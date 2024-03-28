@@ -1,9 +1,10 @@
 import { StyleSheet, Image, View } from "react-native";
+const womanImg = require("./images/free-photo-of-woman-in-dress-lying-down-with-mirror-on-tree.jpeg");
 
 export default function App() {
   return (
     <View style={styles.container}>
-      <Image src="./images/free-photo-of-woman-in-dress-lying-down-with-mirror-on-tree.jpeg" />
+      <Image src={womanImg} />
     </View>
   );
 }

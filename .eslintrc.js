@@ -30,6 +30,7 @@ module.exports = {
         project: './tsconfig.json',
     },
     rules: {
+        'import/extensions': 'off',
         'react/jsx-boolean-value': 'error',
         'unicorn/filename-case': 'off',
         '@typescript-eslint/no-misused-promises': 'warn',

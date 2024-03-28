@@ -3,8 +3,6 @@ import {
     View,
     TextInput,
     Button,
-    Linking,
-    Pressable,
     SafeAreaView,
     ScrollView,
 } from 'react-native';
@@ -17,10 +15,22 @@ import { isEmail } from 'validator';
 import { validatePassword } from './utils';
 import { formStyles } from './styles';
 
-type FormValues = { email: string; password: string };
-const initialFormValues = { email: '', password: '' };
+type FormValues = {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    age: string;
+};
+const initialFormValues = {
+    email: '',
+    password: '',
+    firstName: '',
+    lastName: '',
+    age: '18',
+};
 
-export function SignInScreen({
+export function SignUpScreen({
     navigation,
 }: {
     navigation: NavigationProp<Record<string, unknown>>;
@@ -28,11 +38,20 @@ export function SignInScreen({
     const validateEmailPassword = useCallback((values: FormValues) => {
         const errors: FormValues = initialFormValues;
 
-        errors.email = !isEmail(values.email)
-            ? `${values.email} is not a valid email.`
-            : '';
-
+        errors.email = isEmail(values.email)
+            ? ''
+            : `${values.email} is not a valid email.`;
         errors.password = validatePassword(values.password);
+        errors.firstName =
+            values.firstName.length > 0 ? '' : 'Please provide your first name';
+        errors.lastName =
+            values.lastName.length > 0 ? '' : 'Please provide your last name';
+
+        const ageInt = Number.parseInt(values.age, 10);
+        errors.age =
+            ageInt > 18 || ageInt === 18
+                ? ''
+                : 'You must be at least 18 to use the app';
 
         return errors;
     }, []);
@@ -83,25 +102,37 @@ export function SignInScreen({
                             <Text style={{ color: 'red' }}>
                                 {errors.password}
                             </Text>
-
-                            <View style={formStyles.buttonContainerSmall}>
-                                <Pressable
-                                    onPress={() =>
-                                        Linking.openURL('https://example.com')
-                                    }
-                                >
-                                    {({ pressed }) => (
-                                        <Text
-                                            style={{
-                                                textDecorationLine: 'underline',
-                                                color: pressed ? 'red' : 'blue',
-                                            }}
-                                        >
-                                            Forgot password?
-                                        </Text>
-                                    )}
-                                </Pressable>
+                            <Text>First Name</Text>
+                            <View style={formStyles.textInputContainer}>
+                                <TextInput
+                                    placeholder="Jane"
+                                    onBlur={handleBlur('firstName')}
+                                    onChangeText={handleChange('firstName')}
+                                />
                             </View>
+                            <Text style={{ color: 'red' }}>
+                                {errors.firstName}
+                            </Text>
+                            <Text>Last Name</Text>
+                            <View style={formStyles.textInputContainer}>
+                                <TextInput
+                                    placeholder="Doe"
+                                    onBlur={handleBlur('lastName')}
+                                    onChangeText={handleChange('lastName')}
+                                />
+                            </View>
+                            <Text style={{ color: 'red' }}>
+                                {errors.lastName}
+                            </Text>
+                            <Text>Age</Text>
+                            <View style={formStyles.textInputContainer}>
+                                <TextInput
+                                    placeholder="42"
+                                    onBlur={handleBlur('age')}
+                                    onChangeText={handleChange('age')}
+                                />
+                            </View>
+                            <Text style={{ color: 'red' }}>{errors.age}</Text>
 
                             <View
                                 style={
@@ -112,7 +143,7 @@ export function SignInScreen({
                                 }
                             >
                                 <Button
-                                    title="Sign in"
+                                    title="Sign up"
                                     onPress={handleSubmit}
                                 />
                             </View>
@@ -131,7 +162,7 @@ export function SignInScreen({
                                         name="google"
                                         backgroundColor="#4385f5"
                                     >
-                                        Sign in with Google
+                                        Sign up with Google
                                     </FontAwesome.Button>
                                 </View>
                                 <View style={formStyles.buttonContainerSmall}>
@@ -139,25 +170,10 @@ export function SignInScreen({
                                         name="facebook"
                                         backgroundColor="#3b5998"
                                     >
-                                        Sign in with Facebook
+                                        Sign up with Facebook
                                     </FontAwesome.Button>
                                 </View>
                             </View>
-                            <Text>Don't have an account?</Text>
-                            <Pressable
-                                onPress={() => navigation.navigate('SignUp')}
-                            >
-                                {({ pressed }) => (
-                                    <Text
-                                        style={{
-                                            textDecorationLine: 'underline',
-                                            color: pressed ? 'red' : 'blue',
-                                        }}
-                                    >
-                                        Sign up
-                                    </Text>
-                                )}
-                            </Pressable>
                         </>
                     )}
                 </Formik>

@@ -24,12 +24,17 @@ export function SignInScreen({
     const [passwordError, setPasswordError] = useState<string>('');
 
     const validateEmailPassword = useCallback(() => {
-        if (newEmail && !isEmail(newEmail ?? '')) {
-            setEmailError(`${newEmail} is not a valid email.`);
+        if (!isEmail(email ?? '')) {
+            setEmailError(`${email} is not a valid email.`);
         } else {
-            setEmailError();
+            setEmailError('');
         }
-        setEmail(newEmail);
+
+        if (!isEmail(email ?? '')) {
+            setEmailError(`${email} is not a valid email.`);
+        } else {
+            setEmailError('');
+        }
     }, [email, password]);
 
     return (
@@ -49,6 +54,8 @@ export function SignInScreen({
                     <TextInput
                         secureTextEntry
                         placeholder="At least 8 characters"
+                        value={password}
+                        onChangeText={setPassword}
                     />
                 </View>
                 <Text style={{ color: 'red' }}>{emailError}</Text>
@@ -78,7 +85,7 @@ export function SignInScreen({
                         })
                     }
                 >
-                    <Button title="Sign in" />
+                    <Button title="Sign in" onPress={validateEmailPassword} />
                 </View>
                 <Text
                     style={{

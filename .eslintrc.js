@@ -5,8 +5,11 @@ module.exports = {
         'jest',
         'promise',
         'unicorn',
+        'react',
     ],
     extends: [
+        'eslint:recommended',
+        'plugin:react/recommended',
         'airbnb-base',
         'airbnb-typescript/base',
         'plugin:@typescript-eslint/recommended',

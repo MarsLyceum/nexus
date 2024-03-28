@@ -11,7 +11,7 @@ import {
 import React, { useState, useCallback } from 'react';
 import { NavigationProp } from '@react-navigation/core';
 import { FontAwesome } from '@expo/vector-icons';
-import isEmail from 'validator/lib/isEmail';
+import { isStrongPassword, isEmail } from 'validator';
 
 const styles = StyleSheet.create({
     outerContainer: {
@@ -85,12 +85,14 @@ export function SignInScreen({
             setEmailError('');
         }
 
-        if (!isEmail(email ?? '')) {
-            setEmailError(`${email} is not a valid email.`);
+        if (!isStrongPassword(password ?? '')) {
+            setPasswordError(
+                'The password you entered is not a strong password.'
+            );
         } else {
-            setEmailError('');
+            setPasswordError('');
         }
-    }, [email, password]);
+    }, [email, password, setEmailError, setPasswordError]);
 
     return (
         <SafeAreaView style={styles.outerContainer}>
@@ -113,7 +115,7 @@ export function SignInScreen({
                         onChangeText={setPassword}
                     />
                 </View>
-                <Text style={{ color: 'red' }}>{emailError}</Text>
+                <Text style={{ color: 'red' }}>{passwordError}</Text>
 
                 <View style={styles.buttonContainerSmall}>
                     <Pressable

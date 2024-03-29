@@ -30,11 +30,9 @@ const initialFormValues = {
     age: '18',
 };
 
-export function SignUpScreen({
-    navigation,
-}: {
+export function SignUpScreen({ navigation }) {
     navigation: NavigationProp<Record<string, unknown>>;
-}) {
+
     const validateEmailPassword = useCallback((values: FormValues) => {
         const errors: FormValues = initialFormValues;
 

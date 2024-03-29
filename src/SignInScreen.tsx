@@ -8,12 +8,14 @@ import {
     SafeAreaView,
     ScrollView,
 } from 'react-native';
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { NavigationProp } from '@react-navigation/core';
 import { FontAwesome } from '@expo/vector-icons';
 import { Formik } from 'formik';
 import { isEmail } from 'validator';
+import { useApolloClient } from '@apollo/client';
 
+import { LOGIN_USER_QUERY } from './queries';
 import { validatePassword } from './utils';
 import { formStyles } from './styles';
 
@@ -22,9 +24,10 @@ const initialFormValues = { email: '', password: '' };
 
 export function SignInScreen({
     navigation,
-}: {
+}: Readonly<{
     navigation: NavigationProp<Record<string, unknown>>;
-}) {
+}>) {
+    const apolloClient = useApolloClient();
     const validateEmailPassword = useCallback((values: FormValues) => {
         const errors: FormValues = initialFormValues;
 
@@ -34,7 +37,9 @@ export function SignInScreen({
 
         errors.password = validatePassword(values.password);
 
-        return errors;
+        const noErrors = Object.values(errors).every((value) => value === '');
+
+        return noErrors ? {} : errors;
     }, []);
 
     return (
@@ -42,7 +47,17 @@ export function SignInScreen({
             <ScrollView style={formStyles.container}>
                 <Formik
                     initialValues={initialFormValues}
-                    onSubmit={(values) => console.log(values)}
+                    onSubmit={(values) => {
+                        console.log('submitting...');
+                        const result = apolloClient.query({
+                            query: LOGIN_USER_QUERY,
+                            variables: {
+                                email: values.email,
+                                password: values.password,
+                            },
+                        });
+                        console.log('result:', result);
+                    }}
                     validate={validateEmailPassword}
                     validateOnChange={false}
                     validateOnBlur={false}
@@ -56,9 +71,9 @@ export function SignInScreen({
                     }: {
                         errors: Partial<FormValues>;
                         values: FormValues;
-                        handleChange: any;
-                        handleBlur: any;
-                        handleSubmit: any;
+                        handleChange: unknown;
+                        handleBlur: unknown;
+                        handleSubmit: unknown;
                     }) => (
                         <>
                             <Text>Email</Text>
@@ -75,6 +90,7 @@ export function SignInScreen({
                             <View style={formStyles.textInputContainer}>
                                 <TextInput
                                     secureTextEntry
+                                    value={values.password}
                                     placeholder="At least 8 characters"
                                     onBlur={handleBlur('password')}
                                     onChangeText={handleChange('password')}

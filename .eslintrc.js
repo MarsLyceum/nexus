@@ -30,6 +30,7 @@ module.exports = {
         project: './tsconfig.json',
     },
     rules: {
+        'react/prop-types': 'off',
         'import/extensions': 'off',
         'react/jsx-boolean-value': 'error',
         'unicorn/filename-case': 'off',

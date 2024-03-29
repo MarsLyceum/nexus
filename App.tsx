@@ -9,8 +9,15 @@ import {
     HttpLink,
 } from '@apollo/client';
 import { onError, ErrorResponse } from '@apollo/client/link/error';
+import { loadErrorMessages, loadDevMessages } from '@apollo/client/dev';
 
 import { SignInScreen, SignUpScreen } from './src';
+
+if (__DEV__) {
+    // Adds messages only in a dev environment
+    loadDevMessages();
+    loadErrorMessages();
+}
 
 const Stack = createNativeStackNavigator();
 

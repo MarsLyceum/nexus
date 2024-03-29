@@ -8,7 +8,7 @@ import {
     SafeAreaView,
     ScrollView,
 } from 'react-native';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback } from 'react';
 import { NavigationProp } from '@react-navigation/core';
 import { FontAwesome } from '@expo/vector-icons';
 import { Formik } from 'formik';
@@ -38,7 +38,6 @@ export function SignInScreen({
         errors.password = validatePassword(values.password);
 
         const noErrors = Object.values(errors).every((value) => value === '');
-
         return noErrors ? {} : errors;
     }, []);
 
@@ -47,9 +46,10 @@ export function SignInScreen({
             <ScrollView style={formStyles.container}>
                 <Formik
                     initialValues={initialFormValues}
-                    onSubmit={(values) => {
+                    onSubmit={async (values) => {
                         console.log('submitting...');
-                        const result = apolloClient.query({
+                        // TODO: store token in Redux and use it on other pages
+                        const result = await apolloClient.query({
                             query: LOGIN_USER_QUERY,
                             variables: {
                                 email: values.email,

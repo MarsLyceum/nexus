@@ -7,11 +7,12 @@ import {
     ScrollView,
 } from 'react-native';
 import React, { useCallback } from 'react';
-import { NavigationProp } from '@react-navigation/core';
 import { FontAwesome } from '@expo/vector-icons';
 import { Formik } from 'formik';
 import { isEmail } from 'validator';
+import { useApolloClient } from '@apollo/client';
 
+import { REGISTER_USER_MUTATION } from './queries';
 import { validatePassword } from './utils';
 import { formStyles } from './styles';
 
@@ -31,8 +32,7 @@ const initialFormValues = {
 };
 
 export function SignUpScreen({ navigation }) {
-    navigation: NavigationProp<Record<string, unknown>>;
-
+    const apolloClient = useApolloClient();
     const validateEmailPassword = useCallback((values: FormValues) => {
         const errors: FormValues = initialFormValues;
 
@@ -51,7 +51,8 @@ export function SignUpScreen({ navigation }) {
                 ? ''
                 : 'You must be at least 18 to use the app';
 
-        return errors;
+        const noErrors = Object.values(errors).every((value) => value === '');
+        return noErrors ? {} : errors;
     }, []);
 
     return (
@@ -59,7 +60,21 @@ export function SignUpScreen({ navigation }) {
             <ScrollView style={formStyles.container}>
                 <Formik
                     initialValues={initialFormValues}
-                    onSubmit={(values) => console.log(values)}
+                    onSubmit={async (values) => {
+                        console.log('submitting...');
+                        // TODO: store token in Redux and use it on other pages
+                        const result = await apolloClient.mutate({
+                            mutation: REGISTER_USER_MUTATION,
+                            variables: {
+                                email: values.email,
+                                password: values.password,
+                                firstName: values.firstName,
+                                lastName: values.lastName,
+                                age: Number.parseInt(values.age, 10),
+                            },
+                        });
+                        console.log('result:', result);
+                    }}
                     validate={validateEmailPassword}
                     validateOnChange={false}
                     validateOnBlur={false}

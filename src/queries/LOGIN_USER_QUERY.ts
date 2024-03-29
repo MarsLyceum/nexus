@@ -5,6 +5,10 @@ export const LOGIN_USER_QUERY = gql`
         loginUser(email: $email, password: $password) {
             id
             email
+            firstName
+            lastName
+            age
+            token
         }
     }
 `;

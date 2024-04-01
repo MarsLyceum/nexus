@@ -174,6 +174,20 @@ export function SignInScreen({
                                     </Text>
                                 )}
                             </Pressable>
+                            <Pressable
+                                onPress={() => navigation.navigate('Setup')}
+                            >
+                                {({ pressed }) => (
+                                    <Text
+                                        style={{
+                                            textDecorationLine: 'underline',
+                                            color: pressed ? 'red' : 'blue',
+                                        }}
+                                    >
+                                        Setup
+                                    </Text>
+                                )}
+                            </Pressable>
                         </>
                     )}
                 </Formik>

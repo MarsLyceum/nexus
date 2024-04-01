@@ -54,4 +54,29 @@ export const formStyles = StyleSheet.create({
         marginBottom: 5,
         height: 30,
     },
+    headerTitle: {
+        fontSize: 24,
+    },
+    wordCloudContainer: {
+        borderLeftWidth: 1,
+        borderTopWidth: 1,
+        borderBottomWidth: 1,
+        borderRightWidth: 1,
+        borderRadius: 4,
+        padding: 4,
+        backgroundColor: '#f7fbff',
+        width: '100%',
+        minHeight: 60,
+    },
+    imageSelector: {
+        width: '100%',
+    },
+    selectedImage: {
+        width: '50%',
+    },
+    buttonContainer: {
+        width: '75%',
+        marginHorizontal: 'auto',
+        marginTop: 20,
+    },
 });

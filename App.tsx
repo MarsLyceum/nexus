@@ -12,6 +12,7 @@ import { onError, ErrorResponse } from '@apollo/client/link/error';
 import { loadErrorMessages, loadDevMessages } from '@apollo/client/dev';
 
 import { SignInScreen, SignUpScreen } from './src';
+import {SetupScreen} from "./src/SetupScreen";
 
 if (__DEV__) {
     // Adds messages only in a dev environment
@@ -27,7 +28,7 @@ const errorLink = onError((error: ErrorResponse) => {
     }
 });
 
-const serverIp = '192.168.1.45';
+const serverIp = '192.168.1.141';
 
 const link = from([
     errorLink,
@@ -48,6 +49,7 @@ export default function App() {
                 <Stack.Navigator initialRouteName="SignIn">
                     <Stack.Screen name="SignIn" component={SignInScreen} />
                     <Stack.Screen name="SignUp" component={SignUpScreen} />
+                    <Stack.Screen name="Setup" component={SetupScreen} />
                 </Stack.Navigator>
             </NavigationContainer>
         </ApolloProvider>

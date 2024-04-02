@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import React, { useCallback } from 'react';
 import { NavigationProp } from '@react-navigation/core';
-import { FontAwesome } from '@expo/vector-icons';
 import { Formik } from 'formik';
 import { isEmail } from 'validator';
 import { useApolloClient } from '@apollo/client';
@@ -27,6 +26,7 @@ export function SignInScreen({
 }: Readonly<{
     navigation: NavigationProp<Record<string, unknown>>;
 }>) {
+    // GoogleSignin.configure();
     const apolloClient = useApolloClient();
     const validateEmailPassword = useCallback((values: FormValues) => {
         const errors: FormValues = initialFormValues;
@@ -131,33 +131,6 @@ export function SignInScreen({
                                     title="Sign in"
                                     onPress={handleSubmit}
                                 />
-                            </View>
-                            <Text
-                                style={{
-                                    textAlign: 'center',
-                                    marginTop: 20,
-                                    marginBottom: 20,
-                                }}
-                            >
-                                OR
-                            </Text>
-                            <View style={formStyles.fullWidth}>
-                                <View style={formStyles.buttonContainerSmall}>
-                                    <FontAwesome.Button
-                                        name="google"
-                                        backgroundColor="#4385f5"
-                                    >
-                                        Sign in with Google
-                                    </FontAwesome.Button>
-                                </View>
-                                <View style={formStyles.buttonContainerSmall}>
-                                    <FontAwesome.Button
-                                        name="facebook"
-                                        backgroundColor="#3b5998"
-                                    >
-                                        Sign in with Facebook
-                                    </FontAwesome.Button>
-                                </View>
                             </View>
                             <Text>Don't have an account?</Text>
                             <Pressable

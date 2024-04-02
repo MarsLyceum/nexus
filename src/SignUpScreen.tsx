@@ -6,8 +6,7 @@ import {
     SafeAreaView,
     ScrollView,
 } from 'react-native';
-import React, { useCallback } from 'react';
-import { FontAwesome } from '@expo/vector-icons';
+import React, { useCallback, useEffect } from 'react';
 import { Formik } from 'formik';
 import { isEmail } from 'validator';
 import { useApolloClient } from '@apollo/client';
@@ -32,6 +31,7 @@ const initialFormValues = {
 };
 
 export function SignUpScreen({ navigation }) {
+    useEffect(() => {}, []);
     const apolloClient = useApolloClient();
     const validateEmailPassword = useCallback((values: FormValues) => {
         const errors: FormValues = initialFormValues;
@@ -53,6 +53,21 @@ export function SignUpScreen({ navigation }) {
 
         const noErrors = Object.values(errors).every((value) => value === '');
         return noErrors ? {} : errors;
+    }, []);
+
+    const signUpWithGoogle = useCallback(async () => {
+        GoogleSignin.configure({
+            scopes: ['https://www.googleapis.com/auth/drive.readonly'], // what API you want to access on behalf of the user, default is email and profile
+            webClientId: '<FROM DEVELOPER CONSOLE>', // client ID of type WEB for your server. Required to get the idToken on the user object, and for offline access.
+            offlineAccess: true, // if you want to access Google API on behalf of the user FROM YOUR SERVER
+            hostedDomain: '', // specifies a hosted domain restriction
+            forceCodeForRefreshToken: true, // [Android] related to `serverAuthCode`, read the docs link below *.
+            accountName: '', // [Android] specifies an account name on the device that should be used
+            iosClientId: '<FROM DEVELOPER CONSOLE>', // [iOS] if you want to specify the client ID of type iOS (otherwise, it is taken from GoogleService-Info.plist)
+            googleServicePlistPath: '', // [iOS] if you renamed your GoogleService-Info file, new name here, e.g. GoogleService-Info-Staging
+            openIdRealm: '', // [iOS] The OpenID2 realm of the home web server. This allows Google to include the user's OpenID Identifier in the OpenID Connect ID token.
+            profileImageSize: 120, // [iOS] The desired height (and width) of the profile image. Defaults to 120px
+        });
     }, []);
 
     return (
@@ -159,33 +174,6 @@ export function SignUpScreen({ navigation }) {
                                     title="Sign up"
                                     onPress={handleSubmit}
                                 />
-                            </View>
-                            <Text
-                                style={{
-                                    textAlign: 'center',
-                                    marginTop: 20,
-                                    marginBottom: 20,
-                                }}
-                            >
-                                OR
-                            </Text>
-                            <View style={formStyles.fullWidth}>
-                                <View style={formStyles.buttonContainerSmall}>
-                                    <FontAwesome.Button
-                                        name="google"
-                                        backgroundColor="#4385f5"
-                                    >
-                                        Sign up with Google
-                                    </FontAwesome.Button>
-                                </View>
-                                <View style={formStyles.buttonContainerSmall}>
-                                    <FontAwesome.Button
-                                        name="facebook"
-                                        backgroundColor="#3b5998"
-                                    >
-                                        Sign up with Facebook
-                                    </FontAwesome.Button>
-                                </View>
                             </View>
                         </>
                     )}

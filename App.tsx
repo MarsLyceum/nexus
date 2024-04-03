@@ -8,9 +8,11 @@ import {
     from,
     HttpLink,
 } from '@apollo/client';
+import { Provider as ReduxProvider } from 'react-redux';
 import { onError, ErrorResponse } from '@apollo/client/link/error';
 import { loadErrorMessages, loadDevMessages } from '@apollo/client/dev';
 
+import { store } from './src/redux/store';
 import { SignInScreen, SignUpScreen } from './src';
 
 if (__DEV__) {
@@ -43,13 +45,15 @@ const client = new ApolloClient({
 // eslint-disable-next-line import/no-default-export
 export default function App() {
     return (
-        <ApolloProvider client={client}>
-            <NavigationContainer>
-                <Stack.Navigator initialRouteName="SignIn">
-                    <Stack.Screen name="SignIn" component={SignInScreen} />
-                    <Stack.Screen name="SignUp" component={SignUpScreen} />
-                </Stack.Navigator>
-            </NavigationContainer>
-        </ApolloProvider>
+        <ReduxProvider store={store}>
+            <ApolloProvider client={client}>
+                <NavigationContainer>
+                    <Stack.Navigator initialRouteName="SignIn">
+                        <Stack.Screen name="SignIn" component={SignInScreen} />
+                        <Stack.Screen name="SignUp" component={SignUpScreen} />
+                    </Stack.Navigator>
+                </NavigationContainer>
+            </ApolloProvider>
+        </ReduxProvider>
     );
 }

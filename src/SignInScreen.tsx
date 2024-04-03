@@ -13,7 +13,10 @@ import { NavigationProp } from '@react-navigation/core';
 import { Formik } from 'formik';
 import { isEmail } from 'validator';
 import { useApolloClient } from '@apollo/client';
+import { useDispatch } from 'react-redux';
 
+import { User } from './types';
+import { setUser } from './redux';
 import { LOGIN_USER_QUERY } from './queries';
 import { validatePassword } from './utils';
 import { formStyles } from './styles';
@@ -26,7 +29,15 @@ export function SignInScreen({
 }: Readonly<{
     navigation: NavigationProp<Record<string, unknown>>;
 }>) {
-    // GoogleSignin.configure();
+    const dispatch = useDispatch();
+
+    const updateUserData = useCallback(
+        (user: User) => {
+            dispatch(setUser(user));
+        },
+        [dispatch]
+    );
+
     const apolloClient = useApolloClient();
     const validateEmailPassword = useCallback((values: FormValues) => {
         const errors: FormValues = initialFormValues;
@@ -56,6 +67,7 @@ export function SignInScreen({
                                 password: values.password,
                             },
                         });
+                        updateUserData(result.data as User);
                         console.log('result:', result);
                     }}
                     validate={validateEmailPassword}

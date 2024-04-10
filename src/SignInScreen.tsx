@@ -10,11 +10,13 @@ import {
 } from 'react-native';
 import React, { useCallback } from 'react';
 import { NavigationProp } from '@react-navigation/core';
-import { FontAwesome } from '@expo/vector-icons';
 import { Formik } from 'formik';
 import { isEmail } from 'validator';
 import { useApolloClient } from '@apollo/client';
+import { useDispatch } from 'react-redux';
 
+import { User } from './types';
+import { setUser } from './redux';
 import { LOGIN_USER_QUERY } from './queries';
 import { validatePassword } from './utils';
 import { formStyles } from './styles';
@@ -27,6 +29,15 @@ export function SignInScreen({
 }: Readonly<{
     navigation: NavigationProp<Record<string, unknown>>;
 }>) {
+    const dispatch = useDispatch();
+
+    const updateUserData = useCallback(
+        (user: User) => {
+            dispatch(setUser(user));
+        },
+        [dispatch]
+    );
+
     const apolloClient = useApolloClient();
     const validateEmailPassword = useCallback((values: FormValues) => {
         const errors: FormValues = initialFormValues;
@@ -56,6 +67,7 @@ export function SignInScreen({
                                 password: values.password,
                             },
                         });
+                        updateUserData(result.data as User);
                         console.log('result:', result);
                     }}
                     validate={validateEmailPassword}
@@ -131,33 +143,6 @@ export function SignInScreen({
                                     title="Sign in"
                                     onPress={handleSubmit}
                                 />
-                            </View>
-                            <Text
-                                style={{
-                                    textAlign: 'center',
-                                    marginTop: 20,
-                                    marginBottom: 20,
-                                }}
-                            >
-                                OR
-                            </Text>
-                            <View style={formStyles.fullWidth}>
-                                <View style={formStyles.buttonContainerSmall}>
-                                    <FontAwesome.Button
-                                        name="google"
-                                        backgroundColor="#4385f5"
-                                    >
-                                        Sign in with Google
-                                    </FontAwesome.Button>
-                                </View>
-                                <View style={formStyles.buttonContainerSmall}>
-                                    <FontAwesome.Button
-                                        name="facebook"
-                                        backgroundColor="#3b5998"
-                                    >
-                                        Sign in with Facebook
-                                    </FontAwesome.Button>
-                                </View>
                             </View>
                             <Text>Don't have an account?</Text>
                             <Pressable

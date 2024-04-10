@@ -6,11 +6,14 @@ import {
     SafeAreaView,
     ScrollView,
 } from 'react-native';
-import React, { useCallback } from 'react';
-import { FontAwesome } from '@expo/vector-icons';
+import React, { useCallback, useEffect } from 'react';
 import { Formik } from 'formik';
 import { isEmail } from 'validator';
 import { useApolloClient } from '@apollo/client';
+import { useDispatch } from 'react-redux';
+
+import { User } from './types';
+import { setUser } from './redux';
 
 import { REGISTER_USER_MUTATION } from './queries';
 import { validatePassword } from './utils';
@@ -32,6 +35,16 @@ const initialFormValues = {
 };
 
 export function SignUpScreen({ navigation }) {
+    const dispatch = useDispatch();
+
+    const updateUserData = useCallback(
+        (user: User) => {
+            dispatch(setUser(user));
+        },
+        [dispatch]
+    );
+
+    useEffect(() => {}, []);
     const apolloClient = useApolloClient();
     const validateEmailPassword = useCallback((values: FormValues) => {
         const errors: FormValues = initialFormValues;
@@ -73,6 +86,7 @@ export function SignUpScreen({ navigation }) {
                                 age: Number.parseInt(values.age, 10),
                             },
                         });
+                        updateUserData(result.data as User);
                         console.log('result:', result);
                     }}
                     validate={validateEmailPassword}
@@ -159,33 +173,6 @@ export function SignUpScreen({ navigation }) {
                                     title="Sign up"
                                     onPress={handleSubmit}
                                 />
-                            </View>
-                            <Text
-                                style={{
-                                    textAlign: 'center',
-                                    marginTop: 20,
-                                    marginBottom: 20,
-                                }}
-                            >
-                                OR
-                            </Text>
-                            <View style={formStyles.fullWidth}>
-                                <View style={formStyles.buttonContainerSmall}>
-                                    <FontAwesome.Button
-                                        name="google"
-                                        backgroundColor="#4385f5"
-                                    >
-                                        Sign up with Google
-                                    </FontAwesome.Button>
-                                </View>
-                                <View style={formStyles.buttonContainerSmall}>
-                                    <FontAwesome.Button
-                                        name="facebook"
-                                        backgroundColor="#3b5998"
-                                    >
-                                        Sign up with Facebook
-                                    </FontAwesome.Button>
-                                </View>
                             </View>
                         </>
                     )}

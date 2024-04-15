@@ -14,7 +14,7 @@ import { loadErrorMessages, loadDevMessages } from '@apollo/client/dev';
 
 import { store } from './src/redux/store';
 import { SignInScreen, SignUpScreen } from './src';
-import {SetupScreen} from "./src/SetupScreen";
+import { SetupScreen } from './src/SetupScreen';
 
 if (__DEV__) {
     // Adds messages only in a dev environment
@@ -30,6 +30,7 @@ const errorLink = onError((error: ErrorResponse) => {
     }
 });
 
+// TODO: make this more generic
 const serverIp = '192.168.1.141';
 
 const link = from([
@@ -48,11 +49,13 @@ export default function App() {
     return (
         <ApolloProvider client={client}>
             <NavigationContainer>
-                <Stack.Navigator initialRouteName="SignIn">
-                    <Stack.Screen name="SignIn" component={SignInScreen} />
-                    <Stack.Screen name="SignUp" component={SignUpScreen} />
-                    <Stack.Screen name="Setup" component={SetupScreen} />
-                </Stack.Navigator>
+                <ReduxProvider store={store}>
+                    <Stack.Navigator initialRouteName="SignIn">
+                        <Stack.Screen name="SignIn" component={SignInScreen} />
+                        <Stack.Screen name="SignUp" component={SignUpScreen} />
+                        <Stack.Screen name="Setup" component={SetupScreen} />
+                    </Stack.Navigator>
+                </ReduxProvider>
             </NavigationContainer>
         </ApolloProvider>
     );

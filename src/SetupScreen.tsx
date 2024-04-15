@@ -35,14 +35,15 @@ const initialFormValues: FormValues = {
 };
 
 export function SetupScreen({
-                                navigation,
-                            }: {
+    navigation,
+}: {
     navigation: NavigationProp<Record<string, unknown>>;
 }) {
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
     const handleImagePicker = async () => {
-        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        const { status } =
+            await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== 'granted') {
             alert('Sorry, we need camera roll permissions to select an image.');
             return;

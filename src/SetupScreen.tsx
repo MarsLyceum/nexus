@@ -1,5 +1,7 @@
-import React, { useCallback, useState } from 'react';
+import React, { Component, useCallback, useState } from 'react';
 import {
+    AppRegistry,
+    StyleSheet,
     Text,
     View,
     TextInput,
@@ -9,6 +11,7 @@ import {
     TouchableOpacity,
     Image,
 } from 'react-native';
+import Slick from 'react-native-slick';
 import { NavigationProp } from '@react-navigation/core';
 import { Formik } from 'formik';
 import { FontAwesome } from '@expo/vector-icons';
@@ -69,6 +72,9 @@ export function SetupScreen({
     return (
         <SafeAreaView style={formStyles.outerContainer}>
             <ScrollView style={formStyles.container}>
+                <Slick style={formStyles.slickWrapper} showsButtons>
+                    <View style={formStyles}
+                </Slick>
                 <Text style={formStyles.headerTitle}>Setup your Profile</Text>
                 <Formik
                     initialValues={initialFormValues}

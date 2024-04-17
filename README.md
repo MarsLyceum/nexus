@@ -1,4 +1,4 @@
-# hephaestus
+# Hephaestus
 
 An app that connects people with shared hobbies.
 
@@ -22,3 +22,6 @@ WiFi network as your phone.
   - CocoaPods
 
 See [PROVISIONING](doc/PROVISIONING.md) for detailed setup instructions.
+---
+### Future development
+See [ROADMAP.md](ROADMAP.md)

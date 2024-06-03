@@ -6,6 +6,7 @@ import {
     SafeAreaView,
     ScrollView,
 } from 'react-native';
+import { NavigationProp } from '@react-navigation/core';
 import React, { useCallback, useEffect } from 'react';
 import { Formik } from 'formik';
 import { isEmail } from 'validator';
@@ -34,7 +35,11 @@ const initialFormValues = {
     age: '18',
 };
 
-export function SignUpScreen({ navigation }) {
+export function SignUpScreen({
+    navigation,
+}: Readonly<{
+    navigation: NavigationProp<Record<string, unknown>>;
+}>) {
     const dispatch = useDispatch();
 
     const updateUserData = useCallback(
@@ -73,9 +78,7 @@ export function SignUpScreen({ navigation }) {
             <ScrollView style={formStyles.container}>
                 <Formik
                     initialValues={initialFormValues}
-                    onSubmit={async (values) => {
-                        console.log('submitting...');
-                        // TODO: store token in Redux and use it on other pages
+                    onSubmit={async (values): Promise<void> => {
                         const result = await apolloClient.mutate({
                             mutation: REGISTER_USER_MUTATION,
                             variables: {
@@ -87,7 +90,7 @@ export function SignUpScreen({ navigation }) {
                             },
                         });
                         updateUserData(result.data as User);
-                        console.log('result:', result);
+                        navigation.navigate('Matching');
                     }}
                     validate={validateEmailPassword}
                     validateOnChange={false}

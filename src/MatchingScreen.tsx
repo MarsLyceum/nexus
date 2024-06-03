@@ -1,19 +1,25 @@
-import { StyleSheet, Image, View } from "react-native";
-const womanImg = require("./images/free-photo-of-woman-in-dress-lying-down-with-mirror-on-tree.jpeg");
+import React from 'react';
+import {
+    StyleSheet,
+    Image,
+    SafeAreaView,
+    ImageSourcePropType,
+} from 'react-native';
+import womanImg from './images/free-photo-of-woman-in-dress-lying-down-with-mirror-on-tree.jpeg';
 
-export default function App() {
-  return (
-    <View style={styles.container}>
-      <Image src={womanImg} />
-    </View>
-  );
+export function MatchingScreen() {
+    return (
+        <SafeAreaView>
+            <Image source={womanImg as ImageSourcePropType} />
+        </SafeAreaView>
+    );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
-  },
+    container: {
+        flex: 1,
+        backgroundColor: '#fff',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
 });

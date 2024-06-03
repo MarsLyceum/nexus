@@ -13,7 +13,7 @@ import { onError, ErrorResponse } from '@apollo/client/link/error';
 import { loadErrorMessages, loadDevMessages } from '@apollo/client/dev';
 
 import { store } from './src/redux/store';
-import { SignInScreen, SignUpScreen } from './src';
+import { SignInScreen, SignUpScreen, MatchingScreen } from './src';
 import { SetupScreen } from './src/SetupScreen';
 
 if (__DEV__) {
@@ -30,12 +30,11 @@ const errorLink = onError((error: ErrorResponse) => {
     }
 });
 
-// TODO: make this more generic
-const serverIp = '192.168.1.141';
-
 const link = from([
     errorLink,
-    new HttpLink({ uri: `http://${serverIp}:4000/graphql` }),
+    new HttpLink({
+        uri: `https://hephaestus-api-iwesf7iypq-uw.a.run.app/graphql`,
+    }),
 ]);
 
 const client = new ApolloClient({
@@ -54,6 +53,10 @@ export default function App() {
                         <Stack.Screen name="SignIn" component={SignInScreen} />
                         <Stack.Screen name="SignUp" component={SignUpScreen} />
                         <Stack.Screen name="Setup" component={SetupScreen} />
+                        <Stack.Screen
+                            name="Matching"
+                            component={MatchingScreen}
+                        />
                     </Stack.Navigator>
                 </ReduxProvider>
             </NavigationContainer>

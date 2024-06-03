@@ -57,9 +57,7 @@ export function SignInScreen({
             <ScrollView style={formStyles.container}>
                 <Formik
                     initialValues={initialFormValues}
-                    onSubmit={async (values) => {
-                        console.log('submitting...');
-                        // TODO: store token in Redux and use it on other pages
+                    onSubmit={async (values): Promise<void> => {
                         const result = await apolloClient.query({
                             query: LOGIN_USER_QUERY,
                             variables: {
@@ -68,7 +66,7 @@ export function SignInScreen({
                             },
                         });
                         updateUserData(result.data as User);
-                        console.log('result:', result);
+                        navigation.navigate('Matching');
                     }}
                     validate={validateEmailPassword}
                     validateOnChange={false}

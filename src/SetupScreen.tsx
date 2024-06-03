@@ -73,7 +73,7 @@ export function SetupScreen({
         <SafeAreaView style={formStyles.outerContainer}>
             <ScrollView style={formStyles.container}>
                 <Slick style={formStyles.slickWrapper} showsButtons>
-                    <View style={formStyles}
+                    <View style={formStyles}></View>
                 </Slick>
                 <Text style={formStyles.headerTitle}>Setup your Profile</Text>
                 <Formik

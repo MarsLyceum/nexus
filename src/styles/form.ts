@@ -11,6 +11,7 @@ export const formStyles = StyleSheet.create({
     container: {
         width: '50%',
     },
+    slickWrapper: {},
     buttonContainerSmall: {
         display: 'flex',
         marginTop: 5,

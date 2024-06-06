@@ -8,9 +8,6 @@ export const formStyles = StyleSheet.create({
         justifyContent: 'center',
         paddingTop: 20,
     },
-    container: {
-        width: '50%',
-    },
     slickWrapper: {},
     buttonContainerSmall: {
         display: 'flex',

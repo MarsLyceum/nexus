@@ -11,9 +11,19 @@ import {
 import { Provider as ReduxProvider } from 'react-redux';
 import { onError, ErrorResponse } from '@apollo/client/link/error';
 import { loadErrorMessages, loadDevMessages } from '@apollo/client/dev';
+import {
+    useFonts,
+    Lato_400Regular,
+    Lato_700Bold,
+} from '@expo-google-fonts/lato';
 
 import { store } from './src/redux/store';
-import { SignInScreen, SignUpScreen, MatchingScreen } from './src';
+import {
+    SignInScreen,
+    SignUpScreen,
+    MatchingScreen,
+    WelcomeScreen,
+} from './src';
 import { SetupScreen } from './src/SetupScreen';
 
 if (__DEV__) {
@@ -45,17 +55,40 @@ const client = new ApolloClient({
 // we need to have App be a default export for React Native to work
 // eslint-disable-next-line import/no-default-export
 export default function App() {
+    useFonts({
+        Lato_400Regular,
+        Lato_700Bold,
+    });
+
     return (
         <ApolloProvider client={client}>
             <NavigationContainer>
                 <ReduxProvider store={store}>
-                    <Stack.Navigator initialRouteName="SignIn">
-                        <Stack.Screen name="SignIn" component={SignInScreen} />
-                        <Stack.Screen name="SignUp" component={SignUpScreen} />
-                        <Stack.Screen name="Setup" component={SetupScreen} />
+                    <Stack.Navigator initialRouteName="Welcome">
+                        <Stack.Screen
+                            name="Welcome"
+                            component={WelcomeScreen}
+                            options={{ headerShown: false }}
+                        />
+                        <Stack.Screen
+                            name="SignIn"
+                            component={SignInScreen}
+                            options={{ headerShown: false }}
+                        />
+                        <Stack.Screen
+                            name="SignUp"
+                            component={SignUpScreen}
+                            options={{ headerShown: false }}
+                        />
+                        <Stack.Screen
+                            name="Setup"
+                            component={SetupScreen}
+                            options={{ headerShown: false }}
+                        />
                         <Stack.Screen
                             name="Matching"
                             component={MatchingScreen}
+                            options={{ headerShown: false }}
                         />
                     </Stack.Navigator>
                 </ReduxProvider>

@@ -30,6 +30,7 @@ module.exports = {
         project: './tsconfig.json',
     },
     rules: {
+        'unicorn/prefer-top-level-await': 'off',
         'react/prop-types': 'off',
         'import/extensions': 'off',
         'react/jsx-boolean-value': 'error',

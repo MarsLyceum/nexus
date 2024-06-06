@@ -1,0 +1,63 @@
+import { SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
+import React from 'react';
+import { NavigationProp } from '@react-navigation/core';
+import styled from 'styled-components/native';
+import { formStyles } from './styles';
+import { PeepsLogo } from './images/PeepsLogo';
+import { PrimaryGradientButton } from './PrimaryGradientButton';
+import { SecondaryButton } from './SecondaryButton';
+import { Footer } from './Footer';
+
+const Tagline = styled.Text`
+    font-family: Lato_700Bold;
+    font-size: 24px;
+    margin-top: 63px;
+`;
+
+const styles = StyleSheet.create({
+    topButton: {
+        marginTop: 63,
+    },
+    bottomButton: {
+        marginTop: 48,
+    },
+    buttonContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 20,
+    },
+    footer: {
+        marginTop: 181,
+    },
+});
+
+export function WelcomeScreen({
+    navigation,
+}: Readonly<{
+    navigation: NavigationProp<Record<string, unknown>>;
+}>) {
+    return (
+        <SafeAreaView style={formStyles.outerContainer}>
+            <ScrollView showsHorizontalScrollIndicator={false}>
+                <PeepsLogo />
+                <Tagline>Where friends and communities thrive</Tagline>
+
+                <View style={styles.buttonContainer}>
+                    <PrimaryGradientButton
+                        style={styles.topButton}
+                        title="Create an account"
+                        onPress={() => {}}
+                    />
+                    <SecondaryButton
+                        style={styles.bottomButton}
+                        title="Log in"
+                        onPress={() => {}}
+                    />
+                </View>
+
+                <Footer style={styles.footer} />
+            </ScrollView>
+        </SafeAreaView>
+    );
+}

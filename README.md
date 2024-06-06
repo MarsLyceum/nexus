@@ -1,6 +1,6 @@
 # Hephaestus
 
-An app that connects people with shared hobbies.
+An app that provides a way to meet new friends, do group activities, and connect with people you already know.
 
 ## Setup
 
@@ -11,17 +11,19 @@ WiFi network as your phone.
 ### Provisioning the development environment
 
 **Dependencies:**
-- Node.js
-- React
-- React Native
-- Typescript
-- [*See the full list of JS packages here*](package.json)
-- **macOS specific**
-  - Xcode
-  - Watchman
-  - CocoaPods
 
-See [PROVISIONING](doc/PROVISIONING.md) for detailed setup instructions.
----
+-   Node.js
+-   React
+-   React Native
+-   Typescript
+-   [_See the full list of JS packages here_](package.json)
+-   **macOS specific**
+    -   Xcode
+    -   Watchman
+    -   CocoaPods
+
+## See [PROVISIONING](doc/PROVISIONING.md) for detailed setup instructions.
+
 ### Future development
+
 See [ROADMAP.md](ROADMAP.md)

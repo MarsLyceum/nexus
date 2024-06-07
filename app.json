@@ -1,7 +1,7 @@
 {
     "expo": {
-        "name": "hephaestus",
-        "slug": "hephaestus",
+        "name": "peeps",
+        "slug": "peeps",
         "version": "1.0.1",
         "orientation": "portrait",
         "icon": "./assets/icon.png",
@@ -20,7 +20,7 @@
                 "foregroundImage": "./assets/adaptive-icon.png",
                 "backgroundColor": "#ffffff"
             },
-            "package": "com.marslyceum.hephaestus"
+            "package": "com.marslyceum.peeps"
         },
         "web": {
             "favicon": "./assets/favicon.png"

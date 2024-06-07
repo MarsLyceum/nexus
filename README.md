@@ -1,4 +1,4 @@
-# Hephaestus
+# Peeps
 
 An app that provides a way to meet new friends, do group activities, and connect with people you already know.
 

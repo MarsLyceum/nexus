@@ -14,15 +14,8 @@ import { isEmail } from 'validator';
 import { useApolloClient } from '@apollo/client';
 import { useDispatch } from 'react-redux';
 import { FontAwesome } from '@expo/vector-icons';
-import {
-    SignUpIllustration,
-    GoogleLogo,
-    HorizontalLine,
-    UserIcon,
-    EmailIcon,
-    PhoneIcon,
-    LockIcon,
-} from './images';
+import { SignUpIllustration, HorizontalLine } from './images';
+import { GoogleLogo, User as UserIcon, Email, Phone, Lock } from './icons';
 
 import { User } from './types';
 import { setUser } from './redux';
@@ -55,7 +48,6 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingTop: 20,
     },
     container: {
         flex: 1,
@@ -299,7 +291,7 @@ export function SignUpScreen({
                             </View>
                             <View style={styles.inputContainer}>
                                 <View style={styles.inputWrapper}>
-                                    <EmailIcon style={styles.inputIcon} />
+                                    <Email style={styles.inputIcon} />
                                     <TextInput
                                         placeholder="Enter your email"
                                         style={styles.input}
@@ -315,7 +307,7 @@ export function SignUpScreen({
                             </View>
                             <View style={styles.inputContainer}>
                                 <View style={styles.inputWrapper}>
-                                    <PhoneIcon style={styles.inputIcon} />
+                                    <Phone style={styles.inputIcon} />
                                     <TextInput
                                         placeholder="Phone Number"
                                         style={styles.input}
@@ -325,7 +317,7 @@ export function SignUpScreen({
                             </View>
                             <View style={styles.inputContainer}>
                                 <View style={styles.inputWrapper}>
-                                    <LockIcon style={styles.inputIcon} />
+                                    <Lock style={styles.inputIcon} />
                                     <TextInput
                                         placeholder="Password"
                                         style={styles.input}

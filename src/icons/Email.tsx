@@ -2,7 +2,7 @@ import * as React from 'react';
 import Svg, { Path } from 'react-native-svg';
 import { ViewStyle } from 'react-native';
 
-export function PhoneIcon({
+export function Email({
     style,
 }: Readonly<{ style?: ViewStyle | ViewStyle[] }>) {
     return (
@@ -14,7 +14,15 @@ export function PhoneIcon({
             style={style}
         >
             <Path
-                d="M17 2H7a2 2 0 00-2 2v16a2 2 0 002 2h10a2 2 0 002-2V4a2 2 0 00-2-2zM12 18h.01"
+                d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"
+                stroke="#000"
+                strokeOpacity={0.3}
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+            <Path
+                d="M22 6l-10 7L2 6"
                 stroke="#000"
                 strokeOpacity={0.3}
                 strokeWidth={2}

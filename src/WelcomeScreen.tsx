@@ -2,7 +2,6 @@ import { SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
 import React from 'react';
 import { NavigationProp } from '@react-navigation/core';
 import styled from 'styled-components/native';
-import { formStyles } from './styles';
 import { PeepsLogo } from './images/PeepsLogo';
 import { PrimaryGradientButton } from './PrimaryGradientButton';
 import { SecondaryButton } from './SecondaryButton';
@@ -21,14 +20,21 @@ const styles = StyleSheet.create({
     bottomButton: {
         marginTop: 48,
     },
-    buttonContainer: {
+    centeredContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: 20,
     },
-    footer: {
-        marginTop: 181,
+    outerContainer: {
+        flex: 1,
+        backgroundColor: '#fff',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingTop: 20,
+    },
+    innerScrollContainer: {
+        width: '100%',
+        paddingBottom: 48, // Adds space for footer
     },
 });
 
@@ -38,12 +44,14 @@ export function WelcomeScreen({
     navigation: NavigationProp<Record<string, unknown>>;
 }>) {
     return (
-        <SafeAreaView style={formStyles.outerContainer}>
-            <ScrollView showsHorizontalScrollIndicator={false}>
-                <PeepsLogo />
-                <Tagline>Where friends and communities thrive</Tagline>
-
-                <View style={styles.buttonContainer}>
+        <SafeAreaView style={styles.outerContainer}>
+            <ScrollView
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.innerScrollContainer}
+            >
+                <View style={styles.centeredContainer}>
+                    <PeepsLogo />
+                    <Tagline>Where friends and communities thrive</Tagline>
                     <PrimaryGradientButton
                         style={styles.topButton}
                         title="Create an account"
@@ -55,8 +63,7 @@ export function WelcomeScreen({
                         onPress={() => {}}
                     />
                 </View>
-
-                <Footer style={styles.footer} />
+                <Footer />
             </ScrollView>
         </SafeAreaView>
     );

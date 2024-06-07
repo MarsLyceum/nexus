@@ -14,7 +14,15 @@ import { isEmail } from 'validator';
 import { useApolloClient } from '@apollo/client';
 import { useDispatch } from 'react-redux';
 import { FontAwesome } from '@expo/vector-icons';
-import { SignUpIllustration, GoogleLogo, HorizontalLine } from './images';
+import {
+    SignUpIllustration,
+    GoogleLogo,
+    HorizontalLine,
+    UserIcon,
+    EmailIcon,
+    PhoneIcon,
+    LockIcon,
+} from './images';
 
 import { User } from './types';
 import { setUser } from './redux';
@@ -77,16 +85,28 @@ const styles = StyleSheet.create({
     inputContainer: {
         width: '100%',
         marginBottom: 15,
+        height: 50,
         alignItems: 'center',
     },
     input: {
-        height: 50,
-        width: 285,
+        // height: 50,
+        // width: 285,
+        // paddingHorizontal: 20,
+        // fontSize: 16,
+        // backgroundColor: '#f9f9f9',
+
+        // flex: 1,
+        // backgroundColor: '#f9f9f9',
+
+        // old stuff, new stuff
+
+        // borderWidth: 1,
+        // borderRadius: 25,
         borderColor: '#ddd',
-        borderWidth: 1,
-        borderRadius: 25,
-        paddingHorizontal: 20,
+        height: 45,
+        flex: 1,
         fontSize: 16,
+        marginRight: 5,
         backgroundColor: '#f9f9f9',
     },
     orText: {
@@ -147,6 +167,22 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         width: '100%',
         justifyContent: 'center',
+    },
+    inputIcon: {
+        marginRight: 10,
+    },
+    inputWrapper: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        width: 285,
+        borderColor: '#ddd',
+        borderWidth: 1,
+        borderRadius: 25,
+        paddingHorizontal: 10,
+        backgroundColor: '#f9f9f9',
+        height: 50,
+        flex: 1,
+        fontSize: 16,
     },
 });
 
@@ -232,55 +268,72 @@ export function SignUpScreen({
                             </Text>
 
                             <View style={styles.inputContainer}>
-                                <TextInput
-                                    placeholder="First Name"
-                                    style={styles.input}
-                                    onBlur={handleBlur('firstName')}
-                                    onChangeText={handleChange('firstName')}
-                                />
+                                <View style={styles.inputWrapper}>
+                                    <UserIcon style={styles.inputIcon} />
+                                    <TextInput
+                                        placeholder="First Name"
+                                        style={styles.input}
+                                        selectionColor="#ddd"
+                                        onBlur={handleBlur('firstName')}
+                                        onChangeText={handleChange('firstName')}
+                                    />
+                                </View>
                                 <Text style={{ color: 'red' }}>
                                     {errors.firstName}
                                 </Text>
                             </View>
                             <View style={styles.inputContainer}>
-                                <TextInput
-                                    placeholder="Last Name"
-                                    style={styles.input}
-                                    onBlur={handleBlur('lastName')}
-                                    onChangeText={handleChange('lastName')}
-                                />
+                                <View style={styles.inputWrapper}>
+                                    <UserIcon style={styles.inputIcon} />
+                                    <TextInput
+                                        placeholder="Last Name"
+                                        style={styles.input}
+                                        onBlur={handleBlur('lastName')}
+                                        onChangeText={handleChange('lastName')}
+                                    />
+                                </View>
+
                                 <Text style={{ color: 'red' }}>
                                     {errors.lastName}
                                 </Text>
                             </View>
                             <View style={styles.inputContainer}>
-                                <TextInput
-                                    placeholder="Enter your email"
-                                    style={styles.input}
-                                    keyboardType="email-address"
-                                    value={values.email}
-                                    onBlur={handleBlur('email')}
-                                    onChangeText={handleChange('email')}
-                                />
+                                <View style={styles.inputWrapper}>
+                                    <EmailIcon style={styles.inputIcon} />
+                                    <TextInput
+                                        placeholder="Enter your email"
+                                        style={styles.input}
+                                        keyboardType="email-address"
+                                        value={values.email}
+                                        onBlur={handleBlur('email')}
+                                        onChangeText={handleChange('email')}
+                                    />
+                                </View>
                                 <Text style={{ color: 'red' }}>
                                     {errors.email}
                                 </Text>
                             </View>
                             <View style={styles.inputContainer}>
-                                <TextInput
-                                    placeholder="Phone Number"
-                                    style={styles.input}
-                                    keyboardType="phone-pad"
-                                />
+                                <View style={styles.inputWrapper}>
+                                    <PhoneIcon style={styles.inputIcon} />
+                                    <TextInput
+                                        placeholder="Phone Number"
+                                        style={styles.input}
+                                        keyboardType="phone-pad"
+                                    />
+                                </View>
                             </View>
                             <View style={styles.inputContainer}>
-                                <TextInput
-                                    placeholder="Password"
-                                    style={styles.input}
-                                    secureTextEntry
-                                    onBlur={handleBlur('password')}
-                                    onChangeText={handleChange('password')}
-                                />
+                                <View style={styles.inputWrapper}>
+                                    <LockIcon style={styles.inputIcon} />
+                                    <TextInput
+                                        placeholder="Password"
+                                        style={styles.input}
+                                        secureTextEntry
+                                        onBlur={handleBlur('password')}
+                                        onChangeText={handleChange('password')}
+                                    />
+                                </View>
                                 <Text style={{ color: 'red' }}>
                                     {errors.password}
                                 </Text>

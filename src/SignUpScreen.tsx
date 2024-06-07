@@ -14,7 +14,7 @@ import { isEmail } from 'validator';
 import { useApolloClient } from '@apollo/client';
 import { useDispatch } from 'react-redux';
 import { FontAwesome } from '@expo/vector-icons';
-import { SignUpIllustration, GoogleLogo } from './images';
+import { SignUpIllustration, GoogleLogo, HorizontalLine } from './images';
 
 import { User } from './types';
 import { setUser } from './redux';
@@ -66,18 +66,22 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#333',
         marginTop: -125,
+        textAlign: 'center',
     },
     subtitle: {
         fontSize: 16,
         color: '#666',
         marginBottom: 20,
+        textAlign: 'center',
     },
     inputContainer: {
         width: '100%',
         marginBottom: 15,
+        alignItems: 'center',
     },
     input: {
         height: 50,
+        width: 285,
         borderColor: '#ddd',
         borderWidth: 1,
         borderRadius: 25,
@@ -89,12 +93,15 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#666',
         marginVertical: 15,
+        textAlign: 'center',
+        marginLeft: 20,
+        marginRight: 20,
     },
     socialContainer: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
+        justifyContent: 'center',
+        alignItems: 'center',
         width: '40%',
-        marginBottom: 20,
     },
     socialButton: {
         width: 50,
@@ -103,6 +110,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         borderRadius: 25,
         backgroundColor: '#f9f9f9',
+        marginLeft: 10,
+        marginRight: 10,
     },
     button: {
         width: '100%',
@@ -123,6 +132,7 @@ const styles = StyleSheet.create({
         color: '#666',
         marginTop: 30,
         marginBottom: 34,
+        textAlign: 'center',
     },
     loginLink: {
         color: '#ff5a5f',
@@ -131,6 +141,12 @@ const styles = StyleSheet.create({
     innerScrollContainer: {
         width: '100%',
         flexGrow: 1,
+    },
+    orContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        width: '100%',
+        justifyContent: 'center',
     },
 });
 
@@ -217,11 +233,25 @@ export function SignUpScreen({
 
                             <View style={styles.inputContainer}>
                                 <TextInput
-                                    placeholder="Name"
+                                    placeholder="First Name"
                                     style={styles.input}
                                     onBlur={handleBlur('firstName')}
                                     onChangeText={handleChange('firstName')}
                                 />
+                                <Text style={{ color: 'red' }}>
+                                    {errors.firstName}
+                                </Text>
+                            </View>
+                            <View style={styles.inputContainer}>
+                                <TextInput
+                                    placeholder="Last Name"
+                                    style={styles.input}
+                                    onBlur={handleBlur('lastName')}
+                                    onChangeText={handleChange('lastName')}
+                                />
+                                <Text style={{ color: 'red' }}>
+                                    {errors.lastName}
+                                </Text>
                             </View>
                             <View style={styles.inputContainer}>
                                 <TextInput
@@ -256,7 +286,13 @@ export function SignUpScreen({
                                 </Text>
                             </View>
 
-                            <Text style={styles.orText}>or sign up with</Text>
+                            <View style={styles.orContainer}>
+                                <HorizontalLine />
+                                <Text style={styles.orText}>
+                                    or sign up with
+                                </Text>
+                                <HorizontalLine />
+                            </View>
 
                             <View style={styles.socialContainer}>
                                 <TouchableOpacity style={styles.socialButton}>
@@ -274,7 +310,7 @@ export function SignUpScreen({
                             <PrimaryGradientButton
                                 style={styles.topButton}
                                 title="Create an account"
-                                onPress={() => navigation.navigate('SignUp')}
+                                onPress={handleSubmit}
                             />
 
                             <Text style={styles.loginText}>

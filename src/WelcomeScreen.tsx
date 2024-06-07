@@ -59,7 +59,7 @@ export function WelcomeScreen({
                     <PrimaryGradientButton
                         style={styles.topButton}
                         title="Create an account"
-                        onPress={() => {}}
+                        onPress={() => navigation.navigate('SignUp')}
                     />
                     <SecondaryButton
                         style={styles.bottomButton}

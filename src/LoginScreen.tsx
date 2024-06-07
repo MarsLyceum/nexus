@@ -30,6 +30,7 @@ const initialFormValues = { email: '', password: '' };
 const styles = StyleSheet.create({
     topButton: {
         marginTop: 38,
+        marginBottom: 80,
     },
     outerContainer: {
         flex: 1,
@@ -289,18 +290,9 @@ export function LoginScreen({
 
                             <PrimaryGradientButton
                                 style={styles.topButton}
-                                title="Create an account"
+                                title="Login"
                                 onPress={handleSubmit}
                             />
-
-                            <Text style={styles.loginText}>
-                                Already a member?{' '}
-                                <TouchableOpacity
-                                    onPress={() => navigation.navigate('Login')}
-                                >
-                                    <Text style={styles.loginLink}>Log In</Text>
-                                </TouchableOpacity>
-                            </Text>
                         </View>
                     )}
                 </Formik>

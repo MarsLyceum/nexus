@@ -247,10 +247,8 @@ export function LoginScreen({
                                         onChangeText={handleChange('email')}
                                     />
                                 </View>
-                                <Text style={{ color: 'red' }}>
-                                    {errors.email}
-                                </Text>
                             </View>
+                            <Text style={{ color: 'red' }}>{errors.email}</Text>
                             <View style={styles.inputContainer}>
                                 <View style={styles.inputWrapper}>
                                     <Lock style={styles.inputIcon} />
@@ -262,10 +260,10 @@ export function LoginScreen({
                                         onChangeText={handleChange('password')}
                                     />
                                 </View>
-                                <Text style={{ color: 'red' }}>
-                                    {errors.password}
-                                </Text>
                             </View>
+                            <Text style={{ color: 'red' }}>
+                                {errors.password}
+                            </Text>
 
                             <Text style={styles.forgotPasswordText}>
                                 <TouchableOpacity

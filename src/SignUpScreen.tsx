@@ -270,10 +270,10 @@ export function SignUpScreen({
                                         onChangeText={handleChange('firstName')}
                                     />
                                 </View>
-                                <Text style={{ color: 'red' }}>
-                                    {errors.firstName}
-                                </Text>
                             </View>
+                            <Text style={{ color: 'red' }}>
+                                {errors.firstName}
+                            </Text>
                             <View style={styles.inputContainer}>
                                 <View style={styles.inputWrapper}>
                                     <UserIcon style={styles.inputIcon} />
@@ -284,11 +284,10 @@ export function SignUpScreen({
                                         onChangeText={handleChange('lastName')}
                                     />
                                 </View>
-
-                                <Text style={{ color: 'red' }}>
-                                    {errors.lastName}
-                                </Text>
                             </View>
+                            <Text style={{ color: 'red' }}>
+                                {errors.lastName}
+                            </Text>
                             <View style={styles.inputContainer}>
                                 <View style={styles.inputWrapper}>
                                     <Email style={styles.inputIcon} />
@@ -301,10 +300,8 @@ export function SignUpScreen({
                                         onChangeText={handleChange('email')}
                                     />
                                 </View>
-                                <Text style={{ color: 'red' }}>
-                                    {errors.email}
-                                </Text>
                             </View>
+                            <Text style={{ color: 'red' }}>{errors.email}</Text>
                             <View style={styles.inputContainer}>
                                 <View style={styles.inputWrapper}>
                                     <Phone style={styles.inputIcon} />
@@ -326,10 +323,10 @@ export function SignUpScreen({
                                         onChangeText={handleChange('password')}
                                     />
                                 </View>
-                                <Text style={{ color: 'red' }}>
-                                    {errors.password}
-                                </Text>
                             </View>
+                            <Text style={{ color: 'red' }}>
+                                {errors.password}
+                            </Text>
 
                             <View style={styles.orContainer}>
                                 <HorizontalLine />

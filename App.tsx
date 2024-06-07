@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import {
@@ -16,6 +16,7 @@ import {
     Lato_400Regular,
     Lato_700Bold,
 } from '@expo-google-fonts/lato';
+import * as SplashScreen from 'expo-splash-screen';
 
 import { store } from './src/redux/store';
 import {
@@ -55,44 +56,56 @@ const client = new ApolloClient({
 // we need to have App be a default export for React Native to work
 // eslint-disable-next-line import/no-default-export
 export default function App() {
-    useFonts({
+    const [appIsReady, setAppIsReady] = useState(false);
+
+    const [fontsLoaded] = useFonts({
         Lato_400Regular,
         Lato_700Bold,
     });
 
-    return (
-        <ApolloProvider client={client}>
-            <NavigationContainer>
-                <ReduxProvider store={store}>
-                    <Stack.Navigator initialRouteName="Welcome">
-                        <Stack.Screen
-                            name="Welcome"
-                            component={WelcomeScreen}
-                            options={{ headerShown: false }}
-                        />
-                        <Stack.Screen
-                            name="SignIn"
-                            component={SignInScreen}
-                            options={{ headerShown: false }}
-                        />
-                        <Stack.Screen
-                            name="SignUp"
-                            component={SignUpScreen}
-                            options={{ headerShown: false }}
-                        />
-                        <Stack.Screen
-                            name="Setup"
-                            component={SetupScreen}
-                            options={{ headerShown: false }}
-                        />
-                        <Stack.Screen
-                            name="Matching"
-                            component={MatchingScreen}
-                            options={{ headerShown: false }}
-                        />
-                    </Stack.Navigator>
-                </ReduxProvider>
-            </NavigationContainer>
-        </ApolloProvider>
-    );
+    useEffect(() => {
+        if (fontsLoaded) {
+            // eslint-disable-next-line no-void
+            void SplashScreen.hideAsync(); // Hide the splash screen once the fonts are loaded
+            setAppIsReady(true);
+        }
+    }, [fontsLoaded]);
+
+    if (appIsReady) {
+        return (
+            <ApolloProvider client={client}>
+                <NavigationContainer>
+                    <ReduxProvider store={store}>
+                        <Stack.Navigator initialRouteName="Welcome">
+                            <Stack.Screen
+                                name="Welcome"
+                                component={WelcomeScreen}
+                                options={{ headerShown: false }}
+                            />
+                            <Stack.Screen
+                                name="SignIn"
+                                component={SignInScreen}
+                                options={{ headerShown: false }}
+                            />
+                            <Stack.Screen
+                                name="SignUp"
+                                component={SignUpScreen}
+                                options={{ headerShown: false }}
+                            />
+                            <Stack.Screen
+                                name="Setup"
+                                component={SetupScreen}
+                                options={{ headerShown: false }}
+                            />
+                            <Stack.Screen
+                                name="Matching"
+                                component={MatchingScreen}
+                                options={{ headerShown: false }}
+                            />
+                        </Stack.Navigator>
+                    </ReduxProvider>
+                </NavigationContainer>
+            </ApolloProvider>
+        );
+    }
 }

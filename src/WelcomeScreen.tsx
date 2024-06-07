@@ -31,10 +31,14 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         paddingTop: 20,
+        width: '100%',
     },
     innerScrollContainer: {
         width: '100%',
-        paddingBottom: 48, // Adds space for footer
+    },
+    footer: {
+        marginTop: 202,
+        marginBottom: 48,
     },
 });
 
@@ -46,7 +50,7 @@ export function WelcomeScreen({
     return (
         <SafeAreaView style={styles.outerContainer}>
             <ScrollView
-                showsHorizontalScrollIndicator={false}
+                showsHorizontalScrollIndicator={true}
                 contentContainerStyle={styles.innerScrollContainer}
             >
                 <View style={styles.centeredContainer}>

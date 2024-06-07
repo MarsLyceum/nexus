@@ -24,21 +24,21 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
+        paddingVertical: 20, // Adjust padding as needed
     },
     outerContainer: {
         flex: 1,
         backgroundColor: '#fff',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingTop: 20,
         width: '100%',
     },
     innerScrollContainer: {
         width: '100%',
+        flexGrow: 1,
     },
-    footer: {
-        marginTop: 202,
-        marginBottom: 48,
+    footerContainer: {
+        flexShrink: 0,
     },
 });
 
@@ -50,7 +50,7 @@ export function WelcomeScreen({
     return (
         <SafeAreaView style={styles.outerContainer}>
             <ScrollView
-                showsHorizontalScrollIndicator={true}
+                showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.innerScrollContainer}
             >
                 <View style={styles.centeredContainer}>
@@ -67,7 +67,9 @@ export function WelcomeScreen({
                         onPress={() => {}}
                     />
                 </View>
-                <Footer />
+                <View style={styles.footerContainer}>
+                    <Footer />
+                </View>
             </ScrollView>
         </SafeAreaView>
     );

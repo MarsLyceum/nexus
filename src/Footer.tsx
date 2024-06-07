@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components/native';
-import { ViewStyle } from 'react-native';
+import { ViewStyle, TouchableOpacity } from 'react-native';
 
 const Container = styled.View`
     flex-direction: row;
@@ -18,7 +18,11 @@ const LinkText = styled.Text`
 
 export const Footer = ({ style }: { style?: ViewStyle | ViewStyle[] }) => (
     <Container style={style}>
-        <LinkText>Terms of Service</LinkText>
-        <LinkText>Privacy Policy</LinkText>
+        <TouchableOpacity onPress={() => {}}>
+            <LinkText>Terms of Service</LinkText>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => {}}>
+            <LinkText>Privacy Policy</LinkText>
+        </TouchableOpacity>
     </Container>
 );

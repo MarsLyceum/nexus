@@ -128,15 +128,15 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
     },
-    loginText: {
+    forgotPasswordText: {
         fontSize: 16,
         color: '#666',
-        marginTop: 30,
-        marginBottom: 34,
+        marginTop: 17,
+        marginBottom: 53,
         textAlign: 'center',
     },
-    loginLink: {
-        color: '#ff5a5f',
+    forgotPasswordLink: {
+        color: '#A63FA3',
         fontWeight: 'bold',
     },
     innerScrollContainer: {
@@ -267,10 +267,20 @@ export function LoginScreen({
                                 </Text>
                             </View>
 
+                            <Text style={styles.forgotPasswordText}>
+                                <TouchableOpacity
+                                    onPress={() => navigation.navigate('Login')}
+                                >
+                                    <Text style={styles.forgotPasswordLink}>
+                                        Forgot password?
+                                    </Text>
+                                </TouchableOpacity>
+                            </Text>
+
                             <View style={styles.orContainer}>
                                 <HorizontalLine />
                                 <Text style={styles.orText}>
-                                    or sign up with
+                                    or log in with
                                 </Text>
                                 <HorizontalLine />
                             </View>

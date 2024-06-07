@@ -64,7 +64,7 @@ export function WelcomeScreen({
                     <SecondaryButton
                         style={styles.bottomButton}
                         title="Log in"
-                        onPress={() => {}}
+                        onPress={() => navigation.navigate('Login')}
                     />
                 </View>
                 <View style={styles.footerContainer}>

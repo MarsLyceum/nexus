@@ -20,7 +20,7 @@ import * as SplashScreen from 'expo-splash-screen';
 
 import { store } from './src/redux/store';
 import {
-    SignInScreen,
+    LoginScreen,
     SignUpScreen,
     MatchingScreen,
     WelcomeScreen,
@@ -83,8 +83,8 @@ export default function App() {
                                 options={{ headerShown: false }}
                             />
                             <Stack.Screen
-                                name="SignIn"
-                                component={SignInScreen}
+                                name="Login"
+                                component={LoginScreen}
                                 options={{ headerShown: false }}
                             />
                             <Stack.Screen

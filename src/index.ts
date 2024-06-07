@@ -1,4 +1,4 @@
-export * from './SignInScreen';
+export * from './LoginScreen';
 export * from './SignUpScreen';
 export * from './SetupScreen';
 export * from './MatchingScreen';

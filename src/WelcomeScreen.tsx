@@ -24,14 +24,12 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        paddingVertical: 20, // Adjust padding as needed
+        paddingVertical: 20,
+        width: '100%',
     },
     outerContainer: {
         flex: 1,
         backgroundColor: '#fff',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: '100%',
     },
     innerScrollContainer: {
         width: '100%',
@@ -39,6 +37,8 @@ const styles = StyleSheet.create({
     },
     footerContainer: {
         flexShrink: 0,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
 });
 

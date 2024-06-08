@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
-import { SafeAreaView, View, Image, Text, StyleSheet } from 'react-native';
+import {
+    SafeAreaView,
+    View,
+    Image,
+    Text,
+    StyleSheet,
+    ScrollView,
+} from 'react-native';
 import { Button, Icon } from 'react-native-elements';
 import { useNavigation } from '@react-navigation/native';
 
@@ -35,8 +42,8 @@ const styles = StyleSheet.create({
         elevation: 4,
     },
     profileImage: {
-        width: '100%',
-        height: 300,
+        width: 295,
+        height: 466,
         borderTopLeftRadius: 8,
         borderTopRightRadius: 8,
     },
@@ -105,12 +112,18 @@ export const MatchingScreen = () => {
         },
         about: 'My name is Jessica Parker and I enjoy meeting new people and finding ways to help them have an uplifting experience. I enjoy reading.',
         interests: ['Swimming', 'Yoga', 'Music', 'Photography'],
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         gallery: [
-            'images/jessica-profile-1',
-            'images/jessica-profile-2',
-            'images/jessica-profile-3',
-            'images/jessica-profile-4',
-            'images/jessica-profile-5',
+            // eslint-disable-next-line global-require, unicorn/prefer-module
+            require('./images/jessica-profile-1.png'),
+            // eslint-disable-next-line global-require, unicorn/prefer-module
+            require('./images/jessica-profile-2.png'),
+            // eslint-disable-next-line global-require, unicorn/prefer-module
+            require('./images/jessica-profile-3.png'),
+            // eslint-disable-next-line global-require, unicorn/prefer-module
+            require('./images/jessica-profile-4.png'),
+            // eslint-disable-next-line global-require, unicorn/prefer-module
+            require('./images/jessica-profile-5.png'),
         ],
     });
     const {
@@ -125,66 +138,77 @@ export const MatchingScreen = () => {
 
     return (
         <SafeAreaView style={styles.container}>
-            <View style={styles.header}>
-                <Icon
-                    name="arrow-back"
-                    type="material"
-                    color="#000"
-                    onPress={() => navigation.goBack()}
-                />
-                <Text style={styles.headerTitle}>Discover</Text>
-                <Icon
-                    name="filter-list"
-                    type="material"
-                    color="#000"
-                    onPress={() => console.log('Filter pressed')}
-                />
-            </View>
-            <Text style={styles.location}>Provo, UT</Text>
-            <View style={styles.card}>
-                <Image
-                    source={{ uri: 'https://your-image-url.com' }} // Replace with actual image URL
-                    style={styles.profileImage}
-                />
-                <Text style={styles.distance}>{distance}</Text>
-                <View style={styles.info}>
-                    <Text style={styles.name}>
-                        {user.firstName} {user.lastName}, {user.age}
-                    </Text>
-                    <Text style={styles.job}>{user.profession}</Text>
+            <ScrollView
+                showsHorizontalScrollIndicator={false}
+                // contentContainerStyle={styles.innerScrollContainer}
+            >
+                <View style={styles.header}>
+                    <Icon
+                        name="arrow-back"
+                        type="material"
+                        color="#000"
+                        onPress={() => navigation.goBack()}
+                    />
+                    <Text style={styles.headerTitle}>Discover</Text>
+                    <Icon
+                        name="filter-list"
+                        type="material"
+                        color="#000"
+                        onPress={() => console.log('Filter pressed')}
+                    />
                 </View>
-            </View>
-            <View style={styles.actions}>
-                <Button
-                    icon={
-                        <Icon
-                            name="thumb-down"
-                            type="material"
-                            color="#FF6C6C"
-                        />
-                    }
-                    buttonStyle={styles.actionButton}
-                    onPress={() => console.log('Dislike')}
-                />
-                <Button
-                    icon={<Icon name="heart" type="material" color="#FFF" />}
-                    buttonStyle={styles.mainButton}
-                    onPress={() => console.log('Main action')}
-                />
-                <Button
-                    icon={
-                        <Icon name="thumb-up" type="material" color="#6C6CFF" />
-                    }
-                    buttonStyle={styles.actionButton}
-                    onPress={() => console.log('Like')}
-                />
-            </View>
-            <View style={styles.footer}>
-                <Icon name="home" type="material" color="#FFF" />
-                <Icon name="group" type="material" color="#FFF" />
-                <Icon name="chat" type="material" color="#FFF" />
-                <Icon name="person" type="material" color="#FFF" />
-            </View>
+                <Text style={styles.location}>Provo, UT</Text>
+                <View style={styles.card}>
+                    <Image
+                        source={user.gallery[0]}
+                        style={styles.profileImage}
+                    />
+                    <Text style={styles.distance}>{distance}</Text>
+                    <View style={styles.info}>
+                        <Text style={styles.name}>
+                            {user.firstName} {user.lastName}, {user.age}
+                        </Text>
+                        <Text style={styles.job}>{user.profession}</Text>
+                    </View>
+                </View>
+                <View style={styles.actions}>
+                    <Button
+                        icon={
+                            <Icon
+                                name="thumb-down"
+                                type="material"
+                                color="#FF6C6C"
+                            />
+                        }
+                        buttonStyle={styles.actionButton}
+                        onPress={() => console.log('Dislike')}
+                    />
+                    <Button
+                        icon={
+                            <Icon name="heart" type="material" color="#FFF" />
+                        }
+                        buttonStyle={styles.mainButton}
+                        onPress={() => console.log('Main action')}
+                    />
+                    <Button
+                        icon={
+                            <Icon
+                                name="thumb-up"
+                                type="material"
+                                color="#6C6CFF"
+                            />
+                        }
+                        buttonStyle={styles.actionButton}
+                        onPress={() => console.log('Like')}
+                    />
+                </View>
+                <View style={styles.footer}>
+                    <Icon name="home" type="material" color="#FFF" />
+                    <Icon name="group" type="material" color="#FFF" />
+                    <Icon name="chat" type="material" color="#FFF" />
+                    <Icon name="person" type="material" color="#FFF" />
+                </View>
+            </ScrollView>
         </SafeAreaView>
     );
 };

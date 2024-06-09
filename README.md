@@ -8,6 +8,9 @@ To get things working you need to set the `serverIp` variable in `App.tsx`
 to your computer's ip address. Furthermore, this must be on the same
 WiFi network as your phone.
 
+You will need to install the pnpm package manager as we use that instead of npm
+for Peeps due to its speed and efficiency. To install it run `npm i -g pnpm`
+
 ### Provisioning the development environment
 
 **Dependencies:**

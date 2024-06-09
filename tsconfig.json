@@ -1,6 +1,20 @@
 {
-  "extends": "expo/tsconfig.base",
-  "compilerOptions": {
-    "strict": true
-  }
+    "extends": "expo/tsconfig.base",
+    "compilerOptions": {
+        "target": "es6",
+        "module": "commonjs",
+        "jsx": "react",
+        "strict": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "outDir": "./dist",
+        "rootDir": "./src",
+        "resolveJsonModule": true,
+        "allowSyntheticDefaultImports": true,
+        "noEmit": false,
+        "incremental": true
+    },
+    "include": ["src/**/*.ts", "src/**/*.tsx", "index.tsx", "index.web.tsx"],
+    "exclude": ["node_modules", "dist"]
 }

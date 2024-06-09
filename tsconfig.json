@@ -15,6 +15,6 @@
         "noEmit": false,
         "incremental": true
     },
-    "include": ["src/**/*.ts", "src/**/*.tsx", "index.tsx", "index.web.tsx"],
+    "include": ["src/**/*.ts", "src/**/*.tsx", "index.js", "index.web.js"],
     "exclude": ["node_modules", "dist"]
 }

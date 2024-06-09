@@ -1,3 +1,4 @@
+import 'ts-node/register';
 import { ExpoConfig } from '@expo/config-types';
 
 const config: ExpoConfig = {

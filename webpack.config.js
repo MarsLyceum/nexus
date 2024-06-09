@@ -1,6 +1,7 @@
 const path = require('path');
 const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const { WebpackPluginServe: Serve } = require('webpack-plugin-serve');
 const createExpoWebpackConfigAsync = require('@expo/webpack-config');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 
@@ -93,6 +94,7 @@ module.exports = async function (env, argv) {
 
         plugins: [
             ...(config.plugins || []),
+            new Serve(),
             new CleanWebpackPlugin(),
             new webpack.ProvidePlugin({
                 process: 'process/browser',

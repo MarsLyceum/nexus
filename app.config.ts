@@ -2,6 +2,7 @@ import 'ts-node/register';
 import { ExpoConfig } from '@expo/config-types';
 
 const config: ExpoConfig = {
+    owner: 'suerg',
     name: 'peeps',
     slug: 'peeps',
     version: '1.0.1',
@@ -36,7 +37,7 @@ const config: ExpoConfig = {
     },
     extra: {
         eas: {
-            projectId: '453de580-4e9c-47b1-8976-f5d2fdd9a557',
+            projectId: '46cea6b7-6a97-4f60-bad0-c74ac8cf7d38',
         },
     },
     platforms: ['ios', 'android', 'web'],

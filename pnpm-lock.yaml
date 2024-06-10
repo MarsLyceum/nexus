@@ -216,6 +216,9 @@ importers:
       '@babel/core':
         specifier: ^7.24.7
         version: 7.24.7
+      '@babel/plugin-transform-class-properties':
+        specifier: ^7.24.7
+        version: 7.24.7(@babel/core@7.24.7)
       '@babel/preset-env':
         specifier: ^7.24.7
         version: 7.24.7(@babel/core@7.24.7)

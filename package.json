@@ -78,7 +78,8 @@
         "url": "^0.11.3",
         "util": "^0.12.5",
         "validator": "^13.11.0",
-        "vm-browserify": "^1.1.2"
+        "vm-browserify": "^1.1.2",
+        "@react-native/assets-registry": "^0.74.84"
     },
     "devDependencies": {
         "@babel/core": "^7.24.7",

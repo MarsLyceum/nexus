@@ -29,6 +29,9 @@ importers:
       '@react-native-google-signin/google-signin':
         specifier: ^10.1.2
         version: 10.1.2(expo@50.0.19(@babel/core@7.24.7)(@react-native/babel-preset@0.73.21(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))))(react-native@0.73.6(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))(react@18.2.0))(react@18.2.0)
+      '@react-native/assets-registry':
+        specifier: ^0.74.84
+        version: 0.74.84
       '@react-navigation/bottom-tabs':
         specifier: ^6.5.20
         version: 6.5.20(@react-navigation/native@6.1.17(react-native@0.73.6(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))(react@18.2.0))(react@18.2.0))(react-native-safe-area-context@4.8.2(react-native@0.73.6(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))(react@18.2.0))(react@18.2.0))(react-native-screens@3.29.0(react-native@0.73.6(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))(react@18.2.0))(react@18.2.0))(react-native@0.73.6(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))(react@18.2.0))(react@18.2.0)
@@ -1448,6 +1451,10 @@ packages:
 
   '@react-native/assets-registry@0.73.1':
     resolution: {integrity: sha512-2FgAbU7uKM5SbbW9QptPPZx8N9Ke2L7bsHb+EhAanZjFZunA9PaYtyjUQ1s7HD+zDVqOQIvjkpXSv7Kejd2tqg==}
+    engines: {node: '>=18'}
+
+  '@react-native/assets-registry@0.74.84':
+    resolution: {integrity: sha512-dzUhwyaX04QosWZ8zyaaNB/WYZIdeDN1lcpfQbqiOhZJShRH+FLTDVONE/dqlMQrP+EO7lDqF0RrlIt9lnOCQQ==}
     engines: {node: '>=18'}
 
   '@react-native/babel-plugin-codegen@0.73.4':
@@ -10195,6 +10202,8 @@ snapshots:
       expo: 50.0.19(@babel/core@7.24.7)(@react-native/babel-preset@0.73.21(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7)))
 
   '@react-native/assets-registry@0.73.1': {}
+
+  '@react-native/assets-registry@0.74.84': {}
 
   '@react-native/babel-plugin-codegen@0.73.4(@babel/preset-env@7.24.7(@babel/core@7.24.7))':
     dependencies:

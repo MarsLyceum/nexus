@@ -15,7 +15,7 @@ import { isEmail } from 'validator';
 import { useApolloClient } from '@apollo/client';
 
 import { User } from './types';
-import { useUser } from './state';
+import { loginUser, useAppDispatch } from './redux';
 import { LOGIN_USER_QUERY } from './queries';
 import { validatePassword } from './utils';
 
@@ -171,13 +171,13 @@ export function LoginScreen({
 }: Readonly<{
     navigation: NavigationProp<Record<string, unknown>>;
 }>) {
-    const { loginUser } = useUser();
+    const dispatch = useAppDispatch();
 
     const updateUserData = useCallback(
         (user: User) => {
-            loginUser(user);
+            dispatch(loginUser(user));
         },
-        [loginUser]
+        [dispatch]
     );
 
     const apolloClient = useApolloClient();

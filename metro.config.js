@@ -1,25 +1,2 @@
-// require('ts-node/register');
-// module.exports = require('./metro.config.ts');
-
-const { getDefaultConfig } = require('@expo/metro-config');
-const defaultSourceExts =
-    require('metro-config/src/defaults/defaults').sourceExts;
-
-const defaultConfig = getDefaultConfig(__dirname);
-
-const config = {
-    ...defaultConfig,
-    transformer: {
-        getTransformOptions: () => ({
-            transform: {
-                experimentalImportSupport: false,
-                inlineRequires: true,
-            },
-        }),
-    },
-    resolver: {
-        sourceExts: ['js', 'json', 'ts', 'tsx', 'cjs', 'mjs'],
-    },
-};
-
-export default config;
+require('ts-node/register');
+module.exports = require('./metro.config.ts');

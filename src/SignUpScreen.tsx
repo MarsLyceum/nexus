@@ -17,7 +17,7 @@ import { SignUpIllustration, HorizontalLine } from './images';
 import { GoogleLogo, User as UserIcon, Email, Phone, Lock } from './icons';
 
 import { User } from './types';
-import { useUser } from './state';
+import { loginUser, useAppDispatch } from './redux';
 
 import { REGISTER_USER_MUTATION } from './queries';
 import { validatePassword } from './utils';
@@ -182,13 +182,13 @@ export function SignUpScreen({
 }: Readonly<{
     navigation: NavigationProp<Record<string, unknown>>;
 }>) {
-    const { loginUser } = useUser();
+    const dispatch = useAppDispatch();
 
     const updateUserData = useCallback(
         (user: User) => {
-            loginUser(user);
+            dispatch(loginUser(user));
         },
-        [loginUser]
+        [dispatch]
     );
 
     useEffect(() => {}, []);

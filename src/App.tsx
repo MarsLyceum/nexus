@@ -8,6 +8,7 @@ import {
     from,
     HttpLink,
 } from '@apollo/client';
+import { Provider as ReduxProvider } from 'react-redux';
 import { onError, ErrorResponse } from '@apollo/client/link/error';
 import { loadErrorMessages, loadDevMessages } from '@apollo/client/dev';
 import {
@@ -17,7 +18,7 @@ import {
 } from '@expo-google-fonts/lato';
 import * as SplashScreen from 'expo-splash-screen';
 
-import { CombinedProvider } from './state';
+import { store } from './redux/store';
 import { LoginScreen, SignUpScreen, MatchingScreen, WelcomeScreen } from '.';
 import { SetupScreen } from './SetupScreen';
 
@@ -69,7 +70,7 @@ export default function App() {
         return (
             <ApolloProvider client={client}>
                 <NavigationContainer>
-                    <CombinedProvider>
+                    <ReduxProvider store={store}>
                         <Stack.Navigator initialRouteName="Welcome">
                             <Stack.Screen
                                 name="Welcome"
@@ -97,7 +98,7 @@ export default function App() {
                                 options={{ headerShown: false }}
                             />
                         </Stack.Navigator>
-                    </CombinedProvider>
+                    </ReduxProvider>
                 </NavigationContainer>
             </ApolloProvider>
         );

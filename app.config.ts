@@ -42,6 +42,9 @@ const config: ExpoConfig = {
     },
     platforms: ['ios', 'android', 'web'],
     plugins: ['expo-font'],
+    packagerOpts: {
+        sourceExts: ['js', 'json', 'ts', 'tsx', 'cjs', 'mjs'],
+    },
 };
 
 export default config;

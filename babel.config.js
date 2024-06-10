@@ -13,6 +13,7 @@ module.exports = function babel(api) {
             '@babel/plugin-transform-private-methods',
             '@babel/plugin-transform-private-property-in-object',
             '@babel/plugin-transform-object-rest-spread',
+            '@babel/plugin-transform-modules-commonjs',
         ],
     };
 };

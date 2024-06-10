@@ -152,6 +152,15 @@ importers:
       graphql:
         specifier: ^15.8.0
         version: 15.8.0
+      metro-config:
+        specifier: ^0.80.9
+        version: 0.80.9
+      mobx:
+        specifier: ^6.12.3
+        version: 6.12.3
+      mobx-react-lite:
+        specifier: ^4.0.7
+        version: 4.0.7(mobx@6.12.3)(react-dom@18.2.0(react@18.2.0))(react-native@0.73.6(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))(react@18.2.0))(react@18.2.0)
       module:
         specifier: ^1.2.5
         version: 1.2.5
@@ -212,12 +221,6 @@ importers:
       stream-browserify:
         specifier: ^3.0.0
         version: 3.0.0
-      symbol-observable:
-        specifier: ^4.0.0
-        version: 4.0.0
-      tslib:
-        specifier: ^2.6.3
-        version: 2.6.3
       url:
         specifier: ^0.11.3
         version: 0.11.3
@@ -230,14 +233,17 @@ importers:
       vm-browserify:
         specifier: ^1.1.2
         version: 1.1.2
-      zen-observable-ts:
-        specifier: ^1.1.0
-        version: 1.1.0
+      zustand:
+        specifier: ^4.5.2
+        version: 4.5.2(@types/react@18.2.79)(immer@10.1.1)(react@18.2.0)
     devDependencies:
       '@babel/core':
         specifier: ^7.24.7
         version: 7.24.7
       '@babel/plugin-transform-class-properties':
+        specifier: ^7.24.7
+        version: 7.24.7(@babel/core@7.24.7)
+      '@babel/plugin-transform-modules-commonjs':
         specifier: ^7.24.7
         version: 7.24.7(@babel/core@7.24.7)
       '@babel/plugin-transform-object-rest-spread':
@@ -2211,9 +2217,6 @@ packages:
 
   '@types/yargs@17.0.32':
     resolution: {integrity: sha512-xQ67Yc/laOG5uMfX/093MRlGGCIBzZMarVa+gfNKJxWAIgykYpVGkBdbqEzGDDfCrVUj6Hiff4mTZ5BA6TmAog==}
-
-  '@types/zen-observable@0.8.3':
-    resolution: {integrity: sha512-fbF6oTd4sGGy0xjHPKAt+eS2CrxJ3+6gQ3FGcBoIJR2TLAyCkCyI8JqZNy+FeON0AhVgNJoUumVoZQjBFUqHkw==}
 
   '@types/zen-observable@0.8.7':
     resolution: {integrity: sha512-LKzNTjj+2j09wAo/vvVjzgw5qckJJzhdGgWHW7j69QIGdq/KnZrMAMIHQiWGl3Ccflh5/CudBAntTPYdprPltA==}
@@ -5818,6 +5821,22 @@ packages:
     engines: {node: '>=10'}
     hasBin: true
 
+  mobx-react-lite@4.0.7:
+    resolution: {integrity: sha512-RjwdseshK9Mg8On5tyJZHtGD+J78ZnCnRaxeQDSiciKVQDUbfZcXhmld0VMxAwvcTnPEHZySGGewm467Fcpreg==}
+    peerDependencies:
+      mobx: ^6.9.0
+      react: ^16.8.0 || ^17 || ^18
+      react-dom: '*'
+      react-native: '*'
+    peerDependenciesMeta:
+      react-dom:
+        optional: true
+      react-native:
+        optional: true
+
+  mobx@6.12.3:
+    resolution: {integrity: sha512-c8NKkO4R2lShkSXZ2Ongj1ycjugjzFFo/UswHBnS62y07DMcTc9Rvo03/3nRyszIvwPNljlkd4S828zIBv/piw==}
+
   module@1.2.5:
     resolution: {integrity: sha512-Y+j9HcHf8V6YtNBkLbPmREAUi5xGbAdb9ycXpo2roABDPrJEzd79kmoH5Ib9lpxcNVsHWa1LhRZJcflUq2+N3w==}
     hasBin: true
@@ -8019,6 +8038,11 @@ packages:
     peerDependencies:
       react: '>=16.8'
 
+  use-sync-external-store@1.2.0:
+    resolution: {integrity: sha512-eEgnFxGQ1Ife9bzYs6VLi8/4X6CObHMw9Qr9tPY43iKwsPw8xE8+EFsf/2cFZ5S3esXgpWgtSCtLNS41F+sKPA==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0
+
   use-sync-external-store@1.2.2:
     resolution: {integrity: sha512-PElTlVMwpblvbNqQ82d2n6RjStvdSoNe9FG28kNfz3WiXilJm4DdNkEzRhCZuIDwY8U08WVihhGR5iRqAwfDiw==}
     peerDependencies:
@@ -8422,14 +8446,26 @@ packages:
   zen-observable-ts@0.8.21:
     resolution: {integrity: sha512-Yj3yXweRc8LdRMrCC8nIc4kkjWecPAUVh0TI0OUrWXx6aX790vLcDlWca6I4vsyCGH3LpWxq0dJRcMOFoVqmeg==}
 
-  zen-observable-ts@1.1.0:
-    resolution: {integrity: sha512-1h4zlLSqI2cRLPJUHJFL8bCWHhkpuXkF+dbGkRaWjgDIG26DmzyshUMrdV/rL3UnR+mhaX4fRq8LPouq0MYYIA==}
-
   zen-observable-ts@1.2.5:
     resolution: {integrity: sha512-QZWQekv6iB72Naeake9hS1KxHlotfRpe+WGNbNx5/ta+R3DNjVO2bswf63gXlWDcs+EMd7XY8HfVQyP1X6T4Zg==}
 
   zen-observable@0.8.15:
     resolution: {integrity: sha512-PQ2PC7R9rslx84ndNBZB/Dkv8V8fZEpk83RLgXtYd0fwUgEjseMn1Dgajh2x6S8QbZAFa9p2qVCEuYZNgve0dQ==}
+
+  zustand@4.5.2:
+    resolution: {integrity: sha512-2cN1tPkDVkwCy5ickKrI7vijSjPksFRfqS6237NzT0vqSsztTNnQdHw9mmN7uBdk3gceVXU0a+21jFzFzAc9+g==}
+    engines: {node: '>=12.7.0'}
+    peerDependencies:
+      '@types/react': '>=16.8'
+      immer: '>=9.0.6'
+      react: '>=16.8'
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+      immer:
+        optional: true
+      react:
+        optional: true
 
 snapshots:
 
@@ -11779,8 +11815,6 @@ snapshots:
   '@types/yargs@17.0.32':
     dependencies:
       '@types/yargs-parser': 21.0.3
-
-  '@types/zen-observable@0.8.3': {}
 
   '@types/zen-observable@0.8.7': {}
 
@@ -16295,6 +16329,17 @@ snapshots:
 
   mkdirp@1.0.4: {}
 
+  mobx-react-lite@4.0.7(mobx@6.12.3)(react-dom@18.2.0(react@18.2.0))(react-native@0.73.6(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))(react@18.2.0))(react@18.2.0):
+    dependencies:
+      mobx: 6.12.3
+      react: 18.2.0
+      use-sync-external-store: 1.2.2(react@18.2.0)
+    optionalDependencies:
+      react-dom: 18.2.0(react@18.2.0)
+      react-native: 0.73.6(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))(react@18.2.0)
+
+  mobx@6.12.3: {}
+
   module@1.2.5:
     dependencies:
       chalk: 1.1.3
@@ -18649,6 +18694,10 @@ snapshots:
     dependencies:
       react: 18.2.0
 
+  use-sync-external-store@1.2.0(react@18.2.0):
+    dependencies:
+      react: 18.2.0
+
   use-sync-external-store@1.2.2(react@18.2.0):
     dependencies:
       react: 18.2.0
@@ -19167,13 +19216,16 @@ snapshots:
       tslib: 1.14.1
       zen-observable: 0.8.15
 
-  zen-observable-ts@1.1.0:
-    dependencies:
-      '@types/zen-observable': 0.8.3
-      zen-observable: 0.8.15
-
   zen-observable-ts@1.2.5:
     dependencies:
       zen-observable: 0.8.15
 
   zen-observable@0.8.15: {}
+
+  zustand@4.5.2(@types/react@18.2.79)(immer@10.1.1)(react@18.2.0):
+    dependencies:
+      use-sync-external-store: 1.2.0(react@18.2.0)
+    optionalDependencies:
+      '@types/react': 18.2.79
+      immer: 10.1.1
+      react: 18.2.0

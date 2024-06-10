@@ -13,10 +13,9 @@ import { NavigationProp } from '@react-navigation/core';
 import { Formik } from 'formik';
 import { isEmail } from 'validator';
 import { useApolloClient } from '@apollo/client';
-import { useDispatch } from 'react-redux';
 
 import { User } from './types';
-import { setUser } from './redux';
+import { loginUser, useAppDispatch } from './redux';
 import { LOGIN_USER_QUERY } from './queries';
 import { validatePassword } from './utils';
 
@@ -172,11 +171,11 @@ export function LoginScreen({
 }: Readonly<{
     navigation: NavigationProp<Record<string, unknown>>;
 }>) {
-    const dispatch = useDispatch();
+    const dispatch = useAppDispatch();
 
     const updateUserData = useCallback(
         (user: User) => {
-            dispatch(setUser(user));
+            dispatch(loginUser(user));
         },
         [dispatch]
     );

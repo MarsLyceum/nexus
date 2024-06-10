@@ -12,13 +12,12 @@ import React, { useCallback, useEffect } from 'react';
 import { Formik } from 'formik';
 import { isEmail } from 'validator';
 import { useApolloClient } from '@apollo/client';
-import { useDispatch } from 'react-redux';
 import { FontAwesome } from '@expo/vector-icons';
 import { SignUpIllustration, HorizontalLine } from './images';
 import { GoogleLogo, User as UserIcon, Email, Phone, Lock } from './icons';
 
 import { User } from './types';
-import { setUser } from './redux';
+import { loginUser, useAppDispatch } from './redux';
 
 import { REGISTER_USER_MUTATION } from './queries';
 import { validatePassword } from './utils';
@@ -183,11 +182,11 @@ export function SignUpScreen({
 }: Readonly<{
     navigation: NavigationProp<Record<string, unknown>>;
 }>) {
-    const dispatch = useDispatch();
+    const dispatch = useAppDispatch();
 
     const updateUserData = useCallback(
         (user: User) => {
-            dispatch(setUser(user));
+            dispatch(loginUser(user));
         },
         [dispatch]
     );

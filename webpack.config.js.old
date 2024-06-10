@@ -5,8 +5,16 @@ const { WebpackPluginServe: Serve } = require('webpack-plugin-serve');
 const createExpoWebpackConfigAsync = require('@expo/webpack-config');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 
-module.exports = async function (env, argv) {
+module.exports = async function (env = {}, argv = { mode: 'development' }) {
     const config = await createExpoWebpackConfigAsync(env, argv);
+
+    // Specific packages that need to be transpiled
+    const transpileModules = [
+        'react-native-elements',
+        'react-native-ratings',
+        'react-native-vector-icons',
+        // add any other packages that need transpiling here
+    ];
 
     return {
         ...config,
@@ -67,6 +75,31 @@ module.exports = async function (env, argv) {
                     },
                 },
                 {
+                    test: /\.(js|jsx|ts|tsx)$/,
+                    include: transpileModules.map((moduleName) =>
+                        path.resolve(__dirname, `node_modules/${moduleName}`)
+                    ),
+                    use: {
+                        loader: 'babel-loader',
+                        options: {
+                            presets: [
+                                'babel-preset-expo',
+                                'module:metro-react-native-babel-preset',
+                                '@babel/preset-env',
+                                '@babel/preset-react',
+                                '@babel/preset-typescript',
+                            ],
+                            plugins: [
+                                '@babel/plugin-transform-class-properties',
+                                '@babel/plugin-transform-private-methods',
+                                '@babel/plugin-transform-private-property-in-object',
+                                '@babel/plugin-syntax-dynamic-import',
+                                '@babel/plugin-proposal-object-rest-spread',
+                            ],
+                        },
+                    },
+                },
+                {
                     test: /\.(png|jpe?g|gif)$/i,
                     use: [
                         {
@@ -91,21 +124,21 @@ module.exports = async function (env, argv) {
                 },
             ],
         },
-
         plugins: [
             ...(config.plugins || []),
-            new Serve(),
             new CleanWebpackPlugin(),
-            new webpack.ProvidePlugin({
-                process: 'process/browser',
-                Buffer: ['buffer', 'Buffer'],
-            }),
             new HtmlWebpackPlugin({
                 template: './public/index.html',
             }),
             new webpack.DefinePlugin({
                 'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
             }),
+            new webpack.ProvidePlugin({
+                process: 'process/browser',
+                Buffer: ['buffer', 'Buffer'],
+            }),
+            ...(argv.mode === 'development' ? [new Serve()] : []), // Serve only in development mode
         ],
+        watch: argv.mode === 'development', // Enable watch mode in development
     };
 };

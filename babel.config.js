@@ -12,8 +12,7 @@ module.exports = function babel(api) {
             '@babel/plugin-transform-class-properties',
             '@babel/plugin-transform-private-methods',
             '@babel/plugin-transform-private-property-in-object',
-            '@babel/plugin-syntax-dynamic-import',
-            '@babel/plugin-proposal-object-rest-spread',
+            '@babel/plugin-transform-object-rest-spread',
         ],
     };
 };

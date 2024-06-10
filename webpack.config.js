@@ -1,0 +1,57 @@
+const path = require('path');
+const createExpoWebpackConfigAsync = require('@expo/webpack-config');
+const NodePolyfillPlugin = require('node-polyfill-webpack-plugin');
+
+module.exports = async function (env, argv) {
+    const config = await createExpoWebpackConfigAsync(env, argv);
+
+    config.resolve.alias = {
+        ...(config.resolve.alias || {}),
+        'react-native-web/dist/exports/PermissionsAndroid': path.resolve(
+            __dirname,
+            'src/mocks/PermissionsAndroid.js'
+        ),
+    };
+
+    config.plugins = [
+        ...(config.plugins || []),
+        new NodePolyfillPlugin({
+            excludeAliases: ['console'],
+        }),
+    ];
+
+    config.resolve.fallback = {
+        ...(config.resolve.fallback || {}),
+        crypto: require.resolve('crypto-browserify'),
+    };
+
+    // Add .cjs to the list of file extensions webpack will resolve
+    config.resolve.extensions = [...(config.resolve.extensions || []), '.cjs'];
+
+    // Ensure loaders handle .cjs files
+    config.module.rules.push({
+        test: /\.cjs$/,
+        exclude: /node_modules/,
+        use: {
+            loader: 'babel-loader',
+            options: {
+                presets: [
+                    'babel-preset-expo',
+                    'module:metro-react-native-babel-preset',
+                    '@babel/preset-env',
+                    '@babel/preset-react',
+                    '@babel/preset-typescript',
+                ],
+                plugins: [
+                    '@babel/plugin-transform-class-properties',
+                    '@babel/plugin-transform-private-methods',
+                    '@babel/plugin-transform-private-property-in-object',
+                    '@babel/plugin-syntax-dynamic-import',
+                    '@babel/plugin-proposal-object-rest-spread',
+                ],
+            },
+        },
+    });
+
+    return config;
+};

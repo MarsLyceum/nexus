@@ -1,7 +1,9 @@
 import { SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NavigationProp } from '@react-navigation/core';
 import styled from 'styled-components/native';
+
+import { RootState, useAppSelector, useAppDispatch, loadUser } from './redux';
 import { PeepsLogo } from './images/PeepsLogo';
 import { PrimaryGradientButton } from './PrimaryGradientButton';
 import { SecondaryButton } from './SecondaryButton';
@@ -47,6 +49,20 @@ export function WelcomeScreen({
 }: Readonly<{
     navigation: NavigationProp<Record<string, unknown>>;
 }>) {
+    const dispatch = useAppDispatch();
+    const user = useAppSelector((state: RootState) => state.user.user);
+
+    useEffect(() => {
+        dispatch(loadUser());
+    }, [dispatch]);
+
+    useEffect(() => {
+        if (user) {
+            // If user is loaded, navigate to the matching screen
+            navigation.navigate('Matching');
+        }
+    }, [user, navigation]);
+
     return (
         <SafeAreaView style={styles.outerContainer}>
             <ScrollView

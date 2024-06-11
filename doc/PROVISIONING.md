@@ -31,11 +31,17 @@ If you are using Xcode 14.0 or greater to install a simulator, open Xcode > Sett
 
       sudo gem install cocoapods
 
+- PNPM
+
+    **Note:** You may have to run `nvm use node` first.
+
+      npm install - pnpm
+
 **_NAVIGATE TO THE PROJECT DIRECTORY_**
 
 ### Install project dependencies
 
-    npm install
+    pnpm install
 
 ## Running the dev server
-In the project directory run `npm start`
+In the project directory run `pnpm start`

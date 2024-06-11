@@ -29,6 +29,11 @@ module.exports = {
     parserOptions: {
         project: './tsconfig.json',
     },
+    settings: {
+        react: {
+            version: 'detect',
+        },
+    },
     rules: {
         'unicorn/prefer-top-level-await': 'off',
         'react/prop-types': 'off',
@@ -79,5 +84,18 @@ module.exports = {
                 'unicorn/prefer-module': 'off',
             },
         },
+    ],
+    ignorePatterns: [
+        'node_modules/',
+        'dist/',
+        'build/',
+        '*.min.js',
+        '*.test.js',
+        '*.config.js',
+        'index.js',
+        'electron-shell/main.js',
+        'declarations.d.ts',
+        'babel.config.js',
+        '.eslintrc.js',
     ],
 };

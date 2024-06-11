@@ -20,7 +20,6 @@ import * as SplashScreen from 'expo-splash-screen';
 
 import { store } from './redux';
 import { LoginScreen, SignUpScreen, MatchingScreen, WelcomeScreen } from '.';
-import { SetupScreen } from './SetupScreen';
 
 if (__DEV__) {
     // Adds messages only in a dev environment
@@ -85,11 +84,6 @@ export default function App() {
                             <Stack.Screen
                                 name="SignUp"
                                 component={SignUpScreen}
-                                options={{ headerShown: false }}
-                            />
-                            <Stack.Screen
-                                name="Setup"
-                                component={SetupScreen}
                                 options={{ headerShown: false }}
                             />
                             <Stack.Screen

@@ -10,6 +10,8 @@ import {
 import { Button, Icon } from 'react-native-elements';
 import { useNavigation } from '@react-navigation/native';
 
+import { HeaderButton } from './HeaderButton';
+import { ArrowLeft } from './icons';
 import { MatchUserProfile } from './types';
 import { useDistanceBetweenAddresses, useCurrentLocation } from './hooks';
 
@@ -20,7 +22,7 @@ const styles = StyleSheet.create({
     },
     header: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
+        justifyContent: 'center',
         alignItems: 'center',
         padding: 16,
     },
@@ -43,9 +45,8 @@ const styles = StyleSheet.create({
     },
     profileImage: {
         width: 295,
-        height: 466,
-        borderTopLeftRadius: 8,
-        borderTopRightRadius: 8,
+        height: 450,
+        borderRadius: 20,
     },
     distance: {
         position: 'absolute',
@@ -139,12 +140,9 @@ export const MatchingScreen = () => {
                 // contentContainerStyle={styles.innerScrollContainer}
             >
                 <View style={styles.header}>
-                    <Icon
-                        name="arrow-back"
-                        type="material"
-                        color="#000"
-                        onPress={() => navigation.goBack()}
-                    />
+                    <HeaderButton onPress={() => navigation.goBack()}>
+                        <ArrowLeft />
+                    </HeaderButton>
                     <Text style={styles.headerTitle}>Discover</Text>
                     <Icon
                         name="filter-list"

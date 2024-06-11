@@ -212,10 +212,7 @@ export function LoginScreen({
                     }) => (
                         <View style={styles.container}>
                             <LoginIllustration />
-                            <Text style={styles.title}>Get Started</Text>
-                            <Text style={styles.subtitle}>
-                                by creating a free account.
-                            </Text>
+                            <Text style={styles.title}>Log in</Text>
 
                             <View style={styles.inputContainer}>
                                 <View style={styles.inputWrapper}>

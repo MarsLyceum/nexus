@@ -61,7 +61,7 @@ export function WelcomeScreen({
             // If user is loaded, navigate to the matching screen
             navigation.navigate('Matching');
         }
-    }, [user, navigation]);
+    }, [user]);
 
     return (
         <SafeAreaView style={styles.outerContainer}>

@@ -6,7 +6,6 @@ import {
     Text,
     StyleSheet,
     ScrollView,
-    ImageSourcePropType,
 } from 'react-native';
 import { Button, Icon } from 'react-native-elements';
 import { useNavigation } from '@react-navigation/native';

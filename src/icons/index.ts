@@ -4,3 +4,4 @@ export * from './Lock';
 export * from './Phone';
 export * from './User';
 export * from './ArrowLeft';
+export * from './Setting';

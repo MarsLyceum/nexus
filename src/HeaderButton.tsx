@@ -1,18 +1,10 @@
-import React, { ReactNode } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import React, { ReactNode, useRef, useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 const styles = StyleSheet.create({
     button: {
-        // width: 100, // adjust to fit your needs
-        // height: 100, // adjust to fit your needs
-        // justifyContent: 'center',
-        // alignItems: 'center',
-        // backgroundColor: '#fff', // change or remove if using the image as background
-        // borderRadius: 50, // make the button round
-
         width: 52,
         height: 52,
-        position: 'absolute',
         left: '0%',
         right: '82.37%',
         top: '0%',
@@ -24,10 +16,15 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
+        marginLeft: 50,
+        marginRight: 50,
+    },
+    buttonHovered: {
+        backgroundColor: '#f0f0f0',
     },
     image: {
-        width: 80, // adjust to fit your needs
-        height: 80, // adjust to fit your needs
+        width: 80,
+        height: 80,
         resizeMode: 'contain',
     },
 });
@@ -38,17 +35,23 @@ export const HeaderButton = ({
 }: {
     onPress: () => void;
     children: ReactNode;
-}) => (
-    <Pressable
-        style={styles.button}
-        onPress={onPress}
-        onPointerEnter={({ target }) => {
-            target.style.backgroundColor = '#f0f0f0';
-        }}
-        onPointerLeave={({ target }) => {
-            target.style.backgroundColor = '#fff';
-        }}
-    >
-        {children}
-    </Pressable>
-);
+}) => {
+    const pressableRef = useRef(null);
+    const [isHovered, setIsHovered] = useState(false);
+
+    return (
+        <Pressable
+            ref={pressableRef}
+            style={[styles.button, isHovered && styles.buttonHovered]}
+            onPress={onPress}
+            onPointerEnter={() => {
+                setIsHovered(true);
+            }}
+            onPointerLeave={() => {
+                setIsHovered(false);
+            }}
+        >
+            {children}
+        </Pressable>
+    );
+};

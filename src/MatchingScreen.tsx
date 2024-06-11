@@ -11,7 +11,7 @@ import { Button, Icon } from 'react-native-elements';
 import { useNavigation } from '@react-navigation/native';
 
 import { HeaderButton } from './HeaderButton';
-import { ArrowLeft } from './icons';
+import { ArrowLeft, Setting } from './icons';
 import { MatchUserProfile } from './types';
 import { useDistanceBetweenAddresses, useCurrentLocation } from './hooks';
 
@@ -22,7 +22,7 @@ const styles = StyleSheet.create({
     },
     header: {
         flexDirection: 'row',
-        justifyContent: 'center',
+        justifyContent: 'center', // Center content horizontally
         alignItems: 'center',
         padding: 16,
     },
@@ -143,15 +143,14 @@ export const MatchingScreen = () => {
                     <HeaderButton onPress={() => navigation.goBack()}>
                         <ArrowLeft />
                     </HeaderButton>
-                    <Text style={styles.headerTitle}>Discover</Text>
-                    <Icon
-                        name="filter-list"
-                        type="material"
-                        color="#000"
-                        onPress={() => console.log('Filter pressed')}
-                    />
+                    <View>
+                        <Text style={styles.headerTitle}>Discover</Text>
+                        <Text style={styles.location}>Provo, UT</Text>
+                    </View>
+                    <HeaderButton onPress={() => {}}>
+                        <Setting />
+                    </HeaderButton>
                 </View>
-                <Text style={styles.location}>Provo, UT</Text>
                 <View style={styles.card}>
                     <Image
                         source={user.gallery[0]}

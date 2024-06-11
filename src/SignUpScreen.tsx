@@ -6,6 +6,7 @@ import {
     ScrollView,
     TouchableOpacity,
     StyleSheet,
+    GestureResponderEvent,
 } from 'react-native';
 import { NavigationProp } from '@react-navigation/core';
 import React, { useCallback, useEffect } from 'react';
@@ -244,12 +245,6 @@ export function SignUpScreen({
                         handleSubmit,
                         values,
                         errors,
-                    }: {
-                        errors: Partial<FormValues>;
-                        values: FormValues;
-                        handleChange: any;
-                        handleBlur: any;
-                        handleSubmit: any;
                     }) => (
                         <View style={styles.container}>
                             <SignUpIllustration />
@@ -351,7 +346,11 @@ export function SignUpScreen({
                             <PrimaryGradientButton
                                 style={styles.topButton}
                                 title="Create an account"
-                                onPress={handleSubmit}
+                                onPress={
+                                    handleSubmit as unknown as (
+                                        event: GestureResponderEvent
+                                    ) => void
+                                }
                             />
 
                             <Text style={styles.loginText}>

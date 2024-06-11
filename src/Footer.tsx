@@ -1,13 +1,6 @@
 import React from 'react';
 import styled from 'styled-components/native';
-import { ViewStyle, TouchableOpacity } from 'react-native';
-
-const Container = styled.View`
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    margin: 20px;
-`;
+import { ViewStyle, TouchableOpacity, View, StyleSheet } from 'react-native';
 
 const LinkText = styled.Text`
     color: #a63fa3;
@@ -16,13 +9,22 @@ const LinkText = styled.Text`
     margin: 0 10px;
 `;
 
+const styles = StyleSheet.create({
+    container: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        margin: 20,
+    },
+});
+
 export const Footer = ({ style }: { style?: ViewStyle | ViewStyle[] }) => (
-    <Container style={style}>
+    <View style={[styles.container, style]}>
         <TouchableOpacity onPress={() => {}}>
             <LinkText>Terms of Service</LinkText>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => {}}>
             <LinkText>Privacy Policy</LinkText>
         </TouchableOpacity>
-    </Container>
+    </View>
 );

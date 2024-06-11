@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
 
 export const MatchingScreen = () => {
     const navigation = useNavigation();
-    const [user, setUser] = useState<MatchUserProfile>({
+    const [user] = useState<MatchUserProfile>({
         id: 'unique-user-id',
         firstName: 'Caudia',
         lastName: 'Smith',
@@ -126,12 +126,8 @@ export const MatchingScreen = () => {
             require('./images/jessica-profile-5.png'),
         ],
     });
-    const {
-        location: currentLocation,
-        error: locationError,
-        refreshLocation,
-    } = useCurrentLocation();
-    const { distance, error: distanceError } = useDistanceBetweenAddresses(
+    const { location: currentLocation } = useCurrentLocation();
+    const { distance } = useDistanceBetweenAddresses(
         currentLocation,
         user.location.address
     );

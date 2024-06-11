@@ -18,14 +18,8 @@ import {
 } from '@expo-google-fonts/lato';
 import * as SplashScreen from 'expo-splash-screen';
 
-import { store } from './src/redux';
-import {
-    LoginScreen,
-    SignUpScreen,
-    MatchingScreen,
-    WelcomeScreen,
-} from './src';
-import { SetupScreen } from './src/SetupScreen';
+import { store } from './redux';
+import { LoginScreen, SignUpScreen, MatchingScreen, WelcomeScreen } from '.';
 
 if (__DEV__) {
     // Adds messages only in a dev environment
@@ -90,11 +84,6 @@ export default function App() {
                             <Stack.Screen
                                 name="SignUp"
                                 component={SignUpScreen}
-                                options={{ headerShown: false }}
-                            />
-                            <Stack.Screen
-                                name="Setup"
-                                component={SetupScreen}
                                 options={{ headerShown: false }}
                             />
                             <Stack.Screen

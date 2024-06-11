@@ -18,7 +18,7 @@ import {
 } from '@expo-google-fonts/lato';
 import * as SplashScreen from 'expo-splash-screen';
 
-import { store } from './src/redux/store';
+import { store } from './src/redux';
 import {
     LoginScreen,
     SignUpScreen,

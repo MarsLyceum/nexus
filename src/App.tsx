@@ -18,14 +18,9 @@ import {
 } from '@expo-google-fonts/lato';
 import * as SplashScreen from 'expo-splash-screen';
 
-import { store } from './src/redux';
-import {
-    LoginScreen,
-    SignUpScreen,
-    MatchingScreen,
-    WelcomeScreen,
-} from './src';
-import { SetupScreen } from './src/SetupScreen';
+import { store } from './redux';
+import { LoginScreen, SignUpScreen, MatchingScreen, WelcomeScreen } from '.';
+import { SetupScreen } from './SetupScreen';
 
 if (__DEV__) {
     // Adds messages only in a dev environment

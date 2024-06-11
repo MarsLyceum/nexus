@@ -1,5 +1,5 @@
 import registerRootComponent from 'expo/build/launch/registerRootComponent';
 
-import App from './App.tsx';
+import App from './src/App.tsx';
 
 registerRootComponent(App);

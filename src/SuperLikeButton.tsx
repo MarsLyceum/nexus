@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, StyleSheet, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { PeepsBirdSimplified } from './icons';
@@ -33,19 +33,39 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
+    buttonHovered: {
+        backgroundColor: '#f0f0f0',
+    },
 });
 
-export const SuperLikeButton = () => (
-    <TouchableOpacity style={styles.container}>
-        <LinearGradient
-            colors={['#A3109E', '#FF3A0F']}
-            start={{ x: 0.54, y: 0.38 }}
-            end={{ x: 0.97, y: 0.97 }}
-            style={styles.outerCircle}
+export function SuperLikeButton() {
+    const [isHovered, setIsHovered] = useState(false);
+
+    return (
+        <Pressable
+            style={styles.container}
+            onPointerEnter={() => {
+                setIsHovered(true);
+            }}
+            onPointerLeave={() => {
+                setIsHovered(false);
+            }}
         >
-            <View style={styles.innerCircle}>
-                <PeepsBirdSimplified />
-            </View>
-        </LinearGradient>
-    </TouchableOpacity>
-);
+            <LinearGradient
+                colors={['#A3109E', '#FF3A0F']}
+                start={{ x: 0.54, y: 0.38 }}
+                end={{ x: 0.97, y: 0.97 }}
+                style={styles.outerCircle}
+            >
+                <View
+                    style={[
+                        styles.innerCircle,
+                        isHovered && styles.buttonHovered,
+                    ]}
+                >
+                    <PeepsBirdSimplified />
+                </View>
+            </LinearGradient>
+        </Pressable>
+    );
+}

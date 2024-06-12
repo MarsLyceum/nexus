@@ -16,6 +16,7 @@ import {
     State,
 } from 'react-native-gesture-handler';
 
+import { DislikeLikeButton } from './DislikeLikeButton';
 import { SuperLikeButton } from './SuperLikeButton';
 import { LocationPin, Circle, ThumbsDown, ThumbsUp } from './icons';
 import { MatchUserProfile } from './types';
@@ -157,20 +158,6 @@ const styles = StyleSheet.create({
         backgroundColor: '#FF6C6C',
         paddingVertical: 12,
     },
-    likeDislikeCircle: {
-        width: 78,
-        height: 78,
-        borderRadius: 39,
-        backgroundColor: 'white',
-        justifyContent: 'center',
-        alignItems: 'center',
-
-        shadowColor: 'rgba(0, 0, 0, 0.3)',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 1,
-        shadowRadius: 4,
-        elevation: 4,
-    },
 });
 
 export const MatchingScreen = () => {
@@ -299,13 +286,13 @@ export const MatchingScreen = () => {
                             </View>
                         </View>
                         <View style={styles.actions}>
-                            <TouchableOpacity style={styles.likeDislikeCircle}>
+                            <DislikeLikeButton>
                                 <ThumbsDown />
-                            </TouchableOpacity>
+                            </DislikeLikeButton>
                             <SuperLikeButton />
-                            <TouchableOpacity style={styles.likeDislikeCircle}>
+                            <DislikeLikeButton>
                                 <ThumbsUp />
-                            </TouchableOpacity>
+                            </DislikeLikeButton>
                         </View>
                     </View>
                     <View style={styles.footer}>

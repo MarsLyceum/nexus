@@ -34,12 +34,10 @@ export const HeaderButton = ({
     onPress: () => void;
     children: ReactNode;
 }) => {
-    const pressableRef = useRef(null);
     const [isHovered, setIsHovered] = useState(false);
 
     return (
         <Pressable
-            ref={pressableRef}
             style={[styles.button, isHovered && styles.buttonHovered]}
             onPress={onPress}
             onPointerEnter={() => {

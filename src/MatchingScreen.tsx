@@ -8,7 +8,7 @@ import {
     ScrollView,
     TouchableOpacity,
 } from 'react-native';
-import { Button, Icon } from 'react-native-elements';
+import { Icon } from 'react-native-elements';
 import { useNavigation } from '@react-navigation/native';
 import {
     TapGestureHandler,
@@ -249,7 +249,7 @@ export const MatchingScreen = () => {
         (event: GestureHandlerStateChangeEvent) => {
             if (event.nativeEvent.state === State.END) {
                 const { x } = event.nativeEvent;
-                if (x > containerWidth / 2) {
+                if ((x as number) > containerWidth / 2) {
                     increaseSelectedImageNumber();
                 } else {
                     decreaseSelectedImageNumber();

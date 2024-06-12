@@ -12,6 +12,7 @@ import { useNavigation } from '@react-navigation/native';
 
 import { MatchUserProfile } from './types';
 import { useDistanceBetweenAddresses, useCurrentLocation } from './hooks';
+import { Navbar } from './Navbar';
 
 const styles = StyleSheet.create({
     container: {
@@ -202,12 +203,7 @@ export const MatchingScreen = () => {
                         onPress={() => console.log('Like')}
                     />
                 </View>
-                <View style={styles.footer}>
-                    <Icon name="home" type="material" color="#FFF" />
-                    <Icon name="group" type="material" color="#FFF" />
-                    <Icon name="chat" type="material" color="#FFF" />
-                    <Icon name="person" type="material" color="#FFF" />
-                </View>
+                <Navbar />
             </ScrollView>
         </SafeAreaView>
     );

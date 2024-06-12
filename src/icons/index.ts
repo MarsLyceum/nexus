@@ -7,3 +7,6 @@ export * from './ArrowLeft';
 export * from './Setting';
 export * from './LocationPin';
 export * from './Circle';
+export * from './ThumbsDown';
+export * from './ThumbsUp';
+export * from './PeepsBirdSimplified';

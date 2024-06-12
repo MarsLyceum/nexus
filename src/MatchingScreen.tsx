@@ -6,6 +6,7 @@ import {
     Text,
     StyleSheet,
     ScrollView,
+    TouchableOpacity,
 } from 'react-native';
 import { Button, Icon } from 'react-native-elements';
 import { useNavigation } from '@react-navigation/native';
@@ -16,8 +17,16 @@ import {
     State,
 } from 'react-native-gesture-handler';
 
+import { SuperLikeButton } from './SuperLikeButton';
 import { HeaderButton } from './HeaderButton';
-import { ArrowLeft, Setting, LocationPin, Circle } from './icons';
+import {
+    ArrowLeft,
+    Setting,
+    LocationPin,
+    Circle,
+    ThumbsDown,
+    ThumbsUp,
+} from './icons';
 import { MatchUserProfile } from './types';
 import {
     useDistanceBetweenAddresses,
@@ -147,6 +156,7 @@ const styles = StyleSheet.create({
     actions: {
         flexDirection: 'row',
         justifyContent: 'space-around',
+        alignItems: 'center',
         margin: 16,
     },
     actionButton: {
@@ -170,6 +180,20 @@ const styles = StyleSheet.create({
         justifyContent: 'space-around',
         backgroundColor: '#FF6C6C',
         paddingVertical: 12,
+    },
+    likeDislikeCircle: {
+        width: 78,
+        height: 78,
+        borderRadius: 39,
+        backgroundColor: 'white',
+        justifyContent: 'center',
+        alignItems: 'center',
+
+        shadowColor: 'rgba(0, 0, 0, 0.3)',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 1,
+        shadowRadius: 4,
+        elevation: 4,
     },
 });
 
@@ -308,39 +332,13 @@ export const MatchingScreen = () => {
                             </View>
                         </View>
                         <View style={styles.actions}>
-                            <Button
-                                icon={
-                                    <Icon
-                                        name="thumb-down"
-                                        type="material"
-                                        color="#FF6C6C"
-                                    />
-                                }
-                                buttonStyle={styles.actionButton}
-                                onPress={() => console.log('Dislike')}
-                            />
-                            <Button
-                                icon={
-                                    <Icon
-                                        name="heart"
-                                        type="material"
-                                        color="#FFF"
-                                    />
-                                }
-                                buttonStyle={styles.mainButton}
-                                onPress={() => console.log('Main action')}
-                            />
-                            <Button
-                                icon={
-                                    <Icon
-                                        name="thumb-up"
-                                        type="material"
-                                        color="#6C6CFF"
-                                    />
-                                }
-                                buttonStyle={styles.actionButton}
-                                onPress={() => console.log('Like')}
-                            />
+                            <TouchableOpacity style={styles.likeDislikeCircle}>
+                                <ThumbsDown />
+                            </TouchableOpacity>
+                            <SuperLikeButton />
+                            <TouchableOpacity style={styles.likeDislikeCircle}>
+                                <ThumbsUp />
+                            </TouchableOpacity>
                         </View>
                     </View>
                     <View style={styles.footer}>

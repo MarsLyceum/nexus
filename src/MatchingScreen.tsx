@@ -6,7 +6,6 @@ import {
     Text,
     StyleSheet,
     ScrollView,
-    TouchableOpacity,
 } from 'react-native';
 import { Icon } from 'react-native-elements';
 import {

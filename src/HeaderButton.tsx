@@ -1,4 +1,4 @@
-import React, { ReactNode, useRef, useState } from 'react';
+import React, { ReactNode, useState } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 
 const styles = StyleSheet.create({

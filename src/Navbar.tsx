@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -59,36 +59,71 @@ function CustomTabBar({ state, descriptors, navigation }) {
                     });
                 };
 
-                let iconName;
-                switch (route.name) {
-                    case 'Home':
-                        iconName = isFocused ? 'home' : 'home-outline';
-                        break;
-                    case 'Peeps':
-                        iconName = isFocused ? 'account-group' : 'account-group-outline';
-                        break;
-                    case 'Groups':
-                        iconName = isFocused ? 'account-multiple' : 'account-multiple-outline';
-                        break;
-                    case 'Messages':
-                        iconName = isFocused ? 'message' : 'message-outline';
-                        break;
-                    case 'Account':
-                        iconName = isFocused ? 'account' : 'account-outline';
-                        break;
-                    default:
-                        break;
-                }
-
                 return (
-                    <View key={route.key} style={styles.tabItem}>
-                        <Icon name={iconName} size={24} color={isFocused ? 'white' : 'gray'} onPress={onPress} onLongPress={onLongPress} />
-                        <Text style={{ color: isFocused ? 'white' : 'gray' }}>{label}</Text>
-                    </View>
+                    <AnimatedTabItem
+                        key={route.key}
+                        iconName={getIconName(route.name, isFocused)}
+                        label={label}
+                        isFocused={isFocused}
+                        onPress={onPress}
+                        onLongPress={onLongPress}
+                    />
                 );
             })}
         </LinearGradient>
     );
+}
+
+function AnimatedTabItem({ iconName, label, isFocused, onPress, onLongPress }) {
+    const animationValue = new Animated.Value(0);
+
+    React.useEffect(() => {
+        Animated.timing(animationValue, {
+            toValue: isFocused ? 1 : 0,
+            duration: 400,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+        }).start();
+    }, [isFocused]);
+
+    const translateY = animationValue.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0, -30],
+    });
+
+    return (
+        <View style={styles.tabItemContainer}>
+            <Animated.View style={[styles.tabItem, { transform: [{ translateY }] }]}>
+                {isFocused && (
+                    <>
+                        <View style={[styles.circle, styles.outerCircle]} />
+                        <LinearGradient
+                            colors={['#ff0084', '#33001b']}
+                            style={[styles.circle, styles.innerCircle]}
+                        />
+                    </>
+                )}
+                <Icon name={iconName} size={24} color={isFocused ? 'white' : 'gray'} onPress={onPress} onLongPress={onLongPress} style={styles.icon} />
+            </Animated.View>
+        </View>
+    );
+}
+
+function getIconName(routeName, isFocused) {
+    switch (routeName) {
+        case 'Home':
+            return 'home';
+        case 'Peeps':
+            return 'account-group';
+        case 'Groups':
+            return 'account-multiple';
+        case 'Messages':
+            return 'message';
+        case 'Account':
+            return 'account';
+        default:
+            return '';
+    }
 }
 
 const styles = StyleSheet.create({
@@ -97,12 +132,40 @@ const styles = StyleSheet.create({
         height: 70,
         alignItems: 'center',
         justifyContent: 'space-around',
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
+        borderTopLeftRadius: 100,
+        borderTopRightRadius: 100,
+        borderBottomLeftRadius: 100,
+        borderBottomRightRadius: 100,
+    },
+    tabItemContainer: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     tabItem: {
         alignItems: 'center',
         justifyContent: 'center',
+    },
+    circle: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        position: 'absolute',
+    },
+    outerCircle: {
+        backgroundColor: 'white',
+        width: 64,
+        height: 64,
+        borderRadius: 32,
+        zIndex: 1,
+    },
+    innerCircle: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        zIndex: 2,
+    },
+    icon: {
+        zIndex: 3,
     },
 });
 

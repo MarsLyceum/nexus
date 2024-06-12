@@ -1,6 +1,6 @@
 import { DependencyList, useEffect, useState, useCallback } from 'react';
 
-type FunctionReturningPromise = (...args: never[]) => Promise<never>;
+type FunctionReturningPromise = <T>(...args: T[]) => Promise<T>;
 
 type AsyncState<T> =
     | { loading: boolean; error?: undefined; value?: undefined }

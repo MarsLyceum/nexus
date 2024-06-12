@@ -256,7 +256,7 @@ export const MatchingScreen = () => {
                         </HeaderButton>
                     </View>
                     <View style={styles.cardContainer}>
-                        <View style={styles.card}>
+                        <View style={[styles.card, { cursor: 'pointer' }]}>
                             <TapGestureHandler onEnded={handlePress}>
                                 <View
                                     style={styles.pressableCard}

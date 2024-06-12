@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
     SafeAreaView,
     View,
@@ -6,14 +6,21 @@ import {
     Text,
     StyleSheet,
     ScrollView,
+    GestureResponderEvent,
+    Pressable,
+    PressEvent,
 } from 'react-native';
 import { Button, Icon } from 'react-native-elements';
 import { useNavigation } from '@react-navigation/native';
 
 import { HeaderButton } from './HeaderButton';
-import { ArrowLeft, Setting, LocationPin } from './icons';
+import { ArrowLeft, Setting, LocationPin, Circle } from './icons';
 import { MatchUserProfile } from './types';
-import { useDistanceBetweenAddresses, useCurrentLocation } from './hooks';
+import {
+    useDistanceBetweenAddresses,
+    useCurrentLocation,
+    useCounter,
+} from './hooks';
 
 const styles = StyleSheet.create({
     container: {
@@ -46,6 +53,10 @@ const styles = StyleSheet.create({
         width: 295,
         height: 450,
     },
+    pressableCard: {
+        width: 295,
+        height: 450,
+    },
     cardContainer: {
         justifyContent: 'center',
         alignItems: 'center',
@@ -68,9 +79,6 @@ const styles = StyleSheet.create({
     },
     distanceContainer: {
         position: 'absolute',
-        // top: 16,
-        // left: 16,
-        // backgroundColor: '#000',
         backgroundColor: 'rgba(0, 0, 0, 0.15)',
         color: 'black',
         padding: 4,
@@ -81,6 +89,40 @@ const styles = StyleSheet.create({
 
         top: 20,
         left: 16,
+    },
+    imageNumberNotSelected: {
+        opacity: 0.5,
+    },
+    imageNumberLayoutContainer: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+    },
+    imageNumberLayout: {
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        // alignItems: 'center',
+        height: 44,
+        width: 4,
+        marginTop: 16,
+        marginBottom: 16,
+        marginLeft: 8,
+        marginRight: 8,
+    },
+    imageNumberContainer: {
+        position: 'absolute',
+        backgroundColor: 'rgba(0, 0, 0, 0.15)',
+        color: 'black',
+        padding: 4,
+        borderBottomLeftRadius: 10,
+        borderTopLeftRadius: 10,
+        elevation: 2,
+        height: 76,
+        width: 20,
+
+        top: 146,
+        right: 0,
     },
     info: {
         padding: 16,
@@ -166,6 +208,72 @@ export const MatchingScreen = () => {
         currentLocation,
         user.location.address
     );
+    const [
+        selectedImageNumber,
+        { inc: increaseSelectedImageNumber, dec: decreaseSelectedImageNumber },
+    ] = useCounter(0, 4, 0);
+
+    const [containerWidth, setContainerWidth] = useState(0);
+    const handleLayout = useCallback(
+        (event: { nativeEvent: { layout: { width: number } } }) => {
+            setContainerWidth(event.nativeEvent.layout.width);
+        },
+        [setContainerWidth]
+    );
+
+    // const panResponder = useMemo(
+    //     () =>
+    //         PanResponder.create({
+    //             onStartShouldSetPanResponder: (
+    //                 event: GestureResponderEvent,
+    //                 gestureState: PanResponderGestureState
+    //             ) => true,
+    //             onPanResponderRelease: (
+    //                 event: GestureResponderEvent,
+    //                 gestureState: PanResponderGestureState
+    //             ) => {
+    //                 const { locationX } = event.nativeEvent;
+    //                 alert(`locationX: ${locationX}`);
+    //                 if (locationX > containerWidth / 2) {
+    //                     alert('right side');
+    //                     increaseSelectedImageNumber();
+    //                 } else {
+    //                     alert('left side');
+    //                     decreaseSelectedImageNumber();
+    //                 }
+    //             },
+    //         }),
+    //     [
+    //         containerWidth,
+    //         increaseSelectedImageNumber,
+    //         decreaseSelectedImageNumber,
+    //     ]
+    // );
+
+    const handlePress = useCallback(
+        (event: any) => {
+            const { locationX } = event.nativeEvent;
+            alert(`event.nativeEvent: ${JSON.stringify(event.nativeEvent)}`);
+            console.log(
+                `event.nativeEvent: ${JSON.stringify(event.nativeEvent)}`
+            );
+            alert(`event.locationX: ${event.locationX}`);
+            if (locationX > containerWidth / 2) {
+                alert('right side');
+                // Clicked on the right side
+                increaseSelectedImageNumber();
+            } else {
+                alert('left side');
+                // Clicked on the left side
+                decreaseSelectedImageNumber();
+            }
+        },
+        [
+            containerWidth,
+            increaseSelectedImageNumber,
+            decreaseSelectedImageNumber,
+        ]
+    );
 
     return (
         <SafeAreaView style={styles.container}>
@@ -187,10 +295,19 @@ export const MatchingScreen = () => {
                 </View>
                 <View style={styles.cardContainer}>
                     <View style={styles.card}>
-                        <Image
-                            source={user.gallery[0]}
-                            style={styles.profileImage}
-                        />
+                        <Pressable
+                            style={styles.pressableCard}
+                            // onPress={(evt) => handlePress}
+                            onPress={(evt) =>
+                                alert(JSON.stringify(evt.nativeEvent))
+                            }
+                            onLayout={handleLayout}
+                        >
+                            <Image
+                                source={user.gallery[selectedImageNumber]}
+                                style={styles.profileImage}
+                            />
+                        </Pressable>
                         <View style={styles.distanceContainer}>
                             <View style={styles.distanceLayout}>
                                 <View style={styles.distanceIcon}>
@@ -199,6 +316,57 @@ export const MatchingScreen = () => {
                                 <Text style={styles.distanceText}>
                                     {Math.round(distance ?? 0)}km
                                 </Text>
+                            </View>
+                        </View>
+                        <View style={styles.imageNumberContainer}>
+                            <View style={styles.imageNumberLayoutContainer}>
+                                <View style={styles.imageNumberLayout}>
+                                    <View
+                                        style={[
+                                            Boolean(
+                                                selectedImageNumber !== 0
+                                            ) && styles.imageNumberNotSelected,
+                                        ]}
+                                    >
+                                        <Circle />
+                                    </View>
+                                    <View
+                                        style={[
+                                            Boolean(
+                                                selectedImageNumber !== 1
+                                            ) && styles.imageNumberNotSelected,
+                                        ]}
+                                    >
+                                        <Circle />
+                                    </View>
+                                    <View
+                                        style={[
+                                            Boolean(
+                                                selectedImageNumber !== 2
+                                            ) && styles.imageNumberNotSelected,
+                                        ]}
+                                    >
+                                        <Circle />
+                                    </View>
+                                    <View
+                                        style={[
+                                            Boolean(
+                                                selectedImageNumber !== 3
+                                            ) && styles.imageNumberNotSelected,
+                                        ]}
+                                    >
+                                        <Circle />
+                                    </View>
+                                    <View
+                                        style={[
+                                            Boolean(
+                                                selectedImageNumber !== 4
+                                            ) && styles.imageNumberNotSelected,
+                                        ]}
+                                    >
+                                        <Circle />
+                                    </View>
+                                </View>
                             </View>
                         </View>
                         <View style={styles.info}>

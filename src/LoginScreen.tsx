@@ -64,6 +64,7 @@ const styles = StyleSheet.create({
     },
     inputContainer: {
         width: '100%',
+        marginTop: 15,
         marginBottom: 15,
         height: 50,
         alignItems: 'center',

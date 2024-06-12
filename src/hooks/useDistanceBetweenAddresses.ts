@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 import * as turf from '@turf/turf';
-import { useAsync } from 'react-use';
+import { useAsync } from './useAsync';
 
 const geocodingApiKeyBase64 =
     'QUl6YVN5QzNxYmx5Ym5Uc2dZaGVxZzRjTkQ5eUt5c203djFqclVR';

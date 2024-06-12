@@ -61,7 +61,7 @@ export const useDistanceBetweenAddresses = (
                 'Failed to calculate distance. Please check the addresses and try again.'
             );
         }
-    }, [distance, setDistance, setError, location1, address2]);
+    }, [location1, address2]);
 
     return { distance, error };
 };

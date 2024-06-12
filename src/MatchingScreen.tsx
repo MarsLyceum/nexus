@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
     SafeAreaView,
     View,
@@ -6,12 +6,15 @@ import {
     Text,
     StyleSheet,
     ScrollView,
-    GestureResponderEvent,
-    Pressable,
-    PressEvent,
 } from 'react-native';
 import { Button, Icon } from 'react-native-elements';
 import { useNavigation } from '@react-navigation/native';
+import {
+    TapGestureHandler,
+    GestureHandlerRootView,
+    GestureHandlerStateChangeEvent,
+    State,
+} from 'react-native-gesture-handler';
 
 import { HeaderButton } from './HeaderButton';
 import { ArrowLeft, Setting, LocationPin, Circle } from './icons';
@@ -86,7 +89,6 @@ const styles = StyleSheet.create({
         elevation: 2,
         width: 70,
         height: 34,
-
         top: 20,
         left: 16,
     },
@@ -102,7 +104,6 @@ const styles = StyleSheet.create({
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
-        // alignItems: 'center',
         height: 44,
         width: 4,
         marginTop: 16,
@@ -120,7 +121,6 @@ const styles = StyleSheet.create({
         elevation: 2,
         height: 76,
         width: 20,
-
         top: 146,
         right: 0,
     },
@@ -203,9 +203,9 @@ export const MatchingScreen = () => {
             require('./images/jessica-profile-5.png'),
         ],
     });
-    const { location: currentLocation } = useCurrentLocation();
+    const currentLocation = useCurrentLocation();
     const { distance } = useDistanceBetweenAddresses(
-        currentLocation,
+        currentLocation.location,
         user.location.address
     );
     const [
@@ -218,54 +218,18 @@ export const MatchingScreen = () => {
         (event: { nativeEvent: { layout: { width: number } } }) => {
             setContainerWidth(event.nativeEvent.layout.width);
         },
-        [setContainerWidth]
+        []
     );
 
-    // const panResponder = useMemo(
-    //     () =>
-    //         PanResponder.create({
-    //             onStartShouldSetPanResponder: (
-    //                 event: GestureResponderEvent,
-    //                 gestureState: PanResponderGestureState
-    //             ) => true,
-    //             onPanResponderRelease: (
-    //                 event: GestureResponderEvent,
-    //                 gestureState: PanResponderGestureState
-    //             ) => {
-    //                 const { locationX } = event.nativeEvent;
-    //                 alert(`locationX: ${locationX}`);
-    //                 if (locationX > containerWidth / 2) {
-    //                     alert('right side');
-    //                     increaseSelectedImageNumber();
-    //                 } else {
-    //                     alert('left side');
-    //                     decreaseSelectedImageNumber();
-    //                 }
-    //             },
-    //         }),
-    //     [
-    //         containerWidth,
-    //         increaseSelectedImageNumber,
-    //         decreaseSelectedImageNumber,
-    //     ]
-    // );
-
     const handlePress = useCallback(
-        (event: any) => {
-            const { locationX } = event.nativeEvent;
-            alert(`event.nativeEvent: ${JSON.stringify(event.nativeEvent)}`);
-            console.log(
-                `event.nativeEvent: ${JSON.stringify(event.nativeEvent)}`
-            );
-            alert(`event.locationX: ${event.locationX}`);
-            if (locationX > containerWidth / 2) {
-                alert('right side');
-                // Clicked on the right side
-                increaseSelectedImageNumber();
-            } else {
-                alert('left side');
-                // Clicked on the left side
-                decreaseSelectedImageNumber();
+        (event: GestureHandlerStateChangeEvent) => {
+            if (event.nativeEvent.state === State.END) {
+                const { x } = event.nativeEvent;
+                if (x > containerWidth / 2) {
+                    increaseSelectedImageNumber();
+                } else {
+                    decreaseSelectedImageNumber();
+                }
             }
         },
         [
@@ -276,149 +240,117 @@ export const MatchingScreen = () => {
     );
 
     return (
-        <SafeAreaView style={styles.container}>
-            <ScrollView
-                showsHorizontalScrollIndicator={false}
-                // contentContainerStyle={styles.innerScrollContainer}
-            >
-                <View style={styles.header}>
-                    <HeaderButton onPress={() => navigation.goBack()}>
-                        <ArrowLeft />
-                    </HeaderButton>
-                    <View>
-                        <Text style={styles.headerTitle}>Discover</Text>
-                        <Text style={styles.location}>Provo, UT</Text>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+            <SafeAreaView style={styles.container}>
+                <ScrollView showsHorizontalScrollIndicator={false}>
+                    <View style={styles.header}>
+                        <HeaderButton onPress={() => navigation.goBack()}>
+                            <ArrowLeft />
+                        </HeaderButton>
+                        <View>
+                            <Text style={styles.headerTitle}>Discover</Text>
+                            <Text style={styles.location}>Provo, UT</Text>
+                        </View>
+                        <HeaderButton onPress={() => {}}>
+                            <Setting />
+                        </HeaderButton>
                     </View>
-                    <HeaderButton onPress={() => {}}>
-                        <Setting />
-                    </HeaderButton>
-                </View>
-                <View style={styles.cardContainer}>
-                    <View style={styles.card}>
-                        <Pressable
-                            style={styles.pressableCard}
-                            // onPress={(evt) => handlePress}
-                            onPress={(evt) =>
-                                alert(JSON.stringify(evt.nativeEvent))
-                            }
-                            onLayout={handleLayout}
-                        >
-                            <Image
-                                source={user.gallery[selectedImageNumber]}
-                                style={styles.profileImage}
-                            />
-                        </Pressable>
-                        <View style={styles.distanceContainer}>
-                            <View style={styles.distanceLayout}>
-                                <View style={styles.distanceIcon}>
-                                    <LocationPin />
+                    <View style={styles.cardContainer}>
+                        <View style={styles.card}>
+                            <TapGestureHandler onEnded={handlePress}>
+                                <View
+                                    style={styles.pressableCard}
+                                    onLayout={handleLayout}
+                                >
+                                    <Image
+                                        source={
+                                            user.gallery[selectedImageNumber]
+                                        }
+                                        style={styles.profileImage}
+                                    />
                                 </View>
-                                <Text style={styles.distanceText}>
-                                    {Math.round(distance ?? 0)}km
+                            </TapGestureHandler>
+                            <View style={styles.distanceContainer}>
+                                <View style={styles.distanceLayout}>
+                                    <View style={styles.distanceIcon}>
+                                        <LocationPin />
+                                    </View>
+                                    <Text style={styles.distanceText}>
+                                        {Math.round(distance ?? 0)}km
+                                    </Text>
+                                </View>
+                            </View>
+                            <View style={styles.imageNumberContainer}>
+                                <View style={styles.imageNumberLayoutContainer}>
+                                    <View style={styles.imageNumberLayout}>
+                                        {[0, 1, 2, 3, 4].map((index) => (
+                                            <View
+                                                key={index}
+                                                style={[
+                                                    selectedImageNumber !==
+                                                        index &&
+                                                        styles.imageNumberNotSelected,
+                                                ]}
+                                            >
+                                                <Circle />
+                                            </View>
+                                        ))}
+                                    </View>
+                                </View>
+                            </View>
+                            <View style={styles.info}>
+                                <Text style={styles.name}>
+                                    {user.firstName} {user.lastName}, {user.age}
+                                </Text>
+                                <Text style={styles.job}>
+                                    {user.profession}
                                 </Text>
                             </View>
                         </View>
-                        <View style={styles.imageNumberContainer}>
-                            <View style={styles.imageNumberLayoutContainer}>
-                                <View style={styles.imageNumberLayout}>
-                                    <View
-                                        style={[
-                                            Boolean(
-                                                selectedImageNumber !== 0
-                                            ) && styles.imageNumberNotSelected,
-                                        ]}
-                                    >
-                                        <Circle />
-                                    </View>
-                                    <View
-                                        style={[
-                                            Boolean(
-                                                selectedImageNumber !== 1
-                                            ) && styles.imageNumberNotSelected,
-                                        ]}
-                                    >
-                                        <Circle />
-                                    </View>
-                                    <View
-                                        style={[
-                                            Boolean(
-                                                selectedImageNumber !== 2
-                                            ) && styles.imageNumberNotSelected,
-                                        ]}
-                                    >
-                                        <Circle />
-                                    </View>
-                                    <View
-                                        style={[
-                                            Boolean(
-                                                selectedImageNumber !== 3
-                                            ) && styles.imageNumberNotSelected,
-                                        ]}
-                                    >
-                                        <Circle />
-                                    </View>
-                                    <View
-                                        style={[
-                                            Boolean(
-                                                selectedImageNumber !== 4
-                                            ) && styles.imageNumberNotSelected,
-                                        ]}
-                                    >
-                                        <Circle />
-                                    </View>
-                                </View>
-                            </View>
-                        </View>
-                        <View style={styles.info}>
-                            <Text style={styles.name}>
-                                {user.firstName} {user.lastName}, {user.age}
-                            </Text>
-                            <Text style={styles.job}>{user.profession}</Text>
+                        <View style={styles.actions}>
+                            <Button
+                                icon={
+                                    <Icon
+                                        name="thumb-down"
+                                        type="material"
+                                        color="#FF6C6C"
+                                    />
+                                }
+                                buttonStyle={styles.actionButton}
+                                onPress={() => console.log('Dislike')}
+                            />
+                            <Button
+                                icon={
+                                    <Icon
+                                        name="heart"
+                                        type="material"
+                                        color="#FFF"
+                                    />
+                                }
+                                buttonStyle={styles.mainButton}
+                                onPress={() => console.log('Main action')}
+                            />
+                            <Button
+                                icon={
+                                    <Icon
+                                        name="thumb-up"
+                                        type="material"
+                                        color="#6C6CFF"
+                                    />
+                                }
+                                buttonStyle={styles.actionButton}
+                                onPress={() => console.log('Like')}
+                            />
                         </View>
                     </View>
-                    <View style={styles.actions}>
-                        <Button
-                            icon={
-                                <Icon
-                                    name="thumb-down"
-                                    type="material"
-                                    color="#FF6C6C"
-                                />
-                            }
-                            buttonStyle={styles.actionButton}
-                            onPress={() => console.log('Dislike')}
-                        />
-                        <Button
-                            icon={
-                                <Icon
-                                    name="heart"
-                                    type="material"
-                                    color="#FFF"
-                                />
-                            }
-                            buttonStyle={styles.mainButton}
-                            onPress={() => console.log('Main action')}
-                        />
-                        <Button
-                            icon={
-                                <Icon
-                                    name="thumb-up"
-                                    type="material"
-                                    color="#6C6CFF"
-                                />
-                            }
-                            buttonStyle={styles.actionButton}
-                            onPress={() => console.log('Like')}
-                        />
+                    <View style={styles.footer}>
+                        <Icon name="home" type="material" color="#FFF" />
+                        <Icon name="group" type="material" color="#FFF" />
+                        <Icon name="chat" type="material" color="#FFF" />
+                        <Icon name="person" type="material" color="#FFF" />
                     </View>
-                </View>
-                <View style={styles.footer}>
-                    <Icon name="home" type="material" color="#FFF" />
-                    <Icon name="group" type="material" color="#FFF" />
-                    <Icon name="chat" type="material" color="#FFF" />
-                    <Icon name="person" type="material" color="#FFF" />
-                </View>
-            </ScrollView>
-        </SafeAreaView>
+                </ScrollView>
+            </SafeAreaView>
+        </GestureHandlerRootView>
     );
 };

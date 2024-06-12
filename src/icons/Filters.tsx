@@ -1,7 +1,7 @@
 import * as React from 'react';
 import Svg, { Path, Defs, LinearGradient, Stop } from 'react-native-svg';
 
-export const Setting = () => (
+export const Filters = () => (
     <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
         <Path
             fillRule="evenodd"

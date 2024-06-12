@@ -9,7 +9,6 @@ import {
     TouchableOpacity,
 } from 'react-native';
 import { Icon } from 'react-native-elements';
-import { useNavigation } from '@react-navigation/native';
 import {
     TapGestureHandler,
     GestureHandlerRootView,
@@ -18,42 +17,19 @@ import {
 } from 'react-native-gesture-handler';
 
 import { SuperLikeButton } from './SuperLikeButton';
-import { HeaderButton } from './HeaderButton';
-import {
-    ArrowLeft,
-    Setting,
-    LocationPin,
-    Circle,
-    ThumbsDown,
-    ThumbsUp,
-} from './icons';
+import { LocationPin, Circle, ThumbsDown, ThumbsUp } from './icons';
 import { MatchUserProfile } from './types';
 import {
     useDistanceBetweenAddresses,
     useCurrentLocation,
     useCounter,
 } from './hooks';
+import { Header } from './Header';
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#FFF',
-    },
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 16,
-    },
-    headerTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-    },
-    location: {
-        textAlign: 'center',
-        fontSize: 16,
-        color: '#A3A3A3',
-        marginVertical: 8,
     },
     card: {
         alignItems: 'center',
@@ -198,7 +174,6 @@ const styles = StyleSheet.create({
 });
 
 export const MatchingScreen = () => {
-    const navigation = useNavigation();
     const [user] = useState<MatchUserProfile>({
         id: 'unique-user-id',
         firstName: 'Caudia',
@@ -267,18 +242,10 @@ export const MatchingScreen = () => {
         <GestureHandlerRootView style={{ flex: 1 }}>
             <SafeAreaView style={styles.container}>
                 <ScrollView showsHorizontalScrollIndicator={false}>
-                    <View style={styles.header}>
-                        <HeaderButton onPress={() => navigation.goBack()}>
-                            <ArrowLeft />
-                        </HeaderButton>
-                        <View>
-                            <Text style={styles.headerTitle}>Discover</Text>
-                            <Text style={styles.location}>Provo, UT</Text>
-                        </View>
-                        <HeaderButton onPress={() => {}}>
-                            <Setting />
-                        </HeaderButton>
-                    </View>
+                    <Header
+                        title="Discover"
+                        subtitle={`${user.location.city}, ${user.location.state}`}
+                    />
                     <View style={styles.cardContainer}>
                         <View style={[styles.card, { cursor: 'pointer' }]}>
                             <TapGestureHandler onEnded={handlePress}>

@@ -16,8 +16,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
-        marginLeft: 50,
-        marginRight: 50,
     },
     buttonHovered: {
         backgroundColor: '#f0f0f0',

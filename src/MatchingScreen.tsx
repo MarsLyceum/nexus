@@ -11,7 +11,7 @@ import { Button, Icon } from 'react-native-elements';
 import { useNavigation } from '@react-navigation/native';
 
 import { HeaderButton } from './HeaderButton';
-import { ArrowLeft, Setting } from './icons';
+import { ArrowLeft, Setting, LocationPin } from './icons';
 import { MatchUserProfile } from './types';
 import { useDistanceBetweenAddresses, useCurrentLocation } from './hooks';
 
@@ -22,7 +22,7 @@ const styles = StyleSheet.create({
     },
     header: {
         flexDirection: 'row',
-        justifyContent: 'center', // Center content horizontally
+        justifyContent: 'center',
         alignItems: 'center',
         padding: 16,
     },
@@ -42,31 +42,65 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         margin: 16,
         elevation: 4,
+        position: 'relative',
+        width: 295,
+        height: 450,
+    },
+    cardContainer: {
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     profileImage: {
         width: 295,
         height: 450,
         borderRadius: 20,
     },
-    distance: {
+    distanceText: {
+        color: '#FFF',
+        marginLeft: 5,
+    },
+    distanceIcon: {
+        marginTop: 2.5,
+    },
+    distanceLayout: {
+        display: 'flex',
+        flexDirection: 'row',
+    },
+    distanceContainer: {
         position: 'absolute',
-        top: 16,
-        left: 16,
-        backgroundColor: '#FFF',
+        // top: 16,
+        // left: 16,
+        // backgroundColor: '#000',
+        backgroundColor: 'rgba(0, 0, 0, 0.15)',
+        color: 'black',
         padding: 4,
         borderRadius: 4,
         elevation: 2,
+        width: 70,
+        height: 34,
+
+        top: 20,
+        left: 16,
     },
     info: {
         padding: 16,
+        position: 'absolute',
+        backgroundColor: '#000000',
+        width: 295,
+        height: 83,
+        color: '#FFF',
+        bottom: 0,
+        borderBottomLeftRadius: 20,
+        borderBottomRightRadius: 20,
     },
     name: {
         fontSize: 24,
         fontWeight: 'bold',
+        color: '#FFF',
     },
     job: {
         fontSize: 16,
-        color: '#A3A3A3',
+        color: '#FFF',
     },
     actions: {
         flexDirection: 'row',
@@ -151,49 +185,64 @@ export const MatchingScreen = () => {
                         <Setting />
                     </HeaderButton>
                 </View>
-                <View style={styles.card}>
-                    <Image
-                        source={user.gallery[0]}
-                        style={styles.profileImage}
-                    />
-                    <Text style={styles.distance}>{distance}</Text>
-                    <View style={styles.info}>
-                        <Text style={styles.name}>
-                            {user.firstName} {user.lastName}, {user.age}
-                        </Text>
-                        <Text style={styles.job}>{user.profession}</Text>
+                <View style={styles.cardContainer}>
+                    <View style={styles.card}>
+                        <Image
+                            source={user.gallery[0]}
+                            style={styles.profileImage}
+                        />
+                        <View style={styles.distanceContainer}>
+                            <View style={styles.distanceLayout}>
+                                <View style={styles.distanceIcon}>
+                                    <LocationPin />
+                                </View>
+                                <Text style={styles.distanceText}>
+                                    {Math.round(distance ?? 0)}km
+                                </Text>
+                            </View>
+                        </View>
+                        <View style={styles.info}>
+                            <Text style={styles.name}>
+                                {user.firstName} {user.lastName}, {user.age}
+                            </Text>
+                            <Text style={styles.job}>{user.profession}</Text>
+                        </View>
                     </View>
-                </View>
-                <View style={styles.actions}>
-                    <Button
-                        icon={
-                            <Icon
-                                name="thumb-down"
-                                type="material"
-                                color="#FF6C6C"
-                            />
-                        }
-                        buttonStyle={styles.actionButton}
-                        onPress={() => console.log('Dislike')}
-                    />
-                    <Button
-                        icon={
-                            <Icon name="heart" type="material" color="#FFF" />
-                        }
-                        buttonStyle={styles.mainButton}
-                        onPress={() => console.log('Main action')}
-                    />
-                    <Button
-                        icon={
-                            <Icon
-                                name="thumb-up"
-                                type="material"
-                                color="#6C6CFF"
-                            />
-                        }
-                        buttonStyle={styles.actionButton}
-                        onPress={() => console.log('Like')}
-                    />
+                    <View style={styles.actions}>
+                        <Button
+                            icon={
+                                <Icon
+                                    name="thumb-down"
+                                    type="material"
+                                    color="#FF6C6C"
+                                />
+                            }
+                            buttonStyle={styles.actionButton}
+                            onPress={() => console.log('Dislike')}
+                        />
+                        <Button
+                            icon={
+                                <Icon
+                                    name="heart"
+                                    type="material"
+                                    color="#FFF"
+                                />
+                            }
+                            buttonStyle={styles.mainButton}
+                            onPress={() => console.log('Main action')}
+                        />
+                        <Button
+                            icon={
+                                <Icon
+                                    name="thumb-up"
+                                    type="material"
+                                    color="#6C6CFF"
+                                />
+                            }
+                            buttonStyle={styles.actionButton}
+                            onPress={() => console.log('Like')}
+                        />
+                    </View>
                 </View>
                 <View style={styles.footer}>
                     <Icon name="home" type="material" color="#FFF" />

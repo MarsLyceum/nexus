@@ -5,3 +5,4 @@ export * from './Phone';
 export * from './User';
 export * from './ArrowLeft';
 export * from './Setting';
+export * from './LocationPin';

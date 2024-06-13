@@ -35,6 +35,7 @@ export function DislikeLikeButton({ children }: { children?: ReactNode }) {
             onPointerLeave={() => {
                 setIsHovered(false);
             }}
+            android_ripple={{ color: '#f0f0f0', borderless: false }}
         >
             {children}
         </Pressable>

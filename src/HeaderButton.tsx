@@ -48,6 +48,7 @@ export const HeaderButton = ({
             onPointerLeave={() => {
                 setIsHovered(false);
             }}
+            android_ripple={{ color: '#f0f0f0', borderless: true }}
         >
             {children}
         </Pressable>

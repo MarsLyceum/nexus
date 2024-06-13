@@ -50,6 +50,7 @@ export function SuperLikeButton() {
             onPointerLeave={() => {
                 setIsHovered(false);
             }}
+            android_ripple={{ color: '#f0f0f0', borderless: true }}
         >
             <LinearGradient
                 colors={['#A3109E', '#FF3A0F']}

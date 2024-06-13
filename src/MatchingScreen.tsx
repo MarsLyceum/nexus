@@ -36,7 +36,7 @@ const styles = StyleSheet.create({
     card: {
         alignItems: 'center',
         backgroundColor: '#FFF',
-        borderRadius: 8,
+        borderRadius: 20,
         margin: 16,
         elevation: 4,
         position: 'relative',
@@ -46,10 +46,13 @@ const styles = StyleSheet.create({
     pressableCard: {
         width: 295,
         height: 450,
+        borderColor: 'transparent',
     },
     cardContainer: {
         justifyContent: 'center',
         alignItems: 'center',
+        borderRadius: 8,
+        borderColor: 'transparent',
     },
     profileImage: {
         width: 295,

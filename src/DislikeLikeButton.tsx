@@ -1,5 +1,7 @@
-import React, { ReactNode, useState } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import React, { ReactNode } from 'react';
+import { StyleSheet } from 'react-native';
+
+import { PeepsButton } from './PeepsButton';
 
 const styles = StyleSheet.create({
     likeDislikeCircle: {
@@ -20,24 +22,18 @@ const styles = StyleSheet.create({
     },
 });
 
-export function DislikeLikeButton({ children }: { children?: ReactNode }) {
-    const [isHovered, setIsHovered] = useState(false);
+export type DislikeLikeButtonProps = {
+    children?: ReactNode;
+    onPress: () => void;
+};
 
+export function DislikeLikeButton({
+    children,
+    onPress,
+}: Readonly<DislikeLikeButtonProps>) {
     return (
-        <Pressable
-            style={[
-                styles.likeDislikeCircle,
-                isHovered && styles.buttonHovered,
-            ]}
-            onPointerEnter={() => {
-                setIsHovered(true);
-            }}
-            onPointerLeave={() => {
-                setIsHovered(false);
-            }}
-            android_ripple={{ color: '#f0f0f0', borderless: false }}
-        >
+        <PeepsButton onPress={onPress} style={styles.likeDislikeCircle}>
             {children}
-        </Pressable>
+        </PeepsButton>
     );
 }

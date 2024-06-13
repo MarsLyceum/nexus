@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, Pressable } from 'react-native';
+import React, { useState, useRef, useCallback } from 'react';
+import { View, StyleSheet, Pressable, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { PeepsBirdSimplified } from './icons';
@@ -40,33 +40,58 @@ const styles = StyleSheet.create({
 
 export function SuperLikeButton() {
     const [isHovered, setIsHovered] = useState(false);
+    const scale = useRef(new Animated.Value(1)).current;
+
+    const handlePressIn = useCallback(() => {
+        Animated.spring(scale, {
+            toValue: 0.7,
+            useNativeDriver: true,
+        }).start();
+    }, [scale]);
+
+    const handlePressOut = useCallback(() => {
+        Animated.spring(scale, {
+            toValue: 1,
+            useNativeDriver: true,
+        }).start();
+    }, [scale]);
 
     return (
-        <Pressable
-            style={styles.container}
-            onPointerEnter={() => {
-                setIsHovered(true);
-            }}
-            onPointerLeave={() => {
-                setIsHovered(false);
-            }}
-            android_ripple={{ color: '#f0f0f0', borderless: true }}
+        <Animated.View
+            style={[
+                styles.container,
+                { transform: [{ scale }] },
+                isHovered && styles.buttonHovered,
+            ]}
         >
-            <LinearGradient
-                colors={['#A3109E', '#FF3A0F']}
-                start={{ x: 0.54, y: 0.38 }}
-                end={{ x: 0.97, y: 0.97 }}
-                style={styles.outerCircle}
+            <Pressable
+                style={styles.container}
+                onPointerEnter={() => {
+                    setIsHovered(true);
+                }}
+                onPointerLeave={() => {
+                    setIsHovered(false);
+                }}
+                android_ripple={{ color: '#f0f0f0', borderless: true }}
+                onPressIn={handlePressIn}
+                onPressOut={handlePressOut}
             >
-                <View
-                    style={[
-                        styles.innerCircle,
-                        isHovered && styles.buttonHovered,
-                    ]}
+                <LinearGradient
+                    colors={['#A3109E', '#FF3A0F']}
+                    start={{ x: 0.54, y: 0.38 }}
+                    end={{ x: 0.97, y: 0.97 }}
+                    style={styles.outerCircle}
                 >
-                    <PeepsBirdSimplified />
-                </View>
-            </LinearGradient>
-        </Pressable>
+                    <View
+                        style={[
+                            styles.innerCircle,
+                            isHovered && styles.buttonHovered,
+                        ]}
+                    >
+                        <PeepsBirdSimplified />
+                    </View>
+                </LinearGradient>
+            </Pressable>
+        </Animated.View>
     );
 }

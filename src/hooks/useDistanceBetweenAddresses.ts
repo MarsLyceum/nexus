@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import axios from 'axios';
 import * as turf from '@turf/turf';
+
 import { useAsync } from './useAsync';
+import { GEOCODING_ENABLED } from '../CONSTANTS';
 
 const geocodingApiKeyBase64 =
     'QUl6YVN5QzNxYmx5Ym5Uc2dZaGVxZzRjTkQ5eUt5c203djFqclVR';
@@ -24,15 +26,18 @@ interface GeocodingResponse {
 }
 
 const getCoordinates = async (address: string): Promise<Coordinates> => {
-    const response = await axios.get<GeocodingResponse>(geocodingApiUrl, {
-        params: {
-            address,
-            key: atob(geocodingApiKeyBase64),
-        },
-    });
+    if (GEOCODING_ENABLED) {
+        const response = await axios.get<GeocodingResponse>(geocodingApiUrl, {
+            params: {
+                address,
+                key: atob(geocodingApiKeyBase64),
+            },
+        });
 
-    const { lat, lng } = response.data.results[0].geometry.location;
-    return { latitude: lat, longitude: lng };
+        const { lat, lng } = response.data.results[0].geometry.location;
+        return { latitude: lat, longitude: lng };
+    }
+    return { latitude: 35.825_39, longitude: -86.069_092 };
 };
 
 export const useDistanceBetweenAddresses = (

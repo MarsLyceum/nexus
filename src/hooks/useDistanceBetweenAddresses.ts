@@ -3,7 +3,7 @@ import axios from 'axios';
 import * as turf from '@turf/turf';
 
 import { useAsync } from './useAsync';
-import { GEOCODING_ENABLED } from '../CONSTANTS';
+import { BILLABLE_GEOCODING_ENABLED } from '../CONSTANTS';
 
 const geocodingApiKeyBase64 =
     'QUl6YVN5QzNxYmx5Ym5Uc2dZaGVxZzRjTkQ5eUt5c203djFqclVR';
@@ -12,6 +12,11 @@ const geocodingApiUrl = 'https://maps.googleapis.com/maps/api/geocode/json';
 interface Coordinates {
     latitude: number;
     longitude: number;
+}
+
+interface NominatimResponse {
+    lat: string;
+    lon: string;
 }
 
 interface GeocodingResponse {
@@ -26,7 +31,7 @@ interface GeocodingResponse {
 }
 
 const getCoordinates = async (address: string): Promise<Coordinates> => {
-    if (GEOCODING_ENABLED) {
+    if (BILLABLE_GEOCODING_ENABLED) {
         const response = await axios.get<GeocodingResponse>(geocodingApiUrl, {
             params: {
                 address,
@@ -37,7 +42,27 @@ const getCoordinates = async (address: string): Promise<Coordinates> => {
         const { lat, lng } = response.data.results[0].geometry.location;
         return { latitude: lat, longitude: lng };
     }
-    return { latitude: 35.825_39, longitude: -86.069_092 };
+
+    // Use Nominatim for geocoding
+    const response = await axios.get<NominatimResponse[]>(
+        'https://nominatim.openstreetmap.org/search',
+        {
+            params: {
+                q: address,
+                format: 'json',
+            },
+        }
+    );
+
+    if (response.data && response.data.length > 0) {
+        const { lat, lon } = response.data[0];
+        return {
+            latitude: Number.parseFloat(lat),
+            longitude: Number.parseFloat(lon),
+        };
+    }
+
+    throw new Error('Unable to geocode address using Nominatim');
 };
 
 export const useDistanceBetweenAddresses = (

@@ -8,4 +8,4 @@ function getPlatformTopPadding() {
 }
 
 export const PLATFORM_TOP_PADDING = getPlatformTopPadding();
-export const GEOCODING_ENABLED = false;
+export const BILLABLE_GEOCODING_ENABLED = false;

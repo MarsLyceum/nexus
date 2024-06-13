@@ -6,6 +6,7 @@ import {
     Text,
     StyleSheet,
     ScrollView,
+    Platform,
 } from 'react-native';
 import { Icon } from 'react-native-elements';
 import {
@@ -30,6 +31,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#FFF',
+        paddingTop: Platform.OS === 'android' ? 30 : 0,
     },
     card: {
         alignItems: 'center',
@@ -71,6 +73,7 @@ const styles = StyleSheet.create({
         color: 'black',
         padding: 4,
         borderRadius: 4,
+        borderColor: 'none',
         elevation: 2,
         width: 70,
         height: 34,
@@ -225,9 +228,9 @@ export const MatchingScreen = () => {
     );
 
     return (
-        <GestureHandlerRootView style={{ flex: 1 }}>
-            <SafeAreaView style={styles.container}>
-                <ScrollView showsHorizontalScrollIndicator={false}>
+        <SafeAreaView style={styles.container}>
+            <ScrollView showsHorizontalScrollIndicator={false}>
+                <GestureHandlerRootView style={{ flex: 1 }}>
                     <Header
                         title="Discover"
                         subtitle={`${user.location.city}, ${user.location.state}`}
@@ -300,8 +303,8 @@ export const MatchingScreen = () => {
                         <Icon name="chat" type="material" color="#FFF" />
                         <Icon name="person" type="material" color="#FFF" />
                     </View>
-                </ScrollView>
-            </SafeAreaView>
-        </GestureHandlerRootView>
+                </GestureHandlerRootView>
+            </ScrollView>
+        </SafeAreaView>
     );
 };

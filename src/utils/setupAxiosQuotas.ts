@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const requestQuota = 100;
+const requestQuota = 10;
 let requestCount = 0;
 
 /** This will prevent spamming GCP with requests which will help keep our

@@ -1,5 +1,7 @@
-import React, { ReactNode, useState } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import React, { ReactNode } from 'react';
+import { StyleSheet } from 'react-native';
+
+import { PeepsButton } from './PeepsButton';
 
 const styles = StyleSheet.create({
     button: {
@@ -19,9 +21,6 @@ const styles = StyleSheet.create({
         marginRight: 5,
         marginLeft: 5,
     },
-    buttonHovered: {
-        backgroundColor: '#f0f0f0',
-    },
     image: {
         width: 80,
         height: 80,
@@ -29,28 +28,13 @@ const styles = StyleSheet.create({
     },
 });
 
-export const HeaderButton = ({
-    onPress,
-    children,
-}: {
+interface HeaderButtonProps {
     onPress: () => void;
     children: ReactNode;
-}) => {
-    const [isHovered, setIsHovered] = useState(false);
+}
 
-    return (
-        <Pressable
-            style={[styles.button, isHovered && styles.buttonHovered]}
-            onPress={onPress}
-            onPointerEnter={() => {
-                setIsHovered(true);
-            }}
-            onPointerLeave={() => {
-                setIsHovered(false);
-            }}
-            android_ripple={{ color: '#f0f0f0', borderless: true }}
-        >
-            {children}
-        </Pressable>
-    );
-};
+export const HeaderButton = ({ onPress, children }: HeaderButtonProps) => (
+    <PeepsButton onPress={onPress} style={styles.button}>
+        {children}
+    </PeepsButton>
+);

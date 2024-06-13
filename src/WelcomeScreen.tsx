@@ -1,6 +1,6 @@
 import { SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
 import React, { useEffect } from 'react';
-import { NavigationProp } from '@react-navigation/core';
+import { NavigationProp, useFocusEffect } from '@react-navigation/core';
 import styled from 'styled-components/native';
 
 import { RootState, useAppSelector, useAppDispatch, loadUser } from './redux';
@@ -56,12 +56,12 @@ export function WelcomeScreen({
         dispatch(loadUser());
     }, [dispatch]);
 
-    useEffect(() => {
+    useFocusEffect(() => {
         if (user) {
             // If user is loaded, navigate to the matching screen
             navigation.navigate('Matching');
         }
-    }, [user, navigation]);
+    });
 
     return (
         <SafeAreaView style={styles.outerContainer}>

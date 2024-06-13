@@ -18,8 +18,11 @@ import {
 } from '@expo-google-fonts/lato';
 import * as SplashScreen from 'expo-splash-screen';
 
+import { setupAxiosQuotas } from './utils/setupAxiosQuotas';
 import { store } from './redux';
 import { LoginScreen, SignUpScreen, MatchingScreen, WelcomeScreen } from '.';
+
+setupAxiosQuotas();
 
 if (__DEV__) {
     // Adds messages only in a dev environment

@@ -6,7 +6,6 @@ import {
     Text,
     StyleSheet,
     ScrollView,
-    Platform,
 } from 'react-native';
 import { Icon } from 'react-native-elements';
 import {
@@ -16,6 +15,7 @@ import {
     State,
 } from 'react-native-gesture-handler';
 
+import { PLATFORM_TOP_PADDING } from './CONSTANTS';
 import { DislikeLikeButton } from './DislikeLikeButton';
 import { SuperLikeButton } from './SuperLikeButton';
 import { LocationPin, Circle, ThumbsDown, ThumbsUp } from './icons';
@@ -31,7 +31,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#FFF',
-        paddingTop: Platform.OS === 'android' ? 30 : 0,
+        paddingTop: PLATFORM_TOP_PADDING,
     },
     card: {
         alignItems: 'center',
@@ -49,6 +49,7 @@ const styles = StyleSheet.create({
         borderColor: 'transparent',
     },
     cardContainer: {
+        flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
         borderRadius: 8,
@@ -157,6 +158,9 @@ const styles = StyleSheet.create({
         height: 80,
         alignItems: 'center',
         justifyContent: 'center',
+    },
+    footerContainer: {
+        justifyContent: 'flex-end',
     },
     footer: {
         flexDirection: 'row',
@@ -292,23 +296,25 @@ export const MatchingScreen = () => {
                             </View>
                         </View>
                         <View style={styles.actions}>
-                            <DislikeLikeButton>
+                            <DislikeLikeButton onPress={() => {}}>
                                 <ThumbsDown />
                             </DislikeLikeButton>
                             <SuperLikeButton />
-                            <DislikeLikeButton>
+                            <DislikeLikeButton onPress={() => {}}>
                                 <ThumbsUp />
                             </DislikeLikeButton>
                         </View>
                     </View>
-                    <View style={styles.footer}>
-                        <Icon name="home" type="material" color="#FFF" />
-                        <Icon name="group" type="material" color="#FFF" />
-                        <Icon name="chat" type="material" color="#FFF" />
-                        <Icon name="person" type="material" color="#FFF" />
-                    </View>
                 </GestureHandlerRootView>
             </ScrollView>
+            <View style={styles.footerContainer}>
+                <View style={styles.footer}>
+                    <Icon name="home" type="material" color="#FFF" />
+                    <Icon name="group" type="material" color="#FFF" />
+                    <Icon name="chat" type="material" color="#FFF" />
+                    <Icon name="person" type="material" color="#FFF" />
+                </View>
+            </View>
         </SafeAreaView>
     );
 };

@@ -57,13 +57,7 @@ export function SuperLikeButton() {
     }, [scale]);
 
     return (
-        <Animated.View
-            style={[
-                styles.container,
-                { transform: [{ scale }] },
-                isHovered && styles.buttonHovered,
-            ]}
-        >
+        <Animated.View style={[styles.container, { transform: [{ scale }] }]}>
             <Pressable
                 style={styles.container}
                 onPointerEnter={() => {

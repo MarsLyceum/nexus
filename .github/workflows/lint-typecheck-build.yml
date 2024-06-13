@@ -69,5 +69,5 @@ jobs:
             - name: Install dependencies
               run: pnpm install
 
-            - name: Run type check
+            - name: Run build
               run: pnpm export:web

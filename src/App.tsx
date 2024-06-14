@@ -15,7 +15,7 @@ import {
 import { Provider as ReduxProvider } from 'react-redux';
 import { onError, ErrorResponse } from '@apollo/client/link/error';
 import { loadErrorMessages, loadDevMessages } from '@apollo/client/dev';
-import { createClient, ClientOptions } from 'graphql-ws';
+import { createClient } from 'graphql-ws';
 import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { getMainDefinition } from '@apollo/client/utilities';
 import {
@@ -62,7 +62,8 @@ const quotaLink = new ApolloLink((operation, forward) => {
 const graphqlApiGatewayBaseEndpoint =
     'hephaestus-api-iwesf7iypq-uw.a.run.app/graphql';
 const graphqlApiGatewayEndpointHttp = `https://${graphqlApiGatewayBaseEndpoint}`;
-const graphqlApiGatewayEndpointWs = `wss://${graphqlApiGatewayBaseEndpoint}`; // Use wss:// for secure WebSocket connection
+// const graphqlApiGatewayEndpointWs = `ws://${graphqlApiGatewayBaseEndpoint}`; // Use wss:// for secure WebSocket connection
+const graphqlApiGatewayEndpointWs = 'ws://localhost:4000/graphql';
 
 const httpLink = from([
     errorLink,
@@ -73,10 +74,10 @@ const httpLink = from([
 
 const wsClient = createClient({
     url: graphqlApiGatewayEndpointWs,
-    options: {
+    connectionParams: {
         reconnect: true,
     },
-} as ClientOptions);
+});
 
 const wsLink = new GraphQLWsLink(wsClient);
 

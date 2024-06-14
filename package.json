@@ -14,7 +14,7 @@
         "typecheck": "tsc --noEmit"
     },
     "dependencies": {
-        "@apollo/client": "^3.9.9",
+        "@apollo/client": "^3.10.5",
         "@expo/metro-config": "^0.18.7",
         "@expo/metro-runtime": "^3.2.1",
         "@react-native-async-storage/async-storage": "^1.23.1",
@@ -53,6 +53,7 @@
         "expo-status-bar": "^1.12.1",
         "formik": "^2.4.5",
         "graphql": "^15.8.0",
+        "graphql-ws": "^5.16.0",
         "metro": "^0.80.9",
         "prettier": "3.2.5",
         "react": "18.2.0",

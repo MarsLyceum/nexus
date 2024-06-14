@@ -9,10 +9,15 @@ import {
     HttpLink,
     ApolloLink,
     Observable,
+    split,
+    gql,
 } from '@apollo/client';
 import { Provider as ReduxProvider } from 'react-redux';
 import { onError, ErrorResponse } from '@apollo/client/link/error';
 import { loadErrorMessages, loadDevMessages } from '@apollo/client/dev';
+import { createClient, ClientOptions } from 'graphql-ws';
+import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
+import { getMainDefinition } from '@apollo/client/utilities';
 import {
     useFonts,
     Lato_400Regular,
@@ -54,17 +59,62 @@ const quotaLink = new ApolloLink((operation, forward) => {
     });
 });
 
+const graphqlApiGatewayBaseEndpoint =
+    'hephaestus-api-iwesf7iypq-uw.a.run.app/graphql';
+const graphqlApiGatewayEndpointHttp = `https://${graphqlApiGatewayBaseEndpoint}`;
+const graphqlApiGatewayEndpointWs = `wss://${graphqlApiGatewayBaseEndpoint}`; // Use wss:// for secure WebSocket connection
+
 const httpLink = from([
     errorLink,
     new HttpLink({
-        uri: `https://hephaestus-api-iwesf7iypq-uw.a.run.app/graphql`,
+        uri: graphqlApiGatewayEndpointHttp,
     }),
 ]);
 
+const wsClient = createClient({
+    url: graphqlApiGatewayEndpointWs,
+    options: {
+        reconnect: true,
+    },
+} as ClientOptions);
+
+const wsLink = new GraphQLWsLink(wsClient);
+
+const splitLink = split(
+    ({ query }) => {
+        const definition = getMainDefinition(query);
+        return (
+            definition.kind === 'OperationDefinition' &&
+            definition.operation === 'subscription'
+        );
+    },
+    wsLink,
+    from([quotaLink, httpLink])
+);
+
 const client = new ApolloClient({
-    link: ApolloLink.from([quotaLink, httpLink]),
+    link: splitLink,
     cache: new InMemoryCache(),
 });
+
+const GREETINGS_SUBSCRIPTION = gql`
+    subscription OnGreeting {
+        greetings
+    }
+`;
+
+client
+    .subscribe({
+        query: GREETINGS_SUBSCRIPTION,
+    })
+    .subscribe({
+        next({ data }) {
+            console.log('Greeting:', data.greetings);
+        },
+        error(err) {
+            console.error('Subscription error:', err);
+        },
+    });
 
 // we need to have App be a default export for React Native to work
 // eslint-disable-next-line import/no-default-export

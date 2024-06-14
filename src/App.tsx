@@ -59,11 +59,11 @@ const quotaLink = new ApolloLink((operation, forward) => {
     });
 });
 
-const graphqlApiGatewayBaseEndpoint =
-    'hephaestus-api-iwesf7iypq-uw.a.run.app/graphql';
-const graphqlApiGatewayEndpointHttp = `https://${graphqlApiGatewayBaseEndpoint}`;
-// const graphqlApiGatewayEndpointWs = `ws://${graphqlApiGatewayBaseEndpoint}`; // Use wss:// for secure WebSocket connection
-const graphqlApiGatewayEndpointWs = 'ws://localhost:4000/graphql';
+const graphqlApiGatewayEndpointHttp =
+    'https://hephaestus-api-iwesf7iypq-uw.a.run.app/graphql';
+const graphqlApiGatewayEndpointWs =
+    'ws://hephaestus-api-iwesf7iypq-uw.a.run.app/graphql';
+const localGraphqlApiGatewayEndpointWs = 'ws://localhost:4000/graphql';
 
 const httpLink = from([
     errorLink,
@@ -76,6 +76,17 @@ const wsClient = createClient({
     url: graphqlApiGatewayEndpointWs,
     connectionParams: {
         reconnect: true,
+    },
+    connectionAckWaitTimeout: 20_000,
+    retryAttempts: 5,
+    retryWait: (count) => {
+        Math.min(1000 * 2 ** count, 30_000);
+        return new Promise(() => {});
+    },
+    on: {
+        connected: () => console.log('WebSocket connected'),
+        error: (err) => console.error('WebSocket error:', err),
+        closed: () => console.log('WebSocket closed'),
     },
 });
 

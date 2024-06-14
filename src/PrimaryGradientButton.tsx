@@ -1,7 +1,7 @@
 import React from 'react';
 import {
-    TouchableOpacityProps,
-    TouchableOpacity,
+    PressableProps,
+    Pressable,
     StyleSheet,
     ViewStyle,
     Platform,
@@ -16,7 +16,7 @@ const ButtonText = styled.Text`
     font-weight: bold;
 `;
 
-interface PrimaryGradientButtonProps extends TouchableOpacityProps {
+interface PrimaryGradientButtonProps extends PressableProps {
     title: string;
     style?: ViewStyle | ViewStyle[];
 }
@@ -58,7 +58,7 @@ export const PrimaryGradientButton: React.FC<PrimaryGradientButtonProps> = ({
     style,
 }) => (
     <View style={[styles.shadowContainer, style]}>
-        <TouchableOpacity onPress={onPress}>
+        <Pressable onPress={onPress}>
             <LinearGradient
                 style={styles.gradient}
                 colors={['#A3109E', '#FF3A0F']}
@@ -67,6 +67,6 @@ export const PrimaryGradientButton: React.FC<PrimaryGradientButtonProps> = ({
             >
                 <ButtonText>{title}</ButtonText>
             </LinearGradient>
-        </TouchableOpacity>
+        </Pressable>
     </View>
 );

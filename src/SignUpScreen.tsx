@@ -4,7 +4,7 @@ import {
     TextInput,
     SafeAreaView,
     ScrollView,
-    TouchableOpacity,
+    Pressable,
     StyleSheet,
     GestureResponderEvent,
 } from 'react-native';
@@ -331,16 +331,16 @@ export function SignUpScreen({
                             </View>
 
                             <View style={styles.socialContainer}>
-                                <TouchableOpacity style={styles.socialButton}>
+                                <Pressable style={styles.socialButton}>
                                     <FontAwesome
                                         name="facebook"
                                         size={24}
                                         color="#4267B2"
                                     />
-                                </TouchableOpacity>
-                                <TouchableOpacity style={styles.socialButton}>
+                                </Pressable>
+                                <Pressable style={styles.socialButton}>
                                     <GoogleLogo />
-                                </TouchableOpacity>
+                                </Pressable>
                             </View>
 
                             <PrimaryGradientButton
@@ -355,11 +355,11 @@ export function SignUpScreen({
 
                             <Text style={styles.loginText}>
                                 Already a member?{' '}
-                                <TouchableOpacity
+                                <Pressable
                                     onPress={() => navigation.navigate('Login')}
                                 >
                                     <Text style={styles.loginLink}>Log In</Text>
-                                </TouchableOpacity>
+                                </Pressable>
                             </Text>
                         </View>
                     )}

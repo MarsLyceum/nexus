@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components/native';
-import { ViewStyle, TouchableOpacity, View, StyleSheet } from 'react-native';
+import { ViewStyle, Pressable, View, StyleSheet } from 'react-native';
 
 const LinkText = styled.Text`
     color: #a63fa3;
@@ -20,11 +20,11 @@ const styles = StyleSheet.create({
 
 export const Footer = ({ style }: { style?: ViewStyle | ViewStyle[] }) => (
     <View style={[styles.container, style]}>
-        <TouchableOpacity onPress={() => {}}>
+        <Pressable onPress={() => {}}>
             <LinkText>Terms of Service</LinkText>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => {}}>
+        </Pressable>
+        <Pressable onPress={() => {}}>
             <LinkText>Privacy Policy</LinkText>
-        </TouchableOpacity>
+        </Pressable>
     </View>
 );

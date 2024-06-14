@@ -4,7 +4,7 @@ import {
     TextInput,
     SafeAreaView,
     ScrollView,
-    TouchableOpacity,
+    Pressable,
     StyleSheet,
 } from 'react-native';
 import React, { useCallback } from 'react';
@@ -247,13 +247,13 @@ export function LoginScreen({
                             </Text>
 
                             <Text style={styles.forgotPasswordText}>
-                                <TouchableOpacity
+                                <Pressable
                                     onPress={() => navigation.navigate('Login')}
                                 >
                                     <Text style={styles.forgotPasswordLink}>
                                         Forgot password?
                                     </Text>
-                                </TouchableOpacity>
+                                </Pressable>
                             </Text>
 
                             <View style={styles.orContainer}>
@@ -265,16 +265,16 @@ export function LoginScreen({
                             </View>
 
                             <View style={styles.socialContainer}>
-                                <TouchableOpacity style={styles.socialButton}>
+                                <Pressable style={styles.socialButton}>
                                     <FontAwesome
                                         name="facebook"
                                         size={24}
                                         color="#4267B2"
                                     />
-                                </TouchableOpacity>
-                                <TouchableOpacity style={styles.socialButton}>
+                                </Pressable>
+                                <Pressable style={styles.socialButton}>
                                     <GoogleLogo />
-                                </TouchableOpacity>
+                                </Pressable>
                             </View>
 
                             <PrimaryGradientButton

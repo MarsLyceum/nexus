@@ -62,7 +62,7 @@ const quotaLink = new ApolloLink((operation, forward) => {
 const graphqlApiGatewayEndpointHttp =
     'https://hephaestus-api-iwesf7iypq-uw.a.run.app/graphql';
 const graphqlApiGatewayEndpointWs =
-    'ws://hephaestus-api-iwesf7iypq-uw.a.run.app/graphql';
+    'wss://hephaestus-api-iwesf7iypq-uw.a.run.app/graphql';
 const localGraphqlApiGatewayEndpointWs = 'ws://localhost:4000/graphql';
 
 const httpLink = from([

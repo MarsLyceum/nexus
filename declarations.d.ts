@@ -17,3 +17,9 @@ declare module '*.svg' {
     // eslint-disable-next-line import/no-default-export
     export default content;
 }
+
+declare namespace JSX {
+    interface ElementChildrenAttribute {
+        children: unknown  // specify children name to use
+    }
+}

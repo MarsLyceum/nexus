@@ -15,8 +15,6 @@ import {
 import { Provider as ReduxProvider } from 'react-redux';
 import { onError, ErrorResponse } from '@apollo/client/link/error';
 import { loadErrorMessages, loadDevMessages } from '@apollo/client/dev';
-import { createClient } from 'graphql-ws';
-import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { getMainDefinition } from '@apollo/client/utilities';
 import {
     useFonts,
@@ -61,9 +59,10 @@ const quotaLink = new ApolloLink((operation, forward) => {
 
 const graphqlApiGatewayEndpointHttp =
     'https://hephaestus-api-iwesf7iypq-uw.a.run.app/graphql';
-const graphqlApiGatewayEndpointWs =
-    'wss://hephaestus-api-iwesf7iypq-uw.a.run.app/graphql';
-const localGraphqlApiGatewayEndpointWs = 'ws://localhost:4000/graphql';
+const graphqlApiGatewayEndpointSse =
+    'https://hephaestus-api-iwesf7iypq-uw.a.run.app/graphql/stream';
+const localGraphqlApiGatewayEndpointSse =
+    'http://localhost:4000/graphql/stream';
 
 const httpLink = from([
     errorLink,
@@ -72,25 +71,37 @@ const httpLink = from([
     }),
 ]);
 
-const wsClient = createClient({
-    url: graphqlApiGatewayEndpointWs,
-    connectionParams: {
-        reconnect: true,
-    },
-    connectionAckWaitTimeout: 20_000,
-    retryAttempts: 5,
-    retryWait: (count) => {
-        Math.min(1000 * 2 ** count, 30_000);
-        return new Promise(() => {});
-    },
-    on: {
-        connected: () => console.log('WebSocket connected'),
-        error: (err) => console.error('WebSocket error:', err),
-        closed: () => console.log('WebSocket closed'),
-    },
-});
+const sseLink = new ApolloLink((operation) => {
+    return new Observable((observer) => {
+        const eventSource = new EventSource(localGraphqlApiGatewayEndpointSse, {
+            withCredentials: false,
+        });
 
-const wsLink = new GraphQLWsLink(wsClient);
+        eventSource.onmessage = (event) => {
+            try {
+                const parsedData = JSON.parse(event.data);
+                if (parsedData.errors) {
+                    observer.error(parsedData.errors);
+                } else {
+                    observer.next({
+                        data: { greetings: parsedData.greetings },
+                    });
+                }
+            } catch (err) {
+                observer.error(err);
+            }
+        };
+
+        eventSource.onerror = (error) => {
+            observer.error(error);
+            eventSource.close();
+        };
+
+        return () => {
+            eventSource.close();
+        };
+    });
+});
 
 const splitLink = split(
     ({ query }) => {
@@ -100,7 +111,7 @@ const splitLink = split(
             definition.operation === 'subscription'
         );
     },
-    wsLink,
+    sseLink,
     from([quotaLink, httpLink])
 );
 
@@ -178,4 +189,6 @@ export default function App() {
             </ApolloProvider>
         );
     }
+
+    return null;
 }

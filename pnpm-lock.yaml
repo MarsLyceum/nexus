@@ -140,6 +140,9 @@ importers:
       graphql-request:
         specifier: ^7.0.1
         version: 7.0.1(graphql@15.8.0)
+      graphql-sse:
+        specifier: ^2.5.3
+        version: 2.5.3(graphql@15.8.0)
       graphql-ws:
         specifier: ^5.16.0
         version: 5.16.0(graphql@15.8.0)
@@ -4020,6 +4023,12 @@ packages:
     hasBin: true
     peerDependencies:
       graphql: 14 - 16
+
+  graphql-sse@2.5.3:
+    resolution: {integrity: sha512-5IcFW3e7fPOG7oFkK1v3X1wWtCJArQKB/H1UJeNotjy7a/9EYA5K+EiHJF1BiDSVNx7y64bd0FlDETrNBSvIHQ==}
+    engines: {node: '>=12'}
+    peerDependencies:
+      graphql: '>=0.11 <=16'
 
   graphql-tag@2.12.6:
     resolution: {integrity: sha512-FdSNcu2QQcWnM2VNvSCCDCVS5PpPqpzgFT8+GXzqJuoDd0CBncxCY278u4mhRO7tMgo2JjgJA5aZ+nWSQ/Z+xg==}
@@ -12892,6 +12901,10 @@ snapshots:
       dprint: 0.45.1
       graphql: 15.8.0
       zod: 3.23.8
+
+  graphql-sse@2.5.3(graphql@15.8.0):
+    dependencies:
+      graphql: 15.8.0
 
   graphql-tag@2.12.6(graphql@15.8.0):
     dependencies:

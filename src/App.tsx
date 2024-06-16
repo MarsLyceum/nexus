@@ -73,7 +73,7 @@ const httpLink = from([
 
 const sseLink = new ApolloLink((operation) => {
     return new Observable((observer) => {
-        const eventSource = new EventSource(localGraphqlApiGatewayEndpointSse, {
+        const eventSource = new EventSource(graphqlApiGatewayEndpointSse, {
             withCredentials: false,
         });
 

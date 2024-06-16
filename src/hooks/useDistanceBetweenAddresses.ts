@@ -31,18 +31,6 @@ interface GeocodingResponse {
 }
 
 const getCoordinates = async (address: string): Promise<Coordinates> => {
-    if (BILLABLE_GEOCODING_ENABLED) {
-        const response = await axios.get<GeocodingResponse>(geocodingApiUrl, {
-            params: {
-                address,
-                key: atob(geocodingApiKeyBase64),
-            },
-        });
-
-        const { lat, lng } = response.data.results[0].geometry.location;
-        return { latitude: lat, longitude: lng };
-    }
-
     // Use Nominatim for geocoding
     const response = await axios.get<NominatimResponse[]>(
         'https://nominatim.openstreetmap.org/search',

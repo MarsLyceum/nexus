@@ -3,11 +3,6 @@ import axios from 'axios';
 import * as turf from '@turf/turf';
 
 import { useAsync } from './useAsync';
-import { BILLABLE_GEOCODING_ENABLED } from '../CONSTANTS';
-
-const geocodingApiKeyBase64 =
-    'QUl6YVN5QzNxYmx5Ym5Uc2dZaGVxZzRjTkQ5eUt5c203djFqclVR';
-const geocodingApiUrl = 'https://maps.googleapis.com/maps/api/geocode/json';
 
 interface Coordinates {
     latitude: number;
@@ -17,17 +12,6 @@ interface Coordinates {
 interface NominatimResponse {
     lat: string;
     lon: string;
-}
-
-interface GeocodingResponse {
-    results: {
-        geometry: {
-            location: {
-                lat: number;
-                lng: number;
-            };
-        };
-    }[];
 }
 
 const getCoordinates = async (address: string): Promise<Coordinates> => {

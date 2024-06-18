@@ -14,9 +14,11 @@ import { NavigationProp } from '@react-navigation/core';
 import { Formik, FormikErrors } from 'formik';
 import { isEmail } from 'validator';
 import Auth0 from 'react-native-auth0';
+import { useApolloClient } from '@apollo/client';
 
 import { User } from './types';
 import { loginUser, useAppDispatch } from './redux';
+import { FETCH_USER_QUERY } from './queries';
 import {
     validatePassword,
     AUTH0_DOMAIN,
@@ -34,11 +36,7 @@ const auth0 = new Auth0({
 });
 
 type DecodedToken = JwtPayload & {
-    sub: string;
     email: string;
-    'https://www.peepscommunity.com/first_name': string;
-    'https://www.peepscommunity.com/last_name': string;
-    'https://www.peepscommunity.com/phone_number': string;
 };
 
 type FormValues = { email: string; password: string };
@@ -178,6 +176,7 @@ export function LoginScreen({
     navigation: NavigationProp<Record<string, unknown>>;
 }>) {
     const dispatch = useAppDispatch();
+    const apolloClient = useApolloClient();
 
     const updateUserData = useCallback(
         (user: User) => {
@@ -214,18 +213,23 @@ export function LoginScreen({
             // Decode the ID token to get user information
             const decodedToken = jwtDecode<DecodedToken>(credentials.idToken);
 
-            const user: User = {
-                id: Number.parseInt(decodedToken.sub, 10), // Assuming sub is a string and needs parsing
+            const auth0Data = {
                 email: decodedToken.email,
-                firstName:
-                    decodedToken['https://www.peepscommunity.com/first_name'],
-                lastName:
-                    decodedToken['https://www.peepscommunity.com/last_name'],
-                phoneNumber:
-                    decodedToken['https://www.peepscommunity.com/phone_number'],
                 token: credentials.idToken,
             };
 
+            const result = await apolloClient.query({
+                query: FETCH_USER_QUERY,
+                variables: {
+                    email,
+                },
+            });
+
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            const user: User = {
+                ...result.data,
+                token: auth0Data.token,
+            };
             updateUserData(user);
 
             navigation.navigate('Matching');

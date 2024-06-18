@@ -9,15 +9,17 @@ import {
     GestureResponderEvent,
 } from 'react-native';
 import { NavigationProp } from '@react-navigation/core';
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback } from 'react';
 import Auth0 from 'react-native-auth0';
 import { JwtPayload, jwtDecode } from 'jwt-decode';
 import { Formik } from 'formik';
 import { isEmail } from 'validator';
 import { FontAwesome } from '@expo/vector-icons';
+import { useApolloClient } from '@apollo/client';
+
+import { REGISTER_USER_MUTATION } from './queries';
 import { SignUpIllustration, HorizontalLine } from './images';
 import { GoogleLogo, User as UserIcon, Email, Phone, Lock } from './icons';
-
 import { User } from './types';
 import { loginUser, useAppDispatch } from './redux';
 
@@ -35,11 +37,7 @@ const auth0 = new Auth0({
 });
 
 type DecodedToken = JwtPayload & {
-    sub: string;
     email: string;
-    'https://www.peepscommunity.com/first_name': string;
-    'https://www.peepscommunity.com/last_name': string;
-    'https://www.peepscommunity.com/phone_number': string;
 };
 
 type FormValues = {
@@ -210,7 +208,8 @@ export function SignUpScreen({
         [dispatch]
     );
 
-    useEffect(() => {}, []);
+    const apolloClient = useApolloClient();
+
     const validateEmailPassword = useCallback((values: FormValues) => {
         const errors: FormValues = initialFormValues;
 
@@ -233,11 +232,7 @@ export function SignUpScreen({
                 email: values.email,
                 password: values.password,
                 connection: 'Username-Password-Authentication',
-                user_metadata: {
-                    first_name: values.firstName,
-                    last_name: values.lastName,
-                    phoneNumber: values.phoneNumber,
-                },
+                user_metadata: {},
             });
 
             // Log the user in
@@ -252,16 +247,25 @@ export function SignUpScreen({
             // Decode the ID token to get user information
             const decodedToken = jwtDecode<DecodedToken>(credentials.idToken);
 
-            const user: User = {
-                id: Number.parseInt(decodedToken.sub, 10), // Assuming sub is a string and needs parsing
+            const auth0Data = {
                 email: decodedToken.email,
-                firstName:
-                    decodedToken['https://www.peepscommunity.com/first_name'],
-                lastName:
-                    decodedToken['https://www.peepscommunity.com/last_name'],
-                phoneNumber:
-                    decodedToken['https://www.peepscommunity.com/phone_number'],
                 token: credentials.idToken,
+            };
+
+            const result = await apolloClient.mutate({
+                mutation: REGISTER_USER_MUTATION,
+                variables: {
+                    email: values.email,
+                    firstName: values.firstName,
+                    lastName: values.lastName,
+                    phoneNumber: values.phoneNumber,
+                },
+            });
+
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            const user: User = {
+                ...result.data,
+                token: auth0Data.token,
             };
 
             updateUserData(user);

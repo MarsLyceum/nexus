@@ -7,10 +7,15 @@ import {
     ApolloProvider,
     from,
     HttpLink,
+    ApolloLink,
+    Observable,
+    split,
+    gql,
 } from '@apollo/client';
 import { Provider as ReduxProvider } from 'react-redux';
 import { onError, ErrorResponse } from '@apollo/client/link/error';
 import { loadErrorMessages, loadDevMessages } from '@apollo/client/dev';
+import { getMainDefinition } from '@apollo/client/utilities';
 import {
     useFonts,
     Lato_400Regular,
@@ -18,14 +23,11 @@ import {
 } from '@expo-google-fonts/lato';
 import * as SplashScreen from 'expo-splash-screen';
 
-import { store } from './src/redux';
-import {
-    LoginScreen,
-    SignUpScreen,
-    MatchingScreen,
-    WelcomeScreen,
-} from './src';
-import { SetupScreen } from './src/SetupScreen';
+import { setupAxiosQuotas } from './utils/setupAxiosQuotas';
+import { store } from './redux';
+import { LoginScreen, SignUpScreen, MatchingScreen, WelcomeScreen } from '.';
+
+setupAxiosQuotas();
 
 if (__DEV__) {
     // Adds messages only in a dev environment
@@ -41,17 +43,101 @@ const errorLink = onError((error: ErrorResponse) => {
     }
 });
 
-const link = from([
+const requestQuota = 10;
+let requestCount = 0;
+
+const quotaLink = new ApolloLink((operation, forward) => {
+    if (requestCount < requestQuota) {
+        requestCount += 1;
+        return forward(operation);
+    }
+    console.error('Request quota exceeded');
+    return new Observable((observer) => {
+        observer.error(new Error('Request quota exceeded'));
+    });
+});
+
+const graphqlApiGatewayEndpointHttp =
+    'https://hephaestus-api-iwesf7iypq-uw.a.run.app/graphql';
+const graphqlApiGatewayEndpointSse =
+    'https://hephaestus-api-iwesf7iypq-uw.a.run.app/graphql/stream';
+const localGraphqlApiGatewayEndpointSse =
+    'http://localhost:4000/graphql/stream';
+
+const httpLink = from([
     errorLink,
     new HttpLink({
-        uri: `https://hephaestus-api-iwesf7iypq-uw.a.run.app/graphql`,
+        uri: graphqlApiGatewayEndpointHttp,
     }),
 ]);
 
+const sseLink = new ApolloLink((operation) => {
+    return new Observable((observer) => {
+        const eventSource = new EventSource(graphqlApiGatewayEndpointSse, {
+            withCredentials: false,
+        });
+
+        eventSource.onmessage = (event) => {
+            try {
+                const parsedData = JSON.parse(event.data);
+                if (parsedData.errors) {
+                    observer.error(parsedData.errors);
+                } else {
+                    observer.next({
+                        data: { greetings: parsedData.greetings },
+                    });
+                }
+            } catch (err) {
+                observer.error(err);
+            }
+        };
+
+        eventSource.onerror = (error) => {
+            observer.error(error);
+            eventSource.close();
+        };
+
+        return () => {
+            eventSource.close();
+        };
+    });
+});
+
+const splitLink = split(
+    ({ query }) => {
+        const definition = getMainDefinition(query);
+        return (
+            definition.kind === 'OperationDefinition' &&
+            definition.operation === 'subscription'
+        );
+    },
+    sseLink,
+    from([quotaLink, httpLink])
+);
+
 const client = new ApolloClient({
-    link,
+    link: splitLink,
     cache: new InMemoryCache(),
 });
+
+const GREETINGS_SUBSCRIPTION = gql`
+    subscription OnGreeting {
+        greetings
+    }
+`;
+
+client
+    .subscribe({
+        query: GREETINGS_SUBSCRIPTION,
+    })
+    .subscribe({
+        next({ data }) {
+            console.log('Greeting:', data.greetings);
+        },
+        error(err) {
+            console.error('Subscription error:', err);
+        },
+    });
 
 // we need to have App be a default export for React Native to work
 // eslint-disable-next-line import/no-default-export
@@ -93,11 +179,6 @@ export default function App() {
                                 options={{ headerShown: false }}
                             />
                             <Stack.Screen
-                                name="Setup"
-                                component={SetupScreen}
-                                options={{ headerShown: false }}
-                            />
-                            <Stack.Screen
                                 name="Matching"
                                 component={MatchingScreen}
                                 options={{ headerShown: false }}
@@ -108,4 +189,6 @@ export default function App() {
             </ApolloProvider>
         );
     }
+
+    return null;
 }

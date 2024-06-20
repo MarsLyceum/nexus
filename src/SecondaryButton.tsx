@@ -1,7 +1,7 @@
 import React from 'react';
 import {
-    TouchableOpacityProps,
-    TouchableOpacity,
+    PressableProps,
+    Pressable,
     StyleSheet,
     ViewStyle,
     Platform,
@@ -15,7 +15,7 @@ const ButtonText = styled.Text`
     font-weight: bold;
 `;
 
-interface SecondaryButtonProps extends TouchableOpacityProps {
+interface SecondaryButtonProps extends PressableProps {
     title: string;
     style?: ViewStyle;
 }
@@ -58,8 +58,8 @@ export const SecondaryButton: React.FC<SecondaryButtonProps> = ({
     style,
 }) => (
     <View style={[styles.shadowContainer, style]}>
-        <TouchableOpacity style={styles.container} onPress={onPress}>
+        <Pressable style={styles.container} onPress={onPress}>
             <ButtonText>{title}</ButtonText>
-        </TouchableOpacity>
+        </Pressable>
     </View>
 );

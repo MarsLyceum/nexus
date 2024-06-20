@@ -4,8 +4,9 @@ import {
     TextInput,
     SafeAreaView,
     ScrollView,
-    TouchableOpacity,
+    Pressable,
     StyleSheet,
+    GestureResponderEvent,
 } from 'react-native';
 import { NavigationProp } from '@react-navigation/core';
 import React, { useCallback, useEffect } from 'react';
@@ -244,12 +245,6 @@ export function SignUpScreen({
                         handleSubmit,
                         values,
                         errors,
-                    }: {
-                        errors: Partial<FormValues>;
-                        values: FormValues;
-                        handleChange: any;
-                        handleBlur: any;
-                        handleSubmit: any;
                     }) => (
                         <View style={styles.container}>
                             <SignUpIllustration />
@@ -336,31 +331,35 @@ export function SignUpScreen({
                             </View>
 
                             <View style={styles.socialContainer}>
-                                <TouchableOpacity style={styles.socialButton}>
+                                <Pressable style={styles.socialButton}>
                                     <FontAwesome
                                         name="facebook"
                                         size={24}
                                         color="#4267B2"
                                     />
-                                </TouchableOpacity>
-                                <TouchableOpacity style={styles.socialButton}>
+                                </Pressable>
+                                <Pressable style={styles.socialButton}>
                                     <GoogleLogo />
-                                </TouchableOpacity>
+                                </Pressable>
                             </View>
 
                             <PrimaryGradientButton
                                 style={styles.topButton}
                                 title="Create an account"
-                                onPress={handleSubmit}
+                                onPress={
+                                    handleSubmit as unknown as (
+                                        event: GestureResponderEvent
+                                    ) => void
+                                }
                             />
 
                             <Text style={styles.loginText}>
                                 Already a member?{' '}
-                                <TouchableOpacity
+                                <Pressable
                                     onPress={() => navigation.navigate('Login')}
                                 >
                                     <Text style={styles.loginLink}>Log In</Text>
-                                </TouchableOpacity>
+                                </Pressable>
                             </Text>
                         </View>
                     )}

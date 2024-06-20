@@ -4,13 +4,13 @@ import {
     TextInput,
     SafeAreaView,
     ScrollView,
-    TouchableOpacity,
+    Pressable,
     StyleSheet,
 } from 'react-native';
 import React, { useCallback } from 'react';
 import { FontAwesome } from '@expo/vector-icons';
 import { NavigationProp } from '@react-navigation/core';
-import { Formik } from 'formik';
+import { Formik, FormikErrors } from 'formik';
 import { isEmail } from 'validator';
 import { useApolloClient } from '@apollo/client';
 
@@ -24,7 +24,7 @@ import { LoginIllustration, HorizontalLine } from './images';
 import { PrimaryGradientButton } from './PrimaryGradientButton';
 
 type FormValues = { email: string; password: string };
-const initialFormValues = { email: '', password: '' };
+const initialFormValues: FormValues = { email: '', password: '' };
 
 const styles = StyleSheet.create({
     topButton: {
@@ -64,24 +64,12 @@ const styles = StyleSheet.create({
     },
     inputContainer: {
         width: '100%',
+        marginTop: 15,
         marginBottom: 15,
         height: 50,
         alignItems: 'center',
     },
     input: {
-        // height: 50,
-        // width: 285,
-        // paddingHorizontal: 20,
-        // fontSize: 16,
-        // backgroundColor: '#f9f9f9',
-
-        // flex: 1,
-        // backgroundColor: '#f9f9f9',
-
-        // old stuff, new stuff
-
-        // borderWidth: 1,
-        // borderRadius: 25,
         borderColor: '#ddd',
         height: 45,
         flex: 1,
@@ -182,21 +170,23 @@ export function LoginScreen({
 
     const apolloClient = useApolloClient();
     const validateEmailPassword = useCallback((values: FormValues) => {
-        const errors: FormValues = initialFormValues;
+        const errors: FormikErrors<FormValues> = {};
 
-        errors.email = !isEmail(values.email)
-            ? `${values.email} is not a valid email.`
-            : '';
+        if (!isEmail(values.email)) {
+            errors.email = `${values.email} is not a valid email.`;
+        }
 
-        errors.password = validatePassword(values.password);
+        const passwordError = validatePassword(values.password);
+        if (passwordError) {
+            errors.password = passwordError;
+        }
 
-        const noErrors = Object.values(errors).every((value) => value === '');
-        return noErrors ? {} : errors;
+        return errors;
     }, []);
 
     return (
         <SafeAreaView style={styles.outerContainer}>
-            <ScrollView style={styles.innerScrollContainer}>
+            <ScrollView contentContainerStyle={styles.innerScrollContainer}>
                 <Formik
                     initialValues={initialFormValues}
                     onSubmit={async (values): Promise<void> => {
@@ -220,19 +210,10 @@ export function LoginScreen({
                         handleSubmit,
                         values,
                         errors,
-                    }: {
-                        errors: Partial<FormValues>;
-                        values: FormValues;
-                        handleChange: unknown;
-                        handleBlur: unknown;
-                        handleSubmit: unknown;
                     }) => (
                         <View style={styles.container}>
                             <LoginIllustration />
-                            <Text style={styles.title}>Get Started</Text>
-                            <Text style={styles.subtitle}>
-                                by creating a free account.
-                            </Text>
+                            <Text style={styles.title}>Log in</Text>
 
                             <View style={styles.inputContainer}>
                                 <View style={styles.inputWrapper}>
@@ -255,6 +236,7 @@ export function LoginScreen({
                                         placeholder="Password"
                                         style={styles.input}
                                         secureTextEntry
+                                        value={values.password}
                                         onBlur={handleBlur('password')}
                                         onChangeText={handleChange('password')}
                                     />
@@ -265,13 +247,13 @@ export function LoginScreen({
                             </Text>
 
                             <Text style={styles.forgotPasswordText}>
-                                <TouchableOpacity
+                                <Pressable
                                     onPress={() => navigation.navigate('Login')}
                                 >
                                     <Text style={styles.forgotPasswordLink}>
                                         Forgot password?
                                     </Text>
-                                </TouchableOpacity>
+                                </Pressable>
                             </Text>
 
                             <View style={styles.orContainer}>
@@ -283,22 +265,22 @@ export function LoginScreen({
                             </View>
 
                             <View style={styles.socialContainer}>
-                                <TouchableOpacity style={styles.socialButton}>
+                                <Pressable style={styles.socialButton}>
                                     <FontAwesome
                                         name="facebook"
                                         size={24}
                                         color="#4267B2"
                                     />
-                                </TouchableOpacity>
-                                <TouchableOpacity style={styles.socialButton}>
+                                </Pressable>
+                                <Pressable style={styles.socialButton}>
                                     <GoogleLogo />
-                                </TouchableOpacity>
+                                </Pressable>
                             </View>
 
                             <PrimaryGradientButton
                                 style={styles.topButton}
                                 title="Login"
-                                onPress={handleSubmit}
+                                onPress={handleSubmit as unknown as () => void}
                             />
                         </View>
                     )}

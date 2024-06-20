@@ -1,3 +1,5 @@
+import { ImageSourcePropType } from 'react-native';
+
 export type MatchUserProfile = {
     id: string;
     firstName: string;
@@ -13,5 +15,5 @@ export type MatchUserProfile = {
     about: string;
     interests: string[];
     /** array of image URLs */
-    gallery: string[];
+    gallery: ImageSourcePropType[];
 };

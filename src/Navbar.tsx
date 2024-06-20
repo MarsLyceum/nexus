@@ -1,184 +1,117 @@
-import React from 'react';
-import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, Animated, Easing, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
-function HomeScreen() {
-    return null; // Replace with your component
-}
-
-function PeepsScreen() {
-    return null; // Replace with your component
-}
-
-function GroupsScreen() {
-    return null; // Replace with your component
-}
-
-function MessagesScreen() {
-    return null; // Replace with your component
-}
-
-function AccountScreen() {
-    return null; // Replace with your component
-}
+import { HomeScreen } from './HomeScreen';
+import { MatchingScreen } from './MatchingScreen';
+import { GroupsScreen } from './GroupsScreen';
+import { MessagesScreen } from './MessagesScreen';
+import { FriendsScreen } from './FriendsScreen';
 
 const Tab = createBottomTabNavigator();
 
-function CustomTabBar({ state, descriptors, navigation }) {
-    return (
-        <LinearGradient colors={['#ff0084', '#33001b']} style={styles.tabBar}>
-            {state.routes.map((route, index) => {
-                const { options } = descriptors[route.key];
-                const label =
-                    options.tabBarLabel !== undefined
-                        ? options.tabBarLabel
-                        : options.title !== undefined
-                            ? options.title
-                            : route.name;
-
-                const isFocused = state.index === index;
-
-                const onPress = () => {
-                    const event = navigation.emit({
-                        type: 'tabPress',
-                        target: route.key,
-                    });
-
-                    if (!isFocused && !event.defaultPrevented) {
-                        navigation.navigate(route.name);
-                    }
-                };
-
-                const onLongPress = () => {
-                    navigation.emit({
-                        type: 'tabLongPress',
-                        target: route.key,
-                    });
-                };
-
-                return (
-                    <AnimatedTabItem
-                        key={route.key}
-                        iconName={getIconName(route.name, isFocused)}
-                        label={label}
-                        isFocused={isFocused}
-                        onPress={onPress}
-                        onLongPress={onLongPress}
-                    />
-                );
-            })}
-        </LinearGradient>
-    );
-}
-
-function AnimatedTabItem({ iconName, label, isFocused, onPress, onLongPress }) {
-    const animationValue = new Animated.Value(0);
-
-    React.useEffect(() => {
-        Animated.timing(animationValue, {
-            toValue: isFocused ? 1 : 0,
-            duration: 400,
-            easing: Easing.inOut(Easing.ease),
-            useNativeDriver: true,
-        }).start();
-    }, [isFocused]);
-
-    const translateY = animationValue.interpolate({
-        inputRange: [0, 1],
-        outputRange: [0, -30],
-    });
+export function Navbar() {
+    const [activeTab, setActiveTab] = useState('Home');
+    const [messageCount, setMessageCount] = useState(5); // Example message count
 
     return (
-        <View style={styles.tabItemContainer}>
-            <Animated.View style={[styles.tabItem, { transform: [{ translateY }] }]}>
-                {isFocused && (
-                    <>
-                        <View style={[styles.circle, styles.outerCircle]} />
-                        <LinearGradient
-                            colors={['#ff0084', '#33001b']}
-                            style={[styles.circle, styles.innerCircle]}
-                        />
-                    </>
-                )}
-                <Icon name={iconName} size={24} color={isFocused ? 'white' : 'gray'} onPress={onPress} onLongPress={onLongPress} style={styles.icon} />
-            </Animated.View>
+        <View style={styles.container}>
+            <LinearGradient colors={['#ff0084', '#33001b']} style={styles.gradient}>
+                <Tab.Navigator
+                    screenOptions={({ route }) => ({
+                        tabBarButton: (props) => (
+                            <TouchableOpacity
+                                key={route.name}
+                                style={styles.tabButton}
+                                onPress={() => {
+                                    setActiveTab(route.name);
+                                    props.onPress();
+                                }}
+                                onLongPress={props.onLongPress}
+                            >
+                                <Icon
+                                    name={getIconName(route.name)}
+                                    size={24}
+                                    color={activeTab === route.name ? 'white' : 'gray'}
+                                />
+                                {route.name === 'Messages' && (
+                                    <View style={styles.messageCounter}>
+                                        <Text style={styles.messageCountText}>{messageCount}</Text>
+                                    </View>
+                                )}
+                                <Text style={{ color: activeTab === route.name ? 'white' : 'gray' }}>
+                                    {route.name}
+                                </Text>
+                            </TouchableOpacity>
+                        ),
+                    })}
+                    tabBarOptions={{
+                        showLabel: false,
+                        style: styles.tabBar,
+                    }}
+                >
+                    <Tab.Screen name="Home" component={HomeScreen} />
+                    <Tab.Screen name="Matching" component={MatchingScreen} />
+                    <Tab.Screen name="Groups" component={GroupsScreen} />
+                    <Tab.Screen name="Messages" component={MessagesScreen} />
+                    <Tab.Screen name="Friends" component={FriendsScreen} />
+                </Tab.Navigator>
+            </LinearGradient>
         </View>
     );
 }
 
-function getIconName(routeName, isFocused) {
+function getIconName(routeName: string) {
     switch (routeName) {
         case 'Home':
             return 'home';
-        case 'Peeps':
-            return 'account-group';
+        case 'Matching':
+            return 'account-heart';
         case 'Groups':
             return 'account-multiple';
         case 'Messages':
             return 'message';
-        case 'Account':
-            return 'account';
+        case 'Friends':
+            return 'account-group';
         default:
-            return '';
+            return 'circle';
     }
 }
 
 const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+    },
+    gradient: {
+        flex: 1,
+        justifyContent: 'flex-end',
+    },
     tabBar: {
-        flexDirection: 'row',
         height: 70,
+        flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-around',
-        borderTopLeftRadius: 100,
-        borderTopRightRadius: 100,
-        borderBottomLeftRadius: 100,
-        borderBottomRightRadius: 100,
+        backgroundColor: 'transparent', // Ensure gradient shows through
     },
-    tabItemContainer: {
-        flex: 1,
+    tabButton: {
         alignItems: 'center',
         justifyContent: 'center',
     },
-    tabItem: {
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    circle: {
-        justifyContent: 'center',
-        alignItems: 'center',
+    messageCounter: {
         position: 'absolute',
+        top: -10,
+        right: -10,
+        backgroundColor: 'red',
+        borderRadius: 10,
+        width: 20,
+        height: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
-    outerCircle: {
-        backgroundColor: 'white',
-        width: 64,
-        height: 64,
-        borderRadius: 32,
-        zIndex: 1,
-    },
-    innerCircle: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-        zIndex: 2,
-    },
-    icon: {
-        zIndex: 3,
+    messageCountText: {
+        color: 'white',
+        fontSize: 12,
     },
 });
-
-export function Navbar() {
-    return (
-        <NavigationContainer independent={true}>
-            <Tab.Navigator tabBar={(props) => <CustomTabBar {...props} />}>
-                <Tab.Screen name="Home" component={HomeScreen} />
-                <Tab.Screen name="Peeps" component={PeepsScreen} />
-                <Tab.Screen name="Groups" component={GroupsScreen} />
-                <Tab.Screen name="Messages" component={MessagesScreen} />
-                <Tab.Screen name="Account" component={AccountScreen} />
-            </Tab.Navigator>
-        </NavigationContainer>
-    );
-}

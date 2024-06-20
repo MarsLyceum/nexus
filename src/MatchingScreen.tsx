@@ -26,6 +26,7 @@ import {
     useCounter,
 } from './hooks';
 import { Header } from './Header';
+import { Navbar } from './Navbar';
 
 const styles = StyleSheet.create({
     container: {
@@ -307,14 +308,7 @@ export const MatchingScreen = () => {
                     </View>
                 </GestureHandlerRootView>
             </ScrollView>
-            <View style={styles.footerContainer}>
-                <View style={styles.footer}>
-                    <Icon name="home" type="material" color="#FFF" />
-                    <Icon name="group" type="material" color="#FFF" />
-                    <Icon name="chat" type="material" color="#FFF" />
-                    <Icon name="person" type="material" color="#FFF" />
-                </View>
-            </View>
+            <Navbar />
         </SafeAreaView>
     );
 };

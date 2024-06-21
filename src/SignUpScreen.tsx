@@ -273,7 +273,13 @@ export function SignUpScreen({
             navigation.navigate('Matching');
         } catch (error) {
             console.error(error);
-            alert('Signup failed: ' + error.message);
+            if (error instanceof Error) {
+                // eslint-disable-next-line no-alert
+                alert(`Signup failed: ${error.message}`);
+            } else {
+                // eslint-disable-next-line no-alert
+                alert('Signup failed: An unknown error occurred');
+            }
         }
     };
 

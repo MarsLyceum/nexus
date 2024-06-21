@@ -13,6 +13,7 @@ const config = {
             stream: require.resolve('stream-browserify'),
             crypto: require.resolve('crypto-browserify'),
             url: require.resolve('url'),
+            events: require.resolve('events'),
         },
     },
     transformer: {

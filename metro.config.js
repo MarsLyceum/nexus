@@ -14,6 +14,7 @@ const config = {
             crypto: require.resolve('crypto-browserify'),
             url: require.resolve('url'),
             events: require.resolve('events'),
+            assert: require.resolve('assert'),
         },
     },
     transformer: {

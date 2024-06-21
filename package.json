@@ -33,6 +33,7 @@
         "@typescript-eslint/eslint-plugin": "^7.4.0",
         "@typescript-eslint/parser": "^7.4.0",
         "apollo-client": "^2.6.10",
+        "assert": "^2.1.0",
         "axios": "^1.7.2",
         "bcrypt": "^5.1.1",
         "crypto-browserify": "^3.12.0",

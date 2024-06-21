@@ -6,7 +6,13 @@ const config = {
         unstable_enableSymlinks: true,
         unstable_enablePackageExports: true,
         extraNodeModules: {
-            http: require.resolve('react-native-http'), // or any other shim you prefer
+            http: require.resolve('react-native-http'),
+            https: require.resolve('react-native-https'),
+            zlib: require.resolve('pako'),
+            util: require.resolve('util'),
+            stream: require.resolve('stream-browserify'),
+            crypto: require.resolve('crypto-browserify'),
+            url: require.resolve('url'),
         },
     },
     transformer: {

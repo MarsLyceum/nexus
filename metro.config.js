@@ -5,6 +5,9 @@ const config = {
     resolver: {
         unstable_enableSymlinks: true,
         unstable_enablePackageExports: true,
+        extraNodeModules: {
+            http: require.resolve('react-native-http'), // or any other shim you prefer
+        },
     },
     transformer: {
         getTransformOptions: async () => ({

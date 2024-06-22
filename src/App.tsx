@@ -58,11 +58,12 @@ const quotaLink = new ApolloLink((operation, forward) => {
 });
 
 const graphqlApiGatewayEndpointHttp =
-    'https://hephaestus-api-iwesf7iypq-uw.a.run.app/graphql';
+    'https://peeps-web-service-iwesf7iypq-uw.a.run.app/graphql';
+// const localGraphqlApiGatewayEndpointHttp = 'http://localhost:4000/graphql';
 const graphqlApiGatewayEndpointSse =
-    'https://hephaestus-api-iwesf7iypq-uw.a.run.app/graphql/stream';
-const localGraphqlApiGatewayEndpointSse =
-    'http://localhost:4000/graphql/stream';
+    'https://peeps-web-service-iwesf7iypq-uw.a.run.app/graphql/stream';
+// const localGraphqlApiGatewayEndpointSse =
+//     'http://localhost:4000/graphql/stream';
 
 const httpLink = from([
     errorLink,
@@ -71,37 +72,44 @@ const httpLink = from([
     }),
 ]);
 
-const sseLink = new ApolloLink((operation) => {
-    return new Observable((observer) => {
-        const eventSource = new EventSource(graphqlApiGatewayEndpointSse, {
-            withCredentials: false,
-        });
+const sseLink = new ApolloLink(
+    () =>
+        new Observable((observer) => {
+            const eventSource = new EventSource(graphqlApiGatewayEndpointSse, {
+                withCredentials: false,
+            });
 
-        eventSource.onmessage = (event) => {
-            try {
-                const parsedData = JSON.parse(event.data);
-                if (parsedData.errors) {
-                    observer.error(parsedData.errors);
-                } else {
-                    observer.next({
-                        data: { greetings: parsedData.greetings },
-                    });
+            // eslint-disable-next-line unicorn/prefer-add-event-listener
+            eventSource.onmessage = (event) => {
+                try {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument
+                    const parsedData = JSON.parse(event.data);
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                    if (parsedData.errors) {
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                        observer.error(parsedData.errors);
+                    } else {
+                        observer.next({
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                            data: { greetings: parsedData.greetings },
+                        });
+                    }
+                } catch (error) {
+                    observer.error(error);
                 }
-            } catch (err) {
-                observer.error(err);
-            }
-        };
+            };
 
-        eventSource.onerror = (error) => {
-            observer.error(error);
-            eventSource.close();
-        };
+            // eslint-disable-next-line unicorn/prefer-add-event-listener
+            eventSource.onerror = (error) => {
+                observer.error(error);
+                eventSource.close();
+            };
 
-        return () => {
-            eventSource.close();
-        };
-    });
-});
+            return () => {
+                eventSource.close();
+            };
+        })
+);
 
 const splitLink = split(
     ({ query }) => {
@@ -132,6 +140,7 @@ client
     })
     .subscribe({
         next({ data }) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
             console.log('Greeting:', data.greetings);
         },
         error(err) {
@@ -189,6 +198,4 @@ export default function App() {
             </ApolloProvider>
         );
     }
-
-    return null;
 }

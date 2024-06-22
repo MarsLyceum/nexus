@@ -2,6 +2,7 @@ import React from 'react';
 import styled from 'styled-components/native';
 import { ViewStyle, Pressable, View, StyleSheet } from 'react-native';
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
 const LinkText = styled.Text`
     color: #a63fa3;
     font-size: 14px;

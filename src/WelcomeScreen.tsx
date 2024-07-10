@@ -9,6 +9,7 @@ import { PrimaryGradientButton } from './PrimaryGradientButton';
 import { SecondaryButton } from './SecondaryButton';
 import { Footer } from './Footer';
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
 const Tagline = styled.Text`
     font-family: Lato_700Bold;
     font-size: 24px;

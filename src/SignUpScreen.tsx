@@ -9,34 +9,50 @@ import {
     GestureResponderEvent,
 } from 'react-native';
 import { NavigationProp } from '@react-navigation/core';
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback } from 'react';
+import Auth0 from 'react-native-auth0';
+import { JwtPayload, jwtDecode } from 'jwt-decode';
 import { Formik } from 'formik';
 import { isEmail } from 'validator';
-import { useApolloClient } from '@apollo/client';
 import { FontAwesome } from '@expo/vector-icons';
+import { useApolloClient } from '@apollo/client';
+
+import { REGISTER_USER_MUTATION } from './queries';
 import { SignUpIllustration, HorizontalLine } from './images';
 import { GoogleLogo, User as UserIcon, Email, Phone, Lock } from './icons';
-
 import { User } from './types';
 import { loginUser, useAppDispatch } from './redux';
 
-import { REGISTER_USER_MUTATION } from './queries';
-import { validatePassword } from './utils';
+import {
+    validatePassword,
+    AUTH0_DOMAIN,
+    AUTH0_CLIENT_ID,
+    AUTH0_AUDIENCE,
+} from './utils';
 import { PrimaryGradientButton } from './PrimaryGradientButton';
+
+const auth0 = new Auth0({
+    domain: AUTH0_DOMAIN ?? '',
+    clientId: AUTH0_CLIENT_ID ?? '',
+});
+
+type DecodedToken = JwtPayload & {
+    email: string;
+};
 
 type FormValues = {
     email: string;
     password: string;
     firstName: string;
     lastName: string;
-    age: string;
+    phoneNumber: string;
 };
 const initialFormValues = {
     email: '',
     password: '',
     firstName: '',
     lastName: '',
-    age: '18',
+    phoneNumber: '',
 };
 
 const styles = StyleSheet.create({
@@ -192,8 +208,8 @@ export function SignUpScreen({
         [dispatch]
     );
 
-    useEffect(() => {}, []);
     const apolloClient = useApolloClient();
+
     const validateEmailPassword = useCallback((values: FormValues) => {
         const errors: FormValues = initialFormValues;
 
@@ -206,35 +222,73 @@ export function SignUpScreen({
         errors.lastName =
             values.lastName.length > 0 ? '' : 'Please provide your last name';
 
-        const ageInt = Number.parseInt(values.age, 10);
-        errors.age =
-            ageInt > 18 || ageInt === 18
-                ? ''
-                : 'You must be at least 18 to use the app';
-
         const noErrors = Object.values(errors).every((value) => value === '');
         return noErrors ? {} : errors;
     }, []);
+
+    const handleSignup = async (values: FormValues) => {
+        try {
+            await auth0.auth.createUser({
+                email: values.email,
+                password: values.password,
+                connection: 'Username-Password-Authentication',
+                user_metadata: {},
+            });
+
+            // Log the user in
+            const credentials = await auth0.auth.passwordRealm({
+                username: values.email,
+                password: values.password,
+                realm: 'Username-Password-Authentication',
+                audience: AUTH0_AUDIENCE,
+                scope: 'openid profile email',
+            });
+
+            // Decode the ID token to get user information
+            const decodedToken = jwtDecode<DecodedToken>(credentials.idToken);
+
+            const auth0Data = {
+                email: decodedToken.email,
+                token: credentials.idToken,
+            };
+
+            const result = await apolloClient.mutate({
+                mutation: REGISTER_USER_MUTATION,
+                variables: {
+                    email: values.email,
+                    firstName: values.firstName,
+                    lastName: values.lastName,
+                    phoneNumber: values.phoneNumber,
+                },
+            });
+
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            const user: User = {
+                ...result.data,
+                token: auth0Data.token,
+            };
+
+            updateUserData(user);
+
+            navigation.navigate('Matching');
+        } catch (error) {
+            console.error(error);
+            if (error instanceof Error) {
+                // eslint-disable-next-line no-alert
+                alert(`Signup failed: ${error.message}`);
+            } else {
+                // eslint-disable-next-line no-alert
+                alert('Signup failed: An unknown error occurred');
+            }
+        }
+    };
 
     return (
         <SafeAreaView style={styles.outerContainer}>
             <ScrollView style={styles.innerScrollContainer}>
                 <Formik
                     initialValues={initialFormValues}
-                    onSubmit={async (values): Promise<void> => {
-                        const result = await apolloClient.mutate({
-                            mutation: REGISTER_USER_MUTATION,
-                            variables: {
-                                email: values.email,
-                                password: values.password,
-                                firstName: values.firstName,
-                                lastName: values.lastName,
-                                age: Number.parseInt(values.age, 10),
-                            },
-                        });
-                        updateUserData(result.data as User);
-                        navigation.navigate('Matching');
-                    }}
+                    onSubmit={handleSignup}
                     validate={validateEmailPassword}
                     validateOnChange={false}
                     validateOnBlur={false}

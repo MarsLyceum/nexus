@@ -1,10 +1,33 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Animated, Easing, TouchableOpacity } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/core';
 
-// TODO: animation like in 'peepsbutton'
+// Import custom SVG icons
+import HomeIcon from './icons/HomeIcon';
+import MatchingIcon from './icons/MatchingIcon';
+import GroupsIcon from './icons/GroupsIcon';
+import MessagesIcon from './icons/MessagesIcon';
+import FriendsIcon from './icons/FriendsIcon';
+
+type IconName = 'HomeIcon' | 'MatchingIcon' | 'GroupsIcon' | 'MessagesIcon' | 'FriendsIcon' | string;
+
+const getIconComponent = (iconName: IconName) => {
+    switch (iconName) {
+        case 'HomeIcon':
+            return <HomeIcon />;
+        case 'MatchingIcon':
+            return <MatchingIcon />;
+        case 'GroupsIcon':
+            return <GroupsIcon />;
+        case 'MessagesIcon':
+            return <MessagesIcon />;
+        case 'FriendsIcon':
+            return <FriendsIcon />;
+        default:
+            return null;
+    }
+};
 
 const AnimatedTabItem: React.FC<{
     iconName: string;
@@ -42,14 +65,9 @@ const AnimatedTabItem: React.FC<{
                         />
                     </>
                 )}
-                <Icon
-                    name={iconName}
-                    size={24}
-                    color={isFocused ? 'white' : 'gray'}
-                    onPress={onPress}
-                    onLongPress={onLongPress}
-                    style={styles.icon}
-                />
+                <TouchableOpacity onPress={onPress} onLongPress={onLongPress} style={styles.iconButton}>
+                    {getIconComponent(iconName)}
+                </TouchableOpacity>
                 {label === 'Messages' && messageCount !== undefined && (
                     <View style={styles.messageCounter}>
                         <Text style={styles.messageCountText}>{messageCount}</Text>
@@ -67,76 +85,22 @@ export function Navbar() {
 
     return (
         <LinearGradient colors={['#ff0084', '#33001b']} style={styles.tabBar}>
-            <AnimatedTabItem
-                iconName={getIconName('Home')}
-                label={'Home'}
-                isFocused={activeTab === 'Home'}
-                onPress={() => {
-                    setActiveTab('Home');
-                    navigation.navigate('Home');
-                }}
-                onLongPress={() => {}}
-            />
-            <AnimatedTabItem
-                iconName={getIconName('Matching')}
-                label={'Matching'}
-                isFocused={activeTab === 'Matching'}
-                onPress={() => {
-                    setActiveTab('Matching');
-                    navigation.navigate('Matching');
-                }}
-                onLongPress={() => {}}
-            />
-            <AnimatedTabItem
-                iconName={getIconName('Groups')}
-                label={'Groups'}
-                isFocused={activeTab === 'Groups'}
-                onPress={() => {
-                    setActiveTab('Groups');
-                    navigation.navigate('Groups');
-                }}
-                onLongPress={() => {}}
-            />
-            <AnimatedTabItem
-                iconName={getIconName('Messages')}
-                label={'Messages'}
-                isFocused={activeTab === 'Messages'}
-                onPress={() => {
-                    setActiveTab('Messages');
-                    navigation.navigate('Messages');
-                }}
-                onLongPress={() => {}}
-                messageCount={messageCount}
-            />
-            <AnimatedTabItem
-                iconName={getIconName('Friends')}
-                label={'Friends'}
-                isFocused={activeTab === 'Friends'}
-                onPress={() => {
-                    setActiveTab('Friends');
-                    navigation.navigate('Friends');
-                }}
-                onLongPress={() => {}}
-            />
+            {['Home', 'Matching', 'Groups', 'Messages', 'Friends'].map((label) => (
+                <AnimatedTabItem
+                    key={label}
+                    iconName={`${label}Icon`}
+                    label={label}
+                    isFocused={activeTab === label}
+                    onPress={() => {
+                        setActiveTab(label);
+                        navigation.navigate(label);
+                    }}
+                    onLongPress={() => {}}
+                    messageCount={label === 'Messages' ? messageCount : undefined}
+                />
+            ))}
         </LinearGradient>
     );
-}
-
-function getIconName(routeName: string) {
-    switch (routeName) {
-        case 'Home':
-            return 'home';
-        case 'Matching':
-            return 'account-group';
-        case 'Groups':
-            return 'account-multiple';
-        case 'Messages':
-            return 'message';
-        case 'Friends':
-            return 'account';
-        default:
-            return '';
-    }
 }
 
 const styles = StyleSheet.create({
@@ -177,12 +141,10 @@ const styles = StyleSheet.create({
         borderRadius: 22,
         zIndex: 2,
     },
-    icon: {
-        zIndex: 3,
-    },
     iconButton: {
         alignItems: 'center',
         justifyContent: 'center',
+        zIndex: 3,
     },
     messageCounter: {
         position: 'absolute',

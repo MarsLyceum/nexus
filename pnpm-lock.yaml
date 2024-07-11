@@ -194,9 +194,6 @@ importers:
       react-native-geolocation-service:
         specifier: ^5.3.1
         version: 5.3.1
-      react-native-gesture-handler:
-        specifier: ^2.16.2
-        version: 2.16.2(react-native@0.74.2(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))(@types/react@18.2.79)(react@18.2.0))(react@18.2.0)
       react-native-http:
         specifier: ^0.0.3
         version: 0.0.3
@@ -1122,10 +1119,6 @@ packages:
     resolution: {integrity: sha512-2l78XM7KsW46P2Yv6uPB3fE+y92EsBlrCxi+RVQ0pbznPFdMdkLyGgaCuh683zdld14jHlaADpIQ7YchGAEMAg==}
     cpu: [x64]
     os: [win32]
-
-  '@egjs/hammerjs@2.0.17':
-    resolution: {integrity: sha512-XQsZgjm2EcVUiZQf11UBJQfmZeEmOW8DpI1gsFeln6w0ae0ii4dMQEQ0kjl6DspdWX1aGY1/loyXnP0JS06e/A==}
-    engines: {node: '>=0.8.0'}
 
   '@emotion/is-prop-valid@1.2.2':
     resolution: {integrity: sha512-uNsoYd37AFmaCdXlg6EYD1KaPOaRWRByMCYzbKUX4+hhMfrxdVSelShywL4JVaAeM/eHUOSprYBQls+/neX3pw==}
@@ -2162,9 +2155,6 @@ packages:
 
   '@types/graceful-fs@4.1.9':
     resolution: {integrity: sha512-olP3sd1qOEe5dXTSaFvQG+02VdRXcdytWLAZsAq1PecU8uqQAhkrnbli7DagjtXKW/Bl7YJbUsa8MPcuc8LHEQ==}
-
-  '@types/hammerjs@2.0.45':
-    resolution: {integrity: sha512-qkcUlZmX6c4J8q45taBKTL3p+LbITgyx7qhlPYOdOHZB7B31K0mXbP5YA7i7SgDeEGuI9MnumiKPEMrxg8j3KQ==}
 
   '@types/hoist-non-react-statics@3.3.5':
     resolution: {integrity: sha512-SbcrWzkKBw2cdwRTwQAswfpB9g9LJWfjtUeW/jvNwbhC8cpmmNYVePa+ncbUe0rGTQ7G3Ff6mYUN2VMfLVr+Sg==}
@@ -5829,12 +5819,6 @@ packages:
   react-native-geolocation-service@5.3.1:
     resolution: {integrity: sha512-LTXPtPNmrdhx+yeWG47sAaCgQc3nG1z+HLLHlhK/5YfOgfLcAb9HAkhREPjQKPZOUx8pKZMIpdGFUGfJYtimXQ==}
 
-  react-native-gesture-handler@2.16.2:
-    resolution: {integrity: sha512-vGFlrDKlmyI+BT+FemqVxmvO7nqxU33cgXVsn6IKAFishvlG3oV2Ds67D5nPkHMea8T+s1IcuMm0bF8ntZtAyg==}
-    peerDependencies:
-      react: '*'
-      react-native: '*'
-
   react-native-http@0.0.3:
     resolution: {integrity: sha512-xzpfp+g8PuDFNZ6srdidZinu1+qvQb/qvIf7WA3Jbtv6MTMT/h7LI1ZgSB8ZNLYZk9pYc/uflLRVUc6VuUYqSA==}
     hasBin: true
@@ -8230,10 +8214,6 @@ snapshots:
 
   '@dprint/win32-x64@0.45.1':
     optional: true
-
-  '@egjs/hammerjs@2.0.17':
-    dependencies:
-      '@types/hammerjs': 2.0.45
 
   '@emotion/is-prop-valid@1.2.2':
     dependencies:
@@ -10666,8 +10646,6 @@ snapshots:
   '@types/graceful-fs@4.1.9':
     dependencies:
       '@types/node': 20.14.2
-
-  '@types/hammerjs@2.0.45': {}
 
   '@types/hoist-non-react-statics@3.3.5':
     dependencies:
@@ -15123,16 +15101,6 @@ snapshots:
       - react-native
 
   react-native-geolocation-service@5.3.1: {}
-
-  react-native-gesture-handler@2.16.2(react-native@0.74.2(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))(@types/react@18.2.79)(react@18.2.0))(react@18.2.0):
-    dependencies:
-      '@egjs/hammerjs': 2.0.17
-      hoist-non-react-statics: 3.3.2
-      invariant: 2.2.4
-      lodash: 4.17.21
-      prop-types: 15.8.1
-      react: 18.2.0
-      react-native: 0.74.2(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))(@types/react@18.2.79)(react@18.2.0)
 
   react-native-http@0.0.3:
     dependencies:

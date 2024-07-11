@@ -76,7 +76,6 @@
         "react-native-config": "^1.5.1",
         "react-native-elements": "^3.4.3",
         "react-native-geolocation-service": "^5.3.1",
-        "react-native-gesture-handler": "^2.16.2",
         "react-native-http": "^0.0.3",
         "react-native-https": "^1.0.0",
         "react-native-paper": "^5.12.3",

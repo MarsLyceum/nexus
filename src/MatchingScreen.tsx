@@ -214,9 +214,10 @@ export const MatchingScreen = () => {
     );
 
     const handlePress = useCallback(
-        (event: { nativeEvent: { offsetX: number } }) => {
-            const { offsetX } = event.nativeEvent;
-            if (offsetX > containerWidth / 2) {
+        (event: { nativeEvent: { offsetX: number; locationX: number } }) => {
+            const { offsetX, locationX } = event.nativeEvent;
+            const xOffset = offsetX ?? locationX;
+            if (xOffset > containerWidth / 2) {
                 increaseSelectedImageNumber();
             } else {
                 decreaseSelectedImageNumber();

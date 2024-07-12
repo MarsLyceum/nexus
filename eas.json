@@ -3,9 +3,22 @@
         "version": ">= 7.6.2"
     },
     "build": {
+        "development": {
+            "env": {
+                "EXPO_USE_BRIDGLESS_ARCHITECTURE": "true"
+            }
+        },
         "preview": {
             "android": {
                 "buildType": "apk"
+            },
+            "env": {
+                "EXPO_USE_BRIDGLESS_ARCHITECTURE": "true"
+            }
+        },
+        "production": {
+            "env": {
+                "EXPO_USE_BRIDGLESS_ARCHITECTURE": "true"
             }
         },
         "preview2": {

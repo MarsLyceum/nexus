@@ -79,7 +79,7 @@ const AnimatedTabItem: React.FC<{
 };
 
 export function Navbar() {
-    const [activeTab, setActiveTab] = useState('Home');
+    const [activeTab, setActiveTab] = useState('Matching');
     const [messageCount, setMessageCount] = useState(5);
     const navigation = useNavigation();
 

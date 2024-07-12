@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import EventSource from 'react-native-event-source';
 import {
     ApolloClient,
     InMemoryCache,
@@ -75,6 +76,7 @@ const httpLink = from([
 const sseLink = new ApolloLink(
     () =>
         new Observable((observer) => {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
             const eventSource = new EventSource(graphqlApiGatewayEndpointSse, {
                 withCredentials: false,
             });

@@ -1,23 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 
-// Define the component
-export const HomeScreen = () => {
-    return (
-        <ScrollView contentContainerStyle={styles.container}>
-            <View style={styles.header}>
-                <Text style={styles.headerText}>Web Page Header</Text>
-            </View>
-            <View style={styles.content}>
-                <Text style={styles.contentText}>
-                    This is a boilerplate component representing a web page.
-                </Text>
-                {/* Add more content here */}
-            </View>
-        </ScrollView>
-    );
-};
-
 // Define the styles
 const styles = StyleSheet.create({
     container: {
@@ -46,3 +29,20 @@ const styles = StyleSheet.create({
         color: '#333',
     },
 });
+
+// Define the component
+export const HomeScreen = () => (
+    <ScrollView contentContainerStyle={styles.container}>
+        <View style={styles.header}>
+            <Text style={styles.headerText}>Web Page Header</Text>
+        </View>
+        <View style={styles.content}>
+            <Text style={styles.contentText}>
+                This is a boilerplate component representing a web page.
+            </Text>
+            {/* Add more content here */}
+        </View>
+    </ScrollView>
+);
+
+

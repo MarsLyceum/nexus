@@ -7,7 +7,6 @@ import {
     StyleSheet,
     ScrollView,
 } from 'react-native';
-import { Icon } from 'react-native-elements';
 import {
     TapGestureHandler,
     GestureHandlerRootView,

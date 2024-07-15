@@ -10,98 +10,18 @@ import GroupsIcon from './icons/GroupsIcon';
 import MessagesIcon from './icons/MessagesIcon';
 import FriendsIcon from './icons/FriendsIcon';
 
-type IconName = 'HomeIcon' | 'MatchingIcon' | 'GroupsIcon' | 'MessagesIcon' | 'FriendsIcon' | string;
+type IconName = 'HomeIcon' | 'MatchingIcon' | 'GroupsIcon' | 'MessagesIcon' | 'FriendsIcon';
 
 const getIconComponent = (iconName: IconName) => {
     switch (iconName) {
-        case 'HomeIcon':
-            return <HomeIcon />;
-        case 'MatchingIcon':
-            return <MatchingIcon />;
-        case 'GroupsIcon':
-            return <GroupsIcon />;
-        case 'MessagesIcon':
-            return <MessagesIcon />;
-        case 'FriendsIcon':
-            return <FriendsIcon />;
-        default:
-            return null;
+        case 'HomeIcon': { return <HomeIcon width={24} height={24} />; }
+        case 'MatchingIcon': { return <MatchingIcon width={24} height={24} />; }
+        case 'GroupsIcon': { return <GroupsIcon width={24} height={24} />; }
+        case 'MessagesIcon': { return <MessagesIcon width={24} height={24} />; }
+        case 'FriendsIcon': { return <FriendsIcon width={24} height={24} />; }
+        default: { return undefined; }
     }
 };
-
-const AnimatedTabItem: React.FC<{
-    iconName: string;
-    label: string;
-    isFocused: boolean;
-    onPress: () => void;
-    onLongPress: () => void;
-    messageCount?: number;
-}> = ({ iconName, label, isFocused, onPress, onLongPress, messageCount }) => {
-    const animationValue = React.useRef(new Animated.Value(0)).current;
-
-    React.useEffect(() => {
-        Animated.timing(animationValue, {
-            toValue: isFocused ? 1 : 0,
-            duration: 400,
-            easing: Easing.inOut(Easing.ease),
-            useNativeDriver: true,
-        }).start();
-    }, [isFocused]);
-
-    const translateY = animationValue.interpolate({
-        inputRange: [0, 1],
-        outputRange: [0, -30],
-    });
-
-    return (
-        <View style={styles.tabItemContainer}>
-            <Animated.View style={[styles.tabItem, { transform: [{ translateY }] }]}>
-                {isFocused && (
-                    <>
-                        <View style={[styles.circle, styles.outerCircle]} />
-                        <LinearGradient
-                            colors={['#ff0084', '#33001b']}
-                            style={[styles.circle, styles.innerCircle]}
-                        />
-                    </>
-                )}
-                <TouchableOpacity onPress={onPress} onLongPress={onLongPress} style={styles.iconButton}>
-                    {getIconComponent(iconName)}
-                </TouchableOpacity>
-                {label === 'Messages' && messageCount !== undefined && (
-                    <View style={styles.messageCounter}>
-                        <Text style={styles.messageCountText}>{messageCount}</Text>
-                    </View>
-                )}
-            </Animated.View>
-        </View>
-    );
-};
-
-export function Navbar() {
-    const [activeTab, setActiveTab] = useState('Matching');
-    const [messageCount, setMessageCount] = useState(5);
-    const navigation = useNavigation();
-
-    return (
-        <LinearGradient colors={['#ff0084', '#33001b']} style={styles.tabBar}>
-            {['Home', 'Matching', 'Groups', 'Messages', 'Friends'].map((label) => (
-                <AnimatedTabItem
-                    key={label}
-                    iconName={`${label}Icon`}
-                    label={label}
-                    isFocused={activeTab === label}
-                    onPress={() => {
-                        setActiveTab(label);
-                        navigation.navigate(label);
-                    }}
-                    onLongPress={() => {}}
-                    messageCount={label === 'Messages' ? messageCount : undefined}
-                />
-            ))}
-        </LinearGradient>
-    );
-}
 
 const styles = StyleSheet.create({
     tabBar: {
@@ -163,3 +83,78 @@ const styles = StyleSheet.create({
         fontSize: 12,
     },
 });
+
+const AnimatedTabItem: React.FC<{
+    iconName: string;
+    label: string;
+    isFocused: boolean;
+    onPress: () => void;
+    onLongPress: () => void;
+    messageCount?: number;
+}> = ({ iconName, label, isFocused, onPress, onLongPress, messageCount }) => {
+    const animationValue = React.useRef(new Animated.Value(0)).current;
+
+    React.useEffect(() => {
+        Animated.timing(animationValue, {
+            toValue: isFocused ? 1 : 0,
+            duration: 400,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+        }).start();
+    }, [isFocused]);
+
+    const translateY = animationValue.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0, -30],
+    });
+
+    return (
+        <View style={styles.tabItemContainer}>
+            <Animated.View style={[styles.tabItem, { transform: [{ translateY }] }]}>
+                {isFocused && (
+                    <>
+                        <View style={[styles.circle, styles.outerCircle]} />
+                        <LinearGradient
+                            colors={['#ff0084', '#33001b']}
+                            style={[styles.circle, styles.innerCircle]}
+                        />
+                    </>
+                )}
+                <TouchableOpacity onPress={onPress} onLongPress={onLongPress} style={styles.iconButton}>
+                    {getIconComponent(iconName)}
+                </TouchableOpacity>
+                {label === 'Messages' && messageCount !== undefined && (
+                    <View style={styles.messageCounter}>
+                        <Text style={styles.messageCountText}>{messageCount}</Text>
+                    </View>
+                )}
+            </Animated.View>
+        </View>
+    );
+};
+
+export function Navbar() {
+    const [activeTab, setActiveTab] = useState('Matching');
+    const [messageCount] = useState(5);
+    const navigation = useNavigation();
+
+    return (
+        <LinearGradient colors={['#ff0084', '#33001b']} style={styles.tabBar}>
+            {['Home', 'Matching', 'Groups', 'Messages', 'Friends'].map((label) => (
+                <AnimatedTabItem
+                    key={label}
+                    iconName={`${label}Icon` as IconName}
+                    label={label}
+                    isFocused={activeTab === label}
+                    onPress={() => {
+                        setActiveTab(label);
+                        navigation.navigate(label);
+                    }}
+                    onLongPress={() => {}}
+                    messageCount={label === 'Messages' ? messageCount : undefined}
+                />
+            ))}
+        </LinearGradient>
+    );
+}
+

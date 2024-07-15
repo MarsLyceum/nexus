@@ -6,6 +6,8 @@ import {
     Text,
     StyleSheet,
     ScrollView,
+    Pressable,
+    GestureResponderEvent,
 } from 'react-native';
 import {
     TapGestureHandler,
@@ -218,14 +220,13 @@ export const MatchingScreen = () => {
     );
 
     const handlePress = useCallback(
-        (event: GestureHandlerStateChangeEvent) => {
-            if (event.nativeEvent.state === State.END) {
-                const { x } = event.nativeEvent;
-                if ((x as number) > containerWidth / 2) {
-                    increaseSelectedImageNumber();
-                } else {
-                    decreaseSelectedImageNumber();
-                }
+        (event: { nativeEvent: { offsetX: number; locationX: number } }) => {
+            const { offsetX, locationX } = event.nativeEvent;
+            const xOffset = offsetX ?? locationX;
+            if (xOffset > containerWidth / 2) {
+                increaseSelectedImageNumber();
+            } else {
+                decreaseSelectedImageNumber();
             }
         },
         [
@@ -238,74 +239,73 @@ export const MatchingScreen = () => {
     return (
         <SafeAreaView style={styles.container}>
             <ScrollView showsHorizontalScrollIndicator={false}>
-                <GestureHandlerRootView style={{ flex: 1 }}>
-                    <Header
-                        title="Discover"
-                        subtitle={`${user.location.city}, ${user.location.state}`}
-                    />
-                    <View style={styles.cardContainer}>
-                        <View style={[styles.card, { cursor: 'pointer' }]}>
-                            <TapGestureHandler onEnded={handlePress}>
-                                <View
-                                    style={styles.pressableCard}
-                                    onLayout={handleLayout}
-                                >
-                                    <Image
-                                        source={
-                                            user.gallery[selectedImageNumber]
-                                        }
-                                        style={styles.profileImage}
-                                    />
-                                </View>
-                            </TapGestureHandler>
-                            <View style={styles.distanceContainer}>
-                                <View style={styles.distanceLayout}>
-                                    <View style={styles.distanceIcon}>
-                                        <LocationPin />
-                                    </View>
-                                    <Text style={styles.distanceText}>
-                                        {Math.round(distance ?? 0)}km
-                                    </Text>
-                                </View>
+                <Header
+                    title="Discover"
+                    subtitle={`${user.location.city}, ${user.location.state}`}
+                />
+                <View style={styles.cardContainer}>
+                    <View style={[styles.card, { cursor: 'pointer' }]}>
+                        <Pressable
+                            onPress={
+                                handlePress as unknown as (
+                                    event: GestureResponderEvent
+                                ) => void
+                            }
+                        >
+                            <View
+                                style={styles.pressableCard}
+                                onLayout={handleLayout}
+                            >
+                                <Image
+                                    source={user.gallery[selectedImageNumber]}
+                                    style={styles.profileImage}
+                                />
                             </View>
-                            <View style={styles.imageNumberContainer}>
-                                <View style={styles.imageNumberLayoutContainer}>
-                                    <View style={styles.imageNumberLayout}>
-                                        {[0, 1, 2, 3, 4].map((index) => (
-                                            <View
-                                                key={index}
-                                                style={[
-                                                    selectedImageNumber !==
-                                                        index &&
-                                                        styles.imageNumberNotSelected,
-                                                ]}
-                                            >
-                                                <Circle />
-                                            </View>
-                                        ))}
-                                    </View>
+                        </Pressable>
+                        <View style={styles.distanceContainer}>
+                            <View style={styles.distanceLayout}>
+                                <View style={styles.distanceIcon}>
+                                    <LocationPin />
                                 </View>
-                            </View>
-                            <View style={styles.info}>
-                                <Text style={styles.name}>
-                                    {user.firstName} {user.lastName}, {user.age}
-                                </Text>
-                                <Text style={styles.job}>
-                                    {user.profession}
+                                <Text style={styles.distanceText}>
+                                    {Math.round(distance ?? 0)}km
                                 </Text>
                             </View>
                         </View>
-                        <View style={styles.actions}>
-                            <DislikeLikeButton onPress={() => {}}>
-                                <ThumbsDown />
-                            </DislikeLikeButton>
-                            <SuperLikeButton />
-                            <DislikeLikeButton onPress={() => {}}>
-                                <ThumbsUp />
-                            </DislikeLikeButton>
+                        <View style={styles.imageNumberContainer}>
+                            <View style={styles.imageNumberLayoutContainer}>
+                                <View style={styles.imageNumberLayout}>
+                                    {[0, 1, 2, 3, 4].map((index) => (
+                                        <View
+                                            key={index}
+                                            style={[
+                                                selectedImageNumber !== index &&
+                                                    styles.imageNumberNotSelected,
+                                            ]}
+                                        >
+                                            <Circle />
+                                        </View>
+                                    ))}
+                                </View>
+                            </View>
+                        </View>
+                        <View style={styles.info}>
+                            <Text style={styles.name}>
+                                {user.firstName} {user.lastName}, {user.age}
+                            </Text>
+                            <Text style={styles.job}>{user.profession}</Text>
                         </View>
                     </View>
-                </GestureHandlerRootView>
+                    <View style={styles.actions}>
+                        <DislikeLikeButton onPress={() => {}}>
+                            <ThumbsDown />
+                        </DislikeLikeButton>
+                        <SuperLikeButton />
+                        <DislikeLikeButton onPress={() => {}}>
+                            <ThumbsUp />
+                        </DislikeLikeButton>
+                    </View>
+                </View>
             </ScrollView>
             <Navbar />
         </SafeAreaView>

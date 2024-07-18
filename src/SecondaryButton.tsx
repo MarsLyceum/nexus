@@ -6,14 +6,8 @@ import {
     ViewStyle,
     Platform,
     View,
+    Text,
 } from 'react-native';
-import styled from 'styled-components/native';
-
-const ButtonText = styled.Text`
-    color: #a3119f;
-    font-size: 16px;
-    font-weight: bold;
-`;
 
 interface SecondaryButtonProps extends PressableProps {
     title: string;
@@ -29,6 +23,11 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: '#EBEAEA',
+    },
+    buttonText: {
+        color: '#a3119f',
+        fontSize: 16,
+        fontWeight: 'bold',
     },
     shadowContainer: {
         borderRadius: 25,
@@ -59,7 +58,7 @@ export const SecondaryButton: React.FC<SecondaryButtonProps> = ({
 }) => (
     <View style={[styles.shadowContainer, style]}>
         <Pressable style={styles.container} onPress={onPress}>
-            <ButtonText>{title}</ButtonText>
+            <Text style={styles.buttonText}>{title}</Text>
         </Pressable>
     </View>
 );

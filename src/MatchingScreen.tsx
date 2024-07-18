@@ -7,12 +7,12 @@ import {
     StyleSheet,
     ScrollView,
 } from 'react-native';
-import {
-    TapGestureHandler,
-    GestureHandlerRootView,
-    GestureHandlerStateChangeEvent,
-    State,
-} from 'react-native-gesture-handler';
+// import {
+//     TapGestureHandler,
+//     GestureHandlerRootView,
+//     GestureHandlerStateChangeEvent,
+//     State,
+// } from 'react-native-gesture-handler';
 
 import { PLATFORM_TOP_PADDING } from './CONSTANTS';
 import { DislikeLikeButton } from './DislikeLikeButton';

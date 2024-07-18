@@ -22,14 +22,15 @@ import {
     Lato_700Bold,
 } from '@expo-google-fonts/lato';
 import * as SplashScreen from 'expo-splash-screen';
+import RNEventSource from 'react-native-event-source';
 
 import { setupAxiosQuotas } from './utils/setupAxiosQuotas';
 import { store } from './redux';
 import { LoginScreen, SignUpScreen, MatchingScreen, WelcomeScreen } from '.';
 import { HomeScreen } from './HomeScreen'
-import { GroupsScreen} from "./GroupsScreen";
-import { MessagesScreen} from "./MessagesScreen";
-import { FriendsScreen} from "./FriendsScreen";
+import { GroupsScreen } from "./GroupsScreen";
+import { MessagesScreen } from "./MessagesScreen";
+import { FriendsScreen } from "./FriendsScreen";
 
 setupAxiosQuotas();
 
@@ -81,7 +82,7 @@ const sseLink = new ApolloLink((operation) => {
             withCredentials: false,
         });
 
-        eventSource.onmessage = (event) => {
+        eventSource.onmessage = (event: MessageEvent) => {
             try {
                 const parsedData = JSON.parse(event.data);
                 if (parsedData.errors) {

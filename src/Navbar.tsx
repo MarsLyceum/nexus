@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Animated, Easing, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useNavigation } from '@react-navigation/core';
+import { useNavigation, NavigationProp } from '@react-navigation/native';
 
 // Import custom SVG icons
 import HomeIcon from './icons/HomeIcon';
@@ -11,6 +11,7 @@ import MessagesIcon from './icons/MessagesIcon';
 import FriendsIcon from './icons/FriendsIcon';
 
 type IconName = 'HomeIcon' | 'MatchingIcon' | 'GroupsIcon' | 'MessagesIcon' | 'FriendsIcon';
+type TabName = 'Home' | 'Matching' | 'Groups' | 'Messages' | 'Friends';
 
 const getIconComponent = (iconName: IconName) => {
     switch (iconName) {
@@ -19,7 +20,7 @@ const getIconComponent = (iconName: IconName) => {
         case 'GroupsIcon': { return <GroupsIcon width={24} height={24} />; }
         case 'MessagesIcon': { return <MessagesIcon width={24} height={24} />; }
         case 'FriendsIcon': { return <FriendsIcon width={24} height={24} />; }
-        default: { return null; }
+        default: { return undefined; }
     }
 };
 
@@ -121,7 +122,7 @@ const AnimatedTabItem: React.FC<{
                     </>
                 )}
                 <TouchableOpacity onPress={onPress} onLongPress={onLongPress} style={styles.iconButton}>
-                    {getIconComponent(iconName)}
+                    {getIconComponent(iconName as IconName)}
                 </TouchableOpacity>
                 {label === 'Messages' && messageCount !== undefined && (
                     <View style={styles.messageCounter}>
@@ -134,13 +135,13 @@ const AnimatedTabItem: React.FC<{
 };
 
 export function Navbar() {
-    const [activeTab, setActiveTab] = useState('Matching');
+    const [activeTab, setActiveTab] = useState<TabName>('Matching');
     const [messageCount] = useState(5);
-    const navigation = useNavigation();
+    const navigation = useNavigation<NavigationProp<Record<TabName, undefined>>>();
 
     return (
         <LinearGradient colors={['#ff0084', '#33001b']} style={styles.tabBar}>
-            {['Home', 'Matching', 'Groups', 'Messages', 'Friends'].map((label) => (
+            {(['Home', 'Matching', 'Groups', 'Messages', 'Friends'] as TabName[]).map((label) => (
                 <AnimatedTabItem
                     key={label}
                     iconName={`${label}Icon` as IconName}

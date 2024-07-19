@@ -48,6 +48,13 @@ const errorLink = onError((error: ErrorResponse) => {
     }
 });
 
+declare global {
+    interface EventSource {
+        onmessage: ((this: EventSource, ev: MessageEvent<any>) => any) | null;
+        onerror: ((this: EventSource, ev: Event) => any) | null;
+    }
+}
+
 const requestQuota = 10;
 let requestCount = 0;
 
@@ -106,8 +113,8 @@ const sseLink = new ApolloLink(
             };
 
             // eslint-disable-next-line unicorn/prefer-add-event-listener
-            eventSource.onerror = (error) => {
-                observer.error(error);
+            eventSource.onerror = (event: Event) => {
+                observer.error(new Error('An error occurred with the EventSource.'));
                 eventSource.close();
             };
 

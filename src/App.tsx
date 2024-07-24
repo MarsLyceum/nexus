@@ -77,9 +77,12 @@ const sseLink = new ApolloLink(
     () =>
         new Observable((observer) => {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-            const eventSource = new EventSource(graphqlApiGatewayEndpointSse, {
-                withCredentials: false,
-            });
+            const eventSource: EventSource = new EventSource(
+                graphqlApiGatewayEndpointSse,
+                {
+                    withCredentials: false,
+                }
+            );
 
             // eslint-disable-next-line unicorn/prefer-add-event-listener
             eventSource.onmessage = (event: { data: string }) => {

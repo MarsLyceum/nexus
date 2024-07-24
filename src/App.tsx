@@ -82,7 +82,7 @@ const sseLink = new ApolloLink(
             });
 
             // eslint-disable-next-line unicorn/prefer-add-event-listener
-            eventSource.onmessage = (event) => {
+            eventSource.onmessage = (event: { data: string }) => {
                 try {
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument
                     const parsedData = JSON.parse(event.data);
@@ -102,7 +102,7 @@ const sseLink = new ApolloLink(
             };
 
             // eslint-disable-next-line unicorn/prefer-add-event-listener
-            eventSource.onerror = (error) => {
+            eventSource.onerror = (error: unknown) => {
                 observer.error(error);
                 eventSource.close();
             };

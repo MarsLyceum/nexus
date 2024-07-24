@@ -20,6 +20,14 @@ declare module '*.svg' {
 
 declare namespace JSX {
     interface ElementChildrenAttribute {
-        children: unknown  // specify children name to use
+        children: unknown; // specify children name to use
+    }
+}
+
+import { MessageEvent } from 'react-native-event-source';
+
+declare module 'react-native-event-source' {
+    interface RNEventSource {
+        onmessage?: (event: MessageEvent) => void;
     }
 }

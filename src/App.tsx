@@ -48,13 +48,6 @@ const errorLink = onError((error: ErrorResponse) => {
     }
 });
 
-declare global {
-    interface EventSource {
-        onmessage: ((this: EventSource, ev: MessageEvent<any>) => any) | null;
-        onerror: ((this: EventSource, ev: Event) => any) | null;
-    }
-}
-
 const requestQuota = 10;
 let requestCount = 0;
 
@@ -88,12 +81,15 @@ const sseLink = new ApolloLink(
     () =>
         new Observable((observer) => {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-            const eventSource = new EventSource(graphqlApiGatewayEndpointSse, {
-                withCredentials: false,
-            });
+            const eventSource: EventSource = new EventSource(
+                graphqlApiGatewayEndpointSse,
+                {
+                    withCredentials: false,
+                }
+            );
 
             // eslint-disable-next-line unicorn/prefer-add-event-listener
-            eventSource.onmessage = (event: MessageEvent) => {
+            eventSource.onmessage = (event: { data: string }) => {
                 try {
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument
                     const parsedData = JSON.parse(event.data);
@@ -113,8 +109,8 @@ const sseLink = new ApolloLink(
             };
 
             // eslint-disable-next-line unicorn/prefer-add-event-listener
-            eventSource.onerror = (event: Event) => {
-                observer.error(new Error('An error occurred with the EventSource.'));
+            eventSource.onerror = (error: unknown) => {
+                observer.error(error);
                 eventSource.close();
             };
 

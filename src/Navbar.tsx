@@ -20,7 +20,7 @@ const getIconComponent = (iconName: IconName) => {
         case 'GroupsIcon': { return <GroupsIcon width={24} height={24} />; }
         case 'MessagesIcon': { return <MessagesIcon width={24} height={24} />; }
         case 'FriendsIcon': { return <FriendsIcon width={24} height={24} />; }
-        default: { return undefined; }
+        default: { return; }
     }
 };
 

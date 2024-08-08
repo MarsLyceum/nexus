@@ -29,7 +29,7 @@ import { LoginScreen, SignUpScreen, MatchingScreen, WelcomeScreen } from '.';
 import { HomeScreen } from './HomeScreen'
 import { GroupsScreen} from "./GroupsScreen";
 import { MessagesScreen} from "./MessagesScreen";
-import { FriendsScreen} from "./FriendsScreen";
+import { SettingsScreen} from "./SettingsScreen";
 
 setupAxiosQuotas();
 

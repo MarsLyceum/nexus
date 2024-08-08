@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 
 // Define the component
-export const FriendsScreen = () => {
+export const SettingsScreen = () => {
     return (
         <ScrollView contentContainerStyle={styles.container}>
             <View style={styles.header}>

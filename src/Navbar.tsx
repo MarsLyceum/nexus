@@ -17,10 +17,7 @@ const styles = StyleSheet.create({
         height: 70,
         alignItems: 'center',
         justifyContent: 'space-around',
-        borderTopLeftRadius: 100,
-        borderTopRightRadius: 100,
-        borderBottomLeftRadius: 100,
-        borderBottomRightRadius: 100,
+        borderRadius: 100,
     },
     tabItemContainer: {
         flex: 1,
@@ -91,15 +88,6 @@ const AnimatedTabItem: React.FC<{
 }) => {
     const animationValue = React.useRef(new Animated.Value(0)).current;
 
-    React.useEffect(() => {
-        Animated.timing(animationValue, {
-            toValue: isFocused ? 1 : 0,
-            duration: 400,
-            easing: Easing.inOut(Easing.ease),
-            useNativeDriver: true,
-        }).start();
-    }, [isFocused]);
-
     const translateY = animationValue.interpolate({
         inputRange: [0, 1],
         outputRange: [0, -30],
@@ -136,7 +124,6 @@ const AnimatedTabItem: React.FC<{
             </Animated.View>
         </View>
     );
-};
 
 export function Navbar() {
     const [activeTab, setActiveTab] = useState('Home');

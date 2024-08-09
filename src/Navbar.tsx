@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useNavigation } from '@react-navigation/core';
+import { useNavigation, NavigationProp } from '@react-navigation/core';
 
 import { HomeIcon } from './icons/HomeIcon';
 import { MatchingIcon } from './icons/MatchingIcon';
@@ -124,11 +124,12 @@ const AnimatedTabItem: React.FC<{
             </Animated.View>
         </View>
     );
+}
 
 export function Navbar() {
     const [activeTab, setActiveTab] = useState('Home');
     const [messageCount, setMessageCount] = useState(5);
-    const navigation = useNavigation();
+    const navigation = useNavigation() as NavigationProp<Record<string, unknown>>;
 
     return (
         <LinearGradient colors={['#ff0084', '#33001b']} style={styles.tabBar}>
@@ -187,7 +188,7 @@ export function Navbar() {
     );
 }
 
-function getIconComponent(routeName) {
+function getIconComponent(routeName: string) {
     switch (routeName) {
         case 'Home': {
             return HomeIcon;

@@ -39,6 +39,3 @@ yarn-error.*
 
 # JetBrains
 .idea/
-
-# Idea
-.idea

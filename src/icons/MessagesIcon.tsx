@@ -1,7 +1,7 @@
 import * as React from 'react';
 import Svg, { G, Path, Line, Defs, ClipPath, Rect } from 'react-native-svg';
 
-export const MessagesIcon = (props) => (
+export const MessagesIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <Svg
         width={29}
         height={28}

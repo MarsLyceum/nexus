@@ -1,6 +1,5 @@
- import React, { useState } from 'react';
-import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, NavigationProp } from '@react-navigation/core';
 
@@ -128,7 +127,7 @@ const AnimatedTabItem: React.FC<{
 
 export function Navbar() {
     const [activeTab, setActiveTab] = useState('Home');
-    const [messageCount, setMessageCount] = useState(5);
+    const [messageCount] = useState(5);
     const navigation = useNavigation() as NavigationProp<Record<string, unknown>>;
 
     return (

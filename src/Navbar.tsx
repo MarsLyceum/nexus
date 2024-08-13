@@ -128,7 +128,7 @@ const AnimatedTabItem: React.FC<{
 export function Navbar() {
     const [activeTab, setActiveTab] = useState('Home');
     const [messageCount] = useState(5);
-    const navigation = useNavigation() as NavigationProp<Record<string, unknown>>;
+    const navigation = useNavigation<NavigationProp<Record<string, unknown>>>();
 
     return (
         <LinearGradient colors={['#ff0084', '#33001b']} style={styles.tabBar}>

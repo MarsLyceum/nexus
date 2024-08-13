@@ -1,14 +1,12 @@
 import * as React from 'react';
 import Svg, { Path } from 'react-native-svg';
 
-export const GroupsIcon = (props: React.SVGProps<SVGSVGElement>) => (
+export const GroupsIcon = () => (
     <Svg
         width={29}
         height={28}
         viewBox="0 0 29 28"
         fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        {...props}
     >
         <Path
             d="M10.1447 15.5554C10.1447 17.2743 8.72728 18.6666 6.97726 18.6666C5.22723 18.6666 3.80978 17.2743 3.80978 15.5554C3.80978 13.8366 5.22723 12.4443 6.97726 12.4443C8.72728 12.4443 10.1447 13.8366 10.1447 15.5554Z"

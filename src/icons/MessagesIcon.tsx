@@ -1,14 +1,12 @@
 import * as React from 'react';
 import Svg, { G, Path, Line, Defs, ClipPath, Rect } from 'react-native-svg';
 
-export const MessagesIcon = (props: React.SVGProps<SVGSVGElement>) => (
+export const MessagesIcon = () => (
     <Svg
         width={29}
         height={28}
         viewBox="0 0 29 28"
         fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        {...props}
     >
         <G clipPath="url(#clip0_685_7374)">
             <Path

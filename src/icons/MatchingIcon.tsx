@@ -1,14 +1,12 @@
 import * as React from 'react';
 import Svg, { G, Path, Defs, ClipPath, Rect } from 'react-native-svg';
 /* SVGR has dropped some elements not supported by react-native-svg: filter */
-export const MatchingIcon = (props: React.SVGProps<SVGSVGElement>) => (
+export const MatchingIcon = () => (
     <Svg
         width={39}
         height={34}
         viewBox="0 0 39 34"
         fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        {...props}
     >
         <G clipPath="url(#clip0_685_7396)" filter="url(#filter0_d_685_7396)">
             <G filter="url(#filter1_d_685_7396)">

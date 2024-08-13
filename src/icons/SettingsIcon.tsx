@@ -1,7 +1,7 @@
 import * as React from 'react';
 import Svg, { Path } from 'react-native-svg';
 
-export const FriendsIcon = (props) => (
+export const SettingsIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <Svg
         width={29}
         height={28}

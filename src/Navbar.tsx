@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+ import React, { useState } from 'react';
 import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -8,7 +8,7 @@ import { HomeIcon } from './icons/HomeIcon';
 import { MatchingIcon } from './icons/MatchingIcon';
 import { GroupsIcon } from './icons/GroupsIcon';
 import { MessagesIcon } from './icons/MessagesIcon';
-import { FriendsIcon } from './icons/FriendsIcon';
+import { SettingsIcon } from './icons/SettingsIcon';
 
 // TODO: animation like in 'peepsbutton'
 const styles = StyleSheet.create({
@@ -175,12 +175,12 @@ export function Navbar() {
                 messageCount={messageCount}
             />
             <AnimatedTabItem
-                IconComponent={getIconComponent('Friends')}
-                label={'Friends'}
-                isFocused={activeTab === 'Friends'}
+                IconComponent={getIconComponent('Settings')}
+                label={'Settings'}
+                isFocused={activeTab === 'Settings'}
                 onPress={() => {
-                    setActiveTab('Friends');
-                    navigation.navigate('Friends');
+                    setActiveTab('Settings');
+                    navigation.navigate('Settings');
                 }}
                 onLongPress={() => {}}
             />
@@ -203,7 +203,7 @@ function getIconComponent(routeName: string) {
             return MessagesIcon;
         }
         case 'Friends': {
-            return FriendsIcon;
+            return SettingsIcon;
         }
         default: {
             return HomeIcon;

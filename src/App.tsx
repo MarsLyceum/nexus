@@ -27,6 +27,10 @@ import * as SplashScreen from 'expo-splash-screen';
 import { setupAxiosQuotas } from './utils/setupAxiosQuotas';
 import { store } from './redux';
 import { LoginScreen, SignUpScreen, MatchingScreen, WelcomeScreen } from '.';
+import { HomeScreen } from './HomeScreen'
+import { GroupsScreen} from "./GroupsScreen";
+import { MessagesScreen} from "./MessagesScreen";
+import { SettingsScreen} from "./SettingsScreen";
 
 setupAxiosQuotas();
 
@@ -195,6 +199,26 @@ export default function App() {
                             <Stack.Screen
                                 name="Matching"
                                 component={MatchingScreen}
+                                options={{ headerShown: false }}
+                            />
+                            <Stack.Screen
+                                name="Home"
+                                component={HomeScreen}
+                                options={{ headerShown: false }}
+                            />
+                            <Stack.Screen
+                                name="Groups"
+                                component={GroupsScreen}
+                                options={{ headerShown: false }}
+                            />
+                            <Stack.Screen
+                                name="Messages"
+                                component={MessagesScreen}
+                                options={{ headerShown: false }}
+                            />
+                            <Stack.Screen
+                                name="Settings"
+                                component={SettingsScreen}
                                 options={{ headerShown: false }}
                             />
                         </Stack.Navigator>

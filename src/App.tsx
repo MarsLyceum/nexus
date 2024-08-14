@@ -217,7 +217,7 @@ export default function App() {
                                 options={{ headerShown: false }}
                             />
                             <Stack.Screen
-                                name="Friends"
+                                name="Settings"
                                 component={SettingsScreen}
                                 options={{ headerShown: false }}
                             />

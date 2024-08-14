@@ -31,7 +31,7 @@ const styles = StyleSheet.create({
 });
 
 // Define the component
-export const SettingsScreen = () => {
+export const SettingsScreen = () =>
     <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.header}>
             <Text style={styles.headerText}>Web Page Header</Text>
@@ -43,4 +43,3 @@ export const SettingsScreen = () => {
             {/* Add more content here */}
         </View>
     </ScrollView>
-};

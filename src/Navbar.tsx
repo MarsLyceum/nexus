@@ -201,7 +201,7 @@ function getIconComponent(routeName: string) {
         case 'Messages': {
             return MessagesIcon;
         }
-        case 'Friends': {
+        case 'Settings': {
             return SettingsIcon;
         }
         default: {

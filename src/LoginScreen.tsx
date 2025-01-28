@@ -218,19 +218,19 @@ export function LoginScreen({
                 token: credentials.idToken,
             };
 
-            // const result = await apolloClient.query({
-            //     query: FETCH_USER_QUERY,
-            //     variables: {
-            //         email,
-            //     },
-            // });
+            const result = await apolloClient.query({
+                query: FETCH_USER_QUERY,
+                variables: {
+                    email,
+                },
+            });
 
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             const user: User = {
-                // ...result.data,
+                ...result.data,
                 token: auth0Data.token,
             };
-            // updateUserData(user);
+            updateUserData(user);
 
             navigation.navigate('Matching');
         } catch (error) {

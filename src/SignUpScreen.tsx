@@ -252,23 +252,23 @@ export function SignUpScreen({
                 token: credentials.idToken,
             };
 
-            // const result = await apolloClient.mutate({
-            //     mutation: REGISTER_USER_MUTATION,
-            //     variables: {
-            //         email: values.email,
-            //         firstName: values.firstName,
-            //         lastName: values.lastName,
-            //         phoneNumber: values.phoneNumber,
-            //     },
-            // });
+            const result = await apolloClient.mutate({
+                mutation: REGISTER_USER_MUTATION,
+                variables: {
+                    email: values.email,
+                    firstName: values.firstName,
+                    lastName: values.lastName,
+                    phoneNumber: values.phoneNumber,
+                },
+            });
 
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             const user: User = {
-                // ...result.data,
+                ...result.data,
                 token: auth0Data.token,
             };
 
-            // updateUserData(user);
+            updateUserData(user);
 
             navigation.navigate('Matching');
         } catch (error) {

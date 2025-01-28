@@ -27,10 +27,10 @@ import * as SplashScreen from 'expo-splash-screen';
 import { setupAxiosQuotas } from './utils/setupAxiosQuotas';
 import { store } from './redux';
 import { LoginScreen, SignUpScreen, MatchingScreen, WelcomeScreen } from '.';
-import { HomeScreen } from './HomeScreen'
-import { GroupsScreen} from "./GroupsScreen";
-import { MessagesScreen} from "./MessagesScreen";
-import { SettingsScreen} from "./SettingsScreen";
+import { HomeScreen } from './HomeScreen';
+import { GroupsScreen } from './GroupsScreen';
+import { MessagesScreen } from './MessagesScreen';
+import { SettingsScreen } from './SettingsScreen';
 
 setupAxiosQuotas();
 
@@ -89,30 +89,33 @@ const sseLink = new ApolloLink(
             );
 
             // eslint-disable-next-line unicorn/prefer-add-event-listener
-            eventSource.onmessage = (event: { data: string }) => {
-                try {
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument
-                    const parsedData = JSON.parse(event.data);
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                    if (parsedData.errors) {
+            eventSource.addEventListener(
+                'message',
+                (event: { data: string }) => {
+                    try {
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument
+                        const parsedData = JSON.parse(event.data);
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                        observer.error(parsedData.errors);
-                    } else {
-                        observer.next({
-                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                            data: { greetings: parsedData.greetings },
-                        });
+                        if (parsedData.errors) {
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                            observer.error(parsedData.errors);
+                        } else {
+                            observer.next({
+                                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                                data: { greetings: parsedData.greetings },
+                            });
+                        }
+                    } catch (error) {
+                        observer.error(error);
                     }
-                } catch (error) {
-                    observer.error(error);
                 }
-            };
+            );
 
             // eslint-disable-next-line unicorn/prefer-add-event-listener
-            eventSource.onerror = (error: unknown) => {
+            eventSource.addEventListener('error', (error: unknown) => {
                 observer.error(error);
                 eventSource.close();
-            };
+            });
 
             return () => {
                 eventSource.close();

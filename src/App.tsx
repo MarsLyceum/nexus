@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createDrawerNavigator } from '@react-navigation/drawer';
+import { createStackNavigator } from '@react-navigation/stack';
 import EventSource from 'react-native-event-source';
 import {
     ApolloClient,
@@ -31,6 +32,8 @@ import { HomeScreen } from './HomeScreen';
 import { GroupsScreen } from './GroupsScreen';
 import { MessagesScreen } from './MessagesScreen';
 import { SettingsScreen } from './SettingsScreen';
+import { ServerScreen } from './ServerScreen'; // Each server will open its stack
+import { Sidebar } from './Sidebar';
 
 setupAxiosQuotas();
 
@@ -40,7 +43,11 @@ if (__DEV__) {
     loadErrorMessages();
 }
 
-const Stack = createNativeStackNavigator();
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+const Drawer = createDrawerNavigator();
+
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+const Stack = createStackNavigator();
 
 const errorLink = onError((error: ErrorResponse) => {
     if (error) {
@@ -160,6 +167,19 @@ client
         },
     });
 
+function AppDrawer() {
+    return (
+        <Drawer.Navigator drawerContent={(props) => <Sidebar {...props} />}>
+            <Drawer.Screen name="Home" component={HomeScreen} />
+            <Drawer.Screen name="Groups" component={GroupsScreen} />
+            <Drawer.Screen name="Messages" component={MessagesScreen} />
+            <Drawer.Screen name="Settings" component={SettingsScreen} />
+            <Drawer.Screen name="Server1" component={ServerScreen} />
+            <Drawer.Screen name="Server2" component={ServerScreen} />
+        </Drawer.Navigator>
+    );
+}
+
 // we need to have App be a default export for React Native to work
 // eslint-disable-next-line import/no-default-export
 export default function App() {
@@ -181,8 +201,12 @@ export default function App() {
     if (appIsReady) {
         return (
             <ApolloProvider client={client}>
-                <NavigationContainer>
-                    <ReduxProvider store={store}>
+                <ReduxProvider store={store}>
+                    <NavigationContainer
+                        onReady={() => {
+                            console.log('navigation ready');
+                        }}
+                    >
                         <Stack.Navigator initialRouteName="Welcome">
                             <Stack.Screen
                                 name="Welcome"
@@ -205,28 +229,13 @@ export default function App() {
                                 options={{ headerShown: false }}
                             />
                             <Stack.Screen
-                                name="Home"
-                                component={HomeScreen}
-                                options={{ headerShown: false }}
-                            />
-                            <Stack.Screen
-                                name="Groups"
-                                component={GroupsScreen}
-                                options={{ headerShown: false }}
-                            />
-                            <Stack.Screen
-                                name="Messages"
-                                component={MessagesScreen}
-                                options={{ headerShown: false }}
-                            />
-                            <Stack.Screen
-                                name="Settings"
-                                component={SettingsScreen}
+                                name="AppDrawer"
+                                component={AppDrawer}
                                 options={{ headerShown: false }}
                             />
                         </Stack.Navigator>
-                    </ReduxProvider>
-                </NavigationContainer>
+                    </NavigationContainer>
+                </ReduxProvider>
             </ApolloProvider>
         );
     }

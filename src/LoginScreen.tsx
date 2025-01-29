@@ -232,7 +232,7 @@ export function LoginScreen({
             };
             updateUserData(user);
 
-            navigation.navigate('Matching');
+            navigation.navigate('AppDrawer');
         } catch (error) {
             console.error('Auth0 login failed:', error);
         }

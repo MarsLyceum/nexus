@@ -270,7 +270,7 @@ export function SignUpScreen({
 
             updateUserData(user);
 
-            navigation.navigate('Matching');
+            navigation.navigate('AppDrawer');
         } catch (error) {
             console.error(error);
             if (error instanceof Error) {

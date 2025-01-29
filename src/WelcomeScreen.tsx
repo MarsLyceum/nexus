@@ -60,7 +60,7 @@ export function WelcomeScreen({
     useFocusEffect(() => {
         if (user) {
             // If user is loaded, navigate to the matching screen
-            navigation.navigate('Matching');
+            navigation.navigate('AppDrawer');
         }
     });
 

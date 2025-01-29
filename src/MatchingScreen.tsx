@@ -27,7 +27,6 @@ import {
     useCounter,
 } from './hooks';
 import { Header } from './Header';
-import { Navbar } from './Navbar';
 
 const styles = StyleSheet.create({
     container: {
@@ -307,7 +306,6 @@ export const MatchingScreen = () => {
                     </View>
                 </View>
             </ScrollView>
-            <Navbar />
         </SafeAreaView>
     );
 };

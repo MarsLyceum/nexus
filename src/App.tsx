@@ -169,13 +169,43 @@ client
 
 function AppDrawer() {
     return (
-        <Drawer.Navigator drawerContent={(props) => <Sidebar {...props} />}>
-            <Drawer.Screen name="Home" component={HomeScreen} />
-            <Drawer.Screen name="Groups" component={GroupsScreen} />
-            <Drawer.Screen name="Messages" component={MessagesScreen} />
-            <Drawer.Screen name="Settings" component={SettingsScreen} />
-            <Drawer.Screen name="Server1" component={ServerScreen} />
-            <Drawer.Screen name="Server2" component={ServerScreen} />
+        <Drawer.Navigator
+            screenOptions={{
+                drawerType: 'permanent', // Always visible
+                drawerStyle: { width: 80 }, // Adjust width as needed
+            }}
+            drawerContent={(props) => <Sidebar {...props} />}
+        >
+            <Drawer.Screen
+                name="Home"
+                component={HomeScreen}
+                options={{ headerShown: false }}
+            />
+            <Drawer.Screen
+                name="Groups"
+                component={GroupsScreen}
+                options={{ headerShown: false }}
+            />
+            <Drawer.Screen
+                name="Messages"
+                component={MessagesScreen}
+                options={{ headerShown: false }}
+            />
+            <Drawer.Screen
+                name="Settings"
+                component={SettingsScreen}
+                options={{ headerShown: false }}
+            />
+            <Drawer.Screen
+                name="Server1"
+                component={ServerScreen}
+                options={{ headerShown: false }}
+            />
+            <Drawer.Screen
+                name="Server2"
+                component={ServerScreen}
+                options={{ headerShown: false }}
+            />
         </Drawer.Navigator>
     );
 }

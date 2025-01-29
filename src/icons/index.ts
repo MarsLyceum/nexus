@@ -11,3 +11,4 @@ export * from './ThumbsDown';
 export * from './ThumbsUp';
 export * from './PeepsBirdSimplified';
 export * from './Settings';
+export * from './Chat';

@@ -1,15 +1,10 @@
-// src/App.tsx
-
 import React, { useEffect, useState } from 'react';
-import { StatusBar } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
-import {
-    createDrawerNavigator,
-    DrawerContentComponentProps,
-} from '@react-navigation/drawer';
+import { createDrawerNavigator } from '@react-navigation/drawer';
 import { createStackNavigator } from '@react-navigation/stack';
 import EventSource from 'react-native-event-source';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'react-native';
 import {
     ApolloClient,
     InMemoryCache,
@@ -23,6 +18,7 @@ import {
 } from '@apollo/client';
 import { Provider as ReduxProvider } from 'react-redux';
 import { onError, ErrorResponse } from '@apollo/client/link/error';
+import { loadErrorMessages, loadDevMessages } from '@apollo/client/dev';
 import { getMainDefinition } from '@apollo/client/utilities';
 import {
     useFonts,
@@ -46,45 +42,26 @@ import {
     ServerMessagesScreen,
 } from './screens';
 
-// Initialize Axios quotas
 setupAxiosQuotas();
 
-// Initialize development messages only in dev environment
 if (__DEV__) {
-    // Uncomment if you have loadDevMessages and loadErrorMessages implementations
-    // loadDevMessages();
-    // loadErrorMessages();
+    // Adds messages only in a dev environment
+    loadDevMessages();
+    loadErrorMessages();
 }
 
-// **Define the parameter lists for navigators**
-type RootStackParamList = {
-    Welcome: undefined;
-    Login: undefined;
-    SignUp: undefined;
-    AppDrawer: undefined;
-    Chat: { user: { name: string; avatar: string } };
-    ServerMessages: { channel: string };
-};
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+const Drawer = createDrawerNavigator();
 
-type RootDrawerParamList = {
-    DMs: undefined;
-    Events: undefined;
-    Server1: { channel: string };
-    Server2: { channel: string };
-};
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+const Stack = createStackNavigator();
 
-// **Create typed navigators**
-const Drawer = createDrawerNavigator<RootDrawerParamList>();
-const Stack = createStackNavigator<RootStackParamList>();
-
-// **Error handling link for Apollo Client**
 const errorLink = onError((error: ErrorResponse) => {
     if (error) {
-        console.log('Apollo Client Error:', error);
+        console.log('error:', error);
     }
 });
 
-// **Apollo Client Quota Management**
 const requestQuota = 10;
 let requestCount = 0;
 
@@ -99,15 +76,15 @@ const quotaLink = new ApolloLink((operation, forward) => {
     });
 });
 
-// **Define your GraphQL endpoints**
 const graphqlApiGatewayEndpointHttp =
     'https://peeps-web-service-iwesf7iypq-uw.a.run.app/graphql';
 // const localGraphqlApiGatewayEndpointHttp = 'http://localhost:4000/graphql';
 // const graphqlApiGatewayEndpointSse =
 //     'https://peeps-web-service-iwesf7iypq-uw.a.run.app/graphql/stream';
-const graphqlApiGatewayEndpointSse = ''; // SSE is turned off to save costs
+const graphqlApiGatewayEndpointSse = ''; // turn off sse for now to save money
+// const localGraphqlApiGatewayEndpointSse =
+//     'http://localhost:4000/graphql/stream';
 
-// **HTTP Link for Apollo Client**
 const httpLink = from([
     errorLink,
     new HttpLink({
@@ -115,15 +92,10 @@ const httpLink = from([
     }),
 ]);
 
-// **SSE Link for Apollo Client (if enabled)**
 const sseLink = new ApolloLink(
     () =>
         new Observable((observer) => {
-            if (!graphqlApiGatewayEndpointSse) {
-                observer.complete();
-                return;
-            }
-
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
             const eventSource: EventSource = new EventSource(
                 graphqlApiGatewayEndpointSse,
                 {
@@ -131,11 +103,12 @@ const sseLink = new ApolloLink(
                 }
             );
 
+            // eslint-disable-next-line unicorn/prefer-add-event-listener
             eventSource.addEventListener(
                 'message',
                 (event: { data: string }) => {
                     try {
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument
                         const parsedData = JSON.parse(event.data);
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                         if (parsedData.errors) {
@@ -153,19 +126,18 @@ const sseLink = new ApolloLink(
                 }
             );
 
+            // eslint-disable-next-line unicorn/prefer-add-event-listener
             eventSource.addEventListener('error', (error: unknown) => {
                 observer.error(error);
                 eventSource.close();
             });
 
-            // eslint-disable-next-line consistent-return
             return () => {
                 eventSource.close();
             };
         })
 );
 
-// **Split link to handle subscriptions if SSE is enabled**
 const splitLink = split(
     ({ query }) => {
         const definition = getMainDefinition(query);
@@ -178,20 +150,17 @@ const splitLink = split(
     from([quotaLink, httpLink])
 );
 
-// **Initialize Apollo Client**
 const client = new ApolloClient({
     link: splitLink,
     cache: new InMemoryCache(),
 });
 
-// **Define GraphQL Subscriptions (if needed)**
 const GREETINGS_SUBSCRIPTION = gql`
     subscription OnGreeting {
         greetings
     }
 `;
 
-// **Subscribe to Greetings (optional)**
 client
     .subscribe({
         query: GREETINGS_SUBSCRIPTION,
@@ -206,12 +175,6 @@ client
         },
     });
 
-// **Custom Drawer Content Component**
-const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => (
-    <SidebarScreen {...props} />
-);
-
-// **Drawer Navigator Component**
 function AppDrawer() {
     return (
         <Drawer.Navigator
@@ -223,9 +186,7 @@ function AppDrawer() {
                     backgroundColor: COLORS.AppBackground,
                 }, // Adjust width as needed
             }}
-            drawerContent={(drawerProps) => (
-                <CustomDrawerContent {...drawerProps} />
-            )}
+            drawerContent={(props) => <SidebarScreen {...props} />}
         >
             <Drawer.Screen
                 name="DMs"
@@ -238,28 +199,26 @@ function AppDrawer() {
                 options={{ headerShown: false }}
             />
             <Drawer.Screen
+                // @ts-expect-error broken navigation
                 name="Server1"
                 // @ts-expect-error broken navigation
                 component={ServerScreen}
                 options={{ headerShown: false }}
-                initialParams={{ channel: 'Server1Channel' }}
             />
             <Drawer.Screen
+                // @ts-expect-error broken navigation
                 name="Server2"
                 // @ts-expect-error broken navigation
                 component={ServerScreen}
                 options={{ headerShown: false }}
-                initialParams={{ channel: 'Server2Channel' }}
             />
         </Drawer.Navigator>
     );
 }
 
-// **Splash Screen Handling**
-SplashScreen.preventAutoHideAsync().catch(console.warn);
-
-// **Main App Component**
-export function App() {
+// we need to have App be a default export for React Native to work
+// eslint-disable-next-line import/no-default-export
+export default function App() {
     const [appIsReady, setAppIsReady] = useState(false);
 
     const [fontsLoaded] = useFonts({
@@ -269,9 +228,9 @@ export function App() {
 
     useEffect(() => {
         if (fontsLoaded) {
-            SplashScreen.hideAsync()
-                .then(() => setAppIsReady(true))
-                .catch(console.warn);
+            // eslint-disable-next-line no-void
+            void SplashScreen.hideAsync(); // Hide the splash screen once the fonts are loaded
+            setAppIsReady(true);
         }
     }, [fontsLoaded]);
 
@@ -290,7 +249,7 @@ export function App() {
                         <ReduxProvider store={store}>
                             <NavigationContainer
                                 onReady={() => {
-                                    console.log('Navigation is ready');
+                                    console.log('navigation ready');
                                 }}
                             >
                                 <Stack.Navigator initialRouteName="Welcome">

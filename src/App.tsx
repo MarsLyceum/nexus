@@ -182,6 +182,7 @@ function AppDrawer() {
                 drawerType: 'permanent', // Always visible
                 drawerStyle: {
                     width: 80,
+                    borderWidth: 0,
                     backgroundColor: COLORS.AppBackground,
                 }, // Adjust width as needed
             }}

@@ -23,7 +23,12 @@ const initialChannels = [
     { id: '5', name: 'character creation' },
 ];
 
-const ChannelList = ({ navigation, activeChannel, setActiveChannel }) => {
+const ChannelList = ({
+    navigation,
+    activeChannel,
+    setActiveChannel,
+    isLargeScreen,
+}) => {
     return (
         // Let this fill its parent so on small screens, it covers the full page
         <View style={styles.channelListContainer}>
@@ -32,37 +37,44 @@ const ChannelList = ({ navigation, activeChannel, setActiveChannel }) => {
                 data={initialChannels}
                 keyExtractor={(item) => item.id}
                 renderItem={({ item }) => (
-                    <TouchableOpacity
+                    <View
                         style={[
-                            styles.channelItem,
                             activeChannel === item.name &&
-                                styles.activeChannelItem,
+                                styles.activeChannelItemWrapper,
                         ]}
-                        onPress={() => {
-                            setActiveChannel(item.name);
-                            navigation.navigate('ServerMessages', {
-                                channel: item.name,
-                            });
-                        }}
                     >
-                        <Icon
-                            name="comment"
-                            size={16}
-                            color={
-                                activeChannel === item.name ? 'white' : 'gray'
-                            }
-                            style={styles.icon}
-                        />
-                        <Text
-                            style={[
-                                styles.channelText,
-                                activeChannel === item.name &&
-                                    styles.activeChannelText,
-                            ]}
+                        <TouchableOpacity
+                            style={styles.channelItem}
+                            onPress={() => {
+                                setActiveChannel(item.name);
+                                if (!isLargeScreen) {
+                                    navigation.navigate('ServerMessages', {
+                                        channel: item.name,
+                                    });
+                                }
+                            }}
                         >
-                            {item.name}
-                        </Text>
-                    </TouchableOpacity>
+                            <Icon
+                                name="comment"
+                                size={16}
+                                color={
+                                    activeChannel === item.name
+                                        ? COLORS.White
+                                        : COLORS.InactiveText
+                                }
+                                style={styles.icon}
+                            />
+                            <Text
+                                style={[
+                                    styles.channelText,
+                                    activeChannel === item.name &&
+                                        styles.activeChannelText,
+                                ]}
+                            >
+                                {item.name}
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
                 )}
             />
         </View>
@@ -72,16 +84,18 @@ const ChannelList = ({ navigation, activeChannel, setActiveChannel }) => {
 // **Main Server Screen Component**
 export function ServerScreen({ navigation }) {
     const { width } = useWindowDimensions();
+    const isLargeScreen = width > 768;
     const [activeChannel, setActiveChannel] = useState('general');
 
     // For large screens, show side-by-side layout:
-    if (width > 768) {
+    if (isLargeScreen) {
         return (
             <View style={styles.largeScreenContainer}>
                 {/* Fixed-width sidebar for channels */}
                 <View style={styles.sidebarContainer}>
                     <ChannelList
                         navigation={navigation}
+                        isLargeScreen={isLargeScreen}
                         activeChannel={activeChannel}
                         setActiveChannel={setActiveChannel}
                     />
@@ -104,6 +118,7 @@ export function ServerScreen({ navigation }) {
             navigation={navigation}
             activeChannel={activeChannel}
             setActiveChannel={setActiveChannel}
+            isLargeScreen={isLargeScreen} // Ensure isLargeScreen is passed
         />
     );
 }
@@ -162,9 +177,16 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         paddingVertical: 10,
+        paddingHorizontal: 8, // Added for better touch area
     },
     activeChannelItem: {
-        backgroundColor: '#3A2A4A',
+        backgroundColor: COLORS.SecondaryBackground,
+        borderRadius: 5,
+    },
+    activeChannelItemWrapper: {
+        backgroundColor: COLORS.SecondaryBackground,
+        padding: 4,
+        marginVertical: 2,
         borderRadius: 5,
     },
     icon: {

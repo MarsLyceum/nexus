@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { NavigationProp } from '@react-navigation/core';
+import { NavigationProp, RouteProp } from '@react-navigation/core';
 import {
     View,
     Text,
@@ -206,12 +206,18 @@ const ChannelList = ({
     </View>
 );
 
+type RootStackParamList = {
+    ServerMessages: { channel: string };
+};
+
 // **Main Server Screen Component**
 export function ServerScreen({
     navigation,
-}: {
-    navigation: NavigationProp<Record<string, unknown>>;
-}) {
+    route,
+}: Readonly<{
+    route: RouteProp<RootStackParamList, 'ServerMessages'>;
+    navigation: NavigationProp<RootStackParamList, 'ServerMessages'>;
+}>) {
     const { width } = useWindowDimensions();
     const isLargeScreen = width > 768;
     const [activeChannel, setActiveChannel] = useState('general');
@@ -233,6 +239,7 @@ export function ServerScreen({
                 {/* The rest is chat */}
                 <View style={styles.chatWrapper}>
                     <ServerMessagesScreen
+                        route={route}
                         activeChannel={activeChannel}
                         navigation={navigation}
                     />

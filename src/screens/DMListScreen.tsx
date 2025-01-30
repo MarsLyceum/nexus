@@ -13,6 +13,24 @@ import {
 import { COLORS } from '../constants';
 import { ChatScreen } from './ChatScreen';
 
+// **Define the type for navigation parameters**
+type RootStackParamList = {
+    ChatScreen: {
+        user: {
+            id: string;
+            name: string;
+            avatar: string;
+            subText?: string;
+        };
+    };
+    // Add other routes and their params here if necessary
+};
+
+// **Define the props interface for DMListScreen**
+interface DMListScreenProps {
+    navigation: NavigationProp<RootStackParamList, 'ChatScreen'>;
+}
+
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -95,16 +113,12 @@ const users = [
     },
 ];
 
-export const DMListScreen = ({
-    navigation,
-}: {
-    navigation: NavigationProp<Record<string, unknown>>;
-}) => {
+export const DMListScreen: React.FC<DMListScreenProps> = ({ navigation }) => {
     const { width } = useWindowDimensions();
     const isLargeScreen = width > 768;
-    const [selectedUser, setSelectedUser] = useState(
-        isLargeScreen ? users[0] : undefined
-    );
+    const [selectedUser, setSelectedUser] = useState<
+        (typeof users)[0] | undefined
+    >(isLargeScreen ? users[0] : undefined);
 
     // When switching to large screens, ensure we have a selected user
     useEffect(() => {
@@ -123,7 +137,7 @@ export const DMListScreen = ({
             setSelectedUser(user);
         } else {
             // On small screens, navigate to the Chat screen
-            navigation.navigate('Chat', { user });
+            navigation.navigate('ChatScreen', { user });
         }
     };
 
@@ -150,6 +164,7 @@ export const DMListScreen = ({
                         >
                             <Image
                                 source={{ uri: item.avatar }}
+                                // Ensure the path to your default avatar is correct
                                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, global-require, unicorn/prefer-module
                                 defaultSource={require('../../assets/default-avatar.png')}
                                 style={styles.avatar}
@@ -173,7 +188,11 @@ export const DMListScreen = ({
                 <View style={styles.chatWrapper}>
                     <ChatScreen
                         navigation={navigation}
-                        route={{ params: { user: selectedUser } }}
+                        route={{
+                            key: `ChatScreen-${selectedUser.id}`, // Unique key for each chat
+                            name: 'ChatScreen',
+                            params: { user: selectedUser },
+                        }}
                     />
                 </View>
             )}

@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { View, Animated, StyleSheet, LayoutChangeEvent } from 'react-native';
-import { NavigationProp } from '@react-navigation/core';
+import { DrawerContentComponentProps } from '@react-navigation/drawer';
 
 import { ChatButton, GroupButton, EventsButton } from '../buttons';
 import { COLORS } from '../constants';
@@ -41,11 +41,7 @@ const styles = StyleSheet.create({
     },
 });
 
-export const SidebarScreen = ({
-    navigation,
-}: Readonly<{
-    navigation: NavigationProp<Record<string, unknown>>;
-}>) => {
+export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
     // Default to "chat" as selected
     const [selectedButton, setSelectedButton] = useState<string>('chat');
 

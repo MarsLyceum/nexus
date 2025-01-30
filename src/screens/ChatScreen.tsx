@@ -10,14 +10,115 @@ import {
     Platform,
     useWindowDimensions,
 } from 'react-native';
+import { NavigationProp, RouteProp } from '@react-navigation/core';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 
 import { COLORS } from '../constants';
 
+// **Define the type for navigation parameters**
+type RootStackParamList = {
+    ChatScreen: {
+        user: {
+            name: string;
+            avatar: string;
+        };
+    };
+    // Add other routes and their params here if necessary
+};
+
+type ChatScreenProps = {
+    navigation: NavigationProp<RootStackParamList, 'ChatScreen'>;
+    route: RouteProp<RootStackParamList, 'ChatScreen'>;
+};
+
 // Detect if the device is a mobile or tablet
 const isMobileOrTablet = Platform.OS === 'ios' || Platform.OS === 'android';
 
-export const ChatScreen = ({ route, navigation }) => {
+const styles = StyleSheet.create({
+    chatContainer: {
+        flex: 1,
+        backgroundColor: COLORS.PrimaryBackground,
+    },
+    chatHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: COLORS.PrimaryBackground,
+        borderColor: COLORS.InactiveText,
+        borderBottomWidth: 1,
+        padding: 15,
+    },
+    headerAvatar: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        marginLeft: 10,
+    },
+    chatTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: 'white',
+        marginLeft: 10,
+    },
+    messageContainer: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        padding: 15,
+    },
+    messageAvatar: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        marginRight: 10,
+    },
+    messageContent: {
+        flex: 1,
+    },
+    userName: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: 'white',
+    },
+    time: {
+        fontSize: 12,
+        color: 'gray',
+    },
+    messageText: {
+        fontSize: 14,
+        color: 'white',
+        marginTop: 2,
+    },
+    editedLabel: {
+        fontSize: 12,
+        color: 'gray',
+        marginTop: 2,
+    },
+    inputContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 10,
+        borderTopWidth: 1,
+        borderTopColor: COLORS.InactiveText,
+        backgroundColor: COLORS.PrimaryBackground,
+    },
+    input: {
+        flex: 1,
+        backgroundColor: COLORS.SecondaryBackground,
+        color: 'white',
+        padding: 10,
+        borderRadius: 20,
+        fontSize: 14,
+        marginRight: 10,
+    },
+    sendButton: {
+        padding: 10,
+    },
+});
+
+// **ChatScreen Component**
+export const ChatScreen: React.FC<ChatScreenProps> = ({
+    route,
+    navigation,
+}) => {
     const { user } = route.params || { user: { name: 'Unknown', avatar: '' } };
     const { width } = useWindowDimensions();
     const isLargeScreen = width > 768;
@@ -155,86 +256,3 @@ export const ChatScreen = ({ route, navigation }) => {
         </View>
     );
 };
-
-// **💅 Styles**
-const styles = StyleSheet.create({
-    chatContainer: {
-        flex: 1,
-        backgroundColor: COLORS.PrimaryBackground,
-    },
-    chatHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: COLORS.PrimaryBackground,
-        borderColor: COLORS.InactiveText,
-        borderBottomWidth: 1,
-        padding: 15,
-    },
-    headerAvatar: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        marginLeft: 10,
-    },
-    chatTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: 'white',
-        marginLeft: 10,
-    },
-    messageContainer: {
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        padding: 15,
-    },
-    messageAvatar: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        marginRight: 10,
-    },
-    messageContent: {
-        flex: 1,
-    },
-    userName: {
-        fontSize: 14,
-        fontWeight: 'bold',
-        color: 'white',
-    },
-    time: {
-        fontSize: 12,
-        color: 'gray',
-    },
-    messageText: {
-        fontSize: 14,
-        color: 'white',
-        marginTop: 2,
-    },
-    editedLabel: {
-        fontSize: 12,
-        color: 'gray',
-        marginTop: 2,
-    },
-    inputContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 10,
-        borderTopWidth: 1,
-        borderTopColor: COLORS.InactiveText,
-        backgroundColor: COLORS.PrimaryBackground,
-    },
-    input: {
-        flex: 1,
-        backgroundColor: COLORS.SecondaryBackground,
-        color: 'white',
-        padding: 10,
-        borderRadius: 20,
-        fontSize: 14,
-        marginRight: 10,
-    },
-    sendButton: {
-        padding: 10,
-    },
-});
-
-export default ChatScreen;

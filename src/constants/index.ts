@@ -1,5 +1,3 @@
-export * from './colors';
-
 import { Platform } from 'react-native';
 
 function getPlatformTopPadding() {
@@ -10,3 +8,5 @@ function getPlatformTopPadding() {
 }
 
 export const PLATFORM_TOP_PADDING = getPlatformTopPadding();
+
+export * from './colors';

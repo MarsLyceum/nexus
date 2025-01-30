@@ -2,14 +2,6 @@ import React from 'react';
 import { TouchableOpacity, StyleSheet } from 'react-native';
 import { Events } from '../icons';
 
-export const EventsButton = ({ onPress }) => {
-    return (
-        <TouchableOpacity style={styles.button} onPress={onPress}>
-            <Events />
-        </TouchableOpacity>
-    );
-};
-
 const styles = StyleSheet.create({
     button: {
         width: 40,
@@ -20,3 +12,9 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
 });
+
+export const EventsButton = ({ onPress }: { onPress: () => unknown }) => (
+    <TouchableOpacity style={styles.button} onPress={onPress}>
+        <Events />
+    </TouchableOpacity>
+);

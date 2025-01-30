@@ -1,19 +1,11 @@
 import React from 'react';
-import { TouchableOpacity, StyleSheet, Image, View } from 'react-native';
-
-export const GroupButton = ({ onPress, imageSource }) => {
-    return (
-        <TouchableOpacity onPress={onPress} style={styles.buttonContainer}>
-            <View style={styles.button}>
-                <Image
-                    source={imageSource}
-                    style={styles.image}
-                    resizeMode="cover" // Ensures the image fills the entire rectangle
-                />
-            </View>
-        </TouchableOpacity>
-    );
-};
+import {
+    TouchableOpacity,
+    StyleSheet,
+    Image,
+    View,
+    ImageSourcePropType,
+} from 'react-native';
 
 const styles = StyleSheet.create({
     buttonContainer: {
@@ -35,3 +27,21 @@ const styles = StyleSheet.create({
         height: '100%',
     },
 });
+
+export const GroupButton = ({
+    onPress,
+    imageSource,
+}: {
+    onPress: () => unknown;
+    imageSource: ImageSourcePropType;
+}) => (
+    <TouchableOpacity onPress={onPress} style={styles.buttonContainer}>
+        <View style={styles.button}>
+            <Image
+                source={imageSource}
+                style={styles.image}
+                resizeMode="cover" // Ensures the image fills the entire rectangle
+            />
+        </View>
+    </TouchableOpacity>
+);

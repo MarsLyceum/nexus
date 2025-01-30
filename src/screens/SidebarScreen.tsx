@@ -1,11 +1,45 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { View, Animated, StyleSheet } from 'react-native';
+import { View, Animated, StyleSheet, LayoutChangeEvent } from 'react-native';
 import { NavigationProp } from '@react-navigation/core';
 
 import { ChatButton, GroupButton, EventsButton } from '../buttons';
 import { COLORS } from '../constants';
 
-const BUTTON_MARGIN_TOP = 32; // Define margin top for reuse
+const BUTTON_MARGIN_TOP = 32;
+
+const styles = StyleSheet.create({
+    sidebarButtonsContainer: {
+        marginTop: BUTTON_MARGIN_TOP,
+    },
+    sidebarContainer: {
+        width: 80,
+        height: '100%',
+        backgroundColor: COLORS.AppBackground,
+        flexDirection: 'column',
+        justifyContent: 'flex-start',
+        alignItems: 'center',
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        bottom: 0,
+        overflow: 'hidden',
+    },
+    buttonContainer: {
+        marginBottom: 16,
+        width: '100%',
+        alignItems: 'center',
+    },
+    highlight: {
+        position: 'absolute',
+        left: 0,
+        width: 4,
+        backgroundColor: COLORS.OffWhite,
+        borderTopRightRadius: 20,
+        borderBottomRightRadius: 20,
+        zIndex: 999,
+        right: 'auto',
+    },
+});
 
 export const SidebarScreen = ({
     navigation,
@@ -25,7 +59,7 @@ export const SidebarScreen = ({
     const highlightHeight = useRef(new Animated.Value(40)).current; // Default height
 
     // Capture each button's y & height
-    const handleLayout = (name: string) => (event: any) => {
+    const handleLayout = (name: string) => (event: LayoutChangeEvent) => {
         const { y, height } = event.nativeEvent.layout;
         setButtonLayouts((prev) => ({
             ...prev,
@@ -94,6 +128,7 @@ export const SidebarScreen = ({
                     style={styles.buttonContainer}
                 >
                     <GroupButton
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, global-require, unicorn/prefer-module
                         imageSource={require('../images/playstation_controller.jpg')}
                         onPress={() => {
                             setSelectedButton('server1');
@@ -108,6 +143,7 @@ export const SidebarScreen = ({
                     style={styles.buttonContainer}
                 >
                     <GroupButton
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, global-require, unicorn/prefer-module
                         imageSource={require('../images/mario.jpg')}
                         onPress={() => {
                             setSelectedButton('server2');
@@ -119,37 +155,3 @@ export const SidebarScreen = ({
         </View>
     );
 };
-
-const styles = StyleSheet.create({
-    sidebarButtonsContainer: {
-        marginTop: BUTTON_MARGIN_TOP, // Use the variable here
-    },
-    sidebarContainer: {
-        width: 80,
-        height: '100%',
-        backgroundColor: COLORS.AppBackground,
-        flexDirection: 'column',
-        justifyContent: 'flex-start',
-        alignItems: 'center',
-        position: 'absolute', // Ensure it is fixed in place
-        left: 0,
-        top: 0,
-        bottom: 0,
-        overflow: 'hidden', // Prevents any unwanted overflow
-    },
-    buttonContainer: {
-        marginBottom: 16,
-        width: '100%',
-        alignItems: 'center',
-    },
-    highlight: {
-        position: 'absolute',
-        left: 0,
-        width: 4,
-        backgroundColor: COLORS.OffWhite,
-        borderTopRightRadius: 20,
-        borderBottomRightRadius: 20,
-        zIndex: 999,
-        right: 'auto', // Ensures no extra white space on the right
-    },
-});

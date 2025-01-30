@@ -2,6 +2,14 @@ import React from 'react';
 import { View, FlatList, StyleSheet } from 'react-native';
 import { EventCard } from '../cards';
 
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        padding: 10,
+        backgroundColor: '#1E1E1E',
+    },
+});
+
 const events = [
     {
         id: '1',
@@ -23,24 +31,12 @@ const events = [
     },
 ];
 
-export const EventsScreen: React.FC = () => {
-    return (
-        <View style={styles.container}>
-            <FlatList
-                data={events}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => <EventCard {...item} />}
-            />
-        </View>
-    );
-};
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        padding: 10,
-        backgroundColor: '#1E1E1E',
-    },
-});
-
-export default EventsScreen;
+export const EventsScreen: React.FC = () => (
+    <View style={styles.container}>
+        <FlatList
+            data={events}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => <EventCard {...item} />}
+        />
+    </View>
+);

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { createStackNavigator } from '@react-navigation/stack';
+import { NavigationProp } from '@react-navigation/core';
 import {
     View,
     Text,
@@ -12,120 +12,7 @@ import Icon from 'react-native-vector-icons/FontAwesome5';
 import { COLORS } from '../constants';
 import { ServerMessagesScreen } from './ServerMessagesScreen';
 
-const Stack = createStackNavigator();
-
-// **Channel List**
-const initialChannels = [
-    { id: '1', name: 'general' },
-    { id: '2', name: 'references' },
-    { id: '3', name: 'shopping' },
-    { id: '4', name: 'events' },
-    { id: '5', name: 'character creation' },
-];
-
-const ChannelList = ({
-    navigation,
-    activeChannel,
-    setActiveChannel,
-    isLargeScreen,
-}) => {
-    return (
-        // Let this fill its parent so on small screens, it covers the full page
-        <View style={styles.channelListContainer}>
-            <Text style={styles.serverTitle}>The Traveler Campaign</Text>
-            <FlatList
-                data={initialChannels}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => (
-                    <View
-                        style={[
-                            activeChannel === item.name &&
-                                styles.activeChannelItemWrapper,
-                        ]}
-                    >
-                        <TouchableOpacity
-                            style={styles.channelItem}
-                            onPress={() => {
-                                setActiveChannel(item.name);
-                                if (!isLargeScreen) {
-                                    navigation.navigate('ServerMessages', {
-                                        channel: item.name,
-                                    });
-                                }
-                            }}
-                        >
-                            <Icon
-                                name="comment"
-                                size={16}
-                                color={
-                                    activeChannel === item.name
-                                        ? COLORS.White
-                                        : COLORS.InactiveText
-                                }
-                                style={styles.icon}
-                            />
-                            <Text
-                                style={[
-                                    styles.channelText,
-                                    activeChannel === item.name &&
-                                        styles.activeChannelText,
-                                ]}
-                            >
-                                {item.name}
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
-                )}
-            />
-        </View>
-    );
-};
-
-// **Main Server Screen Component**
-export function ServerScreen({ navigation }) {
-    const { width } = useWindowDimensions();
-    const isLargeScreen = width > 768;
-    const [activeChannel, setActiveChannel] = useState('general');
-
-    // For large screens, show side-by-side layout:
-    if (isLargeScreen) {
-        return (
-            <View style={styles.largeScreenContainer}>
-                {/* Fixed-width sidebar for channels */}
-                <View style={styles.sidebarContainer}>
-                    <ChannelList
-                        navigation={navigation}
-                        isLargeScreen={isLargeScreen}
-                        activeChannel={activeChannel}
-                        setActiveChannel={setActiveChannel}
-                    />
-                </View>
-
-                {/* The rest is chat */}
-                <View style={styles.chatWrapper}>
-                    <ServerMessagesScreen
-                        activeChannel={activeChannel}
-                        navigation={navigation}
-                    />
-                </View>
-            </View>
-        );
-    }
-
-    // Otherwise, use stack screens on smaller devices
-    return (
-        <ChannelList
-            navigation={navigation}
-            activeChannel={activeChannel}
-            setActiveChannel={setActiveChannel}
-            isLargeScreen={isLargeScreen} // Ensure isLargeScreen is passed
-        />
-    );
-}
-
-// **Styles**
 const styles = StyleSheet.create({
-    // Fill entire screen with background color
     largeScreenContainer: {
         flex: 1,
         flexDirection: 'row',
@@ -250,4 +137,117 @@ const styles = StyleSheet.create({
     },
 });
 
-export default ServerScreen;
+// **Channel List**
+const initialChannels = [
+    { id: '1', name: 'general' },
+    { id: '2', name: 'references' },
+    { id: '3', name: 'shopping' },
+    { id: '4', name: 'events' },
+    { id: '5', name: 'character creation' },
+];
+
+const ChannelList = ({
+    navigation,
+    activeChannel,
+    setActiveChannel,
+    isLargeScreen,
+}: {
+    navigation: NavigationProp<Record<string, unknown>>;
+    activeChannel: string;
+    setActiveChannel: (arg: string) => unknown;
+    isLargeScreen: boolean;
+}) => (
+    <View style={styles.channelListContainer}>
+        <Text style={styles.serverTitle}>The Traveler Campaign</Text>
+        <FlatList
+            data={initialChannels}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+                <View
+                    style={[
+                        activeChannel === item.name &&
+                            styles.activeChannelItemWrapper,
+                    ]}
+                >
+                    <TouchableOpacity
+                        style={styles.channelItem}
+                        onPress={() => {
+                            setActiveChannel(item.name);
+                            if (!isLargeScreen) {
+                                navigation.navigate('ServerMessages', {
+                                    channel: item.name,
+                                });
+                            }
+                        }}
+                    >
+                        <Icon
+                            name="comment"
+                            size={16}
+                            color={
+                                activeChannel === item.name
+                                    ? COLORS.White
+                                    : COLORS.InactiveText
+                            }
+                            style={styles.icon}
+                        />
+                        <Text
+                            style={[
+                                styles.channelText,
+                                activeChannel === item.name &&
+                                    styles.activeChannelText,
+                            ]}
+                        >
+                            {item.name}
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+            )}
+        />
+    </View>
+);
+
+// **Main Server Screen Component**
+export function ServerScreen({
+    navigation,
+}: {
+    navigation: NavigationProp<Record<string, unknown>>;
+}) {
+    const { width } = useWindowDimensions();
+    const isLargeScreen = width > 768;
+    const [activeChannel, setActiveChannel] = useState('general');
+
+    // For large screens, show side-by-side layout:
+    if (isLargeScreen) {
+        return (
+            <View style={styles.largeScreenContainer}>
+                {/* Fixed-width sidebar for channels */}
+                <View style={styles.sidebarContainer}>
+                    <ChannelList
+                        navigation={navigation}
+                        isLargeScreen={isLargeScreen}
+                        activeChannel={activeChannel}
+                        setActiveChannel={setActiveChannel}
+                    />
+                </View>
+
+                {/* The rest is chat */}
+                <View style={styles.chatWrapper}>
+                    <ServerMessagesScreen
+                        activeChannel={activeChannel}
+                        navigation={navigation}
+                    />
+                </View>
+            </View>
+        );
+    }
+
+    // Otherwise, use stack screens on smaller devices
+    return (
+        <ChannelList
+            navigation={navigation}
+            activeChannel={activeChannel}
+            setActiveChannel={setActiveChannel}
+            isLargeScreen={isLargeScreen} // Ensure isLargeScreen is passed
+        />
+    );
+}

@@ -10,29 +10,6 @@ interface EventCardProps {
     imageUrl: string;
 }
 
-export const EventCard: React.FC<EventCardProps> = ({
-    title,
-    dateTime,
-    groupName,
-    attendees,
-    location,
-    imageUrl,
-}) => {
-    return (
-        <View style={styles.card}>
-            <View style={styles.textContainer}>
-                <Text style={styles.title}>{title}</Text>
-                <Text style={styles.dateTime}>{dateTime}</Text>
-                <Text style={styles.groupName}>{groupName}</Text>
-                <Text style={styles.attendees}>
-                    {attendees} going · {location}
-                </Text>
-            </View>
-            <Image source={{ uri: imageUrl }} style={styles.eventImage} />
-        </View>
-    );
-};
-
 const styles = StyleSheet.create({
     card: {
         flexDirection: 'row',
@@ -70,3 +47,24 @@ const styles = StyleSheet.create({
         marginLeft: 10,
     },
 });
+
+export const EventCard: React.FC<EventCardProps> = ({
+    title,
+    dateTime,
+    groupName,
+    attendees,
+    location,
+    imageUrl,
+}) => (
+    <View style={styles.card}>
+        <View style={styles.textContainer}>
+            <Text style={styles.title}>{title}</Text>
+            <Text style={styles.dateTime}>{dateTime}</Text>
+            <Text style={styles.groupName}>{groupName}</Text>
+            <Text style={styles.attendees}>
+                {attendees} going · {location}
+            </Text>
+        </View>
+        <Image source={{ uri: imageUrl }} style={styles.eventImage} />
+    </View>
+);

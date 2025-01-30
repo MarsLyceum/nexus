@@ -6,29 +6,30 @@ import {
     ScrollView,
     Pressable,
     StyleSheet,
+    GestureResponderEvent,
 } from 'react-native';
-import React, { useCallback } from 'react';
-import { FontAwesome } from '@expo/vector-icons';
-import { JwtPayload, jwtDecode } from 'jwt-decode';
 import { NavigationProp } from '@react-navigation/core';
-import { Formik, FormikErrors } from 'formik';
-import { isEmail } from 'validator';
+import React, { useCallback } from 'react';
 import Auth0 from 'react-native-auth0';
+import { JwtPayload, jwtDecode } from 'jwt-decode';
+import { Formik } from 'formik';
+import { isEmail } from 'validator';
+import { FontAwesome } from '@expo/vector-icons';
 import { useApolloClient } from '@apollo/client';
 
-import { User } from './types';
-import { loginUser, useAppDispatch } from './redux';
-import { FETCH_USER_QUERY } from './queries';
+import { REGISTER_USER_MUTATION } from '../queries';
+import { SignUpIllustration, HorizontalLine } from '../images';
+import { GoogleLogo, User as UserIcon, Email, Phone, Lock } from '../icons';
+import { User } from '../types';
+import { loginUser, useAppDispatch } from '../redux';
+
 import {
     validatePassword,
     AUTH0_DOMAIN,
     AUTH0_CLIENT_ID,
     AUTH0_AUDIENCE,
-} from './utils';
-
-import { Email, Lock, GoogleLogo } from './icons';
-import { LoginIllustration, HorizontalLine } from './images';
-import { PrimaryGradientButton } from './PrimaryGradientButton';
+} from '../utils';
+import { PrimaryGradientButton } from '../PrimaryGradientButton';
 
 const auth0 = new Auth0({
     domain: AUTH0_DOMAIN ?? '',
@@ -39,13 +40,24 @@ type DecodedToken = JwtPayload & {
     email: string;
 };
 
-type FormValues = { email: string; password: string };
-const initialFormValues: FormValues = { email: '', password: '' };
+type FormValues = {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    phoneNumber: string;
+};
+const initialFormValues = {
+    email: '',
+    password: '',
+    firstName: '',
+    lastName: '',
+    phoneNumber: '',
+};
 
 const styles = StyleSheet.create({
     topButton: {
         marginTop: 38,
-        marginBottom: 80,
     },
     outerContainer: {
         flex: 1,
@@ -80,12 +92,24 @@ const styles = StyleSheet.create({
     },
     inputContainer: {
         width: '100%',
-        marginTop: 15,
         marginBottom: 15,
         height: 50,
         alignItems: 'center',
     },
     input: {
+        // height: 50,
+        // width: 285,
+        // paddingHorizontal: 20,
+        // fontSize: 16,
+        // backgroundColor: '#f9f9f9',
+
+        // flex: 1,
+        // backgroundColor: '#f9f9f9',
+
+        // old stuff, new stuff
+
+        // borderWidth: 1,
+        // borderRadius: 25,
         borderColor: '#ddd',
         height: 45,
         flex: 1,
@@ -131,15 +155,15 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
     },
-    forgotPasswordText: {
+    loginText: {
         fontSize: 16,
         color: '#666',
-        marginTop: 17,
-        marginBottom: 53,
+        marginTop: 30,
+        marginBottom: 34,
         textAlign: 'center',
     },
-    forgotPasswordLink: {
-        color: '#A63FA3',
+    loginLink: {
+        color: '#ff5a5f',
         fontWeight: 'bold',
     },
     innerScrollContainer: {
@@ -170,13 +194,12 @@ const styles = StyleSheet.create({
     },
 });
 
-export function LoginScreen({
+export function SignUpScreen({
     navigation,
 }: Readonly<{
     navigation: NavigationProp<Record<string, unknown>>;
 }>) {
     const dispatch = useAppDispatch();
-    const apolloClient = useApolloClient();
 
     const updateUserData = useCallback(
         (user: User) => {
@@ -185,26 +208,37 @@ export function LoginScreen({
         [dispatch]
     );
 
+    const apolloClient = useApolloClient();
+
     const validateEmailPassword = useCallback((values: FormValues) => {
-        const errors: FormikErrors<FormValues> = {};
+        const errors: FormValues = initialFormValues;
 
-        if (!isEmail(values.email)) {
-            errors.email = `${values.email} is not a valid email.`;
-        }
+        errors.email = isEmail(values.email)
+            ? ''
+            : `${values.email} is not a valid email.`;
+        errors.password = validatePassword(values.password);
+        errors.firstName =
+            values.firstName.length > 0 ? '' : 'Please provide your first name';
+        errors.lastName =
+            values.lastName.length > 0 ? '' : 'Please provide your last name';
 
-        const passwordError = validatePassword(values.password);
-        if (passwordError) {
-            errors.password = passwordError;
-        }
-
-        return errors;
+        const noErrors = Object.values(errors).every((value) => value === '');
+        return noErrors ? {} : errors;
     }, []);
 
-    const handleAuth0Login = async (email: string, password: string) => {
+    const handleSignup = async (values: FormValues) => {
         try {
+            await auth0.auth.createUser({
+                email: values.email,
+                password: values.password,
+                connection: 'Username-Password-Authentication',
+                user_metadata: {},
+            });
+
+            // Log the user in
             const credentials = await auth0.auth.passwordRealm({
-                username: email,
-                password,
+                username: values.email,
+                password: values.password,
                 realm: 'Username-Password-Authentication',
                 audience: AUTH0_AUDIENCE,
                 scope: 'openid profile email',
@@ -218,10 +252,13 @@ export function LoginScreen({
                 token: credentials.idToken,
             };
 
-            const result = await apolloClient.query({
-                query: FETCH_USER_QUERY,
+            const result = await apolloClient.mutate({
+                mutation: REGISTER_USER_MUTATION,
                 variables: {
-                    email,
+                    email: values.email,
+                    firstName: values.firstName,
+                    lastName: values.lastName,
+                    phoneNumber: values.phoneNumber,
                 },
             });
 
@@ -230,22 +267,28 @@ export function LoginScreen({
                 ...result.data,
                 token: auth0Data.token,
             };
+
             updateUserData(user);
 
-            navigation.navigate('Matching');
+            navigation.navigate('AppDrawer');
         } catch (error) {
-            console.error('Auth0 login failed:', error);
+            console.error(error);
+            if (error instanceof Error) {
+                // eslint-disable-next-line no-alert
+                alert(`Signup failed: ${error.message}`);
+            } else {
+                // eslint-disable-next-line no-alert
+                alert('Signup failed: An unknown error occurred');
+            }
         }
     };
 
     return (
         <SafeAreaView style={styles.outerContainer}>
-            <ScrollView contentContainerStyle={styles.innerScrollContainer}>
+            <ScrollView style={styles.innerScrollContainer}>
                 <Formik
                     initialValues={initialFormValues}
-                    onSubmit={async (values): Promise<void> => {
-                        await handleAuth0Login(values.email, values.password);
-                    }}
+                    onSubmit={handleSignup}
                     validate={validateEmailPassword}
                     validateOnChange={false}
                     validateOnBlur={false}
@@ -258,9 +301,41 @@ export function LoginScreen({
                         errors,
                     }) => (
                         <View style={styles.container}>
-                            <LoginIllustration />
-                            <Text style={styles.title}>Log in</Text>
+                            <SignUpIllustration />
+                            <Text style={styles.title}>Get Started</Text>
+                            <Text style={styles.subtitle}>
+                                by creating a free account.
+                            </Text>
 
+                            <View style={styles.inputContainer}>
+                                <View style={styles.inputWrapper}>
+                                    <UserIcon style={styles.inputIcon} />
+                                    <TextInput
+                                        placeholder="First Name"
+                                        style={styles.input}
+                                        selectionColor="#ddd"
+                                        onBlur={handleBlur('firstName')}
+                                        onChangeText={handleChange('firstName')}
+                                    />
+                                </View>
+                            </View>
+                            <Text style={{ color: 'red' }}>
+                                {errors.firstName}
+                            </Text>
+                            <View style={styles.inputContainer}>
+                                <View style={styles.inputWrapper}>
+                                    <UserIcon style={styles.inputIcon} />
+                                    <TextInput
+                                        placeholder="Last Name"
+                                        style={styles.input}
+                                        onBlur={handleBlur('lastName')}
+                                        onChangeText={handleChange('lastName')}
+                                    />
+                                </View>
+                            </View>
+                            <Text style={{ color: 'red' }}>
+                                {errors.lastName}
+                            </Text>
                             <View style={styles.inputContainer}>
                                 <View style={styles.inputWrapper}>
                                     <Email style={styles.inputIcon} />
@@ -277,12 +352,21 @@ export function LoginScreen({
                             <Text style={{ color: 'red' }}>{errors.email}</Text>
                             <View style={styles.inputContainer}>
                                 <View style={styles.inputWrapper}>
+                                    <Phone style={styles.inputIcon} />
+                                    <TextInput
+                                        placeholder="Phone Number"
+                                        style={styles.input}
+                                        keyboardType="phone-pad"
+                                    />
+                                </View>
+                            </View>
+                            <View style={styles.inputContainer}>
+                                <View style={styles.inputWrapper}>
                                     <Lock style={styles.inputIcon} />
                                     <TextInput
                                         placeholder="Password"
                                         style={styles.input}
                                         secureTextEntry
-                                        value={values.password}
                                         onBlur={handleBlur('password')}
                                         onChangeText={handleChange('password')}
                                     />
@@ -292,20 +376,10 @@ export function LoginScreen({
                                 {errors.password}
                             </Text>
 
-                            <Text style={styles.forgotPasswordText}>
-                                <Pressable
-                                    onPress={() => navigation.navigate('Login')}
-                                >
-                                    <Text style={styles.forgotPasswordLink}>
-                                        Forgot password?
-                                    </Text>
-                                </Pressable>
-                            </Text>
-
                             <View style={styles.orContainer}>
                                 <HorizontalLine />
                                 <Text style={styles.orText}>
-                                    or log in with
+                                    or sign up with
                                 </Text>
                                 <HorizontalLine />
                             </View>
@@ -325,9 +399,22 @@ export function LoginScreen({
 
                             <PrimaryGradientButton
                                 style={styles.topButton}
-                                title="Login"
-                                onPress={handleSubmit as unknown as () => void}
+                                title="Create an account"
+                                onPress={
+                                    handleSubmit as unknown as (
+                                        event: GestureResponderEvent
+                                    ) => void
+                                }
                             />
+
+                            <Text style={styles.loginText}>
+                                Already a member?{' '}
+                                <Pressable
+                                    onPress={() => navigation.navigate('Login')}
+                                >
+                                    <Text style={styles.loginLink}>Log In</Text>
+                                </Pressable>
+                            </Text>
                         </View>
                     )}
                 </Formik>

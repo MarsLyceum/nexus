@@ -3,11 +3,11 @@ import React, { useEffect } from 'react';
 import { NavigationProp, useFocusEffect } from '@react-navigation/core';
 import styled from 'styled-components/native';
 
-import { RootState, useAppSelector, useAppDispatch, loadUser } from './redux';
-import { PeepsLogo } from './images/PeepsLogo';
-import { PrimaryGradientButton } from './PrimaryGradientButton';
-import { SecondaryButton } from './SecondaryButton';
-import { Footer } from './Footer';
+import { RootState, useAppSelector, useAppDispatch, loadUser } from '../redux';
+import { PeepsLogo } from '../images/PeepsLogo';
+import { PrimaryGradientButton } from '../PrimaryGradientButton';
+import { SecondaryButton } from '../SecondaryButton';
+import { Footer } from '../Footer';
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
 const Tagline = styled.Text`
@@ -60,7 +60,7 @@ export function WelcomeScreen({
     useFocusEffect(() => {
         if (user) {
             // If user is loaded, navigate to the matching screen
-            navigation.navigate('Matching');
+            navigation.navigate('AppDrawer');
         }
     });
 

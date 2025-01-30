@@ -7,48 +7,62 @@ import {
     FlatList,
     TextInput,
     TouchableOpacity,
+    Platform,
+    useWindowDimensions,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 
+import { COLORS } from '../constants';
+
+// Detect if the device is a mobile or tablet
+const isMobileOrTablet = Platform.OS === 'ios' || Platform.OS === 'android';
+
 export const ChatScreen = ({ route, navigation }) => {
-    const { user } = route.params || { user: { name: 'Unknown', avatar: '' } }; // Default user if no params exist
+    const { user } = route.params || { user: { name: 'Unknown', avatar: '' } };
+    const { width } = useWindowDimensions();
+    const isLargeScreen = width > 768;
 
     const [messageText, setMessageText] = useState('');
     const [messages, setMessages] = useState([
         {
             id: '1',
             user: 'CaptCrunch',
-            time: '1/22/2025 7:12 AM',
+            time: '01/22/2025 7:12 AM',
             text: 'Its free on Steam atm if you want to install it ahead of time',
             avatar: 'https://picsum.photos/50?random=1',
+            edited: false,
         },
         {
             id: '2',
             user: 'Milheht',
-            time: '1/22/2025 7:12 AM',
+            time: '01/22/2025 7:12 AM',
             text: "Ok cool I'll install it then",
             avatar: 'https://picsum.photos/50?random=2',
+            edited: false,
         },
         {
             id: '3',
             user: 'CaptCrunch',
-            time: '1/25/2025 11:32 PM',
-            text: 'Do you like PoE2 by the way? (edited)',
+            time: '01/25/2025 11:32 PM',
+            text: 'Do you like PoE2 by the way?',
             avatar: 'https://picsum.photos/50?random=1',
+            edited: true,
         },
         {
             id: '4',
             user: 'CaptCrunch',
-            time: '1/25/2025 11:35 PM',
+            time: '01/25/2025 11:35 PM',
             text: "He's been really caught up in other things besides games though so I wouldn't hold my breath on him joining, but maybe I can twist his arm lol",
             avatar: 'https://picsum.photos/50?random=1',
+            edited: false,
         },
         {
             id: '5',
             user: 'Milheht',
-            time: '1/26/2025 7:31 AM',
+            time: '01/26/2025 7:31 AM',
             text: "Yeah I like PoE2 but it's really difficult and I'm currently stuck on a boss. It would be fun to play it sometime though.",
             avatar: 'https://picsum.photos/50?random=2',
+            edited: false,
         },
     ]);
 
@@ -58,9 +72,17 @@ export const ChatScreen = ({ route, navigation }) => {
         const newMessage = {
             id: Math.random().toString(),
             user: 'You',
-            time: 'Now',
+            time: new Date().toLocaleString('en-US', {
+                month: '2-digit',
+                day: '2-digit',
+                year: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true,
+            }),
             text: messageText,
-            avatar: 'https://picsum.photos/50?random=99', // User avatar placeholder
+            avatar: 'https://picsum.photos/50?random=99',
+            edited: false,
         };
 
         setMessages((prevMessages) => [...prevMessages, newMessage]);
@@ -71,9 +93,11 @@ export const ChatScreen = ({ route, navigation }) => {
         <View style={styles.chatContainer}>
             {/* Chat Header */}
             <View style={styles.chatHeader}>
-                <TouchableOpacity onPress={() => navigation.goBack()}>
-                    <Icon name="arrow-left" size={20} color="white" />
-                </TouchableOpacity>
+                {!isLargeScreen && (
+                    <TouchableOpacity onPress={() => navigation.goBack()}>
+                        <Icon name="arrow-left" size={20} color="white" />
+                    </TouchableOpacity>
+                )}
                 <Image
                     source={{ uri: user.avatar }}
                     style={styles.headerAvatar}
@@ -97,6 +121,9 @@ export const ChatScreen = ({ route, navigation }) => {
                                 <Text style={styles.time}>{item.time}</Text>
                             </Text>
                             <Text style={styles.messageText}>{item.text}</Text>
+                            {item.edited && (
+                                <Text style={styles.editedLabel}>(edited)</Text>
+                            )}
                         </View>
                     </View>
                 )}
@@ -110,13 +137,20 @@ export const ChatScreen = ({ route, navigation }) => {
                     placeholderTextColor="gray"
                     value={messageText}
                     onChangeText={setMessageText}
+                    onSubmitEditing={
+                        !isMobileOrTablet ? sendMessage : undefined
+                    } // Desktop: Send on Enter
+                    returnKeyType={!isMobileOrTablet ? 'default' : 'send'}
                 />
-                <TouchableOpacity
-                    onPress={sendMessage}
-                    style={styles.sendButton}
-                >
-                    <Icon name="paper-plane" size={20} color="white" />
-                </TouchableOpacity>
+                {/* Show send button ONLY on mobile and tablets */}
+                {isMobileOrTablet && messageText.length > 0 && (
+                    <TouchableOpacity
+                        onPress={sendMessage}
+                        style={styles.sendButton}
+                    >
+                        <Icon name="paper-plane" size={20} color="white" />
+                    </TouchableOpacity>
+                )}
             </View>
         </View>
     );
@@ -126,12 +160,14 @@ export const ChatScreen = ({ route, navigation }) => {
 const styles = StyleSheet.create({
     chatContainer: {
         flex: 1,
-        backgroundColor: '#23272A',
+        backgroundColor: COLORS.PrimaryBackground,
     },
     chatHeader: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#2C2F33',
+        backgroundColor: COLORS.PrimaryBackground,
+        borderColor: COLORS.InactiveText,
+        borderBottomWidth: 1,
         padding: 15,
     },
     headerAvatar: {
@@ -174,17 +210,22 @@ const styles = StyleSheet.create({
         color: 'white',
         marginTop: 2,
     },
+    editedLabel: {
+        fontSize: 12,
+        color: 'gray',
+        marginTop: 2,
+    },
     inputContainer: {
         flexDirection: 'row',
         alignItems: 'center',
         padding: 10,
         borderTopWidth: 1,
-        borderTopColor: '#4A3A5A',
-        backgroundColor: '#2C2F33',
+        borderTopColor: COLORS.InactiveText,
+        backgroundColor: COLORS.PrimaryBackground,
     },
     input: {
         flex: 1,
-        backgroundColor: '#3A3C42',
+        backgroundColor: COLORS.SecondaryBackground,
         color: 'white',
         padding: 10,
         borderRadius: 20,

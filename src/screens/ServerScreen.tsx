@@ -9,6 +9,8 @@ import {
     StyleSheet,
     Image,
     useWindowDimensions,
+    Keyboard,
+    Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { COLORS } from '../constants';
@@ -26,6 +28,7 @@ const initialChannels = [
 
 const ChannelList = ({ navigation, activeChannel, setActiveChannel }) => {
     return (
+        // Let this fill its parent so on small screens, it covers the full page
         <View style={styles.channelListContainer}>
             <Text style={styles.serverTitle}>The Traveler Campaign</Text>
             <FlatList
@@ -67,107 +70,7 @@ const ChannelList = ({ navigation, activeChannel, setActiveChannel }) => {
     );
 };
 
-// **Chat Screen**
-const ChatScreen = ({ route, activeChannel, navigation }) => {
-    const channel = route?.params?.channel || activeChannel;
-    const [messageText, setMessageText] = useState('');
-
-    return (
-        <View style={styles.chatContainer}>
-            {/* Header with Back Button */}
-            <View style={styles.header}>
-                <TouchableOpacity
-                    onPress={() => navigation.goBack()}
-                    style={styles.backButton}
-                >
-                    <Icon name="arrow-left" size={20} color="white" />
-                </TouchableOpacity>
-                <Text style={styles.channelName}># {channel}</Text>
-            </View>
-
-            {/* Chat Messages */}
-            <FlatList
-                data={messages}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => (
-                    <View style={styles.messageContainer}>
-                        <Image
-                            source={{ uri: item.avatar }}
-                            defaultSource={require('../../assets/default-avatar.png')} // Fallback image
-                            style={styles.avatar}
-                        />
-                        <View style={styles.messageContent}>
-                            <Text style={styles.userName}>
-                                {item.user}{' '}
-                                <Text style={styles.time}>{item.time}</Text>
-                            </Text>
-                            <Text style={styles.messageText}>{item.text}</Text>
-                            {item.edited && (
-                                <Text style={styles.editedLabel}>(edited)</Text>
-                            )}
-                        </View>
-                    </View>
-                )}
-            />
-
-            {/* Message Input */}
-            <View style={styles.inputContainer}>
-                <TextInput
-                    style={styles.input}
-                    placeholder={`Message #${channel}`}
-                    placeholderTextColor="gray"
-                    value={messageText}
-                    onChangeText={setMessageText}
-                />
-            </View>
-        </View>
-    );
-};
-
-// **Main Server Screen Component**
-export function ServerScreen({ navigation }) {
-    const { width } = useWindowDimensions();
-    const [activeChannel, setActiveChannel] = useState('general');
-
-    // If the screen width is large, show side-by-side layout
-    if (width > 768) {
-        return (
-            <View style={styles.largeScreenContainer}>
-                <ChannelList
-                    navigation={navigation}
-                    activeChannel={activeChannel}
-                    setActiveChannel={setActiveChannel}
-                />
-                <ChatScreen
-                    activeChannel={activeChannel}
-                    navigation={navigation}
-                />
-            </View>
-        );
-    }
-
-    // On smaller screens, use Stack Navigation
-    return (
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="Channels">
-                {(props) => (
-                    <ChannelList
-                        {...props}
-                        activeChannel={activeChannel}
-                        setActiveChannel={setActiveChannel}
-                    />
-                )}
-            </Stack.Screen>
-            <Stack.Screen name="Chat">
-                {(props) => (
-                    <ChatScreen {...props} activeChannel={activeChannel} />
-                )}
-            </Stack.Screen>
-        </Stack.Navigator>
-    );
-}
-
-// **Messages**
+// **Messages (dummy data)**
 const messages = [
     {
         id: '1',
@@ -193,16 +96,183 @@ const messages = [
     },
 ];
 
+// **Chat Screen**
+const ChatScreen = ({ route, activeChannel, navigation }) => {
+    const channel = route?.params?.channel || activeChannel;
+    const { width } = useWindowDimensions();
+    const isLargeScreen = width > 768;
+
+    const [messageText, setMessageText] = useState('');
+    const [chatMessages, setChatMessages] = useState(messages);
+
+    const formatDateTime = () => {
+        const now = new Date();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const year = now.getFullYear();
+        const hours = now.getHours() % 12 || 12;
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const ampm = now.getHours() >= 12 ? 'PM' : 'AM';
+
+        return `${month}/${day}/${year} ${hours}:${minutes} ${ampm}`;
+    };
+
+    const sendMessage = () => {
+        if (!messageText.trim()) return;
+
+        const newMessage = {
+            id: `${chatMessages.length + 1}`,
+            user: 'You',
+            time: formatDateTime(),
+            text: messageText.trim(),
+            avatar: 'https://picsum.photos/50?random=10',
+        };
+
+        setChatMessages((prevMessages) => [...prevMessages, newMessage]);
+        setMessageText('');
+        Keyboard.dismiss();
+    };
+
+    return (
+        <View style={styles.chatContainer}>
+            {/* Header with Back Button */}
+            <View style={styles.header}>
+                {!isLargeScreen && (
+                    <TouchableOpacity
+                        onPress={() => navigation.goBack()}
+                        style={styles.backButton}
+                    >
+                        <Icon name="arrow-left" size={20} color="white" />
+                    </TouchableOpacity>
+                )}
+                <Text style={styles.channelName}># {channel}</Text>
+            </View>
+
+            {/* Chat Messages */}
+            <FlatList
+                data={chatMessages}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                    <View style={styles.messageContainer}>
+                        <Image
+                            source={{ uri: item.avatar }}
+                            style={styles.avatar}
+                        />
+                        <View style={styles.messageContent}>
+                            <Text style={styles.userName}>
+                                {item.user}{' '}
+                                <Text style={styles.time}>{item.time}</Text>
+                            </Text>
+                            <Text style={styles.messageText}>{item.text}</Text>
+                        </View>
+                    </View>
+                )}
+            />
+
+            {/* Message Input */}
+            <View style={styles.inputContainer}>
+                <TextInput
+                    style={styles.input}
+                    placeholder={`Message #${channel}`}
+                    placeholderTextColor="gray"
+                    value={messageText}
+                    onChangeText={setMessageText}
+                    onSubmitEditing={sendMessage}
+                    returnKeyType="send"
+                />
+                {messageText.length > 0 && Platform.OS !== 'web' && (
+                    <TouchableOpacity
+                        onPress={sendMessage}
+                        style={styles.sendButton}
+                    >
+                        <Icon name="paper-plane" size={18} color="white" />
+                    </TouchableOpacity>
+                )}
+            </View>
+        </View>
+    );
+};
+
+// **Main Server Screen Component**
+export function ServerScreen({ navigation }) {
+    const { width } = useWindowDimensions();
+    const [activeChannel, setActiveChannel] = useState('general');
+
+    // For large screens, show side-by-side layout:
+    if (width > 768) {
+        return (
+            <View style={styles.largeScreenContainer}>
+                {/* Fixed-width sidebar for channels */}
+                <View style={styles.sidebarContainer}>
+                    <ChannelList
+                        navigation={navigation}
+                        activeChannel={activeChannel}
+                        setActiveChannel={setActiveChannel}
+                    />
+                </View>
+
+                {/* The rest is chat */}
+                <View style={styles.chatWrapper}>
+                    <ChatScreen
+                        activeChannel={activeChannel}
+                        navigation={navigation}
+                    />
+                </View>
+            </View>
+        );
+    }
+
+    // Otherwise, use stack screens on smaller devices
+    return (
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="Channels">
+                {(props) => (
+                    <ChannelList
+                        {...props}
+                        activeChannel={activeChannel}
+                        setActiveChannel={setActiveChannel}
+                    />
+                )}
+            </Stack.Screen>
+            <Stack.Screen name="Chat">
+                {(props) => (
+                    <ChatScreen {...props} activeChannel={activeChannel} />
+                )}
+            </Stack.Screen>
+        </Stack.Navigator>
+    );
+}
+
 // **Styles**
 const styles = StyleSheet.create({
+    // Fill entire screen with background color
     largeScreenContainer: {
         flex: 1,
         flexDirection: 'row',
+        backgroundColor: COLORS.PrimaryBackground,
     },
-    channelListContainer: {
+    // This is the fixed-width sidebar for large screens
+    sidebarContainer: {
         width: 250,
         backgroundColor: COLORS.PrimaryBackground,
+    },
+    // This is the remaining chat area on large screens
+    chatWrapper: {
+        flex: 1,
+        backgroundColor: COLORS.PrimaryBackground,
+    },
+
+    // On small screens, this container now flexes to fill (no fixed width)
+    channelListContainer: {
+        flex: 1,
+        backgroundColor: COLORS.PrimaryBackground,
         padding: 20,
+    },
+    serverTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: 'white',
+        marginBottom: 20,
     },
     chatContainer: {
         flex: 1,
@@ -222,12 +292,6 @@ const styles = StyleSheet.create({
         fontSize: 18,
         color: 'white',
         fontWeight: 'bold',
-    },
-    serverTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: 'white',
-        marginBottom: 20,
     },
     channelItem: {
         flexDirection: 'row',
@@ -277,23 +341,25 @@ const styles = StyleSheet.create({
         color: 'white',
         marginTop: 2,
     },
-    editedLabel: {
-        fontSize: 12,
-        color: 'gray',
-        marginTop: 2,
-    },
     inputContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
         padding: 10,
         borderTopWidth: 1,
         borderTopColor: '#4A3A5A',
         backgroundColor: COLORS.PrimaryBackground,
     },
     input: {
+        flex: 1,
         backgroundColor: '#3A2A4A',
         color: 'white',
         padding: 10,
         borderRadius: 20,
         fontSize: 14,
+    },
+    sendButton: {
+        marginLeft: 10,
+        padding: 8,
     },
 });
 

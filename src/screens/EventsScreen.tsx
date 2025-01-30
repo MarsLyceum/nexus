@@ -10,7 +10,7 @@ const events = [
         groupName: 'NashJS - Nashville Javascript',
         attendees: 25,
         location: 'Vaco Nashville',
-        imageUrl: 'https://source.unsplash.com/200x100/?meeting,conference',
+        imageUrl: 'https://picsum.photos/200/100?random=1', // Using Lorem Picsum
     },
     {
         id: '2',
@@ -19,7 +19,7 @@ const events = [
         groupName: 'React Native Nashville',
         attendees: 42,
         location: 'Tech Hub Nashville',
-        imageUrl: 'https://source.unsplash.com/200x100/?tech,event',
+        imageUrl: 'https://picsum.photos/200/100?random=2', // Using Lorem Picsum
     },
 ];
 
@@ -42,3 +42,5 @@ const styles = StyleSheet.create({
         backgroundColor: '#1E1E1E',
     },
 });
+
+export default EventsScreen;

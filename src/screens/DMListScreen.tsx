@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -8,8 +8,8 @@ import {
     Image,
     useWindowDimensions,
 } from 'react-native';
-
 import { COLORS } from '../constants';
+import ChatScreen from './ChatScreen';
 
 const users = [
     {
@@ -41,60 +41,33 @@ const users = [
     },
 ];
 
-const ChatScreen = ({ selectedUser }) => {
-    if (!selectedUser) return <View style={styles.emptyChat} />;
-
-    return (
-        <View style={styles.chatContainer}>
-            <View style={styles.header}>
-                <Image
-                    source={{ uri: selectedUser.avatar }}
-                    style={styles.headerAvatar}
-                />
-                <Text style={styles.headerTitle}>{selectedUser.name}</Text>
-            </View>
-
-            <FlatList
-                data={messages}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => (
-                    <View style={styles.messageContainer}>
-                        <Image
-                            source={{ uri: item.avatar }}
-                            style={styles.messageAvatar}
-                        />
-                        <View style={styles.messageContent}>
-                            <Text style={styles.userName}>
-                                {item.user}{' '}
-                                <Text style={styles.time}>{item.time}</Text>
-                            </Text>
-                            <Text style={styles.messageText}>{item.text}</Text>
-                            {item.edited && (
-                                <Text style={styles.editedLabel}>(edited)</Text>
-                            )}
-                        </View>
-                    </View>
-                )}
-            />
-        </View>
-    );
-};
-
 export const DMListScreen = ({ navigation }) => {
     const { width } = useWindowDimensions();
     const isLargeScreen = width > 768;
-    const [selectedUser, setSelectedUser] = useState(null);
+    const [selectedUser, setSelectedUser] = useState(
+        isLargeScreen ? users[0] : null
+    );
+
+    // When switching to large screens, ensure we have a selected user
+    useEffect(() => {
+        if (isLargeScreen && !selectedUser) {
+            setSelectedUser(users[0]);
+        }
+    }, [isLargeScreen, selectedUser]);
 
     const handleUserPress = (user) => {
         if (isLargeScreen) {
             setSelectedUser(user);
         } else {
+            // On small screens, navigate to the Chat screen
             navigation.navigate('Chat', { user });
         }
     };
 
     return (
+        // Root container with flex:1 and backgroundColor
         <View style={styles.container}>
+            {/* Sidebar DM List */}
             <View style={styles.sidebar}>
                 <View style={styles.dmHeader}>
                     <Text style={styles.dmTitle}>Messages</Text>
@@ -105,7 +78,11 @@ export const DMListScreen = ({ navigation }) => {
                     keyExtractor={(item) => item.id}
                     renderItem={({ item }) => (
                         <TouchableOpacity
-                            style={styles.userItem}
+                            style={[
+                                styles.userItem,
+                                selectedUser?.id === item.id &&
+                                    styles.selectedUserItem,
+                            ]}
                             onPress={() => handleUserPress(item)}
                         >
                             <Image
@@ -127,41 +104,22 @@ export const DMListScreen = ({ navigation }) => {
                 />
             </View>
 
-            {isLargeScreen && <ChatScreen selectedUser={selectedUser} />}
+            {/* On large screens, show the chat to the right */}
+            {isLargeScreen && selectedUser && (
+                <View style={styles.chatWrapper}>
+                    <ChatScreen route={{ params: { user: selectedUser } }} />
+                </View>
+            )}
         </View>
     );
 };
-
-// Sample Chat Messages
-const messages = [
-    {
-        id: '1',
-        user: 'CaptCrunch',
-        time: '1/22/2025 7:12 AM',
-        text: 'Its free on Steam atm if you want to install it ahead of time',
-        avatar: 'https://picsum.photos/50?random=1',
-    },
-    {
-        id: '2',
-        user: 'Milheht',
-        time: '1/22/2025 7:12 AM',
-        text: "Ok cool I'll install it then",
-        avatar: 'https://picsum.photos/50?random=2',
-    },
-    {
-        id: '3',
-        user: 'CaptCrunch',
-        time: '1/25/2025 11:32 PM',
-        text: 'Do you like PoE2 by the way? (edited)',
-        avatar: 'https://picsum.photos/50?random=1',
-    },
-];
 
 // **Styles**
 const styles = StyleSheet.create({
     container: {
         flex: 1,
         flexDirection: 'row',
+        backgroundColor: COLORS.PrimaryBackground,
     },
     sidebar: {
         width: 250,
@@ -185,6 +143,10 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
         paddingHorizontal: 15,
     },
+    selectedUserItem: {
+        backgroundColor: COLORS.SecondaryBackground,
+        borderRadius: 5,
+    },
     avatar: {
         width: 40,
         height: 40,
@@ -199,64 +161,10 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: 'gray',
     },
-    chatContainer: {
+    // The chat area on large screens
+    chatWrapper: {
         flex: 1,
-        backgroundColor: COLORS.SecondaryBackground,
-    },
-    emptyChat: {
-        flex: 1,
-        backgroundColor: COLORS.SecondaryBackground,
-    },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 15,
-        borderBottomWidth: 1,
-        borderBottomColor: '#4A3A5A',
-    },
-    headerAvatar: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        marginRight: 10,
-    },
-    headerTitle: {
-        fontSize: 18,
-        color: 'white',
-        fontWeight: 'bold',
-    },
-    messageContainer: {
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        padding: 15,
-    },
-    messageAvatar: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        marginRight: 10,
-    },
-    messageContent: {
-        flex: 1,
-    },
-    userName: {
-        fontSize: 14,
-        fontWeight: 'bold',
-        color: 'white',
-    },
-    time: {
-        fontSize: 12,
-        color: 'gray',
-    },
-    messageText: {
-        fontSize: 14,
-        color: 'white',
-        marginTop: 2,
-    },
-    editedLabel: {
-        fontSize: 12,
-        color: 'gray',
-        marginTop: 2,
+        backgroundColor: COLORS.PrimaryBackground,
     },
 });
 

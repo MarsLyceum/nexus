@@ -25,6 +25,7 @@ import {
 } from '@expo-google-fonts/lato';
 import * as SplashScreen from 'expo-splash-screen';
 
+import { COLORS } from './constants';
 import { setupAxiosQuotas } from './utils/setupAxiosQuotas';
 import { store } from './redux';
 import {
@@ -177,7 +178,7 @@ function AppDrawer() {
                 drawerType: 'permanent', // Always visible
                 drawerStyle: {
                     width: 80,
-                    backgroundColor: '#1F1524',
+                    backgroundColor: COLORS.AppBackground,
                 }, // Adjust width as needed
             }}
             drawerContent={(props) => <SidebarScreen {...props} />}

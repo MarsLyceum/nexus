@@ -1,3 +1,5 @@
+export * from './colors';
+
 import { Platform } from 'react-native';
 
 function getPlatformTopPadding() {

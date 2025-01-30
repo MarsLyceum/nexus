@@ -8,44 +8,54 @@ import {
     TouchableOpacity,
     StyleSheet,
     Image,
+    useWindowDimensions,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
+import { COLORS } from '../constants';
 
 const Stack = createStackNavigator();
 
 // **Channel List**
-const channels = [
-    { id: '1', name: 'general', active: true },
-    { id: '2', name: 'references', active: false },
-    { id: '3', name: 'shopping', active: false },
-    { id: '4', name: 'events', active: false },
-    { id: '5', name: 'character creation', active: false },
+const initialChannels = [
+    { id: '1', name: 'general' },
+    { id: '2', name: 'references' },
+    { id: '3', name: 'shopping' },
+    { id: '4', name: 'events' },
+    { id: '5', name: 'character creation' },
 ];
 
-const ChannelList = ({ navigation }) => {
+const ChannelList = ({ navigation, activeChannel, setActiveChannel }) => {
     return (
-        <View style={styles.container}>
+        <View style={styles.channelListContainer}>
             <Text style={styles.serverTitle}>The Traveler Campaign</Text>
             <FlatList
-                data={channels}
+                data={initialChannels}
                 keyExtractor={(item) => item.id}
                 renderItem={({ item }) => (
                     <TouchableOpacity
-                        style={styles.channelItem}
-                        onPress={() =>
-                            navigation.navigate('Chat', { channel: item.name })
-                        }
+                        style={[
+                            styles.channelItem,
+                            activeChannel === item.name &&
+                                styles.activeChannelItem,
+                        ]}
+                        onPress={() => {
+                            setActiveChannel(item.name);
+                            navigation.navigate('Chat', { channel: item.name });
+                        }}
                     >
                         <Icon
                             name="comment"
                             size={16}
-                            color={item.active ? 'white' : 'gray'}
+                            color={
+                                activeChannel === item.name ? 'white' : 'gray'
+                            }
                             style={styles.icon}
                         />
                         <Text
                             style={[
                                 styles.channelText,
-                                item.active && styles.activeChannel,
+                                activeChannel === item.name &&
+                                    styles.activeChannelText,
                             ]}
                         >
                             {item.name}
@@ -57,39 +67,14 @@ const ChannelList = ({ navigation }) => {
     );
 };
 
-// **Chat Messages**
-const messages = [
-    {
-        id: '1',
-        user: 'Sarge',
-        time: '01/24/2025 9:50 AM',
-        text: 'Game still ago?',
-        avatar: 'https://source.unsplash.com/50x50/?man,avatar',
-    },
-    {
-        id: '2',
-        user: 'hakeem',
-        time: '01/24/2025 9:59 AM',
-        text: 'Probably, I’ll be attending a wedding so the game will have to start later than usual by anywhere from 30 to 60 minutes, might even run something else',
-        avatar: 'https://source.unsplash.com/50x50/?abstract,avatar',
-    },
-    {
-        id: '3',
-        user: 'DC - Pierre',
-        time: '01/24/2025 10:21 AM',
-        text: 'if you’re attending a wedding you don’t want to give it a miss this week and go enjoy yourself? I’m sure everyone would understand, RL comes first right?',
-        avatar: 'https://source.unsplash.com/50x50/?dragon,avatar',
-        edited: true,
-    },
-];
-
-const ChatScreen = ({ route, navigation }) => {
-    const { channel } = route.params;
+// **Chat Screen**
+const ChatScreen = ({ route, activeChannel, navigation }) => {
+    const channel = route?.params?.channel || activeChannel;
     const [messageText, setMessageText] = useState('');
 
     return (
-        <View style={styles.container}>
-            {/* Header with Back Button & Channel Name */}
+        <View style={styles.chatContainer}>
+            {/* Header with Back Button */}
             <View style={styles.header}>
                 <TouchableOpacity
                     onPress={() => navigation.goBack()}
@@ -108,6 +93,7 @@ const ChatScreen = ({ route, navigation }) => {
                     <View style={styles.messageContainer}>
                         <Image
                             source={{ uri: item.avatar }}
+                            defaultSource={require('../../assets/default-avatar.png')} // Fallback image
                             style={styles.avatar}
                         />
                         <View style={styles.messageContent}>
@@ -138,21 +124,89 @@ const ChatScreen = ({ route, navigation }) => {
     );
 };
 
-// **Stack Navigator**
-export function ServerScreen() {
+// **Main Server Screen Component**
+export function ServerScreen({ navigation }) {
+    const { width } = useWindowDimensions();
+    const [activeChannel, setActiveChannel] = useState('general');
+
+    // If the screen width is large, show side-by-side layout
+    if (width > 768) {
+        return (
+            <View style={styles.largeScreenContainer}>
+                <ChannelList
+                    navigation={navigation}
+                    activeChannel={activeChannel}
+                    setActiveChannel={setActiveChannel}
+                />
+                <ChatScreen
+                    activeChannel={activeChannel}
+                    navigation={navigation}
+                />
+            </View>
+        );
+    }
+
+    // On smaller screens, use Stack Navigation
     return (
         <Stack.Navigator screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="Channels" component={ChannelList} />
-            <Stack.Screen name="Chat" component={ChatScreen} />
+            <Stack.Screen name="Channels">
+                {(props) => (
+                    <ChannelList
+                        {...props}
+                        activeChannel={activeChannel}
+                        setActiveChannel={setActiveChannel}
+                    />
+                )}
+            </Stack.Screen>
+            <Stack.Screen name="Chat">
+                {(props) => (
+                    <ChatScreen {...props} activeChannel={activeChannel} />
+                )}
+            </Stack.Screen>
         </Stack.Navigator>
     );
 }
 
+// **Messages**
+const messages = [
+    {
+        id: '1',
+        user: 'Sarge',
+        time: '01/24/2025 9:50 AM',
+        text: 'Game still ago?',
+        avatar: 'https://picsum.photos/50?random=1',
+    },
+    {
+        id: '2',
+        user: 'hakeem',
+        time: '01/24/2025 9:59 AM',
+        text: 'Probably, I’ll be attending a wedding so the game will have to start later than usual by anywhere from 30 to 60 minutes, might even run something else',
+        avatar: 'https://picsum.photos/50?random=2',
+    },
+    {
+        id: '3',
+        user: 'DC - Pierre',
+        time: '01/24/2025 10:21 AM',
+        text: 'If you’re attending a wedding you don’t want to give it a miss this week and go enjoy yourself? I’m sure everyone would understand, RL comes first right?',
+        avatar: 'https://picsum.photos/50?random=3',
+        edited: true,
+    },
+];
+
 // **Styles**
 const styles = StyleSheet.create({
-    container: {
+    largeScreenContainer: {
         flex: 1,
-        backgroundColor: '#2C1C3D',
+        flexDirection: 'row',
+    },
+    channelListContainer: {
+        width: 250,
+        backgroundColor: COLORS.PrimaryBackground,
+        padding: 20,
+    },
+    chatContainer: {
+        flex: 1,
+        backgroundColor: COLORS.PrimaryBackground,
     },
     header: {
         flexDirection: 'row',
@@ -174,13 +228,15 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: 'white',
         marginBottom: 20,
-        paddingLeft: 20,
     },
     channelItem: {
         flexDirection: 'row',
         alignItems: 'center',
         paddingVertical: 10,
-        paddingLeft: 20,
+    },
+    activeChannelItem: {
+        backgroundColor: '#3A2A4A',
+        borderRadius: 5,
     },
     icon: {
         marginRight: 10,
@@ -189,7 +245,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: 'gray',
     },
-    activeChannel: {
+    activeChannelText: {
         color: 'white',
         fontWeight: 'bold',
     },
@@ -230,7 +286,7 @@ const styles = StyleSheet.create({
         padding: 10,
         borderTopWidth: 1,
         borderTopColor: '#4A3A5A',
-        backgroundColor: '#1A1124',
+        backgroundColor: COLORS.PrimaryBackground,
     },
     input: {
         backgroundColor: '#3A2A4A',

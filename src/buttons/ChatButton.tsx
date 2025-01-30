@@ -1,6 +1,7 @@
 import React from 'react';
 import { TouchableOpacity, StyleSheet } from 'react-native';
 import { Chat } from '../icons';
+import { COLORS } from '../constants/colors';
 
 export const ChatButton = ({ onPress }) => {
     return (
@@ -15,7 +16,7 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: '#6F00AA',
+        backgroundColor: COLORS.Primary,
         justifyContent: 'center',
         alignItems: 'center',
     },

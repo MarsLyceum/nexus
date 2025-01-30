@@ -1,8 +1,11 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { View, Animated } from 'react-native';
+import { View, Animated, StyleSheet } from 'react-native';
 import { NavigationProp } from '@react-navigation/core';
 
 import { ChatButton, GroupButton, EventsButton } from '../buttons';
+import { COLORS } from '../constants';
+
+const BUTTON_MARGIN_TOP = 32; // Define margin top for reuse
 
 export const SidebarScreen = ({
     navigation,
@@ -18,18 +21,12 @@ export const SidebarScreen = ({
     }>({});
 
     // Animated values for highlight top + height
-    const highlightTop = useRef(new Animated.Value(0)).current;
-    const highlightHeight = useRef(new Animated.Value(40)).current; // fallback default
-
-    // -- This is our 16px spacing between buttons:
-    const SPACING = 16;
+    const highlightTop = useRef(new Animated.Value(BUTTON_MARGIN_TOP)).current;
+    const highlightHeight = useRef(new Animated.Value(40)).current; // Default height
 
     // Capture each button's y & height
     const handleLayout = (name: string) => (event: any) => {
         const { y, height } = event.nativeEvent.layout;
-        console.log(
-            `handleLayout -> Button "${name}" measured at y=${y}, height=${height}`
-        );
         setButtonLayouts((prev) => ({
             ...prev,
             [name]: { y, height },
@@ -39,17 +36,9 @@ export const SidebarScreen = ({
     // Animate highlight to match the selected button’s layout
     useEffect(() => {
         const layout = buttonLayouts[selectedButton];
-        console.log(
-            `useEffect -> selectedButton="${selectedButton}", layout=`,
-            layout
-        );
-
         if (layout) {
-            console.log(
-                `Animating highlight: top from current to ${layout.y}, height to ${layout.height}`
-            );
             Animated.spring(highlightTop, {
-                toValue: layout.y,
+                toValue: layout.y + BUTTON_MARGIN_TOP, // Use the variable instead of hardcoded value
                 useNativeDriver: false,
             }).start();
 
@@ -61,9 +50,8 @@ export const SidebarScreen = ({
     }, [selectedButton, buttonLayouts, highlightTop, highlightHeight]);
 
     return (
-        // "box-none" so the container itself won't intercept touches
-        <View pointerEvents="box-none" style={styles.sidebarContainer}>
-            {/* Left-Side Rectangle Highlight: pointerEvents="none" means it never grabs touches. */}
+        <View style={styles.sidebarContainer}>
+            {/* Left-Side Rectangle Highlight */}
             <Animated.View
                 pointerEvents="none"
                 style={[
@@ -74,77 +62,83 @@ export const SidebarScreen = ({
                     },
                 ]}
             />
+            <View style={styles.sidebarButtonsContainer}>
+                {/* CHAT Button */}
+                <View
+                    onLayout={handleLayout('chat')}
+                    style={styles.buttonContainer}
+                >
+                    <ChatButton
+                        onPress={() => {
+                            setSelectedButton('chat');
+                            navigation.navigate('DMs');
+                        }}
+                    />
+                </View>
 
-            {/* CHAT Button Container */}
-            <View
-                onLayout={handleLayout('chat')}
-                style={styles.buttonContainer}
-            >
-                <ChatButton
-                    onPress={() => {
-                        setSelectedButton('chat');
-                        navigation.navigate('DMs');
-                    }}
-                />
-            </View>
+                <View
+                    onLayout={handleLayout('events')}
+                    style={styles.buttonContainer}
+                >
+                    <EventsButton
+                        onPress={() => {
+                            setSelectedButton('events');
+                            navigation.navigate('Events');
+                        }}
+                    />
+                </View>
 
-            <View
-                onLayout={handleLayout('events')}
-                style={styles.buttonContainer}
-            >
-                <EventsButton
-                    onPress={() => {
-                        setSelectedButton('events');
-                        navigation.navigate('Events');
-                    }}
-                />
-            </View>
+                {/* SERVER1 Button */}
+                <View
+                    onLayout={handleLayout('server1')}
+                    style={styles.buttonContainer}
+                >
+                    <GroupButton
+                        imageSource={require('../images/playstation_controller.jpg')}
+                        onPress={() => {
+                            setSelectedButton('server1');
+                            navigation.navigate('Server1');
+                        }}
+                    />
+                </View>
 
-            {/* SERVER1 Button Container */}
-            <View
-                onLayout={handleLayout('server1')}
-                style={styles.buttonContainer}
-            >
-                <GroupButton
-                    imageSource={require('../images/playstation_controller.jpg')}
-                    onPress={() => {
-                        setSelectedButton('server1');
-                        navigation.navigate('Server1');
-                    }}
-                />
-            </View>
-
-            {/* SERVER2 Button Container */}
-            <View
-                onLayout={handleLayout('server2')}
-                style={styles.buttonContainer}
-            >
-                <GroupButton
-                    imageSource={require('../images/mario.jpg')}
-                    onPress={() => {
-                        setSelectedButton('server2');
-                        navigation.navigate('Server2');
-                    }}
-                />
+                {/* SERVER2 Button */}
+                <View
+                    onLayout={handleLayout('server2')}
+                    style={styles.buttonContainer}
+                >
+                    <GroupButton
+                        imageSource={require('../images/mario.jpg')}
+                        onPress={() => {
+                            setSelectedButton('server2');
+                            navigation.navigate('Server2');
+                        }}
+                    />
+                </View>
             </View>
         </View>
     );
 };
 
-const styles = {
+const styles = StyleSheet.create({
+    sidebarButtonsContainer: {
+        marginTop: BUTTON_MARGIN_TOP, // Use the variable here
+    },
     sidebarContainer: {
         width: 80,
-        backgroundColor: '#1F1524',
-        flex: 1,
+        height: '100%',
+        backgroundColor: COLORS.AppBackground,
         flexDirection: 'column',
         justifyContent: 'flex-start',
         alignItems: 'center',
-        position: 'relative',
+        position: 'absolute', // Ensure it is fixed in place
+        left: 0,
+        top: 0,
+        bottom: 0,
+        overflow: 'hidden', // Prevents any unwanted overflow
     },
     buttonContainer: {
-        // This container is measured by 'handleLayout'
-        // Each one wraps exactly one "Button" so we know that button's y, height
-        marginBottom: 16, // add 16px spacing below each
+        marginBottom: 16,
         width: '100%',
         alignItems: 'center',
     },
@@ -152,9 +146,10 @@ const styles = {
         position: 'absolute',
         left: 0,
         width: 4,
-        backgroundColor: '#F2F3F5',
+        backgroundColor: COLORS.OffWhite,
         borderTopRightRadius: 20,
         borderBottomRightRadius: 20,
         zIndex: 999,
+        right: 'auto', // Ensures no extra white space on the right
     },
-};
+});

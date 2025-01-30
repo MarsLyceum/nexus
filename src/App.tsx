@@ -27,13 +27,16 @@ import * as SplashScreen from 'expo-splash-screen';
 
 import { setupAxiosQuotas } from './utils/setupAxiosQuotas';
 import { store } from './redux';
-import { LoginScreen, SignUpScreen, MatchingScreen, WelcomeScreen } from '.';
-import { HomeScreen } from './HomeScreen';
-import { GroupsScreen } from './GroupsScreen';
-import { MessagesScreen } from './MessagesScreen';
-import { SettingsScreen } from './SettingsScreen';
-import { ServerScreen } from './ServerScreen'; // Each server will open its stack
-import { Sidebar } from './Sidebar';
+import {
+    ServerScreen,
+    SidebarScreen,
+    LoginScreen,
+    SignUpScreen,
+    WelcomeScreen,
+    ChatScreen,
+    DMListScreen,
+    EventsScreen,
+} from './screens';
 
 setupAxiosQuotas();
 
@@ -172,28 +175,21 @@ function AppDrawer() {
         <Drawer.Navigator
             screenOptions={{
                 drawerType: 'permanent', // Always visible
-                drawerStyle: { width: 80 }, // Adjust width as needed
+                drawerStyle: {
+                    width: 80,
+                    backgroundColor: '#1F1524',
+                }, // Adjust width as needed
             }}
-            drawerContent={(props) => <Sidebar {...props} />}
+            drawerContent={(props) => <SidebarScreen {...props} />}
         >
             <Drawer.Screen
-                name="Home"
-                component={HomeScreen}
+                name="DMs"
+                component={DMListScreen}
                 options={{ headerShown: false }}
             />
             <Drawer.Screen
-                name="Groups"
-                component={GroupsScreen}
-                options={{ headerShown: false }}
-            />
-            <Drawer.Screen
-                name="Messages"
-                component={MessagesScreen}
-                options={{ headerShown: false }}
-            />
-            <Drawer.Screen
-                name="Settings"
-                component={SettingsScreen}
+                name="Events"
+                component={EventsScreen}
                 options={{ headerShown: false }}
             />
             <Drawer.Screen
@@ -254,13 +250,13 @@ export default function App() {
                                 options={{ headerShown: false }}
                             />
                             <Stack.Screen
-                                name="Matching"
-                                component={MatchingScreen}
+                                name="AppDrawer"
+                                component={AppDrawer}
                                 options={{ headerShown: false }}
                             />
                             <Stack.Screen
-                                name="AppDrawer"
-                                component={AppDrawer}
+                                name="Chat"
+                                component={ChatScreen}
                                 options={{ headerShown: false }}
                             />
                         </Stack.Navigator>

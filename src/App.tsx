@@ -3,7 +3,8 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { createStackNavigator } from '@react-navigation/stack';
 import EventSource from 'react-native-event-source';
-import { SafeAreaView } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'react-native';
 import {
     ApolloClient,
     InMemoryCache,
@@ -38,6 +39,7 @@ import {
     ChatScreen,
     DMListScreen,
     EventsScreen,
+    ServerMessagesScreen,
 } from './screens';
 
 setupAxiosQuotas();
@@ -229,45 +231,59 @@ export default function App() {
 
     if (appIsReady) {
         return (
-            <SafeAreaView style={{ flex: 1 }} edges={['top']}>
-                <ApolloProvider client={client}>
-                    <ReduxProvider store={store}>
-                        <NavigationContainer
-                            onReady={() => {
-                                console.log('navigation ready');
-                            }}
-                        >
-                            <Stack.Navigator initialRouteName="Welcome">
-                                <Stack.Screen
-                                    name="Welcome"
-                                    component={WelcomeScreen}
-                                    options={{ headerShown: false }}
-                                />
-                                <Stack.Screen
-                                    name="Login"
-                                    component={LoginScreen}
-                                    options={{ headerShown: false }}
-                                />
-                                <Stack.Screen
-                                    name="SignUp"
-                                    component={SignUpScreen}
-                                    options={{ headerShown: false }}
-                                />
-                                <Stack.Screen
-                                    name="AppDrawer"
-                                    component={AppDrawer}
-                                    options={{ headerShown: false }}
-                                />
-                                <Stack.Screen
-                                    name="Chat"
-                                    component={ChatScreen}
-                                    options={{ headerShown: false }}
-                                />
-                            </Stack.Navigator>
-                        </NavigationContainer>
-                    </ReduxProvider>
-                </ApolloProvider>
-            </SafeAreaView>
+            <SafeAreaProvider>
+                <StatusBar
+                    barStyle="light-content"
+                    backgroundColor={COLORS.AppBackground}
+                />
+                <SafeAreaView
+                    style={{ flex: 1, backgroundColor: COLORS.AppBackground }}
+                    edges={['top', 'left', 'right']}
+                >
+                    <ApolloProvider client={client}>
+                        <ReduxProvider store={store}>
+                            <NavigationContainer
+                                onReady={() => {
+                                    console.log('navigation ready');
+                                }}
+                            >
+                                <Stack.Navigator initialRouteName="Welcome">
+                                    <Stack.Screen
+                                        name="Welcome"
+                                        component={WelcomeScreen}
+                                        options={{ headerShown: false }}
+                                    />
+                                    <Stack.Screen
+                                        name="Login"
+                                        component={LoginScreen}
+                                        options={{ headerShown: false }}
+                                    />
+                                    <Stack.Screen
+                                        name="SignUp"
+                                        component={SignUpScreen}
+                                        options={{ headerShown: false }}
+                                    />
+                                    <Stack.Screen
+                                        name="AppDrawer"
+                                        component={AppDrawer}
+                                        options={{ headerShown: false }}
+                                    />
+                                    <Stack.Screen
+                                        name="Chat"
+                                        component={ChatScreen}
+                                        options={{ headerShown: false }}
+                                    />
+                                    <Stack.Screen
+                                        name="ServerMessages"
+                                        component={ServerMessagesScreen}
+                                        options={{ headerShown: false }}
+                                    />
+                                </Stack.Navigator>
+                            </NavigationContainer>
+                        </ReduxProvider>
+                    </ApolloProvider>
+                </SafeAreaView>
+            </SafeAreaProvider>
         );
     }
 }

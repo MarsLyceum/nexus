@@ -161,7 +161,6 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: 'gray',
     },
-    // The chat area on large screens
     chatWrapper: {
         flex: 1,
         backgroundColor: COLORS.PrimaryBackground,

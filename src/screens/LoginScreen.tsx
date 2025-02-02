@@ -227,7 +227,8 @@ export function LoginScreen({
 
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             const user: User = {
-                ...result.data,
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                ...result.data.fetchUser,
                 token: auth0Data.token,
             };
             updateUserData(user);

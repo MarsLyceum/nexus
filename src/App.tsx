@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createDrawerNavigator } from '@react-navigation/drawer';
-import { createStackNavigator } from '@react-navigation/stack';
+import {
+    createStackNavigator,
+    TransitionPresets,
+} from '@react-navigation/stack';
 import EventSource from 'react-native-event-source';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { StatusBar } from 'react-native';
+import { Platform, StatusBar } from 'react-native';
 import {
     ApolloClient,
     InMemoryCache,
@@ -40,6 +43,7 @@ import {
     DMListScreen,
     EventsScreen,
     ServerMessagesScreen,
+    CreateGroupModalScreen,
 } from './screens';
 
 setupAxiosQuotas();
@@ -284,6 +288,28 @@ export default function App() {
                                         // @ts-expect-error broken navigation
                                         component={ServerMessagesScreen}
                                         options={{ headerShown: false }}
+                                    />
+                                    <Stack.Screen
+                                        name="CreateGroup"
+                                        component={CreateGroupModalScreen}
+                                        options={{
+                                            presentation:
+                                                Platform.OS === 'web'
+                                                    ? 'modal'
+                                                    : 'modal', // Both modal; adjust if needed
+                                            // For React Navigation v6
+                                            ...Platform.select({
+                                                ios: {
+                                                    ...TransitionPresets.ModalPresentationIOS,
+                                                },
+                                                android: {
+                                                    // Android typically doesn't have modal presets; can customize if needed
+                                                },
+                                                web: {
+                                                    // Customize web modal presentation if necessary
+                                                },
+                                            }),
+                                        }}
                                     />
                                 </Stack.Navigator>
                             </NavigationContainer>

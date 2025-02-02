@@ -1,8 +1,22 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { View, Animated, StyleSheet, LayoutChangeEvent } from 'react-native';
 import { DrawerContentComponentProps } from '@react-navigation/drawer';
+import { useApolloClient } from '@apollo/client';
 
-import { ChatButton, GroupButton, EventsButton } from '../buttons';
+import {
+    retrieveUserGroups,
+    useAppDispatch,
+    useAppSelector,
+    UserGroupsType,
+    RootState,
+} from '../redux';
+import {
+    ChatButton,
+    GroupButton,
+    EventsButton,
+    CreateGroupButton,
+} from '../buttons';
+import { FETCH_USER_GROUPS_QUERY } from '../queries';
 import { COLORS } from '../constants';
 
 const BUTTON_MARGIN_TOP = 32;
@@ -44,6 +58,32 @@ const styles = StyleSheet.create({
 export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
     // Default to "chat" as selected
     const [selectedButton, setSelectedButton] = useState<string>('chat');
+    const user = useAppSelector((state: RootState) => state.user.user);
+
+    const dispatch = useAppDispatch();
+    const apolloClient = useApolloClient();
+
+    const setUserGroups = useCallback(
+        (userGroups: UserGroupsType) => {
+            dispatch(retrieveUserGroups(userGroups));
+        },
+        [dispatch]
+    );
+
+    useEffect(() => {
+        // eslint-disable-next-line no-void
+        void (async () => {
+            const result = await apolloClient.query({
+                query: FETCH_USER_GROUPS_QUERY,
+                variables: {
+                    email: user?.email,
+                },
+            });
+
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+            setUserGroups(result.data.fetchUserGroups);
+        })();
+    }, [JSON.stringify(user)]);
 
     // Store each button's layout as { y, height }
     const [buttonLayouts, setButtonLayouts] = useState<{
@@ -105,7 +145,6 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
                         }}
                     />
                 </View>
-
                 <View
                     onLayout={handleLayout('events')}
                     style={styles.buttonContainer}
@@ -114,6 +153,18 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
                         onPress={() => {
                             setSelectedButton('events');
                             navigation.navigate('Events');
+                        }}
+                    />
+                </View>
+
+                <View
+                    onLayout={handleLayout('createGroup')}
+                    style={styles.buttonContainer}
+                >
+                    <CreateGroupButton
+                        onPress={() => {
+                            setSelectedButton('createGroup');
+                            navigation.navigate('CreateGroup');
                         }}
                     />
                 </View>
@@ -132,7 +183,6 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
                         }}
                     />
                 </View>
-
                 {/* SERVER2 Button */}
                 <View
                     onLayout={handleLayout('server2')}

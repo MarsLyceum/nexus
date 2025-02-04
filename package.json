@@ -14,6 +14,7 @@
         "typecheck": "tsc --noEmit"
     },
     "dependencies": {
+        "@supabase/supabase-js": "^2.48.1",
         "@apollo/client": "^3.12.8",
         "@babel/runtime": "^7.26.7",
         "@expo/metro-config": "^0.19.9",

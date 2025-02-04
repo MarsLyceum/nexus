@@ -11,6 +11,7 @@ import {
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { COLORS } from '../constants';
 import { ServerMessagesScreen } from './ServerMessagesScreen';
+import { Group, GroupChannel } from '../types';
 
 const styles = StyleSheet.create({
     largeScreenContainer: {
@@ -137,45 +138,38 @@ const styles = StyleSheet.create({
     },
 });
 
-// **Channel List**
-const initialChannels = [
-    { id: '1', name: 'general' },
-    { id: '2', name: 'references' },
-    { id: '3', name: 'shopping' },
-    { id: '4', name: 'events' },
-    { id: '5', name: 'character creation' },
-];
-
 const ChannelList = ({
     navigation,
     activeChannel,
     setActiveChannel,
     isLargeScreen,
+    group,
 }: {
+    group: Group;
     navigation: NavigationProp<Record<string, unknown>>;
-    activeChannel: string;
-    setActiveChannel: (arg: string) => unknown;
+    activeChannel: GroupChannel;
+    setActiveChannel: (channel: GroupChannel) => unknown;
     isLargeScreen: boolean;
 }) => (
     <View style={styles.channelListContainer}>
-        <Text style={styles.serverTitle}>The Traveler Campaign</Text>
+        <Text style={styles.serverTitle}>{group.name}</Text>
         <FlatList
-            data={initialChannels}
+            data={group.channels}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
                 <View
                     style={[
-                        activeChannel === item.name &&
+                        activeChannel.name === item.name &&
                             styles.activeChannelItemWrapper,
                     ]}
                 >
                     <TouchableOpacity
                         style={styles.channelItem}
                         onPress={() => {
-                            setActiveChannel(item.name);
+                            setActiveChannel(item);
                             if (!isLargeScreen) {
                                 navigation.navigate('ServerMessages', {
-                                    channel: item.name,
+                                    channel: item,
                                 });
                             }
                         }}
@@ -184,7 +178,7 @@ const ChannelList = ({
                             name="comment"
                             size={16}
                             color={
-                                activeChannel === item.name
+                                activeChannel.name === item.name
                                     ? COLORS.White
                                     : COLORS.InactiveText
                             }
@@ -193,7 +187,7 @@ const ChannelList = ({
                         <Text
                             style={[
                                 styles.channelText,
-                                activeChannel === item.name &&
+                                activeChannel.name === item.name &&
                                     styles.activeChannelText,
                             ]}
                         >
@@ -207,7 +201,7 @@ const ChannelList = ({
 );
 
 type RootStackParamList = {
-    ServerMessages: { channel: string };
+    ServerMessages: { channel: GroupChannel; group: Group };
 };
 
 // **Main Server Screen Component**
@@ -218,9 +212,11 @@ export function ServerScreen({
     route: RouteProp<RootStackParamList, 'ServerMessages'>;
     navigation: NavigationProp<RootStackParamList, 'ServerMessages'>;
 }>) {
+    const { group } = route.params;
+
     const { width } = useWindowDimensions();
     const isLargeScreen = width > 768;
-    const [activeChannel, setActiveChannel] = useState('general');
+    const [activeChannel, setActiveChannel] = useState(group.channels[0]);
 
     // For large screens, show side-by-side layout:
     if (isLargeScreen) {
@@ -229,6 +225,7 @@ export function ServerScreen({
                 {/* Fixed-width sidebar for channels */}
                 <View style={styles.sidebarContainer}>
                     <ChannelList
+                        group={group}
                         navigation={navigation}
                         isLargeScreen={isLargeScreen}
                         activeChannel={activeChannel}
@@ -251,6 +248,7 @@ export function ServerScreen({
     // Otherwise, use stack screens on smaller devices
     return (
         <ChannelList
+            group={group}
             navigation={navigation}
             activeChannel={activeChannel}
             setActiveChannel={setActiveChannel}

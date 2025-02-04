@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavigationProp, RouteProp } from '@react-navigation/core';
+import { useApolloClient } from '@apollo/client';
 import {
     View,
     Text,
@@ -14,11 +15,14 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 
+import { useAppSelector, RootState, UserType } from '../redux';
+import { FETCH_CHANNEL_MESSAGES, FETCH_USER_QUERY } from '../queries';
 import { COLORS } from '../constants';
+import { GroupChannel, GroupChannelMessage } from '../types';
 
 // **Define the type for navigation parameters**
 type RootStackParamList = {
-    ServerMessages: { channel: string };
+    ServerMessages: { channel: GroupChannel };
     // Add other routes and their params here if necessary
 };
 
@@ -26,7 +30,7 @@ type RootStackParamList = {
 type ServerMessagesScreenProps = {
     navigation: NavigationProp<RootStackParamList, 'ServerMessages'>;
     route: RouteProp<RootStackParamList, 'ServerMessages'>;
-    activeChannel: string;
+    activeChannel: GroupChannel;
 };
 
 // **Styles**
@@ -47,7 +51,6 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: COLORS.PrimaryBackground,
     },
-
     // On small screens, this container now flexes to fill (no fixed width)
     channelListContainer: {
         flex: 1,
@@ -149,42 +152,20 @@ const styles = StyleSheet.create({
     },
 });
 
-// **Messages (dummy data)**
-const messages = [
-    {
-        id: '1',
-        user: 'Sarge',
-        time: '01/24/2025 9:50 AM',
-        text: 'Game still ago?',
-        avatar: 'https://picsum.photos/50?random=1',
-    },
-    {
-        id: '2',
-        user: 'hakeem',
-        time: '01/24/2025 9:59 AM',
-        text: 'Probably, I’ll be attending a wedding so the game will have to start later than usual by anywhere from 30 to 60 minutes, might even run something else',
-        avatar: 'https://picsum.photos/50?random=2',
-    },
-    {
-        id: '3',
-        user: 'DC - Pierre',
-        time: '01/24/2025 10:21 AM',
-        text: 'If you’re attending a wedding you don’t want to give it a miss this week and go enjoy yourself? I’m sure everyone would understand, RL comes first right?',
-        avatar: 'https://picsum.photos/50?random=3',
-        edited: true,
-    },
-];
-
-const formatDateTime = () => {
-    const now = new Date();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const year = now.getFullYear();
-    const hours = now.getHours() % 12 || 12;
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const ampm = now.getHours() >= 12 ? 'PM' : 'AM';
+const formatDateTime = (date: Date) => {
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = date.getHours() % 12 || 12;
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const ampm = date.getHours() >= 12 ? 'PM' : 'AM';
 
     return `${month}/${day}/${year} ${hours}:${minutes} ${ampm}`;
+};
+
+type MessageWithAvatar = GroupChannelMessage & {
+    avatar: string;
+    username: string;
 };
 
 export const ServerMessagesScreen: React.FC<ServerMessagesScreenProps> = ({
@@ -192,22 +173,71 @@ export const ServerMessagesScreen: React.FC<ServerMessagesScreenProps> = ({
     activeChannel,
     navigation,
 }) => {
+    const user: UserType = useAppSelector(
+        (state: RootState) => state.user.user
+    );
+    // Prefer channel from route if available; otherwise fallback to activeChannel
     const channel = route?.params?.channel || activeChannel;
     const { width } = useWindowDimensions();
     const isLargeScreen = width > 768;
 
+    const apolloClient = useApolloClient();
     const [messageText, setMessageText] = useState('');
-    const [chatMessages, setChatMessages] = useState(messages);
+    const [chatMessages, setChatMessages] = useState<MessageWithAvatar[]>([]);
+
+    useEffect(() => {
+        // Immediately invoke an async function inside the effect.
+        // eslint-disable-next-line no-void
+        void (async () => {
+            const fetchMessagesResult = await apolloClient.query({
+                query: FETCH_CHANNEL_MESSAGES,
+                variables: {
+                    channelId: channel?.id,
+                    offset: 0,
+                },
+            });
+
+            // Adjust this if your query returns an object containing an array.
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+            const messagesArray = fetchMessagesResult.data.fetchChannelMessages;
+
+            const messages = await Promise.all(
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+                messagesArray.map(async (msg: GroupChannelMessage) => {
+                    const fetchUserResult = await apolloClient.query({
+                        query: FETCH_USER_QUERY,
+                        variables: {
+                            userId: msg.postedByUserId,
+                        },
+                    });
+
+                    return {
+                        ...msg,
+                        postedAt: new Date(msg.postedAt),
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                        username: fetchUserResult.data.fetchUser.username,
+                        avatar: 'https://picsum.photos/50?random=10',
+                    };
+                })
+            );
+
+            setChatMessages(messages);
+        })();
+    }, [JSON.stringify(channel)]);
 
     const sendMessage = () => {
         if (!messageText.trim()) return;
 
-        const newMessage = {
+        const newMessage: MessageWithAvatar = {
             id: `${chatMessages.length + 1}`,
-            user: 'You',
-            time: formatDateTime(),
-            text: messageText.trim(),
+            username: user?.username ?? 'You',
+            postedByUserId: user?.id ?? '',
+            postedAt: new Date(),
+            content: messageText.trim(),
             avatar: 'https://picsum.photos/50?random=10',
+            edited: false,
+            channel,
+            channelId: channel.id,
         };
 
         setChatMessages((prevMessages) => [...prevMessages, newMessage]);
@@ -227,7 +257,7 @@ export const ServerMessagesScreen: React.FC<ServerMessagesScreenProps> = ({
                         <Icon name="arrow-left" size={20} color="white" />
                     </TouchableOpacity>
                 )}
-                <Text style={styles.channelName}># {channel}</Text>
+                <Text style={styles.channelName}># {channel.name}</Text>
             </View>
 
             {/* Chat Messages */}
@@ -242,10 +272,14 @@ export const ServerMessagesScreen: React.FC<ServerMessagesScreenProps> = ({
                         />
                         <View style={styles.messageContent}>
                             <Text style={styles.userName}>
-                                {item.user}{' '}
-                                <Text style={styles.time}>{item.time}</Text>
+                                {item.username}{' '}
+                                <Text style={styles.time}>
+                                    {formatDateTime(item.postedAt)}
+                                </Text>
                             </Text>
-                            <Text style={styles.messageText}>{item.text}</Text>
+                            <Text style={styles.messageText}>
+                                {item.content}
+                            </Text>
                         </View>
                     </View>
                 )}
@@ -255,7 +289,7 @@ export const ServerMessagesScreen: React.FC<ServerMessagesScreenProps> = ({
             <View style={styles.inputContainer}>
                 <TextInput
                     style={styles.input}
-                    placeholder={`Message #${channel}`}
+                    placeholder={`Message #${channel.name}`}
                     placeholderTextColor="gray"
                     value={messageText}
                     onChangeText={setMessageText}

@@ -1,8 +1,9 @@
 import { Group } from './Group';
 
 export type User = {
-    id: number;
+    id: string;
     email: string;
+    username: string;
     firstName: string;
     lastName: string;
     phoneNumber: string;

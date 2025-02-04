@@ -2,13 +2,15 @@ import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { View, Animated, StyleSheet, LayoutChangeEvent } from 'react-native';
 import { DrawerContentComponentProps } from '@react-navigation/drawer';
 import { useApolloClient } from '@apollo/client';
+import { createClient } from '@supabase/supabase-js';
 
 import {
     retrieveUserGroups,
     useAppDispatch,
     useAppSelector,
-    UserGroupsType,
     RootState,
+    UserType,
+    UserGroupsType,
 } from '../redux';
 import {
     ChatButton,
@@ -55,17 +57,42 @@ const styles = StyleSheet.create({
     },
 });
 
+// Initialize Supabase client
+const supabaseUrl = 'https://zrgnvlobrohtrrqeajhy.supabase.co';
+const supabaseAnonKey =
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpyZ252bG9icm9odHJycWVhamh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzgwODgzMjcsImV4cCI6MjA1MzY2NDMyN30.sfXfrw-_WGpxTl8C2TqLqG6Dgd6hUdN-wO3rwi9WMVc';
+const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+
+async function getSignedUrl(bucketName: string, filePath: string, expiry = 60) {
+    const { data, error } = await supabaseClient.storage
+        .from(bucketName)
+        .createSignedUrl(filePath, expiry);
+
+    if (error) {
+        console.error('Error generating signed URL:', error.message);
+        return '';
+    }
+
+    return data.signedUrl; // This URL can be used to access the image
+}
+
 export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
     // Default to "chat" as selected
     const [selectedButton, setSelectedButton] = useState<string>('chat');
-    const user = useAppSelector((state: RootState) => state.user.user);
+    const user: UserType = useAppSelector(
+        (state: RootState) => state.user.user
+    );
+    const userGroups: UserGroupsType = useAppSelector(
+        (state: RootState) => state.userGroups.userGroups
+    );
+    const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
 
     const dispatch = useAppDispatch();
     const apolloClient = useApolloClient();
 
     const setUserGroups = useCallback(
-        (userGroups: UserGroupsType) => {
-            dispatch(retrieveUserGroups(userGroups));
+        (_userGroups: UserGroupsType) => {
+            dispatch(retrieveUserGroups(_userGroups));
         },
         [dispatch]
     );
@@ -76,7 +103,8 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
             const result = await apolloClient.query({
                 query: FETCH_USER_GROUPS_QUERY,
                 variables: {
-                    email: user?.email,
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                    userId: user?.id,
                 },
             });
 
@@ -84,6 +112,24 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
             setUserGroups(result.data.fetchUserGroups);
         })();
     }, [JSON.stringify(user)]);
+
+    useEffect(() => {
+        // eslint-disable-next-line no-void
+        void (async () => {
+            const newImageUrls: Record<string, string> = {};
+
+            for (const group of userGroups) {
+                // eslint-disable-next-line no-await-in-loop
+                const groupAvatar = await getSignedUrl(
+                    'group-avatars',
+                    group.avatarFilePath ?? ''
+                );
+                newImageUrls[group.avatarFilePath ?? ''] = groupAvatar ?? '';
+            }
+
+            setImageUrls(newImageUrls);
+        })();
+    }, [userGroups]);
 
     // Store each button's layout as { y, height }
     const [buttonLayouts, setButtonLayouts] = useState<{
@@ -169,34 +215,24 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
                     />
                 </View>
 
-                {/* SERVER1 Button */}
-                <View
-                    onLayout={handleLayout('server1')}
-                    style={styles.buttonContainer}
-                >
-                    <GroupButton
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, global-require, unicorn/prefer-module
-                        imageSource={require('../images/playstation_controller.jpg')}
-                        onPress={() => {
-                            setSelectedButton('server1');
-                            navigation.navigate('Server1');
-                        }}
-                    />
-                </View>
-                {/* SERVER2 Button */}
-                <View
-                    onLayout={handleLayout('server2')}
-                    style={styles.buttonContainer}
-                >
-                    <GroupButton
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, global-require, unicorn/prefer-module
-                        imageSource={require('../images/mario.jpg')}
-                        onPress={() => {
-                            setSelectedButton('server2');
-                            navigation.navigate('Server2');
-                        }}
-                    />
-                </View>
+                {userGroups.map((group) => (
+                    <View
+                        onLayout={handleLayout(group.name)}
+                        style={styles.buttonContainer}
+                        key={group.id}
+                    >
+                        <GroupButton
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, global-require, unicorn/prefer-module
+                            imageSource={{
+                                uri: imageUrls[group.avatarFilePath ?? ''],
+                            }}
+                            onPress={() => {
+                                setSelectedButton(group.name);
+                                navigation.navigate(group.name);
+                            }}
+                        />
+                    </View>
+                ))}
             </View>
         </View>
     );

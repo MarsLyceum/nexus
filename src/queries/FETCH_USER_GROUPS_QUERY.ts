@@ -1,15 +1,16 @@
 import { gql } from '@apollo/client';
 
 export const FETCH_USER_GROUPS_QUERY = gql`
-    query FetchUserGroups($email: String!) {
-        fetchUserGroups(email: $email) {
+    query FetchUserGroups($userId: String!) {
+        fetchUserGroups(userId: $userId) {
             id
             name
-            createdByUserEmail
+            createdByUserId
             createdAt
             description
+            avatarFilePath
             members {
-                userEmail
+                userId
                 groupId
                 role
                 joinedAt

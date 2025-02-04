@@ -7,12 +7,23 @@ export type GroupMember = {
     joinedAt: Date;
 };
 
+export type GroupChannelMessage = {
+    id: string;
+    content: string;
+    postedAt: Date;
+    edited: boolean;
+    channel: GroupChannel;
+    channelId: string;
+    postedByUserId: string;
+};
+
 export type GroupChannel = {
     id: string;
     name: string;
     type: 'text' | 'voice';
     createdAt: Date;
     groupId: string;
+    messages: GroupChannelMessage[];
 };
 
 export type Group = {
@@ -23,4 +34,5 @@ export type Group = {
     members: GroupMember[];
     channels: GroupChannel[];
     description?: string;
+    avatarFilePath?: string;
 };

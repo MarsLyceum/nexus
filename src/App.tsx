@@ -32,7 +32,7 @@ import * as SplashScreen from 'expo-splash-screen';
 
 import { COLORS } from './constants';
 import { setupAxiosQuotas } from './utils/setupAxiosQuotas';
-import { store } from './redux';
+import { useAppSelector, RootState, UserGroupsType, store } from './redux';
 import {
     ServerScreen,
     SidebarScreen,
@@ -180,6 +180,10 @@ client
     });
 
 function AppDrawer() {
+    const userGroups: UserGroupsType = useAppSelector(
+        (state: RootState) => state.userGroups.userGroups
+    );
+
     return (
         <Drawer.Navigator
             screenOptions={{
@@ -202,20 +206,17 @@ function AppDrawer() {
                 component={EventsScreen}
                 options={{ headerShown: false }}
             />
-            <Drawer.Screen
-                // @ts-expect-error broken navigation
-                name="Server1"
-                // @ts-expect-error broken navigation
-                component={ServerScreen}
-                options={{ headerShown: false }}
-            />
-            <Drawer.Screen
-                // @ts-expect-error broken navigation
-                name="Server2"
-                // @ts-expect-error broken navigation
-                component={ServerScreen}
-                options={{ headerShown: false }}
-            />
+            {userGroups.map((group) => (
+                <Drawer.Screen
+                    // @ts-expect-error broken navigation
+                    name={group.name}
+                    key={group.id}
+                    // @ts-expect-error broken navigation
+                    component={ServerScreen}
+                    initialParams={{ group }}
+                    options={{ headerShown: false }}
+                />
+            ))}
         </Drawer.Navigator>
     );
 }

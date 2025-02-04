@@ -18,7 +18,7 @@ import { useApolloClient } from '@apollo/client';
 
 import { User } from '../types';
 import { loginUser, useAppDispatch } from '../redux';
-import { FETCH_USER_QUERY } from '../queries';
+import { FETCH_USER_BY_EMAIL_QUERY } from '../queries';
 import {
     validatePassword,
     AUTH0_DOMAIN,
@@ -218,17 +218,17 @@ export function LoginScreen({
                 token: credentials.idToken,
             };
 
-            const result = await apolloClient.query({
-                query: FETCH_USER_QUERY,
-                variables: {
-                    email,
-                },
-            });
+            // Use the correct field name from the query result
+            const result = await apolloClient.query<{ fetchUserByEmail: User }>(
+                {
+                    query: FETCH_USER_BY_EMAIL_QUERY,
+                    variables: { email },
+                }
+            );
 
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            // Create the user object using the data from the correct field
             const user: User = {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                ...result.data.fetchUser,
+                ...result.data.fetchUserByEmail,
                 token: auth0Data.token,
             };
             updateUserData(user);

@@ -20,6 +20,7 @@ import {
 } from '../buttons';
 import { FETCH_USER_GROUPS_QUERY } from '../queries';
 import { COLORS } from '../constants';
+import { Group } from '../types';
 
 const BUTTON_MARGIN_TOP = 32;
 
@@ -100,15 +101,15 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
     useEffect(() => {
         // eslint-disable-next-line no-void
         void (async () => {
-            const result = await apolloClient.query({
+            const result = await apolloClient.query<{
+                fetchUserGroups: [Group] | [];
+            }>({
                 query: FETCH_USER_GROUPS_QUERY,
                 variables: {
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
                     userId: user?.id,
                 },
             });
 
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
             setUserGroups(result.data.fetchUserGroups);
         })();
     }, [JSON.stringify(user)]);

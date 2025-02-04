@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { NavigationProp, RouteProp } from '@react-navigation/core';
 import { useApolloClient } from '@apollo/client';
 import {
@@ -18,7 +18,7 @@ import Icon from 'react-native-vector-icons/FontAwesome5';
 import { useAppSelector, RootState, UserType } from '../redux';
 import { FETCH_CHANNEL_MESSAGES, FETCH_USER_QUERY } from '../queries';
 import { COLORS } from '../constants';
-import { GroupChannel, GroupChannelMessage } from '../types';
+import { GroupChannel, GroupChannelMessage, User } from '../types';
 
 // **Define the type for navigation parameters**
 type RootStackParamList = {
@@ -35,23 +35,19 @@ type ServerMessagesScreenProps = {
 
 // **Styles**
 const styles = StyleSheet.create({
-    // Fill entire screen with background color
     largeScreenContainer: {
         flex: 1,
         flexDirection: 'row',
         backgroundColor: COLORS.PrimaryBackground,
     },
-    // This is the fixed-width sidebar for large screens
     sidebarContainer: {
         width: 250,
         backgroundColor: COLORS.PrimaryBackground,
     },
-    // This is the remaining chat area on large screens
     chatWrapper: {
         flex: 1,
         backgroundColor: COLORS.PrimaryBackground,
     },
-    // On small screens, this container now flexes to fill (no fixed width)
     channelListContainer: {
         flex: 1,
         backgroundColor: COLORS.PrimaryBackground,
@@ -159,7 +155,6 @@ const formatDateTime = (date: Date) => {
     const hours = date.getHours() % 12 || 12;
     const minutes = String(date.getMinutes()).padStart(2, '0');
     const ampm = date.getHours() >= 12 ? 'PM' : 'AM';
-
     return `${month}/${day}/${year} ${hours}:${minutes} ${ampm}`;
 };
 
@@ -184,46 +179,107 @@ export const ServerMessagesScreen: React.FC<ServerMessagesScreenProps> = ({
     const apolloClient = useApolloClient();
     const [messageText, setMessageText] = useState('');
     const [chatMessages, setChatMessages] = useState<MessageWithAvatar[]>([]);
+    const [offset, setOffset] = useState(0);
+    const limit = 100;
+    const [loadingMore, setLoadingMore] = useState(false);
 
+    // Create a cache for usernames
+    const userCacheRef = useRef<Record<string, string>>({});
+
+    // Fetch messages when the channel or offset changes
     useEffect(() => {
-        // Immediately invoke an async function inside the effect.
+        let cancelled = false;
+        const fetchMessages = async () => {
+            try {
+                const fetchMessagesResult = await apolloClient.query<{
+                    fetchChannelMessages: GroupChannelMessage;
+                }>({
+                    query: FETCH_CHANNEL_MESSAGES,
+                    variables: {
+                        channelId: channel?.id,
+                        offset, // Fetch messages in batches of 100
+                    },
+                });
+
+                // Assume the query returns an array
+                const messagesArray =
+                    fetchMessagesResult.data.fetchChannelMessages;
+                if (!Array.isArray(messagesArray)) {
+                    console.error(
+                        'Expected fetchChannelMessages to be an array.'
+                    );
+                    return;
+                }
+
+                // Map each message to add avatar and username (using the cache)
+                const newMessages = await Promise.all(
+                    messagesArray.map(async (msg: GroupChannelMessage) => {
+                        // Check if the username for this user is already cached
+                        if (userCacheRef.current[msg.postedByUserId]) {
+                            return {
+                                ...msg,
+                                postedAt: new Date(msg.postedAt),
+                                username:
+                                    userCacheRef.current[msg.postedByUserId],
+                                avatar: 'https://picsum.photos/50?random=10',
+                            };
+                        }
+
+                        // Fetch the username and store it in the cache
+                        const fetchUserResult = await apolloClient.query<{
+                            fetchUser: User;
+                        }>({
+                            query: FETCH_USER_QUERY,
+                            variables: {
+                                userId: msg.postedByUserId,
+                            },
+                        });
+                        const fetchedUsername =
+                            fetchUserResult.data.fetchUser.username;
+                        userCacheRef.current[msg.postedByUserId] =
+                            fetchedUsername;
+                        return {
+                            ...msg,
+                            postedAt: new Date(msg.postedAt),
+                            username: fetchedUsername,
+                            avatar: 'https://picsum.photos/50?random=10',
+                        };
+                    })
+                );
+
+                // If offset is 0, this is the initial load, so replace.
+                // For offset > 0, append new messages to cached ones.
+                if (!cancelled) {
+                    if (offset === 0) {
+                        setChatMessages(newMessages);
+                    } else {
+                        setChatMessages((prevMessages) => [
+                            ...prevMessages,
+                            ...newMessages,
+                        ]);
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching messages:', error);
+            } finally {
+                setLoadingMore(false);
+            }
+        };
+
         // eslint-disable-next-line no-void
-        void (async () => {
-            const fetchMessagesResult = await apolloClient.query({
-                query: FETCH_CHANNEL_MESSAGES,
-                variables: {
-                    channelId: channel?.id,
-                    offset: 0,
-                },
-            });
+        void fetchMessages();
 
-            // Adjust this if your query returns an object containing an array.
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-            const messagesArray = fetchMessagesResult.data.fetchChannelMessages;
+        return () => {
+            cancelled = true;
+        };
+    }, [JSON.stringify(channel), offset]);
 
-            const messages = await Promise.all(
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-                messagesArray.map(async (msg: GroupChannelMessage) => {
-                    const fetchUserResult = await apolloClient.query({
-                        query: FETCH_USER_QUERY,
-                        variables: {
-                            userId: msg.postedByUserId,
-                        },
-                    });
-
-                    return {
-                        ...msg,
-                        postedAt: new Date(msg.postedAt),
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                        username: fetchUserResult.data.fetchUser.username,
-                        avatar: 'https://picsum.photos/50?random=10',
-                    };
-                })
-            );
-
-            setChatMessages(messages);
-        })();
-    }, [JSON.stringify(channel)]);
+    // When scrolling up (end of the inverted list), load more messages
+    const loadMoreMessages = () => {
+        if (loadingMore) return;
+        setLoadingMore(true);
+        setOffset((prevOffset) => prevOffset + limit);
+    };
 
     const sendMessage = () => {
         if (!messageText.trim()) return;
@@ -240,7 +296,8 @@ export const ServerMessagesScreen: React.FC<ServerMessagesScreenProps> = ({
             channelId: channel.id,
         };
 
-        setChatMessages((prevMessages) => [...prevMessages, newMessage]);
+        // Prepend the new message (assuming new messages should appear at the bottom of an inverted list)
+        setChatMessages((prevMessages) => [newMessage, ...prevMessages]);
         setMessageText('');
         Keyboard.dismiss();
     };
@@ -264,6 +321,9 @@ export const ServerMessagesScreen: React.FC<ServerMessagesScreenProps> = ({
             <FlatList
                 data={chatMessages}
                 keyExtractor={(item) => item.id}
+                inverted
+                onEndReached={loadMoreMessages}
+                onEndReachedThreshold={0.1}
                 renderItem={({ item }) => (
                     <View style={styles.messageContainer}>
                         <Image

@@ -16,7 +16,11 @@ import {
 import Icon from 'react-native-vector-icons/FontAwesome5';
 
 import { useAppSelector, RootState, UserType } from '../redux';
-import { FETCH_CHANNEL_MESSAGES, FETCH_USER_QUERY } from '../queries';
+import {
+    FETCH_CHANNEL_MESSAGES_QUERY,
+    FETCH_USER_QUERY,
+    CREATE_GROUP_CHANNEL_MESSAGE_MUTATION,
+} from '../queries';
 import { COLORS } from '../constants';
 import { GroupChannel, GroupChannelMessage, User } from '../types';
 
@@ -186,19 +190,23 @@ export const ServerMessagesScreen: React.FC<ServerMessagesScreenProps> = ({
     // Create a cache for usernames
     const userCacheRef = useRef<Record<string, string>>({});
 
-    // Fetch messages when the channel or offset changes
+    // A refresh trigger state to force refetching messages when updated.
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+    // Fetch messages when the channel, offset, or refreshTrigger changes.
     useEffect(() => {
         let cancelled = false;
         const fetchMessages = async () => {
             try {
                 const fetchMessagesResult = await apolloClient.query<{
-                    fetchChannelMessages: GroupChannelMessage;
+                    fetchChannelMessages: GroupChannelMessage[];
                 }>({
-                    query: FETCH_CHANNEL_MESSAGES,
+                    query: FETCH_CHANNEL_MESSAGES_QUERY,
                     variables: {
                         channelId: channel?.id,
                         offset, // Fetch messages in batches of 100
                     },
+                    fetchPolicy: 'network-only', // ensure fresh data from backend
                 });
 
                 // Assume the query returns an array
@@ -233,6 +241,7 @@ export const ServerMessagesScreen: React.FC<ServerMessagesScreenProps> = ({
                             variables: {
                                 userId: msg.postedByUserId,
                             },
+                            fetchPolicy: 'network-only',
                         });
                         const fetchedUsername =
                             fetchUserResult.data.fetchUser.username;
@@ -266,40 +275,46 @@ export const ServerMessagesScreen: React.FC<ServerMessagesScreenProps> = ({
             }
         };
 
-        // eslint-disable-next-line no-void
         void fetchMessages();
 
         return () => {
             cancelled = true;
         };
-    }, [JSON.stringify(channel), offset]);
+    }, [JSON.stringify(channel), offset, refreshTrigger, apolloClient]);
 
-    // When scrolling up (end of the inverted list), load more messages
+    // When scrolling up (end of the inverted list), load more messages.
     const loadMoreMessages = () => {
         if (loadingMore) return;
         setLoadingMore(true);
         setOffset((prevOffset) => prevOffset + limit);
     };
 
-    const sendMessage = () => {
+    // Use an async function for sendMessage.
+    const sendMessage = async () => {
         if (!messageText.trim()) return;
 
-        const newMessage: MessageWithAvatar = {
-            id: `${chatMessages.length + 1}`,
-            username: user?.username ?? 'You',
-            postedByUserId: user?.id ?? '',
-            postedAt: new Date(),
-            content: messageText.trim(),
-            avatar: 'https://picsum.photos/50?random=10',
-            edited: false,
-            channel,
-            channelId: channel.id,
-        };
+        try {
+            await apolloClient.mutate({
+                mutation: CREATE_GROUP_CHANNEL_MESSAGE_MUTATION,
+                variables: {
+                    postedByUserId: user?.id,
+                    channelId: channel.id,
+                    content: messageText.trim(),
+                },
+            });
 
-        // Prepend the new message (assuming new messages should appear at the bottom of an inverted list)
-        setChatMessages((prevMessages) => [newMessage, ...prevMessages]);
-        setMessageText('');
-        Keyboard.dismiss();
+            // Clear the text input and dismiss the keyboard.
+            setMessageText('');
+            Keyboard.dismiss();
+
+            // Optionally, reset the offset to 0 if you want to load from the beginning.
+            setOffset(0);
+
+            // Trigger a refresh of the messages.
+            setRefreshTrigger((prev) => prev + 1);
+        } catch (error) {
+            console.error('Error creating message:', error);
+        }
     };
 
     return (

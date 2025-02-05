@@ -7,7 +7,7 @@ import { COLORS } from '../constants';
 
 const styles = StyleSheet.create({
     postContainer: {
-        backgroundColor: COLORS.AppBackground,
+        backgroundColor: COLORS.PrimaryBackground,
         borderRadius: 8,
         padding: 15,
         marginBottom: 15,

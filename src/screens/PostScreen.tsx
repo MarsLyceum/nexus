@@ -59,7 +59,7 @@ const isWeb = Platform.OS === 'web';
 const styles = StyleSheet.create({
     safeContainer: {
         flex: 1,
-        backgroundColor: COLORS.PrimaryBackground,
+        backgroundColor: COLORS.SecondaryBackground,
         ...(isWeb && { height: '100vh', display: 'flex' }),
     },
     container: {
@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
         marginBottom: 15,
     },
     singleComment: {
-        backgroundColor: COLORS.SecondaryBackground,
+        backgroundColor: COLORS.PrimaryBackground,
         borderRadius: 6,
         padding: 10,
     },
@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
     },
     modalContainer: {
         width: '85%',
-        backgroundColor: COLORS.AppBackground,
+        backgroundColor: COLORS.PrimaryBackground,
         borderRadius: 8,
         padding: 20,
     },

@@ -91,18 +91,18 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
     const dispatch = useAppDispatch();
     const apolloClient = useApolloClient();
 
-    const setUserGroups = useCallback(
+    const setUserGroupsInStore = useCallback(
         (_userGroups: UserGroupsType) => {
             dispatch(retrieveUserGroups(_userGroups));
         },
         [dispatch]
     );
 
+    // Use user?.id so that the effect only runs when the user ID changes.
     useEffect(() => {
-        // eslint-disable-next-line no-void
         void (async () => {
             const result = await apolloClient.query<{
-                fetchUserGroups: [Group] | [];
+                fetchUserGroups: Group[]; // or [] if no groups
             }>({
                 query: FETCH_USER_GROUPS_QUERY,
                 variables: {
@@ -111,23 +111,27 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
             });
 
             console.log('groups loaded');
-            setUserGroups(result.data.fetchUserGroups);
+            setUserGroupsInStore(result.data.fetchUserGroups);
         })();
-    }, [JSON.stringify(user)]);
+    }, [user?.id, apolloClient, setUserGroupsInStore]);
 
+    // Fetch avatar URLs in parallel for all groups
     useEffect(() => {
-        // eslint-disable-next-line no-void
         void (async () => {
-            const newImageUrls: Record<string, string> = {};
+            const imageUrlPromises = userGroups.map(async (group) => {
+                const avatarPath = group.avatarFilePath ?? '';
+                const url = await getSignedUrl('group-avatars', avatarPath);
+                return { avatarPath, url: url ?? '' };
+            });
 
-            for (const group of userGroups) {
-                // eslint-disable-next-line no-await-in-loop
-                const groupAvatar = await getSignedUrl(
-                    'group-avatars',
-                    group.avatarFilePath ?? ''
-                );
-                newImageUrls[group.avatarFilePath ?? ''] = groupAvatar ?? '';
-            }
+            const results = await Promise.all(imageUrlPromises);
+            const newImageUrls = results.reduce(
+                (acc, { avatarPath, url }) => {
+                    acc[avatarPath] = url;
+                    return acc;
+                },
+                {} as Record<string, string>
+            );
 
             setImageUrls(newImageUrls);
         })();
@@ -156,7 +160,7 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
         const layout = buttonLayouts[selectedButton];
         if (layout) {
             Animated.spring(highlightTop, {
-                toValue: layout.y + BUTTON_MARGIN_TOP, // Use the variable instead of hardcoded value
+                toValue: layout.y + BUTTON_MARGIN_TOP,
                 useNativeDriver: false,
             }).start();
 
@@ -193,6 +197,7 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
                         }}
                     />
                 </View>
+                {/* EVENTS Button */}
                 <View
                     onLayout={handleLayout('events')}
                     style={styles.buttonContainer}
@@ -204,7 +209,25 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
                         }}
                     />
                 </View>
-
+                {/* Render Group Buttons */}
+                {userGroups.map((group) => (
+                    <View
+                        onLayout={handleLayout(group.name)}
+                        style={styles.buttonContainer}
+                        key={group.id}
+                    >
+                        <GroupButton
+                            imageSource={{
+                                uri: imageUrls[group.avatarFilePath ?? ''],
+                            }}
+                            onPress={() => {
+                                setSelectedButton(group.name);
+                                navigation.navigate(group.name);
+                            }}
+                        />
+                    </View>
+                ))}
+                {/* CREATE GROUP Button (placed after the group icons) */}
                 <View
                     onLayout={handleLayout('createGroup')}
                     style={styles.buttonContainer}
@@ -216,25 +239,6 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
                         }}
                     />
                 </View>
-
-                {userGroups.map((group) => (
-                    <View
-                        onLayout={handleLayout(group.name)}
-                        style={styles.buttonContainer}
-                        key={group.id}
-                    >
-                        <GroupButton
-                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, global-require, unicorn/prefer-module
-                            imageSource={{
-                                uri: imageUrls[group.avatarFilePath ?? ''],
-                            }}
-                            onPress={() => {
-                                setSelectedButton(group.name);
-                                navigation.navigate(group.name);
-                            }}
-                        />
-                    </View>
-                ))}
             </View>
         </View>
     );

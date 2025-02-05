@@ -196,6 +196,7 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
                     })
                 );
                 if (!cancelled) {
+                    console.log('feed loaded');
                     setFeedPosts(posts);
                 }
             } catch (error) {

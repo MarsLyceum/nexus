@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
     scrollContent: {
         padding: 15,
     },
-    // Styles for comments (unchanged)
+    // Styles for comments
     commentContainer: {
         borderLeftWidth: 3,
         borderLeftColor: COLORS.Primary,
@@ -96,9 +96,17 @@ const styles = StyleSheet.create({
         fontSize: 14,
         lineHeight: 20,
     },
+    // Style for collapsed comment snippet (displayed inline with name and time)
+    collapsedCommentText: {
+        color: COLORS.InactiveText,
+        fontSize: 12,
+        marginLeft: 12,
+        flex: 1,
+    },
     commentContentWrapper: {
         alignSelf: 'flex-start',
         maxWidth: '100%',
+        marginTop: 4,
     },
     actionsRow: {
         flexDirection: 'row',
@@ -183,33 +191,48 @@ const CommentThread: React.FC<CommentThreadProps> = ({
             ]}
         >
             <View style={styles.singleComment}>
-                <View style={styles.commentHeader}>
-                    <TouchableOpacity
-                        onPress={() => setCollapsed(!collapsed)}
-                        style={{ flexDirection: 'row', alignItems: 'center' }}
-                    >
-                        <Icon
-                            name={collapsed ? 'chevron-right' : 'chevron-down'}
-                            size={12}
-                            color={COLORS.InactiveText}
-                            style={styles.collapseIcon}
-                        />
-                        <Image
-                            source={{
-                                uri: `https://picsum.photos/seed/${comment.user.replace(/[^a-zA-Z0-9]/g, '')}/48`,
-                            }}
-                            style={styles.commentUserPic}
-                        />
-                        <Text style={styles.commentUser}>{comment.user}</Text>
-                        <Text style={styles.commentTime}>{comment.time}</Text>
-                    </TouchableOpacity>
-                </View>
+                <TouchableOpacity
+                    onPress={() => setCollapsed(!collapsed)}
+                    style={styles.commentHeader}
+                >
+                    <Icon
+                        name={collapsed ? 'chevron-right' : 'chevron-down'}
+                        size={12}
+                        color={COLORS.InactiveText}
+                        style={styles.collapseIcon}
+                    />
+                    <Image
+                        source={{
+                            uri: `https://picsum.photos/seed/${comment.user.replace(
+                                /[^a-zA-Z0-9]/g,
+                                ''
+                            )}/48`,
+                        }}
+                        style={styles.commentUserPic}
+                    />
+                    <Text style={styles.commentUser}>{comment.user}</Text>
+                    <Text style={styles.commentTime}>{comment.time}</Text>
+                    {collapsed && (
+                        <Text
+                            style={styles.collapsedCommentText}
+                            numberOfLines={1}
+                            ellipsizeMode="tail"
+                        >
+                            {comment.content}
+                        </Text>
+                    )}
+                </TouchableOpacity>
                 {!collapsed && (
                     <>
                         <View style={styles.commentContentWrapper}>
-                            <Text style={styles.commentText}>
-                                {comment.content}
-                            </Text>
+                            {/* When expanded, show the full comment content below the header */}
+                            <TouchableOpacity
+                                onPress={() => setCollapsed(!collapsed)}
+                            >
+                                <Text style={styles.commentText}>
+                                    {comment.content}
+                                </Text>
+                            </TouchableOpacity>
                             <View style={styles.actionsRow}>
                                 <TouchableOpacity
                                     onPress={() => setIsReplying(true)}

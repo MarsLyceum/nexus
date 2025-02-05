@@ -9,6 +9,11 @@ import {
     SafeAreaView,
     TouchableOpacity,
     TextInput,
+    Modal,
+    Pressable,
+    KeyboardAvoidingView,
+    Platform,
+    LayoutChangeEvent,
 } from 'react-native';
 import { NavigationProp, RouteProp } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
@@ -38,7 +43,7 @@ type PostData = {
     commentsCount: number;
 };
 
-type CommentNode = {
+export type CommentNode = {
     id: string;
     user: string;
     time: string;
@@ -47,16 +52,94 @@ type CommentNode = {
     children: CommentNode[];
 };
 
+/** --------------- CONSTANTS --------------- **/
+const BOTTOM_INPUT_HEIGHT = 60; // adjust as needed
+
+// Flag for platform.
+const isWeb = Platform.OS === 'web';
+
 /** --------------- STYLES --------------- **/
 const styles = StyleSheet.create({
-    container: {
+    safeContainer: {
         flex: 1,
         backgroundColor: COLORS.PrimaryBackground,
+        ...(isWeb && { height: '100vh', display: 'flex' }),
     },
-    scrollContent: {
-        padding: 15,
+    container: {
+        flex: 1,
     },
-    // Styles for comments
+    // On web, position relative so top and bottom sections can be fixed.
+    mainContainer: isWeb
+        ? { flex: 1, position: 'relative' }
+        : { flex: 1, flexDirection: 'column' },
+    // Top section: fixed on web, static on mobile.
+    topSection: isWeb
+        ? {
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              zIndex: 10,
+              backgroundColor: COLORS.PrimaryBackground,
+          }
+        : { padding: 15 },
+    // Scroll section: on web, fill the space between the fixed top and bottom.
+    // The top offset is set dynamically.
+    scrollSection: isWeb
+        ? {
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              bottom: BOTTOM_INPUT_HEIGHT,
+              overflowY: 'auto',
+          }
+        : { flex: 1 },
+    // The ScrollView styling remains similar; overflow is handled by scrollSection on web.
+    scrollView: {
+        flex: 1,
+    },
+    scrollContainer: isWeb
+        ? {
+              paddingHorizontal: 15,
+              paddingBottom: 20, // extra bottom padding
+          }
+        : {
+              flexGrow: 1,
+              paddingHorizontal: 15,
+              paddingBottom: 20,
+          },
+    // Bottom section: fixed on web, static on mobile.
+    bottomSection: isWeb
+        ? {
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: BOTTOM_INPUT_HEIGHT,
+              borderTopWidth: 1,
+              borderTopColor: '#4A3A5A',
+              backgroundColor: COLORS.PrimaryBackground,
+              justifyContent: 'center',
+              paddingHorizontal: 10,
+              zIndex: 10,
+          }
+        : {
+              height: BOTTOM_INPUT_HEIGHT,
+              borderTopWidth: 1,
+              borderTopColor: '#4A3A5A',
+              backgroundColor: COLORS.PrimaryBackground,
+              justifyContent: 'center',
+              paddingHorizontal: 10,
+          },
+    input: {
+        backgroundColor: '#3A2A4A',
+        color: 'white',
+        paddingVertical: 10,
+        paddingHorizontal: 15,
+        borderRadius: 20,
+        fontSize: 14,
+    },
+    // Comment styles remain unchanged.
     commentContainer: {
         borderLeftWidth: 3,
         borderLeftColor: COLORS.Primary,
@@ -96,7 +179,6 @@ const styles = StyleSheet.create({
         fontSize: 14,
         lineHeight: 20,
     },
-    // Style for collapsed comment snippet (displayed inline with name and time)
     collapsedCommentText: {
         color: COLORS.InactiveText,
         fontSize: 12,
@@ -144,6 +226,48 @@ const styles = StyleSheet.create({
         color: COLORS.White,
         fontSize: 14,
     },
+    // Modal styles remain unchanged.
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalContainer: {
+        width: '85%',
+        backgroundColor: COLORS.AppBackground,
+        borderRadius: 8,
+        padding: 20,
+    },
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: '600',
+        marginBottom: 15,
+        color: COLORS.White,
+    },
+    textInput: {
+        borderWidth: 1,
+        borderColor: COLORS.InactiveText,
+        borderRadius: 5,
+        padding: 10,
+        marginBottom: 15,
+        color: COLORS.White,
+    },
+    modalButtonRow: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+    },
+    modalButton: {
+        marginLeft: 10,
+        paddingVertical: 8,
+        paddingHorizontal: 15,
+        borderRadius: 5,
+        backgroundColor: COLORS.Primary,
+    },
+    modalButtonText: {
+        color: COLORS.White,
+        fontWeight: '600',
+    },
 });
 
 /** --------------- COMMENT THREAD --------------- **/
@@ -157,7 +281,7 @@ const CommentThread: React.FC<CommentThreadProps> = ({
     level = 0,
 }) => {
     const [voteCount, setVoteCount] = useState(comment.upvotes);
-    const [collapsed, setCollapsed] = useState(false);
+    const [collapsed, setCollapsed] = useState(comment.upvotes < -1);
     const [isReplying, setIsReplying] = useState(false);
     const [replyText, setReplyText] = useState('');
     const [childReplies, setChildReplies] = useState<CommentNode[]>(
@@ -225,7 +349,6 @@ const CommentThread: React.FC<CommentThreadProps> = ({
                 {!collapsed && (
                     <>
                         <View style={styles.commentContentWrapper}>
-                            {/* When expanded, show the full comment content below the header */}
                             <TouchableOpacity
                                 onPress={() => setCollapsed(!collapsed)}
                             >
@@ -295,19 +418,18 @@ export const PostScreen: React.FC<PostScreenProps> = ({
     navigation,
 }) => {
     const { post: feedPost } = route.params;
-    // Create a PostData object for demonstration.
     const postData: PostData = {
         subreddit: 'r/pcgaming',
         user: feedPost.user,
         time: feedPost.time,
         title: feedPost.title,
-        flair: '', // assuming no flair data from the feed
+        flair: '',
         upvotes: feedPost.upvotes,
         commentsCount: feedPost.commentsCount,
     };
 
-    // Sample comments (replace with real data as needed)
-    const comments: CommentNode[] = [
+    // Initial comments data.
+    const [comments, setComments] = useState<CommentNode[]>([
         {
             id: 'comment-1',
             user: 'myersthekid',
@@ -337,24 +459,142 @@ export const PostScreen: React.FC<PostScreenProps> = ({
                 },
             ],
         },
-    ];
+    ]);
+
+    const [modalVisible, setModalVisible] = useState(false);
+    const [newCommentContent, setNewCommentContent] = useState('');
+
+    // Use state to store the measured height of the top section.
+    const [topSectionHeight, setTopSectionHeight] = useState(0);
+
+    // Handler to update top section height.
+    const onTopSectionLayout = (event: LayoutChangeEvent) => {
+        setTopSectionHeight(event.nativeEvent.layout.height);
+    };
+
+    const handleCreateComment = () => {
+        if (newCommentContent.trim() !== '') {
+            const newComment: CommentNode = {
+                id: `comment-new-${Date.now()}`,
+                user: 'currentUser',
+                time: 'Just now',
+                upvotes: 0,
+                content: newCommentContent,
+                children: [],
+            };
+            setComments((prevComments) => [newComment, ...prevComments]);
+            setNewCommentContent('');
+            setModalVisible(false);
+        }
+    };
+
+    // On mobile use KeyboardAvoidingView; on web use a plain View.
+    const ContainerComponent = isWeb ? View : KeyboardAvoidingView;
+    const containerProps = isWeb
+        ? { style: styles.container }
+        : {
+              style: styles.container,
+              behavior: Platform.OS === 'ios' ? 'padding' : undefined,
+          };
+
+    // For web, update scrollSection style to use the measured topSectionHeight.
+    const webScrollSectionStyle = isWeb
+        ? { ...styles.scrollSection, top: topSectionHeight }
+        : styles.scrollSection;
 
     return (
-        <SafeAreaView style={styles.container}>
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-                <PostItem
-                    user={postData.user}
-                    time={postData.time}
-                    title={postData.title}
-                    upvotes={postData.upvotes}
-                    commentsCount={postData.commentsCount}
-                    flair={postData.flair}
-                    onBackPress={() => navigation.goBack()}
-                />
-                {comments.map((c) => (
-                    <CommentThread key={c.id} comment={c} level={0} />
-                ))}
-            </ScrollView>
+        <SafeAreaView style={styles.safeContainer}>
+            <ContainerComponent {...containerProps}>
+                <View style={styles.mainContainer}>
+                    {/* Top Section */}
+                    <View
+                        style={styles.topSection}
+                        onLayout={onTopSectionLayout}
+                    >
+                        <PostItem
+                            user={postData.user}
+                            time={postData.time}
+                            title={postData.title}
+                            upvotes={postData.upvotes}
+                            commentsCount={postData.commentsCount}
+                            flair={postData.flair}
+                            onBackPress={() => navigation.goBack()}
+                        />
+                    </View>
+
+                    {/* Scrollable Comments */}
+                    <View style={webScrollSectionStyle}>
+                        <ScrollView
+                            style={styles.scrollView}
+                            contentContainerStyle={styles.scrollContainer}
+                            keyboardShouldPersistTaps="handled"
+                            scrollEnabled={true}
+                        >
+                            {comments.map((c) => (
+                                <CommentThread
+                                    key={c.id}
+                                    comment={c}
+                                    level={0}
+                                />
+                            ))}
+                        </ScrollView>
+                    </View>
+
+                    {/* Bottom Fixed Comment Input */}
+                    <View style={styles.bottomSection}>
+                        <TouchableOpacity
+                            style={styles.input}
+                            onPress={() => setModalVisible(true)}
+                        >
+                            <Text style={{ color: COLORS.InactiveText }}>
+                                Write a comment...
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </ContainerComponent>
+
+            {/* Modal for New Comment */}
+            <Modal
+                visible={modalVisible}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setModalVisible(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContainer}>
+                        <Text style={styles.modalTitle}>
+                            Create New Comment
+                        </Text>
+                        <TextInput
+                            placeholder="Write your comment..."
+                            placeholderTextColor={COLORS.InactiveText}
+                            style={styles.textInput}
+                            value={newCommentContent}
+                            onChangeText={setNewCommentContent}
+                            multiline
+                        />
+                        <View style={styles.modalButtonRow}>
+                            <Pressable
+                                style={styles.modalButton}
+                                onPress={() => setModalVisible(false)}
+                            >
+                                <Text style={styles.modalButtonText}>
+                                    Cancel
+                                </Text>
+                            </Pressable>
+                            <Pressable
+                                style={styles.modalButton}
+                                onPress={handleCreateComment}
+                            >
+                                <Text style={styles.modalButtonText}>
+                                    Create
+                                </Text>
+                            </Pressable>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </SafeAreaView>
     );
 };

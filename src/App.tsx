@@ -8,7 +8,7 @@ import {
 } from '@react-navigation/stack';
 import EventSource from 'react-native-event-source';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { Platform, StatusBar, TouchableOpacity } from 'react-native';
+import { Platform, StatusBar, TouchableOpacity, View } from 'react-native';
 import {
     ApolloClient,
     InMemoryCache,
@@ -65,7 +65,7 @@ const errorLink = onError((error: ErrorResponse) => {
     }
 });
 
-const requestQuota = 10;
+const requestQuota = 20;
 let requestCount = 0;
 const quotaLink = new ApolloLink((operation, forward) => {
     if (requestCount < requestQuota) {
@@ -155,7 +155,7 @@ client.subscribe({ query: GREETINGS_SUBSCRIPTION }).subscribe({
     },
 });
 
-// AppDrawer: Your drawer navigator for main sections of your app.
+// AppDrawer: Your drawer navigator for main sections.
 function AppDrawer() {
     const userGroups: UserGroupsType = useAppSelector(
         (state: RootState) => state.userGroups.userGroups
@@ -163,6 +163,7 @@ function AppDrawer() {
 
     return (
         <DrawerNavigator.Navigator
+            // Keep drawer type permanent
             screenOptions={{
                 drawerType: 'permanent',
                 drawerStyle: {
@@ -170,6 +171,8 @@ function AppDrawer() {
                     borderWidth: 0,
                     backgroundColor: COLORS.AppBackground,
                 },
+                // IMPORTANT: Ensure each scene gets flex: 1 so screens can scroll
+                sceneContainerStyle: { flex: 1 },
             }}
             drawerContent={(props) => <SidebarScreen {...props} />}
         >
@@ -196,8 +199,7 @@ function AppDrawer() {
     );
 }
 
-// The main App component with the stack navigator integrating all screens,
-// including FeedChannelScreen and PostScreen from the old feed channel navigator.
+// The main App component with the stack navigator integrating all screens.
 export default function App() {
     const [appIsReady, setAppIsReady] = useState(false);
     const [fontsLoaded] = useFonts({
@@ -224,7 +226,7 @@ export default function App() {
             />
             <SafeAreaView
                 style={{ flex: 1, backgroundColor: COLORS.AppBackground }}
-                edges={['top', 'left', 'right']}
+                edges={['top', 'left', 'right', 'bottom']}
             >
                 <ApolloProvider client={client}>
                     <ReduxProvider store={store}>

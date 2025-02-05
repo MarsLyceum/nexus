@@ -269,7 +269,9 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
                 navigation={navigation}
             />
 
+            {/* Adding style={{ flex: 1 }} here so FlatList gets full height */}
             <FlatList
+                style={{ flex: 1 }}
                 data={feedPosts}
                 renderItem={renderItem}
                 keyExtractor={(item) => item.id}

@@ -13,7 +13,6 @@ import {
     Pressable,
     KeyboardAvoidingView,
     Platform,
-    LayoutChangeEvent,
 } from 'react-native';
 import { NavigationProp, RouteProp } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
@@ -68,46 +67,22 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
     },
-    // On web, position relative so top and bottom sections can be fixed.
-    mainContainer: isWeb
-        ? { flex: 1, position: 'relative' }
-        : { flex: 1, flexDirection: 'column' },
-    // Top section: fixed on web, static on mobile.
-    topSection: isWeb
+    mainContainer: { flex: 1 },
+    // Updated scrollSection style for web: using absolute positioning and overflow
+    scrollSection: isWeb
         ? {
               position: 'absolute',
               top: 0,
               left: 0,
               right: 0,
-              zIndex: 10,
-              backgroundColor: COLORS.PrimaryBackground,
-          }
-        : { padding: 15 },
-    // Scroll section: on web, fill the space between the fixed top and bottom.
-    // The top offset is set dynamically.
-    scrollSection: isWeb
-        ? {
-              position: 'absolute',
-              left: 0,
-              right: 0,
-              bottom: BOTTOM_INPUT_HEIGHT,
+              bottom: BOTTOM_INPUT_HEIGHT, // leave space for bottom input
               overflowY: 'auto',
           }
         : { flex: 1 },
-    // The ScrollView styling remains similar; overflow is handled by scrollSection on web.
     scrollView: {
-        flex: 1,
+        paddingHorizontal: 15,
+        paddingBottom: 20, // extra bottom padding so content isn’t hidden behind the bottom input
     },
-    scrollContainer: isWeb
-        ? {
-              paddingHorizontal: 15,
-              paddingBottom: 20, // extra bottom padding
-          }
-        : {
-              flexGrow: 1,
-              paddingHorizontal: 15,
-              paddingBottom: 20,
-          },
     // Bottom section: fixed on web, static on mobile.
     bottomSection: isWeb
         ? {
@@ -464,14 +439,6 @@ export const PostScreen: React.FC<PostScreenProps> = ({
     const [modalVisible, setModalVisible] = useState(false);
     const [newCommentContent, setNewCommentContent] = useState('');
 
-    // Use state to store the measured height of the top section.
-    const [topSectionHeight, setTopSectionHeight] = useState(0);
-
-    // Handler to update top section height.
-    const onTopSectionLayout = (event: LayoutChangeEvent) => {
-        setTopSectionHeight(event.nativeEvent.layout.height);
-    };
-
     const handleCreateComment = () => {
         if (newCommentContent.trim() !== '') {
             const newComment: CommentNode = {
@@ -497,20 +464,17 @@ export const PostScreen: React.FC<PostScreenProps> = ({
               behavior: Platform.OS === 'ios' ? 'padding' : undefined,
           };
 
-    // For web, update scrollSection style to use the measured topSectionHeight.
-    const webScrollSectionStyle = isWeb
-        ? { ...styles.scrollSection, top: topSectionHeight }
-        : styles.scrollSection;
-
     return (
         <SafeAreaView style={styles.safeContainer}>
             <ContainerComponent {...containerProps}>
                 <View style={styles.mainContainer}>
-                    {/* Top Section */}
-                    <View
-                        style={styles.topSection}
-                        onLayout={onTopSectionLayout}
+                    {/* Scrollable content containing the PostItem and Comments */}
+                    <ScrollView
+                        style={styles.scrollSection}
+                        contentContainerStyle={styles.scrollView}
+                        keyboardShouldPersistTaps="handled"
                     >
+                        {/* Post Header as part of the scrollable content */}
                         <PostItem
                             user={postData.user}
                             time={postData.time}
@@ -520,25 +484,12 @@ export const PostScreen: React.FC<PostScreenProps> = ({
                             flair={postData.flair}
                             onBackPress={() => navigation.goBack()}
                         />
-                    </View>
 
-                    {/* Scrollable Comments */}
-                    <View style={webScrollSectionStyle}>
-                        <ScrollView
-                            style={styles.scrollView}
-                            contentContainerStyle={styles.scrollContainer}
-                            keyboardShouldPersistTaps="handled"
-                            scrollEnabled={true}
-                        >
-                            {comments.map((c) => (
-                                <CommentThread
-                                    key={c.id}
-                                    comment={c}
-                                    level={0}
-                                />
-                            ))}
-                        </ScrollView>
-                    </View>
+                        {/* Render Comments */}
+                        {comments.map((c) => (
+                            <CommentThread key={c.id} comment={c} level={0} />
+                        ))}
+                    </ScrollView>
 
                     {/* Bottom Fixed Comment Input */}
                     <View style={styles.bottomSection}>

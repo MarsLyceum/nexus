@@ -10,6 +10,7 @@ export const CREATE_GROUP_CHANNEL_MESSAGE_MUTATION = gql`
             postedByUserId: $postedByUserId
             channelId: $channelId
             content: $content
+            messageType: "message"
         ) {
             content
         }

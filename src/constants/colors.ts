@@ -6,5 +6,6 @@ export const COLORS = {
     AppBackground: '#1F1524',
     InactiveText: '#989898',
     MainText: '#C5C5C5',
+    TextInput: '#3A2A4A',
     OffWhite: '#F2F3F5',
 };

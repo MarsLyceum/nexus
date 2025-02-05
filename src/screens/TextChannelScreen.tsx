@@ -1,4 +1,3 @@
-// TextChannelScreen.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import {
     View,
@@ -25,22 +24,20 @@ import {
 import { COLORS } from '../constants';
 import { GroupChannel, GroupChannelMessage, User } from '../types';
 
-// Define a type for messages that include avatar and username
 export type MessageWithAvatar = GroupChannelMessage & {
     avatar: string;
     username: string;
 };
 
-// Define the props for TextChannelScreen
 type TextChannelScreenProps = {
     channel: GroupChannel;
-    navigation: any; // You can refine this type with NavigationProp if desired.
+    navigation: any;
 };
 
 const styles = StyleSheet.create({
     chatContainer: {
         flex: 1,
-        backgroundColor: COLORS.PrimaryBackground,
+        backgroundColor: COLORS.SecondaryBackground,
     },
     messageContainer: {
         flexDirection: 'row',
@@ -76,11 +73,11 @@ const styles = StyleSheet.create({
         padding: 10,
         borderTopWidth: 1,
         borderTopColor: '#4A3A5A',
-        backgroundColor: COLORS.PrimaryBackground,
+        backgroundColor: COLORS.SecondaryBackground,
     },
     input: {
         flex: 1,
-        backgroundColor: '#3A2A4A',
+        backgroundColor: COLORS.TextInput,
         color: 'white',
         padding: 10,
         borderRadius: 20,
@@ -119,6 +116,7 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
     const [refreshTrigger, setRefreshTrigger] = useState(0);
     const { width } = useWindowDimensions();
     const isLargeScreen = width > 768;
+    const flatListRef = useRef<FlatList<MessageWithAvatar> | null>(null);
 
     useEffect(() => {
         let cancelled = false;
@@ -134,6 +132,7 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
                     },
                     fetchPolicy: 'network-only',
                 });
+
                 const messagesArray =
                     fetchMessagesResult.data.fetchChannelMessages;
                 if (!Array.isArray(messagesArray)) {
@@ -142,6 +141,7 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
                     );
                     return;
                 }
+
                 const newMessages: MessageWithAvatar[] = await Promise.all(
                     messagesArray.map(async (msg: GroupChannelMessage) => {
                         if (userCacheRef.current[msg.postedByUserId]) {
@@ -153,6 +153,7 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
                                 avatar: 'https://picsum.photos/50?random=10',
                             };
                         }
+
                         const fetchUserResult = await apolloClient.query<{
                             fetchUser: User;
                         }>({
@@ -160,6 +161,7 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
                             variables: { userId: msg.postedByUserId },
                             fetchPolicy: 'network-only',
                         });
+
                         const fetchedUsername =
                             fetchUserResult.data.fetchUser.username;
                         userCacheRef.current[msg.postedByUserId] =
@@ -172,6 +174,7 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
                         };
                     })
                 );
+
                 if (!cancelled) {
                     if (offset === 0) {
                         setChatMessages(newMessages);
@@ -191,6 +194,15 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
             cancelled = true;
         };
     }, [channel, offset, refreshTrigger, apolloClient]);
+
+    useEffect(() => {
+        if (flatListRef.current) {
+            setTimeout(
+                () => flatListRef.current?.scrollToEnd({ animated: true }),
+                100
+            );
+        }
+    }, [chatMessages]);
 
     const loadMoreMessages = () => {
         if (loadingMore) return;
@@ -228,9 +240,9 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
 
             {/* Chat Messages */}
             <FlatList
-                data={chatMessages}
+                ref={flatListRef}
+                data={[...chatMessages].reverse()}
                 keyExtractor={(item) => item.id}
-                inverted
                 onEndReached={loadMoreMessages}
                 onEndReachedThreshold={0.1}
                 renderItem={({ item }) => (
@@ -258,7 +270,7 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
             <View style={styles.inputContainer}>
                 <TextInput
                     style={styles.input}
-                    placeholder={`Message #${channel.name}`}
+                    placeholder={`Message ${channel.name}`}
                     placeholderTextColor="gray"
                     value={messageText}
                     onChangeText={setMessageText}

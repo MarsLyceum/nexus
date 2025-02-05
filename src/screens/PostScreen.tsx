@@ -7,17 +7,15 @@ import {
     ScrollView,
     StyleSheet,
     SafeAreaView,
-    TouchableOpacity,
-    TextInput,
-    Modal,
-    Pressable,
     KeyboardAvoidingView,
     Platform,
+    TouchableOpacity,
 } from 'react-native';
 import { NavigationProp, RouteProp } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { PostItem, VoteActions } from '../sections';
 import { COLORS } from '../constants';
+import { CreateContentButton } from '../buttons'; // <-- Import the new button
 
 /**
  * Define the RootStackParamList locally.
@@ -83,7 +81,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 15,
         paddingBottom: 20, // extra bottom padding so content isn’t hidden behind the bottom input
     },
-    // Bottom section: fixed on web, static on mobile.
+    // (Optional) kept for reference, if you need them elsewhere:
     bottomSection: isWeb
         ? {
               position: 'absolute',
@@ -107,7 +105,7 @@ const styles = StyleSheet.create({
               paddingHorizontal: 10,
           },
     input: {
-        backgroundColor: '#3A2A4A',
+        backgroundColor: COLORS.TextInput,
         color: 'white',
         paddingVertical: 10,
         paddingHorizontal: 15,
@@ -201,7 +199,7 @@ const styles = StyleSheet.create({
         color: COLORS.White,
         fontSize: 14,
     },
-    // Modal styles remain unchanged.
+    // (Optional) kept if you need a shared modal style, not required by the new button
     modalOverlay: {
         flex: 1,
         backgroundColor: 'rgba(0,0,0,0.5)',
@@ -362,14 +360,16 @@ const CommentThread: React.FC<CommentThreadProps> = ({
                                             COLORS.InactiveText
                                         }
                                     />
-                                    <TouchableOpacity
-                                        onPress={handleSubmitReply}
-                                        style={styles.sendReplyButton}
-                                    >
-                                        <Text style={styles.sendReplyText}>
-                                            Send
+                                    <View style={{ marginLeft: 8 }}>
+                                        <Text
+                                            style={styles.sendReplyButton}
+                                            onPress={handleSubmitReply}
+                                        >
+                                            <Text style={styles.sendReplyText}>
+                                                Send
+                                            </Text>
                                         </Text>
-                                    </TouchableOpacity>
+                                    </View>
                                 </View>
                             )}
                         </View>
@@ -436,6 +436,7 @@ export const PostScreen: React.FC<PostScreenProps> = ({
         },
     ]);
 
+    // State for new comment creation
     const [modalVisible, setModalVisible] = useState(false);
     const [newCommentContent, setNewCommentContent] = useState('');
 
@@ -491,61 +492,17 @@ export const PostScreen: React.FC<PostScreenProps> = ({
                         ))}
                     </ScrollView>
 
-                    {/* Bottom Fixed Comment Input */}
-                    <View style={styles.bottomSection}>
-                        <TouchableOpacity
-                            style={styles.input}
-                            onPress={() => setModalVisible(true)}
-                        >
-                            <Text style={{ color: COLORS.InactiveText }}>
-                                Write a comment...
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
+                    {/* Replaced local bottom input & modal with CreateContentButton */}
+                    <CreateContentButton
+                        modalVisible={modalVisible}
+                        setModalVisible={setModalVisible}
+                        contentText={newCommentContent}
+                        setContentText={setNewCommentContent}
+                        handleCreate={handleCreateComment}
+                        buttonText="Write a comment..."
+                    />
                 </View>
             </ContainerComponent>
-
-            {/* Modal for New Comment */}
-            <Modal
-                visible={modalVisible}
-                transparent
-                animationType="fade"
-                onRequestClose={() => setModalVisible(false)}
-            >
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modalContainer}>
-                        <Text style={styles.modalTitle}>
-                            Create New Comment
-                        </Text>
-                        <TextInput
-                            placeholder="Write your comment..."
-                            placeholderTextColor={COLORS.InactiveText}
-                            style={styles.textInput}
-                            value={newCommentContent}
-                            onChangeText={setNewCommentContent}
-                            multiline
-                        />
-                        <View style={styles.modalButtonRow}>
-                            <Pressable
-                                style={styles.modalButton}
-                                onPress={() => setModalVisible(false)}
-                            >
-                                <Text style={styles.modalButtonText}>
-                                    Cancel
-                                </Text>
-                            </Pressable>
-                            <Pressable
-                                style={styles.modalButton}
-                                onPress={handleCreateComment}
-                            >
-                                <Text style={styles.modalButtonText}>
-                                    Create
-                                </Text>
-                            </Pressable>
-                        </View>
-                    </View>
-                </View>
-            </Modal>
         </SafeAreaView>
     );
 };

@@ -1,14 +1,9 @@
 // FeedChannelScreen.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import {
-    View,
     Text,
     SafeAreaView,
     FlatList,
-    TouchableOpacity,
-    Modal,
-    TextInput,
-    Pressable,
     StyleSheet,
     useWindowDimensions,
 } from 'react-native';
@@ -17,10 +12,11 @@ import { Header, PostItem } from '../sections';
 import { COLORS } from '../constants';
 import { FETCH_CHANNEL_POSTS_QUERY, FETCH_USER_QUERY } from '../queries';
 import { GroupChannelPostMessage, GroupChannel, User } from '../types';
+import { CreateContentButton } from '../buttons';
 
-// -----------------------------
-// Shared Types & Models
-// -----------------------------
+/** -----------------------------
+ * Shared Types & Models
+ ----------------------------- */
 export type FeedPost = {
     id: string;
     user: string;
@@ -33,18 +29,15 @@ export type FeedPost = {
     thumbnail: string;
 };
 
-// -----------------------------
-// Updated Props
-// -----------------------------
 export type FeedChannelScreenProps = {
     navigation: any;
     channel?: GroupChannel;
     route?: { params: { channel: GroupChannel } };
 };
 
-// -----------------------------
-// Helper: Convert Date to Relative Time
-// -----------------------------
+/** -----------------------------
+ * Helper: Convert Date to Relative Time
+ ----------------------------- */
 const getRelativeTime = (postedDate: Date): string => {
     const diff = Date.now() - postedDate.getTime();
     const minutes = Math.floor(diff / (1000 * 60));
@@ -53,84 +46,23 @@ const getRelativeTime = (postedDate: Date): string => {
     return `${hours}h`;
 };
 
-// -----------------------------
-// Styles
-// -----------------------------
+/** -----------------------------
+ * Styles
+ ----------------------------- */
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.PrimaryBackground,
+        backgroundColor: COLORS.SecondaryBackground,
     },
     feedList: {
         padding: 15,
     },
-    newPostButton: {
-        position: 'absolute',
-        bottom: 30,
-        right: 20,
-        backgroundColor: COLORS.Primary,
-        width: 60,
-        height: 60,
-        borderRadius: 30,
-        justifyContent: 'center',
-        alignItems: 'center',
-        elevation: 3,
-        shadowColor: '#000',
-        shadowOpacity: 0.3,
-        shadowOffset: { width: 0, height: 2 },
-        shadowRadius: 2,
-    },
-    newPostButtonText: {
-        color: COLORS.White,
-        fontSize: 30,
-        lineHeight: 30,
-    },
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    modalContainer: {
-        width: '85%',
-        backgroundColor: COLORS.AppBackground,
-        borderRadius: 8,
-        padding: 20,
-    },
-    modalTitle: {
-        fontSize: 18,
-        fontWeight: '600',
-        marginBottom: 15,
-        color: COLORS.White,
-    },
-    textInput: {
-        borderWidth: 1,
-        borderColor: COLORS.InactiveText,
-        borderRadius: 5,
-        padding: 10,
-        marginBottom: 15,
-        color: COLORS.White,
-    },
-    modalButtonRow: {
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
-    },
-    modalButton: {
-        marginLeft: 10,
-        paddingVertical: 8,
-        paddingHorizontal: 15,
-        borderRadius: 5,
-        backgroundColor: COLORS.Primary,
-    },
-    modalButtonText: {
-        color: COLORS.White,
-        fontWeight: '600',
-    },
+    // We remove the old floating button & old modal styles if they’re no longer needed
 });
 
-// -----------------------------
-// FeedChannelScreen Component
-// -----------------------------
+/** -----------------------------
+ * FeedChannelScreen
+ ----------------------------- */
 export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
     navigation,
     channel: channelProp,
@@ -138,10 +70,12 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
 }) => {
     const channel = channelProp || route?.params?.channel;
     const { width } = useWindowDimensions();
-
     const apolloClient = useApolloClient();
     const userCacheRef = useRef<Record<string, string>>({});
+
     const [feedPosts, setFeedPosts] = useState<FeedPost[]>([]);
+
+    // The states for controlling the “Create New Post” modal & fields
     const [modalVisible, setModalVisible] = useState(false);
     const [newPostTitle, setNewPostTitle] = useState('');
     const [newPostContent, setNewPostContent] = useState('');
@@ -210,6 +144,22 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
         };
     }, [apolloClient, channel]);
 
+    if (!channel) {
+        return (
+            <SafeAreaView style={styles.container}>
+                <Text
+                    style={{
+                        color: COLORS.White,
+                        textAlign: 'center',
+                        marginTop: 20,
+                    }}
+                >
+                    No channel provided.
+                </Text>
+            </SafeAreaView>
+        );
+    }
+
     const renderItem = ({ item }: { item: FeedPost }) => {
         const handlePress = () => {
             navigation.navigate('PostScreen', { post: item });
@@ -239,27 +189,14 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
             time: 'Just now',
             thumbnail: `https://picsum.photos/seed/you/48`,
         };
+        // Prepend new post to the feed
         setFeedPosts((prevPosts) => [newPost, ...prevPosts]);
+        // Clear inputs
         setNewPostTitle('');
         setNewPostContent('');
+        // Close modal
         setModalVisible(false);
     };
-
-    if (!channel) {
-        return (
-            <SafeAreaView style={styles.container}>
-                <Text
-                    style={{
-                        color: COLORS.White,
-                        textAlign: 'center',
-                        marginTop: 20,
-                    }}
-                >
-                    No channel provided.
-                </Text>
-            </SafeAreaView>
-        );
-    }
 
     return (
         <SafeAreaView style={styles.container}>
@@ -269,7 +206,6 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
                 navigation={navigation}
             />
 
-            {/* Adding style={{ flex: 1 }} here so FlatList gets full height */}
             <FlatList
                 style={{ flex: 1 }}
                 data={feedPosts}
@@ -278,58 +214,28 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
                 contentContainerStyle={styles.feedList}
             />
 
-            <TouchableOpacity
-                style={styles.newPostButton}
-                onPress={() => setModalVisible(true)}
-            >
-                <Text style={styles.newPostButtonText}>+</Text>
-            </TouchableOpacity>
+            {/* Reuse the CreateContentButton instead of a floating “+” button */}
+            <CreateContentButton
+                modalVisible={modalVisible}
+                setModalVisible={setModalVisible}
+                contentText={newPostTitle}
+                setContentText={setNewPostTitle}
+                handleCreate={handleCreatePost}
+                buttonText="Create a new post" // The bottom button
+                modalTitle="Create New Post" // The title inside the modal
+                /** We want two text fields: one for Title, one for Content */
+                showSecondField
+                secondContentText={newPostContent}
+                setSecondContentText={setNewPostContent}
+                /** Customize placeholders for each input */
+                placeholderText="Title"
+                placeholderText2="Content"
+                multilineSecondField
 
-            <Modal
-                visible={modalVisible}
-                transparent
-                animationType="fade"
-                onRequestClose={() => setModalVisible(false)}
-            >
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modalContainer}>
-                        <Text style={styles.modalTitle}>Create New Post</Text>
-                        <TextInput
-                            placeholder="Title"
-                            placeholderTextColor={COLORS.InactiveText}
-                            style={styles.textInput}
-                            value={newPostTitle}
-                            onChangeText={setNewPostTitle}
-                        />
-                        <TextInput
-                            placeholder="Content"
-                            placeholderTextColor={COLORS.InactiveText}
-                            style={[styles.textInput, { height: 80 }]}
-                            value={newPostContent}
-                            onChangeText={setNewPostContent}
-                            multiline
-                        />
-                        <View style={styles.modalButtonRow}>
-                            <Pressable
-                                style={styles.modalButton}
-                                onPress={() => setModalVisible(false)}
-                            >
-                                <Text style={styles.modalButtonText}>
-                                    Cancel
-                                </Text>
-                            </Pressable>
-                            <Pressable
-                                style={styles.modalButton}
-                                onPress={handleCreatePost}
-                            >
-                                <Text style={styles.modalButtonText}>
-                                    Create
-                                </Text>
-                            </Pressable>
-                        </View>
-                    </View>
-                </View>
-            </Modal>
+                /** Optionally override modal styles or title text style if desired */
+                // modalContainerStyle={{ ... }}
+                // modalTitleStyle={{ ... }}
+            />
         </SafeAreaView>
     );
 };

@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
     },
     input: {
         flex: 1,
-        backgroundColor: '#3A2A4A',
+        backgroundColor: COLORS.TextInput,
         color: 'white',
         padding: 10,
         borderRadius: 20,

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
     View,
     Text,
@@ -37,12 +37,12 @@ const isMobileOrTablet = Platform.OS === 'ios' || Platform.OS === 'android';
 const styles = StyleSheet.create({
     chatContainer: {
         flex: 1,
-        backgroundColor: COLORS.PrimaryBackground,
+        backgroundColor: COLORS.SecondaryBackground,
     },
     chatHeader: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: COLORS.PrimaryBackground,
+        backgroundColor: COLORS.SecondaryBackground,
         borderColor: COLORS.InactiveText,
         borderBottomWidth: 1,
         padding: 15,
@@ -98,11 +98,11 @@ const styles = StyleSheet.create({
         padding: 10,
         borderTopWidth: 1,
         borderTopColor: COLORS.InactiveText,
-        backgroundColor: COLORS.PrimaryBackground,
+        backgroundColor: COLORS.SecondaryBackground,
     },
     input: {
         flex: 1,
-        backgroundColor: COLORS.SecondaryBackground,
+        backgroundColor: COLORS.TextInput,
         color: 'white',
         padding: 10,
         borderRadius: 20,
@@ -123,7 +123,8 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     const { width } = useWindowDimensions();
     const isLargeScreen = width > 768;
 
-    const [messageText, setMessageText] = useState('');
+    // Initial messages in chronological order (oldest first)
+    // New messages will be appended at the end.
     const [messages, setMessages] = useState([
         {
             id: '1',
@@ -167,6 +168,9 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
         },
     ]);
 
+    const [messageText, setMessageText] = useState('');
+    const flatListRef = useRef<FlatList>(null);
+
     const sendMessage = () => {
         if (!messageText.trim()) return;
 
@@ -186,9 +190,17 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             edited: false,
         };
 
+        // Append new message at the end of the list.
         setMessages((prevMessages) => [...prevMessages, newMessage]);
         setMessageText('');
     };
+
+    // Scroll to the bottom whenever messages change.
+    useEffect(() => {
+        if (flatListRef.current) {
+            flatListRef.current.scrollToEnd({ animated: true });
+        }
+    }, [messages]);
 
     return (
         <View style={styles.chatContainer}>
@@ -208,6 +220,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
 
             {/* Chat Messages */}
             <FlatList
+                ref={flatListRef}
                 data={messages}
                 keyExtractor={(item) => item.id}
                 renderItem={({ item }) => (
@@ -234,7 +247,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             <View style={styles.inputContainer}>
                 <TextInput
                     style={styles.input}
-                    placeholder={`Message #${user.name}`}
+                    placeholder={`Message ${user.name}`}
                     placeholderTextColor="gray"
                     value={messageText}
                     onChangeText={setMessageText}

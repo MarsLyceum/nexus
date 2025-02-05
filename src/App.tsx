@@ -1,3 +1,4 @@
+// App.tsx
 import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createDrawerNavigator } from '@react-navigation/drawer';
@@ -7,7 +8,7 @@ import {
 } from '@react-navigation/stack';
 import EventSource from 'react-native-event-source';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { Platform, StatusBar } from 'react-native';
+import { Platform, StatusBar, TouchableOpacity } from 'react-native';
 import {
     ApolloClient,
     InMemoryCache,
@@ -44,31 +45,28 @@ import {
     EventsScreen,
     ServerMessagesScreen,
     CreateGroupModalScreen,
+    FeedChannelScreen,
+    PostScreen,
 } from './screens';
 
 setupAxiosQuotas();
 
 if (__DEV__) {
-    // Adds messages only in a dev environment
     loadDevMessages();
     loadErrorMessages();
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-const Drawer = createDrawerNavigator();
-
-// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+const DrawerNavigator = createDrawerNavigator();
 const Stack = createStackNavigator();
 
 const errorLink = onError((error: ErrorResponse) => {
     if (error) {
-        console.log('error:', error);
+        console.log('Apollo Error:', error);
     }
 });
 
 const requestQuota = 10;
 let requestCount = 0;
-
 const quotaLink = new ApolloLink((operation, forward) => {
     if (requestCount < requestQuota) {
         requestCount += 1;
@@ -82,12 +80,7 @@ const quotaLink = new ApolloLink((operation, forward) => {
 
 const graphqlApiGatewayEndpointHttp =
     'https://peeps-web-service-iwesf7iypq-uw.a.run.app/graphql';
-// const localGraphqlApiGatewayEndpointHttp = 'http://localhost:4000/graphql';
-// const graphqlApiGatewayEndpointSse =
-//     'https://peeps-web-service-iwesf7iypq-uw.a.run.app/graphql/stream';
-const graphqlApiGatewayEndpointSse = ''; // turn off sse for now to save money
-// const localGraphqlApiGatewayEndpointSse =
-//     'http://localhost:4000/graphql/stream';
+const graphqlApiGatewayEndpointSse = ''; // SSE turned off
 
 const httpLink = from([
     errorLink,
@@ -99,28 +92,19 @@ const httpLink = from([
 const sseLink = new ApolloLink(
     () =>
         new Observable((observer) => {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
             const eventSource: EventSource = new EventSource(
                 graphqlApiGatewayEndpointSse,
-                {
-                    withCredentials: false,
-                }
+                { withCredentials: false }
             );
-
-            // eslint-disable-next-line unicorn/prefer-add-event-listener
             eventSource.addEventListener(
                 'message',
                 (event: { data: string }) => {
                     try {
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument
                         const parsedData = JSON.parse(event.data);
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                         if (parsedData.errors) {
-                            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                             observer.error(parsedData.errors);
                         } else {
                             observer.next({
-                                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
                                 data: { greetings: parsedData.greetings },
                             });
                         }
@@ -129,13 +113,10 @@ const sseLink = new ApolloLink(
                     }
                 }
             );
-
-            // eslint-disable-next-line unicorn/prefer-add-event-listener
             eventSource.addEventListener('error', (error: unknown) => {
                 observer.error(error);
                 eventSource.close();
             });
-
             return () => {
                 eventSource.close();
             };
@@ -165,67 +146,60 @@ const GREETINGS_SUBSCRIPTION = gql`
     }
 `;
 
-client
-    .subscribe({
-        query: GREETINGS_SUBSCRIPTION,
-    })
-    .subscribe({
-        next({ data }) {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-            console.log('Greeting:', data.greetings);
-        },
-        error(err) {
-            console.error('Subscription error:', err);
-        },
-    });
+client.subscribe({ query: GREETINGS_SUBSCRIPTION }).subscribe({
+    next({ data }) {
+        console.log('Greeting:', data.greetings);
+    },
+    error(err) {
+        console.error('Subscription error:', err);
+    },
+});
 
+// AppDrawer: Your drawer navigator for main sections of your app.
 function AppDrawer() {
     const userGroups: UserGroupsType = useAppSelector(
         (state: RootState) => state.userGroups.userGroups
     );
 
     return (
-        <Drawer.Navigator
+        <DrawerNavigator.Navigator
             screenOptions={{
-                drawerType: 'permanent', // Always visible
+                drawerType: 'permanent',
                 drawerStyle: {
                     width: 80,
                     borderWidth: 0,
                     backgroundColor: COLORS.AppBackground,
-                }, // Adjust width as needed
+                },
             }}
             drawerContent={(props) => <SidebarScreen {...props} />}
         >
-            <Drawer.Screen
+            <DrawerNavigator.Screen
                 name="DMs"
                 component={DMListScreen}
                 options={{ headerShown: false }}
             />
-            <Drawer.Screen
+            <DrawerNavigator.Screen
                 name="Events"
                 component={EventsScreen}
                 options={{ headerShown: false }}
             />
             {userGroups.map((group) => (
-                <Drawer.Screen
-                    // @ts-expect-error broken navigation
+                <DrawerNavigator.Screen
                     name={group.name}
                     key={group.id}
-                    // @ts-expect-error broken navigation
                     component={ServerScreen}
                     initialParams={{ group }}
                     options={{ headerShown: false }}
                 />
             ))}
-        </Drawer.Navigator>
+        </DrawerNavigator.Navigator>
     );
 }
 
-// we need to have App be a default export for React Native to work
-// eslint-disable-next-line import/no-default-export
+// The main App component with the stack navigator integrating all screens,
+// including FeedChannelScreen and PostScreen from the old feed channel navigator.
 export default function App() {
     const [appIsReady, setAppIsReady] = useState(false);
-
     const [fontsLoaded] = useFonts({
         Lato_400Regular,
         Lato_700Bold,
@@ -233,91 +207,87 @@ export default function App() {
 
     useEffect(() => {
         if (fontsLoaded) {
-            // eslint-disable-next-line no-void
-            void SplashScreen.hideAsync(); // Hide the splash screen once the fonts are loaded
+            SplashScreen.hideAsync(); // Hide splash screen once fonts are loaded
             setAppIsReady(true);
         }
     }, [fontsLoaded]);
 
-    if (appIsReady) {
-        return (
-            <SafeAreaProvider>
-                <StatusBar
-                    barStyle="light-content"
-                    backgroundColor={COLORS.AppBackground}
-                />
-                <SafeAreaView
-                    style={{ flex: 1, backgroundColor: COLORS.AppBackground }}
-                    edges={['top', 'left', 'right']}
-                >
-                    <ApolloProvider client={client}>
-                        <ReduxProvider store={store}>
-                            <NavigationContainer
-                                onReady={() => {
-                                    console.log('navigation ready');
-                                }}
-                            >
-                                <Stack.Navigator initialRouteName="Welcome">
-                                    <Stack.Screen
-                                        name="Welcome"
-                                        component={WelcomeScreen}
-                                        options={{ headerShown: false }}
-                                    />
-                                    <Stack.Screen
-                                        name="Login"
-                                        component={LoginScreen}
-                                        options={{ headerShown: false }}
-                                    />
-                                    <Stack.Screen
-                                        name="SignUp"
-                                        component={SignUpScreen}
-                                        options={{ headerShown: false }}
-                                    />
-                                    <Stack.Screen
-                                        name="AppDrawer"
-                                        component={AppDrawer}
-                                        options={{ headerShown: false }}
-                                    />
-                                    <Stack.Screen
-                                        name="Chat"
-                                        // @ts-expect-error broken navigation
-                                        component={ChatScreen}
-                                        options={{ headerShown: false }}
-                                    />
-                                    <Stack.Screen
-                                        name="ServerMessages"
-                                        // @ts-expect-error broken navigation
-                                        component={ServerMessagesScreen}
-                                        options={{ headerShown: false }}
-                                    />
-                                    <Stack.Screen
-                                        name="CreateGroup"
-                                        component={CreateGroupModalScreen}
-                                        options={{
-                                            presentation:
-                                                Platform.OS === 'web'
-                                                    ? 'modal'
-                                                    : 'modal', // Both modal; adjust if needed
-                                            // For React Navigation v6
-                                            ...Platform.select({
-                                                ios: {
-                                                    ...TransitionPresets.ModalPresentationIOS,
-                                                },
-                                                android: {
-                                                    // Android typically doesn't have modal presets; can customize if needed
-                                                },
-                                                web: {
-                                                    // Customize web modal presentation if necessary
-                                                },
-                                            }),
-                                        }}
-                                    />
-                                </Stack.Navigator>
-                            </NavigationContainer>
-                        </ReduxProvider>
-                    </ApolloProvider>
-                </SafeAreaView>
-            </SafeAreaProvider>
-        );
+    if (!appIsReady) {
+        return null;
     }
+
+    return (
+        <SafeAreaProvider>
+            <StatusBar
+                barStyle="light-content"
+                backgroundColor={COLORS.AppBackground}
+            />
+            <SafeAreaView
+                style={{ flex: 1, backgroundColor: COLORS.AppBackground }}
+                edges={['top', 'left', 'right']}
+            >
+                <ApolloProvider client={client}>
+                    <ReduxProvider store={store}>
+                        <NavigationContainer>
+                            <Stack.Navigator initialRouteName="Welcome">
+                                <Stack.Screen
+                                    name="Welcome"
+                                    component={WelcomeScreen}
+                                    options={{ headerShown: false }}
+                                />
+                                <Stack.Screen
+                                    name="Login"
+                                    component={LoginScreen}
+                                    options={{ headerShown: false }}
+                                />
+                                <Stack.Screen
+                                    name="SignUp"
+                                    component={SignUpScreen}
+                                    options={{ headerShown: false }}
+                                />
+                                <Stack.Screen
+                                    name="AppDrawer"
+                                    component={AppDrawer}
+                                    options={{ headerShown: false }}
+                                />
+                                <Stack.Screen
+                                    name="Chat"
+                                    component={ChatScreen}
+                                    options={{ headerShown: false }}
+                                />
+                                <Stack.Screen
+                                    name="ServerMessages"
+                                    component={ServerMessagesScreen}
+                                    options={{ headerShown: false }}
+                                />
+                                <Stack.Screen
+                                    name="CreateGroup"
+                                    component={CreateGroupModalScreen}
+                                    options={{
+                                        presentation: 'modal',
+                                        ...Platform.select({
+                                            ios: {
+                                                ...TransitionPresets.ModalPresentationIOS,
+                                            },
+                                        }),
+                                    }}
+                                />
+                                {/* Integrated FeedChannelScreen and PostScreen */}
+                                <Stack.Screen
+                                    name="FeedChannel"
+                                    component={FeedChannelScreen}
+                                    options={{ headerShown: false }}
+                                />
+                                <Stack.Screen
+                                    name="PostScreen"
+                                    component={PostScreen}
+                                    options={{ headerShown: false }}
+                                />
+                            </Stack.Navigator>
+                        </NavigationContainer>
+                    </ReduxProvider>
+                </ApolloProvider>
+            </SafeAreaView>
+        </SafeAreaProvider>
+    );
 }

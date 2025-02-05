@@ -12,6 +12,7 @@ import Icon from 'react-native-vector-icons/FontAwesome5';
 import { COLORS } from '../constants';
 import { ServerMessagesScreen } from './ServerMessagesScreen';
 import { Group, GroupChannel } from '../types';
+import { Feed } from '../icons';
 
 const styles = StyleSheet.create({
     largeScreenContainer: {
@@ -174,16 +175,20 @@ const ChannelList = ({
                             }
                         }}
                     >
-                        <Icon
-                            name="comment"
-                            size={16}
-                            color={
-                                activeChannel.name === item.name
-                                    ? COLORS.White
-                                    : COLORS.InactiveText
-                            }
-                            style={styles.icon}
-                        />
+                        {item.type === 'feed' ? (
+                            <Feed style={styles.icon} />
+                        ) : (
+                            <Icon
+                                name="comment"
+                                size={16}
+                                color={
+                                    activeChannel.name === item.name
+                                        ? COLORS.White
+                                        : COLORS.InactiveText
+                                }
+                                style={styles.icon}
+                            />
+                        )}
                         <Text
                             style={[
                                 styles.channelText,

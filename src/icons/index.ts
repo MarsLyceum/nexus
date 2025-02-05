@@ -14,3 +14,4 @@ export * from './Settings';
 export * from './Chat';
 export * from './Events';
 export * from './CreateGroup';
+export * from './Feed';

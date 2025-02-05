@@ -8,3 +8,5 @@ export * from './SidebarScreen';
 export * from './SignUpScreen';
 export * from './WelcomeScreen';
 export * from './CreateGroupModalScreen';
+export * from './PostScreen';
+export * from './FeedChannelScreen';

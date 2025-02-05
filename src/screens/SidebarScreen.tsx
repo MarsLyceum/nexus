@@ -110,6 +110,7 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
                 },
             });
 
+            console.log('groups loaded');
             setUserGroups(result.data.fetchUserGroups);
         })();
     }, [JSON.stringify(user)]);

@@ -1,12 +1,13 @@
 import React from 'react';
 import { View, FlatList, StyleSheet } from 'react-native';
 import { EventCard } from '../cards';
+import { COLORS } from '../constants';
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: 10,
-        backgroundColor: '#1E1E1E',
+        backgroundColor: COLORS.SecondaryBackground,
     },
 });
 

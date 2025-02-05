@@ -11,7 +11,7 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         padding: 15,
         marginBottom: 15,
-        borderWidth: 1,
+        borderWidth: 0,
         borderColor: COLORS.InactiveText,
     },
     postRow: {

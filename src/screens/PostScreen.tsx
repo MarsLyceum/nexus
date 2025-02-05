@@ -60,6 +60,7 @@ const styles = StyleSheet.create({
     safeContainer: {
         flex: 1,
         backgroundColor: COLORS.SecondaryBackground,
+        paddingTop: 15,
         ...(isWeb && { height: '100vh', display: 'flex' }),
     },
     container: {

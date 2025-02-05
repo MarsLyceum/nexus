@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
+import { COLORS } from '../constants';
 
 interface EventCardProps {
     title: string;
@@ -13,7 +14,7 @@ interface EventCardProps {
 const styles = StyleSheet.create({
     card: {
         flexDirection: 'row',
-        backgroundColor: '#512D6D',
+        backgroundColor: COLORS.PrimaryBackground,
         borderRadius: 10,
         padding: 15,
         marginVertical: 10,
@@ -29,7 +30,7 @@ const styles = StyleSheet.create({
     },
     dateTime: {
         fontSize: 14,
-        color: '#BB86FC',
+        color: COLORS.AccentText,
         marginVertical: 5,
     },
     groupName: {

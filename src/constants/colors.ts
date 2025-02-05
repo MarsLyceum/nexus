@@ -8,4 +8,5 @@ export const COLORS = {
     MainText: '#C5C5C5',
     TextInput: '#3A2A4A',
     OffWhite: '#F2F3F5',
+    AccentText: '#D3A3EC',
 };

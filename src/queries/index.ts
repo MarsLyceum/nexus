@@ -5,3 +5,4 @@ export * from './FETCH_CHANNEL_MESSAGES_QUERY';
 export * from './FETCH_USER_QUERY';
 export * from './CREATE_GROUP_CHANNEL_MESSAGE_MUTATION';
 export * from './FETCH_CHANNEL_POSTS_QUERY';
+export * from './CREATE_GROUP_CHANNEL_POST_MUTATION';

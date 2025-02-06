@@ -1,4 +1,3 @@
-// FeedChannelScreen.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import {
     Text,
@@ -7,34 +6,17 @@ import {
     StyleSheet,
     useWindowDimensions,
 } from 'react-native';
-import { useApolloClient } from '@apollo/client';
+import { useApolloClient, useMutation } from '@apollo/client';
 import { Header, PostItem } from '../sections';
 import { COLORS } from '../constants';
-import { FETCH_CHANNEL_POSTS_QUERY, FETCH_USER_QUERY } from '../queries';
-import { GroupChannelPostMessage, GroupChannel, User } from '../types';
+import {
+    FETCH_CHANNEL_POSTS_QUERY,
+    FETCH_USER_QUERY,
+    CREATE_GROUP_CHANNEL_POST_MUTATION,
+} from '../queries';
+import { GroupChannelPostMessage, User } from '../types';
 import { CreateContentButton } from '../buttons';
-
-/** -----------------------------
- * Shared Types & Models
- ----------------------------- */
-export type FeedPost = {
-    id: string;
-    user: string;
-    domain: string;
-    title: string;
-    upvotes: number;
-    commentsCount: number;
-    shareCount: number;
-    time: string;
-    thumbnail: string;
-    content: string;
-};
-
-export type FeedChannelScreenProps = {
-    navigation: any;
-    channel?: GroupChannel;
-    route?: { params: { channel: GroupChannel } };
-};
+import { useAppSelector, RootState, UserType } from '../redux';
 
 /** -----------------------------
  * Helper: Convert Date to Relative Time
@@ -42,9 +24,23 @@ export type FeedChannelScreenProps = {
 const getRelativeTime = (postedDate: Date): string => {
     const diff = Date.now() - postedDate.getTime();
     const minutes = Math.floor(diff / (1000 * 60));
+
     if (minutes < 60) return `${minutes}m`;
+
     const hours = Math.floor(minutes / 60);
-    return `${hours}h`;
+    if (hours < 24) return `${hours}h`;
+
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days}d`;
+
+    const weeks = Math.floor(days / 7);
+    if (weeks < 4) return `${weeks}w`;
+
+    const months = Math.floor(days / 30);
+    if (months < 12) return `${months}mo`;
+
+    const years = Math.floor(days / 365);
+    return `${years}y`;
 };
 
 /** -----------------------------
@@ -58,7 +54,6 @@ const styles = StyleSheet.create({
     feedList: {
         padding: 15,
     },
-    // We remove the old floating button & old modal styles if they’re no longer needed
 });
 
 /** -----------------------------
@@ -70,23 +65,46 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
     route,
 }) => {
     const channel = channelProp || route?.params?.channel;
+    const user: UserType = useAppSelector(
+        (state: RootState) => state.user.user
+    );
     const { width } = useWindowDimensions();
     const apolloClient = useApolloClient();
     const userCacheRef = useRef<Record<string, string>>({});
-
     const [feedPosts, setFeedPosts] = useState<FeedPost[]>([]);
-
-    // The states for controlling the “Create New Post” modal & fields
     const [modalVisible, setModalVisible] = useState(false);
     const [newPostTitle, setNewPostTitle] = useState('');
     const [newPostContent, setNewPostContent] = useState('');
 
+    // Apollo mutation hook for creating posts
+    const [createPostMutation, { loading: creatingPost }] = useMutation(
+        CREATE_GROUP_CHANNEL_POST_MUTATION,
+        {
+            refetchQueries: [
+                {
+                    query: FETCH_CHANNEL_POSTS_QUERY,
+                    variables: { channelId: channel?.id, offset: 0 },
+                },
+            ],
+            awaitRefetchQueries: true, // Ensures fresh data before UI updates
+            onCompleted: () => {
+                setModalVisible(false); // Close modal after post creation
+                setNewPostTitle(''); // Clear input
+                setNewPostContent(''); // Clear input
+            },
+            onError: (error) => {
+                console.error('Error creating post:', error);
+            },
+        }
+    );
+
     useEffect(() => {
         if (!channel) return;
-
         let cancelled = false;
+
         const fetchPosts = async () => {
             try {
+                console.log('Starting to load feed:', new Date());
                 const { data } = await apolloClient.query<{
                     fetchFeedPosts: GroupChannelPostMessage[];
                 }>({
@@ -132,7 +150,7 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
                     })
                 );
                 if (!cancelled) {
-                    console.log('feed loaded');
+                    console.log('Feed loaded', new Date());
                     setFeedPosts(posts);
                 }
             } catch (error) {
@@ -146,60 +164,17 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
         };
     }, [apolloClient, channel]);
 
-    if (!channel) {
-        return (
-            <SafeAreaView style={styles.container}>
-                <Text
-                    style={{
-                        color: COLORS.White,
-                        textAlign: 'center',
-                        marginTop: 20,
-                    }}
-                >
-                    No channel provided.
-                </Text>
-            </SafeAreaView>
-        );
-    }
+    const handleCreatePost = async () => {
+        if (!channel || !user?.id || creatingPost) return;
 
-    const renderItem = ({ item }: { item: FeedPost }) => {
-        const handlePress = () => {
-            navigation.navigate('PostScreen', { post: item });
-        };
-        return (
-            <PostItem
-                user={item.user}
-                time={item.time}
-                title={item.title}
-                upvotes={item.upvotes}
-                commentsCount={item.commentsCount}
-                thumbnail={item.thumbnail}
-                onPress={handlePress}
-                content={item.content}
-                preview
-            />
-        );
-    };
-
-    const handleCreatePost = () => {
-        const newPost: FeedPost = {
-            id: Math.random().toString(),
-            user: 'You',
-            domain: '',
-            title: newPostTitle,
-            upvotes: 0,
-            commentsCount: 0,
-            shareCount: 0,
-            time: 'Just now',
-            thumbnail: `https://picsum.photos/seed/you/48`,
-        };
-        // Prepend new post to the feed
-        setFeedPosts((prevPosts) => [newPost, ...prevPosts]);
-        // Clear inputs
-        setNewPostTitle('');
-        setNewPostContent('');
-        // Close modal
-        setModalVisible(false);
+        await createPostMutation({
+            variables: {
+                postedByUserId: user.id,
+                channelId: channel.id,
+                content: newPostContent,
+                title: newPostTitle,
+            },
+        });
     };
 
     return (
@@ -213,32 +188,40 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
             <FlatList
                 style={{ flex: 1 }}
                 data={feedPosts}
-                renderItem={renderItem}
+                renderItem={({ item }) => (
+                    <PostItem
+                        user={item.user}
+                        time={item.time}
+                        title={item.title}
+                        upvotes={item.upvotes}
+                        commentsCount={item.commentsCount}
+                        thumbnail={item.thumbnail}
+                        onPress={() =>
+                            navigation.navigate('PostScreen', { post: item })
+                        }
+                        content={item.content}
+                        preview
+                    />
+                )}
                 keyExtractor={(item) => item.id}
                 contentContainerStyle={styles.feedList}
             />
 
-            {/* Reuse the CreateContentButton instead of a floating “+” button */}
             <CreateContentButton
                 modalVisible={modalVisible}
                 setModalVisible={setModalVisible}
                 contentText={newPostTitle}
                 setContentText={setNewPostTitle}
                 handleCreate={handleCreatePost}
-                buttonText="Create a new post" // The bottom button
-                modalTitle="Create New Post" // The title inside the modal
-                /** We want two text fields: one for Title, one for Content */
+                buttonText="Create a new post"
+                modalTitle="Create New Post"
                 showSecondField
                 secondContentText={newPostContent}
                 setSecondContentText={setNewPostContent}
-                /** Customize placeholders for each input */
                 placeholderText="Title"
                 placeholderText2="Content"
                 multilineSecondField
-
-                /** Optionally override modal styles or title text style if desired */
-                // modalContainerStyle={{ ... }}
-                // modalTitleStyle={{ ... }}
+                disabled={creatingPost}
             />
         </SafeAreaView>
     );

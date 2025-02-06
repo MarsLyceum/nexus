@@ -65,9 +65,11 @@ const supabaseAnonKey =
 const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
 
 async function getSignedUrl(bucketName: string, filePath: string, expiry = 60) {
+    console.log('loading image', new Date());
     const { data, error } = await supabaseClient.storage
         .from(bucketName)
         .createSignedUrl(filePath, expiry);
+    console.log('done loading image', new Date());
 
     if (error) {
         console.error('Error generating signed URL:', error.message);
@@ -98,11 +100,12 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
         [dispatch]
     );
 
-    // Use user?.id so that the effect only runs when the user ID changes.
+    // Fetch groups using Apollo
     useEffect(() => {
         void (async () => {
+            console.log('starting to load groups');
             const result = await apolloClient.query<{
-                fetchUserGroups: Group[]; // or [] if no groups
+                fetchUserGroups: Group[];
             }>({
                 query: FETCH_USER_GROUPS_QUERY,
                 variables: {
@@ -115,27 +118,37 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
         })();
     }, [user?.id, apolloClient, setUserGroupsInStore]);
 
-    // Fetch avatar URLs in parallel for all groups
+    // Fetch avatar URLs in parallel for groups that don't have a cached URL.
     useEffect(() => {
+        if (userGroups.length === 0) return;
+        // Only fetch URLs for groups whose avatar isn't already cached.
+        const groupsMissingUrls = userGroups.filter(
+            (group) => !imageUrls[group.avatarFilePath ?? '']
+        );
+        if (groupsMissingUrls.length === 0) return;
+
         void (async () => {
-            const imageUrlPromises = userGroups.map(async (group) => {
+            const imageUrlPromises = groupsMissingUrls.map(async (group) => {
                 const avatarPath = group.avatarFilePath ?? '';
-                const url = await getSignedUrl('group-avatars', avatarPath);
+                // Increase expiry to 3600 seconds (1 hour)
+                const url = await getSignedUrl(
+                    'group-avatars',
+                    avatarPath,
+                    3600
+                );
                 return { avatarPath, url: url ?? '' };
             });
 
             const results = await Promise.all(imageUrlPromises);
-            const newImageUrls = results.reduce(
-                (acc, { avatarPath, url }) => {
-                    acc[avatarPath] = url;
-                    return acc;
-                },
-                {} as Record<string, string>
-            );
-
-            setImageUrls(newImageUrls);
+            setImageUrls((prev) => {
+                const newImageUrls = { ...prev };
+                results.forEach(({ avatarPath, url }) => {
+                    newImageUrls[avatarPath] = url;
+                });
+                return newImageUrls;
+            });
         })();
-    }, [userGroups]);
+    }, [userGroups, imageUrls]);
 
     // Store each button's layout as { y, height }
     const [buttonLayouts, setButtonLayouts] = useState<{
@@ -227,7 +240,7 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
                         />
                     </View>
                 ))}
-                {/* CREATE GROUP Button (placed after the group icons) */}
+                {/* CREATE GROUP Button */}
                 <View
                     onLayout={handleLayout('createGroup')}
                     style={styles.buttonContainer}

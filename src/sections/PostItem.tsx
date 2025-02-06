@@ -5,6 +5,8 @@ import { VoteActions } from './VoteActions';
 import { BackArrow } from '../buttons';
 import { COLORS } from '../constants';
 
+const TRUNCATE_LENGTH = 100;
+
 const styles = StyleSheet.create({
     postContainer: {
         backgroundColor: COLORS.PrimaryBackground,
@@ -50,16 +52,23 @@ const styles = StyleSheet.create({
         color: COLORS.White,
         fontSize: 12,
     },
+    contentText: {
+        color: COLORS.White,
+        fontSize: 14,
+        marginBottom: 10,
+    },
 });
 
 export type PostItemProps = {
     user: string;
     time: string;
     title: string;
+    content: string;
     upvotes: number;
     commentsCount: number;
     flair?: string;
     thumbnail?: string;
+    preview?: boolean; // If true, show a truncated preview of the content
     onBackPress?: () => void;
     onPress?: () => void;
 };
@@ -75,10 +84,12 @@ export const PostItem: React.FC<PostItemProps> = ({
     user,
     time,
     title,
+    content,
     upvotes,
     commentsCount,
     flair,
     thumbnail,
+    preview = false,
     onBackPress,
     onPress,
 }) => {
@@ -86,7 +97,13 @@ export const PostItem: React.FC<PostItemProps> = ({
     const onUpvote = () => setVoteCount((prev) => prev + 1);
     const onDownvote = () => setVoteCount((prev) => prev - 1);
 
-    const content = (
+    // Truncate content if in preview mode
+    const displayedContent =
+        preview && content.length > TRUNCATE_LENGTH
+            ? content.substring(0, TRUNCATE_LENGTH) + '...'
+            : content;
+
+    const contentElement = (
         <View style={styles.postContainer}>
             <View style={styles.postRow}>
                 {onBackPress && (
@@ -106,6 +123,7 @@ export const PostItem: React.FC<PostItemProps> = ({
                     <Text style={styles.flairText}>{flair}</Text>
                 </View>
             ) : undefined}
+            <Text style={styles.contentText}>{displayedContent}</Text>
             <VoteActions
                 voteCount={voteCount}
                 onUpvote={onUpvote}
@@ -116,7 +134,11 @@ export const PostItem: React.FC<PostItemProps> = ({
     );
 
     if (onPress) {
-        return <TouchableOpacity onPress={onPress}>{content}</TouchableOpacity>;
+        return (
+            <TouchableOpacity onPress={onPress}>
+                {contentElement}
+            </TouchableOpacity>
+        );
     }
-    return content;
+    return contentElement;
 };

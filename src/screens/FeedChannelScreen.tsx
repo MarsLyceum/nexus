@@ -27,6 +27,7 @@ export type FeedPost = {
     shareCount: number;
     time: string;
     thumbnail: string;
+    content: string;
 };
 
 export type FeedChannelScreenProps = {
@@ -122,6 +123,7 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
                             upvotes: msg.upvotes,
                             commentsCount: msg.commentsCount,
                             shareCount: msg.shareCount,
+                            content: msg.content,
                             time: getRelativeTime(new Date(msg.postedAt)),
                             thumbnail:
                                 msg.thumbnail ||
@@ -173,6 +175,8 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
                 commentsCount={item.commentsCount}
                 thumbnail={item.thumbnail}
                 onPress={handlePress}
+                content={item.content}
+                preview
             />
         );
     };

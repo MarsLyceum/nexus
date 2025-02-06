@@ -402,6 +402,7 @@ export const PostScreen: React.FC<PostScreenProps> = ({
         flair: '',
         upvotes: feedPost.upvotes,
         commentsCount: feedPost.commentsCount,
+        content: feedPost.content,
     };
 
     // Initial comments data.
@@ -481,6 +482,7 @@ export const PostScreen: React.FC<PostScreenProps> = ({
                             user={postData.user}
                             time={postData.time}
                             title={postData.title}
+                            content={postData.content}
                             upvotes={postData.upvotes}
                             commentsCount={postData.commentsCount}
                             flair={postData.flair}

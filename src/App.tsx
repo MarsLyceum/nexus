@@ -8,7 +8,7 @@ import {
 } from '@react-navigation/stack';
 import EventSource from 'react-native-event-source';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { Platform, StatusBar, TouchableOpacity, View } from 'react-native';
+import { Platform, StatusBar, View } from 'react-native';
 import {
     ApolloClient,
     InMemoryCache,
@@ -47,6 +47,8 @@ import {
     CreateGroupModalScreen,
     FeedChannelScreen,
     PostScreen,
+    GroupEventsScreen,
+    EventDetailsScreen,
 } from './screens';
 
 setupAxiosQuotas();
@@ -55,6 +57,38 @@ if (__DEV__) {
     loadDevMessages();
     loadErrorMessages();
 }
+
+/**
+ * CustomScrollbar Component
+ *
+ * This component injects custom CSS to style scrollbars on web.
+ * On native platforms, it renders null.
+ */
+const CustomScrollbar = () => {
+    if (Platform.OS !== 'web') return;
+    // eslint-disable-next-line consistent-return
+    return (
+        <style>{`
+        /* Chrome, Safari and Opera */
+        ::-webkit-scrollbar {
+          width: 10px;
+          height: 10px;
+        }
+        ::-webkit-scrollbar-track {
+          background: ${COLORS.PrimaryBackground};
+        }
+        ::-webkit-scrollbar-thumb {
+          background-color: ${COLORS.Primary};
+          border-radius: 999px;
+        }
+        /* Firefox */
+        * {
+          scrollbar-width: thin;
+          scrollbar-color: ${COLORS.Primary} ${COLORS.PrimaryBackground};
+        }
+      `}</style>
+    );
+};
 
 const DrawerNavigator = createDrawerNavigator();
 const Stack = createStackNavigator();
@@ -228,6 +262,8 @@ export default function App() {
                 style={{ flex: 1, backgroundColor: COLORS.AppBackground }}
                 edges={['top', 'left', 'right', 'bottom']}
             >
+                {/* Inject custom scrollbar styles on web */}
+                <CustomScrollbar />
                 <ApolloProvider client={client}>
                     <ReduxProvider store={store}>
                         <NavigationContainer>
@@ -284,6 +320,20 @@ export default function App() {
                                     name="PostScreen"
                                     component={PostScreen}
                                     options={{ headerShown: false }}
+                                />
+                                <Stack.Screen
+                                    name="GroupEvents"
+                                    component={GroupEventsScreen}
+                                    options={{
+                                        headerShown: false,
+                                    }}
+                                />
+                                <Stack.Screen
+                                    name="EventDetails"
+                                    component={EventDetailsScreen}
+                                    options={{
+                                        headerShown: false,
+                                    }}
                                 />
                             </Stack.Navigator>
                         </NavigationContainer>

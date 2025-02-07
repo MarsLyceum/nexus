@@ -10,3 +10,5 @@ export * from './WelcomeScreen';
 export * from './CreateGroupModalScreen';
 export * from './PostScreen';
 export * from './FeedChannelScreen';
+export * from './GroupEventsScreen';
+export * from './EventDetailsScreen';

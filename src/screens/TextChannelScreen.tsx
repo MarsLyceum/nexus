@@ -130,7 +130,6 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
                         channelId: channel.id,
                         offset,
                     },
-                    fetchPolicy: 'network-only',
                 });
 
                 const messagesArray =
@@ -159,7 +158,6 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
                         }>({
                             query: FETCH_USER_QUERY,
                             variables: { userId: msg.postedByUserId },
-                            fetchPolicy: 'network-only',
                         });
 
                         const fetchedUsername =

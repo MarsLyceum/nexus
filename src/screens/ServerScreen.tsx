@@ -1,3 +1,4 @@
+// ServerScreen.tsx
 import React, { useState } from 'react';
 import { NavigationProp, RouteProp } from '@react-navigation/core';
 import {
@@ -11,6 +12,7 @@ import {
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { COLORS } from '../constants';
 import { ServerMessagesScreen } from './ServerMessagesScreen';
+import { GroupEventsScreen } from './GroupEventsScreen';
 import { Group, GroupChannel } from '../types';
 import { Feed } from '../icons';
 
@@ -20,18 +22,14 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         backgroundColor: COLORS.PrimaryBackground,
     },
-    // This is the fixed-width sidebar for large screens
     sidebarContainer: {
         width: 250,
         backgroundColor: COLORS.PrimaryBackground,
     },
-    // This is the remaining chat area on large screens
     chatWrapper: {
         flex: 1,
         backgroundColor: COLORS.PrimaryBackground,
     },
-
-    // On small screens, this container now flexes to fill (no fixed width)
     channelListContainer: {
         flex: 1,
         backgroundColor: COLORS.PrimaryBackground,
@@ -43,34 +41,11 @@ const styles = StyleSheet.create({
         color: 'white',
         marginBottom: 20,
     },
-    chatContainer: {
-        flex: 1,
-        backgroundColor: COLORS.PrimaryBackground,
-    },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 15,
-        borderBottomWidth: 1,
-        borderBottomColor: '#4A3A5A',
-    },
-    backButton: {
-        marginRight: 10,
-    },
-    channelName: {
-        fontSize: 18,
-        color: 'white',
-        fontWeight: 'bold',
-    },
     channelItem: {
         flexDirection: 'row',
         alignItems: 'center',
         paddingVertical: 10,
-        paddingHorizontal: 8, // Added for better touch area
-    },
-    activeChannelItem: {
-        backgroundColor: COLORS.SecondaryBackground,
-        borderRadius: 5,
+        paddingHorizontal: 8,
     },
     activeChannelItemWrapper: {
         backgroundColor: COLORS.SecondaryBackground,
@@ -89,69 +64,39 @@ const styles = StyleSheet.create({
         color: 'white',
         fontWeight: 'bold',
     },
-    messageContainer: {
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        padding: 15,
-    },
-    avatar: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        marginRight: 10,
-    },
-    messageContent: {
-        flex: 1,
-    },
-    userName: {
-        fontSize: 14,
-        fontWeight: 'bold',
-        color: 'white',
-    },
-    time: {
-        fontSize: 12,
-        color: 'gray',
-    },
-    messageText: {
-        fontSize: 14,
-        color: 'white',
-        marginTop: 2,
-    },
-    inputContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 10,
-        borderTopWidth: 1,
-        borderTopColor: '#4A3A5A',
-        backgroundColor: COLORS.PrimaryBackground,
-    },
-    input: {
-        flex: 1,
-        backgroundColor: COLORS.TextInput,
-        color: 'white',
-        padding: 10,
-        borderRadius: 20,
-        fontSize: 14,
-    },
-    sendButton: {
-        marginLeft: 10,
-        padding: 8,
-    },
 });
 
+type RootStackParamList = {
+    ServerMessages: { channel: GroupChannel; group: Group };
+    GroupEvents: { group: Group };
+};
+
+type ServerScreenProps = {
+    route: RouteProp<RootStackParamList, 'ServerMessages'>;
+    navigation: NavigationProp<RootStackParamList, 'ServerMessages'>;
+};
+
+type ActiveView = 'messages' | 'events';
+
+type ChannelListProps = {
+    group: Group;
+    navigation: NavigationProp<Record<string, unknown>>;
+    activeChannel: GroupChannel;
+    setActiveChannel: (channel: GroupChannel) => void;
+    isLargeScreen: boolean;
+    activeView: ActiveView;
+    setActiveView: (view: ActiveView) => void;
+};
+
 const ChannelList = ({
+    group,
     navigation,
     activeChannel,
     setActiveChannel,
     isLargeScreen,
-    group,
-}: {
-    group: Group;
-    navigation: NavigationProp<Record<string, unknown>>;
-    activeChannel: GroupChannel;
-    setActiveChannel: (channel: GroupChannel) => unknown;
-    isLargeScreen: boolean;
-}) => (
+    activeView,
+    setActiveView,
+}: ChannelListProps) => (
     <View style={styles.channelListContainer}>
         <Text style={styles.serverTitle}>{group.name}</Text>
         <FlatList
@@ -160,17 +105,21 @@ const ChannelList = ({
             renderItem={({ item }) => (
                 <View
                     style={[
-                        activeChannel.name === item.name &&
+                        activeChannel.id === item.id &&
                             styles.activeChannelItemWrapper,
                     ]}
                 >
                     <TouchableOpacity
                         style={styles.channelItem}
                         onPress={() => {
+                            // When a regular channel is selected, update activeChannel and show messages.
                             setActiveChannel(item);
-                            if (!isLargeScreen) {
+                            if (isLargeScreen) {
+                                setActiveView('messages');
+                            } else {
                                 navigation.navigate('ServerMessages', {
                                     channel: item,
+                                    group,
                                 });
                             }
                         }}
@@ -182,7 +131,7 @@ const ChannelList = ({
                                 name="comment"
                                 size={16}
                                 color={
-                                    activeChannel.name === item.name
+                                    activeChannel.id === item.id
                                         ? COLORS.White
                                         : COLORS.InactiveText
                                 }
@@ -192,7 +141,7 @@ const ChannelList = ({
                         <Text
                             style={[
                                 styles.channelText,
-                                activeChannel.name === item.name &&
+                                activeChannel.id === item.id &&
                                     styles.activeChannelText,
                             ]}
                         >
@@ -202,32 +151,66 @@ const ChannelList = ({
                 </View>
             )}
         />
+
+        {/* "Events" channel button styled exactly like a regular channel */}
+        <View
+            style={
+                activeChannel.id === 'events'
+                    ? styles.activeChannelItemWrapper
+                    : {}
+            }
+        >
+            <TouchableOpacity
+                style={styles.channelItem}
+                onPress={() => {
+                    if (isLargeScreen) {
+                        // Set the active channel to a special "events" channel and update the view.
+                        setActiveChannel({
+                            id: 'events',
+                            name: 'Events',
+                            type: 'events',
+                        });
+                        setActiveView('events');
+                    } else {
+                        navigation.navigate('GroupEvents', { group });
+                    }
+                }}
+            >
+                <Icon
+                    name="calendar"
+                    size={16}
+                    color={
+                        activeChannel.id === 'events'
+                            ? COLORS.White
+                            : COLORS.InactiveText
+                    }
+                    style={styles.icon}
+                />
+                <Text
+                    style={[
+                        styles.channelText,
+                        activeChannel.id === 'events' &&
+                            styles.activeChannelText,
+                    ]}
+                >
+                    Events
+                </Text>
+            </TouchableOpacity>
+        </View>
     </View>
 );
 
-type RootStackParamList = {
-    ServerMessages: { channel: GroupChannel; group: Group };
-};
-
-// **Main Server Screen Component**
-export function ServerScreen({
-    navigation,
-    route,
-}: Readonly<{
-    route: RouteProp<RootStackParamList, 'ServerMessages'>;
-    navigation: NavigationProp<RootStackParamList, 'ServerMessages'>;
-}>) {
+export function ServerScreen({ navigation, route }: ServerScreenProps) {
     const { group } = route.params;
-
     const { width } = useWindowDimensions();
     const isLargeScreen = width > 768;
+    // Set initial active channel to the first channel of the group.
     const [activeChannel, setActiveChannel] = useState(group.channels[0]);
+    const [activeView, setActiveView] = useState<ActiveView>('messages');
 
-    // For large screens, show side-by-side layout:
     if (isLargeScreen) {
         return (
             <View style={styles.largeScreenContainer}>
-                {/* Fixed-width sidebar for channels */}
                 <View style={styles.sidebarContainer}>
                     <ChannelList
                         group={group}
@@ -235,29 +218,35 @@ export function ServerScreen({
                         isLargeScreen={isLargeScreen}
                         activeChannel={activeChannel}
                         setActiveChannel={setActiveChannel}
+                        activeView={activeView}
+                        setActiveView={setActiveView}
                     />
                 </View>
-
-                {/* The rest is chat */}
                 <View style={styles.chatWrapper}>
-                    <ServerMessagesScreen
-                        route={route}
-                        activeChannel={activeChannel}
-                        navigation={navigation}
-                    />
+                    {activeView === 'messages' ? (
+                        <ServerMessagesScreen
+                            route={route}
+                            activeChannel={activeChannel}
+                            navigation={navigation}
+                        />
+                    ) : (
+                        <GroupEventsScreen navigation={navigation} />
+                    )}
                 </View>
             </View>
         );
     }
 
-    // Otherwise, use stack screens on smaller devices
+    // On smaller screens, we use navigation for both messages and events.
     return (
         <ChannelList
             group={group}
             navigation={navigation}
             activeChannel={activeChannel}
             setActiveChannel={setActiveChannel}
-            isLargeScreen={isLargeScreen} // Ensure isLargeScreen is passed
+            isLargeScreen={isLargeScreen}
+            activeView={activeView}
+            setActiveView={setActiveView}
         />
     );
 }

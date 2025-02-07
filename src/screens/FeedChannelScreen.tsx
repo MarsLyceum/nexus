@@ -110,7 +110,6 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
                 }>({
                     query: FETCH_CHANNEL_POSTS_QUERY,
                     variables: { channelId: channel.id, offset: 0 },
-                    fetchPolicy: 'network-only',
                 });
 
                 const postsData = data.fetchFeedPosts.filter(
@@ -128,7 +127,6 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
                             }>({
                                 query: FETCH_USER_QUERY,
                                 variables: { userId: msg.postedByUserId },
-                                fetchPolicy: 'network-only',
                             });
                             username = userResult.data.fetchUser.username;
                             userCacheRef.current[msg.postedByUserId] = username;
@@ -221,7 +219,6 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
                 placeholderText="Title"
                 placeholderText2="Content"
                 multilineSecondField
-                disabled={creatingPost}
             />
         </SafeAreaView>
     );

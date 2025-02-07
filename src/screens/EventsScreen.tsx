@@ -37,7 +37,7 @@ export const EventsScreen: React.FC = () => (
         <FlatList
             data={events}
             keyExtractor={(item) => item.id}
-            renderItem={({ item }) => <EventCard {...item} />}
+            renderItem={({ item }) => <EventCard {...item} preview />}
         />
     </View>
 );

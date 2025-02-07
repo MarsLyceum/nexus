@@ -5,6 +5,7 @@ import {
     FlatList,
     StyleSheet,
     useWindowDimensions,
+    Platform,
 } from 'react-native';
 import { useApolloClient, useMutation } from '@apollo/client';
 import { Header, PostItem } from '../sections';
@@ -18,27 +19,41 @@ import { GroupChannelPostMessage, User } from '../types';
 import { CreateContentButton } from '../buttons';
 import { useAppSelector, RootState, UserType } from '../redux';
 
+// If not already defined elsewhere, you can add minimal type definitions here:
+interface FeedChannelScreenProps {
+    navigation: any;
+    channel?: any;
+    route?: any;
+}
+
+interface FeedPost {
+    id: string;
+    user: string;
+    domain: string;
+    title: string;
+    upvotes: number;
+    commentsCount: number;
+    shareCount: number;
+    content: string;
+    time: string;
+    thumbnail: string;
+}
+
 /** -----------------------------
  * Helper: Convert Date to Relative Time
  ----------------------------- */
 const getRelativeTime = (postedDate: Date): string => {
     const diff = Date.now() - postedDate.getTime();
     const minutes = Math.floor(diff / (1000 * 60));
-
     if (minutes < 60) return `${minutes}m`;
-
     const hours = Math.floor(minutes / 60);
     if (hours < 24) return `${hours}h`;
-
     const days = Math.floor(hours / 24);
     if (days < 7) return `${days}d`;
-
     const weeks = Math.floor(days / 7);
     if (weeks < 4) return `${weeks}w`;
-
     const months = Math.floor(days / 30);
     if (months < 12) return `${months}mo`;
-
     const years = Math.floor(days / 365);
     return `${years}y`;
 };
@@ -53,6 +68,7 @@ const styles = StyleSheet.create({
     },
     feedList: {
         padding: 15,
+        // Extra bottom padding will be added conditionally in the component
     },
 });
 
@@ -164,7 +180,6 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
 
     const handleCreatePost = async () => {
         if (!channel || !user?.id || creatingPost) return;
-
         await createPostMutation({
             variables: {
                 postedByUserId: user.id,
@@ -174,6 +189,9 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
             },
         });
     };
+
+    // Determine if we're on desktop (web) by checking platform and width
+    const isDesktop = Platform.OS === 'web' && width > 768;
 
     return (
         <SafeAreaView style={styles.container}>
@@ -202,7 +220,10 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
                     />
                 )}
                 keyExtractor={(item) => item.id}
-                contentContainerStyle={styles.feedList}
+                contentContainerStyle={[
+                    styles.feedList,
+                    isDesktop ? { paddingBottom: 60 } : {},
+                ]}
             />
 
             <CreateContentButton

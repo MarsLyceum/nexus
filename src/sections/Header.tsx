@@ -21,15 +21,15 @@ const styles = StyleSheet.create({
 
 export const Header = ({
     isLargeScreen,
-    channel,
+    headerText,
     navigation,
 }: {
     isLargeScreen: boolean;
-    channel: GroupChannel;
+    headerText: string;
     navigation: NavigationProp<Record<string, unknown>>;
 }) => (
     <View style={styles.header}>
         {!isLargeScreen && <BackArrow onPress={() => navigation.goBack()} />}
-        <Text style={styles.channelName}>{channel.name}</Text>
+        <Text style={styles.channelName}>{headerText}</Text>
     </View>
 );

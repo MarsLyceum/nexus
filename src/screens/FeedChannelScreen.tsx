@@ -197,7 +197,7 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
         <SafeAreaView style={styles.container}>
             <Header
                 isLargeScreen={width > 768}
-                channel={channel}
+                headerText={channel.name}
                 navigation={navigation}
             />
 

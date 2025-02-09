@@ -1,3 +1,4 @@
+// GroupEventsScreen.tsx
 import React, { useState } from 'react';
 import {
     View,
@@ -8,8 +9,10 @@ import {
     TextInput,
     TouchableOpacity,
     Button,
+    useWindowDimensions,
 } from 'react-native';
 import { EventCard } from '../cards';
+import { Header } from '../sections';
 import { COLORS } from '../constants';
 
 const initialEvents = [
@@ -37,6 +40,7 @@ export const GroupEventsScreen: React.FC = ({ navigation }) => {
     // State management for events and modal visibility
     const [events, setEvents] = useState(initialEvents);
     const [modalVisible, setModalVisible] = useState(false);
+    const { width } = useWindowDimensions();
 
     // State for new event inputs
     const [title, setTitle] = useState('');
@@ -71,6 +75,12 @@ export const GroupEventsScreen: React.FC = ({ navigation }) => {
 
     return (
         <View style={styles.container}>
+            <Header
+                isLargeScreen={width > 768}
+                headerText="Events"
+                navigation={navigation}
+            />
+
             <FlatList
                 data={events}
                 keyExtractor={(item) => item.id}
@@ -86,6 +96,7 @@ export const GroupEventsScreen: React.FC = ({ navigation }) => {
                         preview
                     />
                 )}
+                contentContainerStyle={styles.eventList}
             />
 
             {/* Floating Action Button */}
@@ -171,7 +182,6 @@ export const GroupEventsScreen: React.FC = ({ navigation }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        padding: 10,
         backgroundColor: COLORS.SecondaryBackground,
     },
     fab: {
@@ -223,5 +233,8 @@ const styles = StyleSheet.create({
     buttonContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
+    },
+    eventList: {
+        padding: 15,
     },
 });

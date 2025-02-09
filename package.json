@@ -14,7 +14,7 @@
         "typecheck": "tsc --noEmit"
     },
     "dependencies": {
-        "react-native-webview": "^13.13.2",
+        "expo-calendar": "^14.0.6",
         "@supabase/supabase-js": "^2.48.1",
         "@apollo/client": "^3.12.8",
         "@babel/runtime": "^7.26.7",

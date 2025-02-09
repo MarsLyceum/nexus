@@ -78,13 +78,13 @@ const CustomScrollbar = () => {
           background: ${COLORS.PrimaryBackground};
         }
         ::-webkit-scrollbar-thumb {
-          background-color: ${COLORS.Primary};
+          background-color: ${COLORS.TextInput};
           border-radius: 999px;
         }
         /* Firefox */
         * {
           scrollbar-width: thin;
-          scrollbar-color: ${COLORS.Primary} ${COLORS.PrimaryBackground};
+          scrollbar-color: ${COLORS.TextInput} ${COLORS.PrimaryBackground};
         }
       `}</style>
     );

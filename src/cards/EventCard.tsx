@@ -1,3 +1,4 @@
+// EventCard.tsx
 import React, { useState } from 'react';
 import {
     View,
@@ -5,36 +6,37 @@ import {
     Image,
     StyleSheet,
     TouchableOpacity,
+    Modal,
+    ScrollView,
+    Linking,
+    Alert,
     Platform,
 } from 'react-native';
-import { WebView } from 'react-native-webview';
+import * as Calendar from 'expo-calendar';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
 import { COLORS } from '../constants';
 import { BackArrow } from '../buttons';
 
 const styles = StyleSheet.create({
-    backArrow: {
-        marginRight: 10,
+    card: {
+        backgroundColor: COLORS.PrimaryBackground,
+        borderRadius: 8,
+        padding: 15,
+        marginVertical: 10,
     },
     titleRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 5,
+        marginBottom: 10,
     },
-    // The card now has a column layout
-    card: {
-        backgroundColor: COLORS.PrimaryBackground,
-        borderRadius: 10,
-        padding: 15,
-        marginVertical: 10,
+    backArrow: {
+        marginRight: 10,
     },
-    // The top row contains the text and the image side by side
     topRow: {
         flexDirection: 'row',
         alignItems: 'flex-start',
     },
-    // Text container takes up the remaining space on the left
     textContainer: {
         flex: 1,
         marginRight: 10,
@@ -44,6 +46,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: 'white',
     },
+    // Date/time style remains unchanged (no underline)
     dateTime: {
         fontSize: 14,
         color: COLORS.AccentText,
@@ -56,6 +59,23 @@ const styles = StyleSheet.create({
     attendees: {
         fontSize: 12,
         color: 'gray',
+        marginBottom: 8,
+    },
+    addressRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginVertical: 8,
+    },
+    addressText: {
+        fontSize: 14,
+        color: COLORS.AccentText,
+        marginLeft: 5,
+    },
+    description: {
+        fontSize: 14,
+        color: '#ddd',
+        marginVertical: 10,
+        lineHeight: 20,
     },
     rsvpButton: {
         backgroundColor: COLORS.Primary,
@@ -74,24 +94,82 @@ const styles = StyleSheet.create({
         fontSize: 12,
         fontWeight: 'bold',
     },
-    // The event image remains on the right in the top row.
     eventImage: {
-        width: 140, // increased by ~75%
-        height: 105, // increased by ~75%
+        width: 140,
+        height: 105,
         borderRadius: 5,
         alignSelf: 'flex-start',
     },
-    // The map container is now placed below the top row and spans the full width.
-    mapContainer: {
-        marginTop: 10,
+    // Modal styles for full lists of profiles
+    modalContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
     },
-    // Map style for both web and native.
-    map: {
-        width: '100%',
-        height: 200,
-        borderRadius: 10,
+    modalContent: {
+        width: '80%',
+        backgroundColor: COLORS.PrimaryBackground,
+        borderRadius: 8,
+        padding: 20,
+    },
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: 'white',
+        marginBottom: 10,
+    },
+    modalItemContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginVertical: 5,
+    },
+    profilePic: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        marginRight: 10,
+    },
+    modalItemText: {
+        fontSize: 16,
+        color: 'white',
+    },
+    closeButton: {
+        marginTop: 20,
+        alignSelf: 'flex-end',
+    },
+    // Stacked profiles styles
+    profilesContainer: {
+        marginVertical: 8,
+    },
+    profileRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginVertical: 4,
+    },
+    profileLabel: {
+        fontSize: 14,
+        color: 'white',
+        marginRight: 8,
+    },
+    stackedProfilesContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    profileImage: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        borderWidth: 2,
+        borderColor: COLORS.PrimaryBackground,
     },
 });
+
+type Person = {
+    id: number;
+    name: string;
+    imageUrl: string;
+};
 
 type EventCardProps = {
     title: string;
@@ -103,11 +181,7 @@ type EventCardProps = {
     hideGroupName?: boolean;
     onBackPress?: () => void;
     onPress?: () => void;
-    onRsvp?: () => void; // Optional callback for additional RSVP actions
-    /**
-     * If set to false, a map view will be shown inside the event details.
-     * Defaults to true.
-     */
+    onRsvp?: () => void;
     preview?: boolean;
 };
 
@@ -124,10 +198,10 @@ export const EventCard: React.FC<EventCardProps> = ({
     onRsvp,
     preview = false,
 }) => {
-    // Local state to track RSVP status
+    // Local state for RSVP status
     const [joined, setJoined] = useState(false);
 
-    // Handler to toggle RSVP state
+    // Toggle RSVP state
     const handleRsvp = () => {
         setJoined((prev) => !prev);
         if (onRsvp) {
@@ -135,19 +209,170 @@ export const EventCard: React.FC<EventCardProps> = ({
         }
     };
 
-    // Define coordinates for the map (can be made dynamic or passed as props)
-    const latitude = 37.78825;
-    const longitude = -122.4324;
-    const latDelta = 0.0922;
-    const lonDelta = 0.0421;
-    const minLat = latitude - latDelta / 2;
-    const maxLat = latitude + latDelta / 2;
-    const minLon = longitude - lonDelta / 2;
-    const maxLon = longitude + lonDelta / 2;
+    // Open external map using the provided address
+    const handleOpenMap = () => {
+        const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+            location
+        )}`;
+        Linking.openURL(url);
+    };
 
-    const openStreetMapUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${minLon},${minLat},${maxLon},${maxLat}&layer=mapnik&marker=${latitude},${longitude}`;
+    // Function to add the event to the calendar
+    const handleAddEventToCalendar = async () => {
+        try {
+            // Parse start and end dates (assuming a 2‑hour event)
+            const startDate = new Date(dateTime);
+            const endDate = new Date(startDate);
+            endDate.setHours(endDate.getHours() + 2);
 
-    // Build the event card: top row for text and image; map below
+            // For web/desktop, use a Google Calendar URL as a fallback
+            if (Platform.OS === 'web') {
+                const formatDate = (date: Date) =>
+                    date.toISOString().replace(/[-:.]/g, '').split('Z')[0] +
+                    'Z';
+                const startStr = formatDate(startDate);
+                const endStr = formatDate(endDate);
+                const googleCalendarUrl = `https://calendar.google.com/calendar/r/eventedit?text=${encodeURIComponent(
+                    title
+                )}&dates=${startStr}/${endStr}&details=${encodeURIComponent(
+                    mockDescription
+                )}&location=${encodeURIComponent(location)}`;
+                Linking.openURL(googleCalendarUrl);
+                return;
+            }
+
+            // For native mobile platforms, request calendar permissions
+            const { status } = await Calendar.requestCalendarPermissionsAsync();
+            if (status !== 'granted') {
+                Alert.alert(
+                    'Permission Denied',
+                    'Calendar permission is required to add events.'
+                );
+                return;
+            }
+
+            // Get modifiable calendars
+            let calendars = await Calendar.getCalendarsAsync(
+                Calendar.EntityTypes.EVENT
+            );
+            let defaultCalendar = calendars.find(
+                (cal) => cal.allowsModifications
+            );
+
+            // If no modifiable calendar is found, attempt to create one
+            if (!defaultCalendar) {
+                let defaultCalendarSource;
+                if (Platform.OS === 'ios') {
+                    defaultCalendarSource =
+                        await Calendar.getDefaultCalendarSourceAsync();
+                } else {
+                    // For Android, use a local source
+                    defaultCalendarSource = {
+                        isLocalAccount: true,
+                        name: 'Expo Calendar',
+                    };
+                }
+                const newCalendarId = await Calendar.createCalendarAsync({
+                    title: 'Expo Calendar',
+                    color: '#2196F3',
+                    entityType: Calendar.EntityTypes.EVENT,
+                    sourceId: defaultCalendarSource.id,
+                    source: defaultCalendarSource,
+                    name: 'Expo Calendar',
+                    ownerAccount: '',
+                    accessLevel: Calendar.CalendarAccessLevel.OWNER,
+                });
+                defaultCalendar = { id: newCalendarId };
+            }
+
+            // Create the event details
+            const eventDetails = {
+                title,
+                startDate: startDate.toISOString(),
+                endDate: endDate.toISOString(),
+                timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                location,
+                notes: mockDescription,
+            };
+
+            await Calendar.createEventAsync(defaultCalendar.id, eventDetails);
+            Alert.alert('Event added to your calendar!');
+        } catch (error) {
+            console.error('Error adding event to calendar:', error);
+            Alert.alert('Error', 'Could not add event to calendar');
+        }
+    };
+
+    // Mock event description for the details view
+    const mockDescription =
+        "Join us for an immersive event where you'll have the opportunity to connect with industry leaders, participate in engaging workshops, and gain valuable insights into the latest trends. This event promises to be an inspiring experience with interactive sessions, networking opportunities, and much more.";
+
+    // Mock data for hosts and going lists with profile pictures from Lorem Picsum.
+    const hosts: Person[] = [
+        {
+            id: 1,
+            name: 'Alice Johnson',
+            imageUrl: 'https://picsum.photos/seed/alice/40',
+        },
+        {
+            id: 2,
+            name: 'Bob Smith',
+            imageUrl: 'https://picsum.photos/seed/bob/40',
+        },
+    ];
+
+    const goingList: Person[] = [
+        {
+            id: 3,
+            name: 'Charlie Brown',
+            imageUrl: 'https://picsum.photos/seed/charlie/40',
+        },
+        {
+            id: 4,
+            name: 'Dana White',
+            imageUrl: 'https://picsum.photos/seed/dana/40',
+        },
+        {
+            id: 5,
+            name: 'Eve Black',
+            imageUrl: 'https://picsum.photos/seed/eve/40',
+        },
+        {
+            id: 6,
+            name: 'Frank Green',
+            imageUrl: 'https://picsum.photos/seed/frank/40',
+        },
+    ];
+
+    // State for controlling the modal view for full lists
+    const [modalVisible, setModalVisible] = useState(false);
+    const [modalListType, setModalListType] = useState<
+        'hosts' | 'going' | null
+    >(null);
+
+    const openModal = (listType: 'hosts' | 'going') => {
+        setModalListType(listType);
+        setModalVisible(true);
+    };
+
+    // Render overlapping (stacked) profile pictures
+    const renderStackedProfiles = (people: Person[]) => {
+        return (
+            <View style={styles.stackedProfilesContainer}>
+                {people.map((person, index) => (
+                    <Image
+                        key={person.id}
+                        source={{ uri: person.imageUrl }}
+                        style={[
+                            styles.profileImage,
+                            { marginLeft: index === 0 ? 0 : -10 },
+                        ]}
+                    />
+                ))}
+            </View>
+        );
+    };
+
     const cardElement = (
         <View style={styles.card}>
             <View style={styles.topRow}>
@@ -161,13 +386,56 @@ export const EventCard: React.FC<EventCardProps> = ({
                         )}
                         <Text style={styles.title}>{title}</Text>
                     </View>
-                    <Text style={styles.dateTime}>{dateTime}</Text>
+                    {/* Date/time area wrapped in a touchable to add to calendar */}
+                    <TouchableOpacity onPress={handleAddEventToCalendar}>
+                        <Text style={styles.dateTime}>{dateTime}</Text>
+                    </TouchableOpacity>
                     {!hideGroupName && (
                         <Text style={styles.groupName}>{groupName}</Text>
                     )}
-                    <Text style={styles.attendees}>
-                        {attendees} going · {location}
-                    </Text>
+                    <Text style={styles.attendees}>{attendees} going</Text>
+                    {/* Clickable address row */}
+                    <TouchableOpacity onPress={handleOpenMap}>
+                        <View style={styles.addressRow}>
+                            <FontAwesome
+                                name="map-marker"
+                                size={16}
+                                color={COLORS.AccentText}
+                            />
+                            <Text style={styles.addressText}>{location}</Text>
+                        </View>
+                    </TouchableOpacity>
+                    {/* Event Description (Details view only) */}
+                    {preview === false && (
+                        <Text style={styles.description}>
+                            {mockDescription}
+                        </Text>
+                    )}
+                    {/* Stacked profile pictures for Hosts and Going (Details view only) */}
+                    {preview === false && (
+                        <View style={styles.profilesContainer}>
+                            <TouchableOpacity
+                                onPress={() => openModal('hosts')}
+                            >
+                                <View style={styles.profileRow}>
+                                    <Text style={styles.profileLabel}>
+                                        Hosts
+                                    </Text>
+                                    {renderStackedProfiles(hosts)}
+                                </View>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                onPress={() => openModal('going')}
+                            >
+                                <View style={styles.profileRow}>
+                                    <Text style={styles.profileLabel}>
+                                        Going
+                                    </Text>
+                                    {renderStackedProfiles(goingList)}
+                                </View>
+                            </TouchableOpacity>
+                        </View>
+                    )}
                     <TouchableOpacity
                         style={styles.rsvpButton}
                         onPress={handleRsvp}
@@ -191,31 +459,58 @@ export const EventCard: React.FC<EventCardProps> = ({
                 </View>
                 <Image source={{ uri: imageUrl }} style={styles.eventImage} />
             </View>
-            {preview === false && (
-                <View style={styles.mapContainer}>
-                    {Platform.OS === 'web' ? (
-                        <iframe
-                            title="map"
-                            width="100%"
-                            height="200"
-                            style={{ border: 0, borderRadius: 10 }}
-                            loading="lazy"
-                            src={openStreetMapUrl}
-                        ></iframe>
-                    ) : (
-                        <WebView
-                            style={styles.map}
-                            source={{ uri: openStreetMapUrl }}
-                        />
-                    )}
-                </View>
-            )}
         </View>
     );
 
-    return onPress ? (
-        <TouchableOpacity onPress={onPress}>{cardElement}</TouchableOpacity>
-    ) : (
-        cardElement
+    return (
+        <>
+            {onPress ? (
+                <TouchableOpacity onPress={onPress}>
+                    {cardElement}
+                </TouchableOpacity>
+            ) : (
+                cardElement
+            )}
+            {/* Modal to display the full list of profiles */}
+            <Modal
+                visible={modalVisible}
+                transparent
+                animationType="slide"
+                onRequestClose={() => setModalVisible(false)}
+            >
+                <View style={styles.modalContainer}>
+                    <View style={styles.modalContent}>
+                        <Text style={styles.modalTitle}>
+                            {modalListType === 'hosts' ? 'Hosts' : 'Going'}
+                        </Text>
+                        <ScrollView>
+                            {(modalListType === 'hosts'
+                                ? hosts
+                                : goingList
+                            ).map((person) => (
+                                <View
+                                    key={person.id}
+                                    style={styles.modalItemContainer}
+                                >
+                                    <Image
+                                        source={{ uri: person.imageUrl }}
+                                        style={styles.profilePic}
+                                    />
+                                    <Text style={styles.modalItemText}>
+                                        {person.name}
+                                    </Text>
+                                </View>
+                            ))}
+                        </ScrollView>
+                        <TouchableOpacity
+                            style={styles.closeButton}
+                            onPress={() => setModalVisible(false)}
+                        >
+                            <Text style={{ color: COLORS.Primary }}>Close</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+        </>
     );
 };

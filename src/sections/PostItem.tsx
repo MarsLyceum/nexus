@@ -10,16 +10,14 @@ const TRUNCATE_LENGTH = 100;
 const styles = StyleSheet.create({
     postContainer: {
         backgroundColor: COLORS.PrimaryBackground,
-        borderRadius: 8,
+        borderRadius: 8, // Updated to 8
         padding: 15,
-        marginBottom: 15,
-        borderWidth: 0,
-        borderColor: COLORS.InactiveText,
+        marginVertical: 10,
     },
     postRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 10,
+        marginBottom: 10, // Standardized spacing
     },
     backArrow: {
         marginRight: 10,
@@ -32,19 +30,19 @@ const styles = StyleSheet.create({
     },
     subredditUserText: {
         color: COLORS.InactiveText,
-        fontSize: 13,
+        fontSize: 14,
     },
     postTitle: {
         color: COLORS.White,
-        fontSize: 16,
-        fontWeight: '600',
+        fontSize: 16, // Standardized typography
+        fontWeight: 'bold', // Standardized typography
         marginBottom: 10,
     },
     flairContainer: {
         alignSelf: 'flex-start',
         paddingHorizontal: 10,
-        paddingVertical: 4,
-        borderRadius: 12,
+        paddingVertical: 10, // Accent element stays different
+        borderRadius: 12, // Accent element remains as is
         backgroundColor: COLORS.Primary,
         marginBottom: 10,
     },
@@ -68,7 +66,7 @@ export type PostItemProps = {
     commentsCount: number;
     flair?: string;
     thumbnail?: string;
-    preview?: boolean; // If true, show a truncated preview of the content
+    preview?: boolean;
     onBackPress?: () => void;
     onPress?: () => void;
 };
@@ -97,7 +95,6 @@ export const PostItem: React.FC<PostItemProps> = ({
     const onUpvote = () => setVoteCount((prev) => prev + 1);
     const onDownvote = () => setVoteCount((prev) => prev - 1);
 
-    // Truncate content if in preview mode
     const displayedContent =
         preview && content.length > TRUNCATE_LENGTH
             ? content.substring(0, TRUNCATE_LENGTH) + '...'
@@ -118,11 +115,11 @@ export const PostItem: React.FC<PostItemProps> = ({
                 </Text>
             </View>
             <Text style={styles.postTitle}>{title}</Text>
-            {flair ? (
+            {flair && (
                 <View style={styles.flairContainer}>
                     <Text style={styles.flairText}>{flair}</Text>
                 </View>
-            ) : undefined}
+            )}
             <Text style={styles.contentText}>{displayedContent}</Text>
             <VoteActions
                 voteCount={voteCount}
@@ -133,12 +130,9 @@ export const PostItem: React.FC<PostItemProps> = ({
         </View>
     );
 
-    if (onPress) {
-        return (
-            <TouchableOpacity onPress={onPress}>
-                {contentElement}
-            </TouchableOpacity>
-        );
-    }
-    return contentElement;
+    return onPress ? (
+        <TouchableOpacity onPress={onPress}>{contentElement}</TouchableOpacity>
+    ) : (
+        contentElement
+    );
 };

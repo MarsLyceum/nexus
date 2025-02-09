@@ -232,7 +232,7 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
         <View style={styles.chatContainer}>
             <Header
                 isLargeScreen={isLargeScreen}
-                channel={channel}
+                headerText={channel.name}
                 navigation={navigation}
             />
 

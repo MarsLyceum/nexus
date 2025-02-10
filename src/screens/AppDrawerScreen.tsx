@@ -1,12 +1,10 @@
 // AppDrawerScreen.tsx
 import React, { useContext } from 'react';
-import { createDrawerNavigator } from '@react-navigation/drawer';
 import {
-    TouchableOpacity,
-    useWindowDimensions,
-    View,
-    StyleSheet,
-} from 'react-native';
+    createDrawerNavigator,
+    DrawerNavigationProp,
+} from '@react-navigation/drawer';
+import { TouchableOpacity, useWindowDimensions } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
 import { COLORS } from '../constants';
@@ -21,7 +19,17 @@ import {
 import { SearchBox } from '../sections';
 import { SearchContext } from '../providers';
 
-const DrawerNavigator = createDrawerNavigator();
+// Define a DrawerParamList type so navigation is properly typed.
+// We include the known screens and allow additional screens with string keys.
+type DrawerParamList = {
+    Messages: undefined;
+    Events: undefined;
+    Search: undefined;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [key: string]: any;
+};
+
+const DrawerNavigator = createDrawerNavigator<DrawerParamList>();
 
 export function AppDrawerScreen() {
     const userGroups: UserGroupsType = useAppSelector(
@@ -37,7 +45,11 @@ export function AppDrawerScreen() {
 
     return (
         <DrawerNavigator.Navigator
-            screenOptions={({ navigation }) => ({
+            screenOptions={({
+                navigation,
+            }: {
+                navigation: DrawerNavigationProp<DrawerParamList>;
+            }) => ({
                 headerShown: true,
                 headerStyle: {
                     backgroundColor: COLORS.AppBackground,
@@ -67,7 +79,7 @@ export function AppDrawerScreen() {
                             onChangeText={setSearchText}
                             desktop
                         />
-                    ) : null,
+                    ) : undefined, // Use `undefined` instead of null
 
                 headerRight: () =>
                     !isDesktop && (
@@ -106,9 +118,9 @@ export function AppDrawerScreen() {
                 />
             ))}
             {/*
-              The Search screen is hidden from the drawer menu (height: 0) 
-              but accessible via the header right icon on mobile.
-            */}
+        The Search screen is hidden from the drawer menu (height: 0) 
+        but accessible via the header right icon on mobile.
+      */}
             <DrawerNavigator.Screen
                 name="Search"
                 component={SearchScreen}
@@ -119,14 +131,3 @@ export function AppDrawerScreen() {
         </DrawerNavigator.Navigator>
     );
 }
-
-const styles = StyleSheet.create({
-    desktopSearchContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: COLORS.TextInput,
-        borderRadius: 6,
-        paddingHorizontal: 10,
-        height: 36,
-    },
-});

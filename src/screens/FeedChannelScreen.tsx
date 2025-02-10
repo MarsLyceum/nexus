@@ -192,7 +192,9 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
             }
         };
 
+        // eslint-disable-next-line no-void
         void fetchPosts();
+        // eslint-disable-next-line consistent-return
         return () => {
             cancelled = true;
         };

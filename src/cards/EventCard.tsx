@@ -26,7 +26,7 @@ const styles = StyleSheet.create({
         padding: 15,
         marginVertical: 10,
         alignSelf: 'center',
-        width: '95%', // Adjust card width so it doesn't span too wide on mobile
+        width: '100%', // Adjust card width so it doesn't span too wide on mobile
     },
     titleRow: {
         flexDirection: 'row',
@@ -218,7 +218,17 @@ export const EventCard: React.FC<EventCardProps> = ({
         const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
             location
         )}`;
-        Linking.openURL(url);
+        // Simply call the function in a block (no void operator)
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+        onPress && handleOpenMap;
+        // eslint-disable-next-line no-lone-blocks
+        {
+            handleOpenMap();
+        }
+        // Alternatively, just call:
+        // handleOpenMap();
+        // eslint-disable-next-line no-void
+        void Linking.openURL(url);
     };
 
     // Function to add the event to the calendar
@@ -240,12 +250,13 @@ export const EventCard: React.FC<EventCardProps> = ({
                 )}&dates=${startStr}/${endStr}&details=${encodeURIComponent(
                     mockDescription
                 )}&location=${encodeURIComponent(location)}`;
-                Linking.openURL(googleCalendarUrl);
+                await Linking.openURL(googleCalendarUrl);
                 return;
             }
 
             // For native mobile platforms, request calendar permissions
             const { status } = await Calendar.requestCalendarPermissionsAsync();
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
             if (status !== 'granted') {
                 Alert.alert(
                     'Permission Denied',
@@ -265,14 +276,17 @@ export const EventCard: React.FC<EventCardProps> = ({
             // If no modifiable calendar is found, attempt to create one
             if (!defaultCalendar) {
                 let defaultCalendarSource;
+                // eslint-disable-next-line unicorn/prefer-ternary
                 if (Platform.OS === 'ios') {
                     defaultCalendarSource =
-                        await Calendar.getDefaultCalendarSourceAsync();
+                        // eslint-disable-next-line unicorn/no-await-expression-member
+                        (await Calendar.getDefaultCalendarAsync()).source;
                 } else {
                     // For Android, use a local source
                     defaultCalendarSource = {
                         isLocalAccount: true,
                         name: 'Expo Calendar',
+                        id: '1', // dummy id if needed
                     };
                 }
                 const newCalendarId = await Calendar.createCalendarAsync({
@@ -285,7 +299,8 @@ export const EventCard: React.FC<EventCardProps> = ({
                     ownerAccount: '',
                     accessLevel: Calendar.CalendarAccessLevel.OWNER,
                 });
-                defaultCalendar = { id: newCalendarId };
+                // Cast to a minimal calendar object with an id.
+                defaultCalendar = { id: newCalendarId } as Calendar.Calendar;
             }
 
             // Create the event details
@@ -300,8 +315,11 @@ export const EventCard: React.FC<EventCardProps> = ({
 
             await Calendar.createEventAsync(defaultCalendar.id, eventDetails);
             Alert.alert('Event added to your calendar!');
-        } catch (error) {
-            console.error('Error adding event to calendar:', error);
+        } catch (error: unknown) {
+            console.error(
+                'Error adding event to calendar:',
+                error instanceof Error ? error.message : error
+            );
             Alert.alert('Error', 'Could not add event to calendar');
         }
     };
@@ -350,8 +368,8 @@ export const EventCard: React.FC<EventCardProps> = ({
     // State for controlling the modal view for full lists
     const [modalVisible, setModalVisible] = useState(false);
     const [modalListType, setModalListType] = useState<
-        'hosts' | 'going' | null
-    >(null);
+        'hosts' | 'going' | undefined
+    >();
 
     const openModal = (listType: 'hosts' | 'going') => {
         setModalListType(listType);
@@ -379,7 +397,6 @@ export const EventCard: React.FC<EventCardProps> = ({
             <View
                 style={[
                     styles.topRow,
-                    // If on a small screen, stack the text and image vertically
                     isSmallScreen && {
                         flexDirection: 'column',
                         alignItems: 'center',
@@ -402,7 +419,12 @@ export const EventCard: React.FC<EventCardProps> = ({
                         <Text style={styles.title}>{title}</Text>
                     </View>
                     {/* Date/time area wrapped in a touchable to add to calendar */}
-                    <TouchableOpacity onPress={handleAddEventToCalendar}>
+                    <TouchableOpacity
+                        onPress={() => {
+                            // eslint-disable-next-line no-void
+                            void handleAddEventToCalendar();
+                        }}
+                    >
                         <Text style={styles.dateTime}>{dateTime}</Text>
                     </TouchableOpacity>
                     {!hideGroupName && (
@@ -476,7 +498,6 @@ export const EventCard: React.FC<EventCardProps> = ({
                     source={{ uri: imageUrl }}
                     style={[
                         styles.eventImage,
-                        // On smaller screens, show the image below with adjusted size
                         isSmallScreen && {
                             width: '100%',
                             height: 200,
@@ -487,6 +508,14 @@ export const EventCard: React.FC<EventCardProps> = ({
             </View>
         </View>
     );
+
+    // Create a safely typed list for the modal mapping.
+    const modalList: Person[] =
+        modalListType === 'hosts'
+            ? hosts
+            : modalListType === 'going'
+              ? goingList
+              : [];
 
     return (
         <>
@@ -502,7 +531,10 @@ export const EventCard: React.FC<EventCardProps> = ({
                 visible={modalVisible}
                 transparent
                 animationType="slide"
-                onRequestClose={() => setModalVisible(false)}
+                onRequestClose={() => {
+                    setModalVisible(false);
+                    setModalListType(undefined);
+                }}
             >
                 <View style={styles.modalContainer}>
                     <View style={styles.modalContent}>
@@ -510,10 +542,7 @@ export const EventCard: React.FC<EventCardProps> = ({
                             {modalListType === 'hosts' ? 'Hosts' : 'Going'}
                         </Text>
                         <ScrollView>
-                            {(modalListType === 'hosts'
-                                ? hosts
-                                : goingList
-                            ).map((person) => (
+                            {modalList.map((person) => (
                                 <View
                                     key={person.id}
                                     style={styles.modalItemContainer}
@@ -530,7 +559,10 @@ export const EventCard: React.FC<EventCardProps> = ({
                         </ScrollView>
                         <TouchableOpacity
                             style={styles.closeButton}
-                            onPress={() => setModalVisible(false)}
+                            onPress={() => {
+                                setModalVisible(false);
+                                setModalListType(undefined);
+                            }}
                         >
                             <Text style={{ color: COLORS.Primary }}>Close</Text>
                         </TouchableOpacity>

@@ -15,12 +15,20 @@ import { NavigationProp, RouteProp } from '@react-navigation/core';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 
 import { COLORS } from '../constants';
-
-// Import the shared search context and the search filter hook
 import { SearchContext } from '../providers';
 import { useSearchFilter } from '../hooks';
 
-// **Define the type for navigation parameters**
+// Define the Message type
+export type Message = {
+    id: string;
+    user: string;
+    time: string;
+    text: string;
+    avatar: string;
+    edited: boolean;
+};
+
+// Define the type for navigation parameters
 type RootStackParamList = {
     ChatScreen: {
         user: {
@@ -28,7 +36,6 @@ type RootStackParamList = {
             avatar: string;
         };
     };
-    // Add other routes and their params here if necessary
 };
 
 type ChatScreenProps = {
@@ -119,7 +126,7 @@ const styles = StyleSheet.create({
     },
 });
 
-// **ChatScreen Component**
+// ChatScreen Component
 export const ChatScreen: React.FC<ChatScreenProps> = ({
     route,
     navigation,
@@ -128,9 +135,8 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     const { width } = useWindowDimensions();
     const isLargeScreen = width > 768;
 
-    // Initial messages in chronological order (oldest first)
-    // New messages will be appended at the end.
-    const [messages, setMessages] = useState([
+    // Initialize messages with an explicit Message type.
+    const [messages, setMessages] = useState<Message[]>([
         {
             id: '1',
             user: 'CaptCrunch',
@@ -174,13 +180,14 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     ]);
 
     const [messageText, setMessageText] = useState('');
-    const flatListRef = useRef<FlatList>(null);
+    const flatListRef = useRef<FlatList<Message>>(null);
 
     // Retrieve the shared search text from context
     const { searchText } = useContext(SearchContext);
 
     // Use the search filter hook to filter messages based on 'text' and 'user'
-    const filteredMessages = useSearchFilter(messages, searchText, [
+    // If your hook supports generics, pass the Message type.
+    const filteredMessages = useSearchFilter<Message>(messages, searchText, [
         'text',
         'user',
     ]);
@@ -188,7 +195,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     const sendMessage = () => {
         if (!messageText.trim()) return;
 
-        const newMessage = {
+        const newMessage: Message = {
             id: Math.random().toString(),
             user: 'You',
             time: new Date().toLocaleString('en-US', {
@@ -204,7 +211,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             edited: false,
         };
 
-        // Append new message at the end of the list.
+        // Append the new message at the end of the list.
         setMessages((prevMessages) => [...prevMessages, newMessage]);
         setMessageText('');
     };
@@ -233,9 +240,9 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             </View>
 
             {/* Chat Messages */}
-            <FlatList
+            <FlatList<Message>
                 ref={flatListRef}
-                data={filteredMessages} // Use filtered messages here.
+                data={filteredMessages}
                 keyExtractor={(item) => item.id}
                 renderItem={({ item }) => (
                     <View style={styles.messageContainer}>
@@ -270,7 +277,6 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
                     } // Desktop: Send on Enter
                     returnKeyType={!isMobileOrTablet ? 'default' : 'send'}
                 />
-                {/* Show send button ONLY on mobile and tablets */}
                 {isMobileOrTablet && messageText.length > 0 && (
                     <TouchableOpacity
                         onPress={sendMessage}

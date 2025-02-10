@@ -1,10 +1,11 @@
 import { configureStore, ThunkAction, Action } from '@reduxjs/toolkit';
 import { useDispatch, useSelector, TypedUseSelectorHook } from 'react-redux';
-import { userReducer } from './slices';
+import { userReducer, userGroupsReducer } from './slices';
 
 export const store = configureStore({
     reducer: {
         user: userReducer,
+        userGroups: userGroupsReducer,
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({

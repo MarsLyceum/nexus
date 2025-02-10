@@ -1,2 +1,3 @@
 export * from './User';
-export * from './MatchUserProfile';
+export * from './Group';
+export * from './Event';

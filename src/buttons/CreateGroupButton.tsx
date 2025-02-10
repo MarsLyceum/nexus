@@ -1,13 +1,12 @@
 import React from 'react';
 import { TouchableOpacity, StyleSheet, View, Text } from 'react-native';
-
-import { Chat } from '../icons';
+import { CreateGroup } from '../icons';
 import { COLORS } from '../constants';
 
 const styles = StyleSheet.create({
     container: {
-        flexDirection: 'row', // Arrange children horizontally
-        alignItems: 'center', // Center them vertically
+        flexDirection: 'row',
+        alignItems: 'center',
     },
     button: {
         width: 32,
@@ -18,19 +17,19 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     text: {
-        marginLeft: 8, // Spacing between the icon and the text
+        marginLeft: 8, // Spacing between the button and the text
         fontSize: 14,
         color: COLORS.White,
         fontFamily: 'Roboto_500Medium',
-        fontWeight: '500', // semibold (numeric value is recommended)
+        fontWeight: 'semibold',
     },
 });
 
-export const ChatButton = ({ onPress }: { onPress: () => unknown }) => (
+export const CreateGroupButton = ({ onPress }: { onPress: () => unknown }) => (
     <TouchableOpacity style={styles.container} onPress={onPress}>
         <View style={styles.button}>
-            <Chat />
+            <CreateGroup />
         </View>
-        <Text style={styles.text}>Messages</Text>
+        <Text style={styles.text}>Create a group</Text>
     </TouchableOpacity>
 );

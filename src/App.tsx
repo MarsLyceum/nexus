@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { createDrawerNavigator } from '@react-navigation/drawer';
-import { createStackNavigator } from '@react-navigation/stack';
+import {
+    createStackNavigator,
+    TransitionPresets,
+} from '@react-navigation/stack';
 import EventSource from 'react-native-event-source';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { StatusBar } from 'react-native';
+import { Platform, StatusBar } from 'react-native';
 import {
     ApolloClient,
     InMemoryCache,
@@ -20,51 +22,81 @@ import { Provider as ReduxProvider } from 'react-redux';
 import { onError, ErrorResponse } from '@apollo/client/link/error';
 import { loadErrorMessages, loadDevMessages } from '@apollo/client/dev';
 import { getMainDefinition } from '@apollo/client/utilities';
+import { Lato_400Regular, Lato_700Bold } from '@expo-google-fonts/lato';
 import {
     useFonts,
-    Lato_400Regular,
-    Lato_700Bold,
-} from '@expo-google-fonts/lato';
+    Roboto_400Regular,
+    Roboto_500Medium,
+    Roboto_700Bold,
+} from '@expo-google-fonts/roboto';
 import * as SplashScreen from 'expo-splash-screen';
 
 import { COLORS } from './constants';
 import { setupAxiosQuotas } from './utils/setupAxiosQuotas';
 import { store } from './redux';
 import {
-    ServerScreen,
-    SidebarScreen,
     LoginScreen,
     SignUpScreen,
     WelcomeScreen,
     ChatScreen,
-    DMListScreen,
-    EventsScreen,
     ServerMessagesScreen,
+    CreateGroupModalScreen,
+    FeedChannelScreen,
+    PostScreen,
+    GroupEventsScreen,
+    EventDetailsScreen,
+    AppDrawerScreen,
 } from './screens';
+import { SearchProvider } from './providers';
 
 setupAxiosQuotas();
 
 if (__DEV__) {
-    // Adds messages only in a dev environment
     loadDevMessages();
     loadErrorMessages();
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-const Drawer = createDrawerNavigator();
+/**
+ * CustomScrollbar Component
+ *
+ * This component injects custom CSS to style scrollbars on web.
+ * On native platforms, it renders null.
+ */
+const CustomScrollbar = () => {
+    if (Platform.OS !== 'web') return <></>;
+    return (
+        <style>{`
+      /* Chrome, Safari and Opera */
+      ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+      }
+      ::-webkit-scrollbar-track {
+        background: ${COLORS.PrimaryBackground};
+      }
+      ::-webkit-scrollbar-thumb {
+        background-color: ${COLORS.TextInput};
+        border-radius: 999px;
+      }
+      /* Firefox */
+      * {
+        scrollbar-width: thin;
+        scrollbar-color: ${COLORS.TextInput} ${COLORS.PrimaryBackground};
+      }
+    `}</style>
+    );
+};
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
 const Stack = createStackNavigator();
 
 const errorLink = onError((error: ErrorResponse) => {
     if (error) {
-        console.log('error:', error);
+        console.log('Apollo Error:', error);
     }
 });
 
-const requestQuota = 10;
+const requestQuota = 20;
 let requestCount = 0;
-
 const quotaLink = new ApolloLink((operation, forward) => {
     if (requestCount < requestQuota) {
         requestCount += 1;
@@ -78,12 +110,7 @@ const quotaLink = new ApolloLink((operation, forward) => {
 
 const graphqlApiGatewayEndpointHttp =
     'https://peeps-web-service-iwesf7iypq-uw.a.run.app/graphql';
-// const localGraphqlApiGatewayEndpointHttp = 'http://localhost:4000/graphql';
-// const graphqlApiGatewayEndpointSse =
-//     'https://peeps-web-service-iwesf7iypq-uw.a.run.app/graphql/stream';
-const graphqlApiGatewayEndpointSse = ''; // turn off sse for now to save money
-// const localGraphqlApiGatewayEndpointSse =
-//     'http://localhost:4000/graphql/stream';
+const graphqlApiGatewayEndpointSse = ''; // SSE turned off
 
 const httpLink = from([
     errorLink,
@@ -95,20 +122,15 @@ const httpLink = from([
 const sseLink = new ApolloLink(
     () =>
         new Observable((observer) => {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
             const eventSource: EventSource = new EventSource(
                 graphqlApiGatewayEndpointSse,
-                {
-                    withCredentials: false,
-                }
+                { withCredentials: false }
             );
-
-            // eslint-disable-next-line unicorn/prefer-add-event-listener
             eventSource.addEventListener(
                 'message',
                 (event: { data: string }) => {
                     try {
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                         const parsedData = JSON.parse(event.data);
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                         if (parsedData.errors) {
@@ -125,13 +147,10 @@ const sseLink = new ApolloLink(
                     }
                 }
             );
-
-            // eslint-disable-next-line unicorn/prefer-add-event-listener
             eventSource.addEventListener('error', (error: unknown) => {
                 observer.error(error);
                 eventSource.close();
             });
-
             return () => {
                 eventSource.close();
             };
@@ -161,136 +180,160 @@ const GREETINGS_SUBSCRIPTION = gql`
     }
 `;
 
-client
-    .subscribe({
-        query: GREETINGS_SUBSCRIPTION,
-    })
-    .subscribe({
-        next({ data }) {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-            console.log('Greeting:', data.greetings);
-        },
-        error(err) {
-            console.error('Subscription error:', err);
-        },
-    });
+client.subscribe({ query: GREETINGS_SUBSCRIPTION }).subscribe({
+    next({ data }) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        console.log('Greeting:', data.greetings);
+    },
+    error(err) {
+        console.error('Subscription error:', err);
+    },
+});
 
-function AppDrawer() {
-    return (
-        <Drawer.Navigator
-            screenOptions={{
-                drawerType: 'permanent', // Always visible
-                drawerStyle: {
-                    width: 80,
-                    borderWidth: 0,
-                    backgroundColor: COLORS.AppBackground,
-                }, // Adjust width as needed
-            }}
-            drawerContent={(props) => <SidebarScreen {...props} />}
-        >
-            <Drawer.Screen
-                name="DMs"
-                component={DMListScreen}
-                options={{ headerShown: false }}
-            />
-            <Drawer.Screen
-                name="Events"
-                component={EventsScreen}
-                options={{ headerShown: false }}
-            />
-            <Drawer.Screen
-                // @ts-expect-error broken navigation
-                name="Server1"
-                // @ts-expect-error broken navigation
-                component={ServerScreen}
-                options={{ headerShown: false }}
-            />
-            <Drawer.Screen
-                // @ts-expect-error broken navigation
-                name="Server2"
-                // @ts-expect-error broken navigation
-                component={ServerScreen}
-                options={{ headerShown: false }}
-            />
-        </Drawer.Navigator>
-    );
-}
-
-// we need to have App be a default export for React Native to work
+// The main App component with the stack navigator integrating all screens.
 // eslint-disable-next-line import/no-default-export
 export default function App() {
     const [appIsReady, setAppIsReady] = useState(false);
-
     const [fontsLoaded] = useFonts({
         Lato_400Regular,
         Lato_700Bold,
+        Roboto_400Regular,
+        Roboto_500Medium,
+        Roboto_700Bold,
     });
 
     useEffect(() => {
         if (fontsLoaded) {
             // eslint-disable-next-line no-void
-            void SplashScreen.hideAsync(); // Hide the splash screen once the fonts are loaded
+            void SplashScreen.hideAsync(); // Hide splash screen once fonts are loaded
             setAppIsReady(true);
         }
     }, [fontsLoaded]);
 
     if (appIsReady) {
         return (
-            <SafeAreaProvider>
-                <StatusBar
-                    barStyle="light-content"
-                    backgroundColor={COLORS.AppBackground}
-                />
-                <SafeAreaView
-                    style={{ flex: 1, backgroundColor: COLORS.AppBackground }}
-                    edges={['top', 'left', 'right']}
-                >
-                    <ApolloProvider client={client}>
-                        <ReduxProvider store={store}>
-                            <NavigationContainer
-                                onReady={() => {
-                                    console.log('navigation ready');
-                                }}
-                            >
-                                <Stack.Navigator initialRouteName="Welcome">
-                                    <Stack.Screen
-                                        name="Welcome"
-                                        component={WelcomeScreen}
-                                        options={{ headerShown: false }}
-                                    />
-                                    <Stack.Screen
-                                        name="Login"
-                                        component={LoginScreen}
-                                        options={{ headerShown: false }}
-                                    />
-                                    <Stack.Screen
-                                        name="SignUp"
-                                        component={SignUpScreen}
-                                        options={{ headerShown: false }}
-                                    />
-                                    <Stack.Screen
-                                        name="AppDrawer"
-                                        component={AppDrawer}
-                                        options={{ headerShown: false }}
-                                    />
-                                    <Stack.Screen
-                                        name="Chat"
-                                        // @ts-expect-error broken navigation
-                                        component={ChatScreen}
-                                        options={{ headerShown: false }}
-                                    />
-                                    <Stack.Screen
-                                        name="ServerMessages"
-                                        // @ts-expect-error broken navigation
-                                        component={ServerMessagesScreen}
-                                        options={{ headerShown: false }}
-                                    />
-                                </Stack.Navigator>
-                            </NavigationContainer>
-                        </ReduxProvider>
-                    </ApolloProvider>
-                </SafeAreaView>
-            </SafeAreaProvider>
+            <SearchProvider>
+                <SafeAreaProvider>
+                    <StatusBar
+                        barStyle="light-content"
+                        backgroundColor={COLORS.AppBackground}
+                    />
+                    <SafeAreaView
+                        style={{
+                            flex: 1,
+                            backgroundColor: COLORS.AppBackground,
+                        }}
+                        edges={['top', 'left', 'right', 'bottom']}
+                    >
+                        {/* Inject custom scrollbar styles on web */}
+                        <CustomScrollbar />
+                        <ApolloProvider client={client}>
+                            <ReduxProvider store={store}>
+                                <NavigationContainer>
+                                    <Stack.Navigator initialRouteName="Welcome">
+                                        <Stack.Screen
+                                            name="Welcome"
+                                            component={
+                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                                WelcomeScreen as React.ComponentType<any>
+                                            }
+                                            options={{ headerShown: false }}
+                                        />
+                                        <Stack.Screen
+                                            name="Login"
+                                            component={
+                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                                LoginScreen as React.ComponentType<any>
+                                            }
+                                            options={{ headerShown: false }}
+                                        />
+                                        <Stack.Screen
+                                            name="SignUp"
+                                            component={
+                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                                SignUpScreen as React.ComponentType<any>
+                                            }
+                                            options={{ headerShown: false }}
+                                        />
+                                        {/* The AppDrawer now supplies its own header (if needed) */}
+                                        <Stack.Screen
+                                            name="AppDrawer"
+                                            component={
+                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                                AppDrawerScreen as React.ComponentType<any>
+                                            }
+                                            options={{ headerShown: false }}
+                                        />
+                                        <Stack.Screen
+                                            name="Chat"
+                                            component={
+                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                                ChatScreen as React.ComponentType<any>
+                                            }
+                                            options={{ headerShown: false }}
+                                        />
+                                        <Stack.Screen
+                                            name="ServerMessages"
+                                            component={
+                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                                ServerMessagesScreen as React.ComponentType<any>
+                                            }
+                                            options={{ headerShown: false }}
+                                        />
+                                        <Stack.Screen
+                                            name="CreateGroup"
+                                            component={
+                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                                CreateGroupModalScreen as React.ComponentType<any>
+                                            }
+                                            options={{
+                                                presentation: 'modal',
+                                                ...Platform.select({
+                                                    ios: {
+                                                        ...TransitionPresets.ModalPresentationIOS,
+                                                    },
+                                                }),
+                                            }}
+                                        />
+                                        <Stack.Screen
+                                            name="FeedChannel"
+                                            component={
+                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                                FeedChannelScreen as React.ComponentType<any>
+                                            }
+                                            options={{ headerShown: false }}
+                                        />
+                                        <Stack.Screen
+                                            name="PostScreen"
+                                            component={
+                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                                PostScreen as React.ComponentType<any>
+                                            }
+                                            options={{ headerShown: false }}
+                                        />
+                                        <Stack.Screen
+                                            name="GroupEvents"
+                                            component={
+                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                                GroupEventsScreen as React.ComponentType<any>
+                                            }
+                                            options={{ headerShown: false }}
+                                        />
+                                        <Stack.Screen
+                                            name="EventDetails"
+                                            component={
+                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                                EventDetailsScreen as React.ComponentType<any>
+                                            }
+                                            options={{ headerShown: false }}
+                                        />
+                                    </Stack.Navigator>
+                                </NavigationContainer>
+                            </ReduxProvider>
+                        </ApolloProvider>
+                    </SafeAreaView>
+                </SafeAreaProvider>
+            </SearchProvider>
         );
     }
 }

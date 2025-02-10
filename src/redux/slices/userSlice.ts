@@ -9,7 +9,7 @@ import { setItem, getItem, deleteItem } from './storageUtil';
 
 const USER_KEY = 'user';
 
-type UserType = User | undefined;
+export type UserType = User | undefined;
 type UserState = { user: UserType };
 const initialState: UserState = {
     user: undefined,

@@ -21,7 +21,7 @@ const styles = StyleSheet.create({
         marginLeft: 8, // Spacing between the button and the text
         fontSize: 14,
         color: COLORS.White,
-        fontFamily: 'Roboto',
+        fontFamily: 'Roboto_500Medium',
         fontWeight: 'semibold',
     },
 });

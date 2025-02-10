@@ -21,8 +21,8 @@ const styles = StyleSheet.create({
         marginLeft: 8, // Spacing between the icon and the text
         fontSize: 14,
         color: COLORS.White,
-        fontFamily: 'Roboto',
-        fontWeight: '600', // semibold (numeric value is recommended)
+        fontFamily: 'Roboto_500Medium',
+        fontWeight: '500', // semibold (numeric value is recommended)
     },
 });
 

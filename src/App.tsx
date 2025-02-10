@@ -24,11 +24,13 @@ import { Provider as ReduxProvider } from 'react-redux';
 import { onError, ErrorResponse } from '@apollo/client/link/error';
 import { loadErrorMessages, loadDevMessages } from '@apollo/client/dev';
 import { getMainDefinition } from '@apollo/client/utilities';
+import { Lato_400Regular, Lato_700Bold } from '@expo-google-fonts/lato';
 import {
     useFonts,
-    Lato_400Regular,
-    Lato_700Bold,
-} from '@expo-google-fonts/lato';
+    Roboto_400Regular,
+    Roboto_500Medium,
+    Roboto_700Bold,
+} from '@expo-google-fonts/roboto';
 import * as SplashScreen from 'expo-splash-screen';
 
 import { COLORS } from './constants';
@@ -239,6 +241,9 @@ export default function App() {
     const [fontsLoaded] = useFonts({
         Lato_400Regular,
         Lato_700Bold,
+        Roboto_400Regular,
+        Roboto_500Medium,
+        Roboto_700Bold,
     });
 
     useEffect(() => {

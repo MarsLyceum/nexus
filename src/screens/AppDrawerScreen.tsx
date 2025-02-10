@@ -25,11 +25,19 @@ type DrawerParamList = {
     Messages: undefined;
     Events: undefined;
     Search: undefined;
+    // Allows additional screens
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     [key: string]: any;
 };
 
 const DrawerNavigator = createDrawerNavigator<DrawerParamList>();
+
+// Wrap ServerScreen to avoid type mismatches when used in the drawer.
+// This wrapper receives the props provided by the DrawerNavigator and passes them to ServerScreen.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const ServerScreenWrapper: React.FC<any> = (props) => (
+    <ServerScreen {...props} />
+);
 
 export function AppDrawerScreen() {
     const userGroups: UserGroupsType = useAppSelector(
@@ -113,7 +121,7 @@ export function AppDrawerScreen() {
                 <DrawerNavigator.Screen
                     name={group.name}
                     key={group.id}
-                    component={ServerScreen}
+                    component={ServerScreenWrapper}
                     initialParams={{ group }}
                 />
             ))}

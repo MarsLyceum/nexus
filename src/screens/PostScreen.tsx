@@ -47,6 +47,7 @@ const BOTTOM_INPUT_HEIGHT = 60;
 const isWeb = Platform.OS === 'web';
 
 const styles = StyleSheet.create({
+    // @ts-expect-error web only type
     safeContainer: {
         flex: 1,
         backgroundColor: COLORS.SecondaryBackground,
@@ -64,6 +65,7 @@ const styles = StyleSheet.create({
               left: 0,
               right: 0,
               bottom: BOTTOM_INPUT_HEIGHT,
+              // @ts-expect-error web only type
               overflowY: 'auto',
           }
         : { flex: 1 },
@@ -150,7 +152,8 @@ export const PostScreen: React.FC<PostScreenProps> = ({
         ? { style: styles.container }
         : {
               style: styles.container,
-              behavior: Platform.OS === 'ios' ? 'padding' : undefined,
+              behavior:
+                  Platform.OS === 'ios' ? ('padding' as const) : undefined,
           };
 
     return (

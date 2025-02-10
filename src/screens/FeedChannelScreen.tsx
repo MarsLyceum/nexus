@@ -28,6 +28,9 @@ type RootStackParamList = {
     FeedChannelScreen: {
         channel: GroupChannel;
     };
+    PostScreen: {
+        post: FeedPost;
+    };
 };
 
 interface FeedChannelScreenProps {
@@ -219,7 +222,7 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
         <SafeAreaView style={styles.container}>
             <Header
                 isLargeScreen={width > 768}
-                headerText={channel.name}
+                headerText={channel?.name ?? ''}
                 navigation={navigation}
             />
 

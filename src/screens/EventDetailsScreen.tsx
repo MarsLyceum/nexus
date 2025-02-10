@@ -8,6 +8,9 @@ import {
     KeyboardAvoidingView,
     Platform,
     Text,
+    ViewStyle,
+    TextStyle,
+    ImageStyle,
 } from 'react-native';
 import { NavigationProp, RouteProp } from '@react-navigation/native';
 import { EventCard } from '../cards';
@@ -43,7 +46,16 @@ type EventDetailsScreenProps = {
 const BOTTOM_INPUT_HEIGHT = 60;
 const isWeb = Platform.OS === 'web';
 
-const styles = StyleSheet.create({
+const styles = StyleSheet.create<{
+    safeContainer: ViewStyle;
+    container: ViewStyle;
+    mainContainer: ViewStyle;
+    scrollSection: ViewStyle;
+    scrollView: ViewStyle;
+    descriptionContainer: ViewStyle;
+    descriptionText: TextStyle;
+}>({
+    // @ts-expect-error web only types
     safeContainer: {
         flex: 1,
         backgroundColor: COLORS.SecondaryBackground,
@@ -63,6 +75,7 @@ const styles = StyleSheet.create({
               left: 0,
               right: 0,
               bottom: BOTTOM_INPUT_HEIGHT,
+              // @ts-expect-error web only types
               overflowY: 'auto',
           }
         : { flex: 1 },
@@ -115,12 +128,15 @@ export const EventDetailsScreen: React.FC<EventDetailsScreenProps> = ({
         }
     };
 
+    // Use a different container on web vs mobile.
     const ContainerComponent = isWeb ? View : KeyboardAvoidingView;
     const containerProps = isWeb
         ? { style: styles.container }
         : {
               style: styles.container,
-              behavior: Platform.OS === 'ios' ? 'padding' : undefined,
+              // Explicitly cast 'padding' as a literal type.
+              behavior:
+                  Platform.OS === 'ios' ? ('padding' as const) : undefined,
           };
 
     return (

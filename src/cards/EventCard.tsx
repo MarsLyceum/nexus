@@ -287,6 +287,7 @@ export const EventCard: React.FC<EventCardProps> = ({
                         isLocalAccount: true,
                         name: 'Expo Calendar',
                         id: '1', // dummy id if needed
+                        type: 'local',
                     };
                 }
                 const newCalendarId = await Calendar.createCalendarAsync({

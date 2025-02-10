@@ -4,10 +4,10 @@ import { View, StyleSheet } from 'react-native';
 import { NavigationProp, RouteProp } from '@react-navigation/core';
 import { FeedChannelScreen } from './FeedChannelScreen';
 import { TextChannelScreen } from './TextChannelScreen';
-import { GroupChannel } from '../types';
+import { GroupChannel, Group } from '../types';
 
 type RootStackParamList = {
-    ServerMessages: { channel: GroupChannel };
+    ServerMessages: { channel: GroupChannel; group: Group };
 };
 
 type ServerMessagesScreenProps = {
@@ -35,6 +35,7 @@ export const ServerMessagesScreen: React.FC<ServerMessagesScreenProps> = ({
     return (
         <View style={styles.chatContainer}>
             {isFeedChannel ? (
+                // @ts-expect-error navigation is a different type
                 <FeedChannelScreen channel={channel} navigation={navigation} />
             ) : (
                 <TextChannelScreen channel={channel} navigation={navigation} />

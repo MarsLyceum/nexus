@@ -15,12 +15,14 @@ import { NavigationProp } from '@react-navigation/core';
 import { EventCard } from '../cards';
 import { Header } from '../sections';
 import { COLORS } from '../constants';
+import { useAppSelector, RootState, UserType } from '../redux';
 
 // Import the shared search context and the search filter hook
 import { SearchContext } from '../providers';
 import { useSearchFilter } from '../hooks';
+import { Event } from '../types';
 
-const initialEvents = [
+const initialEvents: Event[] = [
     {
         id: '1',
         title: 'NashJS: The Art of Giving and Receiving Feedback with: Chris Leonard',
@@ -74,10 +76,13 @@ export const GroupEventsScreen = ({
         'groupName',
         'location',
     ]);
+    const user: UserType = useAppSelector(
+        (state: RootState) => state.user.user
+    );
 
     // Adds a new event to the list
     const handleAddEvent = () => {
-        const newEvent = {
+        const newEvent: Event = {
             id: String(Date.now()), // Unique ID based on timestamp
             title: title || 'Untitled Event',
             dateTime: dateTime || 'TBA',
@@ -85,6 +90,9 @@ export const GroupEventsScreen = ({
             attendees: Number.parseInt(attendees, 10) || 0,
             location: location || 'Location TBD',
             imageUrl: imageUrl || 'https://picsum.photos/200/100',
+            postedByUser: {
+                username: user?.username,
+            },
         };
 
         setEvents([...events, newEvent]);

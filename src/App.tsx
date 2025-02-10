@@ -66,24 +66,24 @@ const CustomScrollbar = () => {
     if (Platform.OS !== 'web') return <></>;
     return (
         <style>{`
-            /* Chrome, Safari and Opera */
-            ::-webkit-scrollbar {
-              width: 10px;
-              height: 10px;
-            }
-            ::-webkit-scrollbar-track {
-              background: ${COLORS.PrimaryBackground};
-            }
-            ::-webkit-scrollbar-thumb {
-              background-color: ${COLORS.TextInput};
-              border-radius: 999px;
-            }
-            /* Firefox */
-            * {
-              scrollbar-width: thin;
-              scrollbar-color: ${COLORS.TextInput} ${COLORS.PrimaryBackground};
-            }
-        `}</style>
+      /* Chrome, Safari and Opera */
+      ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+      }
+      ::-webkit-scrollbar-track {
+        background: ${COLORS.PrimaryBackground};
+      }
+      ::-webkit-scrollbar-thumb {
+        background-color: ${COLORS.TextInput};
+        border-radius: 999px;
+      }
+      /* Firefox */
+      * {
+        scrollbar-width: thin;
+        scrollbar-color: ${COLORS.TextInput} ${COLORS.PrimaryBackground};
+      }
+    `}</style>
     );
 };
 
@@ -233,38 +233,59 @@ export default function App() {
                                     <Stack.Navigator initialRouteName="Welcome">
                                         <Stack.Screen
                                             name="Welcome"
-                                            component={WelcomeScreen}
+                                            component={
+                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                                WelcomeScreen as React.ComponentType<any>
+                                            }
                                             options={{ headerShown: false }}
                                         />
                                         <Stack.Screen
                                             name="Login"
-                                            component={LoginScreen}
+                                            component={
+                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                                LoginScreen as React.ComponentType<any>
+                                            }
                                             options={{ headerShown: false }}
                                         />
                                         <Stack.Screen
                                             name="SignUp"
-                                            component={SignUpScreen}
+                                            component={
+                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                                SignUpScreen as React.ComponentType<any>
+                                            }
                                             options={{ headerShown: false }}
                                         />
                                         {/* The AppDrawer now supplies its own header (if needed) */}
                                         <Stack.Screen
                                             name="AppDrawer"
-                                            component={AppDrawerScreen}
+                                            component={
+                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                                AppDrawerScreen as React.ComponentType<any>
+                                            }
                                             options={{ headerShown: false }}
                                         />
                                         <Stack.Screen
                                             name="Chat"
-                                            component={ChatScreen}
+                                            component={
+                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                                ChatScreen as React.ComponentType<any>
+                                            }
                                             options={{ headerShown: false }}
                                         />
                                         <Stack.Screen
                                             name="ServerMessages"
-                                            component={ServerMessagesScreen}
+                                            component={
+                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                                ServerMessagesScreen as React.ComponentType<any>
+                                            }
                                             options={{ headerShown: false }}
                                         />
                                         <Stack.Screen
                                             name="CreateGroup"
-                                            component={CreateGroupModalScreen}
+                                            component={
+                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                                CreateGroupModalScreen as React.ComponentType<any>
+                                            }
                                             options={{
                                                 presentation: 'modal',
                                                 ...Platform.select({
@@ -276,22 +297,34 @@ export default function App() {
                                         />
                                         <Stack.Screen
                                             name="FeedChannel"
-                                            component={FeedChannelScreen}
+                                            component={
+                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                                FeedChannelScreen as React.ComponentType<any>
+                                            }
                                             options={{ headerShown: false }}
                                         />
                                         <Stack.Screen
                                             name="PostScreen"
-                                            component={PostScreen}
+                                            component={
+                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                                PostScreen as React.ComponentType<any>
+                                            }
                                             options={{ headerShown: false }}
                                         />
                                         <Stack.Screen
                                             name="GroupEvents"
-                                            component={GroupEventsScreen}
+                                            component={
+                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                                GroupEventsScreen as React.ComponentType<any>
+                                            }
                                             options={{ headerShown: false }}
                                         />
                                         <Stack.Screen
                                             name="EventDetails"
-                                            component={EventDetailsScreen}
+                                            component={
+                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                                EventDetailsScreen as React.ComponentType<any>
+                                            }
                                             options={{ headerShown: false }}
                                         />
                                     </Stack.Navigator>

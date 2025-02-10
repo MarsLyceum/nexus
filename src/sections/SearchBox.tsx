@@ -54,6 +54,7 @@ const styles = StyleSheet.create({
         fontFamily: 'Roboto_400Regular',
         padding: 0,
         // Remove the outline on web browsers:
+        // @ts-expect-error we get an error because this only exists for web
         outlineStyle: 'none',
     },
 });

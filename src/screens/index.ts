@@ -13,3 +13,4 @@ export * from './FeedChannelScreen';
 export * from './GroupEventsScreen';
 export * from './EventDetailsScreen';
 export * from './AppDrawerScreen';
+export * from './SearchScreen';

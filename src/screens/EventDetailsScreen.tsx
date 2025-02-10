@@ -14,12 +14,17 @@ import { EventCard } from '../cards';
 import { CreateContentButton } from '../buttons';
 import { COLORS } from '../constants';
 import { CommentThread, CommentNode } from '../sections';
+import { useAppSelector, RootState, UserType } from '../redux';
 
 type EventDetails = {
     id: string;
     title: string;
     dateTime: string;
     groupName: string;
+    postedByUser: {
+        // Creator of the event as an object.
+        username: string;
+    };
     attendees: number;
     location: string;
     imageUrl: string;
@@ -90,12 +95,15 @@ export const EventDetailsScreen: React.FC<EventDetailsScreenProps> = ({
 
     // State to control modal visibility.
     const [modalVisible, setModalVisible] = useState(false);
+    const user: UserType = useAppSelector(
+        (state: RootState) => state.user.user
+    );
 
     const handleCreateComment = () => {
         if (newComment.trim() !== '') {
             const comment: CommentNode = {
                 id: `comment-${Date.now()}`,
-                user: 'currentUser',
+                user: user?.username ?? '',
                 time: 'Just now',
                 upvotes: 0,
                 content: newComment,
@@ -127,7 +135,7 @@ export const EventDetailsScreen: React.FC<EventDetailsScreenProps> = ({
                         <EventCard
                             title={event.title}
                             dateTime={event.dateTime}
-                            groupName={event.groupName}
+                            groupName={event.groupName} // Still used for display in the event card.
                             attendees={event.attendees}
                             location={event.location}
                             imageUrl={event.imageUrl}
@@ -141,7 +149,13 @@ export const EventDetailsScreen: React.FC<EventDetailsScreenProps> = ({
                             </View>
                         )}
                         {comments.map((c) => (
-                            <CommentThread key={c.id} comment={c} level={0} />
+                            // Use postedByUser.username for marking comments by the creator.
+                            <CommentThread
+                                key={c.id}
+                                comment={c}
+                                level={0}
+                                opUser={event.postedByUser.username}
+                            />
                         ))}
                     </ScrollView>
                     <CreateContentButton

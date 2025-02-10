@@ -12,6 +12,7 @@ import { NavigationProp, RouteProp } from '@react-navigation/native';
 import { PostItem, CommentThread, CommentNode } from '../sections'; // Adjust the path as needed
 import { COLORS } from '../constants';
 import { CreateContentButton } from '../buttons';
+import { useAppSelector, RootState, UserType } from '../redux';
 
 type Post = {
     user: string;
@@ -124,12 +125,15 @@ export const PostScreen: React.FC<PostScreenProps> = ({
     // State for new comment creation
     const [modalVisible, setModalVisible] = useState(false);
     const [newCommentContent, setNewCommentContent] = useState('');
+    const user: UserType = useAppSelector(
+        (state: RootState) => state.user.user
+    );
 
     const handleCreateComment = () => {
         if (newCommentContent.trim() !== '') {
             const newComment: CommentNode = {
                 id: `comment-new-${Date.now()}`,
-                user: 'currentUser',
+                user: user?.username ?? '',
                 time: 'Just now',
                 upvotes: 0,
                 content: newCommentContent,
@@ -169,7 +173,13 @@ export const PostScreen: React.FC<PostScreenProps> = ({
                             onBackPress={() => navigation.goBack()}
                         />
                         {comments.map((c) => (
-                            <CommentThread key={c.id} comment={c} level={0} />
+                            // Pass the original poster's username (OP) as a prop
+                            <CommentThread
+                                key={c.id}
+                                comment={c}
+                                level={0}
+                                opUser={postData.user}
+                            />
                         ))}
                     </ScrollView>
                     <CreateContentButton

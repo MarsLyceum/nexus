@@ -11,6 +11,7 @@ import {
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { VoteActions } from './VoteActions';
 import { COLORS } from '../constants';
+import { useAppSelector, RootState, UserType } from '../redux';
 
 const styles = StyleSheet.create({
     commentContainer: {
@@ -41,6 +42,17 @@ const styles = StyleSheet.create({
     commentUser: {
         color: COLORS.White,
         fontWeight: '600',
+        marginRight: 6,
+    },
+    // New style for the OP badge
+    opBadge: {
+        backgroundColor: COLORS.Primary,
+        color: COLORS.White,
+        fontSize: 10,
+        fontWeight: 'bold',
+        paddingHorizontal: 4,
+        paddingVertical: 2,
+        borderRadius: 4,
         marginRight: 6,
     },
     commentTime: {
@@ -113,11 +125,14 @@ export type CommentNode = {
 type CommentThreadProps = {
     comment: CommentNode;
     level?: number;
+    // New optional prop for the original poster's username
+    opUser?: string;
 };
 
 export const CommentThread: React.FC<CommentThreadProps> = ({
     comment,
     level = 0,
+    opUser,
 }) => {
     const [voteCount, setVoteCount] = useState(comment.upvotes);
     const [collapsed, setCollapsed] = useState(comment.upvotes < -1);
@@ -125,6 +140,9 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
     const [replyText, setReplyText] = useState('');
     const [childReplies, setChildReplies] = useState<CommentNode[]>(
         comment.children
+    );
+    const user: UserType = useAppSelector(
+        (state: RootState) => state.user.user
     );
 
     const onUpvote = () => setVoteCount((prev) => prev + 1);
@@ -134,7 +152,7 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
         if (replyText.trim() !== '') {
             const newReply: CommentNode = {
                 id: `reply-${Date.now()}`,
-                user: 'currentUser',
+                user: user?.username ?? '',
                 time: 'Just now',
                 upvotes: 0,
                 content: replyText,
@@ -166,7 +184,7 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
                     />
                     <Image
                         source={{
-                            uri: `https://picsum.photos/seed/${comment.user.replaceAll(
+                            uri: `https://picsum.photos/seed/${comment.user.replace(
                                 /[^\dA-Za-z]/g,
                                 ''
                             )}/48`,
@@ -174,6 +192,10 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
                         style={styles.commentUserPic}
                     />
                     <Text style={styles.commentUser}>{comment.user}</Text>
+                    {/* If the comment's user matches the original poster, show the OP badge */}
+                    {opUser && opUser === comment.user && (
+                        <Text style={styles.opBadge}>OP</Text>
+                    )}
                     <Text style={styles.commentTime}>{comment.time}</Text>
                     {collapsed && (
                         <Text
@@ -238,10 +260,12 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
                             )}
                         </View>
                         {childReplies.map((child) => (
+                            // Pass the opUser prop to nested CommentThreads as well
                             <CommentThread
                                 key={child.id}
                                 comment={child}
                                 level={level + 1}
+                                opUser={opUser}
                             />
                         ))}
                     </>

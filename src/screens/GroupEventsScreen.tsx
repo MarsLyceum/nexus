@@ -29,6 +29,9 @@ const initialEvents = [
         attendees: 25,
         location: 'Vaco Nashville',
         imageUrl: 'https://picsum.photos/200/100?random=1',
+        postedByUser: {
+            username: 'Suerg',
+        },
     },
     {
         id: '2',
@@ -38,6 +41,9 @@ const initialEvents = [
         attendees: 42,
         location: 'Tech Hub Nashville',
         imageUrl: 'https://picsum.photos/200/100?random=2',
+        postedByUser: {
+            username: 'Suerg',
+        },
     },
 ];
 

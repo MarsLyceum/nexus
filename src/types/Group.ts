@@ -4,6 +4,7 @@ export type BaseGroupChannelMessage = {
     content: string;
     postedAt: Date;
     edited: boolean;
+    // eslint-disable-next-line no-use-before-define
     channel: GroupChannel;
     channelId: string;
     postedByUserId: string;
@@ -52,6 +53,7 @@ export type GroupMember = {
     groupId: string;
     role: GroupRole;
     joinedAt: Date;
+    // eslint-disable-next-line no-use-before-define
     group: Group;
 };
 
@@ -63,6 +65,7 @@ export type GroupChannel = {
     // The messages on a channel can be either regular messages or posts.
     messages: GroupChannelMessage[];
     groupId: string;
+    // eslint-disable-next-line no-use-before-define
     group: Group;
 };
 

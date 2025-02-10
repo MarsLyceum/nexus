@@ -20,7 +20,6 @@ import {
 } from '../buttons';
 import { FETCH_USER_GROUPS_QUERY } from '../queries';
 import { COLORS } from '../constants';
-import { Group } from '../types';
 
 const BUTTON_MARGIN_TOP = 32;
 
@@ -29,12 +28,12 @@ const styles = StyleSheet.create({
         marginTop: BUTTON_MARGIN_TOP,
     },
     sidebarContainer: {
-        width: 80,
+        width: 170,
         height: '100%',
         backgroundColor: COLORS.AppBackground,
         flexDirection: 'column',
         justifyContent: 'flex-start',
-        alignItems: 'center',
+        alignItems: 'flex-start', // Changed from 'center' to 'flex-start'
         position: 'absolute',
         left: 0,
         top: 0,
@@ -44,7 +43,8 @@ const styles = StyleSheet.create({
     buttonContainer: {
         marginBottom: 16,
         width: '100%',
-        alignItems: 'center',
+        alignItems: 'flex-start', // Changed from 'center' to 'flex-start'
+        paddingLeft: 10, // Optional: adds some left padding for visual spacing
     },
     highlight: {
         position: 'absolute',
@@ -102,10 +102,11 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
 
     // Fetch groups using Apollo
     useEffect(() => {
+        // eslint-disable-next-line no-void
         void (async () => {
             console.log('starting to load groups');
             const result = await apolloClient.query<{
-                fetchUserGroups: Group[];
+                fetchUserGroups: UserGroupsType;
             }>({
                 query: FETCH_USER_GROUPS_QUERY,
                 variables: {
@@ -127,6 +128,7 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
         );
         if (groupsMissingUrls.length === 0) return;
 
+        // eslint-disable-next-line no-void
         void (async () => {
             const imageUrlPromises = groupsMissingUrls.map(async (group) => {
                 const avatarPath = group.avatarFilePath ?? '';
@@ -237,6 +239,7 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
                                 setSelectedButton(group.name);
                                 navigation.navigate(group.name);
                             }}
+                            groupName={group.name}
                         />
                     </View>
                 ))}

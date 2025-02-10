@@ -13,8 +13,18 @@ import { PostItem, CommentThread, CommentNode } from '../sections'; // Adjust th
 import { COLORS } from '../constants';
 import { CreateContentButton } from '../buttons';
 
+type Post = {
+    user: string;
+    time: string;
+    title: string;
+    flair: string;
+    upvotes: number;
+    commentsCount: number;
+    content: string;
+};
+
 type RootStackParamList = {
-    PostScreen: { post: any };
+    PostScreen: { post: Post };
 };
 
 type PostScreenProps = {
@@ -23,7 +33,6 @@ type PostScreenProps = {
 };
 
 type PostData = {
-    subreddit: string;
     user: string;
     time: string;
     title: string;
@@ -67,9 +76,9 @@ export const PostScreen: React.FC<PostScreenProps> = ({
     route,
     navigation,
 }) => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const { post: feedPost } = route.params;
     const postData: PostData = {
-        subreddit: 'r/pcgaming',
         user: feedPost.user,
         time: feedPost.time,
         title: feedPost.title,

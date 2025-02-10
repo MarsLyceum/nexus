@@ -2,7 +2,6 @@ import React from 'react';
 import { StyleSheet, View, Text } from 'react-native';
 import { NavigationProp } from '@react-navigation/core';
 import { BackArrow } from '../buttons';
-import { GroupChannel } from '../types';
 
 const styles = StyleSheet.create({
     header: {

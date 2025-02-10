@@ -166,8 +166,8 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
                     />
                     <Image
                         source={{
-                            uri: `https://picsum.photos/seed/${comment.user.replace(
-                                /[^a-zA-Z0-9]/g,
+                            uri: `https://picsum.photos/seed/${comment.user.replaceAll(
+                                /[^\dA-Za-z]/g,
                                 ''
                             )}/48`,
                         }}

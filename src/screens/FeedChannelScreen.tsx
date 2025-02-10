@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-    Text,
     SafeAreaView,
     FlatList,
     StyleSheet,
@@ -8,6 +7,7 @@ import {
     Platform,
 } from 'react-native';
 import { useApolloClient, useMutation } from '@apollo/client';
+import { NavigationProp, RouteProp } from '@react-navigation/core';
 import { Header, PostItem } from '../sections';
 import { COLORS } from '../constants';
 import {
@@ -15,15 +15,21 @@ import {
     FETCH_USER_QUERY,
     CREATE_GROUP_CHANNEL_POST_MUTATION,
 } from '../queries';
-import { GroupChannelPostMessage, User } from '../types';
+import { GroupChannelPostMessage, User, GroupChannel } from '../types';
 import { CreateContentButton } from '../buttons';
 import { useAppSelector, RootState, UserType } from '../redux';
 
+type RootStackParamList = {
+    FeedChannelScreen: {
+        channel: GroupChannel;
+    };
+};
+
 // If not already defined elsewhere, you can add minimal type definitions here:
 interface FeedChannelScreenProps {
-    navigation: any;
-    channel?: any;
-    route?: any;
+    navigation: NavigationProp<RootStackParamList, 'FeedChannelScreen'>;
+    channel?: GroupChannel;
+    route?: RouteProp<RootStackParamList, 'FeedChannelScreen'>;
 }
 
 interface FeedPost {
@@ -130,7 +136,7 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
 
                 const postsData = data.fetchFeedPosts.filter(
                     (msg) => msg.messageType === 'post'
-                ) as GroupChannelPostMessage[];
+                );
 
                 const posts: FeedPost[] = await Promise.all(
                     postsData.map(async (msg) => {

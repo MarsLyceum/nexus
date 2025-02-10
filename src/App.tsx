@@ -201,7 +201,7 @@ function AppDrawer() {
             screenOptions={{
                 drawerType: 'permanent',
                 drawerStyle: {
-                    width: 80,
+                    width: 170,
                     borderWidth: 0,
                     backgroundColor: COLORS.AppBackground,
                 },

@@ -11,6 +11,7 @@ import {
     Button,
     useWindowDimensions,
 } from 'react-native';
+import { NavigationProp } from '@react-navigation/core';
 import { EventCard } from '../cards';
 import { Header } from '../sections';
 import { COLORS } from '../constants';
@@ -36,7 +37,11 @@ const initialEvents = [
     },
 ];
 
-export const GroupEventsScreen: React.FC = ({ navigation }) => {
+export const GroupEventsScreen = ({
+    navigation,
+}: {
+    navigation: NavigationProp<Record<string, unknown>>;
+}) => {
     // State management for events and modal visibility
     const [events, setEvents] = useState(initialEvents);
     const [modalVisible, setModalVisible] = useState(false);
@@ -57,7 +62,7 @@ export const GroupEventsScreen: React.FC = ({ navigation }) => {
             title: title || 'Untitled Event',
             dateTime: dateTime || 'TBA',
             groupName: groupName || 'Unknown Group',
-            attendees: parseInt(attendees, 10) || 0,
+            attendees: Number.parseInt(attendees, 10) || 0,
             location: location || 'Location TBD',
             imageUrl: imageUrl || 'https://picsum.photos/200/100',
         };
@@ -111,7 +116,7 @@ export const GroupEventsScreen: React.FC = ({ navigation }) => {
             <Modal
                 visible={modalVisible}
                 animationType="slide"
-                transparent={true}
+                transparent
                 onRequestClose={() => setModalVisible(false)}
             >
                 <View style={styles.modalOverlay}>

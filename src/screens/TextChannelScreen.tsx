@@ -11,9 +11,9 @@ import {
     StyleSheet,
     Platform,
 } from 'react-native';
+import { NavigationProp } from '@react-navigation/core';
 import { useApolloClient } from '@apollo/client';
 import Icon from 'react-native-vector-icons/FontAwesome5';
-import { BackArrow } from '../buttons';
 import { useAppSelector, RootState, UserType } from '../redux';
 import { Header } from '../sections';
 import {
@@ -31,7 +31,7 @@ export type MessageWithAvatar = GroupChannelMessage & {
 
 type TextChannelScreenProps = {
     channel: GroupChannel;
-    navigation: any;
+    navigation: NavigationProp<Record<string, unknown>>;
 };
 
 const styles = StyleSheet.create({
@@ -187,6 +187,7 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
             }
         };
 
+        // eslint-disable-next-line no-void
         void fetchMessages();
         return () => {
             cancelled = true;

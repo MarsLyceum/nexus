@@ -228,8 +228,8 @@ export const EventCard: React.FC<EventCardProps> = ({
             // For web/desktop, use a Google Calendar URL as a fallback
             if (Platform.OS === 'web') {
                 const formatDate = (date: Date) =>
-                    date.toISOString().replace(/[-:.]/g, '').split('Z')[0] +
-                    'Z';
+                    `${date.toISOString().replaceAll(/[.:-]/g, '').split('Z')[0] 
+                    }Z`;
                 const startStr = formatDate(startDate);
                 const endStr = formatDate(endDate);
                 const googleCalendarUrl = `https://calendar.google.com/calendar/r/eventedit?text=${encodeURIComponent(
@@ -252,7 +252,7 @@ export const EventCard: React.FC<EventCardProps> = ({
             }
 
             // Get modifiable calendars
-            let calendars = await Calendar.getCalendarsAsync(
+            const calendars = await Calendar.getCalendarsAsync(
                 Calendar.EntityTypes.EVENT
             );
             let defaultCalendar = calendars.find(
@@ -356,8 +356,7 @@ export const EventCard: React.FC<EventCardProps> = ({
     };
 
     // Render overlapping (stacked) profile pictures
-    const renderStackedProfiles = (people: Person[]) => {
-        return (
+    const renderStackedProfiles = (people: Person[]) => (
             <View style={styles.stackedProfilesContainer}>
                 {people.map((person, index) => (
                     <Image
@@ -371,7 +370,6 @@ export const EventCard: React.FC<EventCardProps> = ({
                 ))}
             </View>
         );
-    };
 
     const cardElement = (
         <View style={styles.card}>

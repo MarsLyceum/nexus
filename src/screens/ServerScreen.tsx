@@ -94,7 +94,6 @@ const ChannelList = ({
     activeChannel,
     setActiveChannel,
     isLargeScreen,
-    activeView,
     setActiveView,
 }: ChannelListProps) => (
     <View style={styles.channelListContainer}>

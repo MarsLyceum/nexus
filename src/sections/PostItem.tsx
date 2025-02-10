@@ -74,7 +74,7 @@ export type PostItemProps = {
 function getAvatarUri(user: string, thumbnail?: string): string {
     return (
         thumbnail ||
-        `https://picsum.photos/seed/${user.replace(/[^a-zA-Z0-9]/g, '')}/48`
+        `https://picsum.photos/seed/${user.replaceAll(/[^\dA-Za-z]/g, '')}/48`
     );
 }
 
@@ -97,7 +97,7 @@ export const PostItem: React.FC<PostItemProps> = ({
 
     const displayedContent =
         preview && content.length > TRUNCATE_LENGTH
-            ? content.substring(0, TRUNCATE_LENGTH) + '...'
+            ? `${content.slice(0, Math.max(0, TRUNCATE_LENGTH))  }...`
             : content;
 
     const contentElement = (

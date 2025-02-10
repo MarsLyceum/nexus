@@ -16,6 +16,6 @@ const styles = StyleSheet.create({
 
 export const BackArrow: React.FC<BackArrowProps> = ({ onPress, style }) => (
     <TouchableOpacity onPress={onPress} style={[styles.backButton, style]}>
-        <Icon name="arrow-left" size={20} color="white" />
+        <Icon name="arrow-left" size={24} color="white" />
     </TouchableOpacity>
 );

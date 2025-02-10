@@ -211,10 +211,11 @@ function AppDrawer() {
             screenOptions={({ navigation }) => ({
                 headerStyle: {
                     backgroundColor: COLORS.AppBackground,
+                    fontFamily: 'Roboto_500Medium',
                 },
                 headerTintColor: 'white',
                 // Hide the header entirely on desktop and thus remove the hamburger menu
-                headerShown: isDesktop ? false : true,
+                headerShown: !isDesktop,
                 // Only show the hamburger menu on mobile/tablet
                 headerLeft: () =>
                     !isDesktop && (

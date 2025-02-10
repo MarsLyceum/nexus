@@ -11,6 +11,7 @@ import {
     Linking,
     Alert,
     Platform,
+    useWindowDimensions,
 } from 'react-native';
 import * as Calendar from 'expo-calendar';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
@@ -24,6 +25,8 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         padding: 15,
         marginVertical: 10,
+        alignSelf: 'center',
+        width: '95%', // Adjust card width so it doesn't span too wide on mobile
     },
     titleRow: {
         flexDirection: 'row',
@@ -46,7 +49,6 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: 'white',
     },
-    // Date/time style remains unchanged (no underline)
     dateTime: {
         fontSize: 14,
         color: COLORS.AccentText,
@@ -100,7 +102,6 @@ const styles = StyleSheet.create({
         borderRadius: 5,
         alignSelf: 'flex-start',
     },
-    // Modal styles for full lists of profiles
     modalContainer: {
         flex: 1,
         justifyContent: 'center',
@@ -138,7 +139,6 @@ const styles = StyleSheet.create({
         marginTop: 20,
         alignSelf: 'flex-end',
     },
-    // Stacked profiles styles
     profilesContainer: {
         marginVertical: 8,
     },
@@ -201,6 +201,10 @@ export const EventCard: React.FC<EventCardProps> = ({
     // Local state for RSVP status
     const [joined, setJoined] = useState(false);
 
+    // Get screen dimensions to adjust layout on small screens
+    const { width: screenWidth } = useWindowDimensions();
+    const isSmallScreen = screenWidth < 768; // Adjust threshold as needed
+
     // Toggle RSVP state
     const handleRsvp = () => {
         setJoined((prev) => !prev);
@@ -228,8 +232,7 @@ export const EventCard: React.FC<EventCardProps> = ({
             // For web/desktop, use a Google Calendar URL as a fallback
             if (Platform.OS === 'web') {
                 const formatDate = (date: Date) =>
-                    `${date.toISOString().replaceAll(/[.:-]/g, '').split('Z')[0] 
-                    }Z`;
+                    `${date.toISOString().replaceAll(/[.:-]/g, '').split('Z')[0]}Z`;
                 const startStr = formatDate(startDate);
                 const endStr = formatDate(endDate);
                 const googleCalendarUrl = `https://calendar.google.com/calendar/r/eventedit?text=${encodeURIComponent(
@@ -357,24 +360,38 @@ export const EventCard: React.FC<EventCardProps> = ({
 
     // Render overlapping (stacked) profile pictures
     const renderStackedProfiles = (people: Person[]) => (
-            <View style={styles.stackedProfilesContainer}>
-                {people.map((person, index) => (
-                    <Image
-                        key={person.id}
-                        source={{ uri: person.imageUrl }}
-                        style={[
-                            styles.profileImage,
-                            { marginLeft: index === 0 ? 0 : -10 },
-                        ]}
-                    />
-                ))}
-            </View>
-        );
+        <View style={styles.stackedProfilesContainer}>
+            {people.map((person, index) => (
+                <Image
+                    key={person.id}
+                    source={{ uri: person.imageUrl }}
+                    style={[
+                        styles.profileImage,
+                        { marginLeft: index === 0 ? 0 : -10 },
+                    ]}
+                />
+            ))}
+        </View>
+    );
 
     const cardElement = (
         <View style={styles.card}>
-            <View style={styles.topRow}>
-                <View style={styles.textContainer}>
+            <View
+                style={[
+                    styles.topRow,
+                    // If on a small screen, stack the text and image vertically
+                    isSmallScreen && {
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                    },
+                ]}
+            >
+                <View
+                    style={[
+                        styles.textContainer,
+                        isSmallScreen && { marginRight: 0 },
+                    ]}
+                >
                     <View style={styles.titleRow}>
                         {onBackPress && (
                             <BackArrow
@@ -455,7 +472,18 @@ export const EventCard: React.FC<EventCardProps> = ({
                         </View>
                     </TouchableOpacity>
                 </View>
-                <Image source={{ uri: imageUrl }} style={styles.eventImage} />
+                <Image
+                    source={{ uri: imageUrl }}
+                    style={[
+                        styles.eventImage,
+                        // On smaller screens, show the image below with adjusted size
+                        isSmallScreen && {
+                            width: '100%',
+                            height: 200,
+                            marginTop: 10,
+                        },
+                    ]}
+                />
             </View>
         </View>
     );

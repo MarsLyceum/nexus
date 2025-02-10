@@ -1,4 +1,3 @@
-// App.tsx
 import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createDrawerNavigator } from '@react-navigation/drawer';
@@ -8,7 +7,13 @@ import {
 } from '@react-navigation/stack';
 import EventSource from 'react-native-event-source';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { Platform, StatusBar, View } from 'react-native';
+import {
+    Platform,
+    StatusBar,
+    View,
+    TouchableOpacity,
+    useWindowDimensions,
+} from 'react-native';
 import {
     ApolloClient,
     InMemoryCache,
@@ -32,6 +37,7 @@ import {
     Roboto_700Bold,
 } from '@expo-google-fonts/roboto';
 import * as SplashScreen from 'expo-splash-screen';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
 import { COLORS } from './constants';
 import { setupAxiosQuotas } from './utils/setupAxiosQuotas';
@@ -67,28 +73,27 @@ if (__DEV__) {
  * On native platforms, it renders null.
  */
 const CustomScrollbar = () => {
-    if (Platform.OS !== 'web') return;
-    // eslint-disable-next-line consistent-return
+    if (Platform.OS !== 'web') return null;
     return (
         <style>{`
-        /* Chrome, Safari and Opera */
-        ::-webkit-scrollbar {
-          width: 10px;
-          height: 10px;
-        }
-        ::-webkit-scrollbar-track {
-          background: ${COLORS.PrimaryBackground};
-        }
-        ::-webkit-scrollbar-thumb {
-          background-color: ${COLORS.TextInput};
-          border-radius: 999px;
-        }
-        /* Firefox */
-        * {
-          scrollbar-width: thin;
-          scrollbar-color: ${COLORS.TextInput} ${COLORS.PrimaryBackground};
-        }
-      `}</style>
+            /* Chrome, Safari and Opera */
+            ::-webkit-scrollbar {
+              width: 10px;
+              height: 10px;
+            }
+            ::-webkit-scrollbar-track {
+              background: ${COLORS.PrimaryBackground};
+            }
+            ::-webkit-scrollbar-thumb {
+              background-color: ${COLORS.TextInput};
+              border-radius: 999px;
+            }
+            /* Firefox */
+            * {
+              scrollbar-width: thin;
+              scrollbar-color: ${COLORS.TextInput} ${COLORS.PrimaryBackground};
+            }
+        `}</style>
     );
 };
 
@@ -197,38 +202,49 @@ function AppDrawer() {
         (state: RootState) => state.userGroups.userGroups
     );
 
+    // Use window dimensions to determine if we're on desktop
+    const dimensions = useWindowDimensions();
+    const isDesktop = dimensions.width > 768;
+
     return (
         <DrawerNavigator.Navigator
-            // Keep drawer type permanent
-            screenOptions={{
-                drawerType: 'permanent',
-                drawerStyle: {
-                    width: 170,
-                    borderWidth: 0,
+            screenOptions={({ navigation }) => ({
+                headerStyle: {
                     backgroundColor: COLORS.AppBackground,
                 },
-                // IMPORTANT: Ensure each scene gets flex: 1 so screens can scroll
+                headerTintColor: 'white',
+                // Hide the header entirely on desktop and thus remove the hamburger menu
+                headerShown: isDesktop ? false : true,
+                // Only show the hamburger menu on mobile/tablet
+                headerLeft: () =>
+                    !isDesktop && (
+                        <TouchableOpacity
+                            onPress={() => navigation.toggleDrawer()}
+                            style={{ marginLeft: 15 }}
+                        >
+                            <FontAwesome name="bars" size={24} color="white" />
+                        </TouchableOpacity>
+                    ),
+                // Permanently display the drawer on desktop
+                drawerType: isDesktop ? 'permanent' : 'slide',
+                drawerStyle: {
+                    width: 170,
+                    borderRightWidth: 0,
+                    borderRightColor: 'transparent',
+                    backgroundColor: COLORS.AppBackground,
+                },
                 sceneContainerStyle: { flex: 1 },
-            }}
+            })}
             drawerContent={(props) => <SidebarScreen {...props} />}
         >
-            <DrawerNavigator.Screen
-                name="DMs"
-                component={DMListScreen}
-                options={{ headerShown: false }}
-            />
-            <DrawerNavigator.Screen
-                name="Events"
-                component={EventsScreen}
-                options={{ headerShown: false }}
-            />
+            <DrawerNavigator.Screen name="Messages" component={DMListScreen} />
+            <DrawerNavigator.Screen name="Events" component={EventsScreen} />
             {userGroups.map((group) => (
                 <DrawerNavigator.Screen
                     name={group.name}
                     key={group.id}
                     component={ServerScreen}
                     initialParams={{ group }}
-                    options={{ headerShown: false }}
                 />
             ))}
         </DrawerNavigator.Navigator>
@@ -288,6 +304,7 @@ export default function App() {
                                     component={SignUpScreen}
                                     options={{ headerShown: false }}
                                 />
+                                {/* The AppDrawer now supplies its own header (if needed) */}
                                 <Stack.Screen
                                     name="AppDrawer"
                                     component={AppDrawer}
@@ -315,7 +332,6 @@ export default function App() {
                                         }),
                                     }}
                                 />
-                                {/* Integrated FeedChannelScreen and PostScreen */}
                                 <Stack.Screen
                                     name="FeedChannel"
                                     component={FeedChannelScreen}
@@ -329,16 +345,12 @@ export default function App() {
                                 <Stack.Screen
                                     name="GroupEvents"
                                     component={GroupEventsScreen}
-                                    options={{
-                                        headerShown: false,
-                                    }}
+                                    options={{ headerShown: false }}
                                 />
                                 <Stack.Screen
                                     name="EventDetails"
                                     component={EventDetailsScreen}
-                                    options={{
-                                        headerShown: false,
-                                    }}
+                                    options={{ headerShown: false }}
                                 />
                             </Stack.Navigator>
                         </NavigationContainer>

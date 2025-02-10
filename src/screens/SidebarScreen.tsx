@@ -208,7 +208,7 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
                     <ChatButton
                         onPress={() => {
                             setSelectedButton('chat');
-                            navigation.navigate('DMs');
+                            navigation.navigate('Messages');
                         }}
                     />
                 </View>

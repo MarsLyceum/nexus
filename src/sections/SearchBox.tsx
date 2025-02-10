@@ -53,5 +53,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontFamily: 'Roboto_400Regular',
         padding: 0,
+        // Remove the outline on web browsers:
+        outlineStyle: 'none',
     },
 });

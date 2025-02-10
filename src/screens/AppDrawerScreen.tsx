@@ -1,5 +1,5 @@
 // AppDrawerScreen.tsx
-import React, { useState } from 'react';
+import React, { useContext } from 'react';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import {
     TouchableOpacity,
@@ -19,6 +19,7 @@ import {
     SearchScreen,
 } from '.';
 import { SearchBox } from '../sections';
+import { SearchContext } from '../providers';
 
 const DrawerNavigator = createDrawerNavigator();
 
@@ -31,24 +32,24 @@ export function AppDrawerScreen() {
     const dimensions = useWindowDimensions();
     const isDesktop = dimensions.width > 768;
 
-    // Store the desktop search text locally
-    const [desktopSearchText, setDesktopSearchText] = useState('');
+    // Use the shared search context instead of local state
+    const { searchText, setSearchText } = useContext(SearchContext);
 
     return (
         <DrawerNavigator.Navigator
             screenOptions={({ navigation }) => ({
-                /**
-                 * Always show a header so that on desktop we can
-                 * display the search bar in the header.
-                 */
                 headerShown: true,
                 headerStyle: {
                     backgroundColor: COLORS.AppBackground,
                     fontFamily: 'Roboto_500Medium',
+                    elevation: 0, // Remove Android shadow
+                    shadowOpacity: 0, // Remove iOS shadow
+                    borderBottomWidth: 0, // Remove any bottom border if present
                 },
+                headerShadowVisible: false, // Disable the default header shadow
                 headerTintColor: 'white',
 
-                // On desktop, no hamburger menu; on mobile, show the hamburger left button
+                // On mobile, show a hamburger button; on desktop, use the search box in the header.
                 headerLeft: () =>
                     !isDesktop && (
                         <TouchableOpacity
@@ -59,13 +60,11 @@ export function AppDrawerScreen() {
                         </TouchableOpacity>
                     ),
 
-                // On desktop, display the shared SearchBox in the header.
-                // On mobile, the header remains empty and the search icon is shown on the right.
                 headerTitle: () =>
                     isDesktop ? (
                         <SearchBox
-                            value={desktopSearchText}
-                            onChangeText={setDesktopSearchText}
+                            value={searchText}
+                            onChangeText={setSearchText}
                             desktop
                         />
                     ) : null,
@@ -107,10 +106,9 @@ export function AppDrawerScreen() {
                 />
             ))}
             {/*
-        Add a new Search screen.
-        The option drawerItemStyle with height: 0 hides the item in the drawer menu.
-        We also show the header on this screen (even on desktop).
-      */}
+              The Search screen is hidden from the drawer menu (height: 0) 
+              but accessible via the header right icon on mobile.
+            */}
             <DrawerNavigator.Screen
                 name="Search"
                 component={SearchScreen}

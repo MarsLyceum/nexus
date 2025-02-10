@@ -59,6 +59,7 @@ import {
     EventDetailsScreen,
     AppDrawerScreen,
 } from './screens';
+import { SearchProvider } from './providers';
 
 setupAxiosQuotas();
 
@@ -219,89 +220,91 @@ export default function App() {
     }
 
     return (
-        <SafeAreaProvider>
-            <StatusBar
-                barStyle="light-content"
-                backgroundColor={COLORS.AppBackground}
-            />
-            <SafeAreaView
-                style={{ flex: 1, backgroundColor: COLORS.AppBackground }}
-                edges={['top', 'left', 'right', 'bottom']}
-            >
-                {/* Inject custom scrollbar styles on web */}
-                <CustomScrollbar />
-                <ApolloProvider client={client}>
-                    <ReduxProvider store={store}>
-                        <NavigationContainer>
-                            <Stack.Navigator initialRouteName="Welcome">
-                                <Stack.Screen
-                                    name="Welcome"
-                                    component={WelcomeScreen}
-                                    options={{ headerShown: false }}
-                                />
-                                <Stack.Screen
-                                    name="Login"
-                                    component={LoginScreen}
-                                    options={{ headerShown: false }}
-                                />
-                                <Stack.Screen
-                                    name="SignUp"
-                                    component={SignUpScreen}
-                                    options={{ headerShown: false }}
-                                />
-                                {/* The AppDrawer now supplies its own header (if needed) */}
-                                <Stack.Screen
-                                    name="AppDrawer"
-                                    component={AppDrawerScreen}
-                                    options={{ headerShown: false }}
-                                />
-                                <Stack.Screen
-                                    name="Chat"
-                                    component={ChatScreen}
-                                    options={{ headerShown: false }}
-                                />
-                                <Stack.Screen
-                                    name="ServerMessages"
-                                    component={ServerMessagesScreen}
-                                    options={{ headerShown: false }}
-                                />
-                                <Stack.Screen
-                                    name="CreateGroup"
-                                    component={CreateGroupModalScreen}
-                                    options={{
-                                        presentation: 'modal',
-                                        ...Platform.select({
-                                            ios: {
-                                                ...TransitionPresets.ModalPresentationIOS,
-                                            },
-                                        }),
-                                    }}
-                                />
-                                <Stack.Screen
-                                    name="FeedChannel"
-                                    component={FeedChannelScreen}
-                                    options={{ headerShown: false }}
-                                />
-                                <Stack.Screen
-                                    name="PostScreen"
-                                    component={PostScreen}
-                                    options={{ headerShown: false }}
-                                />
-                                <Stack.Screen
-                                    name="GroupEvents"
-                                    component={GroupEventsScreen}
-                                    options={{ headerShown: false }}
-                                />
-                                <Stack.Screen
-                                    name="EventDetails"
-                                    component={EventDetailsScreen}
-                                    options={{ headerShown: false }}
-                                />
-                            </Stack.Navigator>
-                        </NavigationContainer>
-                    </ReduxProvider>
-                </ApolloProvider>
-            </SafeAreaView>
-        </SafeAreaProvider>
+        <SearchProvider>
+            <SafeAreaProvider>
+                <StatusBar
+                    barStyle="light-content"
+                    backgroundColor={COLORS.AppBackground}
+                />
+                <SafeAreaView
+                    style={{ flex: 1, backgroundColor: COLORS.AppBackground }}
+                    edges={['top', 'left', 'right', 'bottom']}
+                >
+                    {/* Inject custom scrollbar styles on web */}
+                    <CustomScrollbar />
+                    <ApolloProvider client={client}>
+                        <ReduxProvider store={store}>
+                            <NavigationContainer>
+                                <Stack.Navigator initialRouteName="Welcome">
+                                    <Stack.Screen
+                                        name="Welcome"
+                                        component={WelcomeScreen}
+                                        options={{ headerShown: false }}
+                                    />
+                                    <Stack.Screen
+                                        name="Login"
+                                        component={LoginScreen}
+                                        options={{ headerShown: false }}
+                                    />
+                                    <Stack.Screen
+                                        name="SignUp"
+                                        component={SignUpScreen}
+                                        options={{ headerShown: false }}
+                                    />
+                                    {/* The AppDrawer now supplies its own header (if needed) */}
+                                    <Stack.Screen
+                                        name="AppDrawer"
+                                        component={AppDrawerScreen}
+                                        options={{ headerShown: false }}
+                                    />
+                                    <Stack.Screen
+                                        name="Chat"
+                                        component={ChatScreen}
+                                        options={{ headerShown: false }}
+                                    />
+                                    <Stack.Screen
+                                        name="ServerMessages"
+                                        component={ServerMessagesScreen}
+                                        options={{ headerShown: false }}
+                                    />
+                                    <Stack.Screen
+                                        name="CreateGroup"
+                                        component={CreateGroupModalScreen}
+                                        options={{
+                                            presentation: 'modal',
+                                            ...Platform.select({
+                                                ios: {
+                                                    ...TransitionPresets.ModalPresentationIOS,
+                                                },
+                                            }),
+                                        }}
+                                    />
+                                    <Stack.Screen
+                                        name="FeedChannel"
+                                        component={FeedChannelScreen}
+                                        options={{ headerShown: false }}
+                                    />
+                                    <Stack.Screen
+                                        name="PostScreen"
+                                        component={PostScreen}
+                                        options={{ headerShown: false }}
+                                    />
+                                    <Stack.Screen
+                                        name="GroupEvents"
+                                        component={GroupEventsScreen}
+                                        options={{ headerShown: false }}
+                                    />
+                                    <Stack.Screen
+                                        name="EventDetails"
+                                        component={EventDetailsScreen}
+                                        options={{ headerShown: false }}
+                                    />
+                                </Stack.Navigator>
+                            </NavigationContainer>
+                        </ReduxProvider>
+                    </ApolloProvider>
+                </SafeAreaView>
+            </SafeAreaProvider>
+        </SearchProvider>
     );
 }

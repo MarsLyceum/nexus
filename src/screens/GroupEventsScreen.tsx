@@ -1,5 +1,5 @@
 // GroupEventsScreen.tsx
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import {
     View,
     FlatList,
@@ -15,6 +15,10 @@ import { NavigationProp } from '@react-navigation/core';
 import { EventCard } from '../cards';
 import { Header } from '../sections';
 import { COLORS } from '../constants';
+
+// Import the shared search context and the search filter hook
+import { SearchContext } from '../providers';
+import { useSearchFilter } from '../hooks';
 
 const initialEvents = [
     {
@@ -55,6 +59,16 @@ export const GroupEventsScreen = ({
     const [location, setLocation] = useState('');
     const [imageUrl, setImageUrl] = useState('');
 
+    // Retrieve the shared search text from the context
+    const { searchText } = useContext(SearchContext);
+
+    // Use the search filter hook to filter events based on title, groupName, and location
+    const filteredEvents = useSearchFilter(events, searchText, [
+        'title',
+        'groupName',
+        'location',
+    ]);
+
     // Adds a new event to the list
     const handleAddEvent = () => {
         const newEvent = {
@@ -87,7 +101,7 @@ export const GroupEventsScreen = ({
             />
 
             <FlatList
-                data={events}
+                data={filteredEvents} // Use the filtered events here
                 keyExtractor={(item) => item.id}
                 renderItem={({ item }) => (
                     <EventCard

@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+// TextChannelScreen.tsx
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import {
     View,
     Text,
@@ -16,6 +17,8 @@ import { useApolloClient } from '@apollo/client';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { useAppSelector, RootState, UserType } from '../redux';
 import { Header } from '../sections';
+import { useSearchFilter } from '../hooks/useSearchFilter';
+import { SearchContext } from '../providers'; // Using the shared context
 import {
     FETCH_CHANNEL_MESSAGES_QUERY,
     FETCH_USER_QUERY,
@@ -34,61 +37,6 @@ type TextChannelScreenProps = {
     navigation: NavigationProp<Record<string, unknown>>;
 };
 
-const styles = StyleSheet.create({
-    chatContainer: {
-        flex: 1,
-        backgroundColor: COLORS.SecondaryBackground,
-    },
-    messageContainer: {
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        padding: 15,
-    },
-    avatar: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        marginRight: 10,
-    },
-    messageContent: {
-        flex: 1,
-    },
-    userName: {
-        fontSize: 14,
-        fontWeight: 'bold',
-        color: 'white',
-    },
-    time: {
-        fontSize: 12,
-        color: 'gray',
-    },
-    messageText: {
-        fontSize: 14,
-        color: 'white',
-        marginTop: 2,
-    },
-    inputContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 10,
-        borderTopWidth: 1,
-        borderTopColor: '#4A3A5A',
-        backgroundColor: COLORS.SecondaryBackground,
-    },
-    input: {
-        flex: 1,
-        backgroundColor: COLORS.TextInput,
-        color: 'white',
-        padding: 10,
-        borderRadius: 20,
-        fontSize: 14,
-    },
-    sendButton: {
-        marginLeft: 10,
-        padding: 8,
-    },
-});
-
 const formatDateTime = (date: Date) => {
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
@@ -103,10 +51,13 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
     channel,
     navigation,
 }) => {
+    // Get the current user from Redux
     const user: UserType = useAppSelector(
         (state: RootState) => state.user.user
     );
     const apolloClient = useApolloClient();
+
+    // Local state for sending messages
     const [messageText, setMessageText] = useState('');
     const [chatMessages, setChatMessages] = useState<MessageWithAvatar[]>([]);
     const [offset, setOffset] = useState(0);
@@ -117,6 +68,15 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
     const { width } = useWindowDimensions();
     const isLargeScreen = width > 768;
     const flatListRef = useRef<FlatList<MessageWithAvatar> | null>(null);
+
+    // Read the shared search text from context (no local search box here)
+    const { searchText } = useContext(SearchContext);
+
+    // Filter messages by content and username using the shared search text
+    const filteredMessages = useSearchFilter(chatMessages, searchText, [
+        'content',
+        'username',
+    ]);
 
     useEffect(() => {
         let cancelled = false;
@@ -231,6 +191,7 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
 
     return (
         <View style={styles.chatContainer}>
+            {/* A header is rendered (if needed) by this screen, but the shared search is in the AppDrawer */}
             <Header
                 isLargeScreen={isLargeScreen}
                 headerText={channel.name}
@@ -240,7 +201,8 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
             {/* Chat Messages */}
             <FlatList
                 ref={flatListRef}
-                data={[...chatMessages].reverse()}
+                // Render filtered messages (newest at the bottom)
+                data={[...filteredMessages].reverse()}
                 keyExtractor={(item) => item.id}
                 onEndReached={loadMoreMessages}
                 onEndReachedThreshold={0.1}
@@ -288,3 +250,58 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
         </View>
     );
 };
+
+const styles = StyleSheet.create({
+    chatContainer: {
+        flex: 1,
+        backgroundColor: COLORS.SecondaryBackground,
+    },
+    messageContainer: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        padding: 15,
+    },
+    avatar: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        marginRight: 10,
+    },
+    messageContent: {
+        flex: 1,
+    },
+    userName: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: 'white',
+    },
+    time: {
+        fontSize: 12,
+        color: 'gray',
+    },
+    messageText: {
+        fontSize: 14,
+        color: 'white',
+        marginTop: 2,
+    },
+    inputContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 10,
+        borderTopWidth: 1,
+        borderTopColor: '#4A3A5A',
+        backgroundColor: COLORS.SecondaryBackground,
+    },
+    input: {
+        flex: 1,
+        backgroundColor: COLORS.TextInput,
+        color: 'white',
+        padding: 10,
+        borderRadius: 20,
+        fontSize: 14,
+    },
+    sendButton: {
+        marginLeft: 10,
+        padding: 8,
+    },
+});

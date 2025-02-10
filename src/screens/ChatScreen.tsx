@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
+// ChatScreen.tsx
+import React, { useState, useRef, useEffect, useContext } from 'react';
 import {
     View,
     Text,
@@ -14,6 +15,10 @@ import { NavigationProp, RouteProp } from '@react-navigation/core';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 
 import { COLORS } from '../constants';
+
+// Import the shared search context and the search filter hook
+import { SearchContext } from '../providers';
+import { useSearchFilter } from '../hooks';
 
 // **Define the type for navigation parameters**
 type RootStackParamList = {
@@ -171,6 +176,15 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     const [messageText, setMessageText] = useState('');
     const flatListRef = useRef<FlatList>(null);
 
+    // Retrieve the shared search text from context
+    const { searchText } = useContext(SearchContext);
+
+    // Use the search filter hook to filter messages based on 'text' and 'user'
+    const filteredMessages = useSearchFilter(messages, searchText, [
+        'text',
+        'user',
+    ]);
+
     const sendMessage = () => {
         if (!messageText.trim()) return;
 
@@ -221,7 +235,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             {/* Chat Messages */}
             <FlatList
                 ref={flatListRef}
-                data={messages}
+                data={filteredMessages} // Use filtered messages here.
                 keyExtractor={(item) => item.id}
                 renderItem={({ item }) => (
                     <View style={styles.messageContainer}>

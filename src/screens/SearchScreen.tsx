@@ -1,5 +1,5 @@
 // SearchScreen.tsx
-import React, { useState, useMemo } from 'react';
+import React, { useContext } from 'react';
 import {
     View,
     Text,
@@ -11,6 +11,8 @@ import {
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { COLORS } from '../constants';
 import { SearchBox } from '../sections';
+import { useSearchFilter } from '../hooks';
+import { SearchContext } from '../providers';
 
 type SearchResult = {
     id: number;
@@ -66,28 +68,22 @@ const MOCK_RESULTS: SearchResult[] = [
 ];
 
 export const SearchScreen = () => {
-    // The user’s current search text
-    const [searchQuery, setSearchQuery] = useState('');
+    // Use the shared search context instead of local state
+    const { searchText, setSearchText } = useContext(SearchContext);
 
-    /**
-     * Filter the mock results based on the user’s search query
-     * (matching either the title or the subreddit name).
-     */
-    const filteredResults = useMemo(() => {
-        const lowerQuery = searchQuery.toLowerCase();
-        return MOCK_RESULTS.filter(
-            (item) =>
-                item.title.toLowerCase().includes(lowerQuery) ||
-                item.subreddit.toLowerCase().includes(lowerQuery)
-        );
-    }, [searchQuery]);
+    // Filter the results using the shared searchText (search by "title" and "subreddit")
+    const filteredResults = useSearchFilter<SearchResult>(
+        MOCK_RESULTS,
+        searchText,
+        ['title', 'subreddit']
+    );
 
     return (
         <View style={styles.container}>
-            {/* Shared search box component at the top */}
-            <SearchBox value={searchQuery} onChangeText={setSearchQuery} />
+            {/* Shared SearchBox using the context's search text */}
+            <SearchBox value={searchText} onChangeText={setSearchText} />
 
-            {/* Filter row mimicking Relevance / All time / Safe Search Off */}
+            {/* Filter row (static UI in this example) */}
             <View style={styles.filterRow}>
                 <TouchableOpacity style={styles.filterButton}>
                     <Text style={styles.filterButtonText}>Relevance</Text>
@@ -124,10 +120,7 @@ export const SearchScreen = () => {
                     <TouchableOpacity
                         key={item.id}
                         style={styles.resultItem}
-                        onPress={() => {
-                            // Example: Navigate to a details screen or do something
-                            console.log('Tapped:', item.title);
-                        }}
+                        onPress={() => console.log('Tapped:', item.title)}
                     >
                         <View style={styles.resultHeader}>
                             <Text style={styles.subredditText}>
@@ -142,11 +135,11 @@ export const SearchScreen = () => {
                     </TouchableOpacity>
                 ))}
 
-                {/* Fallback message if there are no matching results */}
+                {/* Fallback message if no results match */}
                 {filteredResults.length === 0 && (
                     <View style={{ marginTop: 20 }}>
                         <Text style={{ color: 'white' }}>
-                            No results found for "{searchQuery}".
+                            No results found for "{searchText}".
                         </Text>
                     </View>
                 )}
@@ -160,23 +153,6 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: COLORS.AppBackground,
         paddingTop: Platform.OS === 'ios' ? 0 : 0,
-    },
-    searchBarContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: COLORS.TextInput,
-        paddingHorizontal: 10,
-        paddingVertical: 8,
-    },
-    searchIcon: {
-        marginRight: 8,
-    },
-    searchBar: {
-        flex: 1,
-        color: COLORS.White,
-        fontFamily: 'Roboto_400Regular',
-        fontSize: 16,
-        padding: 0,
     },
     filterRow: {
         flexDirection: 'row',

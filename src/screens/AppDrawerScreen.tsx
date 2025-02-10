@@ -1,5 +1,4 @@
 // AppDrawerScreen.tsx
-
 import React, { useState } from 'react';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import {
@@ -7,7 +6,6 @@ import {
     useWindowDimensions,
     View,
     StyleSheet,
-    TextInput,
 } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
@@ -20,6 +18,7 @@ import {
     EventsScreen,
     SearchScreen,
 } from '.';
+import { SearchBox } from '../sections';
 
 const DrawerNavigator = createDrawerNavigator();
 
@@ -32,8 +31,7 @@ export function AppDrawerScreen() {
     const dimensions = useWindowDimensions();
     const isDesktop = dimensions.width > 768;
 
-    // We'll store the user's search text here if you want the desktop
-    // header search box to do something. For demonstration, it's just local.
+    // Store the desktop search text locally
     const [desktopSearchText, setDesktopSearchText] = useState('');
 
     return (
@@ -61,27 +59,15 @@ export function AppDrawerScreen() {
                         </TouchableOpacity>
                     ),
 
-                // On desktop, show a large text input with a search icon.
-                // On mobile, show a simple search icon that navigates to 'Search' screen.
+                // On desktop, display the shared SearchBox in the header.
+                // On mobile, the header remains empty and the search icon is shown on the right.
                 headerTitle: () =>
                     isDesktop ? (
-                        <View
-                            style={[
-                                styles.desktopSearchContainer,
-                                { width: dimensions.width * 0.45 },
-                            ]}
-                        >
-                            <FontAwesome name="search" size={16} color="#999" />
-                            <TextInput
-                                style={styles.desktopSearchInput}
-                                placeholder="Search"
-                                placeholderTextColor="#999"
-                                value={desktopSearchText}
-                                onChangeText={setDesktopSearchText}
-                                autoCapitalize="none"
-                                autoCorrect={false}
-                            />
-                        </View>
+                        <SearchBox
+                            value={desktopSearchText}
+                            onChangeText={setDesktopSearchText}
+                            desktop
+                        />
                     ) : null,
 
                 headerRight: () =>
@@ -98,7 +84,7 @@ export function AppDrawerScreen() {
                         </TouchableOpacity>
                     ),
 
-                // On desktop, the drawer is always open and doesn't need a toggle
+                // On desktop, the drawer is always open; on mobile, it slides in.
                 drawerType: isDesktop ? 'permanent' : 'slide',
                 drawerStyle: {
                     width: 170,
@@ -121,10 +107,10 @@ export function AppDrawerScreen() {
                 />
             ))}
             {/*
-              Add a new Search screen.
-              The option drawerItemStyle with height: 0 hides the item in the drawer menu.
-              We also show the header on this screen (even on desktop).
-            */}
+        Add a new Search screen.
+        The option drawerItemStyle with height: 0 hides the item in the drawer menu.
+        We also show the header on this screen (even on desktop).
+      */}
             <DrawerNavigator.Screen
                 name="Search"
                 component={SearchScreen}
@@ -138,21 +124,11 @@ export function AppDrawerScreen() {
 
 const styles = StyleSheet.create({
     desktopSearchContainer: {
-        // Basic styling for the search box
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: COLORS.TextInput,
         borderRadius: 6,
         paddingHorizontal: 10,
         height: 36,
-        // If you want it centered horizontally, you can add marginLeft: 'auto', marginRight: 'auto',
-    },
-    desktopSearchInput: {
-        flex: 1,
-        marginLeft: 6,
-        padding: 0,
-        color: COLORS.White,
-        fontSize: 15,
-        fontFamily: 'Roboto_400Regular',
     },
 });

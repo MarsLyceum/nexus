@@ -1,17 +1,16 @@
 // SearchScreen.tsx
-
 import React, { useState, useMemo } from 'react';
 import {
     View,
     Text,
     StyleSheet,
-    TextInput,
-    TouchableOpacity,
     ScrollView,
+    TouchableOpacity,
     Platform,
 } from 'react-native';
-import { COLORS } from '../constants';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import { COLORS } from '../constants';
+import { SearchBox } from '../sections';
 
 type SearchResult = {
     id: number;
@@ -22,7 +21,7 @@ type SearchResult = {
     comments: string;
 };
 
-// Some mock search results that match the screenshot
+// Some mock search results
 const MOCK_RESULTS: SearchResult[] = [
     {
         id: 1,
@@ -85,25 +84,8 @@ export const SearchScreen = () => {
 
     return (
         <View style={styles.container}>
-            {/* Top “search” section */}
-            <View style={styles.searchBarContainer}>
-                {/* Search icon on the left */}
-                <FontAwesome
-                    name="search"
-                    size={18}
-                    color="#999"
-                    style={styles.searchIcon}
-                />
-                <TextInput
-                    style={styles.searchBar}
-                    placeholder="Search..."
-                    placeholderTextColor="#999"
-                    value={searchQuery}
-                    onChangeText={setSearchQuery}
-                    autoCorrect={false}
-                    autoCapitalize="none"
-                />
-            </View>
+            {/* Shared search box component at the top */}
+            <SearchBox value={searchQuery} onChangeText={setSearchQuery} />
 
             {/* Filter row mimicking Relevance / All time / Safe Search Off */}
             <View style={styles.filterRow}>
@@ -136,7 +118,7 @@ export const SearchScreen = () => {
                 </TouchableOpacity>
             </View>
 
-            {/* Scrollable list of (filtered) search results */}
+            {/* Scrollable list of filtered search results */}
             <ScrollView style={styles.resultsContainer}>
                 {filteredResults.map((item) => (
                     <TouchableOpacity
@@ -160,7 +142,7 @@ export const SearchScreen = () => {
                     </TouchableOpacity>
                 ))}
 
-                {/* Show a simple fallback if there are no matches */}
+                {/* Fallback message if there are no matching results */}
                 {filteredResults.length === 0 && (
                     <View style={{ marginTop: 20 }}>
                         <Text style={{ color: 'white' }}>

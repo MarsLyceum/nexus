@@ -10,7 +10,6 @@ import {
     Text,
     ViewStyle,
     TextStyle,
-    ImageStyle,
 } from 'react-native';
 import { NavigationProp, RouteProp } from '@react-navigation/native';
 import { EventCard } from '../cards';

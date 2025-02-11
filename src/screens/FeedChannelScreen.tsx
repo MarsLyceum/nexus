@@ -1,5 +1,5 @@
 // FeedChannelScreen.tsx
-import React, { useState, useEffect, useRef, useContext } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     SafeAreaView,
     FlatList,
@@ -20,10 +20,6 @@ import {
 import { GroupChannelPostMessage, User, GroupChannel } from '../types';
 import { CreateContentButton } from '../buttons';
 import { useAppSelector, RootState, UserType } from '../redux';
-
-// Import the shared search context and filtering hook
-import { SearchContext } from '../providers';
-import { useSearchFilter } from '../hooks';
 
 type RootStackParamList = {
     FeedChannelScreen: {
@@ -162,16 +158,6 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
     const [newPostTitle, setNewPostTitle] = useState('');
     const [newPostContent, setNewPostContent] = useState('');
 
-    // Retrieve the shared search text from the context.
-    const { searchText } = useContext(SearchContext);
-
-    // Use the search filter hook to filter feed posts by title, content, or user.
-    const filteredPosts = useSearchFilter(feedPosts, searchText, [
-        'title',
-        'content',
-        'user',
-    ]);
-
     // Apollo mutation hook for creating posts
     const [createPostMutation, { loading: creatingPost }] = useMutation(
         CREATE_GROUP_CHANNEL_POST_MUTATION,
@@ -301,7 +287,7 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
             ) : (
                 <FlatList
                     style={{ flex: 1 }}
-                    data={filteredPosts}
+                    data={feedPosts}
                     keyExtractor={(item) => item.id}
                     renderItem={({ item }) => (
                         <PostItem

@@ -1,5 +1,5 @@
 // TextChannelScreen.tsx
-import React, { useState, useEffect, useRef, useContext } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     View,
     Text,
@@ -17,8 +17,6 @@ import { useApolloClient } from '@apollo/client';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { useAppSelector, RootState, UserType } from '../redux';
 import { Header } from '../sections';
-import { useSearchFilter } from '../hooks/useSearchFilter';
-import { SearchContext } from '../providers'; // Using the shared context
 import {
     FETCH_CHANNEL_MESSAGES_QUERY,
     FETCH_USER_QUERY,
@@ -84,15 +82,6 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
     const { width } = useWindowDimensions();
     const isLargeScreen = width > 768;
     const flatListRef = useRef<FlatList<MessageWithAvatar> | null>(null);
-
-    // Read the shared search text from context (no local search box here)
-    const { searchText } = useContext(SearchContext);
-
-    // Filter messages by content and username using the shared search text
-    const filteredMessages = useSearchFilter(chatMessages, searchText, [
-        'content',
-        'username',
-    ]);
 
     useEffect(() => {
         let cancelled = false;
@@ -230,7 +219,7 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
                 <FlatList
                     ref={flatListRef}
                     // Render filtered messages (newest at the bottom)
-                    data={[...filteredMessages].reverse()}
+                    data={[...chatMessages].reverse()}
                     keyExtractor={(item) => item.id}
                     onEndReached={loadMoreMessages}
                     onEndReachedThreshold={0.1}

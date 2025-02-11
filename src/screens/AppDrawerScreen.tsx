@@ -61,10 +61,12 @@ export function AppDrawerScreen() {
                 headerShown: true,
                 headerStyle: {
                     backgroundColor: COLORS.AppBackground,
-                    fontFamily: 'Roboto_500Medium',
                     elevation: 0, // Remove Android shadow
                     shadowOpacity: 0, // Remove iOS shadow
                     borderBottomWidth: 0, // Remove any bottom border if present
+                },
+                headerTitleStyle: {
+                    fontFamily: 'Roboto_500Medium',
                 },
                 headerShadowVisible: false, // Disable the default header shadow
                 headerTintColor: 'white',
@@ -86,6 +88,9 @@ export function AppDrawerScreen() {
                             value={searchText}
                             onChangeText={setSearchText}
                             desktop
+                            onSubmitEditing={() =>
+                                navigation.navigate('Search')
+                            }
                         />
                     ) : undefined, // Use `undefined` instead of null
 

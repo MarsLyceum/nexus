@@ -60,7 +60,6 @@ const styles = StyleSheet.create({
     skeletonButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 10,
     },
     skeletonAvatar: {
         width: 32,

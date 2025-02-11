@@ -1,10 +1,8 @@
 // EventsScreen.tsx
-import React, { useContext } from 'react';
+import React from 'react';
 import { View, FlatList, StyleSheet } from 'react-native';
 import { EventCard } from '../cards';
 import { COLORS } from '../constants';
-import { SearchContext } from '../providers';
-import { useSearchFilter } from '../hooks';
 import { Event } from '../types';
 
 const styles = StyleSheet.create({
@@ -42,24 +40,12 @@ const events: Event[] = [
     },
 ];
 
-export const EventsScreen: React.FC = () => {
-    // Get the shared search text from the context.
-    const { searchText } = useContext(SearchContext);
-
-    // Filter events based on the search text matching title, groupName, or location.
-    const filteredEvents = useSearchFilter(events, searchText, [
-        'title',
-        'groupName',
-        'location',
-    ]);
-
-    return (
-        <View style={styles.container}>
-            <FlatList
-                data={filteredEvents}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => <EventCard {...item} preview />}
-            />
-        </View>
-    );
-};
+export const EventsScreen: React.FC = () => (
+    <View style={styles.container}>
+        <FlatList
+            data={events}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => <EventCard {...item} preview />}
+        />
+    </View>
+);

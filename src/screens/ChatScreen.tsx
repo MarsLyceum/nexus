@@ -1,5 +1,5 @@
 // ChatScreen.tsx
-import React, { useState, useRef, useEffect, useContext } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
     View,
     Text,
@@ -15,8 +15,6 @@ import { NavigationProp, RouteProp } from '@react-navigation/core';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 
 import { COLORS } from '../constants';
-import { SearchContext } from '../providers';
-import { useSearchFilter } from '../hooks';
 
 // Define the Message type
 export type Message = {
@@ -182,16 +180,6 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     const [messageText, setMessageText] = useState('');
     const flatListRef = useRef<FlatList<Message>>(null);
 
-    // Retrieve the shared search text from context
-    const { searchText } = useContext(SearchContext);
-
-    // Use the search filter hook to filter messages based on 'text' and 'user'
-    // If your hook supports generics, pass the Message type.
-    const filteredMessages = useSearchFilter<Message>(messages, searchText, [
-        'text',
-        'user',
-    ]);
-
     const sendMessage = () => {
         if (!messageText.trim()) return;
 
@@ -242,7 +230,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             {/* Chat Messages */}
             <FlatList<Message>
                 ref={flatListRef}
-                data={filteredMessages}
+                data={messages}
                 keyExtractor={(item) => item.id}
                 renderItem={({ item }) => (
                     <View style={styles.messageContainer}>

@@ -7,6 +7,7 @@ import {
 import EventSource from 'react-native-event-source';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Platform, StatusBar } from 'react-native';
+import Toast from 'react-native-toast-message';
 import {
     ApolloClient,
     InMemoryCache,
@@ -289,6 +290,7 @@ export default function App() {
                                             }}
                                         />
                                     </RootStack.Navigator>
+                                    <Toast />
                                 </NavigationContainer>
                             </ReduxProvider>
                         </ApolloProvider>

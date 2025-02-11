@@ -1,6 +1,18 @@
 // PostItem.tsx
 import React, { useState } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import {
+    View,
+    Text,
+    Image,
+    StyleSheet,
+    TouchableOpacity,
+    Share,
+    Platform,
+    Alert,
+} from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import Toast from 'react-native-toast-message';
+
 import { VoteActions } from './VoteActions';
 import { BackArrow } from '../buttons';
 import { COLORS } from '../constants';
@@ -22,7 +34,6 @@ const styles = StyleSheet.create({
     backArrow: {
         marginRight: 10,
     },
-    // Avatar styles for both variants
     userPic: {
         width: 36,
         height: 36,
@@ -35,7 +46,6 @@ const styles = StyleSheet.create({
         borderRadius: 18,
         marginRight: 10,
     },
-    // For default & details variants: group is prominent, with username & time in a subheading.
     headerTextContainer: {
         flexDirection: 'column',
     },
@@ -44,7 +54,6 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: 'bold',
     },
-    // For both variants: username and time text.
     subText: {
         color: COLORS.InactiveText,
         fontSize: 12,
@@ -72,11 +81,28 @@ const styles = StyleSheet.create({
         fontSize: 14,
         marginBottom: 10,
     },
+    actionsContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+        marginTop: 10,
+    },
+    shareButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        marginLeft: 10,
+    },
+    shareCountText: {
+        color: COLORS.White,
+        fontSize: 12,
+        marginLeft: 4,
+    },
 });
 
 export type PostItemProps = {
     username: string;
-    /** For non-feed items, this should be provided. */
     group?: string;
     time: string;
     title: string;
@@ -88,13 +114,8 @@ export type PostItemProps = {
     preview?: boolean;
     onBackPress?: () => void;
     onPress?: () => void;
-    /**
-     * Variants:
-     * - 'feed': for the feed page—shows the user’s picture and username only.
-     * - 'default': for all other screens—shows the group name prominently along with the username and time, using the group’s picture.
-     * - 'details': for the post details screen—uses the user's picture, but displays the group prominently with the username and time as secondary.
-     */
     variant?: 'feed' | 'default' | 'details';
+    shareUrl?: string;
 };
 
 function getUserAvatarUri(username: string, thumbnail?: string): string {
@@ -129,8 +150,11 @@ export const PostItem: React.FC<PostItemProps> = ({
     onBackPress,
     onPress,
     variant = 'default',
+    shareUrl,
 }) => {
     const [voteCount, setVoteCount] = useState(upvotes);
+    const [shareCount, setShareCount] = useState(0);
+
     const onUpvote = () => setVoteCount((prev) => prev + 1);
     const onDownvote = () => setVoteCount((prev) => prev - 1);
 
@@ -143,7 +167,6 @@ export const PostItem: React.FC<PostItemProps> = ({
     let headerElement = null;
 
     if (variant === 'feed') {
-        // Feed variant: uses the user's picture and displays only the username and time.
         avatarUri = getUserAvatarUri(username, thumbnail);
         headerElement = (
             <Text style={styles.subText}>
@@ -151,8 +174,6 @@ export const PostItem: React.FC<PostItemProps> = ({
             </Text>
         );
     } else if (variant === 'details') {
-        // Details variant: uses the user's picture, but displays the group prominently,
-        // with the username and time as secondary.
         avatarUri = getUserAvatarUri(username, thumbnail);
         headerElement = (
             <View style={styles.headerTextContainer}>
@@ -163,8 +184,6 @@ export const PostItem: React.FC<PostItemProps> = ({
             </View>
         );
     } else {
-        // Default variant: uses the group's picture and displays the group prominently,
-        // along with the username and time.
         avatarUri = getGroupAvatarUri(group, thumbnail);
         headerElement = (
             <View style={styles.headerTextContainer}>
@@ -175,6 +194,52 @@ export const PostItem: React.FC<PostItemProps> = ({
             </View>
         );
     }
+
+    const onShare = async () => {
+        if (Platform.OS === 'web') {
+            const linkToCopy =
+                shareUrl ||
+                (typeof window !== 'undefined' && window.location.href) ||
+                '';
+            if (!linkToCopy) {
+                Alert.alert(
+                    'Unable to copy link',
+                    'No URL is available to copy.'
+                );
+                return;
+            }
+            try {
+                await navigator.clipboard.writeText(linkToCopy);
+                Toast.show({
+                    type: 'success',
+                    text1: 'Link copied to clipboard',
+                    position: 'bottom',
+                    visibilityTime: 2000,
+                });
+                setShareCount((prev) => prev + 1);
+            } catch (err) {
+                Toast.show({
+                    type: 'error',
+                    text1: 'Unable to copy link',
+                    position: 'bottom',
+                    visibilityTime: 2000,
+                });
+            }
+        } else {
+            try {
+                const result = await Share.share({
+                    message: `${title}\n\n${displayedContent}${
+                        shareUrl ? `\n\n${shareUrl}` : ''
+                    }`,
+                });
+                if (result.action === Share.sharedAction) {
+                    setShareCount((prev) => prev + 1);
+                }
+            } catch (error: any) {
+                Alert.alert('Share error', error.message);
+            }
+        }
+    };
 
     const contentElement = (
         <View style={styles.postContainer}>
@@ -199,12 +264,24 @@ export const PostItem: React.FC<PostItemProps> = ({
             {displayedContent !== '' && (
                 <Text style={styles.contentText}>{displayedContent}</Text>
             )}
-            <VoteActions
-                voteCount={voteCount}
-                onUpvote={onUpvote}
-                onDownvote={onDownvote}
-                commentCount={commentsCount}
-            />
+            <View style={styles.actionsContainer}>
+                <VoteActions
+                    voteCount={voteCount}
+                    onUpvote={onUpvote}
+                    onDownvote={onDownvote}
+                    commentCount={commentsCount}
+                />
+                <TouchableOpacity onPress={onShare} style={styles.shareButton}>
+                    <MaterialCommunityIcons
+                        name="share-outline"
+                        size={20}
+                        color={COLORS.White}
+                    />
+                    {shareCount > 0 && (
+                        <Text style={styles.shareCountText}>{shareCount}</Text>
+                    )}
+                </TouchableOpacity>
+            </View>
         </View>
     );
 

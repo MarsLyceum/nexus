@@ -245,6 +245,9 @@ importers:
       react-native-svg-transformer:
         specifier: ^1.5.0
         version: 1.5.0(react-native-svg@15.8.0(react-native@0.76.6(@babel/core@7.26.7)(@babel/preset-env@7.24.7(@babel/core@7.26.7))(@react-native-community/cli-server-api@13.6.9)(@types/react@18.3.18)(react@18.3.1))(react@18.3.1))(react-native@0.76.6(@babel/core@7.26.7)(@babel/preset-env@7.24.7(@babel/core@7.26.7))(@react-native-community/cli-server-api@13.6.9)(@types/react@18.3.18)(react@18.3.1))(typescript@5.3.3)
+      react-native-toast-message:
+        specifier: ^2.2.1
+        version: 2.2.1(react-native@0.76.6(@babel/core@7.26.7)(@babel/preset-env@7.24.7(@babel/core@7.26.7))(@react-native-community/cli-server-api@13.6.9)(@types/react@18.3.18)(react@18.3.1))(react@18.3.1)
       react-native-vector-icons:
         specifier: ^10.2.0
         version: 10.2.0
@@ -6063,6 +6066,12 @@ packages:
 
   react-native-svg@15.8.0:
     resolution: {integrity: sha512-KHJzKpgOjwj1qeZzsBjxNdoIgv2zNCO9fVcoq2TEhTRsVV5DGTZ9JzUZwybd7q4giT/H3RdtqC3u44dWdO0Ffw==}
+    peerDependencies:
+      react: '*'
+      react-native: '*'
+
+  react-native-toast-message@2.2.1:
+    resolution: {integrity: sha512-iXFMnlxPcgKKs4bZOIl06W16m6KXMh/bAYpWLyVXlISSCdcL2+FX5WPpRP3TGQeM/u9q+j5ex48DDY+72en+Sw==}
     peerDependencies:
       react: '*'
       react-native: '*'
@@ -15803,6 +15812,11 @@ snapshots:
       react: 18.3.1
       react-native: 0.76.6(@babel/core@7.26.7)(@babel/preset-env@7.24.7(@babel/core@7.26.7))(@react-native-community/cli-server-api@13.6.9)(@types/react@18.3.18)(react@18.3.1)
       warn-once: 0.1.1
+
+  react-native-toast-message@2.2.1(react-native@0.76.6(@babel/core@7.26.7)(@babel/preset-env@7.24.7(@babel/core@7.26.7))(@react-native-community/cli-server-api@13.6.9)(@types/react@18.3.18)(react@18.3.1))(react@18.3.1):
+    dependencies:
+      react: 18.3.1
+      react-native: 0.76.6(@babel/core@7.26.7)(@babel/preset-env@7.24.7(@babel/core@7.26.7))(@react-native-community/cli-server-api@13.6.9)(@types/react@18.3.18)(react@18.3.1)
 
   react-native-vector-icons@10.2.0:
     dependencies:

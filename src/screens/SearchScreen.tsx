@@ -1,3 +1,4 @@
+// SearchScreen.tsx
 import React, { useContext } from 'react';
 import {
     View,
@@ -7,17 +8,19 @@ import {
     TouchableOpacity,
     Platform,
     useWindowDimensions,
-    Image,
 } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import { useNavigation } from '@react-navigation/native';
+import { BackArrow } from '../buttons';
 import { COLORS } from '../constants';
-import { SearchBox } from '../sections';
+import { SearchBox, PostItem } from '../sections';
 import { useSearchFilter } from '../hooks';
 import { SearchContext } from '../providers';
 
 type SearchResult = {
     id: number;
     group: string;
+    username: string;
     time: string;
     title: string;
     upvotes: string;
@@ -28,6 +31,7 @@ const MOCK_RESULTS: SearchResult[] = [
     {
         id: 1,
         group: 'r/gaming',
+        username: 'gamer1',
         time: '1y',
         title: "I think it's time to slowly step away from PC gaming",
         upvotes: '0',
@@ -36,6 +40,7 @@ const MOCK_RESULTS: SearchResult[] = [
     {
         id: 2,
         group: 'r/SubredditDrama',
+        username: 'dramaKing',
         time: '5y',
         title: '/r/pcgaming reacts to the /r/Games shutdown',
         upvotes: '7.6k',
@@ -44,6 +49,7 @@ const MOCK_RESULTS: SearchResult[] = [
     {
         id: 3,
         group: 'r/pcmasterrace',
+        username: 'elitegamer',
         time: '1y',
         title: 'Is pc gaming no longer affordable?',
         upvotes: '2.0k',
@@ -52,6 +58,7 @@ const MOCK_RESULTS: SearchResult[] = [
     {
         id: 4,
         group: 'r/pcgaming',
+        username: 'pcfanatic',
         time: '7d',
         title: 'Hot take: PC gaming kinda sucks right now',
         upvotes: '0',
@@ -60,6 +67,7 @@ const MOCK_RESULTS: SearchResult[] = [
     {
         id: 5,
         group: 'r/pcgaming',
+        username: 'techguru',
         time: '1y',
         title: 'When and why did PC gaming become so incredibly popular (again)?',
         upvotes: '0',
@@ -67,77 +75,89 @@ const MOCK_RESULTS: SearchResult[] = [
     },
 ];
 
-// Remove any "/" from the group string before encoding the seed.
-const getAvatarUri = (group: string) =>
-    `https://picsum.photos/seed/${encodeURIComponent(group.replace(/\//g, ''))}/48/48`;
+// Helper: Convert string counts (e.g., "7.6k") to numbers.
+const parseCount = (count: string): number => {
+    if (count.toLowerCase().endsWith('k')) {
+        return Math.round(parseFloat(count) * 1000);
+    }
+    return parseInt(count, 10);
+};
 
 export const SearchScreen = () => {
     const { searchText, setSearchText } = useContext(SearchContext);
     const { width } = useWindowDimensions();
     const isDesktop = width > 768;
+    const navigation = useNavigation();
 
     const filteredResults = useSearchFilter<SearchResult>(
         MOCK_RESULTS,
         searchText,
-        ['title', 'group']
+        ['title', 'group', 'username']
     );
 
     return (
         <View style={styles.container}>
-            {!isDesktop && (
-                <SearchBox value={searchText} onChangeText={setSearchText} />
-            )}
-
-            <View style={styles.filterRow}>
-                <TouchableOpacity style={styles.filterButton}>
-                    <Text style={styles.filterButtonText}>Relevance</Text>
-                    <FontAwesome
-                        name="caret-down"
-                        size={14}
-                        color={COLORS.InactiveText}
-                        style={styles.filterIcon}
-                    />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.filterButton}>
-                    <Text style={styles.filterButtonText}>All time</Text>
-                    <FontAwesome
-                        name="caret-down"
-                        size={14}
-                        color={COLORS.InactiveText}
-                        style={styles.filterIcon}
-                    />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.filterButton}>
-                    <Text style={styles.filterButtonText}>Safe Search Off</Text>
-                    <FontAwesome
-                        name="caret-down"
-                        size={14}
-                        color={COLORS.InactiveText}
-                        style={styles.filterIcon}
-                    />
-                </TouchableOpacity>
+            {/* Header row with back arrow and filter buttons */}
+            <View style={styles.headerRow}>
+                <BackArrow onPress={() => navigation.goBack()} />
+                <View style={styles.filterRow}>
+                    <TouchableOpacity style={styles.filterButton}>
+                        <Text style={styles.filterButtonText}>Relevance</Text>
+                        <FontAwesome
+                            name="caret-down"
+                            size={14}
+                            color={COLORS.InactiveText}
+                            style={styles.filterIcon}
+                        />
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.filterButton}>
+                        <Text style={styles.filterButtonText}>All time</Text>
+                        <FontAwesome
+                            name="caret-down"
+                            size={14}
+                            color={COLORS.InactiveText}
+                            style={styles.filterIcon}
+                        />
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.filterButton}>
+                        <Text style={styles.filterButtonText}>
+                            Safe Search Off
+                        </Text>
+                        <FontAwesome
+                            name="caret-down"
+                            size={14}
+                            color={COLORS.InactiveText}
+                            style={styles.filterIcon}
+                        />
+                    </TouchableOpacity>
+                </View>
             </View>
+
+            {/* SearchBox below the header row */}
+            {!isDesktop && (
+                <View style={styles.searchBoxContainer}>
+                    <SearchBox
+                        value={searchText}
+                        onChangeText={setSearchText}
+                    />
+                </View>
+            )}
 
             <ScrollView style={styles.resultsContainer}>
                 {filteredResults.map((item) => (
-                    <TouchableOpacity
+                    <PostItem
                         key={item.id}
-                        style={styles.resultItem}
+                        username={item.username}
+                        group={item.group}
+                        time={item.time}
+                        title={item.title}
+                        content="" // No additional content for search results.
+                        upvotes={parseCount(item.upvotes)}
+                        commentsCount={parseCount(item.comments)}
+                        preview
+                        variant="default" // Use default variant: shows group & username with group avatar.
                         onPress={() => console.log('Tapped:', item.title)}
-                    >
-                        <View style={styles.resultHeader}>
-                            <Image
-                                source={{ uri: getAvatarUri(item.group) }}
-                                style={styles.avatarPlaceholder}
-                            />
-                            <Text style={styles.groupText}>{item.group}</Text>
-                            <Text style={styles.timeText}>{item.time}</Text>
-                        </View>
-                        <Text style={styles.titleText}>{item.title}</Text>
-                        <Text style={styles.metaText}>
-                            {item.upvotes} upvotes • {item.comments} comments
-                        </Text>
-                    </TouchableOpacity>
+                    />
                 ))}
 
                 {filteredResults.length === 0 && (
@@ -156,20 +176,24 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: COLORS.SecondaryBackground,
-        paddingTop: Platform.OS === 'ios' ? 0 : 0,
+    },
+    headerRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 10,
+        paddingVertical: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: COLORS.TextInput,
     },
     filterRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 10,
-        paddingVertical: 8,
-        borderBottomWidth: 1,
-        borderBottomColor: COLORS.TextInput,
+        marginLeft: 10,
     },
     filterButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginRight: 16,
+        marginRight: 10,
     },
     filterButtonText: {
         color: COLORS.InactiveText,
@@ -180,53 +204,11 @@ const styles = StyleSheet.create({
     filterIcon: {
         marginTop: 1,
     },
+    searchBoxContainer: {
+        padding: 10,
+    },
     resultsContainer: {
         flex: 1,
         paddingHorizontal: 10,
-    },
-    resultItem: {
-        backgroundColor: COLORS.PrimaryBackground,
-        borderRadius: 8,
-        padding: 15,
-        marginVertical: 10,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 2,
-    },
-    resultHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 8,
-    },
-    avatarPlaceholder: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        marginRight: 10,
-    },
-    groupText: {
-        color: COLORS.InactiveText,
-        fontFamily: 'Roboto_700Bold',
-        fontSize: 14,
-        marginRight: 8,
-    },
-    timeText: {
-        color: COLORS.InactiveText,
-        fontFamily: 'Roboto_400Regular',
-        fontSize: 12,
-    },
-    titleText: {
-        color: COLORS.White,
-        fontFamily: 'Roboto_400Regular',
-        fontSize: 16,
-        fontWeight: 'bold',
-        marginBottom: 10,
-    },
-    metaText: {
-        color: COLORS.InactiveText,
-        fontFamily: 'Roboto_400Regular',
-        fontSize: 12,
     },
 });

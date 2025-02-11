@@ -166,7 +166,7 @@ export const PostScreen: React.FC<PostScreenProps> = ({
                         keyboardShouldPersistTaps="handled"
                     >
                         <PostItem
-                            user={postData.user}
+                            username={postData.user}
                             time={postData.time}
                             title={postData.title}
                             content={postData.content}
@@ -174,6 +174,8 @@ export const PostScreen: React.FC<PostScreenProps> = ({
                             commentsCount={postData.commentsCount}
                             flair={postData.flair}
                             onBackPress={() => navigation.goBack()}
+                            variant="details"
+                            group="My cool group"
                         />
                         {comments.map((c) => (
                             // Pass the original poster's username (OP) as a prop

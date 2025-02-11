@@ -168,11 +168,11 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
                     variables: { channelId: channel?.id, offset: 0 },
                 },
             ],
-            awaitRefetchQueries: true, // Ensures fresh data before UI updates
+            awaitRefetchQueries: true,
             onCompleted: () => {
-                setModalVisible(false); // Close modal after post creation
-                setNewPostTitle(''); // Clear input
-                setNewPostContent(''); // Clear input
+                setModalVisible(false);
+                setNewPostTitle('');
+                setNewPostContent('');
             },
             onError: (error) => {
                 console.error('Error creating post:', error);
@@ -242,7 +242,6 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
             }
         };
 
-        // eslint-disable-next-line no-void
         void fetchPosts();
         return () => {
             cancelled = true;
@@ -291,19 +290,20 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
                     keyExtractor={(item) => item.id}
                     renderItem={({ item }) => (
                         <PostItem
-                            user={item.user}
+                            username={item.user}
                             time={item.time}
                             title={item.title}
                             upvotes={item.upvotes}
                             commentsCount={item.commentsCount}
                             thumbnail={item.thumbnail}
+                            content={item.content}
+                            preview
+                            variant="feed"
                             onPress={() =>
                                 navigation.navigate('PostScreen', {
                                     post: item,
                                 })
                             }
-                            content={item.content}
-                            preview
                         />
                     )}
                     contentContainerStyle={[

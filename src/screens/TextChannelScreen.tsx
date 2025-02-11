@@ -47,6 +47,21 @@ const formatDateTime = (date: Date) => {
     return `${month}/${day}/${year} ${hours}:${minutes} ${ampm}`;
 };
 
+/**
+ * SkeletonMessageItem mimics a chat message while loading.
+ * It uses your palette (e.g. COLORS.InactiveText) for the placeholder blocks.
+ */
+const SkeletonMessageItem: React.FC = () => (
+    <View style={styles.skeletonMessageContainer}>
+        <View style={styles.skeletonAvatar} />
+        <View style={styles.skeletonMessageContent}>
+            <View style={styles.skeletonUsername} />
+            <View style={styles.skeletonTime} />
+            <View style={styles.skeletonText} />
+        </View>
+    </View>
+);
+
 export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
     channel,
     navigation,
@@ -63,6 +78,7 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
     const [offset, setOffset] = useState(0);
     const limit = 100;
     const [loadingMore, setLoadingMore] = useState(false);
+    const [loadingMessages, setLoadingMessages] = useState<boolean>(true);
     const userCacheRef = useRef<Record<string, string>>({});
     const [refreshTrigger, setRefreshTrigger] = useState(0);
     const { width } = useWindowDimensions();
@@ -143,6 +159,9 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
             } catch (error) {
                 console.error('Error fetching messages:', error);
             } finally {
+                if (offset === 0) {
+                    setLoadingMessages(false);
+                }
                 setLoadingMore(false);
             }
         };
@@ -191,7 +210,7 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
 
     return (
         <View style={styles.chatContainer}>
-            {/* A header is rendered (if needed) by this screen, but the shared search is in the AppDrawer */}
+            {/* Header rendered by this screen */}
             <Header
                 isLargeScreen={isLargeScreen}
                 headerText={channel.name}
@@ -199,33 +218,43 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
             />
 
             {/* Chat Messages */}
-            <FlatList
-                ref={flatListRef}
-                // Render filtered messages (newest at the bottom)
-                data={[...filteredMessages].reverse()}
-                keyExtractor={(item) => item.id}
-                onEndReached={loadMoreMessages}
-                onEndReachedThreshold={0.1}
-                renderItem={({ item }) => (
-                    <View style={styles.messageContainer}>
-                        <Image
-                            source={{ uri: item.avatar }}
-                            style={styles.avatar}
-                        />
-                        <View style={styles.messageContent}>
-                            <Text style={styles.userName}>
-                                {item.username}{' '}
-                                <Text style={styles.time}>
-                                    {formatDateTime(item.postedAt)}
+            {loadingMessages ? (
+                // Render 5 skeleton message placeholders while loading
+                <FlatList
+                    data={[0, 1, 2, 3, 4]}
+                    keyExtractor={(item) => item.toString()}
+                    renderItem={() => <SkeletonMessageItem />}
+                    contentContainerStyle={{ paddingBottom: 80 }}
+                />
+            ) : (
+                <FlatList
+                    ref={flatListRef}
+                    // Render filtered messages (newest at the bottom)
+                    data={[...filteredMessages].reverse()}
+                    keyExtractor={(item) => item.id}
+                    onEndReached={loadMoreMessages}
+                    onEndReachedThreshold={0.1}
+                    renderItem={({ item }) => (
+                        <View style={styles.messageContainer}>
+                            <Image
+                                source={{ uri: item.avatar }}
+                                style={styles.avatar}
+                            />
+                            <View style={styles.messageContent}>
+                                <Text style={styles.userName}>
+                                    {item.username}{' '}
+                                    <Text style={styles.time}>
+                                        {formatDateTime(item.postedAt)}
+                                    </Text>
                                 </Text>
-                            </Text>
-                            <Text style={styles.messageText}>
-                                {item.content}
-                            </Text>
+                                <Text style={styles.messageText}>
+                                    {item.content}
+                                </Text>
+                            </View>
                         </View>
-                    </View>
-                )}
-            />
+                    )}
+                />
+            )}
 
             {/* Message Input */}
             <View style={styles.inputContainer}>
@@ -303,5 +332,41 @@ const styles = StyleSheet.create({
     sendButton: {
         marginLeft: 10,
         padding: 8,
+    },
+    // Skeleton styles for chat messages
+    skeletonMessageContainer: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        padding: 15,
+    },
+    skeletonAvatar: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: COLORS.InactiveText,
+        marginRight: 10,
+    },
+    skeletonMessageContent: {
+        flex: 1,
+    },
+    skeletonUsername: {
+        width: 120,
+        height: 14,
+        borderRadius: 4,
+        backgroundColor: COLORS.InactiveText,
+        marginBottom: 4,
+    },
+    skeletonTime: {
+        width: 60,
+        height: 10,
+        borderRadius: 4,
+        backgroundColor: COLORS.InactiveText,
+        marginBottom: 4,
+    },
+    skeletonText: {
+        width: '80%',
+        height: 14,
+        borderRadius: 4,
+        backgroundColor: COLORS.InactiveText,
     },
 });

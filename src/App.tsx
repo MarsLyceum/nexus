@@ -87,7 +87,8 @@ const CustomScrollbar = () => {
     );
 };
 
-const Stack = createStackNavigator();
+const MainStack = createStackNavigator();
+const RootStack = createStackNavigator();
 
 const errorLink = onError((error: ErrorResponse) => {
     if (error) {
@@ -190,6 +191,38 @@ client.subscribe({ query: GREETINGS_SUBSCRIPTION }).subscribe({
     },
 });
 
+function MainStackScreen() {
+    return (
+        <MainStack.Navigator
+            initialRouteName="Welcome"
+            screenOptions={{ headerShown: false }}
+        >
+            <MainStack.Screen name="Welcome" component={WelcomeScreen} />
+            <MainStack.Screen name="Login" component={LoginScreen} />
+            <MainStack.Screen name="SignUp" component={SignUpScreen} />
+            <MainStack.Screen name="AppDrawer" component={AppDrawerScreen} />
+            <MainStack.Screen name="Chat" component={ChatScreen} />
+            <MainStack.Screen
+                name="ServerMessages"
+                component={ServerMessagesScreen}
+            />
+            <MainStack.Screen
+                name="FeedChannel"
+                component={FeedChannelScreen}
+            />
+            <MainStack.Screen name="PostScreen" component={PostScreen} />
+            <MainStack.Screen
+                name="GroupEvents"
+                component={GroupEventsScreen}
+            />
+            <MainStack.Screen
+                name="EventDetails"
+                component={EventDetailsScreen}
+            />
+        </MainStack.Navigator>
+    );
+}
+
 // The main App component with the stack navigator integrating all screens.
 // eslint-disable-next-line import/no-default-export
 export default function App() {
@@ -230,104 +263,32 @@ export default function App() {
                         <ApolloProvider client={client}>
                             <ReduxProvider store={store}>
                                 <NavigationContainer>
-                                    <Stack.Navigator initialRouteName="Welcome">
-                                        <Stack.Screen
-                                            name="Welcome"
-                                            component={
-                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                                WelcomeScreen as React.ComponentType<any>
-                                            }
-                                            options={{ headerShown: false }}
+                                    <RootStack.Navigator
+                                        screenOptions={{
+                                            headerShown: false,
+                                            presentation: 'transparentModal', // This makes the screens render as modals by default
+                                        }}
+                                    >
+                                        <RootStack.Screen
+                                            name="Main"
+                                            component={MainStackScreen}
                                         />
-                                        <Stack.Screen
-                                            name="Login"
-                                            component={
-                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                                LoginScreen as React.ComponentType<any>
-                                            }
-                                            options={{ headerShown: false }}
-                                        />
-                                        <Stack.Screen
-                                            name="SignUp"
-                                            component={
-                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                                SignUpScreen as React.ComponentType<any>
-                                            }
-                                            options={{ headerShown: false }}
-                                        />
-                                        {/* The AppDrawer now supplies its own header (if needed) */}
-                                        <Stack.Screen
-                                            name="AppDrawer"
-                                            component={
-                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                                AppDrawerScreen as React.ComponentType<any>
-                                            }
-                                            options={{ headerShown: false }}
-                                        />
-                                        <Stack.Screen
-                                            name="Chat"
-                                            component={
-                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                                ChatScreen as React.ComponentType<any>
-                                            }
-                                            options={{ headerShown: false }}
-                                        />
-                                        <Stack.Screen
-                                            name="ServerMessages"
-                                            component={
-                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                                ServerMessagesScreen as React.ComponentType<any>
-                                            }
-                                            options={{ headerShown: false }}
-                                        />
-                                        <Stack.Screen
+                                        <RootStack.Screen
                                             name="CreateGroup"
-                                            component={
-                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                                CreateGroupModalScreen as React.ComponentType<any>
-                                            }
+                                            component={CreateGroupModalScreen}
                                             options={{
-                                                presentation: 'modal',
+                                                presentation:
+                                                    'transparentModal',
+                                                cardStyle: {
+                                                    backgroundColor:
+                                                        'transparent',
+                                                },
                                                 ...Platform.select({
-                                                    ios: {
-                                                        ...TransitionPresets.ModalPresentationIOS,
-                                                    },
+                                                    ios: TransitionPresets.ModalPresentationIOS,
                                                 }),
                                             }}
                                         />
-                                        <Stack.Screen
-                                            name="FeedChannel"
-                                            component={
-                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                                FeedChannelScreen as React.ComponentType<any>
-                                            }
-                                            options={{ headerShown: false }}
-                                        />
-                                        <Stack.Screen
-                                            name="PostScreen"
-                                            component={
-                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                                PostScreen as React.ComponentType<any>
-                                            }
-                                            options={{ headerShown: false }}
-                                        />
-                                        <Stack.Screen
-                                            name="GroupEvents"
-                                            component={
-                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                                GroupEventsScreen as React.ComponentType<any>
-                                            }
-                                            options={{ headerShown: false }}
-                                        />
-                                        <Stack.Screen
-                                            name="EventDetails"
-                                            component={
-                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                                EventDetailsScreen as React.ComponentType<any>
-                                            }
-                                            options={{ headerShown: false }}
-                                        />
-                                    </Stack.Navigator>
+                                    </RootStack.Navigator>
                                 </NavigationContainer>
                             </ReduxProvider>
                         </ApolloProvider>

@@ -56,6 +56,25 @@ const styles = StyleSheet.create({
         zIndex: 999,
         right: 'auto',
     },
+    // Skeleton styles for the group button placeholder
+    skeletonButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 10,
+    },
+    skeletonAvatar: {
+        width: 32,
+        height: 32,
+        borderRadius: 20,
+        backgroundColor: COLORS.InactiveText, // Updated to match palette
+        marginRight: 10,
+    },
+    skeletonText: {
+        width: 100,
+        height: 15,
+        borderRadius: 4,
+        backgroundColor: COLORS.InactiveText, // Updated to match palette
+    },
 });
 
 // Initialize Supabase client
@@ -79,6 +98,14 @@ async function getSignedUrl(bucketName: string, filePath: string, expiry = 60) {
     return data.signedUrl; // This URL can be used to access the image
 }
 
+// Skeleton component for the group button placeholder
+const SkeletonGroupButton = () => (
+    <View style={styles.skeletonButton}>
+        <View style={styles.skeletonAvatar} />
+        <View style={styles.skeletonText} />
+    </View>
+);
+
 export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
     // Default to "chat" as selected
     const [selectedButton, setSelectedButton] = useState<string>('chat');
@@ -89,6 +116,8 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
         (state: RootState) => state.userGroups.userGroups
     );
     const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
+    // New state to track if the groups are loading
+    const [loadingGroups, setLoadingGroups] = useState<boolean>(true);
 
     const dispatch = useAppDispatch();
     const apolloClient = useApolloClient();
@@ -116,6 +145,7 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
 
             console.log('groups loaded');
             setUserGroupsInStore(result.data.fetchUserGroups);
+            setLoadingGroups(false);
         })();
     }, [user?.id, apolloClient, setUserGroupsInStore]);
 
@@ -224,25 +254,37 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
                         }}
                     />
                 </View>
-                {/* Render Group Buttons */}
-                {userGroups.map((group) => (
-                    <View
-                        onLayout={handleLayout(group.name)}
-                        style={styles.buttonContainer}
-                        key={group.id}
-                    >
-                        <GroupButton
-                            imageSource={{
-                                uri: imageUrls[group.avatarFilePath ?? ''],
-                            }}
-                            onPress={() => {
-                                setSelectedButton(group.name);
-                                navigation.navigate(group.name);
-                            }}
-                            groupName={group.name}
-                        />
-                    </View>
-                ))}
+                {/* Render Group Buttons or Skeletons while loading */}
+                {loadingGroups
+                    ? // Render 3 skeleton placeholders while loading
+                      [0, 1, 2].map((placeholder) => (
+                          <View
+                              style={styles.buttonContainer}
+                              key={`skeleton-${placeholder}`}
+                          >
+                              <SkeletonGroupButton />
+                          </View>
+                      ))
+                    : userGroups.map((group) => (
+                          <View
+                              onLayout={handleLayout(group.name)}
+                              style={styles.buttonContainer}
+                              key={group.id}
+                          >
+                              <GroupButton
+                                  imageSource={{
+                                      uri: imageUrls[
+                                          group.avatarFilePath ?? ''
+                                      ],
+                                  }}
+                                  onPress={() => {
+                                      setSelectedButton(group.name);
+                                      navigation.navigate(group.name);
+                                  }}
+                                  groupName={group.name}
+                              />
+                          </View>
+                      ))}
                 {/* CREATE GROUP Button */}
                 <View
                     onLayout={handleLayout('createGroup')}

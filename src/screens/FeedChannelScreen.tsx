@@ -6,6 +6,7 @@ import {
     StyleSheet,
     useWindowDimensions,
     Platform,
+    View,
 } from 'react-native';
 import { useApolloClient, useMutation } from '@apollo/client';
 import { NavigationProp, RouteProp } from '@react-navigation/core';
@@ -72,18 +73,73 @@ const getRelativeTime = (postedDate: Date): string => {
 };
 
 /** -----------------------------
- * Styles
+ * Styles (using the provided color palette)
  ----------------------------- */
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.SecondaryBackground,
+        backgroundColor: COLORS.SecondaryBackground, // #382348
     },
     feedList: {
         padding: 15,
-        // Extra bottom padding will be added conditionally in the component
+    },
+    // Skeleton styles for feed post placeholder
+    skeletonContainer: {
+        backgroundColor: COLORS.PrimaryBackground, // #281B31
+        padding: 15,
+        marginBottom: 10,
+        borderRadius: 8,
+        shadowColor: COLORS.OffWhite, // #F2F3F5
+        shadowOpacity: 0.1,
+        shadowRadius: 5,
+        elevation: 2,
+    },
+    skeletonHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 10,
+    },
+    skeletonAvatar: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: COLORS.InactiveText, // #989898
+    },
+    skeletonTextBlock: {
+        height: 20,
+        backgroundColor: COLORS.InactiveText, // #989898
+        borderRadius: 4,
+        marginLeft: 10,
+        flex: 1,
+    },
+    skeletonTitle: {
+        height: 20,
+        backgroundColor: COLORS.InactiveText, // #989898
+        borderRadius: 4,
+        marginBottom: 10,
+    },
+    skeletonContent: {
+        height: 60,
+        backgroundColor: COLORS.InactiveText, // #989898
+        borderRadius: 4,
     },
 });
+
+/** -----------------------------
+ * SkeletonPostItem Component
+ * ----------------------------- */
+const SkeletonPostItem: React.FC = () => (
+    <View style={styles.skeletonContainer}>
+        <View style={styles.skeletonHeader}>
+            <View style={styles.skeletonAvatar} />
+            <View style={[styles.skeletonTextBlock, { width: '60%' }]} />
+        </View>
+        <View style={[styles.skeletonTitle, { width: '80%' }]} />
+        <View
+            style={[styles.skeletonContent, { width: '100%', marginTop: 10 }]}
+        />
+    </View>
+);
 
 /** -----------------------------
  * FeedChannelScreen
@@ -101,6 +157,7 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
     const apolloClient = useApolloClient();
     const userCacheRef = useRef<Record<string, string>>({});
     const [feedPosts, setFeedPosts] = useState<FeedPost[]>([]);
+    const [loadingFeed, setLoadingFeed] = useState<boolean>(true);
     const [modalVisible, setModalVisible] = useState(false);
     const [newPostTitle, setNewPostTitle] = useState('');
     const [newPostContent, setNewPostContent] = useState('');
@@ -189,15 +246,18 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
                 if (!cancelled) {
                     console.log('Feed loaded', new Date());
                     setFeedPosts(posts);
+                    setLoadingFeed(false);
                 }
             } catch (error) {
                 console.error('Error fetching feed posts:', error);
+                if (!cancelled) {
+                    setLoadingFeed(false);
+                }
             }
         };
 
         // eslint-disable-next-line no-void
         void fetchPosts();
-        // eslint-disable-next-line consistent-return
         return () => {
             cancelled = true;
         };
@@ -226,31 +286,46 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
                 navigation={navigation}
             />
 
-            <FlatList
-                style={{ flex: 1 }}
-                // Use the filtered posts rather than the complete feedPosts array.
-                data={filteredPosts}
-                renderItem={({ item }) => (
-                    <PostItem
-                        user={item.user}
-                        time={item.time}
-                        title={item.title}
-                        upvotes={item.upvotes}
-                        commentsCount={item.commentsCount}
-                        thumbnail={item.thumbnail}
-                        onPress={() =>
-                            navigation.navigate('PostScreen', { post: item })
-                        }
-                        content={item.content}
-                        preview
-                    />
-                )}
-                keyExtractor={(item) => item.id}
-                contentContainerStyle={[
-                    styles.feedList,
-                    isDesktop ? { paddingBottom: 60 } : {},
-                ]}
-            />
+            {/* While loading, display skeleton placeholders; otherwise, display the feed posts */}
+            {loadingFeed ? (
+                <FlatList
+                    style={{ flex: 1 }}
+                    data={[0, 1, 2, 3, 4]} // Display 5 skeleton items
+                    keyExtractor={(item) => item.toString()}
+                    renderItem={() => <SkeletonPostItem />}
+                    contentContainerStyle={[
+                        styles.feedList,
+                        isDesktop ? { paddingBottom: 60 } : {},
+                    ]}
+                />
+            ) : (
+                <FlatList
+                    style={{ flex: 1 }}
+                    data={filteredPosts}
+                    keyExtractor={(item) => item.id}
+                    renderItem={({ item }) => (
+                        <PostItem
+                            user={item.user}
+                            time={item.time}
+                            title={item.title}
+                            upvotes={item.upvotes}
+                            commentsCount={item.commentsCount}
+                            thumbnail={item.thumbnail}
+                            onPress={() =>
+                                navigation.navigate('PostScreen', {
+                                    post: item,
+                                })
+                            }
+                            content={item.content}
+                            preview
+                        />
+                    )}
+                    contentContainerStyle={[
+                        styles.feedList,
+                        isDesktop ? { paddingBottom: 60 } : {},
+                    ]}
+                />
+            )}
 
             <CreateContentButton
                 modalVisible={modalVisible}

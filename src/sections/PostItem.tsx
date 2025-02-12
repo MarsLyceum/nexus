@@ -1,4 +1,3 @@
-// PostItem.tsx
 import React, { useState } from 'react';
 import {
     View,
@@ -102,6 +101,7 @@ const styles = StyleSheet.create({
 });
 
 export type PostItemProps = {
+    id: string;
     username: string;
     group?: string;
     time: string;
@@ -115,7 +115,7 @@ export type PostItemProps = {
     onBackPress?: () => void;
     onPress?: () => void;
     variant?: 'feed' | 'default' | 'details';
-    shareUrl?: string;
+    shareUrl?: string; // Optional override
 };
 
 function getUserAvatarUri(username: string, thumbnail?: string): string {
@@ -137,6 +137,7 @@ function getGroupAvatarUri(group: string, thumbnail?: string): string {
 }
 
 export const PostItem: React.FC<PostItemProps> = ({
+    id,
     username,
     group = '',
     time,
@@ -195,21 +196,18 @@ export const PostItem: React.FC<PostItemProps> = ({
         );
     }
 
+    // Compute the share URL intelligently.
+    // On web: use window.location.origin; on mobile: use a deeplink scheme.
+    const computedShareUrl =
+        shareUrl ||
+        (Platform.OS === 'web' && typeof window !== 'undefined'
+            ? `${window.location.origin}/post/${id}`
+            : `peeps://post/${id}`); // Mobile deep link
+
     const onShare = async () => {
         if (Platform.OS === 'web') {
-            const linkToCopy =
-                shareUrl ||
-                (typeof window !== 'undefined' && window.location.href) ||
-                '';
-            if (!linkToCopy) {
-                Alert.alert(
-                    'Unable to copy link',
-                    'No URL is available to copy.'
-                );
-                return;
-            }
             try {
-                await navigator.clipboard.writeText(linkToCopy);
+                await navigator.clipboard.writeText(computedShareUrl);
                 Toast.show({
                     type: 'success',
                     text1: 'Link copied to clipboard',
@@ -228,9 +226,7 @@ export const PostItem: React.FC<PostItemProps> = ({
         } else {
             try {
                 const result = await Share.share({
-                    message: `${title}\n\n${displayedContent}${
-                        shareUrl ? `\n\n${shareUrl}` : ''
-                    }`,
+                    message: `${title}\n\n${displayedContent}\n\n${computedShareUrl}`,
                 });
                 if (result.action === Share.sharedAction) {
                     setShareCount((prev) => prev + 1);

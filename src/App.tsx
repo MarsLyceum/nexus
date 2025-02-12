@@ -118,8 +118,7 @@ const graphqlApiGatewayEndpointSse = ''; // SSE turned off
 const httpLink = from([
     errorLink,
     createUploadLink({
-        // uri: graphqlApiGatewayEndpointHttp,
-        uri: 'http://192.168.1.48:4000/graphql',
+        uri: graphqlApiGatewayEndpointHttp,
         isExtractableFile: (value: any) => {
             if (value == null) return false;
             // On web: if value is a native File or Blob, it’s fine.

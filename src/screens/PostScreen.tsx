@@ -40,6 +40,7 @@ type PostScreenProps = {
 };
 
 type PostData = {
+    id: string;
     user: string;
     time: string;
     title: string;
@@ -311,6 +312,7 @@ export const PostScreen: React.FC<PostScreenProps> = ({
 
     // Map the post fields into our local PostData type.
     const postData: PostData = {
+        id: feedPost.id,
         user: resolvedUsername,
         time: formattedTime,
         title: feedPost.title,
@@ -354,6 +356,7 @@ export const PostScreen: React.FC<PostScreenProps> = ({
                         keyboardShouldPersistTaps="handled"
                     >
                         <PostItem
+                            id={postData.id}
                             username={postData.user}
                             time={postData.time}
                             title={postData.title}

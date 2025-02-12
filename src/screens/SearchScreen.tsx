@@ -18,7 +18,7 @@ import { useSearchFilter } from '../hooks';
 import { SearchContext } from '../providers';
 
 type SearchResult = {
-    id: number;
+    id: string;
     group: string;
     username: string;
     time: string;
@@ -29,7 +29,7 @@ type SearchResult = {
 
 const MOCK_RESULTS: SearchResult[] = [
     {
-        id: 1,
+        id: '1',
         group: 'r/gaming',
         username: 'gamer1',
         time: '1y',
@@ -38,7 +38,7 @@ const MOCK_RESULTS: SearchResult[] = [
         comments: '275',
     },
     {
-        id: 2,
+        id: '2',
         group: 'r/SubredditDrama',
         username: 'dramaKing',
         time: '5y',
@@ -47,7 +47,7 @@ const MOCK_RESULTS: SearchResult[] = [
         comments: '3.0k',
     },
     {
-        id: 3,
+        id: '3',
         group: 'r/pcmasterrace',
         username: 'elitegamer',
         time: '1y',
@@ -56,7 +56,7 @@ const MOCK_RESULTS: SearchResult[] = [
         comments: '1.6k',
     },
     {
-        id: 4,
+        id: '4',
         group: 'r/pcgaming',
         username: 'pcfanatic',
         time: '7d',
@@ -65,7 +65,7 @@ const MOCK_RESULTS: SearchResult[] = [
         comments: '59',
     },
     {
-        id: 5,
+        id: '5',
         group: 'r/pcgaming',
         username: 'techguru',
         time: '1y',
@@ -146,6 +146,7 @@ export const SearchScreen = () => {
             <ScrollView style={styles.resultsContainer}>
                 {filteredResults.map((item) => (
                     <PostItem
+                        id={item.id}
                         key={item.id}
                         username={item.username}
                         group={item.group}

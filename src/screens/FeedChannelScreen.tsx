@@ -273,6 +273,7 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
                     keyExtractor={(item) => item.id}
                     renderItem={({ item }) => (
                         <PostItem
+                            id={item.id}
                             username={item.user}
                             time={item.time}
                             title={item.title}

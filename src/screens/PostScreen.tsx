@@ -208,7 +208,8 @@ export const PostScreen: React.FC<PostScreenProps> = ({
         skip: !!post, // skip if a post was already passed in
     });
 
-    // Compute the user ID from the passed post or fetched post.
+    // Compute the user id from the passed post or fetched post.
+    // (This is only used to fetch the user details; we won't display it.)
     const computedUserId =
         post?.postedByUserId ||
         post?.user ||
@@ -216,7 +217,7 @@ export const PostScreen: React.FC<PostScreenProps> = ({
         data?.fetchPost?.user ||
         '';
 
-    // Fetch user details based on the computed user ID.
+    // Fetch user details based on the computed user id.
     const { data: userData } = useQuery(FETCH_USER_QUERY, {
         variables: { userId: computedUserId },
         skip: computedUserId === '',
@@ -304,9 +305,9 @@ export const PostScreen: React.FC<PostScreenProps> = ({
     const rawTime = feedPost.postedAt || feedPost.time || '';
     const formattedTime = rawTime ? getRelativeTime(rawTime) : 'Unknown time';
 
-    // Resolve the username from the fetched user data (if available).
-    const resolvedUsername =
-        userData?.fetchUser?.username || computedUserId || 'Unknown User';
+    // Resolve the username from the fetched user data.
+    // Instead of defaulting to the user id, we now fall back to a generic "Username".
+    const resolvedUsername = userData?.fetchUser?.username || 'Username';
 
     // Map the post fields into our local PostData type.
     const postData: PostData = {

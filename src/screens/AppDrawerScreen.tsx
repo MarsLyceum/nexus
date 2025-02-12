@@ -17,27 +17,18 @@ import {
     SearchScreen,
 } from '.';
 import { SearchBox } from '../sections';
-import { SearchContext } from '../providers';
+import { SearchContext, ActiveGroupContext } from '../providers'; // Make sure ActiveGroupContext is exported from your providers
 
 // Define a DrawerParamList type so navigation is properly typed.
-// We include the known screens and allow additional screens with string keys.
 type DrawerParamList = {
     Messages: undefined;
     Events: undefined;
     Search: undefined;
-    // Allows additional screens
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // Additional screens will use the group names as keys.
     [key: string]: any;
 };
 
 const DrawerNavigator = createDrawerNavigator<DrawerParamList>();
-
-// Wrap ServerScreen to avoid type mismatches when used in the drawer.
-// This wrapper receives the props provided by the DrawerNavigator and passes them to ServerScreen.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const ServerScreenWrapper: React.FC<any> = (props) => (
-    <ServerScreen {...props} />
-);
 
 export function AppDrawerScreen() {
     const userGroups: UserGroupsType = useAppSelector(
@@ -48,8 +39,11 @@ export function AppDrawerScreen() {
     const dimensions = useWindowDimensions();
     const isDesktop = dimensions.width > 768;
 
-    // Use the shared search context instead of local state
+    // Use the shared search context
     const { searchText, setSearchText } = useContext(SearchContext);
+
+    // Get the setter for active group from context
+    const { setActiveGroup } = useContext(ActiveGroupContext);
 
     return (
         <DrawerNavigator.Navigator
@@ -92,7 +86,7 @@ export function AppDrawerScreen() {
                                 navigation.navigate('Search')
                             }
                         />
-                    ) : undefined, // Use `undefined` instead of null
+                    ) : undefined, // Use undefined when not on desktop
 
                 headerRight: () =>
                     !isDesktop && (
@@ -122,16 +116,23 @@ export function AppDrawerScreen() {
         >
             <DrawerNavigator.Screen name="Messages" component={DMListScreen} />
             <DrawerNavigator.Screen name="Events" component={EventsScreen} />
+
             {userGroups.map((group) => (
                 <DrawerNavigator.Screen
-                    name={group.name}
                     key={group.id}
-                    component={ServerScreenWrapper}
-                    initialParams={{ group }}
+                    name={group.name}
+                    component={ServerScreen}
+                    // When this screen is focused, set the active group in context.
+                    listeners={{
+                        focus: () => {
+                            setActiveGroup(group);
+                        },
+                    }}
                 />
             ))}
+
             {/*
-        The Search screen is hidden from the drawer menu (height: 0) 
+        The Search screen is hidden from the drawer menu (height: 0)
         but accessible via the header right icon on mobile.
       */}
             <DrawerNavigator.Screen

@@ -49,7 +49,7 @@ import {
     EventDetailsScreen,
     AppDrawerScreen,
 } from './screens';
-import { SearchProvider } from './providers';
+import { SearchProvider, ActiveGroupProvider } from './providers';
 
 setupAxiosQuotas();
 
@@ -247,57 +247,62 @@ export default function App() {
 
     if (appIsReady) {
         return (
-            <SearchProvider>
-                <SafeAreaProvider>
-                    <StatusBar
-                        barStyle="light-content"
-                        backgroundColor={COLORS.AppBackground}
-                    />
-                    <SafeAreaView
-                        style={{
-                            flex: 1,
-                            backgroundColor: COLORS.AppBackground,
-                        }}
-                        edges={['top', 'left', 'right', 'bottom']}
-                    >
-                        {/* Inject custom scrollbar styles on web */}
-                        <CustomScrollbar />
-                        <ApolloProvider client={client}>
-                            <ReduxProvider store={store}>
-                                <NavigationContainer linking={linking}>
-                                    <RootStack.Navigator
-                                        screenOptions={{
-                                            headerShown: false,
-                                            presentation: 'transparentModal', // This makes the screens render as modals by default
-                                        }}
-                                    >
-                                        <RootStack.Screen
-                                            name="Main"
-                                            component={MainStackScreen}
-                                        />
-                                        <RootStack.Screen
-                                            name="CreateGroup"
-                                            component={CreateGroupModalScreen}
-                                            options={{
+            <ActiveGroupProvider>
+                <SearchProvider>
+                    <SafeAreaProvider>
+                        <StatusBar
+                            barStyle="light-content"
+                            backgroundColor={COLORS.AppBackground}
+                        />
+                        <SafeAreaView
+                            style={{
+                                flex: 1,
+                                backgroundColor: COLORS.AppBackground,
+                            }}
+                            edges={['top', 'left', 'right', 'bottom']}
+                        >
+                            {/* Inject custom scrollbar styles on web */}
+                            <CustomScrollbar />
+                            <ApolloProvider client={client}>
+                                <ReduxProvider store={store}>
+                                    <NavigationContainer linking={linking}>
+                                        <RootStack.Navigator
+                                            screenOptions={{
+                                                headerShown: false,
                                                 presentation:
-                                                    'transparentModal',
-                                                cardStyle: {
-                                                    backgroundColor:
-                                                        'transparent',
-                                                },
-                                                ...Platform.select({
-                                                    ios: TransitionPresets.ModalPresentationIOS,
-                                                }),
+                                                    'transparentModal', // This makes the screens render as modals by default
                                             }}
-                                        />
-                                    </RootStack.Navigator>
-                                    <Toast />
-                                </NavigationContainer>
-                            </ReduxProvider>
-                        </ApolloProvider>
-                    </SafeAreaView>
-                </SafeAreaProvider>
-            </SearchProvider>
+                                        >
+                                            <RootStack.Screen
+                                                name="Main"
+                                                component={MainStackScreen}
+                                            />
+                                            <RootStack.Screen
+                                                name="CreateGroup"
+                                                component={
+                                                    CreateGroupModalScreen
+                                                }
+                                                options={{
+                                                    presentation:
+                                                        'transparentModal',
+                                                    cardStyle: {
+                                                        backgroundColor:
+                                                            'transparent',
+                                                    },
+                                                    ...Platform.select({
+                                                        ios: TransitionPresets.ModalPresentationIOS,
+                                                    }),
+                                                }}
+                                            />
+                                        </RootStack.Navigator>
+                                        <Toast />
+                                    </NavigationContainer>
+                                </ReduxProvider>
+                            </ApolloProvider>
+                        </SafeAreaView>
+                    </SafeAreaProvider>
+                </SearchProvider>
+            </ActiveGroupProvider>
         );
     }
 }

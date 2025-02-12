@@ -1,6 +1,6 @@
 // ServerScreen.tsx
-import React, { useState } from 'react';
-import { NavigationProp, RouteProp } from '@react-navigation/native';
+import React, { useState, useContext, useEffect } from 'react';
+import { NavigationProp } from '@react-navigation/native';
 import {
     View,
     Text,
@@ -15,6 +15,7 @@ import { ServerMessagesScreen } from './ServerMessagesScreen';
 import { GroupEventsScreen } from './GroupEventsScreen';
 import { Group, GroupChannel } from '../types';
 import { Feed } from '../icons';
+import { ActiveGroupContext } from '../providers';
 
 const styles = StyleSheet.create({
     largeScreenContainer: {
@@ -66,20 +67,12 @@ const styles = StyleSheet.create({
     },
 });
 
-// Define the root stack's param list.
 type RootStackParamList = {
-    ServerMessages: { channel: GroupChannel; group: Group };
+    ServerMessages: undefined;
     GroupEvents: { group: Group };
 };
 
-// Create a unified navigation type alias.
 type NavProp = NavigationProp<RootStackParamList>;
-
-// Define props for ServerScreen.
-type ServerScreenProps = {
-    route: RouteProp<RootStackParamList, 'ServerMessages'>;
-    navigation: NavProp;
-};
 
 type ActiveView = 'messages' | 'events';
 
@@ -107,67 +100,70 @@ const ChannelList: React.FC<ChannelListProps> = ({
         <FlatList
             data={group.channels}
             keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-                <View
-                    style={
-                        activeChannel?.id === item.id
-                            ? styles.activeChannelItemWrapper
-                            : {}
-                    }
-                >
-                    <TouchableOpacity
-                        style={styles.channelItem}
-                        onPress={() => {
-                            setActiveChannel(item);
-                            if (isLargeScreen) {
-                                setActiveView('messages');
-                            } else {
-                                navigation.navigate('ServerMessages', {
-                                    channel: item,
-                                    group,
-                                });
-                            }
-                        }}
+            renderItem={({ item }) => {
+                // Only highlight a channel if the view is "messages" and this channel is the active one.
+                const isActiveChannel =
+                    activeView === 'messages' && activeChannel?.id === item.id;
+                return (
+                    <View
+                        style={
+                            isActiveChannel
+                                ? styles.activeChannelItemWrapper
+                                : undefined
+                        }
                     >
-                        {item.type === 'feed' ? (
-                            <Feed style={styles.icon} />
-                        ) : (
-                            <Icon
-                                name="comment"
-                                size={16}
-                                color={
-                                    activeChannel?.id === item.id
-                                        ? COLORS.White
-                                        : COLORS.InactiveText
+                        <TouchableOpacity
+                            style={styles.channelItem}
+                            onPress={() => {
+                                setActiveChannel(item);
+                                if (isLargeScreen) {
+                                    setActiveView('messages');
+                                } else {
+                                    // On smaller screens, navigate without passing the channel in the route.
+                                    navigation.navigate('ServerMessages');
                                 }
-                                style={styles.icon}
-                            />
-                        )}
-                        <Text
-                            style={[
-                                styles.channelText,
-                                activeChannel?.id === item.id &&
-                                    styles.activeChannelText,
-                            ]}
+                            }}
                         >
-                            {item.name}
-                        </Text>
-                    </TouchableOpacity>
-                </View>
-            )}
+                            {item.type === 'feed' ? (
+                                <Feed style={styles.icon} />
+                            ) : (
+                                <Icon
+                                    name="comment"
+                                    size={16}
+                                    color={
+                                        isActiveChannel
+                                            ? COLORS.White
+                                            : COLORS.InactiveText
+                                    }
+                                    style={styles.icon}
+                                />
+                            )}
+                            <Text
+                                style={[
+                                    styles.channelText,
+                                    isActiveChannel && styles.activeChannelText,
+                                ]}
+                            >
+                                {item.name}
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+                );
+            }}
         />
 
-        {/* "Events" button without a fake channel */}
+        {/* "Events" button */}
         <View
             style={
-                activeView === 'events' ? styles.activeChannelItemWrapper : {}
+                activeView === 'events'
+                    ? styles.activeChannelItemWrapper
+                    : undefined
             }
         >
             <TouchableOpacity
                 style={styles.channelItem}
                 onPress={() => {
                     if (isLargeScreen) {
-                        // Clear activeChannel and set view to events.
                         setActiveChannel(undefined);
                         setActiveView('events');
                     } else {
@@ -198,22 +194,43 @@ const ChannelList: React.FC<ChannelListProps> = ({
     </View>
 );
 
-export function ServerScreen({ navigation, route }: ServerScreenProps) {
-    const { group } = route.params;
+export function ServerScreen({ navigation }: { navigation: NavProp }) {
+    const { activeGroup, activeChannel, setActiveChannel } =
+        useContext(ActiveGroupContext);
     const { width } = useWindowDimensions();
     const isLargeScreen = width > 768;
-    // Set the initial active channel to the first channel in the group.
-    const [activeChannel, setActiveChannel] = useState<
-        GroupChannel | undefined
-    >(group.channels[0] || undefined);
     const [activeView, setActiveView] = useState<ActiveView>('messages');
+
+    // When an active group becomes available and no active channel is set, use the first channel.
+    useEffect(() => {
+        if (activeGroup && !activeChannel) {
+            setActiveChannel(activeGroup.channels[0] || undefined);
+        }
+    }, [activeGroup, activeChannel, setActiveChannel]);
+
+    if (!activeGroup) {
+        return (
+            <View
+                style={{
+                    flex: 1,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    backgroundColor: COLORS.PrimaryBackground,
+                }}
+            >
+                <Text style={{ color: COLORS.White }}>
+                    No active group selected.
+                </Text>
+            </View>
+        );
+    }
 
     if (isLargeScreen) {
         return (
             <View style={styles.largeScreenContainer}>
                 <View style={styles.sidebarContainer}>
                     <ChannelList
-                        group={group}
+                        group={activeGroup}
                         navigation={navigation}
                         isLargeScreen={isLargeScreen}
                         activeChannel={activeChannel}
@@ -224,20 +241,13 @@ export function ServerScreen({ navigation, route }: ServerScreenProps) {
                 </View>
                 <View style={styles.chatWrapper}>
                     {activeView === 'messages' ? (
-                        // When activeView is 'messages', activeChannel should not be undefined.
-                        <ServerMessagesScreen
-                            route={route}
-                            activeChannel={activeChannel!}
-                            // @ts-expect-error type narrowing isn't working
-                            navigation={
-                                navigation as NavigationProp<
-                                    RootStackParamList,
-                                    'ServerMessages'
-                                >
-                            }
-                        />
+                        // ServerMessagesScreen retrieves the active channel from context.
+                        <ServerMessagesScreen navigation={navigation} />
                     ) : (
-                        <GroupEventsScreen navigation={navigation} />
+                        <GroupEventsScreen
+                            navigation={navigation}
+                            group={activeGroup}
+                        />
                     )}
                 </View>
             </View>
@@ -247,7 +257,7 @@ export function ServerScreen({ navigation, route }: ServerScreenProps) {
     // On smaller screens, render just the channel list.
     return (
         <ChannelList
-            group={group}
+            group={activeGroup}
             navigation={navigation}
             activeChannel={activeChannel}
             setActiveChannel={setActiveChannel}

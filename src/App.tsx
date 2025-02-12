@@ -32,6 +32,7 @@ import {
 } from '@expo-google-fonts/roboto';
 import * as SplashScreen from 'expo-splash-screen';
 
+import { linking } from './linking';
 import { COLORS } from './constants';
 import { setupAxiosQuotas } from './utils/setupAxiosQuotas';
 import { store } from './redux';
@@ -263,7 +264,7 @@ export default function App() {
                         <CustomScrollbar />
                         <ApolloProvider client={client}>
                             <ReduxProvider store={store}>
-                                <NavigationContainer>
+                                <NavigationContainer linking={linking}>
                                     <RootStack.Navigator
                                         screenOptions={{
                                             headerShown: false,

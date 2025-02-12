@@ -9,12 +9,60 @@ import {
     StyleSheet,
     Image,
     Alert,
+    Platform,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
-import { createClient } from '@supabase/supabase-js';
-import { COLORS } from '../constants'; // Adjust path if needed
+import { useMutation } from '@apollo/client';
+import { COLORS } from '../constants';
+import { CREATE_GROUP_MUTATION } from '../queries';
+import { useAppSelector, RootState, UserType } from '../redux';
+
+/**
+ * Helper function to detect the MIME type from a file URI.
+ * It uses the file extension to return a MIME type.
+ */
+function getMimeType(uri: string): string {
+    const extension = uri.split('.').pop()?.toLowerCase();
+    switch (extension) {
+        case 'jpg':
+        case 'jpeg':
+            return 'image/jpeg';
+        case 'png':
+            return 'image/png';
+        case 'gif':
+            return 'image/gif';
+        case 'webp':
+            return 'image/webp';
+        default:
+            return 'application/octet-stream';
+    }
+}
+
+/**
+ * Converts a data URL (base64) to a File object (for web).
+ * @param dataUrl The data URL (e.g., "data:image/jpeg;base64,...")
+ * @param filename The desired file name.
+ */
+function dataURLtoFile(dataUrl: string, filename: string): File {
+    const arr = dataUrl.split(',');
+    const mimeMatch = arr[0].match(/:(.*?);/);
+    if (!mimeMatch) {
+        throw new Error('Invalid data URL');
+    }
+    const mime = mimeMatch[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new File([u8arr], filename, {
+        type: mime,
+        lastModified: Date.now(),
+    });
+}
 
 type RootStackParamList = {
     CreateGroup: undefined;
@@ -31,52 +79,18 @@ type Props = {
     route: CreateGroupModalRouteProp;
 };
 
-// Initialize Supabase client
-const supabaseUrl = 'https://zrgnvlobrohtrrqeajhy.supabase.co';
-const supabaseAnonKey =
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpyZ252bG9icm9odHJycWVhamh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzgwODgzMjcsImV4cCI6MjA1MzY2NDMyN30.sfXfrw-_WGpxTl8C2TqLqG6Dgd6hUdN-wO3rwi9WMVc';
-const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
-
-const uploadIconToSupabase = async (
-    imageUri: string
-): Promise<string | null> => {
-    try {
-        // Convert the image URI to a Blob.
-        const response = await fetch(imageUri);
-        const blob = await response.blob();
-
-        const filePath = `${Date.now()}.jpg`;
-        // Generate a unique file name (you might use a UUID here)
-        const fileName = `group-avatars/${filePath}`;
-
-        // Upload the file to your Supabase bucket (change 'group-icons' to your bucket name)
-        const { data, error } = await supabaseClient.storage
-            .from('group-avatars')
-            .upload(fileName, blob, {
-                contentType: 'image/jpeg',
-            });
-
-        if (error) {
-            console.error('Error uploading image:', error.message);
-            return null;
-        }
-
-        // Get the public URL for the uploaded image.
-        return filePath;
-    } catch (uploadError) {
-        console.error('Upload error:', uploadError);
-        return null;
-    }
-};
-
 export const CreateGroupModalScreen: React.FC<Props> = ({ navigation }) => {
     const [groupName, setGroupName] = useState<string>('');
     const [groupAvatar, setGroupAvatar] = useState<string | null>(null);
     const [isPublic, setIsPublic] = useState<boolean>(true);
+    const user: UserType = useAppSelector(
+        (state: RootState) => state.user.user
+    );
 
-    // Function to launch the image picker for uploading an avatar
+    const [createGroup, { loading }] = useMutation(CREATE_GROUP_MUTATION);
+
+    // Launch the image picker.
     const handleUploadAvatar = async () => {
-        // Request permission to access the media library
         const { status } =
             await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== 'granted') {
@@ -87,16 +101,14 @@ export const CreateGroupModalScreen: React.FC<Props> = ({ navigation }) => {
             return;
         }
 
-        // Launch the image library with base64 enabled
         const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: true,
             aspect: [1, 1],
             quality: 1,
-            base64: true, // Ensure we get the base64 data on web
+            base64: Platform.OS === 'web', // request base64 on web
         });
 
-        // Determine if the user canceled
         const canceled =
             ('canceled' in result && result.canceled) ||
             ('cancelled' in result && result.cancelled);
@@ -104,33 +116,87 @@ export const CreateGroupModalScreen: React.FC<Props> = ({ navigation }) => {
             return;
         }
 
-        // For the new API, the result will have an "assets" array
+        // Expo’s new API returns an assets array.
         const imageAsset = result.assets ? result.assets[0] : result;
-        // If base64 is provided, use it to create a data URI; otherwise, use the uri.
-        const imageUri = imageAsset.base64
-            ? `data:image/jpeg;base64,${imageAsset.base64}`
-            : imageAsset.uri;
 
-        setGroupAvatar(imageUri);
+        if (Platform.OS === 'web') {
+            // On web, if base64 is provided, construct a data URL.
+            if (imageAsset.base64) {
+                const mimeType = getMimeType(imageAsset.uri);
+                const dataUrl = `data:${mimeType};base64,${imageAsset.base64}`;
+                setGroupAvatar(dataUrl);
+            } else {
+                setGroupAvatar(imageAsset.uri);
+            }
+        } else {
+            // On native, simply store the URI.
+            setGroupAvatar(imageAsset.uri);
+        }
     };
 
+    // Call the mutation when "Create" is pressed.
     const handleCreateGroup = async () => {
         if (groupName.trim() === '') {
-            alert('Please enter a group name.');
+            Alert.alert('Validation', 'Please enter a group name.');
+            return;
+        }
+        if (!groupAvatar) {
+            Alert.alert('Validation', 'Please upload an avatar.');
             return;
         }
 
-        await uploadIconToSupabase(groupAvatar ?? '');
+        try {
+            let fileUpload: File | { uri: string; type: string; name: string };
 
-        // Log or call your API to create the group with the provided details.
-        console.log('Group Created:', {
-            groupName,
-            groupAvatar,
-            privacy: isPublic ? 'Public' : 'Private',
-        });
+            if (Platform.OS !== 'web') {
+                // For native, create an object with the file details.
+                const fileName = groupAvatar.split('/').pop() || 'upload';
+                const mimeType = getMimeType(fileName);
+                fileUpload = {
+                    uri: groupAvatar,
+                    type: mimeType,
+                    name: fileName,
+                };
+            } else {
+                // Web: if groupAvatar is a data URL, convert it to a File.
+                if (groupAvatar.startsWith('data:')) {
+                    const fileName =
+                        'upload.' + getMimeType(groupAvatar).split('/')[1];
+                    fileUpload = dataURLtoFile(groupAvatar, fileName);
+                } else {
+                    // Otherwise, fetch the URL and convert to a File.
+                    const response = await fetch(groupAvatar);
+                    const blob = await response.blob();
+                    const fileName = groupAvatar.split('/').pop() || 'upload';
+                    const mimeType = blob.type || getMimeType(groupAvatar);
+                    fileUpload = new File([blob], fileName, {
+                        type: mimeType,
+                        lastModified: Date.now(),
+                    });
+                }
+            }
 
-        // Close the modal after creation.
-        navigation.goBack();
+            // Now call the mutation.
+            // We add the header 'x-apollo-operation-name' to satisfy CSRF checks.
+            const { data } = await createGroup({
+                variables: {
+                    name: groupName,
+                    createdByUserId: user?.id,
+                    publicGroup: isPublic,
+                    avatar: fileUpload,
+                },
+                context: {
+                    headers: {
+                        'x-apollo-operation-name': 'CreateGroup',
+                    },
+                },
+            });
+            console.log('Group Created:', data.createGroup.name);
+            navigation.goBack();
+        } catch (error) {
+            console.error('Error creating group:', error);
+            Alert.alert('Error', 'Failed to create group.');
+        }
     };
 
     return (
@@ -138,7 +204,6 @@ export const CreateGroupModalScreen: React.FC<Props> = ({ navigation }) => {
             <View style={styles.modalContainer}>
                 <Text style={styles.modalTitle}>Create New Group</Text>
 
-                {/* Group Avatar Section */}
                 <View style={styles.groupAvatarContainer}>
                     {groupAvatar ? (
                         <Image
@@ -162,7 +227,6 @@ export const CreateGroupModalScreen: React.FC<Props> = ({ navigation }) => {
                     </Pressable>
                 </View>
 
-                {/* Privacy Selection */}
                 <View style={styles.privacyContainer}>
                     <Text style={styles.privacyLabel}>Privacy:</Text>
                     <View style={styles.privacyOptions}>
@@ -189,7 +253,6 @@ export const CreateGroupModalScreen: React.FC<Props> = ({ navigation }) => {
                     </View>
                 </View>
 
-                {/* Group Name Input */}
                 <TextInput
                     style={styles.textInput}
                     placeholder="Enter group name"
@@ -198,7 +261,6 @@ export const CreateGroupModalScreen: React.FC<Props> = ({ navigation }) => {
                     onChangeText={setGroupName}
                 />
 
-                {/* Buttons */}
                 <View style={styles.modalButtonRow}>
                     <Pressable
                         style={styles.modalButton}
@@ -209,8 +271,11 @@ export const CreateGroupModalScreen: React.FC<Props> = ({ navigation }) => {
                     <Pressable
                         style={styles.modalButton}
                         onPress={handleCreateGroup}
+                        disabled={loading}
                     >
-                        <Text style={styles.modalButtonText}>Create</Text>
+                        <Text style={styles.modalButtonText}>
+                            {loading ? 'Creating...' : 'Create'}
+                        </Text>
                     </Pressable>
                 </View>
             </View>
@@ -221,7 +286,7 @@ export const CreateGroupModalScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
     modalOverlay: {
         flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.5)', // Semi-transparent background
+        backgroundColor: 'rgba(0,0,0,0.5)',
         justifyContent: 'center',
         alignItems: 'center',
     },

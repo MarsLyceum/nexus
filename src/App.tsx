@@ -8,12 +8,12 @@ import EventSource from 'react-native-event-source';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Platform, StatusBar } from 'react-native';
 import Toast from 'react-native-toast-message';
+import createUploadLink from 'apollo-upload-client/createUploadLink.mjs';
 import {
     ApolloClient,
     InMemoryCache,
     ApolloProvider,
     from,
-    HttpLink,
     ApolloLink,
     Observable,
     split,
@@ -117,8 +117,42 @@ const graphqlApiGatewayEndpointSse = ''; // SSE turned off
 
 const httpLink = from([
     errorLink,
-    new HttpLink({
-        uri: graphqlApiGatewayEndpointHttp,
+    createUploadLink({
+        // uri: graphqlApiGatewayEndpointHttp,
+        uri: 'http://192.168.1.48:4000/graphql',
+        isExtractableFile: (value: any) => {
+            if (value == null) return false;
+            // On web: if value is a native File or Blob, it’s fine.
+            if (typeof File !== 'undefined' && value instanceof File)
+                return true;
+            if (typeof Blob !== 'undefined' && value instanceof Blob)
+                return true;
+            // For our custom file object, check that it has uri, name, and type.
+            if (
+                typeof value === 'object' &&
+                typeof value.uri === 'string' &&
+                typeof value.name === 'string' &&
+                typeof value.type === 'string'
+            ) {
+                // On web, if the file object doesn’t have a createReadStream, add a dummy.
+                if (
+                    Platform.OS === 'web' &&
+                    typeof value.createReadStream !== 'function'
+                ) {
+                    Object.defineProperty(value, 'createReadStream', {
+                        value: () => {
+                            throw new Error(
+                                'createReadStream is not supported on web'
+                            );
+                        },
+                        writable: false,
+                        enumerable: false,
+                    });
+                }
+                return true;
+            }
+            return false;
+        },
     }),
 ]);
 

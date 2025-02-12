@@ -7,3 +7,4 @@ export * from './CREATE_GROUP_CHANNEL_MESSAGE_MUTATION';
 export * from './FETCH_CHANNEL_POSTS_QUERY';
 export * from './CREATE_GROUP_CHANNEL_POST_MUTATION';
 export * from './FETCH_POST_QUERY';
+export * from './CREATE_GROUP_MUTATION';

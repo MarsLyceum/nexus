@@ -1,19 +1,17 @@
 // ServerMessagesScreen.tsx
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { NavigationProp, RouteProp } from '@react-navigation/core';
+import React, { useContext } from 'react';
+import { View, StyleSheet, Text } from 'react-native';
+import { NavigationProp } from '@react-navigation/core';
 import { FeedChannelScreen } from './FeedChannelScreen';
 import { TextChannelScreen } from './TextChannelScreen';
-import { GroupChannel, Group } from '../types';
+import { ActiveGroupContext } from '../providers';
 
 type RootStackParamList = {
-    ServerMessages: { channel: GroupChannel; group: Group };
+    ServerMessages: undefined;
 };
 
 type ServerMessagesScreenProps = {
     navigation: NavigationProp<RootStackParamList, 'ServerMessages'>;
-    route: RouteProp<RootStackParamList, 'ServerMessages'>;
-    activeChannel: GroupChannel;
 };
 
 const styles = StyleSheet.create({
@@ -23,22 +21,38 @@ const styles = StyleSheet.create({
 });
 
 export const ServerMessagesScreen: React.FC<ServerMessagesScreenProps> = ({
-    route,
-    activeChannel,
     navigation,
 }) => {
-    // Determine the channel either from route params or from the activeChannel prop.
-    const channel = route?.params?.channel || activeChannel;
-    const isFeedChannel = channel.type === 'feed';
+    // Retrieve the activeChannel from context
+    const { activeChannel } = useContext(ActiveGroupContext);
 
-    // On large screens (or non-feed channels), render the appropriate screen inline.
+    // If there's no active channel available, show an informational message.
+    if (!activeChannel) {
+        return (
+            <View style={styles.chatContainer}>
+                <Text style={{ color: 'white' }}>
+                    No active channel selected.
+                </Text>
+            </View>
+        );
+    }
+
+    const isFeedChannel = activeChannel.type === 'feed';
+
     return (
         <View style={styles.chatContainer}>
             {isFeedChannel ? (
-                // @ts-expect-error navigation is a different type
-                <FeedChannelScreen channel={channel} navigation={navigation} />
+                <FeedChannelScreen
+                    channel={activeChannel}
+                    // @ts-expect-error: Adjust navigation typing as needed.
+                    navigation={navigation}
+                />
             ) : (
-                <TextChannelScreen channel={channel} navigation={navigation} />
+                <TextChannelScreen
+                    channel={activeChannel}
+                    // @ts-expect-error: Adjust navigation typing as needed.
+                    navigation={navigation}
+                />
             )}
         </View>
     );

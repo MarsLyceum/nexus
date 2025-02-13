@@ -1,6 +1,17 @@
-// PostItem.tsx
 import React, { useState } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import {
+    View,
+    Text,
+    Image,
+    StyleSheet,
+    TouchableOpacity,
+    Share,
+    Platform,
+    Alert,
+} from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import Toast from 'react-native-toast-message';
+
 import { VoteActions } from './VoteActions';
 import { BackArrow } from '../buttons';
 import { COLORS } from '../constants';
@@ -10,14 +21,14 @@ const TRUNCATE_LENGTH = 100;
 const styles = StyleSheet.create({
     postContainer: {
         backgroundColor: COLORS.PrimaryBackground,
-        borderRadius: 8, // Updated to 8
+        borderRadius: 8,
         padding: 15,
         marginVertical: 10,
     },
     postRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 10, // Standardized spacing
+        marginBottom: 10,
     },
     backArrow: {
         marginRight: 10,
@@ -28,21 +39,35 @@ const styles = StyleSheet.create({
         borderRadius: 18,
         marginRight: 10,
     },
-    subredditUserText: {
-        color: COLORS.InactiveText,
+    groupPic: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        marginRight: 10,
+    },
+    headerTextContainer: {
+        flexDirection: 'column',
+    },
+    groupText: {
+        color: COLORS.White,
         fontSize: 14,
+        fontWeight: 'bold',
+    },
+    subText: {
+        color: COLORS.InactiveText,
+        fontSize: 12,
     },
     postTitle: {
         color: COLORS.White,
-        fontSize: 16, // Standardized typography
-        fontWeight: 'bold', // Standardized typography
+        fontSize: 16,
+        fontWeight: 'bold',
         marginBottom: 10,
     },
     flairContainer: {
         alignSelf: 'flex-start',
         paddingHorizontal: 10,
-        paddingVertical: 10, // Accent element stays different
-        borderRadius: 12, // Accent element remains as is
+        paddingVertical: 10,
+        borderRadius: 12,
         backgroundColor: COLORS.Primary,
         marginBottom: 10,
     },
@@ -55,10 +80,30 @@ const styles = StyleSheet.create({
         fontSize: 14,
         marginBottom: 10,
     },
+    actionsContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+        marginTop: 10,
+    },
+    shareButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        marginLeft: 10,
+    },
+    shareCountText: {
+        color: COLORS.White,
+        fontSize: 12,
+        marginLeft: 4,
+    },
 });
 
 export type PostItemProps = {
-    user: string;
+    id: string;
+    username: string;
+    group?: string;
     time: string;
     title: string;
     content: string;
@@ -69,17 +114,32 @@ export type PostItemProps = {
     preview?: boolean;
     onBackPress?: () => void;
     onPress?: () => void;
+    variant?: 'feed' | 'default' | 'details';
+    shareUrl?: string; // Optional override
 };
 
-function getAvatarUri(user: string, thumbnail?: string): string {
+function getUserAvatarUri(username: string, thumbnail?: string): string {
     return (
         thumbnail ||
-        `https://picsum.photos/seed/${user.replaceAll(/[^\dA-Za-z]/g, '')}/48`
+        `https://picsum.photos/seed/${encodeURIComponent(
+            username.replaceAll(/\W/g, '')
+        )}/48`
+    );
+}
+
+function getGroupAvatarUri(group: string, thumbnail?: string): string {
+    return (
+        thumbnail ||
+        `https://picsum.photos/seed/${encodeURIComponent(
+            group.replaceAll(/\W/g, '')
+        )}/48`
     );
 }
 
 export const PostItem: React.FC<PostItemProps> = ({
-    user,
+    id,
+    username,
+    group = '',
     time,
     title,
     content,
@@ -90,15 +150,94 @@ export const PostItem: React.FC<PostItemProps> = ({
     preview = false,
     onBackPress,
     onPress,
+    variant = 'default',
+    shareUrl,
 }) => {
     const [voteCount, setVoteCount] = useState(upvotes);
+    const [shareCount, setShareCount] = useState(0);
+
     const onUpvote = () => setVoteCount((prev) => prev + 1);
     const onDownvote = () => setVoteCount((prev) => prev - 1);
 
     const displayedContent =
         preview && content.length > TRUNCATE_LENGTH
-            ? `${content.slice(0, Math.max(0, TRUNCATE_LENGTH))  }...`
+            ? `${content.slice(0, TRUNCATE_LENGTH)}...`
             : content;
+
+    let avatarUri = '';
+    let headerElement;
+
+    if (variant === 'feed') {
+        avatarUri = getUserAvatarUri(username, thumbnail);
+        headerElement = (
+            <Text style={styles.subText}>
+                {username} • {time}
+            </Text>
+        );
+    } else if (variant === 'details') {
+        avatarUri = getUserAvatarUri(username, thumbnail);
+        headerElement = (
+            <View style={styles.headerTextContainer}>
+                <Text style={styles.groupText}>{group}</Text>
+                <Text style={styles.subText}>
+                    {username} • {time}
+                </Text>
+            </View>
+        );
+    } else {
+        avatarUri = getGroupAvatarUri(group, thumbnail);
+        headerElement = (
+            <View style={styles.headerTextContainer}>
+                <Text style={styles.groupText}>{group}</Text>
+                <Text style={styles.subText}>
+                    {username} • {time}
+                </Text>
+            </View>
+        );
+    }
+
+    // Compute the share URL intelligently.
+    // On web: use window.location.origin; on mobile: use a deeplink scheme.
+    const computedShareUrl =
+        shareUrl ||
+        (Platform.OS === 'web' && typeof window !== 'undefined'
+            ? `${window.location.origin}/post/${id}`
+            : `peeps://post/${id}`); // Mobile deep link
+
+    const onShare = async () => {
+        if (Platform.OS === 'web') {
+            try {
+                await navigator.clipboard.writeText(computedShareUrl);
+                Toast.show({
+                    type: 'success',
+                    text1: 'Link copied to clipboard',
+                    position: 'bottom',
+                    visibilityTime: 2000,
+                });
+                setShareCount((prev) => prev + 1);
+            } catch {
+                Toast.show({
+                    type: 'error',
+                    text1: 'Unable to copy link',
+                    position: 'bottom',
+                    visibilityTime: 2000,
+                });
+            }
+        } else {
+            try {
+                const result = await Share.share({
+                    message: `${title}\n\n${displayedContent}\n\n${computedShareUrl}`,
+                });
+                if (result.action === Share.sharedAction) {
+                    setShareCount((prev) => prev + 1);
+                }
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } catch (error: any) {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+                Alert.alert('Share error', error.message);
+            }
+        }
+    };
 
     const contentElement = (
         <View style={styles.postContainer}>
@@ -107,12 +246,12 @@ export const PostItem: React.FC<PostItemProps> = ({
                     <BackArrow onPress={onBackPress} style={styles.backArrow} />
                 )}
                 <Image
-                    source={{ uri: getAvatarUri(user, thumbnail) }}
-                    style={styles.userPic}
+                    source={{ uri: avatarUri }}
+                    style={
+                        variant === 'feed' ? styles.userPic : styles.groupPic
+                    }
                 />
-                <Text style={styles.subredditUserText}>
-                    {user} • {time}
-                </Text>
+                {headerElement}
             </View>
             <Text style={styles.postTitle}>{title}</Text>
             {flair && (
@@ -120,13 +259,27 @@ export const PostItem: React.FC<PostItemProps> = ({
                     <Text style={styles.flairText}>{flair}</Text>
                 </View>
             )}
-            <Text style={styles.contentText}>{displayedContent}</Text>
-            <VoteActions
-                voteCount={voteCount}
-                onUpvote={onUpvote}
-                onDownvote={onDownvote}
-                commentCount={commentsCount}
-            />
+            {displayedContent !== '' && (
+                <Text style={styles.contentText}>{displayedContent}</Text>
+            )}
+            <View style={styles.actionsContainer}>
+                <VoteActions
+                    voteCount={voteCount}
+                    onUpvote={onUpvote}
+                    onDownvote={onDownvote}
+                    commentCount={commentsCount}
+                />
+                <TouchableOpacity onPress={onShare} style={styles.shareButton}>
+                    <MaterialCommunityIcons
+                        name="share-outline"
+                        size={20}
+                        color={COLORS.White}
+                    />
+                    {shareCount > 0 && (
+                        <Text style={styles.shareCountText}>{shareCount}</Text>
+                    )}
+                </TouchableOpacity>
+            </View>
         </View>
     );
 

@@ -1,5 +1,5 @@
 // GroupEventsScreen.tsx
-import React, { useState, useContext } from 'react';
+import React, { useState } from 'react';
 import {
     View,
     FlatList,
@@ -17,9 +17,6 @@ import { Header } from '../sections';
 import { COLORS } from '../constants';
 import { useAppSelector, RootState, UserType } from '../redux';
 
-// Import the shared search context and the search filter hook
-import { SearchContext } from '../providers';
-import { useSearchFilter } from '../hooks';
 import { Event } from '../types';
 
 const initialEvents: Event[] = [
@@ -67,15 +64,6 @@ export const GroupEventsScreen = ({
     const [location, setLocation] = useState('');
     const [imageUrl, setImageUrl] = useState('');
 
-    // Retrieve the shared search text from the context
-    const { searchText } = useContext(SearchContext);
-
-    // Use the search filter hook to filter events based on title, groupName, and location
-    const filteredEvents = useSearchFilter(events, searchText, [
-        'title',
-        'groupName',
-        'location',
-    ]);
     const user: UserType = useAppSelector(
         (state: RootState) => state.user.user
     );
@@ -115,7 +103,7 @@ export const GroupEventsScreen = ({
             />
 
             <FlatList
-                data={filteredEvents} // Use the filtered events here
+                data={events}
                 keyExtractor={(item) => item.id}
                 renderItem={({ item }) => (
                     <EventCard

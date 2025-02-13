@@ -9,6 +9,7 @@ interface SearchBoxProps {
     onChangeText: (text: string) => void;
     placeholder?: string;
     desktop?: boolean;
+    onSubmitEditing?: () => void;
 }
 
 export const SearchBox: React.FC<SearchBoxProps> = ({
@@ -16,6 +17,7 @@ export const SearchBox: React.FC<SearchBoxProps> = ({
     onChangeText,
     placeholder = 'Search...',
     desktop = false,
+    onSubmitEditing,
 }) => (
     <View style={[styles.container, desktop && styles.desktopContainer]}>
         <FontAwesome name="search" size={18} color="#999" style={styles.icon} />
@@ -27,6 +29,7 @@ export const SearchBox: React.FC<SearchBoxProps> = ({
             onChangeText={onChangeText}
             autoCapitalize="none"
             autoCorrect={false}
+            onSubmitEditing={onSubmitEditing}
         />
     </View>
 );

@@ -1,6 +1,5 @@
-// ServerScreen.tsx
-import React, { useState } from 'react';
-import { NavigationProp, RouteProp } from '@react-navigation/native';
+import React, { useState, useContext, useEffect, useRef } from 'react';
+import { NavigationProp } from '@react-navigation/native';
 import {
     View,
     Text,
@@ -15,6 +14,7 @@ import { ServerMessagesScreen } from './ServerMessagesScreen';
 import { GroupEventsScreen } from './GroupEventsScreen';
 import { Group, GroupChannel } from '../types';
 import { Feed } from '../icons';
+import { ActiveGroupContext } from '../providers';
 
 const styles = StyleSheet.create({
     largeScreenContainer: {
@@ -23,8 +23,8 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.PrimaryBackground,
     },
     sidebarContainer: {
-        width: 250,
         backgroundColor: COLORS.PrimaryBackground,
+        // Width will be dynamically set (250 when expanded, 60 when collapsed)
     },
     chatWrapper: {
         flex: 1,
@@ -37,7 +37,20 @@ const styles = StyleSheet.create({
     },
     serverTitle: {
         fontSize: 20,
+        fontFamily: 'Roboto_700Bold',
         fontWeight: 'bold',
+        color: 'white',
+        marginBottom: 10,
+    },
+    // New style for member information
+    memberInfo: {
+        fontSize: 12,
+        color: 'white',
+        marginBottom: 10,
+    },
+    groupDescription: {
+        fontFamily: 'Roboto_400Regular',
+        fontSize: 14,
         color: 'white',
         marginBottom: 20,
     },
@@ -66,21 +79,12 @@ const styles = StyleSheet.create({
     },
 });
 
-// Define the root stack's param list.
 type RootStackParamList = {
-    ServerMessages: { channel: GroupChannel; group: Group };
+    ServerMessages: undefined;
     GroupEvents: { group: Group };
 };
 
-// Create a unified navigation type alias.
 type NavProp = NavigationProp<RootStackParamList>;
-
-// Define props for ServerScreen.
-type ServerScreenProps = {
-    route: RouteProp<RootStackParamList, 'ServerMessages'>;
-    navigation: NavProp;
-};
-
 type ActiveView = 'messages' | 'events';
 
 type ChannelListProps = {
@@ -91,6 +95,7 @@ type ChannelListProps = {
     isLargeScreen: boolean;
     activeView: ActiveView;
     setActiveView: (view: ActiveView) => void;
+    collapsed?: boolean;
 };
 
 const ChannelList: React.FC<ChannelListProps> = ({
@@ -101,141 +106,281 @@ const ChannelList: React.FC<ChannelListProps> = ({
     isLargeScreen,
     activeView,
     setActiveView,
-}) => (
-    <View style={styles.channelListContainer}>
-        <Text style={styles.serverTitle}>{group.name}</Text>
-        <FlatList
-            data={group.channels}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-                <View
-                    style={
-                        activeChannel?.id === item.id
-                            ? styles.activeChannelItemWrapper
-                            : {}
-                    }
+    collapsed = false,
+}) => {
+    // Define mock data for member and online counts
+    const mockMemberCount = 123;
+    const mockOnlineCount = 45;
+
+    // Render a channel item differently when collapsed.
+    const renderChannelItem = ({ item }: { item: GroupChannel }) => {
+        const isActiveChannel =
+            activeView === 'messages' && activeChannel?.id === item.id;
+        if (collapsed) {
+            // Minimal view: show only the icon.
+            return (
+                <TouchableOpacity
+                    style={[
+                        styles.channelItem,
+                        { justifyContent: 'center', paddingVertical: 10 },
+                    ]}
+                    onPress={() => {
+                        setActiveChannel(item);
+                        if (isLargeScreen) {
+                            setActiveView('messages');
+                        } else {
+                            navigation.navigate('ServerMessages');
+                        }
+                    }}
                 >
-                    <TouchableOpacity
-                        style={styles.channelItem}
-                        onPress={() => {
-                            setActiveChannel(item);
-                            if (isLargeScreen) {
-                                setActiveView('messages');
-                            } else {
-                                navigation.navigate('ServerMessages', {
-                                    channel: item,
-                                    group,
-                                });
+                    {item.type === 'feed' ? (
+                        <Feed
+                            style={styles.icon}
+                            color={
+                                isActiveChannel
+                                    ? COLORS.White
+                                    : COLORS.InactiveText
                             }
-                        }}
+                        />
+                    ) : (
+                        <Icon
+                            name="comment"
+                            size={16}
+                            color={
+                                isActiveChannel
+                                    ? COLORS.White
+                                    : COLORS.InactiveText
+                            }
+                            style={styles.icon}
+                        />
+                    )}
+                </TouchableOpacity>
+            );
+        }
+        // Full view: show icon and text.
+        return (
+            <View
+                style={
+                    isActiveChannel
+                        ? styles.activeChannelItemWrapper
+                        : undefined
+                }
+            >
+                <TouchableOpacity
+                    style={styles.channelItem}
+                    onPress={() => {
+                        setActiveChannel(item);
+                        if (isLargeScreen) {
+                            setActiveView('messages');
+                        } else {
+                            navigation.navigate('ServerMessages');
+                        }
+                    }}
+                >
+                    {item.type === 'feed' ? (
+                        <Feed
+                            style={styles.icon}
+                            color={
+                                isActiveChannel
+                                    ? COLORS.White
+                                    : COLORS.InactiveText
+                            }
+                        />
+                    ) : (
+                        <Icon
+                            name="comment"
+                            size={16}
+                            color={
+                                isActiveChannel
+                                    ? COLORS.White
+                                    : COLORS.InactiveText
+                            }
+                            style={styles.icon}
+                        />
+                    )}
+                    <Text
+                        style={[
+                            styles.channelText,
+                            isActiveChannel && styles.activeChannelText,
+                        ]}
                     >
-                        {item.type === 'feed' ? (
-                            <Feed style={styles.icon} />
-                        ) : (
-                            <Icon
-                                name="comment"
-                                size={16}
-                                color={
-                                    activeChannel?.id === item.id
-                                        ? COLORS.White
-                                        : COLORS.InactiveText
-                                }
-                                style={styles.icon}
-                            />
-                        )}
+                        {item.name}
+                    </Text>
+                </TouchableOpacity>
+            </View>
+        );
+    };
+
+    return (
+        // Adjust container padding when collapsed.
+        <View
+            style={[styles.channelListContainer, collapsed && { padding: 5 }]}
+        >
+            {!collapsed && (
+                <>
+                    <Text style={styles.serverTitle}>{group.name}</Text>
+                    {/* Insert mock data for member counts */}
+                    <Text style={styles.memberInfo}>
+                        {`${mockMemberCount} members ${mockOnlineCount} online`}
+                    </Text>
+                    <Text style={styles.groupDescription}>
+                        {group.description ||
+                            'Join us as we explore the boundaries of innovation and collaboration! Our community thrives on sharing ideas, inspiring creativity, and building a better future together.'}
+                    </Text>
+                </>
+            )}
+            <FlatList
+                data={group.channels}
+                keyExtractor={(item) => item.id}
+                renderItem={renderChannelItem}
+            />
+
+            {/* "Events" button */}
+            <View
+                style={
+                    !collapsed && activeView === 'events'
+                        ? styles.activeChannelItemWrapper
+                        : undefined
+                }
+            >
+                <TouchableOpacity
+                    // When collapsed, override channelItem style to center content.
+                    style={
+                        collapsed
+                            ? [
+                                  styles.channelItem,
+                                  {
+                                      justifyContent: 'center',
+                                      paddingHorizontal: 0,
+                                  },
+                              ]
+                            : styles.channelItem
+                    }
+                    onPress={() => {
+                        if (isLargeScreen) {
+                            setActiveChannel(undefined);
+                            setActiveView('events');
+                        } else {
+                            navigation.navigate('GroupEvents', { group });
+                        }
+                    }}
+                >
+                    <Icon
+                        name="calendar"
+                        size={16}
+                        color={
+                            activeView === 'events'
+                                ? COLORS.White
+                                : COLORS.InactiveText
+                        }
+                        style={[styles.icon, collapsed && { marginRight: 0 }]}
+                    />
+                    {!collapsed && (
                         <Text
                             style={[
                                 styles.channelText,
-                                activeChannel?.id === item.id &&
+                                activeView === 'events' &&
                                     styles.activeChannelText,
                             ]}
                         >
-                            {item.name}
+                            Events
                         </Text>
-                    </TouchableOpacity>
-                </View>
-            )}
-        />
-
-        {/* "Events" button without a fake channel */}
-        <View
-            style={
-                activeView === 'events' ? styles.activeChannelItemWrapper : {}
-            }
-        >
-            <TouchableOpacity
-                style={styles.channelItem}
-                onPress={() => {
-                    if (isLargeScreen) {
-                        // Clear activeChannel and set view to events.
-                        setActiveChannel(undefined);
-                        setActiveView('events');
-                    } else {
-                        navigation.navigate('GroupEvents', { group });
-                    }
-                }}
-            >
-                <Icon
-                    name="calendar"
-                    size={16}
-                    color={
-                        activeView === 'events'
-                            ? COLORS.White
-                            : COLORS.InactiveText
-                    }
-                    style={styles.icon}
-                />
-                <Text
-                    style={[
-                        styles.channelText,
-                        activeView === 'events' && styles.activeChannelText,
-                    ]}
-                >
-                    Events
-                </Text>
-            </TouchableOpacity>
+                    )}
+                </TouchableOpacity>
+            </View>
         </View>
-    </View>
-);
+    );
+};
 
-export function ServerScreen({ navigation, route }: ServerScreenProps) {
-    const { group } = route.params;
+export function ServerScreen({ navigation }: { navigation: NavProp }) {
+    const { activeGroup, activeChannel, setActiveChannel } =
+        useContext(ActiveGroupContext);
     const { width } = useWindowDimensions();
     const isLargeScreen = width > 768;
-    // Set the initial active channel to the first channel in the group.
-    const [activeChannel, setActiveChannel] = useState<
-        GroupChannel | undefined
-    >(group.channels[0] || undefined);
     const [activeView, setActiveView] = useState<ActiveView>('messages');
+
+    // Auto-collapse sidebar state
+    const [sidebarExpanded, setSidebarExpanded] = useState(true);
+    const collapseTimer = useRef<NodeJS.Timeout | null>(null);
+
+    // Start a timer to collapse the sidebar after 2.5 seconds.
+    const startCollapseTimer = () => {
+        if (collapseTimer.current) clearTimeout(collapseTimer.current);
+        collapseTimer.current = setTimeout(() => {
+            setSidebarExpanded(false);
+        }, 2500);
+    };
+
+    const handleMouseEnter = () => {
+        if (collapseTimer.current) clearTimeout(collapseTimer.current);
+        setSidebarExpanded(true);
+    };
+
+    const handleMouseLeave = () => {
+        startCollapseTimer();
+    };
+
+    useEffect(() => {
+        if (isLargeScreen) {
+            startCollapseTimer();
+        }
+        return () => {
+            if (collapseTimer.current) clearTimeout(collapseTimer.current);
+        };
+    }, [isLargeScreen]);
+
+    // When an active group becomes available and no active channel is set, use the first channel.
+    useEffect(() => {
+        if (activeGroup && !activeChannel) {
+            setActiveChannel(activeGroup.channels[0] || undefined);
+        }
+    }, [activeGroup, activeChannel, setActiveChannel]);
+
+    if (!activeGroup) {
+        return (
+            <View
+                style={{
+                    flex: 1,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    backgroundColor: COLORS.PrimaryBackground,
+                }}
+            >
+                <Text style={{ color: COLORS.White }}>
+                    No active group selected.
+                </Text>
+            </View>
+        );
+    }
 
     if (isLargeScreen) {
         return (
             <View style={styles.largeScreenContainer}>
-                <View style={styles.sidebarContainer}>
+                <View
+                    style={[
+                        styles.sidebarContainer,
+                        { width: sidebarExpanded ? 250 : 60 },
+                    ]}
+                    // @ts-expect-error web only type
+                    onMouseEnter={handleMouseEnter}
+                    onMouseLeave={handleMouseLeave}
+                >
                     <ChannelList
-                        group={group}
+                        group={activeGroup}
                         navigation={navigation}
                         isLargeScreen={isLargeScreen}
                         activeChannel={activeChannel}
                         setActiveChannel={setActiveChannel}
                         activeView={activeView}
                         setActiveView={setActiveView}
+                        collapsed={!sidebarExpanded}
                     />
                 </View>
                 <View style={styles.chatWrapper}>
                     {activeView === 'messages' ? (
-                        // When activeView is 'messages', activeChannel should not be undefined.
-                        <ServerMessagesScreen
-                            route={route}
-                            activeChannel={activeChannel!}
-                            // @ts-expect-error type narrowing isn't working
-                            navigation={
-                                navigation as NavigationProp<
-                                    RootStackParamList,
-                                    'ServerMessages'
-                                >
-                            }
-                        />
+                        // ServerMessagesScreen retrieves the active channel from context.
+                        // @ts-expect-error navigation
+                        <ServerMessagesScreen navigation={navigation} />
                     ) : (
                         <GroupEventsScreen navigation={navigation} />
                     )}
@@ -247,7 +392,7 @@ export function ServerScreen({ navigation, route }: ServerScreenProps) {
     // On smaller screens, render just the channel list.
     return (
         <ChannelList
-            group={group}
+            group={activeGroup}
             navigation={navigation}
             activeChannel={activeChannel}
             setActiveChannel={setActiveChannel}

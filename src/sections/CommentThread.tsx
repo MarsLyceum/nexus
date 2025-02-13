@@ -16,7 +16,7 @@ import { useAppSelector, RootState, UserType } from '../redux';
 const styles = StyleSheet.create({
     commentContainer: {
         borderLeftWidth: 3,
-        borderLeftColor: COLORS.Primary,
+        borderLeftColor: COLORS.TextInput,
         paddingLeft: 10,
         marginBottom: 15,
     },
@@ -210,13 +210,10 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
                 {!collapsed && (
                     <>
                         <View style={styles.commentContentWrapper}>
-                            <TouchableOpacity
-                                onPress={() => setCollapsed(!collapsed)}
-                            >
-                                <Text style={styles.commentText}>
-                                    {comment.content}
-                                </Text>
-                            </TouchableOpacity>
+                            {/* Removed the TouchableOpacity wrapper to allow text selection */}
+                            <Text style={styles.commentText} selectable>
+                                {comment.content}
+                            </Text>
                             <View style={styles.actionsRow}>
                                 <TouchableOpacity
                                     onPress={() => setIsReplying(true)}

@@ -1,11 +1,12 @@
 // FeedChannelScreen.tsx
-import React, { useState, useEffect, useRef, useContext } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     SafeAreaView,
     FlatList,
     StyleSheet,
     useWindowDimensions,
     Platform,
+    View,
 } from 'react-native';
 import { useApolloClient, useMutation } from '@apollo/client';
 import { NavigationProp, RouteProp } from '@react-navigation/core';
@@ -19,17 +20,14 @@ import {
 import { GroupChannelPostMessage, User, GroupChannel } from '../types';
 import { CreateContentButton } from '../buttons';
 import { useAppSelector, RootState, UserType } from '../redux';
-
-// Import the shared search context and filtering hook
-import { SearchContext } from '../providers';
-import { useSearchFilter } from '../hooks';
+import { getRelativeTime } from '../utils';
 
 type RootStackParamList = {
     FeedChannelScreen: {
         channel: GroupChannel;
     };
     PostScreen: {
-        post: FeedPost;
+        id: string;
     };
 };
 
@@ -53,37 +51,73 @@ interface FeedPost {
 }
 
 /** -----------------------------
- * Helper: Convert Date to Relative Time
- ----------------------------- */
-const getRelativeTime = (postedDate: Date): string => {
-    const diff = Date.now() - postedDate.getTime();
-    const minutes = Math.floor(diff / (1000 * 60));
-    if (minutes < 60) return `${minutes}m`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}h`;
-    const days = Math.floor(hours / 24);
-    if (days < 7) return `${days}d`;
-    const weeks = Math.floor(days / 7);
-    if (weeks < 4) return `${weeks}w`;
-    const months = Math.floor(days / 30);
-    if (months < 12) return `${months}mo`;
-    const years = Math.floor(days / 365);
-    return `${years}y`;
-};
-
-/** -----------------------------
- * Styles
+ * Styles (using the provided color palette)
  ----------------------------- */
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.SecondaryBackground,
+        backgroundColor: COLORS.SecondaryBackground, // #382348
     },
     feedList: {
         padding: 15,
-        // Extra bottom padding will be added conditionally in the component
+    },
+    // Skeleton styles for feed post placeholder
+    skeletonContainer: {
+        backgroundColor: COLORS.PrimaryBackground, // #281B31
+        padding: 15,
+        marginBottom: 10,
+        borderRadius: 8,
+        shadowColor: COLORS.OffWhite, // #F2F3F5
+        shadowOpacity: 0.1,
+        shadowRadius: 5,
+        elevation: 2,
+    },
+    skeletonHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 10,
+    },
+    skeletonAvatar: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: COLORS.InactiveText, // #989898
+    },
+    skeletonTextBlock: {
+        height: 20,
+        backgroundColor: COLORS.InactiveText, // #989898
+        borderRadius: 4,
+        marginLeft: 10,
+        flex: 1,
+    },
+    skeletonTitle: {
+        height: 20,
+        backgroundColor: COLORS.InactiveText, // #989898
+        borderRadius: 4,
+        marginBottom: 10,
+    },
+    skeletonContent: {
+        height: 60,
+        backgroundColor: COLORS.InactiveText, // #989898
+        borderRadius: 4,
     },
 });
+
+/** -----------------------------
+ * SkeletonPostItem Component
+ * ----------------------------- */
+const SkeletonPostItem: React.FC = () => (
+    <View style={styles.skeletonContainer}>
+        <View style={styles.skeletonHeader}>
+            <View style={styles.skeletonAvatar} />
+            <View style={[styles.skeletonTextBlock, { width: '60%' }]} />
+        </View>
+        <View style={[styles.skeletonTitle, { width: '80%' }]} />
+        <View
+            style={[styles.skeletonContent, { width: '100%', marginTop: 10 }]}
+        />
+    </View>
+);
 
 /** -----------------------------
  * FeedChannelScreen
@@ -101,19 +135,10 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
     const apolloClient = useApolloClient();
     const userCacheRef = useRef<Record<string, string>>({});
     const [feedPosts, setFeedPosts] = useState<FeedPost[]>([]);
+    const [loadingFeed, setLoadingFeed] = useState<boolean>(true);
     const [modalVisible, setModalVisible] = useState(false);
     const [newPostTitle, setNewPostTitle] = useState('');
     const [newPostContent, setNewPostContent] = useState('');
-
-    // Retrieve the shared search text from the context.
-    const { searchText } = useContext(SearchContext);
-
-    // Use the search filter hook to filter feed posts by title, content, or user.
-    const filteredPosts = useSearchFilter(feedPosts, searchText, [
-        'title',
-        'content',
-        'user',
-    ]);
 
     // Apollo mutation hook for creating posts
     const [createPostMutation, { loading: creatingPost }] = useMutation(
@@ -125,11 +150,11 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
                     variables: { channelId: channel?.id, offset: 0 },
                 },
             ],
-            awaitRefetchQueries: true, // Ensures fresh data before UI updates
+            awaitRefetchQueries: true,
             onCompleted: () => {
-                setModalVisible(false); // Close modal after post creation
-                setNewPostTitle(''); // Clear input
-                setNewPostContent(''); // Clear input
+                setModalVisible(false);
+                setNewPostTitle('');
+                setNewPostContent('');
             },
             onError: (error) => {
                 console.error('Error creating post:', error);
@@ -189,9 +214,13 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
                 if (!cancelled) {
                     console.log('Feed loaded', new Date());
                     setFeedPosts(posts);
+                    setLoadingFeed(false);
                 }
             } catch (error) {
                 console.error('Error fetching feed posts:', error);
+                if (!cancelled) {
+                    setLoadingFeed(false);
+                }
             }
         };
 
@@ -226,31 +255,48 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
                 navigation={navigation}
             />
 
-            <FlatList
-                style={{ flex: 1 }}
-                // Use the filtered posts rather than the complete feedPosts array.
-                data={filteredPosts}
-                renderItem={({ item }) => (
-                    <PostItem
-                        user={item.user}
-                        time={item.time}
-                        title={item.title}
-                        upvotes={item.upvotes}
-                        commentsCount={item.commentsCount}
-                        thumbnail={item.thumbnail}
-                        onPress={() =>
-                            navigation.navigate('PostScreen', { post: item })
-                        }
-                        content={item.content}
-                        preview
-                    />
-                )}
-                keyExtractor={(item) => item.id}
-                contentContainerStyle={[
-                    styles.feedList,
-                    isDesktop ? { paddingBottom: 60 } : {},
-                ]}
-            />
+            {/* While loading, display skeleton placeholders; otherwise, display the feed posts */}
+            {loadingFeed ? (
+                <FlatList
+                    style={{ flex: 1 }}
+                    data={[0, 1, 2, 3, 4]} // Display 5 skeleton items
+                    keyExtractor={(item) => item.toString()}
+                    renderItem={() => <SkeletonPostItem />}
+                    contentContainerStyle={[
+                        styles.feedList,
+                        isDesktop ? { paddingBottom: 60 } : {},
+                    ]}
+                />
+            ) : (
+                <FlatList
+                    style={{ flex: 1 }}
+                    data={feedPosts}
+                    keyExtractor={(item) => item.id}
+                    renderItem={({ item }) => (
+                        <PostItem
+                            id={item.id}
+                            username={item.user}
+                            time={item.time}
+                            title={item.title}
+                            upvotes={item.upvotes}
+                            commentsCount={item.commentsCount}
+                            thumbnail={item.thumbnail}
+                            content={item.content}
+                            preview
+                            variant="feed"
+                            onPress={() =>
+                                navigation.navigate('PostScreen', {
+                                    id: item.id,
+                                })
+                            }
+                        />
+                    )}
+                    contentContainerStyle={[
+                        styles.feedList,
+                        isDesktop ? { paddingBottom: 60 } : {},
+                    ]}
+                />
+            )}
 
             <CreateContentButton
                 modalVisible={modalVisible}

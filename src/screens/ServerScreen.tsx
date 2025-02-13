@@ -1,4 +1,3 @@
-// ServerScreen.tsx
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import { NavigationProp } from '@react-navigation/native';
 import {
@@ -38,7 +37,20 @@ const styles = StyleSheet.create({
     },
     serverTitle: {
         fontSize: 20,
+        fontFamily: 'Roboto_700Bold',
         fontWeight: 'bold',
+        color: 'white',
+        marginBottom: 10,
+    },
+    // New style for member information
+    memberInfo: {
+        fontSize: 12,
+        color: 'white',
+        marginBottom: 10,
+    },
+    groupDescription: {
+        fontFamily: 'Roboto_400Regular',
+        fontSize: 14,
         color: 'white',
         marginBottom: 20,
     },
@@ -96,6 +108,10 @@ const ChannelList: React.FC<ChannelListProps> = ({
     setActiveView,
     collapsed = false,
 }) => {
+    // Define mock data for member and online counts
+    const mockMemberCount = 123;
+    const mockOnlineCount = 45;
+
     // Render a channel item differently when collapsed.
     const renderChannelItem = ({ item }: { item: GroupChannel }) => {
         const isActiveChannel =
@@ -200,7 +216,19 @@ const ChannelList: React.FC<ChannelListProps> = ({
         <View
             style={[styles.channelListContainer, collapsed && { padding: 5 }]}
         >
-            {!collapsed && <Text style={styles.serverTitle}>{group.name}</Text>}
+            {!collapsed && (
+                <>
+                    <Text style={styles.serverTitle}>{group.name}</Text>
+                    {/* Insert mock data for member counts */}
+                    <Text style={styles.memberInfo}>
+                        {`${mockMemberCount} members ${mockOnlineCount} online`}
+                    </Text>
+                    <Text style={styles.groupDescription}>
+                        {group.description ||
+                            'Join us as we explore the boundaries of innovation and collaboration! Our community thrives on sharing ideas, inspiring creativity, and building a better future together.'}
+                    </Text>
+                </>
+            )}
             <FlatList
                 data={group.channels}
                 keyExtractor={(item) => item.id}
@@ -210,7 +238,6 @@ const ChannelList: React.FC<ChannelListProps> = ({
             {/* "Events" button */}
             <View
                 style={
-                    // Apply the active wrapper only when sidebar is expanded.
                     !collapsed && activeView === 'events'
                         ? styles.activeChannelItemWrapper
                         : undefined

@@ -1,5 +1,6 @@
 export const COLORS = {
     Primary: '#6F00AA',
+    Secondary: '#BDFFFD',
     White: '#FFFFFF',
     PrimaryBackground: '#281B31',
     SecondaryBackground: '#382348',

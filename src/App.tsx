@@ -119,8 +119,10 @@ const httpLink = from([
     errorLink,
     createUploadLink({
         uri: graphqlApiGatewayEndpointHttp,
+        // @ts-expect-error boolean
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         isExtractableFile: (value: any) => {
-            if (value == null) return false;
+            if (value === undefined) return false;
             // On web: if value is a native File or Blob, it’s fine.
             if (typeof File !== 'undefined' && value instanceof File)
                 return true;
@@ -129,13 +131,17 @@ const httpLink = from([
             // For our custom file object, check that it has uri, name, and type.
             if (
                 typeof value === 'object' &&
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                 typeof value.uri === 'string' &&
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                 typeof value.name === 'string' &&
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                 typeof value.type === 'string'
             ) {
                 // On web, if the file object doesn’t have a createReadStream, add a dummy.
                 if (
                     Platform.OS === 'web' &&
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                     typeof value.createReadStream !== 'function'
                 ) {
                     Object.defineProperty(value, 'createReadStream', {
@@ -236,6 +242,7 @@ function MainStackScreen() {
             <MainStack.Screen name="Login" component={LoginScreen} />
             <MainStack.Screen name="SignUp" component={SignUpScreen} />
             <MainStack.Screen name="AppDrawer" component={AppDrawerScreen} />
+            {/* @ts-expect-error navigator */}
             <MainStack.Screen name="Chat" component={ChatScreen} />
             <MainStack.Screen
                 name="ServerMessages"
@@ -243,8 +250,10 @@ function MainStackScreen() {
             />
             <MainStack.Screen
                 name="FeedChannel"
+                // @ts-expect-error navigator
                 component={FeedChannelScreen}
             />
+            {/* @ts-expect-error navigator */}
             <MainStack.Screen name="PostScreen" component={PostScreen} />
             <MainStack.Screen
                 name="GroupEvents"
@@ -252,6 +261,7 @@ function MainStackScreen() {
             />
             <MainStack.Screen
                 name="EventDetails"
+                // @ts-expect-error navigator
                 component={EventDetailsScreen}
             />
         </MainStack.Navigator>
@@ -298,6 +308,7 @@ export default function App() {
                             <CustomScrollbar />
                             <ApolloProvider client={client}>
                                 <ReduxProvider store={store}>
+                                    {/* @ts-expect-error navigator */}
                                     <NavigationContainer linking={linking}>
                                         <RootStack.Navigator
                                             screenOptions={{
@@ -312,6 +323,7 @@ export default function App() {
                                             />
                                             <RootStack.Screen
                                                 name="CreateGroup"
+                                                // @ts-expect-error navigator
                                                 component={
                                                     CreateGroupModalScreen
                                                 }

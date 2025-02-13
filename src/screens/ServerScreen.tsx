@@ -361,6 +361,7 @@ export function ServerScreen({ navigation }: { navigation: NavProp }) {
                         styles.sidebarContainer,
                         { width: sidebarExpanded ? 250 : 60 },
                     ]}
+                    // @ts-expect-error web only type
                     onMouseEnter={handleMouseEnter}
                     onMouseLeave={handleMouseLeave}
                 >
@@ -378,12 +379,10 @@ export function ServerScreen({ navigation }: { navigation: NavProp }) {
                 <View style={styles.chatWrapper}>
                     {activeView === 'messages' ? (
                         // ServerMessagesScreen retrieves the active channel from context.
+                        // @ts-expect-error navigation
                         <ServerMessagesScreen navigation={navigation} />
                     ) : (
-                        <GroupEventsScreen
-                            navigation={navigation}
-                            group={activeGroup}
-                        />
+                        <GroupEventsScreen navigation={navigation} />
                     )}
                 </View>
             </View>

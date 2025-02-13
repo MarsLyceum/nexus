@@ -28,7 +28,6 @@ type RootStackParamList = {
     };
     PostScreen: {
         id: string;
-        post: FeedPost;
     };
 };
 
@@ -225,7 +224,9 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
             }
         };
 
+        // eslint-disable-next-line no-void
         void fetchPosts();
+        // eslint-disable-next-line consistent-return
         return () => {
             cancelled = true;
         };
@@ -286,7 +287,6 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
                             onPress={() =>
                                 navigation.navigate('PostScreen', {
                                     id: item.id,
-                                    // post: item,
                                 })
                             }
                         />

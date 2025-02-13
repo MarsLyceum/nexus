@@ -30,11 +30,11 @@ export const ActiveGroupProvider: FC<ActiveGroupProviderProps> = ({
     children,
 }) => {
     const [activeGroup, setActiveGroup] = useState<Group | undefined>(
-        undefined
+        
     );
     const [activeChannel, setActiveChannel] = useState<
         GroupChannel | undefined
-    >(undefined);
+    >();
 
     return (
         <ActiveGroupContext.Provider

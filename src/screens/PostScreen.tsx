@@ -54,6 +54,7 @@ const BOTTOM_INPUT_HEIGHT = 60;
 const isWeb = Platform.OS === 'web';
 
 const styles = StyleSheet.create({
+    // @ts-expect-error web only type
     safeContainer: {
         flex: 1,
         backgroundColor: COLORS.SecondaryBackground,
@@ -71,6 +72,7 @@ const styles = StyleSheet.create({
               left: 0,
               right: 0,
               bottom: BOTTOM_INPUT_HEIGHT,
+              // @ts-expect-error web only type
               overflowY: 'auto',
           }
         : { flex: 1 },
@@ -84,26 +86,24 @@ const styles = StyleSheet.create({
    Skeleton Components
    ======================= */
 
-const SkeletonPostItem: React.FC = () => {
-    return (
-        <View style={skeletonStyles.container}>
-            {/* Header with avatar and user info */}
-            <View style={skeletonStyles.header}>
-                <View style={skeletonStyles.avatar} />
-                <View style={skeletonStyles.userInfo}>
-                    <View style={skeletonStyles.username} />
-                    <View style={skeletonStyles.time} />
-                </View>
+const SkeletonPostItem: React.FC = () => (
+    <View style={skeletonStyles.container}>
+        {/* Header with avatar and user info */}
+        <View style={skeletonStyles.header}>
+            <View style={skeletonStyles.avatar} />
+            <View style={skeletonStyles.userInfo}>
+                <View style={skeletonStyles.username} />
+                <View style={skeletonStyles.time} />
             </View>
-            {/* Title */}
-            <View style={skeletonStyles.title} />
-            {/* Content lines */}
-            <View style={skeletonStyles.contentLine} />
-            <View style={[skeletonStyles.contentLine, { width: '80%' }]} />
-            <View style={[skeletonStyles.contentLine, { width: '90%' }]} />
         </View>
-    );
-};
+        {/* Title */}
+        <View style={skeletonStyles.title} />
+        {/* Content lines */}
+        <View style={skeletonStyles.contentLine} />
+        <View style={[skeletonStyles.contentLine, { width: '80%' }]} />
+        <View style={[skeletonStyles.contentLine, { width: '90%' }]} />
+    </View>
+);
 
 const skeletonStyles = StyleSheet.create({
     container: {
@@ -156,17 +156,15 @@ const skeletonStyles = StyleSheet.create({
     },
 });
 
-const SkeletonComment: React.FC = () => {
-    return (
-        <View style={skeletonCommentStyles.container}>
-            <View style={skeletonCommentStyles.avatar} />
-            <View style={skeletonCommentStyles.content}>
-                <View style={skeletonCommentStyles.line} />
-                <View style={[skeletonCommentStyles.line, { width: '80%' }]} />
-            </View>
+const SkeletonComment: React.FC = () => (
+    <View style={skeletonCommentStyles.container}>
+        <View style={skeletonCommentStyles.avatar} />
+        <View style={skeletonCommentStyles.content}>
+            <View style={skeletonCommentStyles.line} />
+            <View style={[skeletonCommentStyles.line, { width: '80%' }]} />
         </View>
-    );
-};
+    </View>
+);
 
 const skeletonCommentStyles = StyleSheet.create({
     container: {
@@ -204,6 +202,7 @@ export const PostScreen: React.FC<PostScreenProps> = ({
     const { id, post } = route.params;
 
     // Fetch the post if it wasn’t passed in via navigation.
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const { data, loading, error } = useQuery(FETCH_POST_QUERY, {
         variables: { postId: post ? post.id : id?.toString() },
         skip: !!post, // skip if a post was already passed in
@@ -211,15 +210,20 @@ export const PostScreen: React.FC<PostScreenProps> = ({
 
     // Compute the user id from the passed post or fetched post.
     // (This is only used to fetch the user details; we won't display it.)
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const computedUserId =
         post?.postedByUserId ||
         post?.user ||
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         data?.fetchPost?.postedByUserId ||
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         data?.fetchPost?.user ||
         '';
 
     // Fetch user details based on the computed user id.
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const { data: userData } = useQuery(FETCH_USER_QUERY, {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         variables: { userId: computedUserId },
         skip: computedUserId === '',
     });
@@ -300,7 +304,8 @@ export const PostScreen: React.FC<PostScreenProps> = ({
     }
 
     // Use the provided post if available; otherwise, use the fetched post.
-    const feedPost: Post = post ? post : data.fetchPost;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+    const feedPost: Post = post || data.fetchPost;
 
     // Format the time using our utility function.
     const rawTime = feedPost.postedAt || feedPost.time || '';
@@ -308,11 +313,13 @@ export const PostScreen: React.FC<PostScreenProps> = ({
 
     // Resolve the username from the fetched user data.
     // Instead of defaulting to the user id, we now fall back to a generic "Username".
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
     const resolvedUsername = userData?.fetchUser?.username || 'Username';
 
     // Map the post fields into our local PostData type.
     const postData: PostData = {
         id: feedPost.id,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         user: resolvedUsername,
         time: formattedTime,
         title: feedPost.title,
@@ -348,6 +355,7 @@ export const PostScreen: React.FC<PostScreenProps> = ({
 
     return (
         <SafeAreaView style={styles.safeContainer}>
+            {/* @ts-expect-error props */}
             <ContainerComponent {...containerProps}>
                 <View style={styles.mainContainer}>
                     <ScrollView
@@ -368,6 +376,7 @@ export const PostScreen: React.FC<PostScreenProps> = ({
                                 if (navigation.canGoBack()) {
                                     navigation.goBack();
                                 } else {
+                                    // @ts-expect-error navigation
                                     navigation.navigate('AppDrawer');
                                 }
                             }}

@@ -124,6 +124,7 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
 
     // Fetch groups from Apollo
     useEffect(() => {
+        // eslint-disable-next-line no-void
         void (async () => {
             const result = await apolloClient.query<{
                 fetchUserGroups: UserGroupsType;
@@ -143,6 +144,7 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
             (group) => !imageUrls[group.avatarFilePath ?? '']
         );
         if (groupsMissingUrls.length === 0) return;
+        // eslint-disable-next-line no-void
         void (async () => {
             const imageUrlPromises = groupsMissingUrls.map(async (group) => {
                 const avatarPath = group.avatarFilePath ?? '';
@@ -214,8 +216,7 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
                         ...prev,
                         createGroup: { y, height },
                     }));
-                },
-                (error) => console.error('Error measuring CreateGroup', error)
+                }
             );
         }
     }, [selectedButton]);

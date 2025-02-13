@@ -25,6 +25,7 @@ type DrawerParamList = {
     Events: undefined;
     Search: undefined;
     // Additional screens will use the group names as keys.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     [key: string]: any;
 };
 

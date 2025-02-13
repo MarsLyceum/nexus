@@ -27,16 +27,21 @@ function getMimeType(uri: string): string {
     const extension = uri.split('.').pop()?.toLowerCase();
     switch (extension) {
         case 'jpg':
-        case 'jpeg':
+        case 'jpeg': {
             return 'image/jpeg';
-        case 'png':
+        }
+        case 'png': {
             return 'image/png';
-        case 'gif':
+        }
+        case 'gif': {
             return 'image/gif';
-        case 'webp':
+        }
+        case 'webp': {
             return 'image/webp';
-        default:
+        }
+        default: {
             return 'application/octet-stream';
+        }
     }
 }
 
@@ -55,7 +60,9 @@ function dataURLtoFile(dataUrl: string, filename: string): File {
     const bstr = atob(arr[1]);
     let n = bstr.length;
     const u8arr = new Uint8Array(n);
+    // eslint-disable-next-line no-plusplus
     while (n--) {
+        // eslint-disable-next-line unicorn/prefer-code-point
         u8arr[n] = bstr.charCodeAt(n);
     }
     return new File([u8arr], filename, {
@@ -81,7 +88,7 @@ type Props = {
 
 export const CreateGroupModalScreen: React.FC<Props> = ({ navigation }) => {
     const [groupName, setGroupName] = useState<string>('');
-    const [groupAvatar, setGroupAvatar] = useState<string | null>(null);
+    const [groupAvatar, setGroupAvatar] = useState<string | undefined>();
     const [isPublic, setIsPublic] = useState<boolean>(true);
     const user: UserType = useAppSelector(
         (state: RootState) => state.user.user
@@ -93,6 +100,7 @@ export const CreateGroupModalScreen: React.FC<Props> = ({ navigation }) => {
     const handleUploadAvatar = async () => {
         const { status } =
             await ImagePicker.requestMediaLibraryPermissionsAsync();
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
         if (status !== 'granted') {
             Alert.alert(
                 'Permission required',
@@ -159,9 +167,9 @@ export const CreateGroupModalScreen: React.FC<Props> = ({ navigation }) => {
                 };
             } else {
                 // Web: if groupAvatar is a data URL, convert it to a File.
+                // eslint-disable-next-line no-lonely-if
                 if (groupAvatar.startsWith('data:')) {
-                    const fileName =
-                        'upload.' + getMimeType(groupAvatar).split('/')[1];
+                    const fileName = `upload.${getMimeType(groupAvatar).split('/')[1]}`;
                     fileUpload = dataURLtoFile(groupAvatar, fileName);
                 } else {
                     // Otherwise, fetch the URL and convert to a File.
@@ -178,6 +186,7 @@ export const CreateGroupModalScreen: React.FC<Props> = ({ navigation }) => {
 
             // Now call the mutation.
             // We add the header 'x-apollo-operation-name' to satisfy CSRF checks.
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             const { data } = await createGroup({
                 variables: {
                     name: groupName,
@@ -191,6 +200,7 @@ export const CreateGroupModalScreen: React.FC<Props> = ({ navigation }) => {
                     },
                 },
             });
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
             console.log('Group Created:', data.createGroup.name);
             navigation.goBack();
         } catch (error) {

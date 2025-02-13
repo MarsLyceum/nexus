@@ -6,7 +6,6 @@ import {
     StyleSheet,
     ScrollView,
     TouchableOpacity,
-    Platform,
     useWindowDimensions,
 } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
@@ -78,9 +77,9 @@ const MOCK_RESULTS: SearchResult[] = [
 // Helper: Convert string counts (e.g., "7.6k") to numbers.
 const parseCount = (count: string): number => {
     if (count.toLowerCase().endsWith('k')) {
-        return Math.round(parseFloat(count) * 1000);
+        return Math.round(Number.parseFloat(count) * 1000);
     }
-    return parseInt(count, 10);
+    return Number.parseInt(count, 10);
 };
 
 export const SearchScreen = () => {

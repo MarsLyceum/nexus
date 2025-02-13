@@ -122,7 +122,7 @@ function getUserAvatarUri(username: string, thumbnail?: string): string {
     return (
         thumbnail ||
         `https://picsum.photos/seed/${encodeURIComponent(
-            username.replace(/[^\w]/g, '')
+            username.replaceAll(/\W/g, '')
         )}/48`
     );
 }
@@ -131,7 +131,7 @@ function getGroupAvatarUri(group: string, thumbnail?: string): string {
     return (
         thumbnail ||
         `https://picsum.photos/seed/${encodeURIComponent(
-            group.replace(/[^\w]/g, '')
+            group.replaceAll(/\W/g, '')
         )}/48`
     );
 }
@@ -165,7 +165,7 @@ export const PostItem: React.FC<PostItemProps> = ({
             : content;
 
     let avatarUri = '';
-    let headerElement = null;
+    let headerElement;
 
     if (variant === 'feed') {
         avatarUri = getUserAvatarUri(username, thumbnail);
@@ -215,7 +215,7 @@ export const PostItem: React.FC<PostItemProps> = ({
                     visibilityTime: 2000,
                 });
                 setShareCount((prev) => prev + 1);
-            } catch (err) {
+            } catch {
                 Toast.show({
                     type: 'error',
                     text1: 'Unable to copy link',
@@ -231,7 +231,9 @@ export const PostItem: React.FC<PostItemProps> = ({
                 if (result.action === Share.sharedAction) {
                     setShareCount((prev) => prev + 1);
                 }
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (error: any) {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
                 Alert.alert('Share error', error.message);
             }
         }

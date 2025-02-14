@@ -8,7 +8,6 @@ export const FETCH_USER_GROUPS_QUERY = gql`
             createdByUserId
             createdAt
             description
-            avatarFilePath
             members {
                 userId
                 groupId
@@ -22,6 +21,7 @@ export const FETCH_USER_GROUPS_QUERY = gql`
                 createdAt
                 groupId
             }
+            avatar
         }
     }
 `;

@@ -116,6 +116,7 @@ export type PostItemProps = {
     onPress?: () => void;
     variant?: 'feed' | 'default' | 'details';
     shareUrl?: string; // Optional override
+    fromReddit?: boolean; // New prop: indicates if the post is imported from Reddit
 };
 
 function getUserAvatarUri(username: string, thumbnail?: string): string {
@@ -152,6 +153,7 @@ export const PostItem: React.FC<PostItemProps> = ({
     onPress,
     variant = 'default',
     shareUrl,
+    fromReddit = false,
 }) => {
     const [voteCount, setVoteCount] = useState(upvotes);
     const [shareCount, setShareCount] = useState(0);
@@ -172,6 +174,7 @@ export const PostItem: React.FC<PostItemProps> = ({
         headerElement = (
             <Text style={styles.subText}>
                 {username} • {time}
+                {fromReddit ? ' • From Reddit' : ''}
             </Text>
         );
     } else if (variant === 'details') {
@@ -181,6 +184,7 @@ export const PostItem: React.FC<PostItemProps> = ({
                 <Text style={styles.groupText}>{group}</Text>
                 <Text style={styles.subText}>
                     {username} • {time}
+                    {fromReddit ? ' • From Reddit' : ''}
                 </Text>
             </View>
         );
@@ -191,6 +195,7 @@ export const PostItem: React.FC<PostItemProps> = ({
                 <Text style={styles.groupText}>{group}</Text>
                 <Text style={styles.subText}>
                     {username} • {time}
+                    {fromReddit ? ' • From Reddit' : ''}
                 </Text>
             </View>
         );
@@ -231,9 +236,7 @@ export const PostItem: React.FC<PostItemProps> = ({
                 if (result.action === Share.sharedAction) {
                     setShareCount((prev) => prev + 1);
                 }
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (error: any) {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
                 Alert.alert('Share error', error.message);
             }
         }

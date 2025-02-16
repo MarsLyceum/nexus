@@ -48,6 +48,7 @@ interface FeedPost {
     content: string;
     time: string;
     thumbnail: string;
+    fromReddit?: boolean; // New property to flag Reddit posts
 }
 
 /** -----------------------------
@@ -208,6 +209,7 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
                             thumbnail:
                                 msg.thumbnail ||
                                 `https://picsum.photos/seed/${username}/48`,
+                            fromReddit: Math.random() < 0.2, // ~20% chance to be true
                         } as FeedPost;
                     })
                 );
@@ -289,6 +291,7 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
                                     id: item.id,
                                 })
                             }
+                            fromReddit={item.fromReddit}
                         />
                     )}
                     contentContainerStyle={[

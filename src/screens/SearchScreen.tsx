@@ -157,6 +157,7 @@ export const SearchScreen = () => {
                         preview
                         variant="default" // Use default variant: shows group & username with group avatar.
                         onPress={() => console.log('Tapped:', item.title)}
+                        fromReddit={Math.random() < 0.2}
                     />
                 ))}
 

@@ -2,7 +2,6 @@ import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { View, Animated, StyleSheet, LayoutChangeEvent } from 'react-native';
 import { DrawerContentComponentProps } from '@react-navigation/drawer';
 import { useApolloClient } from '@apollo/client';
-import { createClient } from '@supabase/supabase-js';
 
 import {
     retrieveUserGroups,
@@ -29,16 +28,14 @@ const styles = StyleSheet.create({
         height: '100%',
         backgroundColor: COLORS.AppBackground,
         paddingTop: BUTTON_MARGIN_TOP,
-        paddingLeft: 10, // All items align with this left padding
+        paddingLeft: 10,
         position: 'absolute',
         left: 0,
         top: 0,
         bottom: 0,
         overflow: 'hidden',
     },
-    sidebarButtonsContainer: {
-        // Container for all sidebar items
-    },
+    sidebarButtonsContainer: {},
     buttonContainer: {
         marginBottom: 16,
     },
@@ -71,27 +68,6 @@ const styles = StyleSheet.create({
     },
 });
 
-//
-// Initialize Supabase client
-//
-const supabaseUrl = 'https://zrgnvlobrohtrrqeajhy.supabase.co';
-const supabaseAnonKey =
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpyZ252bG9icm9odHJycWVhamh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzgwODgzMjcsImV4cCI6MjA1MzY2NDMyN30.sfXfrw-_WGpxTl8C2TqLqG6Dgd6hUdN-wO3rwi9WMVc';
-const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
-
-async function getSignedUrl(bucketName: string, filePath: string, expiry = 60) {
-    console.log('loading image', new Date());
-    const { data, error } = await supabaseClient.storage
-        .from(bucketName)
-        .createSignedUrl(filePath, expiry);
-    console.log('done loading image', new Date());
-    if (error) {
-        console.error('Error generating signed URL:', error.message);
-        return '';
-    }
-    return data.signedUrl;
-}
-
 // Skeleton component for the group button placeholder
 const SkeletonGroupButton = () => (
     <View style={styles.skeletonButton}>
@@ -101,7 +77,6 @@ const SkeletonGroupButton = () => (
 );
 
 export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
-    // State for the currently selected button (used for highlighting)
     const [selectedButton, setSelectedButton] = useState<string>('chat');
     const user: UserType = useAppSelector(
         (state: RootState) => state.user.user
@@ -109,7 +84,6 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
     const userGroups: UserGroupsType = useAppSelector(
         (state: RootState) => state.userGroups.userGroups
     );
-    const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
     const [loadingGroups, setLoadingGroups] = useState<boolean>(true);
 
     const dispatch = useAppDispatch();
@@ -122,9 +96,7 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
         [dispatch]
     );
 
-    // Fetch groups from Apollo
     useEffect(() => {
-        // eslint-disable-next-line no-void
         void (async () => {
             const result = await apolloClient.query<{
                 fetchUserGroups: UserGroupsType;
@@ -137,57 +109,20 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
         })();
     }, [user?.id, apolloClient, setUserGroupsInStore]);
 
-    // Fetch missing avatar URLs
-    useEffect(() => {
-        if (userGroups.length === 0) return;
-        const groupsMissingUrls = userGroups.filter(
-            (group) => !imageUrls[group.avatarFilePath ?? '']
-        );
-        if (groupsMissingUrls.length === 0) return;
-        // eslint-disable-next-line no-void
-        void (async () => {
-            const imageUrlPromises = groupsMissingUrls.map(async (group) => {
-                const avatarPath = group.avatarFilePath ?? '';
-                const url = await getSignedUrl(
-                    'group-avatars',
-                    avatarPath,
-                    3600
-                );
-                return { avatarPath, url: url ?? '' };
-            });
-            const results = await Promise.all(imageUrlPromises);
-            setImageUrls((prev) => {
-                const newImageUrls = { ...prev };
-                results.forEach(({ avatarPath, url }) => {
-                    newImageUrls[avatarPath] = url;
-                });
-                return newImageUrls;
-            });
-        })();
-    }, [userGroups, imageUrls]);
-
-    // --- Measure Button Layouts for Active Indicator ---
     const [buttonLayouts, setButtonLayouts] = useState<{
         [key: string]: { y: number; height: number };
     }>({});
     const handleLayout = (name: string) => (event: LayoutChangeEvent) => {
         const { y, height } = event.nativeEvent.layout;
-        setButtonLayouts((prev) => ({
-            ...prev,
-            [name]: { y, height },
-        }));
+        setButtonLayouts((prev) => ({ ...prev, [name]: { y, height } }));
     };
 
-    // --- Ref for Container (for active indicator measurements) ---
     const sidebarButtonsContainerRef = useRef<View>(null);
-    // Ref for CreateGroup button container
     const createGroupRef = useRef<View>(null);
 
-    // --- Animated Values for Active Indicator ---
     const highlightTop = useRef(new Animated.Value(BUTTON_MARGIN_TOP)).current;
     const highlightHeight = useRef(new Animated.Value(40)).current;
 
-    // Update active indicator when selectedButton or its layout changes
     useEffect(() => {
         const layout = buttonLayouts[selectedButton];
         if (layout) {
@@ -202,7 +137,6 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
         }
     }, [selectedButton, buttonLayouts]);
 
-    // Re-measure the CreateGroup button whenever it's selected
     useEffect(() => {
         if (
             selectedButton === 'createGroup' &&
@@ -223,7 +157,6 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
 
     return (
         <View style={styles.sidebarContainer}>
-            {/* Active Button Highlight */}
             <Animated.View
                 pointerEvents="none"
                 style={[
@@ -235,7 +168,6 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
                 style={styles.sidebarButtonsContainer}
                 ref={sidebarButtonsContainerRef}
             >
-                {/* CHAT Button */}
                 <View
                     onLayout={handleLayout('chat')}
                     style={styles.buttonContainer}
@@ -247,7 +179,6 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
                         }}
                     />
                 </View>
-                {/* EVENTS Button */}
                 <View
                     onLayout={handleLayout('events')}
                     style={styles.buttonContainer}
@@ -259,7 +190,6 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
                         }}
                     />
                 </View>
-                {/* Groups List */}
                 {loadingGroups
                     ? [0, 1, 2].map((placeholder) => (
                           <View
@@ -277,9 +207,7 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
                           >
                               <GroupButton
                                   imageSource={{
-                                      uri: imageUrls[
-                                          group.avatarFilePath ?? ''
-                                      ],
+                                      uri: group.avatarUrl,
                                   }}
                                   onPress={() => {
                                       setSelectedButton(group.name);
@@ -289,7 +217,6 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
                               />
                           </View>
                       ))}
-                {/* CREATE GROUP Button */}
                 <View
                     ref={createGroupRef}
                     onLayout={handleLayout('createGroup')}

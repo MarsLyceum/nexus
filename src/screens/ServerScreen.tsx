@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect, useRef } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { NavigationProp } from '@react-navigation/native';
 import {
     View,
@@ -24,7 +24,6 @@ const styles = StyleSheet.create({
     },
     sidebarContainer: {
         backgroundColor: COLORS.PrimaryBackground,
-        // Width will be dynamically set (250 when expanded, 60 when collapsed)
     },
     chatWrapper: {
         flex: 1,
@@ -42,7 +41,6 @@ const styles = StyleSheet.create({
         color: 'white',
         marginBottom: 10,
     },
-    // New style for member information
     memberInfo: {
         fontSize: 12,
         color: 'white',
@@ -95,7 +93,6 @@ type ChannelListProps = {
     isLargeScreen: boolean;
     activeView: ActiveView;
     setActiveView: (view: ActiveView) => void;
-    collapsed?: boolean;
 };
 
 const ChannelList: React.FC<ChannelListProps> = ({
@@ -106,58 +103,15 @@ const ChannelList: React.FC<ChannelListProps> = ({
     isLargeScreen,
     activeView,
     setActiveView,
-    collapsed = false,
 }) => {
     // Define mock data for member and online counts
     const mockMemberCount = 123;
     const mockOnlineCount = 45;
 
-    // Render a channel item differently when collapsed.
+    // Render a channel item (always in full view)
     const renderChannelItem = ({ item }: { item: GroupChannel }) => {
         const isActiveChannel =
             activeView === 'messages' && activeChannel?.id === item.id;
-        if (collapsed) {
-            // Minimal view: show only the icon.
-            return (
-                <TouchableOpacity
-                    style={[
-                        styles.channelItem,
-                        { justifyContent: 'center', paddingVertical: 10 },
-                    ]}
-                    onPress={() => {
-                        setActiveChannel(item);
-                        if (isLargeScreen) {
-                            setActiveView('messages');
-                        } else {
-                            navigation.navigate('ServerMessages');
-                        }
-                    }}
-                >
-                    {item.type === 'feed' ? (
-                        <Feed
-                            style={styles.icon}
-                            color={
-                                isActiveChannel
-                                    ? COLORS.White
-                                    : COLORS.InactiveText
-                            }
-                        />
-                    ) : (
-                        <Icon
-                            name="comment"
-                            size={16}
-                            color={
-                                isActiveChannel
-                                    ? COLORS.White
-                                    : COLORS.InactiveText
-                            }
-                            style={styles.icon}
-                        />
-                    )}
-                </TouchableOpacity>
-            );
-        }
-        // Full view: show icon and text.
         return (
             <View
                 style={
@@ -212,50 +166,30 @@ const ChannelList: React.FC<ChannelListProps> = ({
     };
 
     return (
-        // Adjust container padding when collapsed.
-        <View
-            style={[styles.channelListContainer, collapsed && { padding: 5 }]}
-        >
-            {!collapsed && (
-                <>
-                    <Text style={styles.serverTitle}>{group.name}</Text>
-                    {/* Insert mock data for member counts */}
-                    <Text style={styles.memberInfo}>
-                        {`${mockMemberCount} members ${mockOnlineCount} online`}
-                    </Text>
-                    <Text style={styles.groupDescription}>
-                        {group.description ||
-                            'Join us as we explore the boundaries of innovation and collaboration! Our community thrives on sharing ideas, inspiring creativity, and building a better future together.'}
-                    </Text>
-                </>
-            )}
+        <View style={styles.channelListContainer}>
+            <Text style={styles.serverTitle}>{group.name}</Text>
+            <Text style={styles.memberInfo}>
+                {`${mockMemberCount} members ${mockOnlineCount} online`}
+            </Text>
+            <Text style={styles.groupDescription}>
+                {group.description ||
+                    'Join us as we explore the boundaries of innovation and collaboration! Our community thrives on sharing ideas, inspiring creativity, and building a better future together.'}
+            </Text>
             <FlatList
                 data={group.channels}
                 keyExtractor={(item) => item.id}
                 renderItem={renderChannelItem}
             />
-
             {/* "Events" button */}
             <View
                 style={
-                    !collapsed && activeView === 'events'
+                    activeView === 'events'
                         ? styles.activeChannelItemWrapper
                         : undefined
                 }
             >
                 <TouchableOpacity
-                    // When collapsed, override channelItem style to center content.
-                    style={
-                        collapsed
-                            ? [
-                                  styles.channelItem,
-                                  {
-                                      justifyContent: 'center',
-                                      paddingHorizontal: 0,
-                                  },
-                              ]
-                            : styles.channelItem
-                    }
+                    style={styles.channelItem}
                     onPress={() => {
                         if (isLargeScreen) {
                             setActiveChannel(undefined);
@@ -273,19 +207,16 @@ const ChannelList: React.FC<ChannelListProps> = ({
                                 ? COLORS.White
                                 : COLORS.InactiveText
                         }
-                        style={[styles.icon, collapsed && { marginRight: 0 }]}
+                        style={styles.icon}
                     />
-                    {!collapsed && (
-                        <Text
-                            style={[
-                                styles.channelText,
-                                activeView === 'events' &&
-                                    styles.activeChannelText,
-                            ]}
-                        >
-                            Events
-                        </Text>
-                    )}
+                    <Text
+                        style={[
+                            styles.channelText,
+                            activeView === 'events' && styles.activeChannelText,
+                        ]}
+                    >
+                        Events
+                    </Text>
                 </TouchableOpacity>
             </View>
         </View>
@@ -298,36 +229,6 @@ export function ServerScreen({ navigation }: { navigation: NavProp }) {
     const { width } = useWindowDimensions();
     const isLargeScreen = width > 768;
     const [activeView, setActiveView] = useState<ActiveView>('messages');
-
-    // Auto-collapse sidebar state
-    const [sidebarExpanded, setSidebarExpanded] = useState(true);
-    const collapseTimer = useRef<NodeJS.Timeout | null>(null);
-
-    // Start a timer to collapse the sidebar after 2.5 seconds.
-    const startCollapseTimer = () => {
-        if (collapseTimer.current) clearTimeout(collapseTimer.current);
-        collapseTimer.current = setTimeout(() => {
-            setSidebarExpanded(false);
-        }, 2500);
-    };
-
-    const handleMouseEnter = () => {
-        if (collapseTimer.current) clearTimeout(collapseTimer.current);
-        setSidebarExpanded(true);
-    };
-
-    const handleMouseLeave = () => {
-        startCollapseTimer();
-    };
-
-    useEffect(() => {
-        if (isLargeScreen) {
-            startCollapseTimer();
-        }
-        return () => {
-            if (collapseTimer.current) clearTimeout(collapseTimer.current);
-        };
-    }, [isLargeScreen]);
 
     // When an active group becomes available and no active channel is set, use the first channel.
     useEffect(() => {
@@ -356,15 +257,7 @@ export function ServerScreen({ navigation }: { navigation: NavProp }) {
     if (isLargeScreen) {
         return (
             <View style={styles.largeScreenContainer}>
-                <View
-                    style={[
-                        styles.sidebarContainer,
-                        { width: sidebarExpanded ? 250 : 60 },
-                    ]}
-                    // @ts-expect-error web only type
-                    onMouseEnter={handleMouseEnter}
-                    onMouseLeave={handleMouseLeave}
-                >
+                <View style={[styles.sidebarContainer, { width: 250 }]}>
                     <ChannelList
                         group={activeGroup}
                         navigation={navigation}
@@ -373,12 +266,10 @@ export function ServerScreen({ navigation }: { navigation: NavProp }) {
                         setActiveChannel={setActiveChannel}
                         activeView={activeView}
                         setActiveView={setActiveView}
-                        collapsed={!sidebarExpanded}
                     />
                 </View>
                 <View style={styles.chatWrapper}>
                     {activeView === 'messages' ? (
-                        // ServerMessagesScreen retrieves the active channel from context.
                         // @ts-expect-error navigation
                         <ServerMessagesScreen navigation={navigation} />
                     ) : (

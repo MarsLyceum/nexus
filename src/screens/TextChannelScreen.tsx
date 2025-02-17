@@ -47,7 +47,6 @@ const formatDateTime = (date: Date) => {
 
 /**
  * SkeletonMessageItem mimics a chat message while loading.
- * It uses your palette (e.g. COLORS.InactiveText) for the placeholder blocks.
  */
 const SkeletonMessageItem: React.FC = () => (
     <View style={styles.skeletonMessageContainer}>
@@ -155,7 +154,6 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
             }
         };
 
-        // eslint-disable-next-line no-void
         void fetchMessages();
         return () => {
             cancelled = true;
@@ -199,7 +197,6 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
 
     return (
         <View style={styles.chatContainer}>
-            {/* Header rendered by this screen */}
             <Header
                 isLargeScreen={isLargeScreen}
                 headerText={channel.name}
@@ -208,7 +205,6 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
 
             {/* Chat Messages */}
             {loadingMessages ? (
-                // Render 5 skeleton message placeholders while loading
                 <FlatList
                     data={[0, 1, 2, 3, 4]}
                     keyExtractor={(item) => item.toString()}
@@ -218,7 +214,7 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
             ) : (
                 <FlatList
                     ref={flatListRef}
-                    // Render filtered messages (newest at the bottom)
+                    // Render messages with the newest at the bottom
                     data={[...chatMessages].reverse()}
                     keyExtractor={(item) => item.id}
                     onEndReached={loadMoreMessages}
@@ -278,6 +274,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'flex-start',
         padding: 15,
+        width: '100%', // Ensure the container doesn't exceed screen width
     },
     avatar: {
         width: 40,
@@ -287,6 +284,7 @@ const styles = StyleSheet.create({
     },
     messageContent: {
         flex: 1,
+        flexShrink: 1, // Allow content to shrink if needed
     },
     userName: {
         fontSize: 14,
@@ -301,6 +299,8 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: 'white',
         marginTop: 2,
+        flexWrap: 'wrap', // Wrap long text
+        flexShrink: 1,
     },
     inputContainer: {
         flexDirection: 'row',
@@ -322,11 +322,11 @@ const styles = StyleSheet.create({
         marginLeft: 10,
         padding: 8,
     },
-    // Skeleton styles for chat messages
     skeletonMessageContainer: {
         flexDirection: 'row',
         alignItems: 'flex-start',
         padding: 15,
+        width: '100%',
     },
     skeletonAvatar: {
         width: 40,

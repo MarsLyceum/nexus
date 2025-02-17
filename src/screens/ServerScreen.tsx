@@ -270,6 +270,7 @@ export function ServerScreen({ navigation }: { navigation: NavProp }) {
                 </View>
                 <View style={styles.chatWrapper}>
                     {activeView === 'messages' ? (
+                        // @ts-expect-error navigation
                         <ServerMessagesScreen navigation={navigation} />
                     ) : (
                         <GroupEventsScreen navigation={navigation} />

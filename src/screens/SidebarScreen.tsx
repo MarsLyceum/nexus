@@ -76,22 +76,6 @@ const SkeletonGroupButton = () => (
     </View>
 );
 
-// Helper function to detect MIME type from a base64 string
-const detectMimeTypeFromBase64 = (base64: string): string => {
-    if (base64.startsWith('data:')) {
-        const mimeEndIndex = base64.indexOf(';');
-        if (mimeEndIndex !== -1) {
-            return base64.substring(5, mimeEndIndex);
-        }
-    }
-    const prefix = base64.substring(0, 20);
-    if (prefix.startsWith('iVBORw0KGgo')) return 'image/png';
-    if (prefix.startsWith('/9j/')) return 'image/jpeg';
-    if (prefix.startsWith('R0lGODdh') || prefix.startsWith('R0lGODlh'))
-        return 'image/gif';
-    return 'image/png';
-};
-
 export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
     const [selectedButton, setSelectedButton] = useState<string>('chat');
     const user: UserType = useAppSelector(
@@ -223,10 +207,7 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
                           >
                               <GroupButton
                                   imageSource={{
-                                      // Check if group.avatar already has a Data URI prefix.
-                                      uri: group.avatar.startsWith('data:')
-                                          ? group.avatar
-                                          : `data:${detectMimeTypeFromBase64(group.avatar)};base64,${group.avatar}`,
+                                      uri: group.avatarUrl,
                                   }}
                                   onPress={() => {
                                       setSelectedButton(group.name);

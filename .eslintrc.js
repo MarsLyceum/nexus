@@ -35,6 +35,7 @@ module.exports = {
         },
     },
     rules: {
+        'no-void': 'off',
         'unicorn/prefer-top-level-await': 'off',
         'react/prop-types': 'off',
         'import/extensions': 'off',

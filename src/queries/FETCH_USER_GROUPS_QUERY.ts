@@ -21,7 +21,7 @@ export const FETCH_USER_GROUPS_QUERY = gql`
                 createdAt
                 groupId
             }
-            avatar
+            avatarUrl
         }
     }
 `;

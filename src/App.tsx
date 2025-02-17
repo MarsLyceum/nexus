@@ -118,7 +118,8 @@ const graphqlApiGatewayEndpointSse = ''; // SSE turned off
 const httpLink = from([
     errorLink,
     createUploadLink({
-        uri: graphqlApiGatewayEndpointHttp,
+        // uri: graphqlApiGatewayEndpointHttp,
+        uri: 'http://localhost:4000/graphql',
         // @ts-expect-error boolean
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         isExtractableFile: (value: any) => {

@@ -25,6 +25,7 @@ export const { setUserGroups } = userGroupsSlice.actions;
 
 export const retrieveUserGroups =
     (userGroups: UserGroupsType): AppThunk =>
+    // eslint-disable-next-line @typescript-eslint/require-await
     async (dispatch) => {
         try {
             dispatch(setUserGroups(userGroups));

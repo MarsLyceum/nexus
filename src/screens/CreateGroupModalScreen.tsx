@@ -68,6 +68,7 @@ export const CreateGroupModalScreen: React.FC<Props> = ({ navigation }) => {
         }
 
         try {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             const { data } = await createGroup({
                 variables: {
                     name: groupName,
@@ -81,6 +82,7 @@ export const CreateGroupModalScreen: React.FC<Props> = ({ navigation }) => {
                     },
                 },
             });
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
             console.log('Group Created:', data.createGroup.name);
             navigation.goBack();
         } catch (error) {

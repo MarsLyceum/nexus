@@ -9,6 +9,7 @@ export const FETCH_CHANNEL_MESSAGES_QUERY = gql`
             edited
             channelId
             postedByUserId
+            attachmentUrls
         }
     }
 `;

@@ -1,4 +1,3 @@
-// TextChannelScreen.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import {
     View,
@@ -7,10 +6,12 @@ import {
     FlatList,
     TouchableOpacity,
     Image,
+    Modal,
     useWindowDimensions,
     Keyboard,
     StyleSheet,
     Platform,
+    ScrollView,
 } from 'react-native';
 import { NavigationProp } from '@react-navigation/core';
 import { useApolloClient } from '@apollo/client';
@@ -24,10 +25,20 @@ import {
 } from '../queries';
 import { COLORS } from '../constants';
 import { GroupChannel, GroupChannelMessage, User } from '../types';
+import { useFileUpload } from '../hooks/useFileUpload';
+
+// Define a type for attachments
+interface Attachment {
+    id: string;
+    file: File | { uri: string; type: string; name: string };
+    previewUri: string;
+}
 
 export type MessageWithAvatar = GroupChannelMessage & {
     avatar: string;
     username: string;
+    // Add attachmentUrls property from the query
+    attachmentUrls?: string[];
 };
 
 type TextChannelScreenProps = {
@@ -45,9 +56,6 @@ const formatDateTime = (date: Date) => {
     return `${month}/${day}/${year} ${hours}:${minutes} ${ampm}`;
 };
 
-/**
- * SkeletonMessageItem mimics a chat message while loading.
- */
 const SkeletonMessageItem: React.FC = () => (
     <View style={styles.skeletonMessageContainer}>
         <View style={styles.skeletonAvatar} />
@@ -81,6 +89,15 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
     const { width } = useWindowDimensions();
     const isLargeScreen = width > 768;
     const flatListRef = useRef<FlatList<MessageWithAvatar> | null>(null);
+
+    // File upload hook and attachment state
+    const { pickFile } = useFileUpload();
+    const [attachments, setAttachments] = useState<Attachment[]>([]);
+
+    // New state for the modal
+    const [modalVisible, setModalVisible] = useState(false);
+    const [selectedAttachment, setSelectedAttachment] =
+        useState<Attachment | null>(null);
 
     useEffect(() => {
         let cancelled = false;
@@ -176,22 +193,62 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
     };
 
     const sendMessage = async () => {
-        if (!messageText.trim()) return;
+        // Ensure that there is either text or at least one attachment.
+        if (!messageText.trim() && attachments.length === 0) return;
         try {
+            // Cap the attachments to 10
+            const cappedAttachments = attachments.slice(0, 10);
+            // Create an array of files from attachments
+            const attachmentsArray = cappedAttachments.map((att) => att.file);
+
+            console.log('variables:', {
+                postedByUserId: user?.id,
+                channelId: channel.id,
+                content: messageText.trim(),
+                attachments: attachmentsArray,
+            });
+
             await apolloClient.mutate({
                 mutation: CREATE_GROUP_CHANNEL_MESSAGE_MUTATION,
                 variables: {
                     postedByUserId: user?.id,
                     channelId: channel.id,
                     content: messageText.trim(),
+                    attachments: attachmentsArray,
+                },
+                context: {
+                    headers: {
+                        'x-apollo-operation-name': 'CreateMessage',
+                    },
                 },
             });
+            // Reset the input and attachments
             setMessageText('');
+            setAttachments([]);
             Keyboard.dismiss();
             setOffset(0);
             setRefreshTrigger((prev) => prev + 1);
         } catch (error) {
             console.error('Error creating message:', error);
+        }
+    };
+
+    const handleImageUpload = async () => {
+        const file = await pickFile();
+        if (file) {
+            let previewUri = '';
+            if ('uri' in file) {
+                previewUri = file.uri;
+            } else {
+                // For web, create an object URL from the File object
+                previewUri = URL.createObjectURL(file);
+            }
+            const newAttachment: Attachment = {
+                id: `${Date.now()}-${Math.random()}`,
+                file,
+                previewUri,
+            };
+            setAttachments((prev) => [...prev, newAttachment]);
         }
     };
 
@@ -232,35 +289,168 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
                                         {formatDateTime(item.postedAt)}
                                     </Text>
                                 </Text>
-                                <Text style={styles.messageText}>
-                                    {item.content}
-                                </Text>
+                                {/* Render text content only if present */}
+                                {item.content ? (
+                                    <Text style={styles.messageText}>
+                                        {item.content}
+                                    </Text>
+                                ) : null}
+                                {/* Render attachments if they exist */}
+                                {item.attachmentUrls &&
+                                    item.attachmentUrls.length > 0 && (
+                                        <View
+                                            style={
+                                                styles.messageAttachmentsContainer
+                                            }
+                                        >
+                                            {item.attachmentUrls.map(
+                                                (url, index) => (
+                                                    <TouchableOpacity
+                                                        key={index}
+                                                        onPress={() => {
+                                                            // Create a dummy attachment object
+                                                            setSelectedAttachment(
+                                                                {
+                                                                    id: `message-${index}`,
+                                                                    previewUri:
+                                                                        url,
+                                                                    file: {
+                                                                        uri: url,
+                                                                        type: 'image/jpeg',
+                                                                        name: 'Image',
+                                                                    },
+                                                                }
+                                                            );
+                                                            setModalVisible(
+                                                                true
+                                                            );
+                                                        }}
+                                                    >
+                                                        <Image
+                                                            source={{
+                                                                uri: url,
+                                                            }}
+                                                            style={
+                                                                styles.messageAttachmentImage
+                                                            }
+                                                        />
+                                                    </TouchableOpacity>
+                                                )
+                                            )}
+                                        </View>
+                                    )}
                             </View>
                         </View>
                     )}
                 />
             )}
 
-            {/* Message Input */}
-            <View style={styles.inputContainer}>
-                <TextInput
-                    style={styles.input}
-                    placeholder={`Message ${channel.name}`}
-                    placeholderTextColor="gray"
-                    value={messageText}
-                    onChangeText={setMessageText}
-                    onSubmitEditing={sendMessage}
-                    returnKeyType="send"
-                />
-                {messageText.length > 0 && Platform.OS !== 'web' && (
-                    <TouchableOpacity
-                        onPress={sendMessage}
-                        style={styles.sendButton}
-                    >
-                        <Icon name="paper-plane" size={18} color="white" />
-                    </TouchableOpacity>
+            {/* New Input Section Layout */}
+            <View>
+                {/* Always render the border above the input section */}
+                <View style={styles.inputBorderLine} />
+
+                {/* Attachments Preview (if any) */}
+                {attachments.length > 0 && (
+                    <View style={styles.attachmentsContainer}>
+                        <ScrollView
+                            horizontal
+                            contentContainerStyle={
+                                styles.attachmentsPreviewContainer
+                            }
+                            showsHorizontalScrollIndicator={false}
+                        >
+                            {attachments.map((att) => (
+                                <View
+                                    key={att.id}
+                                    style={styles.attachmentPreview}
+                                >
+                                    <TouchableOpacity
+                                        onPress={() => {
+                                            setSelectedAttachment(att);
+                                            setModalVisible(true);
+                                        }}
+                                    >
+                                        <Image
+                                            source={{ uri: att.previewUri }}
+                                            style={styles.attachmentImage}
+                                        />
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={styles.removeAttachmentButton}
+                                        onPress={() =>
+                                            setAttachments((prev) =>
+                                                prev.filter(
+                                                    (a) => a.id !== att.id
+                                                )
+                                            )
+                                        }
+                                    >
+                                        <Icon
+                                            name="times"
+                                            size={18}
+                                            color={COLORS.White}
+                                        />
+                                    </TouchableOpacity>
+                                </View>
+                            ))}
+                        </ScrollView>
+                    </View>
                 )}
+
+                {/* Input Container (no border since the border is already rendered above) */}
+                <View style={styles.inputContainerNoBorder}>
+                    <TouchableOpacity
+                        onPress={handleImageUpload}
+                        style={styles.imageButton}
+                    >
+                        <Icon name="image" size={24} color="white" />
+                    </TouchableOpacity>
+                    <TextInput
+                        style={styles.input}
+                        placeholder={`Message ${channel.name}`}
+                        placeholderTextColor="gray"
+                        value={messageText}
+                        onChangeText={setMessageText}
+                        onSubmitEditing={sendMessage}
+                        returnKeyType="send"
+                    />
+                    {(messageText.length > 0 || attachments.length > 0) &&
+                        Platform.OS !== 'web' && (
+                            <TouchableOpacity
+                                onPress={sendMessage}
+                                style={styles.sendButton}
+                            >
+                                <Icon
+                                    name="paper-plane"
+                                    size={18}
+                                    color="white"
+                                />
+                            </TouchableOpacity>
+                        )}
+                </View>
             </View>
+
+            {/* Modal for large image view (only the image is shown) */}
+            {modalVisible && selectedAttachment && (
+                <Modal
+                    visible={modalVisible}
+                    transparent={true}
+                    animationType="fade"
+                    onRequestClose={() => setModalVisible(false)}
+                >
+                    <TouchableOpacity
+                        style={styles.modalOverlay}
+                        onPress={() => setModalVisible(false)}
+                    >
+                        <Image
+                            source={{ uri: selectedAttachment.previewUri }}
+                            style={styles.modalImage}
+                            resizeMode="contain"
+                        />
+                    </TouchableOpacity>
+                </Modal>
+            )}
         </View>
     );
 };
@@ -274,7 +464,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'flex-start',
         padding: 15,
-        width: '100%', // Ensure the container doesn't exceed screen width
+        width: '100%',
     },
     avatar: {
         width: 40,
@@ -284,7 +474,7 @@ const styles = StyleSheet.create({
     },
     messageContent: {
         flex: 1,
-        flexShrink: 1, // Allow content to shrink if needed
+        flexShrink: 1,
     },
     userName: {
         fontSize: 14,
@@ -299,7 +489,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: 'white',
         marginTop: 2,
-        flexWrap: 'wrap', // Wrap long text
+        flexWrap: 'wrap',
         flexShrink: 1,
     },
     inputContainer: {
@@ -309,6 +499,16 @@ const styles = StyleSheet.create({
         borderTopWidth: 1,
         borderTopColor: '#4A3A5A',
         backgroundColor: COLORS.SecondaryBackground,
+    },
+    inputContainerNoBorder: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 10,
+        backgroundColor: COLORS.SecondaryBackground,
+    },
+    imageButton: {
+        marginRight: 10,
+        padding: 8,
     },
     input: {
         flex: 1,
@@ -321,6 +521,43 @@ const styles = StyleSheet.create({
     sendButton: {
         marginLeft: 10,
         padding: 8,
+    },
+    inputBorderLine: {
+        height: 1,
+        backgroundColor: '#4A3A5A',
+        width: '100%',
+    },
+    attachmentsContainer: {
+        paddingVertical: 10,
+        overflow: 'visible',
+        marginBottom: 0,
+    },
+    attachmentsPreviewContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 10,
+        overflow: 'visible',
+    },
+    attachmentPreview: {
+        position: 'relative',
+        marginRight: 10,
+        overflow: 'visible',
+    },
+    attachmentImage: {
+        width: 80,
+        height: 80,
+        borderRadius: 10,
+    },
+    removeAttachmentButton: {
+        position: 'absolute',
+        top: 4,
+        right: 4,
+        backgroundColor: COLORS.AppBackground,
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     skeletonMessageContainer: {
         flexDirection: 'row',
@@ -357,5 +594,29 @@ const styles = StyleSheet.create({
         height: 14,
         borderRadius: 4,
         backgroundColor: COLORS.InactiveText,
+    },
+    // New styles for message attachments
+    messageAttachmentsContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        marginTop: 5,
+    },
+    messageAttachmentImage: {
+        width: 100,
+        height: 100,
+        marginRight: 5,
+        marginTop: 5,
+        borderRadius: 8,
+    },
+    // Modal styles updated for a simple image view
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.9)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalImage: {
+        width: '90%',
+        height: '90%',
     },
 });

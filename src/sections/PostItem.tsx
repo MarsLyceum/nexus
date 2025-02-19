@@ -3,14 +3,22 @@ import {
     View,
     Text,
     Image,
+    ImageBackground,
     StyleSheet,
     TouchableOpacity,
     Share,
     Platform,
     Alert,
+    Dimensions, // Used to get the window width for rendering HTML
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Toast from 'react-native-toast-message';
+// Import RenderHTML for rendering HTML content
+import RenderHTML from 'react-native-render-html';
+// Import htmlTruncate to safely truncate HTML content while preserving tags
+import htmlTruncate from 'html-truncate';
+// Import decode to decode HTML entities (in case the HTML is escaped)
+import { decode } from 'html-entities';
 
 import { VoteActions } from './VoteActions';
 import { BackArrow } from '../buttons';
@@ -80,6 +88,21 @@ const styles = StyleSheet.create({
         fontSize: 14,
         marginBottom: 10,
     },
+    attachmentsContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        marginBottom: 10,
+        alignItems: 'flex-start', // cross-axis alignment
+        justifyContent: 'flex-start', // main-axis alignment: left
+    },
+    // Thumbnail style for preview mode (100x100)
+    attachmentImage: {
+        width: 100,
+        height: 100,
+        borderRadius: 8,
+        marginRight: 5,
+        marginBottom: 5,
+    },
     actionsContainer: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -106,7 +129,7 @@ export type PostItemProps = {
     group?: string;
     time: string;
     title: string;
-    content: string;
+    content: string; // HTML string from React Quill
     upvotes: number;
     commentsCount: number;
     flair?: string;
@@ -116,7 +139,9 @@ export type PostItemProps = {
     onPress?: () => void;
     variant?: 'feed' | 'default' | 'details';
     shareUrl?: string; // Optional override
-    fromReddit?: boolean; // New prop: indicates if the post is imported from Reddit
+    fromReddit?: boolean; // Indicates if the post is imported from Reddit
+    // New prop for attached image URLs
+    attachmentUrls?: string[];
 };
 
 function getUserAvatarUri(username: string, thumbnail?: string): string {
@@ -154,6 +179,7 @@ export const PostItem: React.FC<PostItemProps> = ({
     variant = 'default',
     shareUrl,
     fromReddit = false,
+    attachmentUrls,
 }) => {
     const [voteCount, setVoteCount] = useState(upvotes);
     const [shareCount, setShareCount] = useState(0);
@@ -161,10 +187,29 @@ export const PostItem: React.FC<PostItemProps> = ({
     const onUpvote = () => setVoteCount((prev) => prev + 1);
     const onDownvote = () => setVoteCount((prev) => prev - 1);
 
-    const displayedContent =
-        preview && content.length > TRUNCATE_LENGTH
-            ? `${content.slice(0, TRUNCATE_LENGTH)}...`
-            : content;
+    // Get the window width for the RenderHTML component and for calculating image dimensions.
+    const { width: windowWidth } = Dimensions.get('window');
+
+    // Calculate the inner width of the post container (accounting for 15px padding on each side)
+    const innerWidth = windowWidth - 30;
+
+    // Define the details view image style for a 240p target.
+    // For a typical 16:9 240p image, the resolution is roughly 854x240.
+    // We scale the image to the inner width of the post and calculate the height accordingly.
+    const detailsImageStyle = {
+        width: innerWidth,
+        height: innerWidth * (240 / 854), // maintain the 16:9 ratio based on a 240p target
+    };
+
+    // Decode the HTML in case it's escaped.
+    const decodedContent = decode(content);
+    // Only truncate if the content is longer than our limit.
+    const truncatedContent =
+        decodedContent.length > TRUNCATE_LENGTH
+            ? htmlTruncate(decodedContent, TRUNCATE_LENGTH, {
+                  ellipsis: '...',
+              })
+            : decodedContent;
 
     let avatarUri = '';
     let headerElement;
@@ -202,7 +247,6 @@ export const PostItem: React.FC<PostItemProps> = ({
     }
 
     // Compute the share URL intelligently.
-    // On web: use window.location.origin; on mobile: use a deeplink scheme.
     const computedShareUrl =
         shareUrl ||
         (Platform.OS === 'web' && typeof window !== 'undefined'
@@ -231,14 +275,12 @@ export const PostItem: React.FC<PostItemProps> = ({
         } else {
             try {
                 const result = await Share.share({
-                    message: `${title}\n\n${displayedContent}\n\n${computedShareUrl}`,
+                    message: `${title}\n\n${decodedContent.replace(/<[^>]+>/g, '')}\n\n${computedShareUrl}`,
                 });
                 if (result.action === Share.sharedAction) {
                     setShareCount((prev) => prev + 1);
                 }
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (error: any) {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
                 Alert.alert('Share error', error.message);
             }
         }
@@ -264,8 +306,54 @@ export const PostItem: React.FC<PostItemProps> = ({
                     <Text style={styles.flairText}>{flair}</Text>
                 </View>
             )}
-            {displayedContent !== '' && (
-                <Text style={styles.contentText}>{displayedContent}</Text>
+            {/* Render the HTML content.
+          - In preview mode, we use the truncated decoded HTML.
+          - Otherwise, we render the full decoded HTML.
+      */}
+            {decodedContent !== '' &&
+                (preview ? (
+                    <RenderHTML
+                        contentWidth={windowWidth}
+                        source={{ html: truncatedContent }}
+                        baseStyle={styles.contentText}
+                    />
+                ) : (
+                    <RenderHTML
+                        contentWidth={windowWidth}
+                        source={{ html: decodedContent }}
+                        baseStyle={styles.contentText}
+                    />
+                ))}
+            {/* Render attached images if any */}
+            {attachmentUrls && attachmentUrls.length > 0 && (
+                <View style={styles.attachmentsContainer}>
+                    {attachmentUrls.map((url, index) =>
+                        variant === 'details' ? (
+                            <View
+                                key={index}
+                                style={{
+                                    width: innerWidth,
+                                    alignSelf: 'flex-start',
+                                }}
+                            >
+                                <ImageBackground
+                                    source={{ uri: url }}
+                                    style={detailsImageStyle}
+                                    imageStyle={{
+                                        resizeMode: 'contain',
+                                        alignSelf: 'flex-start',
+                                    }}
+                                />
+                            </View>
+                        ) : (
+                            <Image
+                                key={index}
+                                source={{ uri: url }}
+                                style={styles.attachmentImage}
+                            />
+                        )
+                    )}
+                </View>
             )}
             <View style={styles.actionsContainer}>
                 <VoteActions

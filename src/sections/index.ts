@@ -3,3 +3,6 @@ export * from './PostItem';
 export * from './VoteActions';
 export * from './CommentThread';
 export * from './SearchBox';
+export * from './AttachmentPreviews';
+export * from './CustomRichTextEditor';
+export * from './RichTextEditor';

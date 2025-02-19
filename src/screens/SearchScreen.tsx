@@ -1,4 +1,3 @@
-// SearchScreen.tsx
 import React, { useContext } from 'react';
 import {
     View,
@@ -24,6 +23,7 @@ type SearchResult = {
     title: string;
     upvotes: string;
     comments: string;
+    attachmentUrls?: string[]; // <-- Added attachmentUrls field
 };
 
 const MOCK_RESULTS: SearchResult[] = [
@@ -158,6 +158,7 @@ export const SearchScreen = () => {
                         variant="default" // Use default variant: shows group & username with group avatar.
                         onPress={() => console.log('Tapped:', item.title)}
                         fromReddit={Math.random() < 0.2}
+                        attachmentUrls={item.attachmentUrls || []} // <-- Pass attachments (or an empty array)
                     />
                 ))}
 

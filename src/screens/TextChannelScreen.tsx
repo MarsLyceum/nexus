@@ -11,13 +11,12 @@ import {
     Keyboard,
     StyleSheet,
     Platform,
-    ScrollView,
 } from 'react-native';
 import { NavigationProp } from '@react-navigation/core';
 import { useApolloClient } from '@apollo/client';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { useAppSelector, RootState, UserType } from '../redux';
-import { Header } from '../sections';
+import { Header, AttachmentPreviews, Attachment } from '../sections';
 import {
     FETCH_CHANNEL_MESSAGES_QUERY,
     FETCH_USER_QUERY,
@@ -27,23 +26,11 @@ import { COLORS } from '../constants';
 import { GroupChannel, GroupChannelMessage, User } from '../types';
 import { useFileUpload } from '../hooks/useFileUpload';
 
-// Define a type for attachments
-interface Attachment {
-    id: string;
-    file: File | { uri: string; type: string; name: string };
-    previewUri: string;
-}
-
 export type MessageWithAvatar = GroupChannelMessage & {
     avatar: string;
     username: string;
     // Add attachmentUrls property from the query
     attachmentUrls?: string[];
-};
-
-type TextChannelScreenProps = {
-    channel: GroupChannel;
-    navigation: NavigationProp<Record<string, unknown>>;
 };
 
 const formatDateTime = (date: Date) => {
@@ -66,6 +53,11 @@ const SkeletonMessageItem: React.FC = () => (
         </View>
     </View>
 );
+
+type TextChannelScreenProps = {
+    channel: GroupChannel;
+    navigation: NavigationProp<Record<string, unknown>>;
+};
 
 export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
     channel,
@@ -98,6 +90,57 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedAttachment, setSelectedAttachment] =
         useState<Attachment | null>(null);
+
+    // Helper function to check if a URL is an image/gif URL.
+    const isImageUrl = (url: string): boolean => {
+        return /\.(jpeg|jpg|gif|png)$/i.test(url);
+    };
+
+    // Computed inline image URL from message text.
+    // Only if the text is a single URL (no spaces) and looks like an image.
+    const inlineImageUrl = (() => {
+        const trimmed = messageText.trim();
+        if (
+            trimmed.startsWith('http') &&
+            !trimmed.includes(' ') &&
+            isImageUrl(trimmed)
+        ) {
+            return trimmed;
+        }
+        return null;
+    })();
+
+    // Helper function to render message content.
+    // If the content is only a URL that looks like an image, show a preview in the message.
+    const renderMessageContent = (content: string) => {
+        const isOnlyUrl = content.startsWith('http') && !content.includes(' ');
+        if (isOnlyUrl && isImageUrl(content)) {
+            return (
+                <TouchableOpacity
+                    onPress={() => {
+                        setSelectedAttachment({
+                            id: content,
+                            previewUri: content,
+                            file: {
+                                uri: content,
+                                type: 'image/jpeg',
+                                name: 'Image',
+                            },
+                        });
+                        setModalVisible(true);
+                    }}
+                >
+                    <Image
+                        source={{ uri: content }}
+                        style={styles.messageAttachmentImage}
+                    />
+                </TouchableOpacity>
+            );
+        } else {
+            // For mixed or plain text, just render the content as text.
+            return <Text style={styles.messageText}>{content}</Text>;
+        }
+    };
 
     useEffect(() => {
         let cancelled = false;
@@ -289,12 +332,10 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
                                         {formatDateTime(item.postedAt)}
                                     </Text>
                                 </Text>
-                                {/* Render text content only if present */}
-                                {item.content ? (
-                                    <Text style={styles.messageText}>
-                                        {item.content}
-                                    </Text>
-                                ) : null}
+                                {/* Render message content */}
+                                {item.content
+                                    ? renderMessageContent(item.content)
+                                    : null}
                                 {/* Render attachments if they exist */}
                                 {item.attachmentUrls &&
                                     item.attachmentUrls.length > 0 && (
@@ -350,55 +391,58 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
                 {/* Always render the border above the input section */}
                 <View style={styles.inputBorderLine} />
 
-                {/* Attachments Preview (if any) */}
-                {attachments.length > 0 && (
-                    <View style={styles.attachmentsContainer}>
-                        <ScrollView
-                            horizontal
-                            contentContainerStyle={
-                                styles.attachmentsPreviewContainer
-                            }
-                            showsHorizontalScrollIndicator={false}
-                        >
-                            {attachments.map((att) => (
-                                <View
-                                    key={att.id}
-                                    style={styles.attachmentPreview}
-                                >
-                                    <TouchableOpacity
-                                        onPress={() => {
-                                            setSelectedAttachment(att);
-                                            setModalVisible(true);
-                                        }}
-                                    >
-                                        <Image
-                                            source={{ uri: att.previewUri }}
-                                            style={styles.attachmentImage}
-                                        />
-                                    </TouchableOpacity>
-                                    <TouchableOpacity
-                                        style={styles.removeAttachmentButton}
-                                        onPress={() =>
-                                            setAttachments((prev) =>
-                                                prev.filter(
-                                                    (a) => a.id !== att.id
-                                                )
-                                            )
-                                        }
-                                    >
-                                        <Icon
-                                            name="times"
-                                            size={18}
-                                            color={COLORS.White}
-                                        />
-                                    </TouchableOpacity>
-                                </View>
-                            ))}
-                        </ScrollView>
+                {/* Inline Image Preview (if message text is an image URL) */}
+                {inlineImageUrl && (
+                    <View style={styles.inlineAttachmentContainer}>
+                        <View style={styles.attachmentPreview}>
+                            <TouchableOpacity
+                                onPress={() => {
+                                    setSelectedAttachment({
+                                        id: inlineImageUrl,
+                                        previewUri: inlineImageUrl,
+                                        file: {
+                                            uri: inlineImageUrl,
+                                            type: 'image/jpeg',
+                                            name: 'Image',
+                                        },
+                                    });
+                                    setModalVisible(true);
+                                }}
+                            >
+                                <Image
+                                    source={{ uri: inlineImageUrl }}
+                                    style={styles.attachmentImage}
+                                />
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={styles.removeAttachmentButton}
+                                onPress={() => setMessageText('')}
+                            >
+                                <Icon
+                                    name="times"
+                                    size={18}
+                                    color={COLORS.White}
+                                />
+                            </TouchableOpacity>
+                        </View>
                     </View>
                 )}
 
-                {/* Input Container (no border since the border is already rendered above) */}
+                {/* Render attachments using the common AttachmentPreviews component */}
+                <AttachmentPreviews
+                    attachments={attachments}
+                    onAttachmentPress={(att) => {
+                        setSelectedAttachment(att);
+                        setModalVisible(true);
+                    }}
+                    onRemoveAttachment={(id) =>
+                        setAttachments((prev) =>
+                            prev.filter((a) => a.id !== id)
+                        )
+                    }
+                />
+
+                {/* Input Container */}
                 <View style={styles.inputContainerNoBorder}>
                     <TouchableOpacity
                         onPress={handleImageUpload}
@@ -431,7 +475,7 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
                 </View>
             </View>
 
-            {/* Modal for large image view (only the image is shown) */}
+            {/* Modal for large image view */}
             {modalVisible && selectedAttachment && (
                 <Modal
                     visible={modalVisible}
@@ -527,21 +571,16 @@ const styles = StyleSheet.create({
         backgroundColor: '#4A3A5A',
         width: '100%',
     },
-    attachmentsContainer: {
+    // Inline attachments
+    inlineAttachmentContainer: {
         paddingVertical: 10,
-        overflow: 'visible',
-        marginBottom: 0,
-    },
-    attachmentsPreviewContainer: {
+        paddingHorizontal: 10,
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 10,
-        overflow: 'visible',
     },
     attachmentPreview: {
         position: 'relative',
         marginRight: 10,
-        overflow: 'visible',
     },
     attachmentImage: {
         width: 80,
@@ -595,7 +634,6 @@ const styles = StyleSheet.create({
         borderRadius: 4,
         backgroundColor: COLORS.InactiveText,
     },
-    // New styles for message attachments
     messageAttachmentsContainer: {
         flexDirection: 'row',
         flexWrap: 'wrap',
@@ -608,7 +646,6 @@ const styles = StyleSheet.create({
         marginTop: 5,
         borderRadius: 8,
     },
-    // Modal styles updated for a simple image view
     modalOverlay: {
         flex: 1,
         backgroundColor: 'rgba(0,0,0,0.9)',

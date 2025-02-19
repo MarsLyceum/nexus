@@ -11,7 +11,7 @@ import {
 import { NavigationProp, RouteProp } from '@react-navigation/native';
 import { useQuery } from '@apollo/client';
 import { FETCH_POST_QUERY, FETCH_USER_QUERY } from '../queries';
-import { PostItem, CommentThread, CommentNode } from '../sections';
+import { PostItem, CommentThread, CommentNode, Attachment } from '../sections';
 import { COLORS } from '../constants';
 import { CreateContentButton } from '../buttons';
 import { useAppSelector, RootState, UserType } from '../redux';
@@ -28,6 +28,7 @@ type Post = {
     content: string;
     postedByUserId?: string;
     postedAt?: string;
+    attachmentUrls?: string[]; // <-- Added attachmentUrls field
 };
 
 type RootStackParamList = {
@@ -48,6 +49,7 @@ type PostData = {
     upvotes: number;
     commentsCount: number;
     content: string;
+    attachmentUrls: string[]; // <-- Added attachmentUrls field
 };
 
 const BOTTOM_INPUT_HEIGHT = 60;
@@ -202,28 +204,21 @@ export const PostScreen: React.FC<PostScreenProps> = ({
     const { id, post } = route.params;
 
     // Fetch the post if it wasn’t passed in via navigation.
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const { data, loading, error } = useQuery(FETCH_POST_QUERY, {
         variables: { postId: post ? post.id : id?.toString() },
         skip: !!post, // skip if a post was already passed in
     });
 
     // Compute the user id from the passed post or fetched post.
-    // (This is only used to fetch the user details; we won't display it.)
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const computedUserId =
         post?.postedByUserId ||
         post?.user ||
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         data?.fetchPost?.postedByUserId ||
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         data?.fetchPost?.user ||
         '';
 
     // Fetch user details based on the computed user id.
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const { data: userData } = useQuery(FETCH_USER_QUERY, {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         variables: { userId: computedUserId },
         skip: computedUserId === '',
     });
@@ -262,6 +257,8 @@ export const PostScreen: React.FC<PostScreenProps> = ({
     ]);
     const [modalVisible, setModalVisible] = useState(false);
     const [newCommentContent, setNewCommentContent] = useState('');
+    // NEW: Attachments state for CreateContentButton
+    const [attachments, setAttachments] = useState<Attachment[]>([]);
     const user: UserType = useAppSelector(
         (state: RootState) => state.user.user
     );
@@ -304,7 +301,6 @@ export const PostScreen: React.FC<PostScreenProps> = ({
     }
 
     // Use the provided post if available; otherwise, use the fetched post.
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
     const feedPost: Post = post || data.fetchPost;
 
     // Format the time using our utility function.
@@ -312,14 +308,11 @@ export const PostScreen: React.FC<PostScreenProps> = ({
     const formattedTime = rawTime ? getRelativeTime(rawTime) : 'Unknown time';
 
     // Resolve the username from the fetched user data.
-    // Instead of defaulting to the user id, we now fall back to a generic "Username".
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
     const resolvedUsername = userData?.fetchUser?.username || 'Username';
 
     // Map the post fields into our local PostData type.
     const postData: PostData = {
         id: feedPost.id,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         user: resolvedUsername,
         time: formattedTime,
         title: feedPost.title,
@@ -327,6 +320,7 @@ export const PostScreen: React.FC<PostScreenProps> = ({
         upvotes: feedPost.upvotes,
         commentsCount: feedPost.commentsCount,
         content: feedPost.content,
+        attachmentUrls: feedPost.attachmentUrls || [],
     };
 
     const handleCreateComment = () => {
@@ -372,6 +366,7 @@ export const PostScreen: React.FC<PostScreenProps> = ({
                             upvotes={postData.upvotes}
                             commentsCount={postData.commentsCount}
                             flair={postData.flair}
+                            attachmentUrls={postData.attachmentUrls}
                             onBackPress={() => {
                                 if (navigation.canGoBack()) {
                                     navigation.goBack();
@@ -400,6 +395,8 @@ export const PostScreen: React.FC<PostScreenProps> = ({
                         setContentText={setNewCommentContent}
                         handleCreate={handleCreateComment}
                         buttonText="Write a comment..."
+                        attachments={attachments}
+                        setAttachments={setAttachments}
                     />
                 </View>
             </ContainerComponent>

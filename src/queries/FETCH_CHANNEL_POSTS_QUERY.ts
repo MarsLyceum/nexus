@@ -13,6 +13,7 @@ export const FETCH_CHANNEL_POSTS_QUERY = gql`
             channelId
             postedByUserId
             messageType
+            attachmentUrls
             ... on PostMessage {
                 title
                 flair

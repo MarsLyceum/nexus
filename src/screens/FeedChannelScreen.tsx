@@ -21,6 +21,7 @@ import { GroupChannelPostMessage, User, GroupChannel } from '../types';
 import { CreateContentButton } from '../buttons';
 import { useAppSelector, RootState, UserType } from '../redux';
 import { getRelativeTime } from '../utils';
+import { Attachment } from '../sections';
 
 type RootStackParamList = {
     FeedChannelScreen: {
@@ -49,6 +50,7 @@ interface FeedPost {
     time: string;
     thumbnail: string;
     fromReddit?: boolean; // New property to flag Reddit posts
+    attachmentUrls?: string[]; // New property for attached image URLs
 }
 
 /** -----------------------------
@@ -140,11 +142,18 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
     const [modalVisible, setModalVisible] = useState(false);
     const [newPostTitle, setNewPostTitle] = useState('');
     const [newPostContent, setNewPostContent] = useState('');
+    // State for attachments (used when creating a post)
+    const [postAttachments, setPostAttachments] = useState<Attachment[]>([]);
 
     // Apollo mutation hook for creating posts
     const [createPostMutation, { loading: creatingPost }] = useMutation(
         CREATE_GROUP_CHANNEL_POST_MUTATION,
         {
+            context: {
+                headers: {
+                    'x-apollo-operation-name': 'CreateMessage',
+                },
+            },
             refetchQueries: [
                 {
                     query: FETCH_CHANNEL_POSTS_QUERY,
@@ -156,6 +165,7 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
                 setModalVisible(false);
                 setNewPostTitle('');
                 setNewPostContent('');
+                setPostAttachments([]); // clear attachments on success
             },
             onError: (error) => {
                 console.error('Error creating post:', error);
@@ -210,6 +220,7 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
                                 msg.thumbnail ||
                                 `https://picsum.photos/seed/${username}/48`,
                             fromReddit: Math.random() < 0.2, // ~20% chance to be true
+                            attachmentUrls: msg.attachmentUrls, // Added attached image URLs
                         } as FeedPost;
                     })
                 );
@@ -228,7 +239,6 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
 
         // eslint-disable-next-line no-void
         void fetchPosts();
-        // eslint-disable-next-line consistent-return
         return () => {
             cancelled = true;
         };
@@ -242,6 +252,7 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
                 channelId: channel.id,
                 content: newPostContent,
                 title: newPostTitle,
+                attachments: postAttachments.map((att) => att.file),
             },
         });
     };
@@ -292,6 +303,7 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
                                 })
                             }
                             fromReddit={item.fromReddit}
+                            attachmentUrls={item.attachmentUrls} // Pass attached images to PostItem
                         />
                     )}
                     contentContainerStyle={[
@@ -315,6 +327,9 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
                 placeholderText="Title"
                 placeholderText2="Content"
                 multilineSecondField
+                attachments={postAttachments}
+                setAttachments={setPostAttachments}
+                enableImageAttachments
             />
         </SafeAreaView>
     );

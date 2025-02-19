@@ -6,7 +6,6 @@ import {
     FlatList,
     TouchableOpacity,
     Image,
-    Modal,
     useWindowDimensions,
     Keyboard,
     StyleSheet,
@@ -16,7 +15,12 @@ import { NavigationProp } from '@react-navigation/core';
 import { useApolloClient } from '@apollo/client';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { useAppSelector, RootState, UserType } from '../redux';
-import { Header, AttachmentPreviews, Attachment } from '../sections';
+import {
+    Header,
+    AttachmentPreviews,
+    Attachment,
+    LargeImageModal,
+} from '../sections';
 import {
     FETCH_CHANNEL_MESSAGES_QUERY,
     FETCH_USER_QUERY,
@@ -29,7 +33,6 @@ import { useFileUpload } from '../hooks/useFileUpload';
 export type MessageWithAvatar = GroupChannelMessage & {
     avatar: string;
     username: string;
-    // Add attachmentUrls property from the query
     attachmentUrls?: string[];
 };
 
@@ -63,13 +66,11 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
     channel,
     navigation,
 }) => {
-    // Get the current user from Redux
     const user: UserType = useAppSelector(
         (state: RootState) => state.user.user
     );
     const apolloClient = useApolloClient();
 
-    // Local state for sending messages
     const [messageText, setMessageText] = useState('');
     const [chatMessages, setChatMessages] = useState<MessageWithAvatar[]>([]);
     const [offset, setOffset] = useState(0);
@@ -82,22 +83,18 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
     const isLargeScreen = width > 768;
     const flatListRef = useRef<FlatList<MessageWithAvatar> | null>(null);
 
-    // File upload hook and attachment state
     const { pickFile } = useFileUpload();
     const [attachments, setAttachments] = useState<Attachment[]>([]);
 
-    // New state for the modal
+    // New states for the updated modal usage
     const [modalVisible, setModalVisible] = useState(false);
-    const [selectedAttachment, setSelectedAttachment] =
-        useState<Attachment | null>(null);
+    const [modalAttachments, setModalAttachments] = useState<string[]>([]);
+    const [modalInitialIndex, setModalInitialIndex] = useState(0);
 
-    // Helper function to check if a URL is an image/gif URL.
     const isImageUrl = (url: string): boolean => {
         return /\.(jpeg|jpg|gif|png)$/i.test(url);
     };
 
-    // Computed inline image URL from message text.
-    // Only if the text is a single URL (no spaces) and looks like an image.
     const inlineImageUrl = (() => {
         const trimmed = messageText.trim();
         if (
@@ -110,23 +107,15 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
         return null;
     })();
 
-    // Helper function to render message content.
-    // If the content is only a URL that looks like an image, show a preview in the message.
     const renderMessageContent = (content: string) => {
         const isOnlyUrl = content.startsWith('http') && !content.includes(' ');
         if (isOnlyUrl && isImageUrl(content)) {
             return (
                 <TouchableOpacity
                     onPress={() => {
-                        setSelectedAttachment({
-                            id: content,
-                            previewUri: content,
-                            file: {
-                                uri: content,
-                                type: 'image/jpeg',
-                                name: 'Image',
-                            },
-                        });
+                        // Wrap the URL in an array and open modal at index 0
+                        setModalAttachments([content]);
+                        setModalInitialIndex(0);
                         setModalVisible(true);
                     }}
                 >
@@ -137,7 +126,6 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
                 </TouchableOpacity>
             );
         } else {
-            // For mixed or plain text, just render the content as text.
             return <Text style={styles.messageText}>{content}</Text>;
         }
     };
@@ -236,12 +224,9 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
     };
 
     const sendMessage = async () => {
-        // Ensure that there is either text or at least one attachment.
         if (!messageText.trim() && attachments.length === 0) return;
         try {
-            // Cap the attachments to 10
             const cappedAttachments = attachments.slice(0, 10);
-            // Create an array of files from attachments
             const attachmentsArray = cappedAttachments.map((att) => att.file);
 
             console.log('variables:', {
@@ -265,7 +250,6 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
                     },
                 },
             });
-            // Reset the input and attachments
             setMessageText('');
             setAttachments([]);
             Keyboard.dismiss();
@@ -283,7 +267,6 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
             if ('uri' in file) {
                 previewUri = file.uri;
             } else {
-                // For web, create an object URL from the File object
                 previewUri = URL.createObjectURL(file);
             }
             const newAttachment: Attachment = {
@@ -303,7 +286,6 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
                 navigation={navigation}
             />
 
-            {/* Chat Messages */}
             {loadingMessages ? (
                 <FlatList
                     data={[0, 1, 2, 3, 4]}
@@ -314,7 +296,6 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
             ) : (
                 <FlatList
                     ref={flatListRef}
-                    // Render messages with the newest at the bottom
                     data={[...chatMessages].reverse()}
                     keyExtractor={(item) => item.id}
                     onEndReached={loadMoreMessages}
@@ -332,11 +313,9 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
                                         {formatDateTime(item.postedAt)}
                                     </Text>
                                 </Text>
-                                {/* Render message content */}
                                 {item.content
                                     ? renderMessageContent(item.content)
                                     : null}
-                                {/* Render attachments if they exist */}
                                 {item.attachmentUrls &&
                                     item.attachmentUrls.length > 0 && (
                                         <View
@@ -349,18 +328,12 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
                                                     <TouchableOpacity
                                                         key={index}
                                                         onPress={() => {
-                                                            // Create a dummy attachment object
-                                                            setSelectedAttachment(
-                                                                {
-                                                                    id: `message-${index}`,
-                                                                    previewUri:
-                                                                        url,
-                                                                    file: {
-                                                                        uri: url,
-                                                                        type: 'image/jpeg',
-                                                                        name: 'Image',
-                                                                    },
-                                                                }
+                                                            // Pass the full array and set the tapped image as the initial index
+                                                            setModalAttachments(
+                                                                item.attachmentUrls!
+                                                            );
+                                                            setModalInitialIndex(
+                                                                index
                                                             );
                                                             setModalVisible(
                                                                 true
@@ -386,26 +359,16 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
                 />
             )}
 
-            {/* New Input Section Layout */}
             <View>
-                {/* Always render the border above the input section */}
                 <View style={styles.inputBorderLine} />
-
-                {/* Inline Image Preview (if message text is an image URL) */}
                 {inlineImageUrl && (
                     <View style={styles.inlineAttachmentContainer}>
                         <View style={styles.attachmentPreview}>
                             <TouchableOpacity
                                 onPress={() => {
-                                    setSelectedAttachment({
-                                        id: inlineImageUrl,
-                                        previewUri: inlineImageUrl,
-                                        file: {
-                                            uri: inlineImageUrl,
-                                            type: 'image/jpeg',
-                                            name: 'Image',
-                                        },
-                                    });
+                                    // Open modal with the inline image as a single-item array
+                                    setModalAttachments([inlineImageUrl]);
+                                    setModalInitialIndex(0);
                                     setModalVisible(true);
                                 }}
                             >
@@ -428,11 +391,12 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
                     </View>
                 )}
 
-                {/* Render attachments using the common AttachmentPreviews component */}
                 <AttachmentPreviews
                     attachments={attachments}
                     onAttachmentPress={(att) => {
-                        setSelectedAttachment(att);
+                        // Open modal with a single image preview from attachments
+                        setModalAttachments([att.previewUri]);
+                        setModalInitialIndex(0);
                         setModalVisible(true);
                     }}
                     onRemoveAttachment={(id) =>
@@ -442,7 +406,6 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
                     }
                 />
 
-                {/* Input Container */}
                 <View style={styles.inputContainerNoBorder}>
                     <TouchableOpacity
                         onPress={handleImageUpload}
@@ -475,26 +438,12 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
                 </View>
             </View>
 
-            {/* Modal for large image view */}
-            {modalVisible && selectedAttachment && (
-                <Modal
-                    visible={modalVisible}
-                    transparent={true}
-                    animationType="fade"
-                    onRequestClose={() => setModalVisible(false)}
-                >
-                    <TouchableOpacity
-                        style={styles.modalOverlay}
-                        onPress={() => setModalVisible(false)}
-                    >
-                        <Image
-                            source={{ uri: selectedAttachment.previewUri }}
-                            style={styles.modalImage}
-                            resizeMode="contain"
-                        />
-                    </TouchableOpacity>
-                </Modal>
-            )}
+            <LargeImageModal
+                visible={modalVisible}
+                attachments={modalAttachments}
+                initialIndex={modalInitialIndex}
+                onClose={() => setModalVisible(false)}
+            />
         </View>
     );
 };
@@ -571,7 +520,6 @@ const styles = StyleSheet.create({
         backgroundColor: '#4A3A5A',
         width: '100%',
     },
-    // Inline attachments
     inlineAttachmentContainer: {
         paddingVertical: 10,
         paddingHorizontal: 10,
@@ -645,15 +593,5 @@ const styles = StyleSheet.create({
         marginRight: 5,
         marginTop: 5,
         borderRadius: 8,
-    },
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.9)',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    modalImage: {
-        width: '90%',
-        height: '90%',
     },
 });

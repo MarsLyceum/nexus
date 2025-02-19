@@ -3,7 +3,6 @@ import {
     View,
     Text,
     Image,
-    ImageBackground,
     StyleSheet,
     TouchableOpacity,
     Share,
@@ -18,6 +17,8 @@ import { VoteActions } from './VoteActions';
 import { BackArrow } from '../buttons';
 import { COLORS } from '../constants';
 import { HtmlRenderer } from './HtmlRenderer';
+import { LargeImageModal } from './LargeImageModal';
+import { AttachmentCarousel } from './AttachmentCarousel';
 
 const styles = StyleSheet.create({
     postContainer: {
@@ -80,20 +81,6 @@ const styles = StyleSheet.create({
         color: COLORS.White,
         fontSize: 14,
         marginBottom: 10,
-    },
-    attachmentsContainer: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        marginBottom: 10,
-        alignItems: 'flex-start',
-        justifyContent: 'flex-start',
-    },
-    attachmentImage: {
-        width: 100,
-        height: 100,
-        borderRadius: 8,
-        marginRight: 5,
-        marginBottom: 5,
     },
     actionsContainer: {
         flexDirection: 'row',
@@ -174,17 +161,15 @@ export const PostItem: React.FC<PostItemProps> = ({
 }) => {
     const [voteCount, setVoteCount] = useState(upvotes);
     const [shareCount, setShareCount] = useState(0);
+    const [modalVisible, setModalVisible] = useState(false);
+    // State for modal starting index
+    const [modalStartIndex, setModalStartIndex] = useState(0);
 
     const onUpvote = () => setVoteCount((prev) => prev + 1);
     const onDownvote = () => setVoteCount((prev) => prev - 1);
 
     const { width: windowWidth } = Dimensions.get('window');
     const innerWidth = windowWidth - 30;
-
-    const detailsImageStyle = {
-        width: innerWidth,
-        height: innerWidth * (240 / 854),
-    };
 
     let avatarUri = '';
     let headerElement;
@@ -260,6 +245,20 @@ export const PostItem: React.FC<PostItemProps> = ({
         }
     };
 
+    // Handler for image press to open modal with the correct index
+    const handleImagePress = (index: number) => {
+        setModalStartIndex(index);
+        setModalVisible(true);
+    };
+
+    // Render the attachment carousel if attachmentUrls exist
+    const attachmentsElement = attachmentUrls && attachmentUrls.length > 0 && (
+        <AttachmentCarousel
+            attachmentUrls={attachmentUrls}
+            onImagePress={handleImagePress}
+        />
+    );
+
     const contentElement = (
         <View style={styles.postContainer}>
             <View style={styles.postRow}>
@@ -287,36 +286,7 @@ export const PostItem: React.FC<PostItemProps> = ({
                     innerWidth={innerWidth}
                 />
             )}
-            {attachmentUrls && attachmentUrls.length > 0 && (
-                <View style={styles.attachmentsContainer}>
-                    {attachmentUrls.map((url, index) =>
-                        variant === 'details' ? (
-                            <View
-                                key={index}
-                                style={{
-                                    width: innerWidth,
-                                    alignSelf: 'flex-start',
-                                }}
-                            >
-                                <ImageBackground
-                                    source={{ uri: url }}
-                                    style={detailsImageStyle}
-                                    imageStyle={{
-                                        resizeMode: 'contain',
-                                        alignSelf: 'flex-start',
-                                    }}
-                                />
-                            </View>
-                        ) : (
-                            <Image
-                                key={index}
-                                source={{ uri: url }}
-                                style={styles.attachmentImage}
-                            />
-                        )
-                    )}
-                </View>
-            )}
+            {attachmentsElement}
             <View style={styles.actionsContainer}>
                 <VoteActions
                     voteCount={voteCount}
@@ -338,9 +308,21 @@ export const PostItem: React.FC<PostItemProps> = ({
         </View>
     );
 
-    return onPress ? (
-        <TouchableOpacity onPress={onPress}>{contentElement}</TouchableOpacity>
-    ) : (
-        contentElement
+    return (
+        <>
+            {onPress ? (
+                <TouchableOpacity onPress={onPress}>
+                    {contentElement}
+                </TouchableOpacity>
+            ) : (
+                contentElement
+            )}
+            <LargeImageModal
+                visible={modalVisible}
+                attachments={attachmentUrls || []}
+                initialIndex={modalStartIndex}
+                onClose={() => setModalVisible(false)}
+            />
+        </>
     );
 };

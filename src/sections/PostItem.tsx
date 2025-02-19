@@ -13,43 +13,11 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Toast from 'react-native-toast-message';
-import htmlTruncate from 'html-truncate';
-import { decode } from 'html-entities';
-import { WebView } from 'react-native-webview';
 
 import { VoteActions } from './VoteActions';
 import { BackArrow } from '../buttons';
 import { COLORS } from '../constants';
-
-const TRUNCATE_LENGTH = 100;
-
-/**
- * Helper function to fix HTML anchor and pre tags and now also spoiler spans:
- * - Prepend "https://" if href does not start with a valid protocol.
- * - Remove target="_blank" attributes.
- * - Remove spellcheck="false" attributes (especially from <pre> tags)
- * - For spoiler spans (<span class="spoiler">):
- *   - Set the initial background and text color to white (COLORS.White), so the text is hidden.
- *   - Add an onclick handler that toggles the background color between white (hidden) and transparent (revealed).
- *     The text color remains white in both states.
- */
-function fixHtmlContent(html: string): string {
-    // Prepend https:// to any href not starting with http, https, mailto, or ftp
-    let fixed = html.replace(
-        /<a\s+([^>]*?)href="(?!https?:\/\/|mailto:|ftp:\/\/)([^"]+)"/gi,
-        '<a $1href="https://$2"'
-    );
-    // Remove target="_blank" attributes
-    fixed = fixed.replace(/\s*target="_blank"/gi, '');
-    // Remove spellcheck="false" attributes
-    fixed = fixed.replace(/\s*spellcheck="false"/gi, '');
-    // Process spoilers: add inline style and onclick to toggle the background between white and transparent.
-    fixed = fixed.replace(
-        /<span class="spoiler"/g,
-        `<span class="spoiler" style="background-color: ${COLORS.White}; color: ${COLORS.White}; cursor: pointer;" onclick="this.style.backgroundColor = (this.style.backgroundColor==='transparent' ? '${COLORS.White}' : 'transparent');"`
-    );
-    return fixed;
-}
+import { HtmlRenderer } from './HtmlRenderer';
 
 const styles = StyleSheet.create({
     postContainer: {
@@ -218,36 +186,6 @@ export const PostItem: React.FC<PostItemProps> = ({
         height: innerWidth * (240 / 854),
     };
 
-    const decodedContent = decode(content);
-    console.log('decodedContent:', decodedContent);
-    const truncatedContent =
-        decodedContent.length > TRUNCATE_LENGTH
-            ? htmlTruncate(decodedContent, TRUNCATE_LENGTH, {
-                  ellipsis: '...',
-              })
-            : decodedContent;
-
-    // Use fixHtmlContent to sanitize either the full or truncated content.
-    const fixedContent = fixHtmlContent(
-        preview ? truncatedContent : decodedContent
-    );
-
-    // Create the full HTML string to render in the WebView (used in native).
-    const htmlContent = `
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <style>
-          body { color: ${COLORS.White}; font-size: 14px; margin: 0; padding: 0; }
-        </style>
-      </head>
-      <body>
-        ${fixedContent}
-      </body>
-    </html>
-    `;
-
     let avatarUri = '';
     let headerElement;
 
@@ -311,7 +249,7 @@ export const PostItem: React.FC<PostItemProps> = ({
         } else {
             try {
                 const result = await Share.share({
-                    message: `${title}\n\n${decodedContent.replace(/<[^>]+>/g, '')}\n\n${computedShareUrl}`,
+                    message: `${title}\n\n${content.replace(/<[^>]+>/g, '')}\n\n${computedShareUrl}`,
                 });
                 if (result.action === Share.sharedAction) {
                     setShareCount((prev) => prev + 1);
@@ -342,37 +280,13 @@ export const PostItem: React.FC<PostItemProps> = ({
                     <Text style={styles.flairText}>{flair}</Text>
                 </View>
             )}
-            {decodedContent !== '' &&
-                (Platform.OS === 'web' ? (
-                    <div
-                        style={{
-                            width: innerWidth,
-                            height: preview ? 200 : 300,
-                            marginBottom: 10,
-                            backgroundColor: COLORS.PrimaryBackground,
-                            overflow: 'auto',
-                            color: COLORS.White,
-                            fontSize: 14,
-                            padding: 0,
-                        }}
-                        // Using the sanitized fixedContent directly
-                        dangerouslySetInnerHTML={{ __html: fixedContent }}
-                    />
-                ) : (
-                    <WebView
-                        originWhitelist={['*']}
-                        source={{ html: htmlContent }}
-                        style={{
-                            width: innerWidth,
-                            height: preview ? 200 : 300,
-                            marginBottom: 10,
-                            backgroundColor: COLORS.PrimaryBackground,
-                        }}
-                        scrollEnabled={false}
-                        automaticallyAdjustContentInsets={true}
-                        javaScriptEnabled={true}
-                    />
-                ))}
+            {content !== '' && (
+                <HtmlRenderer
+                    content={content}
+                    preview={preview}
+                    innerWidth={innerWidth}
+                />
+            )}
             {attachmentUrls && attachmentUrls.length > 0 && (
                 <View style={styles.attachmentsContainer}>
                     {attachmentUrls.map((url, index) =>

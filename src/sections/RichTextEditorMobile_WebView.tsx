@@ -30,7 +30,7 @@ export const RichTextEditorMobile: React.FC<RichTextEditorMobileProps> = ({
           }
           /* Allow the toolbar to display fully */
           .ql-toolbar.ql-snow {
-            width: 100%;
+            width: 99%;
             overflow: visible;
           }
           /* Reset and full size */
@@ -79,7 +79,6 @@ export const RichTextEditorMobile: React.FC<RichTextEditorMobileProps> = ({
           .ql-container.ql-snow {
             border: 1px solid ${COLORS.TextInput} !important;
             border-radius: 5px !important;
-            height: 200px !important;
             overflow: hidden;
           }
           .ql-editor {
@@ -123,17 +122,95 @@ export const RichTextEditorMobile: React.FC<RichTextEditorMobileProps> = ({
         <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
         <script>
           var initialContent = ${JSON.stringify(initialContent)};
+          
+          // ====== Custom Spoiler Blot (Mobile) ======
+          var Inline = Quill.import('blots/inline');
+          class SpoilerBlot extends Inline {
+              static create() {
+                  var node = super.create();
+                  node.setAttribute('class', 'spoiler');
+                  node.appendChild(document.createTextNode('\\u200B')); // zero-width space
+                  return node;
+              }
+              static formats(node) {
+                  return node.getAttribute('class') === 'spoiler';
+              }
+              static value(node) {
+                  return node.innerText.replace(/\\u200B/g, '');
+              }
+          }
+          SpoilerBlot.blotName = 'spoiler';
+          SpoilerBlot.tagName = 'span';
+          Quill.register(SpoilerBlot);
+          
+          // ====== Register Icons ======
+          var icons = Quill.import('ui/icons');
+          icons['spoiler'] = \`
+            <svg viewBox="0 0 24 24">
+              <title>Spoiler</title>
+              <path d="M12,2L2,7v7c0,5,4,9,10,9s10-4,10-9V7L12,2z M12,17 c-3,0-5-2-5-5v-1l5-3l5,3v1C17,15,15,17,12,17z"/>
+            </svg>
+          \`;
+          if (icons.blockquote) {
+              icons.blockquote = icons.blockquote.replace('<svg', '<svg><title>Blockquote</title>');
+          }
+          if (icons['code-block']) {
+              icons['code-block'] = icons['code-block'].replace('<svg', '<svg><title>Code Block</title>');
+          }
+          
+          // ====== Custom Toolbar Handler for Spoiler ======
+          var toolbarHandlers = {
+              spoiler: function() {
+                  var range = this.quill.getSelection();
+                  if (!range) return;
+                  if (range.length > 0) {
+                      // Toggle spoiler on selected text
+                      var currentFormat = this.quill.getFormat(range);
+                      var isActive = !!currentFormat.spoiler;
+                      this.quill.formatText(range.index, range.length, 'spoiler', !isActive);
+                      setTimeout(() => {
+                          var leaf = this.quill.getLeaf(range.index)[0];
+                          if (leaf && leaf.parent && leaf.parent.statics && leaf.parent.statics.blotName === 'spoiler') {
+                              var blot = leaf.parent;
+                              if (!blot.domNode.nextSibling) {
+                                  var spaceNode = document.createTextNode(' ');
+                                  blot.domNode.parentNode.insertBefore(spaceNode, blot.domNode.nextSibling);
+                              }
+                          }
+                      }, 0);
+                  } else {
+                      // Insert a 1-char spoiler placeholder if no selection
+                      var insertIndex = range.index;
+                      this.quill.insertText(insertIndex, '\\u200B', { spoiler: true });
+                      this.quill.setSelection(insertIndex + 1, 0);
+                      setTimeout(() => {
+                          var leaf = this.quill.getLeaf(insertIndex)[0];
+                          if (leaf && leaf.parent && leaf.parent.statics && leaf.parent.statics.blotName === 'spoiler') {
+                              var blot = leaf.parent;
+                              if (!blot.domNode.nextSibling) {
+                                  var spaceNode = document.createTextNode(' ');
+                                  blot.domNode.parentNode.insertBefore(spaceNode, blot.domNode.nextSibling);
+                              }
+                          }
+                      }, 0);
+                  }
+              }
+          };
+
           window.addEventListener('load', function() {
               var options = {
                   theme: 'snow',
                   modules: {
-                      toolbar: [
-                        ['bold', 'italic', 'underline'],
-                        [{ header: [1, 2, 3, false] }],
-                        [{ list: 'ordered' }, { list: 'bullet' }],
-                        ['link'],
-                        ['clean']
-                      ]
+                      toolbar: {
+                          container: [
+                              ['bold', 'italic', 'underline'],
+                              [{ header: [1, 2, 3, false] }],
+                              [{ list: 'ordered' }, { list: 'bullet' }],
+                              ['link', 'spoiler', 'blockquote', 'code-block'],
+                              ['clean']
+                          ],
+                          handlers: toolbarHandlers
+                      }
                   }
               };
               var quill = new Quill('#editor', options);

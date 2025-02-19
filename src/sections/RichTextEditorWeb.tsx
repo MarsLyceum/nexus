@@ -1,4 +1,3 @@
-// RichTextEditorWeb.tsx
 import React, { useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, Platform, Text } from 'react-native';
 import { COLORS } from '../constants';
@@ -86,6 +85,12 @@ if (Platform.OS === 'web') {
                 '<svg><title>Blockquote</title>'
             );
         }
+        if (icons['code-block']) {
+            icons['code-block'] = icons['code-block'].replace(
+                '<svg',
+                '<svg><title>Code Block</title>'
+            );
+        }
     } catch (e) {
         console.warn('Could not add hover titles to some icons:', e);
     }
@@ -147,7 +152,7 @@ if (Platform.OS === 'web') {
                 ['bold', 'italic', 'underline'],
                 [{ header: [1, 2, 3, false] }],
                 [{ list: 'ordered' }, { list: 'bullet' }],
-                ['link', 'spoiler', 'blockquote'],
+                ['link', 'spoiler', 'blockquote', 'code-block'],
                 ['clean'],
             ],
             handlers: toolbarHandlers,

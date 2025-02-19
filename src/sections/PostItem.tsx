@@ -9,16 +9,16 @@ import {
     Share,
     Platform,
     Alert,
-    Dimensions, // Used to get the window width for rendering HTML
+    Dimensions,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Toast from 'react-native-toast-message';
-// Import RenderHTML for rendering HTML content
-import RenderHTML from 'react-native-render-html';
-// Import htmlTruncate to safely truncate HTML content while preserving tags
+// Removed RenderHTML import
+// import RenderHTML from 'react-native-render-html';
 import htmlTruncate from 'html-truncate';
-// Import decode to decode HTML entities (in case the HTML is escaped)
 import { decode } from 'html-entities';
+// Import WebView from react-native-webview
+import { WebView } from 'react-native-webview';
 
 import { VoteActions } from './VoteActions';
 import { BackArrow } from '../buttons';
@@ -92,10 +92,9 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         flexWrap: 'wrap',
         marginBottom: 10,
-        alignItems: 'flex-start', // cross-axis alignment
-        justifyContent: 'flex-start', // main-axis alignment: left
+        alignItems: 'flex-start',
+        justifyContent: 'flex-start',
     },
-    // Thumbnail style for preview mode (100x100)
     attachmentImage: {
         width: 100,
         height: 100,
@@ -129,7 +128,7 @@ export type PostItemProps = {
     group?: string;
     time: string;
     title: string;
-    content: string; // HTML string from React Quill
+    content: string;
     upvotes: number;
     commentsCount: number;
     flair?: string;
@@ -138,9 +137,8 @@ export type PostItemProps = {
     onBackPress?: () => void;
     onPress?: () => void;
     variant?: 'feed' | 'default' | 'details';
-    shareUrl?: string; // Optional override
-    fromReddit?: boolean; // Indicates if the post is imported from Reddit
-    // New prop for attached image URLs
+    shareUrl?: string;
+    fromReddit?: boolean;
     attachmentUrls?: string[];
 };
 
@@ -187,29 +185,37 @@ export const PostItem: React.FC<PostItemProps> = ({
     const onUpvote = () => setVoteCount((prev) => prev + 1);
     const onDownvote = () => setVoteCount((prev) => prev - 1);
 
-    // Get the window width for the RenderHTML component and for calculating image dimensions.
     const { width: windowWidth } = Dimensions.get('window');
-
-    // Calculate the inner width of the post container (accounting for 15px padding on each side)
     const innerWidth = windowWidth - 30;
 
-    // Define the details view image style for a 240p target.
-    // For a typical 16:9 240p image, the resolution is roughly 854x240.
-    // We scale the image to the inner width of the post and calculate the height accordingly.
     const detailsImageStyle = {
         width: innerWidth,
-        height: innerWidth * (240 / 854), // maintain the 16:9 ratio based on a 240p target
+        height: innerWidth * (240 / 854),
     };
 
-    // Decode the HTML in case it's escaped.
     const decodedContent = decode(content);
-    // Only truncate if the content is longer than our limit.
     const truncatedContent =
         decodedContent.length > TRUNCATE_LENGTH
             ? htmlTruncate(decodedContent, TRUNCATE_LENGTH, {
                   ellipsis: '...',
               })
             : decodedContent;
+
+    // Create the HTML string to be rendered inside the WebView.
+    const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+          body { color: ${COLORS.White}; font-size: 14px; margin: 0; padding: 0; }
+        </style>
+      </head>
+      <body>
+        ${preview ? truncatedContent : decodedContent}
+      </body>
+    </html>
+    `;
 
     let avatarUri = '';
     let headerElement;
@@ -246,12 +252,11 @@ export const PostItem: React.FC<PostItemProps> = ({
         );
     }
 
-    // Compute the share URL intelligently.
     const computedShareUrl =
         shareUrl ||
         (Platform.OS === 'web' && typeof window !== 'undefined'
             ? `${window.location.origin}/post/${id}`
-            : `peeps://post/${id}`); // Mobile deep link
+            : `peeps://post/${id}`);
 
     const onShare = async () => {
         if (Platform.OS === 'web') {
@@ -306,25 +311,21 @@ export const PostItem: React.FC<PostItemProps> = ({
                     <Text style={styles.flairText}>{flair}</Text>
                 </View>
             )}
-            {/* Render the HTML content.
-          - In preview mode, we use the truncated decoded HTML.
-          - Otherwise, we render the full decoded HTML.
-      */}
-            {decodedContent !== '' &&
-                (preview ? (
-                    <RenderHTML
-                        contentWidth={windowWidth}
-                        source={{ html: truncatedContent }}
-                        baseStyle={styles.contentText}
-                    />
-                ) : (
-                    <RenderHTML
-                        contentWidth={windowWidth}
-                        source={{ html: decodedContent }}
-                        baseStyle={styles.contentText}
-                    />
-                ))}
-            {/* Render attached images if any */}
+            {decodedContent !== '' && (
+                <WebView
+                    originWhitelist={['*']}
+                    source={{ html: htmlContent }}
+                    style={{
+                        width: innerWidth,
+                        height: preview ? 200 : 300,
+                        marginBottom: 10,
+                        backgroundColor: COLORS.PrimaryBackground,
+                    }}
+                    scrollEnabled={false}
+                    automaticallyAdjustContentInsets={true}
+                    javaScriptEnabled={true}
+                />
+            )}
             {attachmentUrls && attachmentUrls.length > 0 && (
                 <View style={styles.attachmentsContainer}>
                     {attachmentUrls.map((url, index) =>

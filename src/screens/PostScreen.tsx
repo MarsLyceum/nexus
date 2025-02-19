@@ -66,7 +66,10 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
     },
-    mainContainer: { flex: 1 },
+    mainContainer: {
+        flex: 1,
+        position: 'relative', // Added to allow absolute positioning of the button
+    },
     scrollSection: isWeb
         ? {
               position: 'absolute',
@@ -81,6 +84,14 @@ const styles = StyleSheet.create({
     scrollView: {
         paddingHorizontal: 15,
         paddingBottom: 20,
+    },
+    // New style for the CreateContentButton container
+    createContentButtonContainer: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: BOTTOM_INPUT_HEIGHT,
     },
 });
 
@@ -388,16 +399,19 @@ export const PostScreen: React.FC<PostScreenProps> = ({
                             />
                         ))}
                     </ScrollView>
-                    <CreateContentButton
-                        modalVisible={modalVisible}
-                        setModalVisible={setModalVisible}
-                        contentText={newCommentContent}
-                        setContentText={setNewCommentContent}
-                        handleCreate={handleCreateComment}
-                        buttonText="Write a comment..."
-                        attachments={attachments}
-                        setAttachments={setAttachments}
-                    />
+                    {/* Fixed CreateContentButton at the bottom */}
+                    <View style={styles.createContentButtonContainer}>
+                        <CreateContentButton
+                            modalVisible={modalVisible}
+                            setModalVisible={setModalVisible}
+                            contentText={newCommentContent}
+                            setContentText={setNewCommentContent}
+                            handleCreate={handleCreateComment}
+                            buttonText="Write a comment..."
+                            attachments={attachments}
+                            setAttachments={setAttachments}
+                        />
+                    </View>
                 </View>
             </ContainerComponent>
         </SafeAreaView>

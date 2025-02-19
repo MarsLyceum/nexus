@@ -14,6 +14,7 @@
         "typecheck": "tsc --noEmit"
     },
     "dependencies": {
+        "react-native-webview": "^13.13.2",
         "@react-native-picker/picker": "^2.11.0",
         "slate": "^0.112.0",
         "slate-react": "^0.112.1",

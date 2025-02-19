@@ -119,7 +119,7 @@ const httpLink = from([
     errorLink,
     createUploadLink({
         // uri: graphqlApiGatewayEndpointHttp,
-        uri: 'http://localhost:4000/graphql',
+        uri: 'http://192.168.1.48:4000/graphql',
         // @ts-expect-error boolean
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         isExtractableFile: (value: any) => {

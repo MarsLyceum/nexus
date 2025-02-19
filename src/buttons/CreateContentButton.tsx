@@ -7,7 +7,6 @@ import {
     TextInput,
     Pressable,
     StyleSheet,
-    Platform,
     Image,
 } from 'react-native';
 import { COLORS } from '../constants';
@@ -206,10 +205,6 @@ export default CreateContentButton;
 
 const styles = StyleSheet.create({
     bottomSection: {
-        // Removed absolute positioning so it doesn't overlap the modal content on web.
-        // ...(Platform.OS === 'web'
-        //   ? { position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 10 }
-        //   : {}),
         height: 60,
         borderTopWidth: 1,
         borderTopColor: '#4A3A5A',
@@ -253,6 +248,10 @@ const styles = StyleSheet.create({
     },
     editorContainer: {
         marginBottom: 20,
+        marginLeft: 0,
+        marginRight: 0,
+        paddingLeft: 0,
+        paddingRight: 0,
     },
     modalButtonRow: {
         flexDirection: 'row',

@@ -6,9 +6,9 @@ import {
     TextInput,
     Pressable,
     StyleSheet,
-    Image,
     Alert,
 } from 'react-native';
+import { Image as ExpoImage } from 'expo-image';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { useMutation } from '@apollo/client';
@@ -98,7 +98,7 @@ export const CreateGroupModalScreen: React.FC<Props> = ({ navigation }) => {
 
                 <View style={styles.groupAvatarContainer}>
                     {fileData ? (
-                        <Image
+                        <ExpoImage
                             source={{ uri: fileData }}
                             style={styles.groupAvatar}
                         />

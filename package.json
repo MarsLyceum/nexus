@@ -14,6 +14,10 @@
         "typecheck": "tsc --noEmit"
     },
     "dependencies": {
+        "expo-image": "^2.0.6",
+        "@types/react-helmet": "^6.1.11",
+        "react-helmet": "^6.1.0",
+        "react-native-reanimated-carousel": "^4.0.2",
         "react-native-webview": "^13.13.2",
         "@react-native-picker/picker": "^2.11.0",
         "slate": "^0.112.0",

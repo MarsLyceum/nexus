@@ -7,8 +7,8 @@ import {
     TextInput,
     Pressable,
     StyleSheet,
-    Image,
 } from 'react-native';
+import { Image as ExpoImage } from 'expo-image';
 import { COLORS } from '../constants';
 import { useFileUpload } from '../hooks';
 import { AttachmentPreviews, Attachment, RichTextEditor } from '../sections';
@@ -189,7 +189,7 @@ export const CreateContentButton: React.FC<CreateContentButtonProps> = ({
                         style={styles.previewModalOverlay}
                         onPress={() => setPreviewModalVisible(false)}
                     >
-                        <Image
+                        <ExpoImage
                             source={{ uri: selectedAttachment.previewUri }}
                             style={styles.previewModalImage}
                             resizeMode="contain"

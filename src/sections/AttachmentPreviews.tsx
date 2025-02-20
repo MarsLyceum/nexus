@@ -1,11 +1,6 @@
 import React from 'react';
-import {
-    View,
-    TouchableOpacity,
-    Image,
-    ScrollView,
-    StyleSheet,
-} from 'react-native';
+import { View, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import { Image as ExpoImage } from 'expo-image';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { COLORS } from '../constants';
 
@@ -41,7 +36,7 @@ export const AttachmentPreviews: React.FC<AttachmentPreviewsProps> = ({
                                 onAttachmentPress && onAttachmentPress(att)
                             }
                         >
-                            <Image
+                            <ExpoImage
                                 source={{ uri: att.previewUri }}
                                 style={styles.attachmentImage}
                             />

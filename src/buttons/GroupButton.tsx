@@ -2,11 +2,11 @@ import React from 'react';
 import {
     TouchableOpacity,
     StyleSheet,
-    Image,
     View,
     ImageSourcePropType,
     Text,
 } from 'react-native';
+import { Image as ExpoImage } from 'expo-image';
 import { COLORS } from '../constants';
 
 const styles = StyleSheet.create({
@@ -53,7 +53,7 @@ export const GroupButton = ({
     <TouchableOpacity style={styles.container} onPress={onPress}>
         <View style={styles.buttonContainer}>
             <View style={styles.button}>
-                <Image
+                <ExpoImage
                     source={imageSource}
                     style={styles.image}
                     resizeMode="cover" // Ensures the image fills the entire rectangle

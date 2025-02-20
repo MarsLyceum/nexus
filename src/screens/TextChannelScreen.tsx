@@ -5,12 +5,12 @@ import {
     TextInput,
     FlatList,
     TouchableOpacity,
-    Image,
     useWindowDimensions,
     Keyboard,
     StyleSheet,
     Platform,
 } from 'react-native';
+import { Image as ExpoImage } from 'expo-image';
 import { NavigationProp } from '@react-navigation/core';
 import { useApolloClient } from '@apollo/client';
 import Icon from 'react-native-vector-icons/FontAwesome5';
@@ -28,6 +28,7 @@ import {
 } from '../queries';
 import { COLORS } from '../constants';
 import { GroupChannel, GroupChannelMessage, User } from '../types';
+import { LinkPreview } from '../small-components';
 import { useFileUpload } from '../hooks/useFileUpload';
 
 export type MessageWithAvatar = GroupChannelMessage & {
@@ -109,25 +110,11 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
 
     const renderMessageContent = (content: string) => {
         const isOnlyUrl = content.startsWith('http') && !content.includes(' ');
-        if (isOnlyUrl && isImageUrl(content)) {
-            return (
-                <TouchableOpacity
-                    onPress={() => {
-                        // Wrap the URL in an array and open modal at index 0
-                        setModalAttachments([content]);
-                        setModalInitialIndex(0);
-                        setModalVisible(true);
-                    }}
-                >
-                    <Image
-                        source={{ uri: content }}
-                        style={styles.messageAttachmentImage}
-                    />
-                </TouchableOpacity>
-            );
-        } else {
-            return <Text style={styles.messageText}>{content}</Text>;
-        }
+        return isOnlyUrl ? (
+            <LinkPreview url={content} containerWidth={width - 32} />
+        ) : (
+            <Text style={styles.messageText}>{content}</Text>
+        );
     };
 
     useEffect(() => {
@@ -302,7 +289,7 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
                     onEndReachedThreshold={0.1}
                     renderItem={({ item }) => (
                         <View style={styles.messageContainer}>
-                            <Image
+                            <ExpoImage
                                 source={{ uri: item.avatar }}
                                 style={styles.avatar}
                             />
@@ -340,7 +327,7 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
                                                             );
                                                         }}
                                                     >
-                                                        <Image
+                                                        <ExpoImage
                                                             source={{
                                                                 uri: url,
                                                             }}
@@ -372,7 +359,7 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
                                     setModalVisible(true);
                                 }}
                             >
-                                <Image
+                                <ExpoImage
                                     source={{ uri: inlineImageUrl }}
                                     style={styles.attachmentImage}
                                 />

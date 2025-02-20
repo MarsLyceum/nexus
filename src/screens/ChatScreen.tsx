@@ -4,7 +4,6 @@ import {
     View,
     Text,
     StyleSheet,
-    Image,
     FlatList,
     TextInput,
     TouchableOpacity,
@@ -12,6 +11,7 @@ import {
     useWindowDimensions,
 } from 'react-native';
 import { NavigationProp, RouteProp } from '@react-navigation/core';
+import { Image as ExpoImage } from 'expo-image';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 
 import { COLORS } from '../constants';
@@ -220,7 +220,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
                         <Icon name="arrow-left" size={20} color="white" />
                     </TouchableOpacity>
                 )}
-                <Image
+                <ExpoImage
                     source={{ uri: user.avatar }}
                     style={styles.headerAvatar}
                 />
@@ -234,7 +234,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
                 keyExtractor={(item) => item.id}
                 renderItem={({ item }) => (
                     <View style={styles.messageContainer}>
-                        <Image
+                        <ExpoImage
                             source={{ uri: item.avatar }}
                             style={styles.messageAvatar}
                         />

@@ -3,11 +3,11 @@ import React, { useState } from 'react';
 import {
     View,
     Text,
-    Image,
     TouchableOpacity,
     TextInput,
     StyleSheet,
 } from 'react-native';
+import { Image as ExpoImage } from 'expo-image';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { VoteActions } from './VoteActions';
 import { COLORS } from '../constants';
@@ -182,7 +182,7 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
                         color={COLORS.InactiveText}
                         style={styles.collapseIcon}
                     />
-                    <Image
+                    <ExpoImage
                         source={{
                             uri: `https://picsum.photos/seed/${comment.user.replaceAll(
                                 /[^\dA-Za-z]/g,

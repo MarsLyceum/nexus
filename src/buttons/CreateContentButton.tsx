@@ -1,5 +1,4 @@
-// CreateContentButton.tsx
-import React from 'react';
+import React, { useState } from 'react';
 import {
     View,
     Text,
@@ -8,84 +7,231 @@ import {
     TextInput,
     Pressable,
     StyleSheet,
-    Platform,
-    StyleProp,
-    ViewStyle,
-    TextStyle,
 } from 'react-native';
+import { Image as ExpoImage } from 'expo-image';
 import { COLORS } from '../constants';
+import { useFileUpload } from '../hooks';
+import { AttachmentPreviews, Attachment, RichTextEditor } from '../sections';
 
 type CreateContentButtonProps = {
-    /** Controls visibility of the modal */
     modalVisible: boolean;
     setModalVisible: (visible: boolean) => void;
-
-    /** First text field (e.g. “Title”) */
-    contentText: string;
+    contentText: string; // For the title (if using two fields) or for content (if single field)
     setContentText: (text: string) => void;
-
-    /** Handler for when user presses “Create” */
     handleCreate: () => void;
-
-    /** Text for the bottom button that opens the modal (e.g. “Write a comment...” or “+”) */
     buttonText: string;
-
-    /**
-     * Modal Title (overrides the big text at the top of the Modal).
-     * If not provided, defaults to the same as `buttonText`.
-     */
     modalTitle?: string;
-
-    /**
-     * (Optional) Show a second text field. E.g. for “Content” in a post.
-     * If `true`, it will render a second TextInput.
-     */
     showSecondField?: boolean;
-
-    /** State and setter for second text field. Only used if `showSecondField` is true. */
     secondContentText?: string;
     setSecondContentText?: (text: string) => void;
-
-    /**
-     * Placeholders for the TextInputs
-     */
-    placeholderText?: string; // placeholder for the first field
-    placeholderText2?: string; // placeholder for the second field
-
-    /** If the second text field should allow multiline. */
+    placeholderText?: string; // Placeholder for the first field (Title)
+    placeholderText2?: string; // Placeholder for the second field (Content)
     multilineSecondField?: boolean;
-
-    /** Optional style overrides for the entire modal container. */
-    modalContainerStyle?: StyleProp<ViewStyle>;
-    /** Optional style overrides for the modal title text. */
-    modalTitleStyle?: StyleProp<TextStyle>;
+    attachments: Attachment[];
+    setAttachments: (attachments: Attachment[]) => void;
+    enableImageAttachments?: boolean;
 };
 
-const isWeb = Platform.OS === 'web';
+export const CreateContentButton: React.FC<CreateContentButtonProps> = ({
+    modalVisible,
+    setModalVisible,
+    contentText,
+    setContentText,
+    handleCreate,
+    buttonText,
+    modalTitle,
+    showSecondField = false,
+    secondContentText = '',
+    setSecondContentText = () => {},
+    placeholderText = 'Enter title...',
+    placeholderText2 = 'Enter content...',
+    multilineSecondField = false,
+    attachments,
+    setAttachments,
+    enableImageAttachments = false,
+}) => {
+    const { pickFile } = useFileUpload();
+    const [previewModalVisible, setPreviewModalVisible] = useState(false);
+    const [selectedAttachment, setSelectedAttachment] = useState<
+        Attachment | undefined
+    >();
+
+    // Attachment insert handler
+    const handleAttachmentInsert = async () => {
+        try {
+            const result = await pickFile();
+            if (!result) return;
+            const file = result;
+            let previewUri = '';
+            if (file && 'uri' in file) {
+                previewUri = file.uri;
+            } else if (file) {
+                previewUri = URL.createObjectURL(file);
+            }
+            const newAttachment: Attachment = {
+                id: `${Date.now()}-${Math.random()}`,
+                file,
+                previewUri,
+            };
+            // @ts-expect-error type inference broken
+            setAttachments((prev) => [...prev, newAttachment]);
+        } catch (error) {
+            console.error('Error in handleAttachmentInsert:', error);
+        }
+    };
+
+    const onAttachmentPress = (attachment: Attachment) => {
+        setSelectedAttachment(attachment);
+        setPreviewModalVisible(true);
+    };
+
+    const onRemoveAttachment = (attachmentId: string) => {
+        // @ts-expect-error type inference broken
+        setAttachments((prev) => prev.filter((att) => att.id !== attachmentId));
+    };
+
+    return (
+        <>
+            <View style={styles.bottomSection}>
+                <TouchableOpacity
+                    style={styles.input}
+                    onPress={() => setModalVisible(true)}
+                >
+                    <Text style={{ color: COLORS.InactiveText }}>
+                        {buttonText}
+                    </Text>
+                </TouchableOpacity>
+            </View>
+            <Modal
+                visible={modalVisible}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setModalVisible(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContainer}>
+                        <Text style={styles.modalTitle}>
+                            {modalTitle || buttonText}
+                        </Text>
+
+                        {showSecondField ? (
+                            <>
+                                {/* First field: Plain text input for title */}
+                                <TextInput
+                                    placeholder={placeholderText}
+                                    placeholderTextColor={COLORS.InactiveText}
+                                    style={styles.textInput}
+                                    value={contentText}
+                                    onChangeText={setContentText}
+                                />
+                                {/* Second field: Conditionally render based on multilineSecondField */}
+                                {multilineSecondField ? (
+                                    <View style={styles.editorContainer}>
+                                        <RichTextEditor
+                                            initialContent={secondContentText}
+                                            onChange={setSecondContentText}
+                                        />
+                                    </View>
+                                ) : (
+                                    <TextInput
+                                        placeholder={placeholderText2}
+                                        placeholderTextColor={
+                                            COLORS.InactiveText
+                                        }
+                                        style={[
+                                            styles.textInput,
+                                            {
+                                                height: 100,
+                                                textAlignVertical: 'top',
+                                            },
+                                        ]}
+                                        value={secondContentText}
+                                        onChangeText={setSecondContentText}
+                                        multiline
+                                    />
+                                )}
+                            </>
+                        ) : (
+                            // Single field: Use RichTextEditor for content
+                            <View style={styles.editorContainer}>
+                                <RichTextEditor
+                                    initialContent={contentText}
+                                    onChange={setContentText}
+                                />
+                            </View>
+                        )}
+
+                        {enableImageAttachments && (
+                            <TouchableOpacity
+                                onPress={handleAttachmentInsert}
+                                style={styles.attachImageButton}
+                            >
+                                <Text style={styles.attachImageButtonText}>
+                                    Add Image
+                                </Text>
+                            </TouchableOpacity>
+                        )}
+
+                        <AttachmentPreviews
+                            attachments={attachments}
+                            onAttachmentPress={onAttachmentPress}
+                            onRemoveAttachment={onRemoveAttachment}
+                        />
+
+                        <View style={styles.modalButtonRow}>
+                            <Pressable
+                                style={styles.modalButton}
+                                onPress={() => setModalVisible(false)}
+                            >
+                                <Text style={styles.modalButtonText}>
+                                    Cancel
+                                </Text>
+                            </Pressable>
+                            <Pressable
+                                style={styles.modalButton}
+                                onPress={handleCreate}
+                            >
+                                <Text style={styles.modalButtonText}>
+                                    Create
+                                </Text>
+                            </Pressable>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+
+            {previewModalVisible && selectedAttachment && (
+                <Modal
+                    visible={previewModalVisible}
+                    transparent
+                    animationType="fade"
+                    onRequestClose={() => setPreviewModalVisible(false)}
+                >
+                    <TouchableOpacity
+                        style={styles.previewModalOverlay}
+                        onPress={() => setPreviewModalVisible(false)}
+                    >
+                        <ExpoImage
+                            source={{ uri: selectedAttachment.previewUri }}
+                            style={styles.previewModalImage}
+                            resizeMode="contain"
+                        />
+                    </TouchableOpacity>
+                </Modal>
+            )}
+        </>
+    );
+};
 
 const styles = StyleSheet.create({
-    bottomSection: isWeb
-        ? {
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              height: 60,
-              borderTopWidth: 1,
-              borderTopColor: '#4A3A5A',
-              backgroundColor: COLORS.SecondaryBackground,
-              justifyContent: 'center',
-              paddingHorizontal: 10,
-              zIndex: 10,
-          }
-        : {
-              height: 60,
-              borderTopWidth: 1,
-              borderTopColor: '#4A3A5A',
-              backgroundColor: COLORS.SecondaryBackground,
-              justifyContent: 'center',
-              paddingHorizontal: 10,
-          },
+    bottomSection: {
+        height: 60,
+        borderTopWidth: 1,
+        borderTopColor: '#4A3A5A',
+        backgroundColor: COLORS.SecondaryBackground,
+        justifyContent: 'center',
+        paddingHorizontal: 10,
+    },
     input: {
         backgroundColor: COLORS.TextInput,
         color: 'white',
@@ -120,6 +266,13 @@ const styles = StyleSheet.create({
         marginBottom: 15,
         color: COLORS.White,
     },
+    editorContainer: {
+        marginBottom: 20,
+        marginLeft: 0,
+        marginRight: 0,
+        paddingLeft: 0,
+        paddingRight: 0,
+    },
     modalButtonRow: {
         flexDirection: 'row',
         justifyContent: 'flex-end',
@@ -135,95 +288,28 @@ const styles = StyleSheet.create({
         color: COLORS.White,
         fontWeight: '600',
     },
+    previewModalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.9)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    previewModalImage: {
+        width: '90%',
+        height: '90%',
+        borderWidth: 2,
+        borderColor: 'white',
+    },
+    attachImageButton: {
+        backgroundColor: COLORS.Primary,
+        paddingVertical: 8,
+        paddingHorizontal: 15,
+        borderRadius: 5,
+        alignSelf: 'flex-start',
+        marginBottom: 15,
+    },
+    attachImageButtonText: {
+        color: COLORS.White,
+        fontWeight: '600',
+    },
 });
-
-/**
- * A reusable button at the bottom of the screen that opens a configurable modal
- * (optionally with two TextInputs) to create new content, post, comment, etc.
- */
-export const CreateContentButton: React.FC<CreateContentButtonProps> = ({
-    modalVisible,
-    setModalVisible,
-    contentText,
-    setContentText,
-    handleCreate,
-    buttonText,
-    modalTitle,
-    showSecondField = false,
-    secondContentText,
-    setSecondContentText,
-    placeholderText = 'Write here...',
-    placeholderText2 = 'More text...',
-    multilineSecondField = false,
-    modalContainerStyle,
-    modalTitleStyle,
-}) => (
-    <>
-        {/* Bottom Fixed Button */}
-        <View style={styles.bottomSection}>
-            <TouchableOpacity
-                style={styles.input}
-                onPress={() => setModalVisible(true)}
-            >
-                <Text style={{ color: COLORS.InactiveText }}>{buttonText}</Text>
-            </TouchableOpacity>
-        </View>
-
-        {/* Modal for Creating Content */}
-        <Modal
-            visible={modalVisible}
-            transparent
-            animationType="fade"
-            onRequestClose={() => setModalVisible(false)}
-        >
-            <View style={styles.modalOverlay}>
-                <View style={[styles.modalContainer, modalContainerStyle]}>
-                    {/* Title */}
-                    <Text style={[styles.modalTitle, modalTitleStyle]}>
-                        {modalTitle || buttonText}
-                    </Text>
-
-                    {/* First field */}
-                    <TextInput
-                        placeholder={placeholderText}
-                        placeholderTextColor={COLORS.InactiveText}
-                        style={styles.textInput}
-                        value={contentText}
-                        onChangeText={setContentText}
-                    />
-
-                    {/* Optional second field */}
-                    {showSecondField && setSecondContentText && (
-                        <TextInput
-                            placeholder={placeholderText2}
-                            placeholderTextColor={COLORS.InactiveText}
-                            style={[
-                                styles.textInput,
-                                multilineSecondField && { height: 80 },
-                            ]}
-                            value={secondContentText}
-                            onChangeText={setSecondContentText}
-                            multiline={multilineSecondField}
-                        />
-                    )}
-
-                    {/* Action Buttons */}
-                    <View style={styles.modalButtonRow}>
-                        <Pressable
-                            style={styles.modalButton}
-                            onPress={() => setModalVisible(false)}
-                        >
-                            <Text style={styles.modalButtonText}>Cancel</Text>
-                        </Pressable>
-                        <Pressable
-                            style={styles.modalButton}
-                            onPress={handleCreate}
-                        >
-                            <Text style={styles.modalButtonText}>Create</Text>
-                        </Pressable>
-                    </View>
-                </View>
-            </View>
-        </Modal>
-    </>
-);

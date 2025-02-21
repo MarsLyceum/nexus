@@ -1,13 +1,12 @@
-// useFileUpload.ts
 import { useState } from 'react';
 import { Alert, Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 
 /**
- * Determines the MIME type from a file URI.
+ * Determines the MIME type from a file URI or file name.
  */
-const getMimeType = (uri: string): string => {
-    const extension = uri.split('.').pop()?.toLowerCase();
+const getMimeType = (input: string): string => {
+    const extension = input.split('.').pop()?.toLowerCase();
     switch (extension) {
         // Images
         case 'jpg':
@@ -121,14 +120,13 @@ export const useFileUpload = () => {
                 'Permission required',
                 'Permission to access media library is required!'
             );
-            return;
+            return undefined;
         }
 
-        // Launch the image picker
+        // Launch the image picker with cropping enabled, but no forced aspect ratio
         const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: true,
-            aspect: [1, 1],
+            mediaTypes: ['images'], // Updated: use an array of media types
+            allowsEditing: true, // Allows cropping, but no fixed aspect ratio
             quality: 1,
             base64: Platform.OS === 'web', // Request base64 on web
         });
@@ -138,20 +136,29 @@ export const useFileUpload = () => {
             ('canceled' in result && result.canceled) ||
             ('cancelled' in result && result.cancelled);
         if (canceled) {
-            return;
+            // eslint-disable-next-line consistent-return
+            return undefined;
         }
 
         // Handle the asset returned (Expo’s new API returns an assets array)
         const imageAsset = result.assets ? result.assets[0] : result;
 
         if (Platform.OS === 'web') {
-            // For web, if base64 is provided, construct a data URL and convert it
+            // For web, if base64 is provided, use it to create a proper File
             if (imageAsset.base64) {
-                const mimeType = getMimeType(imageAsset.uri);
+                // Try to get fileName from the asset; fallback to a default name
+                const fileName =
+                    imageAsset.fileName ||
+                    imageAsset.uri.split('/').pop() ||
+                    'upload.jpg';
+                // Determine MIME type using the fileName rather than the URI
+                let mimeType = getMimeType(fileName);
+                if (mimeType === 'application/octet-stream') {
+                    // Fallback to a common type if unable to detect
+                    mimeType = 'image/jpeg';
+                }
                 const dataUrl = `data:${mimeType};base64,${imageAsset.base64}`;
                 setFileData(dataUrl);
-                const fileName = `upload.${mimeType.split('/')[1]}`;
-                // eslint-disable-next-line consistent-return
                 return dataURLtoFile(dataUrl, fileName);
             }
 
@@ -165,7 +172,6 @@ export const useFileUpload = () => {
                 lastModified: Date.now(),
             });
             setFileData(imageAsset.uri);
-            // eslint-disable-next-line consistent-return
             return file;
         }
 
@@ -173,7 +179,6 @@ export const useFileUpload = () => {
         setFileData(imageAsset.uri);
         const fileName = imageAsset.uri.split('/').pop() || 'upload';
         const mimeType = getMimeType(fileName);
-        // eslint-disable-next-line consistent-return
         return {
             uri: imageAsset.uri,
             type: mimeType,

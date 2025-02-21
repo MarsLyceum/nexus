@@ -5,12 +5,14 @@ export const CREATE_GROUP_CHANNEL_MESSAGE_MUTATION = gql`
         $postedByUserId: String!
         $channelId: String!
         $content: String!
+        $attachments: [Upload!]
     ) {
         createGroupChannelMessage(
             postedByUserId: $postedByUserId
             channelId: $channelId
             content: $content
             messageType: "message"
+            attachments: $attachments
         ) {
             content
         }

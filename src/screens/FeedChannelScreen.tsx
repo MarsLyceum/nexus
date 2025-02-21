@@ -1,5 +1,5 @@
 // FeedChannelScreen.tsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import {
     SafeAreaView,
     FlatList,
@@ -8,23 +8,19 @@ import {
     Platform,
     View,
 } from 'react-native';
-import { useApolloClient, useMutation } from '@apollo/client';
 import { NavigationProp, RouteProp } from '@react-navigation/core';
-import { Header, PostItem } from '../sections';
+import { Header, PostItem, Attachment } from '../sections';
 import { COLORS } from '../constants';
-import {
-    FETCH_CHANNEL_POSTS_QUERY,
-    FETCH_USER_QUERY,
-    CREATE_GROUP_CHANNEL_POST_MUTATION,
-} from '../queries';
-import { GroupChannelPostMessage, User, GroupChannel } from '../types';
 import { CreateContentButton } from '../buttons';
 import { useAppSelector, RootState, UserType } from '../redux';
-import { getRelativeTime } from '../utils';
+import { FeedPost } from '../types';
+import { useFeedPosts } from '../hooks/useFeedPosts';
+import { useCreatePost } from '../hooks/useCreatePost';
 
 type RootStackParamList = {
     FeedChannelScreen: {
-        channel: GroupChannel;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        channel: any; // Replace 'any' with your GroupChannel type if available
     };
     PostScreen: {
         id: string;
@@ -33,42 +29,28 @@ type RootStackParamList = {
 
 interface FeedChannelScreenProps {
     navigation: NavigationProp<RootStackParamList, 'FeedChannelScreen'>;
-    channel?: GroupChannel;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    channel?: any;
     route?: RouteProp<RootStackParamList, 'FeedChannelScreen'>;
 }
 
-interface FeedPost {
-    id: string;
-    user: string;
-    domain: string;
-    title: string;
-    upvotes: number;
-    commentsCount: number;
-    shareCount: number;
-    content: string;
-    time: string;
-    thumbnail: string;
-    fromReddit?: boolean; // New property to flag Reddit posts
-}
-
 /** -----------------------------
- * Styles (using the provided color palette)
+ * Styles
  ----------------------------- */
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.SecondaryBackground, // #382348
+        backgroundColor: COLORS.SecondaryBackground,
     },
     feedList: {
         padding: 15,
     },
-    // Skeleton styles for feed post placeholder
     skeletonContainer: {
-        backgroundColor: COLORS.PrimaryBackground, // #281B31
+        backgroundColor: COLORS.PrimaryBackground,
         padding: 15,
         marginBottom: 10,
         borderRadius: 8,
-        shadowColor: COLORS.OffWhite, // #F2F3F5
+        shadowColor: COLORS.OffWhite,
         shadowOpacity: 0.1,
         shadowRadius: 5,
         elevation: 2,
@@ -82,31 +64,31 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: COLORS.InactiveText, // #989898
+        backgroundColor: COLORS.InactiveText,
     },
     skeletonTextBlock: {
         height: 20,
-        backgroundColor: COLORS.InactiveText, // #989898
+        backgroundColor: COLORS.InactiveText,
         borderRadius: 4,
         marginLeft: 10,
         flex: 1,
     },
     skeletonTitle: {
         height: 20,
-        backgroundColor: COLORS.InactiveText, // #989898
+        backgroundColor: COLORS.InactiveText,
         borderRadius: 4,
         marginBottom: 10,
     },
     skeletonContent: {
         height: 60,
-        backgroundColor: COLORS.InactiveText, // #989898
+        backgroundColor: COLORS.InactiveText,
         borderRadius: 4,
     },
 });
 
 /** -----------------------------
  * SkeletonPostItem Component
- * ----------------------------- */
+ ----------------------------- */
 const SkeletonPostItem: React.FC = () => (
     <View style={styles.skeletonContainer}>
         <View style={styles.skeletonHeader}>
@@ -121,7 +103,7 @@ const SkeletonPostItem: React.FC = () => (
 );
 
 /** -----------------------------
- * FeedChannelScreen
+ * FeedChannelScreen Component
  ----------------------------- */
 export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
     navigation,
@@ -133,116 +115,32 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
         (state: RootState) => state.user.user
     );
     const { width } = useWindowDimensions();
-    const apolloClient = useApolloClient();
-    const userCacheRef = useRef<Record<string, string>>({});
-    const [feedPosts, setFeedPosts] = useState<FeedPost[]>([]);
-    const [loadingFeed, setLoadingFeed] = useState<boolean>(true);
+
+    // Use custom hook to fetch feed posts
+    const { feedPosts, loadingFeed } = useFeedPosts(channel?.id);
+
+    // Local UI state for creating a post
     const [modalVisible, setModalVisible] = useState(false);
     const [newPostTitle, setNewPostTitle] = useState('');
     const [newPostContent, setNewPostContent] = useState('');
+    const [postAttachments, setPostAttachments] = useState<Attachment[]>([]);
 
-    // Apollo mutation hook for creating posts
-    const [createPostMutation, { loading: creatingPost }] = useMutation(
-        CREATE_GROUP_CHANNEL_POST_MUTATION,
-        {
-            refetchQueries: [
-                {
-                    query: FETCH_CHANNEL_POSTS_QUERY,
-                    variables: { channelId: channel?.id, offset: 0 },
-                },
-            ],
-            awaitRefetchQueries: true,
-            onCompleted: () => {
-                setModalVisible(false);
-                setNewPostTitle('');
-                setNewPostContent('');
-            },
-            onError: (error) => {
-                console.error('Error creating post:', error);
-            },
-        }
-    );
-
-    useEffect(() => {
-        if (!channel) return;
-        let cancelled = false;
-
-        const fetchPosts = async () => {
-            try {
-                console.log('Starting to load feed:', new Date());
-                const { data } = await apolloClient.query<{
-                    fetchFeedPosts: GroupChannelPostMessage[];
-                }>({
-                    query: FETCH_CHANNEL_POSTS_QUERY,
-                    variables: { channelId: channel.id, offset: 0 },
-                });
-
-                const postsData = data.fetchFeedPosts.filter(
-                    (msg) => msg.messageType === 'post'
-                );
-
-                const posts: FeedPost[] = await Promise.all(
-                    postsData.map(async (msg) => {
-                        let username: string;
-                        if (userCacheRef.current[msg.postedByUserId]) {
-                            username = userCacheRef.current[msg.postedByUserId];
-                        } else {
-                            const userResult = await apolloClient.query<{
-                                fetchUser: User;
-                            }>({
-                                query: FETCH_USER_QUERY,
-                                variables: { userId: msg.postedByUserId },
-                            });
-                            username = userResult.data.fetchUser.username;
-                            userCacheRef.current[msg.postedByUserId] = username;
-                        }
-                        return {
-                            id: msg.id,
-                            user: username,
-                            domain: msg.domain || '',
-                            title: msg.title,
-                            upvotes: msg.upvotes,
-                            commentsCount: msg.commentsCount,
-                            shareCount: msg.shareCount,
-                            content: msg.content,
-                            time: getRelativeTime(new Date(msg.postedAt)),
-                            thumbnail:
-                                msg.thumbnail ||
-                                `https://picsum.photos/seed/${username}/48`,
-                            fromReddit: Math.random() < 0.2, // ~20% chance to be true
-                        } as FeedPost;
-                    })
-                );
-                if (!cancelled) {
-                    console.log('Feed loaded', new Date());
-                    setFeedPosts(posts);
-                    setLoadingFeed(false);
-                }
-            } catch (error) {
-                console.error('Error fetching feed posts:', error);
-                if (!cancelled) {
-                    setLoadingFeed(false);
-                }
-            }
-        };
-
-        // eslint-disable-next-line no-void
-        void fetchPosts();
-        // eslint-disable-next-line consistent-return
-        return () => {
-            cancelled = true;
-        };
-    }, [apolloClient, channel]);
+    // Use custom hook for creating a post
+    const { createPost, creatingPost } = useCreatePost(channel?.id, () => {
+        setModalVisible(false);
+        setNewPostTitle('');
+        setNewPostContent('');
+        setPostAttachments([]); // Clear attachments on success
+    });
 
     const handleCreatePost = async () => {
         if (!channel || !user?.id || creatingPost) return;
-        await createPostMutation({
-            variables: {
-                postedByUserId: user.id,
-                channelId: channel.id,
-                content: newPostContent,
-                title: newPostTitle,
-            },
+        await createPost({
+            postedByUserId: user.id,
+            channelId: channel.id,
+            content: newPostContent,
+            title: newPostTitle,
+            attachments: postAttachments.map((att) => att.file),
         });
     };
 
@@ -257,11 +155,10 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
                 navigation={navigation}
             />
 
-            {/* While loading, display skeleton placeholders; otherwise, display the feed posts */}
             {loadingFeed ? (
                 <FlatList
                     style={{ flex: 1 }}
-                    data={[0, 1, 2, 3, 4]} // Display 5 skeleton items
+                    data={[0, 1, 2, 3, 4]} // 5 skeleton items
                     keyExtractor={(item) => item.toString()}
                     renderItem={() => <SkeletonPostItem />}
                     contentContainerStyle={[
@@ -273,8 +170,8 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
                 <FlatList
                     style={{ flex: 1 }}
                     data={feedPosts}
-                    keyExtractor={(item) => item.id}
-                    renderItem={({ item }) => (
+                    keyExtractor={(item: FeedPost) => item.id}
+                    renderItem={({ item }: { item: FeedPost }) => (
                         <PostItem
                             id={item.id}
                             username={item.user}
@@ -292,6 +189,7 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
                                 })
                             }
                             fromReddit={item.fromReddit}
+                            attachmentUrls={item.attachmentUrls}
                         />
                     )}
                     contentContainerStyle={[
@@ -315,6 +213,9 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
                 placeholderText="Title"
                 placeholderText2="Content"
                 multilineSecondField
+                attachments={postAttachments}
+                setAttachments={setPostAttachments}
+                enableImageAttachments
             />
         </SafeAreaView>
     );

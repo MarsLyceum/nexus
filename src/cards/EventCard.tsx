@@ -1,9 +1,10 @@
+// eslint-disable-next-line eslint-comments/disable-enable-pair
+/* eslint-disable max-lines */
 // EventCard.tsx
 import React, { useState } from 'react';
 import {
     View,
     Text,
-    Image,
     StyleSheet,
     TouchableOpacity,
     Modal,
@@ -14,6 +15,7 @@ import {
     useWindowDimensions,
 } from 'react-native';
 import * as Calendar from 'expo-calendar';
+import { Image as ExpoImage } from 'expo-image';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
 import { COLORS } from '../constants';
@@ -381,7 +383,7 @@ export const EventCard: React.FC<EventCardProps> = ({
     const renderStackedProfiles = (people: Person[]) => (
         <View style={styles.stackedProfilesContainer}>
             {people.map((person, index) => (
-                <Image
+                <ExpoImage
                     key={person.id}
                     source={{ uri: person.imageUrl }}
                     style={[
@@ -495,7 +497,7 @@ export const EventCard: React.FC<EventCardProps> = ({
                         </View>
                     </TouchableOpacity>
                 </View>
-                <Image
+                <ExpoImage
                     source={{ uri: imageUrl }}
                     style={[
                         styles.eventImage,
@@ -548,7 +550,7 @@ export const EventCard: React.FC<EventCardProps> = ({
                                     key={person.id}
                                     style={styles.modalItemContainer}
                                 >
-                                    <Image
+                                    <ExpoImage
                                         source={{ uri: person.imageUrl }}
                                         style={styles.profilePic}
                                     />

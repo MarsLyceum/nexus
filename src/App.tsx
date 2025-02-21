@@ -27,8 +27,11 @@ import { Lato_400Regular, Lato_700Bold } from '@expo-google-fonts/lato';
 import {
     useFonts,
     Roboto_400Regular,
+    Roboto_400Regular_Italic,
     Roboto_500Medium,
+    Roboto_500Medium_Italic,
     Roboto_700Bold,
+    Roboto_700Bold_Italic,
 } from '@expo-google-fonts/roboto';
 import * as SplashScreen from 'expo-splash-screen';
 
@@ -111,18 +114,19 @@ const quotaLink = new ApolloLink((operation, forward) => {
     });
 });
 
-const graphqlApiGatewayEndpointHttp =
-    'https://peeps-web-service-iwesf7iypq-uw.a.run.app/graphql';
+// const graphqlApiGatewayEndpointHttp =
+//     'https://peeps-web-service-iwesf7iypq-uw.a.run.app/graphql';
 const graphqlApiGatewayEndpointSse = ''; // SSE turned off
 
 const httpLink = from([
     errorLink,
     createUploadLink({
-        uri: graphqlApiGatewayEndpointHttp,
+        // uri: graphqlApiGatewayEndpointHttp,
+        uri: 'http://192.168.1.48:4000/graphql',
         // @ts-expect-error boolean
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         isExtractableFile: (value: any) => {
-            if (value === undefined) return false;
+            if (value === undefined || value === null) return false;
             // On web: if value is a native File or Blob, it’s fine.
             if (typeof File !== 'undefined' && value instanceof File)
                 return true;
@@ -276,8 +280,11 @@ export default function App() {
         Lato_400Regular,
         Lato_700Bold,
         Roboto_400Regular,
+        Roboto_400Regular_Italic,
         Roboto_500Medium,
+        Roboto_500Medium_Italic,
         Roboto_700Bold,
+        Roboto_700Bold_Italic,
     });
 
     useEffect(() => {

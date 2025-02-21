@@ -1,20 +1,19 @@
-// ChatScreen.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import {
     View,
     Text,
     StyleSheet,
-    Image,
     FlatList,
-    TextInput,
-    TouchableOpacity,
-    Platform,
     useWindowDimensions,
 } from 'react-native';
 import { NavigationProp, RouteProp } from '@react-navigation/core';
+import { Image as ExpoImage } from 'expo-image';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 
 import { COLORS } from '../constants';
+import { ChatInput } from '../small-components';
+import { Attachment } from '../types';
+import { useFileUpload } from '../hooks';
 
 // Define the Message type
 export type Message = {
@@ -40,9 +39,6 @@ type ChatScreenProps = {
     navigation: NavigationProp<RootStackParamList, 'ChatScreen'>;
     route: RouteProp<RootStackParamList, 'ChatScreen'>;
 };
-
-// Detect if the device is a mobile or tablet
-const isMobileOrTablet = Platform.OS === 'ios' || Platform.OS === 'android';
 
 const styles = StyleSheet.create({
     chatContainer: {
@@ -102,29 +98,8 @@ const styles = StyleSheet.create({
         color: 'gray',
         marginTop: 2,
     },
-    inputContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 10,
-        borderTopWidth: 1,
-        borderTopColor: COLORS.InactiveText,
-        backgroundColor: COLORS.SecondaryBackground,
-    },
-    input: {
-        flex: 1,
-        backgroundColor: COLORS.TextInput,
-        color: 'white',
-        padding: 10,
-        borderRadius: 20,
-        fontSize: 14,
-        marginRight: 10,
-    },
-    sendButton: {
-        padding: 10,
-    },
 });
 
-// ChatScreen Component
 export const ChatScreen: React.FC<ChatScreenProps> = ({
     route,
     navigation,
@@ -178,10 +153,30 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     ]);
 
     const [messageText, setMessageText] = useState('');
+    const [attachments, setAttachments] = useState<Attachment[]>([]);
     const flatListRef = useRef<FlatList<Message>>(null);
 
-    const sendMessage = () => {
-        if (!messageText.trim()) return;
+    // Use file upload hook for handling image upload
+    const { pickFile } = useFileUpload();
+
+    // Updated handleImageUpload function using useFileUpload hook.
+    const handleImageUpload = async () => {
+        const file = await pickFile();
+        if (file) {
+            let previewUri = '';
+            previewUri = 'uri' in file ? file.uri : URL.createObjectURL(file);
+            const newAttachment: Attachment = {
+                id: `${Date.now()}-${Math.random()}`,
+                file,
+                previewUri,
+            };
+            setAttachments((prev) => [...prev, newAttachment]);
+        }
+    };
+
+    // Function to send a message using the new ChatInput component
+    const sendMessageHandler = () => {
+        if (!messageText.trim() && attachments.length === 0) return;
 
         const newMessage: Message = {
             id: Math.random().toString(),
@@ -199,9 +194,19 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             edited: false,
         };
 
-        // Append the new message at the end of the list.
         setMessages((prevMessages) => [...prevMessages, newMessage]);
         setMessageText('');
+        setAttachments([]);
+    };
+
+    // Handlers for inline image and attachment preview presses
+    // eslint-disable-next-line unicorn/consistent-function-scoping
+    const onInlineImagePress = (url: string) => {
+        console.log('Inline image pressed:', url);
+    };
+
+    const onAttachmentPreviewPress = (att: Attachment) => {
+        console.log('Attachment preview pressed:', att);
     };
 
     // Scroll to the bottom whenever messages change.
@@ -216,11 +221,14 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             {/* Chat Header */}
             <View style={styles.chatHeader}>
                 {!isLargeScreen && (
-                    <TouchableOpacity onPress={() => navigation.goBack()}>
-                        <Icon name="arrow-left" size={20} color="white" />
-                    </TouchableOpacity>
+                    <Icon.Button
+                        name="arrow-left"
+                        size={20}
+                        backgroundColor={COLORS.SecondaryBackground}
+                        onPress={() => navigation.goBack()}
+                    />
                 )}
-                <Image
+                <ExpoImage
                     source={{ uri: user.avatar }}
                     style={styles.headerAvatar}
                 />
@@ -234,7 +242,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
                 keyExtractor={(item) => item.id}
                 renderItem={({ item }) => (
                     <View style={styles.messageContainer}>
-                        <Image
+                        <ExpoImage
                             source={{ uri: item.avatar }}
                             style={styles.messageAvatar}
                         />
@@ -252,28 +260,18 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
                 )}
             />
 
-            {/* Message Input */}
-            <View style={styles.inputContainer}>
-                <TextInput
-                    style={styles.input}
-                    placeholder={`Message ${user.name}`}
-                    placeholderTextColor="gray"
-                    value={messageText}
-                    onChangeText={setMessageText}
-                    onSubmitEditing={
-                        !isMobileOrTablet ? sendMessage : undefined
-                    } // Desktop: Send on Enter
-                    returnKeyType={!isMobileOrTablet ? 'default' : 'send'}
-                />
-                {isMobileOrTablet && messageText.length > 0 && (
-                    <TouchableOpacity
-                        onPress={sendMessage}
-                        style={styles.sendButton}
-                    >
-                        <Icon name="paper-plane" size={20} color="white" />
-                    </TouchableOpacity>
-                )}
-            </View>
+            {/* Chat Input using the ChatInput component */}
+            <ChatInput
+                messageText={messageText}
+                setMessageText={setMessageText}
+                attachments={attachments}
+                setAttachments={setAttachments}
+                handleImageUpload={handleImageUpload}
+                sendMessageHandler={sendMessageHandler}
+                recipientName={user.name}
+                onInlineImagePress={onInlineImagePress}
+                onAttachmentPreviewPress={onAttachmentPreviewPress}
+            />
         </View>
     );
 };

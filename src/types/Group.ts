@@ -8,6 +8,7 @@ export type BaseGroupChannelMessage = {
     channel: GroupChannel;
     channelId: string;
     postedByUserId: string;
+    attachmentUrls?: string[];
 };
 
 export type GroupChannelRegularMessage = BaseGroupChannelMessage & {

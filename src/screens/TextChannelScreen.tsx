@@ -1,361 +1,130 @@
 // TextChannelScreen.tsx
-import React, { useState, useEffect, useRef } from 'react';
-import {
-    View,
-    Text,
-    TextInput,
-    FlatList,
-    TouchableOpacity,
-    Image,
-    useWindowDimensions,
-    Keyboard,
-    StyleSheet,
-    Platform,
-} from 'react-native';
+import React, { useState } from 'react';
+import { View, useWindowDimensions } from 'react-native';
 import { NavigationProp } from '@react-navigation/core';
-import { useApolloClient } from '@apollo/client';
-import Icon from 'react-native-vector-icons/FontAwesome5';
 import { useAppSelector, RootState, UserType } from '../redux';
-import { Header } from '../sections';
-import {
-    FETCH_CHANNEL_MESSAGES_QUERY,
-    FETCH_USER_QUERY,
-    CREATE_GROUP_CHANNEL_MESSAGE_MUTATION,
-} from '../queries';
+import { Header, LargeImageModal } from '../sections';
 import { COLORS } from '../constants';
-import { GroupChannel, GroupChannelMessage, User } from '../types';
+import { GroupChannel, Attachment } from '../types';
+import { MessageList, ChatInput } from '../small-components';
+import { useFileUpload, useChannelMessages, useSendMessage } from '../hooks';
 
-export type MessageWithAvatar = GroupChannelMessage & {
-    avatar: string;
-    username: string;
-};
-
-type TextChannelScreenProps = {
+export type TextChannelScreenProps = {
     channel: GroupChannel;
     navigation: NavigationProp<Record<string, unknown>>;
 };
-
-const formatDateTime = (date: Date) => {
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const year = date.getFullYear();
-    const hours = date.getHours() % 12 || 12;
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const ampm = date.getHours() >= 12 ? 'PM' : 'AM';
-    return `${month}/${day}/${year} ${hours}:${minutes} ${ampm}`;
-};
-
-/**
- * SkeletonMessageItem mimics a chat message while loading.
- */
-const SkeletonMessageItem: React.FC = () => (
-    <View style={styles.skeletonMessageContainer}>
-        <View style={styles.skeletonAvatar} />
-        <View style={styles.skeletonMessageContent}>
-            <View style={styles.skeletonUsername} />
-            <View style={styles.skeletonTime} />
-            <View style={styles.skeletonText} />
-        </View>
-    </View>
-);
 
 export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
     channel,
     navigation,
 }) => {
-    // Get the current user from Redux
     const user: UserType = useAppSelector(
         (state: RootState) => state.user.user
     );
-    const apolloClient = useApolloClient();
-
-    // Local state for sending messages
     const [messageText, setMessageText] = useState('');
-    const [chatMessages, setChatMessages] = useState<MessageWithAvatar[]>([]);
-    const [offset, setOffset] = useState(0);
-    const limit = 100;
-    const [loadingMore, setLoadingMore] = useState(false);
-    const [loadingMessages, setLoadingMessages] = useState<boolean>(true);
-    const userCacheRef = useRef<Record<string, string>>({});
-    const [refreshTrigger, setRefreshTrigger] = useState(0);
     const { width } = useWindowDimensions();
     const isLargeScreen = width > 768;
-    const flatListRef = useRef<FlatList<MessageWithAvatar> | null>(null);
+    const [attachments, setAttachments] = useState<Attachment[]>([]);
 
-    useEffect(() => {
-        let cancelled = false;
-        const fetchMessages = async () => {
-            try {
-                const fetchMessagesResult = await apolloClient.query<{
-                    fetchChannelMessages: GroupChannelMessage[];
-                }>({
-                    query: FETCH_CHANNEL_MESSAGES_QUERY,
-                    variables: {
-                        channelId: channel.id,
-                        offset,
-                    },
-                });
+    // Modal state for image previews
+    const [modalVisible, setModalVisible] = useState(false);
+    const [modalAttachments, setModalAttachments] = useState<string[]>([]);
+    const [modalInitialIndex, setModalInitialIndex] = useState(0);
 
-                const messagesArray =
-                    fetchMessagesResult.data.fetchChannelMessages;
-                if (!Array.isArray(messagesArray)) {
-                    console.error(
-                        'Expected fetchChannelMessages to be an array.'
-                    );
-                    return;
-                }
+    // Use our custom hook to fetch messages
+    const { chatMessages, loadingMessages, loadMoreMessages, refreshMessages } =
+        useChannelMessages(channel.id);
 
-                const newMessages: MessageWithAvatar[] = await Promise.all(
-                    messagesArray.map(async (msg: GroupChannelMessage) => {
-                        if (userCacheRef.current[msg.postedByUserId]) {
-                            return {
-                                ...msg,
-                                postedAt: new Date(msg.postedAt),
-                                username:
-                                    userCacheRef.current[msg.postedByUserId],
-                                avatar: 'https://picsum.photos/50?random=10',
-                            };
-                        }
+    // Use our custom hook to send messages
+    const sendMsg = useSendMessage();
 
-                        const fetchUserResult = await apolloClient.query<{
-                            fetchUser: User;
-                        }>({
-                            query: FETCH_USER_QUERY,
-                            variables: { userId: msg.postedByUserId },
-                        });
-
-                        const fetchedUsername =
-                            fetchUserResult.data.fetchUser.username;
-                        userCacheRef.current[msg.postedByUserId] =
-                            fetchedUsername;
-                        return {
-                            ...msg,
-                            postedAt: new Date(msg.postedAt),
-                            username: fetchedUsername,
-                            avatar: 'https://picsum.photos/50?random=10',
-                        };
-                    })
-                );
-
-                if (!cancelled) {
-                    if (offset === 0) {
-                        setChatMessages(newMessages);
-                    } else {
-                        setChatMessages((prev) => [...prev, ...newMessages]);
-                    }
-                }
-            } catch (error) {
-                console.error('Error fetching messages:', error);
-            } finally {
-                if (offset === 0) {
-                    setLoadingMessages(false);
-                }
-                setLoadingMore(false);
-            }
-        };
-
-        void fetchMessages();
-        return () => {
-            cancelled = true;
-        };
-    }, [channel, offset, refreshTrigger, apolloClient]);
-
-    useEffect(() => {
-        if (flatListRef.current) {
-            setTimeout(
-                () => flatListRef.current?.scrollToEnd({ animated: true }),
-                100
-            );
-        }
-    }, [chatMessages]);
-
-    const loadMoreMessages = () => {
-        if (loadingMore) return;
-        setLoadingMore(true);
-        setOffset((prev) => prev + limit);
+    const sendMessageHandler = async () => {
+        if (!messageText.trim() && attachments.length === 0) return;
+        await sendMsg(
+            user?.id ?? '',
+            channel.id,
+            messageText,
+            attachments,
+            refreshMessages
+        );
+        setMessageText('');
+        setAttachments([]);
     };
 
-    const sendMessage = async () => {
-        if (!messageText.trim()) return;
-        try {
-            await apolloClient.mutate({
-                mutation: CREATE_GROUP_CHANNEL_MESSAGE_MUTATION,
-                variables: {
-                    postedByUserId: user?.id,
-                    channelId: channel.id,
-                    content: messageText.trim(),
-                },
-            });
-            setMessageText('');
-            Keyboard.dismiss();
-            setOffset(0);
-            setRefreshTrigger((prev) => prev + 1);
-        } catch (error) {
-            console.error('Error creating message:', error);
+    const { pickFile } = useFileUpload();
+
+    const handleImageUpload = async () => {
+        const file = await pickFile();
+        if (file) {
+            let previewUri = '';
+            previewUri = 'uri' in file ? file.uri : URL.createObjectURL(file);
+            const newAttachment: Attachment = {
+                id: `${Date.now()}-${Math.random()}`,
+                file,
+                previewUri,
+            };
+            setAttachments((prev) => [...prev, newAttachment]);
         }
+    };
+
+    // Handler for inline image preview tap
+    const handleInlineImagePress = (url: string) => {
+        setModalAttachments([url]);
+        setModalInitialIndex(0);
+        setModalVisible(true);
+    };
+
+    // Handler for attachment preview tap from ChatInput
+    const handleAttachmentPreviewPress = (att: Attachment) => {
+        setModalAttachments([att.previewUri]);
+        setModalInitialIndex(0);
+        setModalVisible(true);
+    };
+
+    // Handler for tapping an attachment inside a MessageItem
+    const handleMessageItemAttachmentPress = (
+        _attachments: string[],
+        index: number
+    ) => {
+        setModalAttachments(_attachments);
+        setModalInitialIndex(index);
+        setModalVisible(true);
     };
 
     return (
-        <View style={styles.chatContainer}>
+        <View style={{ flex: 1, backgroundColor: COLORS.SecondaryBackground }}>
             <Header
                 isLargeScreen={isLargeScreen}
                 headerText={channel.name}
                 navigation={navigation}
             />
 
-            {/* Chat Messages */}
-            {loadingMessages ? (
-                <FlatList
-                    data={[0, 1, 2, 3, 4]}
-                    keyExtractor={(item) => item.toString()}
-                    renderItem={() => <SkeletonMessageItem />}
-                    contentContainerStyle={{ paddingBottom: 80 }}
-                />
-            ) : (
-                <FlatList
-                    ref={flatListRef}
-                    // Render messages with the newest at the bottom
-                    data={[...chatMessages].reverse()}
-                    keyExtractor={(item) => item.id}
-                    onEndReached={loadMoreMessages}
-                    onEndReachedThreshold={0.1}
-                    renderItem={({ item }) => (
-                        <View style={styles.messageContainer}>
-                            <Image
-                                source={{ uri: item.avatar }}
-                                style={styles.avatar}
-                            />
-                            <View style={styles.messageContent}>
-                                <Text style={styles.userName}>
-                                    {item.username}{' '}
-                                    <Text style={styles.time}>
-                                        {formatDateTime(item.postedAt)}
-                                    </Text>
-                                </Text>
-                                <Text style={styles.messageText}>
-                                    {item.content}
-                                </Text>
-                            </View>
-                        </View>
-                    )}
-                />
-            )}
+            <MessageList
+                chatMessages={chatMessages}
+                loadingMessages={loadingMessages}
+                width={width}
+                loadMoreMessages={loadMoreMessages}
+                onAttachmentPress={handleMessageItemAttachmentPress}
+            />
 
-            {/* Message Input */}
-            <View style={styles.inputContainer}>
-                <TextInput
-                    style={styles.input}
-                    placeholder={`Message ${channel.name}`}
-                    placeholderTextColor="gray"
-                    value={messageText}
-                    onChangeText={setMessageText}
-                    onSubmitEditing={sendMessage}
-                    returnKeyType="send"
-                />
-                {messageText.length > 0 && Platform.OS !== 'web' && (
-                    <TouchableOpacity
-                        onPress={sendMessage}
-                        style={styles.sendButton}
-                    >
-                        <Icon name="paper-plane" size={18} color="white" />
-                    </TouchableOpacity>
-                )}
-            </View>
+            <ChatInput
+                messageText={messageText}
+                setMessageText={setMessageText}
+                attachments={attachments}
+                setAttachments={setAttachments}
+                handleImageUpload={handleImageUpload}
+                sendMessageHandler={sendMessageHandler}
+                recipientName={`#${channel.name}`}
+                onInlineImagePress={handleInlineImagePress}
+                onAttachmentPreviewPress={handleAttachmentPreviewPress}
+            />
+
+            <LargeImageModal
+                visible={modalVisible}
+                attachments={modalAttachments}
+                initialIndex={modalInitialIndex}
+                onClose={() => setModalVisible(false)}
+            />
         </View>
     );
 };
-
-const styles = StyleSheet.create({
-    chatContainer: {
-        flex: 1,
-        backgroundColor: COLORS.SecondaryBackground,
-    },
-    messageContainer: {
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        padding: 15,
-        width: '100%', // Ensure the container doesn't exceed screen width
-    },
-    avatar: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        marginRight: 10,
-    },
-    messageContent: {
-        flex: 1,
-        flexShrink: 1, // Allow content to shrink if needed
-    },
-    userName: {
-        fontSize: 14,
-        fontWeight: 'bold',
-        color: 'white',
-    },
-    time: {
-        fontSize: 12,
-        color: 'gray',
-    },
-    messageText: {
-        fontSize: 14,
-        color: 'white',
-        marginTop: 2,
-        flexWrap: 'wrap', // Wrap long text
-        flexShrink: 1,
-    },
-    inputContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 10,
-        borderTopWidth: 1,
-        borderTopColor: '#4A3A5A',
-        backgroundColor: COLORS.SecondaryBackground,
-    },
-    input: {
-        flex: 1,
-        backgroundColor: COLORS.TextInput,
-        color: 'white',
-        padding: 10,
-        borderRadius: 20,
-        fontSize: 14,
-    },
-    sendButton: {
-        marginLeft: 10,
-        padding: 8,
-    },
-    skeletonMessageContainer: {
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        padding: 15,
-        width: '100%',
-    },
-    skeletonAvatar: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: COLORS.InactiveText,
-        marginRight: 10,
-    },
-    skeletonMessageContent: {
-        flex: 1,
-    },
-    skeletonUsername: {
-        width: 120,
-        height: 14,
-        borderRadius: 4,
-        backgroundColor: COLORS.InactiveText,
-        marginBottom: 4,
-    },
-    skeletonTime: {
-        width: 60,
-        height: 10,
-        borderRadius: 4,
-        backgroundColor: COLORS.InactiveText,
-        marginBottom: 4,
-    },
-    skeletonText: {
-        width: '80%',
-        height: 14,
-        borderRadius: 4,
-        backgroundColor: COLORS.InactiveText,
-    },
-});

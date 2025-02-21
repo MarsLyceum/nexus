@@ -1,4 +1,3 @@
-// EventDetailsScreen.tsx
 import React, { useState } from 'react';
 import {
     SafeAreaView,
@@ -15,7 +14,7 @@ import { NavigationProp, RouteProp } from '@react-navigation/native';
 import { EventCard } from '../cards';
 import { CreateContentButton } from '../buttons';
 import { COLORS } from '../constants';
-import { CommentThread, CommentNode } from '../sections';
+import { CommentThread, CommentNode, Attachment } from '../sections';
 import { useAppSelector, RootState, UserType } from '../redux';
 
 type EventDetails = {
@@ -24,7 +23,6 @@ type EventDetails = {
     dateTime: string;
     groupName: string;
     postedByUser: {
-        // Creator of the event as an object.
         username: string;
     };
     attendees: number;
@@ -74,7 +72,6 @@ const styles = StyleSheet.create<{
               left: 0,
               right: 0,
               bottom: BOTTOM_INPUT_HEIGHT,
-              // @ts-expect-error web only types
               overflowY: 'auto',
           }
         : { flex: 1 },
@@ -111,6 +108,9 @@ export const EventDetailsScreen: React.FC<EventDetailsScreenProps> = ({
         (state: RootState) => state.user.user
     );
 
+    // New state for attachments
+    const [attachments, setAttachments] = useState<Attachment[]>([]);
+
     const handleCreateComment = () => {
         if (newComment.trim() !== '') {
             const comment: CommentNode = {
@@ -133,7 +133,6 @@ export const EventDetailsScreen: React.FC<EventDetailsScreenProps> = ({
         ? { style: styles.container }
         : {
               style: styles.container,
-              // Explicitly cast 'padding' as a literal type.
               behavior:
                   Platform.OS === 'ios' ? ('padding' as const) : undefined,
           };
@@ -150,7 +149,7 @@ export const EventDetailsScreen: React.FC<EventDetailsScreenProps> = ({
                         <EventCard
                             title={event.title}
                             dateTime={event.dateTime}
-                            groupName={event.groupName} // Still used for display in the event card.
+                            groupName={event.groupName}
                             attendees={event.attendees}
                             location={event.location}
                             imageUrl={event.imageUrl}
@@ -164,7 +163,6 @@ export const EventDetailsScreen: React.FC<EventDetailsScreenProps> = ({
                             </View>
                         )}
                         {comments.map((c) => (
-                            // Use postedByUser.username for marking comments by the creator.
                             <CommentThread
                                 key={c.id}
                                 comment={c}
@@ -180,6 +178,8 @@ export const EventDetailsScreen: React.FC<EventDetailsScreenProps> = ({
                         setContentText={setNewComment}
                         handleCreate={handleCreateComment}
                         buttonText="Write a comment..."
+                        attachments={attachments}
+                        setAttachments={setAttachments}
                     />
                 </View>
             </ContainerComponent>

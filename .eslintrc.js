@@ -35,6 +35,16 @@ module.exports = {
         },
     },
     rules: {
+        '@typescript-eslint/no-unsafe-argument': 'off',
+        '@typescript-eslint/no-unsafe-return': 'off',
+        '@typescript-eslint/no-unsafe-call': 'off',
+        '@typescript-eslint/no-unsafe-member-access': 'off',
+        '@typescript-eslint/no-unsafe-assignment': 'off',
+        'max-lines': [
+            'error',
+            { max: 500, skipBlankLines: true, skipComments: true },
+        ],
+        'no-plusplus': 'off',
         'no-void': 'off',
         'unicorn/prefer-top-level-await': 'off',
         'react/prop-types': 'off',

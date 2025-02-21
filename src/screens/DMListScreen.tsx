@@ -6,9 +6,9 @@ import {
     FlatList,
     TouchableOpacity,
     StyleSheet,
-    Image,
     useWindowDimensions,
 } from 'react-native';
+import { Image as ExpoImage } from 'expo-image';
 
 import { COLORS } from '../constants';
 import { ChatScreen } from './ChatScreen';
@@ -162,7 +162,7 @@ export const DMListScreen: React.FC<DMListScreenProps> = ({ navigation }) => {
                             ]}
                             onPress={() => handleUserPress(item)}
                         >
-                            <Image
+                            <ExpoImage
                                 source={{ uri: item.avatar }}
                                 // Ensure the path to your default avatar is correct
                                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, global-require, unicorn/prefer-module

@@ -1,207 +1,205 @@
 import React from 'react';
-import { Text, StyleSheet } from 'react-native';
+import {
+    Text,
+    StyleSheet,
+    Dimensions,
+    ScrollView,
+    Linking,
+} from 'react-native';
+import MarkdownIt from 'markdown-it';
+import RenderHTML, {
+    defaultHTMLElementModels,
+    HTMLContentModel,
+} from 'react-native-render-html';
 import { COLORS } from '../constants';
 
-// Spoiler component is used in markdown rendering for spoiler syntax.
-const Spoiler: React.FC<{ text: string }> = ({ text }) => {
+// ---------------------
+// Styles
+// ---------------------
+const styles = StyleSheet.create({
+    document: {
+        color: 'white',
+        fontSize: 16,
+        lineHeight: 22,
+    },
+    code_inline: {
+        fontFamily: 'monospace',
+        backgroundColor: '#2f3136',
+        color: '#c7c7c7',
+        paddingHorizontal: 4,
+        paddingVertical: 2,
+    },
+    blockquote: {
+        backgroundColor: COLORS.AppBackground,
+        padding: 10,
+        borderLeftColor: '#4ea1f3',
+        borderLeftWidth: 4,
+        marginVertical: 8,
+    },
+    spoilerText: {
+        fontSize: 16,
+        // Optionally add additional padding if needed.
+    },
+    linkText: {
+        color: COLORS.Link, // Updated to use COLORS.Link (#3254a8)
+        textDecorationLine: 'underline',
+        fontSize: 16,
+    },
+});
+
+// ---------------------
+// Helper function to extract text recursively from tnode children
+// ---------------------
+const extractTextFromTnode = (tnode: any): string => {
+    if (tnode.data) {
+        return tnode.data;
+    }
+    if (tnode.children && Array.isArray(tnode.children)) {
+        return tnode.children.map(extractTextFromTnode).join('');
+    }
+    return '';
+};
+
+// ---------------------
+// Inline Spoiler Component (updated to be inline and not full width)
+// ---------------------
+const InlineSpoiler: React.FC<{ children: React.ReactNode }> = ({
+    children,
+}) => {
     const [revealed, setRevealed] = React.useState(false);
     return (
         <Text
-            onPress={() => setRevealed(!revealed)}
-            style={revealed ? styles.spoilerRevealed : styles.spoilerHidden}
+            onPress={() => setRevealed((prev) => !prev)}
+            selectable={true}
+            style={[
+                styles.spoilerText,
+                {
+                    backgroundColor: revealed ? 'transparent' : COLORS.White,
+                    color: COLORS.White,
+                    alignSelf: 'flex-start', // Keeps the element inline
+                },
+            ]}
         >
-            {text}
+            {children}
         </Text>
     );
 };
 
-// This function processes markdown syntax and returns an array of JSX elements.
-export const renderMarkdown = (text: string): JSX.Element[] => {
-    const lines = text.split('\n');
-    const renderedLines = lines.map((line, index) => {
-        const segments: JSX.Element[] = [];
-        let lastIndex = 0;
-        let key = 0;
-        // Regex covers code blocks, inline code, underline, bold+italic, bold, italic, strikethrough,
-        // spoilers, links, images, and auto-links.
-        const regex =
-            /(```([\S\s]+?)```)|(`([^`]+)`)|(__(.+?)__)|(\*\*\*([^*]+)\*\*\*)|(\*\*([^*]+)\*\*)|(\*([^*]+)\*)|(_([^_]+)_)|(~~(.*?)~~)|(>!(.*?)!<)|(\|\|([\S\s]+?)\|\|)|(\[([^\]]+)]\(([^)]+)\))|(!\[([^\]]*)]\(([^)]+)\))|(https?:\/\/\S+)/g;
-        let match;
-        // eslint-disable-next-line no-cond-assign
-        while ((match = regex.exec(line)) !== null) {
-            // Add plain text preceding the markdown match.
-            if (match.index > lastIndex) {
-                segments.push(
-                    <Text key={key++} style={styles.plainText}>
-                        {line.slice(lastIndex, match.index)}
-                    </Text>
-                );
-            }
-            // Multi-line code block.
-            if (match[1]) {
-                segments.push(
-                    <Text key={key++} style={styles.codeBlockText}>
-                        {match[2]}
-                    </Text>
-                );
-            }
-            // Inline code.
-            else if (match[3]) {
-                segments.push(
-                    <Text key={key++} style={styles.codeText}>
-                        {match[4]}
-                    </Text>
-                );
-            }
-            // Underline.
-            else if (match[5]) {
-                segments.push(
-                    <Text key={key++} style={styles.underlineText}>
-                        {match[6]}
-                    </Text>
-                );
-            }
-            // Bold+Italic.
-            else if (match[7]) {
-                segments.push(
-                    <Text key={key++} style={styles.boldItalicText}>
-                        {match[8]}
-                    </Text>
-                );
-            }
-            // Bold.
-            else if (match[9]) {
-                segments.push(
-                    <Text key={key++} style={styles.boldText}>
-                        {match[10]}
-                    </Text>
-                );
-            }
-            // Italic (asterisks).
-            else if (match[11]) {
-                segments.push(
-                    <Text key={key++} style={styles.italicText}>
-                        {match[12]}
-                    </Text>
-                );
-            }
-            // Italic (underscores).
-            else if (match[13]) {
-                segments.push(
-                    <Text key={key++} style={styles.italicText}>
-                        {match[14]}
-                    </Text>
-                );
-            }
-            // Strikethrough.
-            else if (match[15]) {
-                segments.push(
-                    <Text key={key++} style={styles.strikethroughText}>
-                        {match[16]}
-                    </Text>
-                );
-            }
-            // Reddit-style spoiler.
-            else if (match[17]) {
-                segments.push(<Spoiler key={key++} text={match[18]} />);
-            }
-            // Discord-style spoiler.
-            else if (match[19]) {
-                segments.push(<Spoiler key={key++} text={match[20]} />);
-            }
-            // Link.
-            else if (match[21]) {
-                segments.push(
-                    <Text key={key++} style={styles.linkText}>
-                        {match[22]}
-                    </Text>
-                );
-            }
-            // Image (render the alt text).
-            else if (match[24]) {
-                segments.push(
-                    <Text key={key++} style={styles.imageText}>
-                        {match[25]}
-                    </Text>
-                );
-            }
-            // Auto-link.
-            else if (match[27]) {
-                segments.push(
-                    <Text key={key++} style={styles.linkText}>
-                        {match[28]}
-                    </Text>
-                );
-            }
-            lastIndex = regex.lastIndex;
-        }
-        // Append any remaining plain text.
-        if (lastIndex < line.length) {
-            segments.push(
-                <Text key={key++} style={styles.plainText}>
-                    {line.slice(Math.max(0, lastIndex))}
-                </Text>
-            );
-        }
-        return <Text key={index}>{segments}</Text>;
-    });
-    // Join lines with newline characters.
-    // eslint-disable-next-line unicorn/no-array-reduce
-    return renderedLines.reduce((prev, curr, idx) => {
-        if (idx === 0) return [curr];
-        return [...prev, <Text key={`newline-${idx}`}>{'\n'}</Text>, curr];
-    }, [] as JSX.Element[]);
+// ---------------------
+// Custom Inline Link Component
+// ---------------------
+const InlineLink: React.FC<{ tnode: any }> = ({ tnode }) => {
+    const href = tnode.attributes?.href || '';
+    const content =
+        tnode.domNode?.textContent || extractTextFromTnode(tnode) || '';
+    return (
+        <Text
+            onPress={() => {
+                if (href) {
+                    Linking.openURL(href);
+                }
+            }}
+            selectable={true}
+            style={[
+                styles.linkText,
+                { alignSelf: 'flex-start' }, // Ensures the inline element only takes up necessary width
+            ]}
+        >
+            {content}
+        </Text>
+    );
 };
 
-const styles = StyleSheet.create({
-    plainText: {
-        color: 'white',
-    },
-    codeText: {
-        fontFamily: 'monospace',
-        backgroundColor: '#2f3136',
-        color: '#c7c7c7',
-    },
-    codeBlockText: {
-        fontFamily: 'monospace',
-        backgroundColor: '#2f3136',
-        color: '#c7c7c7',
-        padding: 4,
-    },
-    boldText: {
-        fontWeight: 'bold',
-        color: 'white',
-    },
-    italicText: {
-        fontStyle: 'italic',
-        color: 'white',
-    },
-    boldItalicText: {
-        fontWeight: 'bold',
-        fontStyle: 'italic',
-        color: 'white',
-    },
-    underlineText: {
-        textDecorationLine: 'underline',
-        color: 'white',
-    },
-    strikethroughText: {
-        textDecorationLine: 'line-through',
-        color: 'white',
-    },
-    spoilerHidden: {
-        backgroundColor: COLORS.White,
-        color: COLORS.White,
-    },
-    spoilerRevealed: {
-        backgroundColor: 'transparent',
-        color: COLORS.White,
-    },
-    linkText: {
-        color: '#4ea1f3',
-        textDecorationLine: 'underline',
-    },
-    imageText: {
-        color: '#f3a14e',
-    },
+// ---------------------
+// Markdown-It Plugin for Inline Spoilers
+// ---------------------
+function inlineSpoilerPlugin(md: MarkdownIt) {
+    function tokenize(state: any, silent: boolean) {
+        const pos = state.pos;
+        if (state.src.slice(pos, pos + 2) !== '||') return false;
+        const end = state.src.indexOf('||', pos + 2);
+        if (end === -1) return false;
+        if (!silent) {
+            const token = state.push('spoiler', 'spoiler', 0);
+            token.content = state.src.slice(pos + 2, end);
+        }
+        state.pos = end + 2;
+        return true;
+    }
+    md.inline.ruler.before('text', 'spoiler', tokenize);
+}
+
+// ---------------------
+// Custom Renderer for Spoiler Tokens in Markdown-It
+// ---------------------
+function spoilerRenderer(tokens: any, idx: number) {
+    return `<spoiler>${tokens[idx].content}</spoiler>`;
+}
+
+// ---------------------
+// Create Markdown-It Instance with Plugin
+// ---------------------
+const mdInstance = new MarkdownIt({
+    typographer: true,
+    html: true,
 });
+mdInstance.use(inlineSpoilerPlugin);
+mdInstance.renderer.rules.spoiler = spoilerRenderer;
+
+// ---------------------
+// Custom Renderers for react-native-render-html
+// ---------------------
+const customRenderers = {
+    spoiler: ({ tnode }: any) => {
+        // Extract text content either from the domNode or by traversing children.
+        const content =
+            tnode.domNode?.textContent || extractTextFromTnode(tnode) || '';
+        return <InlineSpoiler>{content}</InlineSpoiler>;
+    },
+    a: ({ tnode }: any) => {
+        // Render the link as an inline element with our custom styling.
+        return <InlineLink tnode={tnode} />;
+    },
+};
+
+// ---------------------
+// Custom Element Models for react-native-render-html
+// ---------------------
+const customHTMLElementModels = {
+    ...defaultHTMLElementModels,
+    spoiler: {
+        ...defaultHTMLElementModels.span,
+        contentModel: HTMLContentModel.textual, // Inline behavior
+        isTranslatableTextual: () => true,
+    },
+    a: {
+        ...defaultHTMLElementModels.a,
+        contentModel: HTMLContentModel.textual, // Ensure inline behavior
+        isTranslatableTextual: () => true,
+    },
+};
+
+// ---------------------
+// Main MarkdownRenderer Component
+// ---------------------
+export const MarkdownRenderer: React.FC<{ text: string }> = ({ text }) => {
+    const htmlContent = mdInstance.render(text);
+    const contentWidth = Dimensions.get('window').width;
+
+    return (
+        <ScrollView>
+            <RenderHTML
+                contentWidth={contentWidth}
+                source={{ html: htmlContent }}
+                renderers={customRenderers}
+                customHTMLElementModels={customHTMLElementModels}
+                tagsStyles={{
+                    body: styles.document,
+                    code: styles.code_inline,
+                    blockquote: styles.blockquote,
+                }}
+                defaultTextProps={{ selectable: true }}
+            />
+        </ScrollView>
+    );
+};

@@ -9,7 +9,7 @@ import {
 import { Image as ExpoImage } from 'expo-image';
 import { LinkPreview } from './LinkPreview';
 import { MessageWithAvatar } from '../types';
-import { renderMarkdown } from './MarkdownRenderer';
+import { MarkdownRenderer } from './MarkdownRenderer';
 
 const formatDateTime = (date: Date) => {
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -44,8 +44,7 @@ const NativeSizeAttachmentImage: React.FC<{ uri: string }> = ({ uri }) => {
 
     if (!dimensions) {
         // Optionally, you can return a placeholder or spinner while dimensions load.
-        // eslint-disable-next-line unicorn/no-useless-undefined
-        return undefined;
+        return null;
     }
 
     return (
@@ -69,7 +68,7 @@ const renderMessageContent = (content: string, width: number) => {
     if (isOnlyUrl) {
         return <LinkPreview url={content} containerWidth={width - 32} />;
     }
-    return <Text style={styles.messageText}>{renderMarkdown(content)}</Text>;
+    return <MarkdownRenderer text={content} />;
 };
 
 export const MessageItem: React.FC<MessageItemProps> = ({
@@ -84,9 +83,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                 {item.username}{' '}
                 <Text style={styles.time}>{formatDateTime(item.postedAt)}</Text>
             </Text>
-            {item.content
-                ? renderMessageContent(item.content, width)
-                : undefined}
+            {item.content ? renderMessageContent(item.content, width) : null}
             {item.attachmentUrls && item.attachmentUrls.length > 0 && (
                 <View style={styles.messageAttachmentsContainer}>
                     {item.attachmentUrls.map((url, index) => (

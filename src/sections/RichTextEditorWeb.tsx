@@ -1,6 +1,50 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, Platform, Text } from 'react-native';
+import TurndownService from 'turndown';
+import { marked } from 'marked';
 import { COLORS } from '../constants';
+
+// Extend marked with a custom inline extension for spoiler syntax (both Discord and Reddit styles)
+marked.use({
+    extensions: [
+        {
+            name: 'spoiler',
+            level: 'inline', // Process inline elements
+            start(src) {
+                // Find the first occurrence of either || or >!
+                const discordIndex = src.indexOf('||');
+                const redditIndex = src.indexOf('>!');
+                if (discordIndex === -1 && redditIndex === -1) return -1;
+                if (discordIndex === -1) return redditIndex;
+                if (redditIndex === -1) return discordIndex;
+                return Math.min(discordIndex, redditIndex);
+            },
+            tokenizer(src, tokens) {
+                // Check for Discord-style spoiler: ||spoiler||
+                const discordMatch = /^(\|\|)([\s\S]+?)\1/.exec(src);
+                if (discordMatch) {
+                    return {
+                        type: 'spoiler',
+                        raw: discordMatch[0],
+                        text: discordMatch[2],
+                    };
+                }
+                // Check for Reddit-style spoiler: >!spoiler text!<
+                const redditMatch = /^(>!)([\s\S]+?)(!<)/.exec(src);
+                if (redditMatch) {
+                    return {
+                        type: 'spoiler',
+                        raw: redditMatch[0],
+                        text: redditMatch[2],
+                    };
+                }
+            },
+            renderer(token) {
+                return `<span class="spoiler">${token.text}</span>`;
+            },
+        },
+    ],
+});
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let ReactQuill: any;
@@ -264,8 +308,10 @@ if (Platform.OS === 'web') {
 }
 
 interface RichTextEditorWebProps {
+    // initialContent is now expected to be in Markdown
     initialContent?: string;
-    onChange: (html: string) => void;
+    // onChange will receive Markdown as a string
+    onChange: (markdown: string) => void;
 }
 
 export const RichTextEditorWeb: React.FC<RichTextEditorWebProps> = ({
@@ -281,9 +327,23 @@ export const RichTextEditorWeb: React.FC<RichTextEditorWebProps> = ({
         );
     }
 
+    // Create a TurndownService instance for converting HTML to Markdown
+    const turndownService = new TurndownService();
+    // Add a custom rule to convert <span class="spoiler"> elements into Discord-style spoilers.
+    turndownService.addRule('spoiler', {
+        filter: (node, options) =>
+            node.nodeName === 'SPAN' &&
+            node.getAttribute('class') &&
+            node.getAttribute('class')!.includes('spoiler'),
+        replacement: (content, node, options) => `||${content}||`,
+    });
+
+    // Convert the initial Markdown content to HTML using marked (which now supports spoiler syntax)
+    const initialHTML = initialContent ? marked(initialContent) : '';
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const quillRef = useRef<any>(null);
-    const [value, setValue] = useState(initialContent);
+    const [value, setValue] = useState(initialHTML);
 
     useEffect(() => {
         const styleEl = document.createElement('style');
@@ -385,7 +445,9 @@ export const RichTextEditorWeb: React.FC<RichTextEditorWebProps> = ({
 
     const handleChange = (content: string) => {
         setValue(content);
-        onChange(content);
+        // Convert the HTML content to Markdown (with our custom spoiler rule) before calling onChange
+        const markdown = turndownService.turndown(content);
+        onChange(markdown);
     };
 
     return (

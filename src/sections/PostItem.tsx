@@ -17,10 +17,9 @@ import Toast from 'react-native-toast-message';
 import { VoteActions } from './VoteActions';
 import { BackArrow } from '../buttons';
 import { COLORS } from '../constants';
-import { HtmlRenderer } from './HtmlRenderer';
 import { LargeImageModal } from './LargeImageModal';
 import { AttachmentImageGallery } from './AttachmentImageGallery';
-import { LinkPreview } from '../small-components';
+import { LinkPreview, MarkdownRenderer } from '../small-components';
 
 const styles = StyleSheet.create({
     postContainer: {
@@ -102,7 +101,6 @@ const styles = StyleSheet.create({
         fontSize: 12,
         marginLeft: 4,
     },
-    // Other styles remain unchanged.
 });
 
 // Helper to extract URLs from text using a refined regex.
@@ -257,9 +255,7 @@ export const PostItem: React.FC<PostItemProps> = ({
                 if (result.action === Share.sharedAction) {
                     setShareCount((prev) => prev + 1);
                 }
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (error: any) {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                 Alert.alert('Share error', error.message);
             }
         }
@@ -304,13 +300,7 @@ export const PostItem: React.FC<PostItemProps> = ({
             )}
             {content !== '' && (
                 <>
-                    {!isJustLink && (
-                        <HtmlRenderer
-                            content={content}
-                            preview={preview}
-                            innerWidth={innerWidth}
-                        />
-                    )}
+                    {!isJustLink && <MarkdownRenderer text={content} />}
                     {urlsInContent.map((url, index) => (
                         <LinkPreview
                             key={index}

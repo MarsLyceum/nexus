@@ -5,7 +5,7 @@ import { COLORS } from '../constants'; // Import your color constants
 
 interface RichTextEditorMobileProps {
     initialContent?: string;
-    onChange: (html: string) => void;
+    onChange: (markdown: string) => void;
 }
 
 export const RichTextEditorMobile: React.FC<RichTextEditorMobileProps> = ({
@@ -13,7 +13,8 @@ export const RichTextEditorMobile: React.FC<RichTextEditorMobileProps> = ({
     onChange,
 }) => {
     // Memoize the HTML so it is created only once and not on every re-render.
-    const editorHtml = React.useMemo(() => `
+    const editorHtml = React.useMemo(
+        () => `
     <!DOCTYPE html>
     <html>
       <head>
@@ -21,18 +22,14 @@ export const RichTextEditorMobile: React.FC<RichTextEditorMobileProps> = ({
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <!-- Allow inline scripts/styles and eval for debugging -->
         <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval';">
+        <!-- Load Quill CSS -->
         <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
         <style>
-          /* Ensure borders and paddings are included in the width calculations */
-          * {
-            box-sizing: border-box;
-          }
-          /* Allow the toolbar to display fully */
+          * { box-sizing: border-box; }
           .ql-toolbar.ql-snow {
             width: 99%;
             overflow: visible;
           }
-          /* Reset and full size */
           body, html {
             margin: 0;
             padding: 0;
@@ -40,12 +37,10 @@ export const RichTextEditorMobile: React.FC<RichTextEditorMobileProps> = ({
             width: 100%;
             background-color: ${COLORS.PrimaryBackground};
           }
-          /* Editor container */
           #editor {
             height: 100%;
             width: 100%;
           }
-          /* Toolbar and Editor Styles (matching the web version) */
           .ql-toolbar button svg {
             stroke: ${COLORS.MainText} !important;
             fill: ${COLORS.MainText} !important;
@@ -114,21 +109,75 @@ export const RichTextEditorMobile: React.FC<RichTextEditorMobileProps> = ({
             padding: 2px 6px;
           }
         </style>
+        <!-- Load marked and turndown from CDNs -->
+        <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/turndown/dist/turndown.min.js"></script>
       </head>
       <body>
         <div id="editor"></div>
         <!-- Load Quill from CDN -->
         <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
         <script>
-          var initialContent = ${JSON.stringify(initialContent)};
-          
-          // ====== Custom Spoiler Blot (Mobile) ======
+          // Store the initial markdown content passed from React Native.
+          var initialMarkdown = ${JSON.stringify(initialContent)};
+
+          // ====== Extend marked to support Discord (||spoiler||) and Reddit (>!spoiler!<) spoilers ======
+          marked.use({
+            extensions: [
+              {
+                name: 'spoiler',
+                level: 'inline',
+                start: function(src) {
+                  var discordIndex = src.indexOf('||');
+                  var redditIndex = src.indexOf('>!');
+                  if (discordIndex === -1 && redditIndex === -1) return -1;
+                  if (discordIndex === -1) return redditIndex;
+                  if (redditIndex === -1) return discordIndex;
+                  return Math.min(discordIndex, redditIndex);
+                },
+                tokenizer: function(src, tokens) {
+                  var discordMatch = /^(\|\|)([\\s\\S]+?)\\1/.exec(src);
+                  if (discordMatch) {
+                    return {
+                      type: 'spoiler',
+                      raw: discordMatch[0],
+                      text: discordMatch[2]
+                    };
+                  }
+                  var redditMatch = /^(>!)([\\s\\S]+?)(!<)/.exec(src);
+                  if (redditMatch) {
+                    return {
+                      type: 'spoiler',
+                      raw: redditMatch[0],
+                      text: redditMatch[2]
+                    };
+                  }
+                },
+                renderer: function(token) {
+                  return '<span class="spoiler">' + token.text + '</span>';
+                }
+              }
+            ]
+          });
+
+          // ====== Create a Turndown instance with a custom rule for spoilers ======
+          var turndownService = new TurndownService();
+          turndownService.addRule('spoiler', {
+            filter: function(node) {
+              return node.nodeName === 'SPAN' && node.getAttribute('class') && node.getAttribute('class').indexOf('spoiler') > -1;
+            },
+            replacement: function(content) {
+              return '||' + content + '||';
+            }
+          });
+
+          // ====== Custom Spoiler Blot for Quill ======
           var Inline = Quill.import('blots/inline');
           class SpoilerBlot extends Inline {
               static create() {
                   var node = super.create();
                   node.setAttribute('class', 'spoiler');
-                  node.appendChild(document.createTextNode('\\u200B')); // zero-width space
+                  node.appendChild(document.createTextNode('\\u200B'));
                   return node;
               }
               static formats(node) {
@@ -141,7 +190,7 @@ export const RichTextEditorMobile: React.FC<RichTextEditorMobileProps> = ({
           SpoilerBlot.blotName = 'spoiler';
           SpoilerBlot.tagName = 'span';
           Quill.register(SpoilerBlot);
-          
+
           // ====== Register Icons ======
           var icons = Quill.import('ui/icons');
           icons['spoiler'] = \`
@@ -163,11 +212,10 @@ export const RichTextEditorMobile: React.FC<RichTextEditorMobileProps> = ({
                   var range = this.quill.getSelection();
                   if (!range) return;
                   if (range.length > 0) {
-                      // Toggle spoiler on selected text
                       var currentFormat = this.quill.getFormat(range);
                       var isActive = !!currentFormat.spoiler;
                       this.quill.formatText(range.index, range.length, 'spoiler', !isActive);
-                      setTimeout(() => {
+                      setTimeout(function() {
                           var leaf = this.quill.getLeaf(range.index)[0];
                           if (leaf && leaf.parent && leaf.parent.statics && leaf.parent.statics.blotName === 'spoiler') {
                               var blot = leaf.parent;
@@ -176,13 +224,12 @@ export const RichTextEditorMobile: React.FC<RichTextEditorMobileProps> = ({
                                   blot.domNode.parentNode.insertBefore(spaceNode, blot.domNode.nextSibling);
                               }
                           }
-                      }, 0);
+                      }.bind(this), 0);
                   } else {
-                      // Insert a 1-char spoiler placeholder if no selection
                       var insertIndex = range.index;
                       this.quill.insertText(insertIndex, '\\u200B', { spoiler: true });
                       this.quill.setSelection(insertIndex + 1, 0);
-                      setTimeout(() => {
+                      setTimeout(function() {
                           var leaf = this.quill.getLeaf(insertIndex)[0];
                           if (leaf && leaf.parent && leaf.parent.statics && leaf.parent.statics.blotName === 'spoiler') {
                               var blot = leaf.parent;
@@ -191,12 +238,14 @@ export const RichTextEditorMobile: React.FC<RichTextEditorMobileProps> = ({
                                   blot.domNode.parentNode.insertBefore(spaceNode, blot.domNode.nextSibling);
                               }
                           }
-                      }, 0);
+                      }.bind(this), 0);
                   }
               }
           };
 
           window.addEventListener('load', function() {
+              // Convert the initial markdown into HTML using marked
+              var initialHTML = marked(initialMarkdown);
               var options = {
                   theme: 'snow',
                   modules: {
@@ -213,20 +262,23 @@ export const RichTextEditorMobile: React.FC<RichTextEditorMobileProps> = ({
                   }
               };
               var quill = new Quill('#editor', options);
-              // Set the initial content
-              quill.clipboard.dangerouslyPasteHTML(initialContent);
-              // Listen for text changes and post updated HTML to React Native
+              // Set the initial content (converted from markdown)
+              quill.clipboard.dangerouslyPasteHTML(initialHTML);
+              // Listen for text changes; on each change, convert the HTML to markdown using turndown and post it
               quill.on('text-change', function(delta, oldDelta, source) {
                   var html = document.querySelector('#editor .ql-editor').innerHTML;
+                  var markdown = turndownService.turndown(html);
                   if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
-                      window.ReactNativeWebView.postMessage(html);
+                      window.ReactNativeWebView.postMessage(markdown);
                   }
               });
           });
         </script>
       </body>
     </html>
-        `, []); // Empty dependency array ensures this is computed only once
+    `,
+        []
+    ); // Empty dependency array ensures this is computed only once
 
     return (
         <View style={styles.outerContainer}>

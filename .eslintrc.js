@@ -35,6 +35,10 @@ module.exports = {
         },
     },
     rules: {
+        'max-lines': [
+            'error',
+            { max: 500, skipBlankLines: true, skipComments: true },
+        ],
         'no-void': 'off',
         'unicorn/prefer-top-level-await': 'off',
         'react/prop-types': 'off',

@@ -1,6 +1,12 @@
 // MessageItem.tsx
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import {
+    View,
+    Text,
+    TouchableOpacity,
+    StyleSheet,
+    Image as RNImage,
+} from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { LinkPreview } from './LinkPreview';
 import { MessageWithAvatar } from '../types';
@@ -20,6 +26,41 @@ export type MessageItemProps = {
     item: MessageWithAvatar;
     width: number;
     onAttachmentPress: (attachments: string[], index: number) => void;
+};
+
+// New component to render an attachment image at 30% of its native size
+const NativeSizeAttachmentImage: React.FC<{ uri: string }> = ({ uri }) => {
+    const [dimensions, setDimensions] = React.useState<{
+        width: number;
+        height: number;
+    } | null>(null);
+
+    React.useEffect(() => {
+        RNImage.getSize(
+            uri,
+            (width, height) => setDimensions({ width, height }),
+            (error) =>
+                console.error('Failed to get image dimensions for', uri, error)
+        );
+    }, [uri]);
+
+    if (!dimensions) {
+        return null; // Optionally, return a placeholder or spinner while loading dimensions
+    }
+
+    return (
+        <ExpoImage
+            source={{ uri }}
+            style={[
+                styles.messageAttachmentImage,
+                {
+                    width: dimensions.width * 0.3,
+                    height: dimensions.height * 0.3,
+                },
+            ]}
+            contentFit="contain"
+        />
+    );
 };
 
 export const MessageItem: React.FC<MessageItemProps> = ({
@@ -60,10 +101,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                                     )
                                 }
                             >
-                                <ExpoImage
-                                    source={{ uri: url }}
-                                    style={styles.messageAttachmentImage}
-                                />
+                                <NativeSizeAttachmentImage uri={url} />
                             </TouchableOpacity>
                         ))}
                     </View>
@@ -111,9 +149,8 @@ const styles = StyleSheet.create({
         flexWrap: 'wrap',
         marginTop: 5,
     },
+    // Style for attachment images with margins and border radius. Dimensions are applied dynamically.
     messageAttachmentImage: {
-        width: 100,
-        height: 100,
         marginRight: 5,
         marginTop: 5,
         borderRadius: 8,

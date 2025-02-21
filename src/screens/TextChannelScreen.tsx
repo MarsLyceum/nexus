@@ -57,11 +57,7 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
         const file = await pickFile();
         if (file) {
             let previewUri = '';
-            if ('uri' in file) {
-                previewUri = file.uri;
-            } else {
-                previewUri = URL.createObjectURL(file);
-            }
+            previewUri = 'uri' in file ? file.uri : URL.createObjectURL(file);
             const newAttachment: Attachment = {
                 id: `${Date.now()}-${Math.random()}`,
                 file,
@@ -87,10 +83,10 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
 
     // Handler for tapping an attachment inside a MessageItem
     const handleMessageItemAttachmentPress = (
-        attachments: string[],
+        _attachments: string[],
         index: number
     ) => {
-        setModalAttachments(attachments);
+        setModalAttachments(_attachments);
         setModalInitialIndex(index);
         setModalVisible(true);
     };

@@ -6,12 +6,31 @@ let ReactQuill: any;
 let Quill: any;
 let Inline: any;
 
-// Only load ReactQuill and related web-specific code if running on web
 if (Platform.OS === 'web') {
-    ReactQuill = require('react-quill');
-    require('react-quill/dist/quill.snow.css');
+    // Use react-quill-new for web and load its CSS
+    ReactQuill = require('react-quill-new').default;
+    require('react-quill-new/dist/quill.snow.css');
 
-    Quill = ReactQuill.Quill;
+    // Load quill-better-table CSS
+    require('quill-better-table/dist/quill-better-table.css');
+
+    // Get the Quill instance from react-quill-new
+    Quill = require('react-quill-new').Quill;
+    // Expose Quill globally for quill-better-table requirements
+    (window as any).Quill = Quill;
+
+    // Import quill-better-table
+    const QuillBetterTable = require('quill-better-table');
+
+    // Register quill-better-table module with Quill
+    Quill.register(
+        {
+            'modules/better-table': QuillBetterTable,
+        },
+        true
+    );
+
+    // Get Inline blot for custom formatting
     Inline = Quill.import('blots/inline');
 
     // ====== Custom Spoiler Blot (Web) ======
@@ -33,12 +52,25 @@ if (Platform.OS === 'web') {
     SpoilerBlot.tagName = 'span';
     Quill.register(SpoilerBlot);
 
-    // ====== Custom Spoiler Icon & Toolbar Handlers ======
+    // ====== Custom Icons & Toolbar Handlers ======
     const icons = Quill.import('ui/icons');
+
+    // Spoiler icon (already defined)
     icons['spoiler'] = `
     <svg viewBox="0 0 24 24">
       <title>Spoiler</title>
       <path d="M12,2L2,7v7c0,5,4,9,10,9s10-4,10-9V7L12,2z M12,17 c-3,0-5-2-5-5v-1l5-3l5,3v1C17,15,15,17,12,17z"/>
+    </svg>
+  `;
+
+    // Define table icon (icon markup itself need not include title)
+    icons['insertTable'] = `
+    <svg viewBox="0 0 18 18">
+      <rect class="ql-stroke" height="12" width="12" x="3" y="3"></rect>
+      <line class="ql-stroke" x1="3" x2="15" y1="7" y2="7"></line>
+      <line class="ql-stroke" x1="3" x2="15" y1="11" y2="11"></line>
+      <line class="ql-stroke" x1="7" x2="7" y1="3" y2="15"></line>
+      <line class="ql-stroke" x1="11" x2="11" y1="3" y2="15"></line>
     </svg>
   `;
 
@@ -144,8 +176,25 @@ if (Platform.OS === 'web') {
                 }, 0);
             }
         },
+        insertTable: function () {
+            // Prompt the user for number of rows and columns
+            const rowsInput = window.prompt('Enter number of rows', '3');
+            const columnsInput = window.prompt('Enter number of columns', '3');
+            const rows = parseInt(rowsInput, 10);
+            const columns = parseInt(columnsInput, 10);
+            if (isNaN(rows) || isNaN(columns) || rows < 1 || columns < 1) {
+                alert('Invalid number of rows or columns');
+                return;
+            }
+            // Get the better-table module and insert the table with user-defined dimensions
+            const tableModule = this.quill.getModule('better-table');
+            if (tableModule) {
+                tableModule.insertTable(rows, columns);
+            }
+        },
     };
 
+    // ====== Define ReactQuill Modules (with Better Table) ======
     (ReactQuill as any).modules = {
         toolbar: {
             container: [
@@ -154,8 +203,36 @@ if (Platform.OS === 'web') {
                 [{ list: 'ordered' }, { list: 'bullet' }],
                 ['link', 'spoiler', 'blockquote', 'code-block'],
                 ['clean'],
+                // New row for table insertion button
+                ['insertTable'],
             ],
             handlers: toolbarHandlers,
+        },
+        // Disable default table module
+        table: false,
+        // Add quill-better-table configuration
+        'better-table': {
+            operationMenu: {
+                items: {
+                    insertColumnRight: { text: 'Insert Column Right' },
+                    insertColumnLeft: { text: 'Insert Column Left' },
+                    insertRowUp: { text: 'Insert Row Above' },
+                    insertRowDown: { text: 'Insert Row Below' },
+                    mergeCells: { text: 'Merge Cells' },
+                    unmergeCells: { text: 'Unmerge Cells' },
+                    deleteColumn: { text: 'Delete Column' },
+                    deleteRow: { text: 'Delete Row' },
+                    deleteTable: { text: 'Delete Table' },
+                },
+                color: {
+                    colors: ['#fff', 'red', 'rgb(0, 0, 0)'],
+                    text: 'Background Colors',
+                },
+            },
+        },
+        // Set keyboard bindings for table operations
+        keyboard: {
+            bindings: QuillBetterTable.keyboardBindings,
         },
     };
 }
@@ -169,7 +246,7 @@ export const RichTextEditorWeb: React.FC<RichTextEditorWebProps> = ({
     initialContent = '',
     onChange,
 }) => {
-    // Return a fallback for mobile platforms
+    // Fallback for mobile platforms
     if (Platform.OS !== 'web') {
         return (
             <View style={styles.container}>
@@ -253,6 +330,12 @@ export const RichTextEditorWeb: React.FC<RichTextEditorWebProps> = ({
         border-radius: 3px;
         padding: 2px 6px;
       }
+      /* CSS rule to set the table outline (borders) to white */
+      .ql-editor table,
+      .ql-editor table th,
+      .ql-editor table td {
+        border: 1px solid ${COLORS.White} !important;
+      }
     `;
         document.head.appendChild(styleEl);
         return () => {
@@ -260,6 +343,17 @@ export const RichTextEditorWeb: React.FC<RichTextEditorWebProps> = ({
                 document.head.removeChild(styleEl);
             }
         };
+    }, []);
+
+    // Delay adding title and aria-label to allow the toolbar button to render
+    useEffect(() => {
+        setTimeout(() => {
+            const btn = document.querySelector('.ql-insertTable');
+            if (btn) {
+                btn.setAttribute('title', 'Insert Table');
+                btn.setAttribute('aria-label', 'Insert Table');
+            }
+        }, 500);
     }, []);
 
     const handleChange = (content: string) => {

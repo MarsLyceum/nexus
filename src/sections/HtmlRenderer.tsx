@@ -43,6 +43,9 @@ export const HtmlRenderer: React.FC<HtmlRendererProps> = ({
     preview,
     innerWidth,
 }) => {
+    // State to hold the dynamic height for the WebView (native only)
+    const [webViewHeight, setWebViewHeight] = React.useState<number>(0);
+
     // Decode the raw HTML content.
     const decodedContent = decode(content);
     // Truncate if in preview mode.
@@ -56,6 +59,7 @@ export const HtmlRenderer: React.FC<HtmlRendererProps> = ({
     );
 
     // Create the full HTML string for the native WebView.
+    // We add a script that calculates the document height and posts it to React Native.
     const htmlContent = `
     <!DOCTYPE html>
     <html>
@@ -67,17 +71,26 @@ export const HtmlRenderer: React.FC<HtmlRendererProps> = ({
       </head>
       <body>
         ${processedContent}
+        <script>
+          // Delay execution to ensure content is rendered.
+          setTimeout(function() {
+            var height = document.documentElement.scrollHeight || document.body.scrollHeight;
+            window.ReactNativeWebView.postMessage(height.toString());
+          }, 100);
+        </script>
       </body>
     </html>
   `;
 
-    const height = preview ? 200 : 300;
+    // Fallback height until the content height is measured.
+    const defaultHeight = preview ? 200 : 300;
+    const computedHeight = webViewHeight || defaultHeight;
 
     return Platform.OS === 'web' ? (
+        // Web: remove fixed height so the container sizes to its content.
         <div
             style={{
                 width: innerWidth,
-                height,
                 marginBottom: 10,
                 backgroundColor: COLORS.PrimaryBackground,
                 overflow: 'auto',
@@ -88,12 +101,26 @@ export const HtmlRenderer: React.FC<HtmlRendererProps> = ({
             dangerouslySetInnerHTML={{ __html: processedContent }}
         />
     ) : (
+        // Native: Use WebView with injected JS to determine dynamic height.
         <WebView
             originWhitelist={['*']}
             source={{ html: htmlContent }}
+            injectedJavaScript={`
+          setTimeout(function() {
+              var height = document.documentElement.scrollHeight || document.body.scrollHeight;
+              window.ReactNativeWebView.postMessage(height.toString());
+          }, 100);
+          true;
+      `}
+            onMessage={(event) => {
+                const height = parseInt(event.nativeEvent.data, 10);
+                if (!isNaN(height)) {
+                    setWebViewHeight(height);
+                }
+            }}
             style={{
                 width: innerWidth,
-                height,
+                height: computedHeight,
                 marginBottom: 10,
                 backgroundColor: COLORS.PrimaryBackground,
             }}

@@ -27,8 +27,11 @@ import { Lato_400Regular, Lato_700Bold } from '@expo-google-fonts/lato';
 import {
     useFonts,
     Roboto_400Regular,
+    Roboto_400Regular_Italic,
     Roboto_500Medium,
+    Roboto_500Medium_Italic,
     Roboto_700Bold,
+    Roboto_700Bold_Italic,
 } from '@expo-google-fonts/roboto';
 import * as SplashScreen from 'expo-splash-screen';
 
@@ -277,8 +280,11 @@ export default function App() {
         Lato_400Regular,
         Lato_700Bold,
         Roboto_400Regular,
+        Roboto_400Regular_Italic,
         Roboto_500Medium,
+        Roboto_500Medium_Italic,
         Roboto_700Bold,
+        Roboto_700Bold_Italic,
     });
 
     useEffect(() => {

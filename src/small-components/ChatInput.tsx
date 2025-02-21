@@ -1,17 +1,14 @@
-// ChatInput.tsx
 import React from 'react';
-import {
-    View,
-    TextInput,
-    TouchableOpacity,
-    Platform,
-    StyleSheet,
-} from 'react-native';
+import { View, TouchableOpacity, Platform, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { Image as ExpoImage } from 'expo-image';
 import { COLORS } from '../constants';
 import { AttachmentPreviews } from '../sections';
-import { Attachment } from '../types'; // adjust the import if needed
+import { Attachment } from '../types';
+import { MarkdownTextInput } from './MarkdownTextInput';
+
+// Utility to check if a URL is an image
+const isImageUrl = (url: string): boolean => /\.(jpeg|jpg|gif|png)$/i.test(url);
 
 export type ChatInputProps = {
     messageText: string;
@@ -24,9 +21,6 @@ export type ChatInputProps = {
     onInlineImagePress: (url: string) => void;
     onAttachmentPreviewPress: (att: Attachment) => void;
 };
-
-// Utility to check if a URL is an image
-const isImageUrl = (url: string): boolean => /\.(jpeg|jpg|gif|png)$/i.test(url);
 
 export const ChatInput: React.FC<ChatInputProps> = ({
     messageText,
@@ -86,12 +80,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 >
                     <Icon name="image" size={24} color="white" />
                 </TouchableOpacity>
-                <TextInput
-                    style={styles.input}
-                    placeholder={`Message ${recipientName}`}
-                    placeholderTextColor="gray"
+                <MarkdownTextInput
                     value={messageText}
                     onChangeText={setMessageText}
+                    placeholder={`Message ${recipientName}`}
                     onSubmitEditing={sendMessageHandler}
                     returnKeyType="send"
                 />
@@ -150,14 +142,6 @@ const styles = StyleSheet.create({
     imageButton: {
         marginRight: 10,
         padding: 8,
-    },
-    input: {
-        flex: 1,
-        backgroundColor: COLORS.TextInput,
-        color: 'white',
-        padding: 10,
-        borderRadius: 20,
-        fontSize: 14,
     },
     sendButton: {
         marginLeft: 10,

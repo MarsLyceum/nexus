@@ -1,3 +1,5 @@
+// eslint-disable-next-line eslint-comments/disable-enable-pair
+/* eslint-disable max-lines */
 // EventCard.tsx
 import React, { useState } from 'react';
 import {

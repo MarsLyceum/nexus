@@ -41,7 +41,7 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
     const sendMessageHandler = async () => {
         if (!messageText.trim() && attachments.length === 0) return;
         await sendMsg(
-            user?.id,
+            user?.id ?? '',
             channel.id,
             messageText,
             attachments,

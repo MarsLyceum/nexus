@@ -52,8 +52,9 @@ export const CreateContentButton: React.FC<CreateContentButtonProps> = ({
 }) => {
     const { pickFile } = useFileUpload();
     const [previewModalVisible, setPreviewModalVisible] = useState(false);
-    const [selectedAttachment, setSelectedAttachment] =
-        useState<Attachment | null>(null);
+    const [selectedAttachment, setSelectedAttachment] = useState<
+        Attachment | undefined
+    >();
 
     // Attachment insert handler
     const handleAttachmentInsert = async () => {
@@ -72,6 +73,7 @@ export const CreateContentButton: React.FC<CreateContentButtonProps> = ({
                 file,
                 previewUri,
             };
+            // @ts-expect-error type inference broken
             setAttachments((prev) => [...prev, newAttachment]);
         } catch (error) {
             console.error('Error in handleAttachmentInsert:', error);
@@ -84,6 +86,7 @@ export const CreateContentButton: React.FC<CreateContentButtonProps> = ({
     };
 
     const onRemoveAttachment = (attachmentId: string) => {
+        // @ts-expect-error type inference broken
         setAttachments((prev) => prev.filter((att) => att.id !== attachmentId));
     };
 
@@ -121,13 +124,32 @@ export const CreateContentButton: React.FC<CreateContentButtonProps> = ({
                                     value={contentText}
                                     onChangeText={setContentText}
                                 />
-                                {/* Second field: Rich Text Editor for content */}
-                                <View style={styles.editorContainer}>
-                                    <RichTextEditor
-                                        initialContent={secondContentText}
-                                        onChange={setSecondContentText}
+                                {/* Second field: Conditionally render based on multilineSecondField */}
+                                {multilineSecondField ? (
+                                    <View style={styles.editorContainer}>
+                                        <RichTextEditor
+                                            initialContent={secondContentText}
+                                            onChange={setSecondContentText}
+                                        />
+                                    </View>
+                                ) : (
+                                    <TextInput
+                                        placeholder={placeholderText2}
+                                        placeholderTextColor={
+                                            COLORS.InactiveText
+                                        }
+                                        style={[
+                                            styles.textInput,
+                                            {
+                                                height: 100,
+                                                textAlignVertical: 'top',
+                                            },
+                                        ]}
+                                        value={secondContentText}
+                                        onChangeText={setSecondContentText}
+                                        multiline
                                     />
-                                </View>
+                                )}
                             </>
                         ) : (
                             // Single field: Use RichTextEditor for content
@@ -200,8 +222,6 @@ export const CreateContentButton: React.FC<CreateContentButtonProps> = ({
         </>
     );
 };
-
-export default CreateContentButton;
 
 const styles = StyleSheet.create({
     bottomSection: {

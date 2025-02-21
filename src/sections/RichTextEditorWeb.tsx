@@ -2,24 +2,33 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, Platform, Text } from 'react-native';
 import { COLORS } from '../constants';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let ReactQuill: any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let Quill: any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let Inline: any;
 
 if (Platform.OS === 'web') {
     // Use react-quill-new for web and load its CSS
+    // eslint-disable-next-line global-require, @typescript-eslint/no-var-requires, unicorn/prefer-module
     ReactQuill = require('react-quill-new').default;
+    // eslint-disable-next-line global-require, @typescript-eslint/no-var-requires, unicorn/prefer-module
     require('react-quill-new/dist/quill.snow.css');
 
     // Load quill-better-table CSS
+    // eslint-disable-next-line global-require, @typescript-eslint/no-var-requires, unicorn/prefer-module
     require('quill-better-table/dist/quill-better-table.css');
 
     // Get the Quill instance from react-quill-new
+    // eslint-disable-next-line global-require, @typescript-eslint/no-var-requires, unicorn/prefer-module
     Quill = require('react-quill-new').Quill;
     // Expose Quill globally for quill-better-table requirements
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (window as any).Quill = Quill;
 
     // Import quill-better-table
+    // eslint-disable-next-line global-require, @typescript-eslint/no-var-requires, unicorn/prefer-module
     const QuillBetterTable = require('quill-better-table');
 
     // Register quill-better-table module with Quill
@@ -38,14 +47,18 @@ if (Platform.OS === 'web') {
         static create() {
             const node = super.create();
             node.setAttribute('class', 'spoiler');
-            node.appendChild(document.createTextNode('\u200B')); // zero-width space
+            node.append(document.createTextNode('\u200B')); // zero-width space
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return node;
         }
+
         static formats(node: HTMLElement) {
             return node.getAttribute('class') === 'spoiler';
         }
+
         static value(node: HTMLElement) {
-            return node.innerText.replace(/\u200B/g, '');
+            // eslint-disable-next-line unicorn/prefer-dom-node-text-content
+            return node.innerText.replaceAll('​', '');
         }
     }
     SpoilerBlot.blotName = 'spoiler';
@@ -56,7 +69,7 @@ if (Platform.OS === 'web') {
     const icons = Quill.import('ui/icons');
 
     // Spoiler icon (already defined)
-    icons['spoiler'] = `
+    icons.spoiler = `
     <svg viewBox="0 0 24 24">
       <title>Spoiler</title>
       <path d="M12,2L2,7v7c0,5,4,9,10,9s10-4,10-9V7L12,2z M12,17 c-3,0-5-2-5-5v-1l5-3l5,3v1C17,15,15,17,12,17z"/>
@@ -64,7 +77,7 @@ if (Platform.OS === 'web') {
   `;
 
     // Define table icon (icon markup itself need not include title)
-    icons['insertTable'] = `
+    icons.insertTable = `
     <svg viewBox="0 0 18 18">
       <rect class="ql-stroke" height="12" width="12" x="3" y="3"></rect>
       <line class="ql-stroke" x1="3" x2="15" y1="7" y2="7"></line>
@@ -123,18 +136,21 @@ if (Platform.OS === 'web') {
                 '<svg><title>Code Block</title>'
             );
         }
-    } catch (e) {
-        console.warn('Could not add hover titles to some icons:', e);
+    } catch (error) {
+        console.warn('Could not add hover titles to some icons:', error);
     }
 
     const toolbarHandlers = {
-        spoiler: function () {
+        spoiler() {
+            // @ts-expect-error quill
             const range = this.quill.getSelection();
             if (!range) return;
             if (range.length > 0) {
                 // Toggle spoiler on selected text
+                // @ts-expect-error quill
                 const currentFormat = this.quill.getFormat(range);
                 const isActive = !!currentFormat.spoiler;
+                // @ts-expect-error quill
                 this.quill.formatText(
                     range.index,
                     range.length,
@@ -143,6 +159,7 @@ if (Platform.OS === 'web') {
                 );
 
                 setTimeout(() => {
+                    // @ts-expect-error quill
                     const [leaf] = this.quill.getLeaf(range.index);
                     if (leaf && leaf.parent?.statics?.blotName === 'spoiler') {
                         const blot = leaf.parent;
@@ -158,10 +175,13 @@ if (Platform.OS === 'web') {
             } else {
                 // Insert a 1-char spoiler placeholder if no selection
                 const insertIndex = range.index;
+                // @ts-expect-error quill
                 this.quill.insertText(insertIndex, '\u200B', { spoiler: true });
+                // @ts-expect-error quill
                 this.quill.setSelection(insertIndex + 1, 0);
 
                 setTimeout(() => {
+                    // @ts-expect-error quill
                     const [leaf] = this.quill.getLeaf(insertIndex);
                     if (leaf && leaf.parent?.statics?.blotName === 'spoiler') {
                         const blot = leaf.parent;
@@ -176,17 +196,23 @@ if (Platform.OS === 'web') {
                 }, 0);
             }
         },
-        insertTable: function () {
+        insertTable() {
             // Prompt the user for number of rows and columns
             const rowsInput = window.prompt('Enter number of rows', '3');
             const columnsInput = window.prompt('Enter number of columns', '3');
-            const rows = parseInt(rowsInput, 10);
-            const columns = parseInt(columnsInput, 10);
-            if (isNaN(rows) || isNaN(columns) || rows < 1 || columns < 1) {
+            const rows = Number.parseInt(rowsInput ?? '', 10);
+            const columns = Number.parseInt(columnsInput ?? '', 10);
+            if (
+                Number.isNaN(rows) ||
+                Number.isNaN(columns) ||
+                rows < 1 ||
+                columns < 1
+            ) {
                 alert('Invalid number of rows or columns');
                 return;
             }
             // Get the better-table module and insert the table with user-defined dimensions
+            // @ts-expect-error quilll module
             const tableModule = this.quill.getModule('better-table');
             if (tableModule) {
                 tableModule.insertTable(rows, columns);
@@ -195,7 +221,7 @@ if (Platform.OS === 'web') {
     };
 
     // ====== Define ReactQuill Modules (with Better Table) ======
-    (ReactQuill as any).modules = {
+    ReactQuill.modules = {
         toolbar: {
             container: [
                 ['bold', 'italic', 'underline'],
@@ -255,6 +281,7 @@ export const RichTextEditorWeb: React.FC<RichTextEditorWebProps> = ({
         );
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const quillRef = useRef<any>(null);
     const [value, setValue] = useState(initialContent);
 
@@ -337,10 +364,10 @@ export const RichTextEditorWeb: React.FC<RichTextEditorWebProps> = ({
         border: 1px solid ${COLORS.White} !important;
       }
     `;
-        document.head.appendChild(styleEl);
+        document.head.append(styleEl);
         return () => {
             if (document.head.contains(styleEl)) {
-                document.head.removeChild(styleEl);
+                styleEl.remove();
             }
         };
     }, []);
@@ -367,7 +394,7 @@ export const RichTextEditorWeb: React.FC<RichTextEditorWebProps> = ({
                 ref={quillRef}
                 value={value}
                 onChange={handleChange}
-                modules={(ReactQuill as any).modules}
+                modules={ReactQuill.modules}
                 theme="snow"
                 style={styles.webEditor}
             />

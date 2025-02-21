@@ -109,11 +109,12 @@ const styles = StyleSheet.create({
 const extractUrls = (text: string): string[] => {
     const urlRegex = /https?:\/\/[^\s"<]+/g;
     const matches = text.match(urlRegex);
-    return matches ? matches : [];
+    return matches || [];
 };
 
 // Helper to strip HTML tags from a string.
-const stripHTML = (html: string): string => html.replace(/<[^>]+>/g, '').trim();
+const stripHTML = (html: string): string =>
+    html.replaceAll(/<[^>]+>/g, '').trim();
 
 export type PostItemProps = {
     id: string;
@@ -184,7 +185,7 @@ export const PostItem: React.FC<PostItemProps> = ({
     const innerWidth = windowWidth - 30; // available width for post content
 
     let avatarUri = '';
-    let headerElement = null;
+    let headerElement;
 
     if (variant === 'feed') {
         avatarUri = getUserAvatarUri(username, thumbnail);
@@ -225,7 +226,7 @@ export const PostItem: React.FC<PostItemProps> = ({
             : `peeps://post/${id}`);
 
     // Prepare Open Graph meta tags for web only
-    const ogDescription = stripHTML(content).substring(0, 160);
+    const ogDescription = stripHTML(content).slice(0, 160);
     const ogImage = thumbnail || avatarUri;
     const ogType = 'article';
 
@@ -251,12 +252,14 @@ export const PostItem: React.FC<PostItemProps> = ({
         } else {
             try {
                 const result = await Share.share({
-                    message: `${title}\n\n${content.replace(/<[^>]+>/g, '')}\n\n${computedShareUrl}`,
+                    message: `${title}\n\n${content.replaceAll(/<[^>]+>/g, '')}\n\n${computedShareUrl}`,
                 });
                 if (result.action === Share.sharedAction) {
                     setShareCount((prev) => prev + 1);
                 }
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (error: any) {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                 Alert.alert('Share error', error.message);
             }
         }

@@ -5,10 +5,11 @@ import { TouchableOpacity, Linking, Text, StyleSheet } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { getDomainFromUrl } from '../utils/linkPreviewUtils';
 import { COLORS } from '../constants';
+import { PreviewData } from '../types';
 
 export type FallbackPreviewProps = {
     url: string;
-    previewData: any;
+    previewData: PreviewData;
 };
 
 export const FallbackPreview: React.FC<FallbackPreviewProps> = ({
@@ -31,15 +32,15 @@ export const FallbackPreview: React.FC<FallbackPreviewProps> = ({
                     style={styles.linkPreviewImage}
                     contentFit="cover"
                 />
-            ) : null}
+            ) : undefined}
             {previewData.title ? (
                 <Text style={styles.linkPreviewTitle}>{previewData.title}</Text>
-            ) : null}
+            ) : undefined}
             {previewData.description ? (
                 <Text style={styles.linkPreviewDescription}>
                     {previewData.description}
                 </Text>
-            ) : null}
+            ) : undefined}
             <Text style={styles.linkPreviewSite}>{siteToShow}</Text>
         </TouchableOpacity>
     );

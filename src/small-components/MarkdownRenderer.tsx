@@ -19,20 +19,21 @@ const Spoiler: React.FC<{ text: string }> = ({ text }) => {
 export const renderMarkdown = (text: string): JSX.Element[] => {
     const lines = text.split('\n');
     const renderedLines = lines.map((line, index) => {
-        let segments: JSX.Element[] = [];
+        const segments: JSX.Element[] = [];
         let lastIndex = 0;
         let key = 0;
         // Regex covers code blocks, inline code, underline, bold+italic, bold, italic, strikethrough,
         // spoilers, links, images, and auto-links.
         const regex =
-            /(```([\s\S]+?)```)|(`([^`]+)`)|(__(.+?)__)|(\*\*\*([^*]+)\*\*\*)|(\*\*([^*]+)\*\*)|(\*([^*]+)\*)|(_([^_]+)_)|(~~(.*?)~~)|(>!(.*?)!<)|(\|\|([\s\S]+?)\|\|)|(\[([^\]]+)\]\(([^)]+)\))|(!\[([^\]]*)\]\(([^)]+)\))|(https?:\/\/[^\s]+)/g;
+            /(```([\S\s]+?)```)|(`([^`]+)`)|(__(.+?)__)|(\*\*\*([^*]+)\*\*\*)|(\*\*([^*]+)\*\*)|(\*([^*]+)\*)|(_([^_]+)_)|(~~(.*?)~~)|(>!(.*?)!<)|(\|\|([\S\s]+?)\|\|)|(\[([^\]]+)]\(([^)]+)\))|(!\[([^\]]*)]\(([^)]+)\))|(https?:\/\/\S+)/g;
         let match;
+        // eslint-disable-next-line no-cond-assign
         while ((match = regex.exec(line)) !== null) {
             // Add plain text preceding the markdown match.
             if (match.index > lastIndex) {
                 segments.push(
                     <Text key={key++} style={styles.plainText}>
-                        {line.substring(lastIndex, match.index)}
+                        {line.slice(lastIndex, match.index)}
                     </Text>
                 );
             }
@@ -138,13 +139,14 @@ export const renderMarkdown = (text: string): JSX.Element[] => {
         if (lastIndex < line.length) {
             segments.push(
                 <Text key={key++} style={styles.plainText}>
-                    {line.substring(lastIndex)}
+                    {line.slice(Math.max(0, lastIndex))}
                 </Text>
             );
         }
         return <Text key={index}>{segments}</Text>;
     });
     // Join lines with newline characters.
+    // eslint-disable-next-line unicorn/no-array-reduce
     return renderedLines.reduce((prev, curr, idx) => {
         if (idx === 0) return [curr];
         return [...prev, <Text key={`newline-${idx}`}>{'\n'}</Text>, curr];

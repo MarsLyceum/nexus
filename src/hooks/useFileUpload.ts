@@ -90,6 +90,7 @@ const dataURLtoFile = (dataUrl: string, filename: string): File => {
     const u8arr = new Uint8Array(n);
     // eslint-disable-next-line no-plusplus
     while (n--) {
+        // eslint-disable-next-line unicorn/prefer-code-point
         u8arr[n] = bstr.charCodeAt(n);
     }
     return new File([u8arr], filename, {
@@ -113,17 +114,18 @@ export const useFileUpload = () => {
         // Request permissions
         const { status } =
             await ImagePicker.requestMediaLibraryPermissionsAsync();
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
         if (status !== 'granted') {
             Alert.alert(
                 'Permission required',
                 'Permission to access media library is required!'
             );
-            return;
+            return undefined;
         }
 
         // Launch the image picker with cropping enabled, but no forced aspect ratio
         const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            mediaTypes: ['images'], // Updated: use an array of media types
             allowsEditing: true, // Allows cropping, but no fixed aspect ratio
             quality: 1,
             base64: Platform.OS === 'web', // Request base64 on web
@@ -134,7 +136,8 @@ export const useFileUpload = () => {
             ('canceled' in result && result.canceled) ||
             ('cancelled' in result && result.cancelled);
         if (canceled) {
-            return;
+            // eslint-disable-next-line consistent-return
+            return undefined;
         }
 
         // Handle the asset returned (Expo’s new API returns an assets array)
@@ -148,8 +151,6 @@ export const useFileUpload = () => {
                     imageAsset.fileName ||
                     imageAsset.uri.split('/').pop() ||
                     'upload.jpg';
-                const extension =
-                    fileName.split('.').pop()?.toLowerCase() || 'jpg';
                 // Determine MIME type using the fileName rather than the URI
                 let mimeType = getMimeType(fileName);
                 if (mimeType === 'application/octet-stream') {

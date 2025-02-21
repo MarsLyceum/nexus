@@ -4,7 +4,6 @@ import {
     Text,
     StyleSheet,
     FlatList,
-    Platform,
     useWindowDimensions,
 } from 'react-native';
 import { NavigationProp, RouteProp } from '@react-navigation/core';
@@ -40,9 +39,6 @@ type ChatScreenProps = {
     navigation: NavigationProp<RootStackParamList, 'ChatScreen'>;
     route: RouteProp<RootStackParamList, 'ChatScreen'>;
 };
-
-// Detect if the device is a mobile or tablet
-const isMobileOrTablet = Platform.OS === 'ios' || Platform.OS === 'android';
 
 const styles = StyleSheet.create({
     chatContainer: {
@@ -168,11 +164,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
         const file = await pickFile();
         if (file) {
             let previewUri = '';
-            if ('uri' in file) {
-                previewUri = file.uri;
-            } else {
-                previewUri = URL.createObjectURL(file);
-            }
+            previewUri = 'uri' in file ? file.uri : URL.createObjectURL(file);
             const newAttachment: Attachment = {
                 id: `${Date.now()}-${Math.random()}`,
                 file,
@@ -208,6 +200,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     };
 
     // Handlers for inline image and attachment preview presses
+    // eslint-disable-next-line unicorn/consistent-function-scoping
     const onInlineImagePress = (url: string) => {
         console.log('Inline image pressed:', url);
     };

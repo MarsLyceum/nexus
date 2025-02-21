@@ -16,20 +16,7 @@ import { COLORS } from '../constants';
 import { CreateContentButton } from '../buttons';
 import { useAppSelector, RootState, UserType } from '../redux';
 import { getRelativeTime } from '../utils';
-
-type Post = {
-    id: string;
-    user?: string;
-    time?: string;
-    title: string;
-    flair?: string;
-    upvotes: number;
-    commentsCount: number;
-    content: string;
-    postedByUserId?: string;
-    postedAt?: string;
-    attachmentUrls?: string[]; // <-- Added attachmentUrls field
-};
+import { Post, PostData } from '../types';
 
 type RootStackParamList = {
     PostScreen: { id?: number; post?: Post };
@@ -38,18 +25,6 @@ type RootStackParamList = {
 type PostScreenProps = {
     navigation: NavigationProp<RootStackParamList, 'PostScreen'>;
     route: RouteProp<RootStackParamList, 'PostScreen'>;
-};
-
-type PostData = {
-    id: string;
-    user: string;
-    time: string;
-    title: string;
-    flair: string;
-    upvotes: number;
-    commentsCount: number;
-    content: string;
-    attachmentUrls: string[]; // <-- Added attachmentUrls field
 };
 
 const BOTTOM_INPUT_HEIGHT = 60;
@@ -77,7 +52,6 @@ const styles = StyleSheet.create({
               left: 0,
               right: 0,
               bottom: BOTTOM_INPUT_HEIGHT,
-              // @ts-expect-error web only type
               overflowY: 'auto',
           }
         : { flex: 1 },
@@ -277,8 +251,11 @@ export const PostScreen: React.FC<PostScreenProps> = ({
     // If the post query is still loading, render the skeleton screen.
     if (loading) {
         return (
+            // @ts-expect-error web only types
             <SafeAreaView style={styles.safeContainer}>
+                {/* @ts-expect-error web only types */}
                 <View style={styles.mainContainer}>
+                    {/* @ts-expect-error web only types */}
                     <ScrollView
                         style={styles.scrollSection}
                         contentContainerStyle={styles.scrollView}
@@ -297,6 +274,7 @@ export const PostScreen: React.FC<PostScreenProps> = ({
 
     if (error) {
         return (
+            // @ts-expect-error web only types
             <SafeAreaView style={styles.safeContainer}>
                 <View
                     style={{
@@ -316,6 +294,7 @@ export const PostScreen: React.FC<PostScreenProps> = ({
 
     // Format the time using our utility function.
     const rawTime = feedPost.postedAt || feedPost.time || '';
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const formattedTime = rawTime ? getRelativeTime(rawTime) : 'Unknown time';
 
     // Resolve the username from the fetched user data.
@@ -359,10 +338,13 @@ export const PostScreen: React.FC<PostScreenProps> = ({
           };
 
     return (
+        // @ts-expect-error web only types
         <SafeAreaView style={styles.safeContainer}>
             {/* @ts-expect-error props */}
             <ContainerComponent {...containerProps}>
+                {/* @ts-expect-error web only types */}
                 <View style={styles.mainContainer}>
+                    {/* @ts-expect-error web only types */}
                     <ScrollView
                         style={styles.scrollSection}
                         contentContainerStyle={styles.scrollView}
@@ -400,6 +382,7 @@ export const PostScreen: React.FC<PostScreenProps> = ({
                         ))}
                     </ScrollView>
                     {/* Fixed CreateContentButton at the bottom */}
+                    {/* @ts-expect-error web only types */}
                     <View style={styles.createContentButtonContainer}>
                         <CreateContentButton
                             modalVisible={modalVisible}

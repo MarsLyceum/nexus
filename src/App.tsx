@@ -114,8 +114,8 @@ const quotaLink = new ApolloLink((operation, forward) => {
     });
 });
 
-const graphqlApiGatewayEndpointHttp =
-    'https://peeps-web-service-iwesf7iypq-uw.a.run.app/graphql';
+// const graphqlApiGatewayEndpointHttp =
+//     'https://peeps-web-service-iwesf7iypq-uw.a.run.app/graphql';
 const graphqlApiGatewayEndpointSse = ''; // SSE turned off
 
 const httpLink = from([

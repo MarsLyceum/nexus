@@ -19,6 +19,7 @@ import { useCreatePost } from '../hooks/useCreatePost';
 
 type RootStackParamList = {
     FeedChannelScreen: {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         channel: any; // Replace 'any' with your GroupChannel type if available
     };
     PostScreen: {
@@ -28,6 +29,7 @@ type RootStackParamList = {
 
 interface FeedChannelScreenProps {
     navigation: NavigationProp<RootStackParamList, 'FeedChannelScreen'>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     channel?: any;
     route?: RouteProp<RootStackParamList, 'FeedChannelScreen'>;
 }

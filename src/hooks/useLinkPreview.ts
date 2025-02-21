@@ -7,19 +7,7 @@ import {
     getDomainFromUrl,
     getOEmbedEndpoint,
 } from '../utils/linkPreviewUtils';
-
-// Define a type for the preview data.
-type PreviewData = {
-    title?: string;
-    description?: string;
-    images?: string[];
-    siteName?: string;
-    url?: string;
-    locale?: string;
-    ogType?: string;
-    logo?: string;
-    embedHtml?: string;
-};
+import { PreviewData } from '../types';
 
 export function useLinkPreview(url: string) {
     const [previewData, setPreviewData] = useState<PreviewData>({});
@@ -86,8 +74,8 @@ export function useLinkPreview(url: string) {
                         });
                         setLoading(false);
                         return;
-                    } catch (err) {
-                        console.warn('oEmbed fetch failed:', err);
+                    } catch (error) {
+                        console.warn('oEmbed fetch failed:', error);
                         // Fall through to fallback.
                     }
                 }
@@ -128,7 +116,7 @@ export function useLinkPreview(url: string) {
                 setLoading(false);
             }
         }
-        fetchPreview();
+        void fetchPreview();
     }, [url]);
 
     return { previewData, loading, isImage, imageDimensions };

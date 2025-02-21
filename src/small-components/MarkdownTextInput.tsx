@@ -32,17 +32,18 @@ const renderHighlightedText = (text: string) => {
             );
         }
         // Process inline markdown
-        let segments: JSX.Element[] = [];
+        const segments: JSX.Element[] = [];
         let lastIndex = 0;
         const regex =
-            /(```([\s\S]+?)```)|(`([^`]+)`)|(__(.+?)__)|(\*\*\*([^*]+)\*\*\*)|(\*\*([^*]+)\*\*)|(\*([^*]+)\*)|(_([^_]+)_)|(~~(.*?)~~)|(>!(.*?)!<)|(\|\|([\s\S]+?)\|\|)|(\[([^\]]+)\]\(([^)]+)\))|(!\[([^\]]*)\]\(([^)]+)\))|(https?:\/\/[^\s]+)/g;
+            /(```([\S\s]+?)```)|(`([^`]+)`)|(__(.+?)__)|(\*\*\*([^*]+)\*\*\*)|(\*\*([^*]+)\*\*)|(\*([^*]+)\*)|(_([^_]+)_)|(~~(.*?)~~)|(>!(.*?)!<)|(\|\|([\S\s]+?)\|\|)|(\[([^\]]+)]\(([^)]+)\))|(!\[([^\]]*)]\(([^)]+)\))|(https?:\/\/\S+)/g;
         let match;
         let key = 0;
+        // eslint-disable-next-line no-cond-assign
         while ((match = regex.exec(line)) !== null) {
             if (match.index > lastIndex) {
                 segments.push(
                     <Text key={key++} style={styles.plainText}>
-                        {line.substring(lastIndex, match.index)}
+                        {line.slice(lastIndex, match.index)}
                     </Text>
                 );
             }
@@ -59,14 +60,10 @@ const renderHighlightedText = (text: string) => {
                 segments.push(
                     <Text key={key++} style={styles.plainText}>
                         {'`'}
-                    </Text>
-                );
-                segments.push(
+                    </Text>,
                     <Text key={key++} style={styles.codeText}>
                         {match[4]}
-                    </Text>
-                );
-                segments.push(
+                    </Text>,
                     <Text key={key++} style={styles.plainText}>
                         {'`'}
                     </Text>
@@ -77,14 +74,10 @@ const renderHighlightedText = (text: string) => {
                 segments.push(
                     <Text key={key++} style={styles.plainText}>
                         {'__'}
-                    </Text>
-                );
-                segments.push(
+                    </Text>,
                     <Text key={key++} style={styles.underlineText}>
                         {match[6]}
-                    </Text>
-                );
-                segments.push(
+                    </Text>,
                     <Text key={key++} style={styles.plainText}>
                         {'__'}
                     </Text>
@@ -95,14 +88,10 @@ const renderHighlightedText = (text: string) => {
                 segments.push(
                     <Text key={key++} style={styles.plainText}>
                         {'***'}
-                    </Text>
-                );
-                segments.push(
+                    </Text>,
                     <Text key={key++} style={styles.boldItalicText}>
                         {match[8]}
-                    </Text>
-                );
-                segments.push(
+                    </Text>,
                     <Text key={key++} style={styles.plainText}>
                         {'***'}
                     </Text>
@@ -113,14 +102,10 @@ const renderHighlightedText = (text: string) => {
                 segments.push(
                     <Text key={key++} style={styles.plainText}>
                         {'**'}
-                    </Text>
-                );
-                segments.push(
+                    </Text>,
                     <Text key={key++} style={styles.boldText}>
                         {match[10]}
-                    </Text>
-                );
-                segments.push(
+                    </Text>,
                     <Text key={key++} style={styles.plainText}>
                         {'**'}
                     </Text>
@@ -131,14 +116,10 @@ const renderHighlightedText = (text: string) => {
                 segments.push(
                     <Text key={key++} style={styles.plainText}>
                         {'*'}
-                    </Text>
-                );
-                segments.push(
+                    </Text>,
                     <Text key={key++} style={styles.italicText}>
                         {match[12]}
-                    </Text>
-                );
-                segments.push(
+                    </Text>,
                     <Text key={key++} style={styles.plainText}>
                         {'*'}
                     </Text>
@@ -149,14 +130,10 @@ const renderHighlightedText = (text: string) => {
                 segments.push(
                     <Text key={key++} style={styles.plainText}>
                         {'_'}
-                    </Text>
-                );
-                segments.push(
+                    </Text>,
                     <Text key={key++} style={styles.italicText}>
                         {match[14]}
-                    </Text>
-                );
-                segments.push(
+                    </Text>,
                     <Text key={key++} style={styles.plainText}>
                         {'_'}
                     </Text>
@@ -167,14 +144,10 @@ const renderHighlightedText = (text: string) => {
                 segments.push(
                     <Text key={key++} style={styles.plainText}>
                         {'~~'}
-                    </Text>
-                );
-                segments.push(
+                    </Text>,
                     <Text key={key++} style={styles.strikethroughText}>
                         {match[16]}
-                    </Text>
-                );
-                segments.push(
+                    </Text>,
                     <Text key={key++} style={styles.plainText}>
                         {'~~'}
                     </Text>
@@ -185,14 +158,10 @@ const renderHighlightedText = (text: string) => {
                 segments.push(
                     <Text key={key++} style={styles.plainText}>
                         {'>!'}
-                    </Text>
-                );
-                segments.push(
+                    </Text>,
                     <Text key={key++} style={styles.spoilerTextInline}>
                         {match[18]}
-                    </Text>
-                );
-                segments.push(
+                    </Text>,
                     <Text key={key++} style={styles.plainText}>
                         {'!<'}
                     </Text>
@@ -203,14 +172,10 @@ const renderHighlightedText = (text: string) => {
                 segments.push(
                     <Text key={key++} style={styles.plainText}>
                         {'||'}
-                    </Text>
-                );
-                segments.push(
+                    </Text>,
                     <Text key={key++} style={styles.spoilerTextInline}>
                         {match[20]}
-                    </Text>
-                );
-                segments.push(
+                    </Text>,
                     <Text key={key++} style={styles.plainText}>
                         {'||'}
                     </Text>
@@ -245,7 +210,7 @@ const renderHighlightedText = (text: string) => {
         if (lastIndex < line.length) {
             segments.push(
                 <Text key={key++} style={styles.plainText}>
-                    {line.substring(lastIndex)}
+                    {line.slice(Math.max(0, lastIndex))}
                 </Text>
             );
         }
@@ -253,6 +218,7 @@ const renderHighlightedText = (text: string) => {
     });
 
     // Interleave lines with newline characters.
+    // eslint-disable-next-line unicorn/no-array-reduce
     return renderedLines.reduce((prev, curr, idx) => {
         if (idx === 0) return [curr];
         return [...prev, <Text key={`newline-${idx}`}>{'\n'}</Text>, curr];
@@ -272,6 +238,7 @@ export const MarkdownTextInput: React.FC<MarkdownTextInputProps> = ({
     ...rest
 }) => (
     <View style={styles.inputWrapper}>
+        {/* @ts-expect-error web only type */}
         <Text style={styles.inputTextOverlay} pointerEvents="none">
             {renderHighlightedText(value)}
         </Text>

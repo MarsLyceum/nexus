@@ -30,6 +30,7 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
     const deviceWidth = Dimensions.get('window').width;
     const deviceHeight = Dimensions.get('window').height;
     const carouselHeight = deviceHeight * 0.8;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const carouselRef = useRef<any>(null);
 
     // When modal becomes visible, reset the carousel to the initial index.
@@ -54,25 +55,24 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
                     currentIndex < attachments.length - 1
                 ) {
                     console.log('Navigating to next image:', currentIndex + 1);
-                    carouselRef.current &&
-                        carouselRef.current.scrollTo({
-                            index: currentIndex + 1,
-                            animated: true,
-                        });
+                    carouselRef?.current.scrollTo({
+                        index: currentIndex + 1,
+                        animated: true,
+                    });
                 } else if (e.key === 'ArrowLeft' && currentIndex > 0) {
                     console.log(
                         'Navigating to previous image:',
                         currentIndex - 1
                     );
-                    carouselRef.current &&
-                        carouselRef.current.scrollTo({
-                            index: currentIndex - 1,
-                            animated: true,
-                        });
+                    carouselRef?.current.scrollTo({
+                        index: currentIndex - 1,
+                        animated: true,
+                    });
                 }
             }
         };
         window.addEventListener('keydown', handleKeyDown);
+        // eslint-disable-next-line consistent-return
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [visible, attachments.length, currentIndex]);
 
@@ -123,11 +123,10 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
                                 direction="left"
                                 onPress={() => {
                                     console.log('Left arrow pressed');
-                                    carouselRef.current &&
-                                        carouselRef.current.scrollTo({
-                                            index: currentIndex - 1,
-                                            animated: true,
-                                        });
+                                    carouselRef?.current.scrollTo({
+                                        index: currentIndex - 1,
+                                        animated: true,
+                                    });
                                 }}
                                 disabled={currentIndex === 0}
                                 iconSize={30}
@@ -139,11 +138,10 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
                                 direction="right"
                                 onPress={() => {
                                     console.log('Right arrow pressed');
-                                    carouselRef.current &&
-                                        carouselRef.current.scrollTo({
-                                            index: currentIndex + 1,
-                                            animated: true,
-                                        });
+                                    carouselRef?.current.scrollTo({
+                                        index: currentIndex + 1,
+                                        animated: true,
+                                    });
                                 }}
                                 disabled={
                                     currentIndex === attachments.length - 1

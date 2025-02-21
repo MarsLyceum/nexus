@@ -21,7 +21,8 @@ export const AttachmentPreviews: React.FC<AttachmentPreviewsProps> = ({
     onAttachmentPress,
     onRemoveAttachment,
 }) => {
-    if (attachments.length === 0) return null;
+    // eslint-disable-next-line unicorn/no-useless-undefined
+    if (attachments.length === 0) return undefined;
     return (
         <View style={styles.attachmentsContainer}>
             <ScrollView

@@ -39,7 +39,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         !trimmed.includes(' ') &&
         isImageUrl(trimmed)
             ? trimmed
-            : null;
+            : undefined;
 
     return (
         <View>

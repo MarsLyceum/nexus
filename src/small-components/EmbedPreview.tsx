@@ -4,10 +4,11 @@ import React from 'react';
 import { View, Platform, StyleSheet } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { getDomainFromUrl } from '../utils/linkPreviewUtils';
+import { PreviewData } from '../types';
 
 export type EmbedPreviewProps = {
     url: string;
-    previewData: any;
+    previewData: PreviewData;
     containerWidth?: number;
 };
 
@@ -34,15 +35,14 @@ export const EmbedPreview: React.FC<EmbedPreviewProps> = ({
         const scaledHeight = defaultHeight * scaleFactor;
 
         if (Platform.OS === 'web') {
-            const modifiedEmbedHtml =
-                `<style>
-          iframe { 
+            const modifiedEmbedHtml = `<style>
+          iframe {
             transform: scale(${scaleFactor});
             transform-origin: top left;
             width: ${defaultWidth}px !important;
             height: ${defaultHeight}px !important;
           }
-        </style>` + previewData.embedHtml;
+        </style>${previewData.embedHtml}`;
             return (
                 <View
                     style={[
@@ -56,14 +56,14 @@ export const EmbedPreview: React.FC<EmbedPreviewProps> = ({
                     />
                 </View>
             );
-        } else {
-            const webViewHtml = `
+        }
+        const webViewHtml = `
         <html>
           <head>
             <meta name="viewport" content="initial-scale=1.0, width=device-width" />
             <style>
               body, html { margin: 0; padding: 0; background-color: #000; overflow: hidden; }
-              iframe { 
+              iframe {
                 transform: scale(${scaleFactor});
                 transform-origin: top left;
                 width: ${defaultWidth}px !important;
@@ -76,35 +76,34 @@ export const EmbedPreview: React.FC<EmbedPreviewProps> = ({
           </body>
         </html>
       `;
-            return (
-                <View
-                    style={[
-                        styles.embedContainer,
-                        { width: idealWidth, height: scaledHeight },
-                    ]}
-                >
-                    <WebView
-                        source={{ html: webViewHtml }}
-                        style={{ flex: 1 }}
-                        allowsInlineMediaPlayback
-                    />
-                </View>
-            );
-        }
-    } else {
-        if (Platform.OS === 'web') {
-            return (
-                <View style={styles.embedContainer}>
-                    <div
-                        style={{ width: '100%' }}
-                        dangerouslySetInnerHTML={{
-                            __html: previewData.embedHtml,
-                        }}
-                    />
-                </View>
-            );
-        } else {
-            const webViewHtml = `
+        return (
+            <View
+                style={[
+                    styles.embedContainer,
+                    { width: idealWidth, height: scaledHeight },
+                ]}
+            >
+                <WebView
+                    source={{ html: webViewHtml }}
+                    style={{ flex: 1 }}
+                    allowsInlineMediaPlayback
+                />
+            </View>
+        );
+    }
+    if (Platform.OS === 'web') {
+        return (
+            <View style={styles.embedContainer}>
+                <div
+                    style={{ width: '100%' }}
+                    dangerouslySetInnerHTML={{
+                        __html: previewData.embedHtml ?? '',
+                    }}
+                />
+            </View>
+        );
+    }
+    const webViewHtml = `
         <html>
           <head>
             <meta name="viewport" content="initial-scale=1.0, width=device-width" />
@@ -118,17 +117,15 @@ export const EmbedPreview: React.FC<EmbedPreviewProps> = ({
           </body>
         </html>
       `;
-            return (
-                <View style={[styles.embedContainer, { height: 240 }]}>
-                    <WebView
-                        source={{ html: webViewHtml }}
-                        style={{ flex: 1 }}
-                        allowsInlineMediaPlayback
-                    />
-                </View>
-            );
-        }
-    }
+    return (
+        <View style={[styles.embedContainer, { height: 240 }]}>
+            <WebView
+                source={{ html: webViewHtml }}
+                style={{ flex: 1 }}
+                allowsInlineMediaPlayback
+            />
+        </View>
+    );
 };
 
 const styles = StyleSheet.create({

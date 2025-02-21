@@ -22,7 +22,7 @@ const TRUNCATE_LENGTH = 100;
  */
 function fixHtmlContent(html: string): string {
     // Prepend https:// to any href not starting with http, https, mailto, or ftp
-    let fixed = html.replace(
+    let fixed = html.replaceAll(
         /<a\s+([^>]*?)href="(?!https?:\/\/|mailto:|ftp:\/\/)([^"]+)"/gi,
         '<a $1href="https://$2"'
     );
@@ -113,8 +113,8 @@ export const HtmlRenderer: React.FC<HtmlRendererProps> = ({
           true;
       `}
             onMessage={(event) => {
-                const height = parseInt(event.nativeEvent.data, 10);
-                if (!isNaN(height)) {
+                const height = Number.parseInt(event.nativeEvent.data, 10);
+                if (!Number.isNaN(height)) {
                     setWebViewHeight(height);
                 }
             }}

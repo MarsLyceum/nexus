@@ -4,13 +4,14 @@ import {
     CREATE_GROUP_CHANNEL_POST_MUTATION,
     FETCH_CHANNEL_POSTS_QUERY,
 } from '../queries';
+import { AttachmentFile } from '../types';
 
 type CreatePostVariables = {
     postedByUserId: string;
     channelId: string;
     content: string;
     title: string;
-    attachments: any[];
+    attachments: AttachmentFile[];
 };
 
 export const useCreatePost = (

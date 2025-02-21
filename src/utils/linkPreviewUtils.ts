@@ -24,7 +24,8 @@ export function getDomainFromUrl(url: string): string {
     }
 }
 
-export function getOEmbedEndpoint(url: string): string | null {
+// eslint-disable-next-line consistent-return
+export function getOEmbedEndpoint(url: string): string | undefined {
     const domain = getDomainFromUrl(url).toLowerCase();
     if (domain.includes('youtube.com') || domain.includes('youtu.be')) {
         return `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`;
@@ -56,5 +57,4 @@ export function getOEmbedEndpoint(url: string): string | null {
     if (domain.includes('giphy.com')) {
         return `https://giphy.com/services/oembed?url=${encodeURIComponent(url)}&format=json`;
     }
-    return null;
 }

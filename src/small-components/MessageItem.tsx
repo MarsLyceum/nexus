@@ -44,7 +44,8 @@ const NativeSizeAttachmentImage: React.FC<{ uri: string }> = ({ uri }) => {
 
     if (!dimensions) {
         // Optionally, you can return a placeholder or spinner while dimensions load.
-        return null;
+        // eslint-disable-next-line unicorn/no-useless-undefined
+        return undefined;
     }
 
     return (
@@ -92,7 +93,10 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                         <TouchableOpacity
                             key={index}
                             onPress={() =>
-                                onAttachmentPress(item.attachmentUrls, index)
+                                onAttachmentPress(
+                                    item.attachmentUrls ?? [],
+                                    index
+                                )
                             }
                         >
                             <NativeSizeAttachmentImage uri={url} />

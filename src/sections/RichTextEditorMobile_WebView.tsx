@@ -13,8 +13,7 @@ export const RichTextEditorMobile: React.FC<RichTextEditorMobileProps> = ({
     onChange,
 }) => {
     // Memoize the HTML so it is created only once and not on every re-render.
-    const editorHtml = React.useMemo(() => {
-        return `
+    const editorHtml = React.useMemo(() => `
     <!DOCTYPE html>
     <html>
       <head>
@@ -227,8 +226,7 @@ export const RichTextEditorMobile: React.FC<RichTextEditorMobileProps> = ({
         </script>
       </body>
     </html>
-        `;
-    }, []); // Empty dependency array ensures this is computed only once
+        `, []); // Empty dependency array ensures this is computed only once
 
     return (
         <View style={styles.outerContainer}>
@@ -237,13 +235,13 @@ export const RichTextEditorMobile: React.FC<RichTextEditorMobileProps> = ({
                     source={{ html: editorHtml }}
                     onMessage={(event) => onChange(event.nativeEvent.data)}
                     style={styles.webview}
-                    javaScriptEnabled={true}
-                    domStorageEnabled={true}
+                    javaScriptEnabled
+                    domStorageEnabled
                     mixedContentMode="always"
                     onLoadEnd={() => console.log('WebView load end')}
                     onError={(syntheticEvent) => {
                         const { nativeEvent } = syntheticEvent;
-                        console.warn('WebView error: ', nativeEvent);
+                        console.warn('WebView error:', nativeEvent);
                     }}
                 />
             </View>

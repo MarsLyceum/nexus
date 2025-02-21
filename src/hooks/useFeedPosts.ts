@@ -77,6 +77,7 @@ export const useFeedPosts = (channelId?: string) => {
 
         // eslint-disable-next-line no-void
         void fetchPosts();
+        // eslint-disable-next-line consistent-return
         return () => {
             cancelled = true;
         };

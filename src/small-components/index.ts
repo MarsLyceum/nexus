@@ -3,6 +3,7 @@ export * from './EmbedPreview';
 export * from './FallbackPreview';
 export * from './ImagePreview';
 export * from './LinkPreview';
+export * from './MarkdownEditor';
 export * from './MarkdownRenderer';
 export * from './MarkdownTextInput';
 export * from './MessageItem';

@@ -12,6 +12,7 @@ import { Image as ExpoImage } from 'expo-image';
 import { COLORS } from '../constants';
 import { useFileUpload } from '../hooks';
 import { AttachmentPreviews, Attachment, RichTextEditor } from '../sections';
+import { MarkdownEditor } from '../small-components';
 
 type CreateContentButtonProps = {
     modalVisible: boolean;
@@ -55,6 +56,8 @@ export const CreateContentButton: React.FC<CreateContentButtonProps> = ({
     const [selectedAttachment, setSelectedAttachment] = useState<
         Attachment | undefined
     >();
+    // New state to toggle between editors
+    const [useMarkdown, setUseMarkdown] = useState(false);
 
     // Attachment insert handler
     const handleAttachmentInsert = async () => {
@@ -124,14 +127,46 @@ export const CreateContentButton: React.FC<CreateContentButtonProps> = ({
                                     value={contentText}
                                     onChangeText={setContentText}
                                 />
-                                {/* Second field: Conditionally render based on multilineSecondField */}
+                                {/* Second field: Editor for content */}
                                 {multilineSecondField ? (
-                                    <View style={styles.editorContainer}>
-                                        <RichTextEditor
-                                            initialContent={secondContentText}
-                                            onChange={setSecondContentText}
-                                        />
-                                    </View>
+                                    <>
+                                        <TouchableOpacity
+                                            onPress={() =>
+                                                setUseMarkdown((prev) => !prev)
+                                            }
+                                            style={styles.toggleButton}
+                                        >
+                                            <Text
+                                                style={styles.toggleButtonText}
+                                            >
+                                                {useMarkdown
+                                                    ? 'Switch to Rich Text Editor'
+                                                    : 'Switch to Markdown Editor'}
+                                            </Text>
+                                        </TouchableOpacity>
+                                        <View style={styles.editorContainer}>
+                                            {useMarkdown ? (
+                                                <MarkdownEditor
+                                                    value={secondContentText}
+                                                    onChangeText={
+                                                        setSecondContentText
+                                                    }
+                                                    placeholder={
+                                                        placeholderText2
+                                                    }
+                                                />
+                                            ) : (
+                                                <RichTextEditor
+                                                    initialContent={
+                                                        secondContentText
+                                                    }
+                                                    onChange={
+                                                        setSecondContentText
+                                                    }
+                                                />
+                                            )}
+                                        </View>
+                                    </>
                                 ) : (
                                     <TextInput
                                         placeholder={placeholderText2}
@@ -152,12 +187,32 @@ export const CreateContentButton: React.FC<CreateContentButtonProps> = ({
                                 )}
                             </>
                         ) : (
-                            // Single field: Use RichTextEditor for content
+                            // Single field: Editor for content
                             <View style={styles.editorContainer}>
-                                <RichTextEditor
-                                    initialContent={contentText}
-                                    onChange={setContentText}
-                                />
+                                <TouchableOpacity
+                                    onPress={() =>
+                                        setUseMarkdown((prev) => !prev)
+                                    }
+                                    style={styles.toggleButton}
+                                >
+                                    <Text style={styles.toggleButtonText}>
+                                        {useMarkdown
+                                            ? 'Switch to Rich Text Editor'
+                                            : 'Switch to Markdown Editor'}
+                                    </Text>
+                                </TouchableOpacity>
+                                {useMarkdown ? (
+                                    <MarkdownEditor
+                                        value={contentText}
+                                        onChangeText={setContentText}
+                                        placeholder={placeholderText2}
+                                    />
+                                ) : (
+                                    <RichTextEditor
+                                        initialContent={contentText}
+                                        onChange={setContentText}
+                                    />
+                                )}
                             </View>
                         )}
 
@@ -309,6 +364,18 @@ const styles = StyleSheet.create({
         marginBottom: 15,
     },
     attachImageButtonText: {
+        color: COLORS.White,
+        fontWeight: '600',
+    },
+    toggleButton: {
+        alignSelf: 'flex-end',
+        marginBottom: 10,
+        paddingVertical: 6,
+        paddingHorizontal: 10,
+        backgroundColor: COLORS.SecondaryBackground,
+        borderRadius: 5,
+    },
+    toggleButtonText: {
         color: COLORS.White,
         fontWeight: '600',
     },

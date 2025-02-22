@@ -1,8 +1,7 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { View, StyleSheet, Platform, Text } from 'react-native';
 import { getRichTextEditorHtml } from './RichTextEditorBase';
 import { convertDeltaToMarkdownWithFencesAndFormatting } from '../utils';
-import { MarkdownTextInput } from '../small-components';
 
 interface RichTextEditorWebProps {
     initialContent?: string;
@@ -13,8 +12,6 @@ export const RichTextEditorWeb: React.FC<RichTextEditorWebProps> = ({
     initialContent = '',
     onChange,
 }) => {
-    const [isMarkdownMode, setIsMarkdownMode] = useState(false);
-
     // Compute srcDoc only once when the component mounts.
     const srcDoc = useMemo(
         () => getRichTextEditorHtml(initialContent),
@@ -42,11 +39,6 @@ export const RichTextEditorWeb: React.FC<RichTextEditorWebProps> = ({
                         onChange(markdown);
                         return;
                     }
-                    // Listen for the markdown switch signal.
-                    if (parsed.type === 'switch-to-markdown') {
-                        setIsMarkdownMode(true);
-                        return;
-                    }
                 } catch (e) {
                     console.error('Failed to parse message:', e);
                 }
@@ -56,7 +48,7 @@ export const RichTextEditorWeb: React.FC<RichTextEditorWebProps> = ({
         return () => window.removeEventListener('message', messageHandler);
     }, [onChange]);
 
-    // Conditionally render the iframe or the markdown editor.
+    // For non-web platforms, render a fallback message.
     if (Platform.OS !== 'web') {
         return (
             <View style={styles.container}>
@@ -75,23 +67,13 @@ export const RichTextEditorWeb: React.FC<RichTextEditorWebProps> = ({
         }
       `}</style>
             <div style={styles.flexWrapper}>
-                {isMarkdownMode ? (
-                    // Render the markdown editor component.
-                    <MarkdownTextInput
-                        value={initialContent}
-                        onChangeText={onChange}
-                        placeholder="Edit markdown..."
-                    />
-                ) : (
-                    // Render the Quill iframe.
-                    <iframe
-                        ref={iframeRef}
-                        className="my-editor-iframe"
-                        title="Quill Editor Iframe"
-                        srcDoc={srcDoc}
-                        style={styles.webEditor}
-                    />
-                )}
+                <iframe
+                    ref={iframeRef}
+                    className="my-editor-iframe"
+                    title="Quill Editor Iframe"
+                    srcDoc={srcDoc}
+                    style={styles.webEditor}
+                />
             </div>
         </View>
     );

@@ -133,6 +133,12 @@ export const RichTextEditorWeb: React.FC<RichTextEditorWebProps> = ({
       .ql-toolbar .ql-picker-item:hover,
       .ql-toolbar .ql-picker-label.ql-active,
       .ql-toolbar .ql-picker-item.ql-selected { color: ${COLORS.Primary} !important; }
+      
+      /* New CSS rule for dropdown background */
+      .ql-picker-options {
+        background-color: ${COLORS.AppBackground} !important;
+      }
+      
       .ql-tooltip {
         background-color: ${COLORS.PrimaryBackground} !important;
         border: 1px solid ${COLORS.TextInput} !important;
@@ -250,7 +256,7 @@ export const RichTextEditorWeb: React.FC<RichTextEditorWebProps> = ({
                 [{ list: 'ordered' }, { list: 'bullet' }],
                 ['link', 'spoiler', 'blockquote', 'code-block'],
                 ['clean'],
-                ['insertTable']
+                // ['insertTable']
               ],
               handlers: toolbarHandlers
             },

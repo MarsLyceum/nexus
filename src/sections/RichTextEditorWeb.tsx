@@ -7,6 +7,8 @@ import { gfm } from 'turndown-plugin-gfm';
 if (Platform.OS === 'web') {
     // Load Quill CSS for web
     require('react-quill-new/dist/quill.snow.css');
+    // Re-enable Better Table CSS
+    require('quill-better-table/dist/quill-better-table.css');
 }
 
 marked.use({
@@ -94,6 +96,8 @@ export const RichTextEditorWeb: React.FC<RichTextEditorWebProps> = ({
     <title>Quill Editor Iframe</title>
     <!-- Quill CSS -->
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <!-- Better Table CSS -->
+    <link href="https://unpkg.com/quill-better-table@1.2.10/dist/quill-better-table.css" rel="stylesheet">
     <style>
       html, body { margin: 0; padding: 0; height: 100%; width: 100%; }
       #editor { height: 100%; width: 100%; }
@@ -125,10 +129,10 @@ export const RichTextEditorWeb: React.FC<RichTextEditorWebProps> = ({
       .ql-toolbar button.ql-active .ql-fill { fill: ${COLORS.Primary} !important; }
       .ql-toolbar .ql-picker-label,
       .ql-toolbar .ql-picker-item { color: ${COLORS.MainText} !important; }
-      /* Set the dropdown (picker options) background to COLORS.AppBackground */
-      .ql-picker-options {
-        background-color: ${COLORS.AppBackground} !important;
-      }
+      .ql-toolbar .ql-picker-label:hover,
+      .ql-toolbar .ql-picker-item:hover,
+      .ql-toolbar .ql-picker-label.ql-active,
+      .ql-toolbar .ql-picker-item.ql-selected { color: ${COLORS.Primary} !important; }
       .ql-tooltip {
         background-color: ${COLORS.PrimaryBackground} !important;
         border: 1px solid ${COLORS.TextInput} !important;
@@ -165,9 +169,18 @@ export const RichTextEditorWeb: React.FC<RichTextEditorWebProps> = ({
     <div id="editor">${initialHTML}</div>
     <!-- Load Quill JS -->
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+    <!-- Load Better Table JS -->
+    <script src="https://unpkg.com/quill-better-table@1.2.10/dist/quill-better-table.min.js"></script>
     <!-- Define initQuill on window so it is available globally -->
     <script>
       window.initQuill = function() {
+        const BetterTable = window.QuillBetterTable ? (window.QuillBetterTable.default || window.QuillBetterTable) : null;
+        if (BetterTable) {
+          Quill.register('modules/better-table', BetterTable);
+        } else {
+          console.error("QuillBetterTable is not defined after script load.");
+        }
+      
         var CodeBlock = Quill.import('formats/code-block');
         CodeBlock.create = function() {
           var node = document.createElement('pre');
@@ -194,6 +207,7 @@ export const RichTextEditorWeb: React.FC<RichTextEditorWebProps> = ({
       
         var icons = Quill.import('ui/icons');
         icons.spoiler = '<svg viewBox="0 0 24 24"><title>Spoiler</title><path d="M12,2L2,7v7c0,5,4,9,10,9s10-4,10-9V7L12,2z M12,17 c-3,0-5-2-5-5v-1l5-3l5,3v1C17,15,15,17,12,17z"/></svg>';
+        icons.insertTable = '<svg viewBox="0 0 18 18"><rect class="ql-stroke" height="12" width="12" x="3" y="3"></rect><line class="ql-stroke" x1="3" x2="15" y1="7" y2="7"></line><line class="ql-stroke" x1="3" x2="15" y1="11" y2="11"></line><line class="ql-stroke" x1="7" x2="7" y1="3" y2="15"></line><line class="ql-stroke" x1="11" x2="11" y1="3" y2="15"></line></svg>';
       
         var toolbarHandlers = {
           spoiler: function() {
@@ -215,6 +229,14 @@ export const RichTextEditorWeb: React.FC<RichTextEditorWebProps> = ({
             var currentFormat = this.quill.getFormat(range);
             var isActive = currentFormat.list === 'bullet';
             this.quill.format('list', isActive ? false : 'bullet');
+          },
+          insertTable: function() {
+            var tableModule = this.quill.getModule('better-table');
+            if (tableModule && tableModule.insertTable) {
+              tableModule.insertTable(3, 3);
+            } else {
+              console.error("Better Table module not loaded or insertTable not available.");
+            }
           }
         };
       
@@ -227,9 +249,13 @@ export const RichTextEditorWeb: React.FC<RichTextEditorWebProps> = ({
                 [{ header: [1, 2, 3, false] }],
                 [{ list: 'ordered' }, { list: 'bullet' }],
                 ['link', 'spoiler', 'blockquote', 'code-block'],
-                ['clean']
+                ['clean'],
+                ['insertTable']
               ],
               handlers: toolbarHandlers
+            },
+            'better-table': {
+              operationMenu: { items: { unmergeCells: { text: 'Unmerge Cells' } } }
             },
             keyboard: {}
           },
@@ -240,6 +266,14 @@ export const RichTextEditorWeb: React.FC<RichTextEditorWebProps> = ({
         myQuill.on('text-change', function(delta) {
           window.parent.postMessage({ type: 'content-change', delta: myQuill.getContents() }, '*');
         });
+      
+        setTimeout(function() {
+          var btn = document.querySelector('.ql-insertTable');
+          if (btn) {
+            btn.setAttribute('title', 'Insert Table');
+            btn.setAttribute('aria-label', 'Insert Table');
+          }
+        }, 500);
       };
     </script>
     <!-- Call initQuill after the DOM is loaded -->

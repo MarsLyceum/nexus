@@ -39,7 +39,18 @@ export function convertDeltaToMarkdownWithFencesAndFormatting(
             const codeText = segment.ops.map((op) => op.insert).join('');
             markdown += `\n\`\`\`\n${codeText}\n\`\`\`\n`;
         } else {
-            const nonCodeMarkdown = deltaToMarkdown(segment.ops);
+            // Pre-process non-code ops to wrap spoiler text with Discord-style markers.
+            const processedOps = segment.ops.map((op) => {
+                if (op.attributes && op.attributes.spoiler) {
+                    return {
+                        ...op,
+                        insert: `||${op.insert}||`,
+                        attributes: { ...op.attributes, spoiler: undefined },
+                    };
+                }
+                return op;
+            });
+            const nonCodeMarkdown = deltaToMarkdown(processedOps);
             markdown += nonCodeMarkdown;
         }
     });

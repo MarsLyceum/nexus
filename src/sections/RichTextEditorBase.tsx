@@ -1,6 +1,58 @@
 import { COLORS } from '../constants';
 import { marked } from 'marked';
 
+// --- Custom Marked Extension for Spoilers ---
+const spoilerExtension = {
+    name: 'spoiler',
+    level: 'inline', // This is an inline-level tokenizer.
+    start(src: string) {
+        // Find the earliest index of either Discord or Reddit spoiler tokens.
+        const discordIndex = src.indexOf('||');
+        const redditIndex = src.indexOf('>!');
+        if (discordIndex === -1) return redditIndex;
+        if (redditIndex === -1) return discordIndex;
+        return Math.min(discordIndex, redditIndex);
+    },
+    tokenizer(src: string) {
+        // Remove common zero-width characters so that invisible characters don’t interfere.
+        const cleaned = src.replace(/[\u200B\u200C\u200D\uFEFF]/g, '');
+        // Handle Discord-style spoilers: ||spoiler||
+        if (cleaned.startsWith('||')) {
+            // Revised regex:
+            // - Matches opening "||"
+            // - Captures one or more non-pipe, non-newline characters (allowing internal single pipes)
+            // - Matches closing "||" only if immediately followed by the end-of-string or a newline.
+            const match = /^\|\|([^|\n]+(?:\|(?!\|)[^|\n]+)*)\|\|(?=$|\n)/.exec(
+                cleaned
+            );
+            if (match) {
+                return {
+                    type: 'spoiler',
+                    raw: match[0],
+                    text: match[1].trim(),
+                };
+            }
+        }
+        // Handle Reddit-style spoilers: >!spoiler!<
+        if (src.startsWith('>!')) {
+            const match = /^>!([^!]+(?:!(?!<)[^!]+)*)!</.exec(src);
+            if (match) {
+                return {
+                    type: 'spoiler',
+                    raw: match[0],
+                    text: match[1].trim(),
+                };
+            }
+        }
+    },
+    renderer(token: any) {
+        return `<span class="spoiler">${token.text}</span>`;
+    },
+};
+
+// Register the extension with marked.
+marked.use({ extensions: [spoilerExtension] });
+
 export function getRichTextEditorHtml(initialContent: string = ''): string {
     const initialHTML = initialContent ? marked(initialContent) : '<p><br></p>';
     return `<!DOCTYPE html>
@@ -38,25 +90,37 @@ export function getRichTextEditorHtml(initialContent: string = ''): string {
       .ql-toolbar {
         background-color: ${COLORS.AppBackground} !important;
       }
-      .ql-toolbar button svg { stroke: ${COLORS.MainText} !important; fill: ${COLORS.MainText} !important; }
+      .ql-toolbar button svg { 
+        stroke: ${COLORS.MainText} !important;
+        fill: ${COLORS.MainText} !important; 
+      }
       .ql-stroke { stroke: ${COLORS.MainText} !important; }
       .ql-fill { fill: ${COLORS.MainText} !important; }
       .ql-toolbar button:hover svg,
       .ql-toolbar button.ql-active svg {
-        stroke: ${COLORS.Primary} !important; fill: ${COLORS.Primary} !important;
+        stroke: ${COLORS.Primary} !important;
+        fill: ${COLORS.Primary} !important;
       }
       .ql-toolbar button:hover .ql-stroke,
-      .ql-toolbar button.ql-active .ql-stroke { stroke: ${COLORS.Primary} !important; }
+      .ql-toolbar button.ql-active .ql-stroke { 
+        stroke: ${COLORS.Primary} !important; 
+      }
       .ql-toolbar button:hover .ql-fill,
-      .ql-toolbar button.ql-active .ql-fill { fill: ${COLORS.Primary} !important; }
+      .ql-toolbar button.ql-active .ql-fill { 
+        fill: ${COLORS.Primary} !important; 
+      }
       .ql-toolbar .ql-picker-label,
-      .ql-toolbar .ql-picker-item { color: ${COLORS.MainText} !important; }
+      .ql-toolbar .ql-picker-item { 
+        color: ${COLORS.MainText} !important; 
+      }
       .ql-toolbar .ql-picker-label:hover,
       .ql-toolbar .ql-picker-item:hover,
       .ql-toolbar .ql-picker-label.ql-active,
-      .ql-toolbar .ql-picker-item.ql-selected { color: ${COLORS.Primary} !important; }
-      .ql-picker-options {
-        background-color: ${COLORS.AppBackground} !important;
+      .ql-toolbar .ql-picker-item.ql-selected { 
+        color: ${COLORS.Primary} !important; 
+      }
+      .ql-picker-options { 
+        background-color: ${COLORS.AppBackground} !important; 
       }
       .ql-tooltip {
         background-color: ${COLORS.PrimaryBackground} !important;
@@ -75,7 +139,9 @@ export function getRichTextEditorHtml(initialContent: string = ''): string {
         border-radius: 3px !important;
         padding: 5px;
       }
-      .ql-tooltip .ql-action { color: ${COLORS.Primary} !important; }
+      .ql-tooltip .ql-action { 
+        color: ${COLORS.Primary} !important; 
+      }
       .spoiler {
         background-color: ${COLORS.InactiveText} !important;
         color: ${COLORS.White} !important;
@@ -84,7 +150,9 @@ export function getRichTextEditorHtml(initialContent: string = ''): string {
       }
       .ql-editor table,
       .ql-editor table th,
-      .ql-editor table td { border: 1px solid ${COLORS.White} !important; }
+      .ql-editor table td { 
+        border: 1px solid ${COLORS.White} !important; 
+      }
       .custom-bullet {
         display: inline-block; width: 1em; margin-right: 0.2em; color: ${COLORS.Primary};
       }
@@ -111,11 +179,16 @@ export function getRichTextEditorHtml(initialContent: string = ''): string {
           static create() {
             var node = super.create();
             node.setAttribute('class', 'spoiler');
-            node.append(document.createTextNode('\\u200B'));
+            // Append a zero-width space to ensure proper rendering in Quill.
+            node.append(document.createTextNode('\u200B'));
             return node;
           }
-          static formats(node) { return node.getAttribute('class') === 'spoiler'; }
-          static value(node) { return node.innerText.replace(/\\u200B/g, ''); }
+          static formats(node) { 
+            return node.getAttribute('class') === 'spoiler'; 
+          }
+          static value(node) { 
+            return node.innerText.replace(/\u200B/g, ''); 
+          }
         }
         SpoilerBlot.blotName = 'spoiler';
         SpoilerBlot.tagName = 'span';
@@ -134,7 +207,7 @@ export function getRichTextEditorHtml(initialContent: string = ''): string {
               this.quill.formatText(range.index, range.length, 'spoiler', !isActive);
             } else {
               var insertIndex = range.index;
-              this.quill.insertText(insertIndex, '\\u200B', { spoiler: true });
+              this.quill.insertText(insertIndex, '\u200B', { spoiler: true });
               this.quill.setSelection(insertIndex + 1, 0);
             }
           },
@@ -164,6 +237,48 @@ export function getRichTextEditorHtml(initialContent: string = ''): string {
           placeholder: "Start typing..."
         });
       
+        // Add a clipboard matcher to ensure <span class="spoiler"> is parsed as a spoiler.
+        quill.clipboard.addMatcher('span', function(node, delta) {
+          if (node.classList && node.classList.contains('spoiler')) {
+            delta.ops.forEach(op => {
+              op.attributes = op.attributes || {};
+              op.attributes.spoiler = true;
+            });
+          }
+          return delta;
+        });
+      
+        // Add titles to toolbar buttons and select elements for hover text.
+        var toolbarModule = quill.getModule('toolbar');
+        if (toolbarModule && toolbarModule.container) {
+          const titleMapping = {
+            'ql-bold': 'Bold',
+            'ql-italic': 'Italic',
+            'ql-underline': 'Underline',
+            'ql-header': 'Header',
+            'ql-list': { ordered: 'Ordered List', bullet: 'Bullet List' },
+            'ql-link': 'Link',
+            'ql-spoiler': 'Spoiler',
+            'ql-blockquote': 'Blockquote',
+            'ql-code-block': 'Code Block',
+            'ql-clean': 'Clear Formatting'
+          };
+          toolbarModule.container.querySelectorAll('button, select').forEach(el => {
+            for (const key in titleMapping) {
+              if (el.classList.contains(key)) {
+                if (typeof titleMapping[key] === 'object') {
+                  const val = el.getAttribute('value');
+                  if (val && titleMapping[key][val]) {
+                    el.setAttribute('title', titleMapping[key][val]);
+                  }
+                } else {
+                  el.setAttribute('title', titleMapping[key]);
+                }
+              }
+            }
+          });
+        }
+      
         // Unified postMessage function for both web (iframe) and mobile (WebView).
         var postMessageFn = (msg) => {
           if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
@@ -178,7 +293,6 @@ export function getRichTextEditorHtml(initialContent: string = ''): string {
           postMessageFn(JSON.stringify({ type: 'text-change', delta: delta }));
         });
       
-        // Notify that the editor has been initialized.
         postMessageFn(JSON.stringify({ type: 'iframe-init', message: 'Quill editor loaded' }));
       }
       

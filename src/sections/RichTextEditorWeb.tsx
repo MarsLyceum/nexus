@@ -1,7 +1,8 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, StyleSheet, Platform, Text } from 'react-native';
 import { getRichTextEditorHtml } from './RichTextEditorBase';
 import { convertDeltaToMarkdownWithFencesAndFormatting } from '../utils';
+import { MarkdownTextInput } from '../small-components';
 
 interface RichTextEditorWebProps {
     initialContent?: string;
@@ -12,18 +13,12 @@ export const RichTextEditorWeb: React.FC<RichTextEditorWebProps> = ({
     initialContent = '',
     onChange,
 }) => {
-    if (Platform.OS !== 'web') {
-        return (
-            <View style={styles.container}>
-                <Text>Rich text editor is not available on mobile</Text>
-            </View>
-        );
-    }
+    const [isMarkdownMode, setIsMarkdownMode] = useState(false);
 
     // Compute srcDoc only once when the component mounts.
     const srcDoc = useMemo(
         () => getRichTextEditorHtml(initialContent),
-        [] // Removed initialContent dependency to avoid reloading
+        [] // removed initialContent dependency to avoid reloading
     );
 
     const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -38,7 +33,6 @@ export const RichTextEditorWeb: React.FC<RichTextEditorWebProps> = ({
                         return;
                     }
                     if (parsed.type === 'text-change') {
-                        // Convert the raw delta to markdown on the React side.
                         const delta = parsed.delta;
                         const markdown =
                             convertDeltaToMarkdownWithFencesAndFormatting(
@@ -46,6 +40,11 @@ export const RichTextEditorWeb: React.FC<RichTextEditorWebProps> = ({
                             );
                         console.log('Markdown from iframe:', markdown);
                         onChange(markdown);
+                        return;
+                    }
+                    // Listen for the markdown switch signal.
+                    if (parsed.type === 'switch-to-markdown') {
+                        setIsMarkdownMode(true);
                         return;
                     }
                 } catch (e) {
@@ -57,6 +56,15 @@ export const RichTextEditorWeb: React.FC<RichTextEditorWebProps> = ({
         return () => window.removeEventListener('message', messageHandler);
     }, [onChange]);
 
+    // Conditionally render the iframe or the markdown editor.
+    if (Platform.OS !== 'web') {
+        return (
+            <View style={styles.container}>
+                <Text>Rich text editor is not available on mobile</Text>
+            </View>
+        );
+    }
+
     return (
         <View style={styles.container}>
             <style>{`
@@ -67,13 +75,23 @@ export const RichTextEditorWeb: React.FC<RichTextEditorWebProps> = ({
         }
       `}</style>
             <div style={styles.flexWrapper}>
-                <iframe
-                    ref={iframeRef}
-                    className="my-editor-iframe"
-                    title="Quill Editor Iframe"
-                    srcDoc={srcDoc}
-                    style={styles.webEditor}
-                />
+                {isMarkdownMode ? (
+                    // Render the markdown editor component.
+                    <MarkdownTextInput
+                        value={initialContent}
+                        onChangeText={onChange}
+                        placeholder="Edit markdown..."
+                    />
+                ) : (
+                    // Render the Quill iframe.
+                    <iframe
+                        ref={iframeRef}
+                        className="my-editor-iframe"
+                        title="Quill Editor Iframe"
+                        srcDoc={srcDoc}
+                        style={styles.webEditor}
+                    />
+                )}
             </div>
         </View>
     );

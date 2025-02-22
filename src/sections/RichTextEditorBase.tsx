@@ -19,12 +19,10 @@ export function getRichTextEditorHtml(initialContent: string = ''): string {
         width: 100%; 
         background-color: ${COLORS.AppBackground} !important;
       }
-      /* Remove the fixed height on #editor so it only wraps its contents */
       #editor { width: 100%; }
       .ql-container.ql-snow {
         border: 1px solid ${COLORS.TextInput} !important;
         border-radius: 5px !important;
-        /* Updated fixed height to dynamic viewport height */
         height: 80vh !important;
         width: 100% !important;
         max-width: none !important;
@@ -90,6 +88,11 @@ export function getRichTextEditorHtml(initialContent: string = ''): string {
       .custom-bullet {
         display: inline-block; width: 1em; margin-right: 0.2em; color: ${COLORS.Primary};
       }
+      /* New CSS for the markdown switch button to expand its width */
+      .ql-toolbar button.ql-markdownSwitch {
+        min-width: 180px;
+        white-space: nowrap;
+      }
     </style>
   </head>
   <body>
@@ -125,6 +128,8 @@ export function getRichTextEditorHtml(initialContent: string = ''): string {
       
         var icons = Quill.import('ui/icons');
         icons.spoiler = '<svg viewBox="0 0 24 24"><title>Spoiler</title><path d="M12,2L2,7v7c0,5,4,9,10,9s10-4,10-9V7L12,2z M12,17 c-3,0-5-2-5-5v-1l5-3l5,3v1C17,15,15,17,12,17z"/></svg>';
+        // Updated markdown switch button to display descriptive text.
+        icons.markdownSwitch = '<span style="color: ${COLORS.MainText}; font-size:12px;">Switch to markdown editor?</span>';
       
         var toolbarHandlers = {
           spoiler: function() {
@@ -146,6 +151,17 @@ export function getRichTextEditorHtml(initialContent: string = ''): string {
             var currentFormat = this.quill.getFormat(range);
             var isActive = currentFormat.list === 'bullet';
             this.quill.format('list', isActive ? false : 'bullet');
+          },
+          // New handler for switching to markdown editor.
+          markdownSwitch: function() {
+            var postMessageFn = (msg) => {
+              if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+                window.ReactNativeWebView.postMessage(msg);
+              } else if (window.parent && window.parent.postMessage) {
+                window.parent.postMessage(msg, '*');
+              }
+            };
+            postMessageFn(JSON.stringify({ type: 'switch-to-markdown' }));
           }
         };
       
@@ -153,12 +169,14 @@ export function getRichTextEditorHtml(initialContent: string = ''): string {
           theme: 'snow',
           modules: {
             toolbar: {
+              // Added markdownSwitch button to the toolbar.
               container: [
                 ['bold', 'italic', 'underline'],
                 [{ header: [1, 2, 3, false] }],
                 [{ list: 'ordered' }, { list: 'bullet' }],
                 ['link', 'spoiler', 'blockquote', 'code-block'],
-                ['clean']
+                // Add the custom markdown switch button.
+                ['clean', 'markdownSwitch']
               ],
               handlers: toolbarHandlers
             }
@@ -176,7 +194,6 @@ export function getRichTextEditorHtml(initialContent: string = ''): string {
         };
       
         quill.on('text-change', function() {
-          // Get the raw delta and send it as a JSON string.
           var delta = quill.getContents();
           postMessageFn(JSON.stringify({ type: 'text-change', delta: delta }));
         });

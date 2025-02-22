@@ -3,12 +3,14 @@ import { View, StyleSheet, Platform, Text } from 'react-native';
 import { marked } from 'marked';
 import { COLORS } from '../constants';
 import { gfm } from 'turndown-plugin-gfm';
+// Import the deltaToMarkdown conversion method.
+import { deltaToMarkdown } from 'quill-delta-to-markdown';
 
 if (Platform.OS === 'web') {
     // Load Quill CSS for web
     require('react-quill-new/dist/quill.snow.css');
-    // Re-enable Better Table CSS
-    require('quill-better-table/dist/quill-better-table.css');
+    // Optionally, remove Better Table CSS if not needed:
+    // require('quill-better-table/dist/quill-better-table.css');
 }
 
 marked.use({
@@ -54,17 +56,57 @@ interface RichTextEditorWebProps {
     onChange: (markdown: string) => void;
 }
 
-const convertDeltaToMarkdown = (ops: any[]): string => {
-    return ops
-        .map((op) => {
-            let text = op.insert;
-            if (op.attributes && op.attributes.spoiler) {
-                text = `||${text}||`;
-            }
-            return text;
-        })
-        .join('');
-};
+// --- New Conversion Function ---
+// This function first “patches” the ops by checking if an op should be treated as a code op
+// based on its own attributes or if the next op is a newline with code-block.
+// Then it segments the ops into code and non-code groups and processes each group.
+function convertDeltaToMarkdownWithFencesAndFormatting(ops: any[]): string {
+    type Segment = { isCode: boolean; ops: any[] };
+    const segments: Segment[] = [];
+    let currentSegment: Segment | null = null;
+
+    for (let i = 0; i < ops.length; i++) {
+        const op = ops[i];
+        // Determine if this op should be treated as code.
+        let opIsCode = false;
+        if (op.attributes && op.attributes['code-block']) {
+            opIsCode = true;
+        } else if (
+            i + 1 < ops.length &&
+            ops[i + 1].insert === '\n' &&
+            ops[i + 1].attributes &&
+            ops[i + 1].attributes['code-block']
+        ) {
+            opIsCode = true;
+        }
+
+        if (!currentSegment) {
+            currentSegment = { isCode: opIsCode, ops: [op] };
+        } else if (currentSegment.isCode === opIsCode) {
+            currentSegment.ops.push(op);
+        } else {
+            segments.push(currentSegment);
+            currentSegment = { isCode: opIsCode, ops: [op] };
+        }
+    }
+    if (currentSegment) {
+        segments.push(currentSegment);
+    }
+
+    let markdown = '';
+    segments.forEach((segment) => {
+        if (segment.isCode) {
+            // For code segments, join all inserted text.
+            const codeText = segment.ops.map((op) => op.insert).join('');
+            markdown += `\n\`\`\`\n${codeText}\n\`\`\`\n`;
+        } else {
+            // For non-code segments, use deltaToMarkdown to preserve formatting.
+            const nonCodeMarkdown = deltaToMarkdown(segment.ops);
+            markdown += nonCodeMarkdown;
+        }
+    });
+    return markdown;
+}
 
 export const RichTextEditorWeb: React.FC<RichTextEditorWebProps> = ({
     initialContent = '',
@@ -85,7 +127,7 @@ export const RichTextEditorWeb: React.FC<RichTextEditorWebProps> = ({
     const [bulletMode, setBulletMode] = useState<boolean>(false);
     const iframeRef = useRef<HTMLIFrameElement>(null);
 
-    // Updated srcDoc with deferred initQuill() call after DOMContentLoaded
+    // Compute srcDoc only once on mount.
     const srcDoc = useMemo(() => {
         return `
 <!DOCTYPE html>
@@ -96,8 +138,6 @@ export const RichTextEditorWeb: React.FC<RichTextEditorWebProps> = ({
     <title>Quill Editor Iframe</title>
     <!-- Quill CSS -->
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
-    <!-- Better Table CSS -->
-    <link href="https://unpkg.com/quill-better-table@1.2.10/dist/quill-better-table.css" rel="stylesheet">
     <style>
       html, body { margin: 0; padding: 0; height: 100%; width: 100%; }
       #editor { height: 100%; width: 100%; }
@@ -133,12 +173,9 @@ export const RichTextEditorWeb: React.FC<RichTextEditorWebProps> = ({
       .ql-toolbar .ql-picker-item:hover,
       .ql-toolbar .ql-picker-label.ql-active,
       .ql-toolbar .ql-picker-item.ql-selected { color: ${COLORS.Primary} !important; }
-      
-      /* New CSS rule for dropdown background */
       .ql-picker-options {
         background-color: ${COLORS.AppBackground} !important;
       }
-      
       .ql-tooltip {
         background-color: ${COLORS.PrimaryBackground} !important;
         border: 1px solid ${COLORS.TextInput} !important;
@@ -175,18 +212,10 @@ export const RichTextEditorWeb: React.FC<RichTextEditorWebProps> = ({
     <div id="editor">${initialHTML}</div>
     <!-- Load Quill JS -->
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
-    <!-- Load Better Table JS -->
-    <script src="https://unpkg.com/quill-better-table@1.2.10/dist/quill-better-table.min.js"></script>
-    <!-- Define initQuill on window so it is available globally -->
     <script>
       window.initQuill = function() {
-        const BetterTable = window.QuillBetterTable ? (window.QuillBetterTable.default || window.QuillBetterTable) : null;
-        if (BetterTable) {
-          Quill.register('modules/better-table', BetterTable);
-        } else {
-          console.error("QuillBetterTable is not defined after script load.");
-        }
-      
+        // Removed Better Table integration to avoid runtime errors
+        
         var CodeBlock = Quill.import('formats/code-block');
         CodeBlock.create = function() {
           var node = document.createElement('pre');
@@ -213,7 +242,6 @@ export const RichTextEditorWeb: React.FC<RichTextEditorWebProps> = ({
       
         var icons = Quill.import('ui/icons');
         icons.spoiler = '<svg viewBox="0 0 24 24"><title>Spoiler</title><path d="M12,2L2,7v7c0,5,4,9,10,9s10-4,10-9V7L12,2z M12,17 c-3,0-5-2-5-5v-1l5-3l5,3v1C17,15,15,17,12,17z"/></svg>';
-        icons.insertTable = '<svg viewBox="0 0 18 18"><rect class="ql-stroke" height="12" width="12" x="3" y="3"></rect><line class="ql-stroke" x1="3" x2="15" y1="7" y2="7"></line><line class="ql-stroke" x1="3" x2="15" y1="11" y2="11"></line><line class="ql-stroke" x1="7" x2="7" y1="3" y2="15"></line><line class="ql-stroke" x1="11" x2="11" y1="3" y2="15"></line></svg>';
       
         var toolbarHandlers = {
           spoiler: function() {
@@ -235,14 +263,6 @@ export const RichTextEditorWeb: React.FC<RichTextEditorWebProps> = ({
             var currentFormat = this.quill.getFormat(range);
             var isActive = currentFormat.list === 'bullet';
             this.quill.format('list', isActive ? false : 'bullet');
-          },
-          insertTable: function() {
-            var tableModule = this.quill.getModule('better-table');
-            if (tableModule && tableModule.insertTable) {
-              tableModule.insertTable(3, 3);
-            } else {
-              console.error("Better Table module not loaded or insertTable not available.");
-            }
           }
         };
       
@@ -255,13 +275,9 @@ export const RichTextEditorWeb: React.FC<RichTextEditorWebProps> = ({
                 [{ header: [1, 2, 3, false] }],
                 [{ list: 'ordered' }, { list: 'bullet' }],
                 ['link', 'spoiler', 'blockquote', 'code-block'],
-                ['clean'],
-                // ['insertTable']
+                ['clean']
               ],
               handlers: toolbarHandlers
-            },
-            'better-table': {
-              operationMenu: { items: { unmergeCells: { text: 'Unmerge Cells' } } }
             },
             keyboard: {}
           },
@@ -295,12 +311,14 @@ export const RichTextEditorWeb: React.FC<RichTextEditorWebProps> = ({
   </body>
 </html>
         `;
-    }, [initialHTML]);
+    }, []);
 
     useEffect(() => {
         const messageHandler = (event: MessageEvent) => {
+            console.log('Received message:', event.data);
             if (event.data && event.data.type === 'content-change') {
                 const delta = event.data.delta;
+                // If bulletMode is active, convert ordered list ops to bullet list ops.
                 if (bulletMode && delta.ops) {
                     delta.ops = delta.ops.map((op: any) => {
                         if (op.attributes && op.attributes.list === 'ordered') {
@@ -315,8 +333,27 @@ export const RichTextEditorWeb: React.FC<RichTextEditorWebProps> = ({
                         return op;
                     });
                 }
-                const markdown = convertDeltaToMarkdown(delta.ops);
-                console.log('Markdown:', markdown);
+                // Pre-process delta ops: wrap spoiler-marked text with Discord markdown.
+                if (delta.ops) {
+                    delta.ops = delta.ops.map((op: any) => {
+                        if (
+                            op.attributes &&
+                            op.attributes.spoiler &&
+                            typeof op.insert === 'string'
+                        ) {
+                            return {
+                                ...op,
+                                insert: `||${op.insert}||`,
+                            };
+                        }
+                        return op;
+                    });
+                }
+                // --- Use our new conversion function ---
+                const markdown = convertDeltaToMarkdownWithFencesAndFormatting(
+                    delta.ops
+                );
+                console.log('Final markdown output:', markdown);
                 onChange(markdown);
             }
         };

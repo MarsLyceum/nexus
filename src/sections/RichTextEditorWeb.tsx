@@ -1,17 +1,20 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { View, StyleSheet, Platform, Text } from 'react-native';
-import TurndownService from 'turndown';
 import { marked } from 'marked';
 import { COLORS } from '../constants';
+import { gfm } from 'turndown-plugin-gfm';
 
-// Extend marked with a custom inline extension for spoiler syntax (both Discord and Reddit styles)
+if (Platform.OS === 'web') {
+    // Load Quill CSS for web
+    require('react-quill-new/dist/quill.snow.css');
+}
+
 marked.use({
     extensions: [
         {
             name: 'spoiler',
-            level: 'inline', // Process inline elements
+            level: 'inline',
             start(src) {
-                // Find the first occurrence of either || or >!
                 const discordIndex = src.indexOf('||');
                 const redditIndex = src.indexOf('>!');
                 if (discordIndex === -1 && redditIndex === -1) return -1;
@@ -20,7 +23,6 @@ marked.use({
                 return Math.min(discordIndex, redditIndex);
             },
             tokenizer(src, tokens) {
-                // Check for Discord-style spoiler: ||spoiler||
                 const discordMatch = /^(\|\|)([\s\S]+?)\1/.exec(src);
                 if (discordMatch) {
                     return {
@@ -29,7 +31,6 @@ marked.use({
                         text: discordMatch[2],
                     };
                 }
-                // Check for Reddit-style spoiler: >!spoiler text!<
                 const redditMatch = /^(>!)([\s\S]+?)(!<)/.exec(src);
                 if (redditMatch) {
                     return {
@@ -46,279 +47,27 @@ marked.use({
     ],
 });
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let ReactQuill: any;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let Quill: any;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let Inline: any;
-
-if (Platform.OS === 'web') {
-    // Use react-quill-new for web and load its CSS
-    // eslint-disable-next-line global-require, @typescript-eslint/no-var-requires, unicorn/prefer-module
-    ReactQuill = require('react-quill-new').default;
-    // eslint-disable-next-line global-require, @typescript-eslint/no-var-requires, unicorn/prefer-module
-    require('react-quill-new/dist/quill.snow.css');
-
-    // Load quill-better-table CSS
-    // eslint-disable-next-line global-require, @typescript-eslint/no-var-requires, unicorn/prefer-module
-    require('quill-better-table/dist/quill-better-table.css');
-
-    // Get the Quill instance from react-quill-new
-    // eslint-disable-next-line global-require, @typescript-eslint/no-var-requires, unicorn/prefer-module
-    Quill = require('react-quill-new').Quill;
-    // Expose Quill globally for quill-better-table requirements
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (window as any).Quill = Quill;
-
-    // Import quill-better-table
-    // eslint-disable-next-line global-require, @typescript-eslint/no-var-requires, unicorn/prefer-module
-    const QuillBetterTable = require('quill-better-table');
-
-    // Register quill-better-table module with Quill
-    Quill.register(
-        {
-            'modules/better-table': QuillBetterTable,
-        },
-        true
-    );
-
-    // Get Inline blot for custom formatting
-    Inline = Quill.import('blots/inline');
-
-    // ====== Custom Spoiler Blot (Web) ======
-    class SpoilerBlot extends Inline {
-        static create() {
-            const node = super.create();
-            node.setAttribute('class', 'spoiler');
-            node.append(document.createTextNode('\u200B')); // zero-width space
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-            return node;
-        }
-
-        static formats(node: HTMLElement) {
-            return node.getAttribute('class') === 'spoiler';
-        }
-
-        static value(node: HTMLElement) {
-            // eslint-disable-next-line unicorn/prefer-dom-node-text-content
-            return node.innerText.replaceAll('​', '');
-        }
-    }
-    SpoilerBlot.blotName = 'spoiler';
-    SpoilerBlot.tagName = 'span';
-    Quill.register(SpoilerBlot);
-
-    // ====== Custom Icons & Toolbar Handlers ======
-    const icons = Quill.import('ui/icons');
-
-    // Spoiler icon (already defined)
-    icons.spoiler = `
-    <svg viewBox="0 0 24 24">
-      <title>Spoiler</title>
-      <path d="M12,2L2,7v7c0,5,4,9,10,9s10-4,10-9V7L12,2z M12,17 c-3,0-5-2-5-5v-1l5-3l5,3v1C17,15,15,17,12,17z"/>
-    </svg>
-  `;
-
-    // Define table icon (icon markup itself need not include title)
-    icons.insertTable = `
-    <svg viewBox="0 0 18 18">
-      <rect class="ql-stroke" height="12" width="12" x="3" y="3"></rect>
-      <line class="ql-stroke" x1="3" x2="15" y1="7" y2="7"></line>
-      <line class="ql-stroke" x1="3" x2="15" y1="11" y2="11"></line>
-      <line class="ql-stroke" x1="7" x2="7" y1="3" y2="15"></line>
-      <line class="ql-stroke" x1="11" x2="11" y1="3" y2="15"></line>
-    </svg>
-  `;
-
-    try {
-        if (icons.bold) {
-            icons.bold = icons.bold.replace('<svg', '<svg><title>Bold</title>');
-        }
-        if (icons.italic) {
-            icons.italic = icons.italic.replace(
-                '<svg',
-                '<svg><title>Italic</title>'
-            );
-        }
-        if (icons.underline) {
-            icons.underline = icons.underline.replace(
-                '<svg',
-                '<svg><title>Underline</title>'
-            );
-        }
-        if (icons.link) {
-            icons.link = icons.link.replace('<svg', '<svg><title>Link</title>');
-        }
-        if (icons.clean) {
-            icons.clean = icons.clean.replace(
-                '<svg',
-                '<svg><title>Remove Formatting</title>'
-            );
-        }
-        if (icons.list?.ordered) {
-            icons.list.ordered = icons.list.ordered.replace(
-                '<svg',
-                '<svg><title>Ordered List</title>'
-            );
-        }
-        if (icons.list?.bullet) {
-            icons.list.bullet = icons.list.bullet.replace(
-                '<svg',
-                '<svg><title>Bullet List</title>'
-            );
-        }
-        if (icons.blockquote) {
-            icons.blockquote = icons.blockquote.replace(
-                '<svg',
-                '<svg><title>Blockquote</title>'
-            );
-        }
-        if (icons['code-block']) {
-            icons['code-block'] = icons['code-block'].replace(
-                '<svg',
-                '<svg><title>Code Block</title>'
-            );
-        }
-    } catch (error) {
-        console.warn('Could not add hover titles to some icons:', error);
-    }
-
-    const toolbarHandlers = {
-        spoiler() {
-            // @ts-expect-error quill
-            const range = this.quill.getSelection();
-            if (!range) return;
-            if (range.length > 0) {
-                // Toggle spoiler on selected text
-                // @ts-expect-error quill
-                const currentFormat = this.quill.getFormat(range);
-                const isActive = !!currentFormat.spoiler;
-                // @ts-expect-error quill
-                this.quill.formatText(
-                    range.index,
-                    range.length,
-                    'spoiler',
-                    !isActive
-                );
-
-                setTimeout(() => {
-                    // @ts-expect-error quill
-                    const [leaf] = this.quill.getLeaf(range.index);
-                    if (leaf && leaf.parent?.statics?.blotName === 'spoiler') {
-                        const blot = leaf.parent;
-                        if (!blot.domNode.nextSibling) {
-                            const spaceNode = document.createTextNode(' ');
-                            blot.domNode.parentNode?.insertBefore(
-                                spaceNode,
-                                blot.domNode.nextSibling
-                            );
-                        }
-                    }
-                }, 0);
-            } else {
-                // Insert a 1-char spoiler placeholder if no selection
-                const insertIndex = range.index;
-                // @ts-expect-error quill
-                this.quill.insertText(insertIndex, '\u200B', { spoiler: true });
-                // @ts-expect-error quill
-                this.quill.setSelection(insertIndex + 1, 0);
-
-                setTimeout(() => {
-                    // @ts-expect-error quill
-                    const [leaf] = this.quill.getLeaf(insertIndex);
-                    if (leaf && leaf.parent?.statics?.blotName === 'spoiler') {
-                        const blot = leaf.parent;
-                        if (!blot.domNode.nextSibling) {
-                            const spaceNode = document.createTextNode(' ');
-                            blot.domNode.parentNode?.insertBefore(
-                                spaceNode,
-                                blot.domNode.nextSibling
-                            );
-                        }
-                    }
-                }, 0);
-            }
-        },
-        insertTable() {
-            // Prompt the user for number of rows and columns
-            const rowsInput = window.prompt('Enter number of rows', '3');
-            const columnsInput = window.prompt('Enter number of columns', '3');
-            const rows = Number.parseInt(rowsInput ?? '', 10);
-            const columns = Number.parseInt(columnsInput ?? '', 10);
-            if (
-                Number.isNaN(rows) ||
-                Number.isNaN(columns) ||
-                rows < 1 ||
-                columns < 1
-            ) {
-                alert('Invalid number of rows or columns');
-                return;
-            }
-            // Get the better-table module and insert the table with user-defined dimensions
-            // @ts-expect-error quilll module
-            const tableModule = this.quill.getModule('better-table');
-            if (tableModule) {
-                tableModule.insertTable(rows, columns);
-            }
-        },
-    };
-
-    // ====== Define ReactQuill Modules (with Better Table) ======
-    ReactQuill.modules = {
-        toolbar: {
-            container: [
-                ['bold', 'italic', 'underline'],
-                [{ header: [1, 2, 3, false] }],
-                [{ list: 'ordered' }, { list: 'bullet' }],
-                ['link', 'spoiler', 'blockquote', 'code-block'],
-                ['clean'],
-                // New row for table insertion button
-                ['insertTable'],
-            ],
-            handlers: toolbarHandlers,
-        },
-        // Disable default table module
-        table: false,
-        // Add quill-better-table configuration
-        'better-table': {
-            operationMenu: {
-                items: {
-                    insertColumnRight: { text: 'Insert Column Right' },
-                    insertColumnLeft: { text: 'Insert Column Left' },
-                    insertRowUp: { text: 'Insert Row Above' },
-                    insertRowDown: { text: 'Insert Row Below' },
-                    mergeCells: { text: 'Merge Cells' },
-                    unmergeCells: { text: 'Unmerge Cells' },
-                    deleteColumn: { text: 'Delete Column' },
-                    deleteRow: { text: 'Delete Row' },
-                    deleteTable: { text: 'Delete Table' },
-                },
-                color: {
-                    colors: ['#fff', 'red', 'rgb(0, 0, 0)'],
-                    text: 'Background Colors',
-                },
-            },
-        },
-        // Set keyboard bindings for table operations
-        keyboard: {
-            bindings: QuillBetterTable.keyboardBindings,
-        },
-    };
-}
-
 interface RichTextEditorWebProps {
-    // initialContent is now expected to be in Markdown
     initialContent?: string;
-    // onChange will receive Markdown as a string
     onChange: (markdown: string) => void;
 }
+
+const convertDeltaToMarkdown = (ops: any[]): string => {
+    return ops
+        .map((op) => {
+            let text = op.insert;
+            if (op.attributes && op.attributes.spoiler) {
+                text = `||${text}||`;
+            }
+            return text;
+        })
+        .join('');
+};
 
 export const RichTextEditorWeb: React.FC<RichTextEditorWebProps> = ({
     initialContent = '',
     onChange,
 }) => {
-    // Fallback for mobile platforms
     if (Platform.OS !== 'web') {
         return (
             <View style={styles.container}>
@@ -327,62 +76,33 @@ export const RichTextEditorWeb: React.FC<RichTextEditorWebProps> = ({
         );
     }
 
-    // Create a TurndownService instance for converting HTML to Markdown
-    const turndownService = new TurndownService();
-    // Add a custom rule to convert <span class="spoiler"> elements into Discord-style spoilers.
-    turndownService.addRule('spoiler', {
-        filter: (node, options) =>
-            node.nodeName === 'SPAN' &&
-            node.getAttribute('class') &&
-            node.getAttribute('class')!.includes('spoiler'),
-        replacement: (content, node, options) => `||${content}||`,
-    });
+    const initialHTML = useMemo(() => {
+        return initialContent ? marked(initialContent) : '<p><br></p>';
+    }, [initialContent]);
 
-    // Convert the initial Markdown content to HTML using marked (which now supports spoiler syntax)
-    const initialHTML = initialContent ? marked(initialContent) : '';
+    const [bulletMode, setBulletMode] = useState<boolean>(false);
+    const iframeRef = useRef<HTMLIFrameElement>(null);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const quillRef = useRef<any>(null);
-    const [value, setValue] = useState(initialHTML);
-
-    useEffect(() => {
-        const styleEl = document.createElement('style');
-        styleEl.innerHTML = `
-      /* Toolbar and Editor Styles */
-      .ql-toolbar button svg {
-        stroke: ${COLORS.MainText} !important;
-        fill: ${COLORS.MainText} !important;
-      }
-      .ql-stroke { stroke: ${COLORS.MainText} !important; }
-      .ql-fill { fill: ${COLORS.MainText} !important; }
-      .ql-toolbar button:hover svg,
-      .ql-toolbar button.ql-active svg {
-        stroke: ${COLORS.Primary} !important;
-        fill: ${COLORS.Primary} !important;
-      }
-      .ql-toolbar button:hover .ql-stroke,
-      .ql-toolbar button.ql-active .ql-stroke {
-        stroke: ${COLORS.Primary} !important;
-      }
-      .ql-toolbar button:hover .ql-fill,
-      .ql-toolbar button.ql-active .ql-fill {
-        fill: ${COLORS.Primary} !important;
-      }
-      .ql-toolbar .ql-picker-label,
-      .ql-toolbar .ql-picker-item {
-        color: ${COLORS.MainText} !important;
-      }
-      .ql-toolbar .ql-picker-label:hover,
-      .ql-toolbar .ql-picker-item:hover,
-      .ql-toolbar .ql-picker-label.ql-active,
-      .ql-toolbar .ql-picker-item.ql-selected {
-        color: ${COLORS.Primary} !important;
-      }
+    // Updated srcDoc with deferred initQuill() call after DOMContentLoaded
+    const srcDoc = useMemo(() => {
+        return `
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Quill Editor Iframe</title>
+    <!-- Quill CSS -->
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <style>
+      html, body { margin: 0; padding: 0; height: 100%; width: 100%; }
+      #editor { height: 100%; width: 100%; }
       .ql-container.ql-snow {
         border: 1px solid ${COLORS.TextInput} !important;
         border-radius: 5px !important;
         height: 200px !important;
-        overflow: hidden;
+        width: 100% !important;
+        max-width: none !important;
       }
       .ql-editor {
         height: 100% !important;
@@ -390,6 +110,24 @@ export const RichTextEditorWeb: React.FC<RichTextEditorWebProps> = ({
         box-sizing: border-box;
         color: ${COLORS.MainText} !important;
         background-color: ${COLORS.PrimaryBackground} !important;
+      }
+      .ql-editor.ql-blank::before { color: ${COLORS.MainText} !important; }
+      .ql-toolbar button svg { stroke: ${COLORS.MainText} !important; fill: ${COLORS.MainText} !important; }
+      .ql-stroke { stroke: ${COLORS.MainText} !important; }
+      .ql-fill { fill: ${COLORS.MainText} !important; }
+      .ql-toolbar button:hover svg,
+      .ql-toolbar button.ql-active svg {
+        stroke: ${COLORS.Primary} !important; fill: ${COLORS.Primary} !important;
+      }
+      .ql-toolbar button:hover .ql-stroke,
+      .ql-toolbar button.ql-active .ql-stroke { stroke: ${COLORS.Primary} !important; }
+      .ql-toolbar button:hover .ql-fill,
+      .ql-toolbar button.ql-active .ql-fill { fill: ${COLORS.Primary} !important; }
+      .ql-toolbar .ql-picker-label,
+      .ql-toolbar .ql-picker-item { color: ${COLORS.MainText} !important; }
+      /* Set the dropdown (picker options) background to COLORS.AppBackground */
+      .ql-picker-options {
+        background-color: ${COLORS.AppBackground} !important;
       }
       .ql-tooltip {
         background-color: ${COLORS.PrimaryBackground} !important;
@@ -408,67 +146,184 @@ export const RichTextEditorWeb: React.FC<RichTextEditorWebProps> = ({
         border-radius: 3px !important;
         padding: 5px;
       }
-      .ql-tooltip .ql-action {
-        color: ${COLORS.Primary} !important;
-      }
+      .ql-tooltip .ql-action { color: ${COLORS.Primary} !important; }
       .spoiler {
         background-color: ${COLORS.InactiveText} !important;
         color: ${COLORS.White} !important;
         border-radius: 3px;
         padding: 2px 6px;
       }
-      /* CSS rule to set the table outline (borders) to white */
       .ql-editor table,
       .ql-editor table th,
-      .ql-editor table td {
-        border: 1px solid ${COLORS.White} !important;
+      .ql-editor table td { border: 1px solid ${COLORS.White} !important; }
+      .custom-bullet {
+        display: inline-block; width: 1em; margin-right: 0.2em; color: ${COLORS.Primary};
       }
-    `;
-        document.head.append(styleEl);
-        return () => {
-            if (document.head.contains(styleEl)) {
-                styleEl.remove();
+    </style>
+  </head>
+  <body>
+    <div id="editor">${initialHTML}</div>
+    <!-- Load Quill JS -->
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+    <!-- Define initQuill on window so it is available globally -->
+    <script>
+      window.initQuill = function() {
+        var CodeBlock = Quill.import('formats/code-block');
+        CodeBlock.create = function() {
+          var node = document.createElement('pre');
+          node.setAttribute('spellcheck', 'false');
+          node.classList.add('ql-syntax');
+          return node;
+        };
+        Quill.register(CodeBlock, true);
+      
+        var Inline = Quill.import('blots/inline');
+        class SpoilerBlot extends Inline {
+          static create() {
+            var node = super.create();
+            node.setAttribute('class', 'spoiler');
+            node.append(document.createTextNode('\\u200B'));
+            return node;
+          }
+          static formats(node) { return node.getAttribute('class') === 'spoiler'; }
+          static value(node) { return node.innerText.replaceAll('\\u200B', ''); }
+        }
+        SpoilerBlot.blotName = 'spoiler';
+        SpoilerBlot.tagName = 'span';
+        Quill.register(SpoilerBlot);
+      
+        var icons = Quill.import('ui/icons');
+        icons.spoiler = '<svg viewBox="0 0 24 24"><title>Spoiler</title><path d="M12,2L2,7v7c0,5,4,9,10,9s10-4,10-9V7L12,2z M12,17 c-3,0-5-2-5-5v-1l5-3l5,3v1C17,15,15,17,12,17z"/></svg>';
+      
+        var toolbarHandlers = {
+          spoiler: function() {
+            var range = this.quill.getSelection();
+            if (!range) return;
+            if (range.length > 0) {
+              var currentFormat = this.quill.getFormat(range);
+              var isActive = !!currentFormat.spoiler;
+              this.quill.formatText(range.index, range.length, 'spoiler', !isActive);
+            } else {
+              var insertIndex = range.index;
+              this.quill.insertText(insertIndex, '\\u200B', { spoiler: true });
+              this.quill.setSelection(insertIndex + 1, 0);
+            }
+          },
+          bullet: function() {
+            var range = this.quill.getSelection();
+            if (!range) return;
+            var currentFormat = this.quill.getFormat(range);
+            var isActive = currentFormat.list === 'bullet';
+            this.quill.format('list', isActive ? false : 'bullet');
+          }
+        };
+      
+        var myQuill = new Quill('#editor', {
+          theme: 'snow',
+          modules: {
+            toolbar: {
+              container: [
+                ['bold', 'italic', 'underline'],
+                [{ header: [1, 2, 3, false] }],
+                [{ list: 'ordered' }, { list: 'bullet' }],
+                ['link', 'spoiler', 'blockquote', 'code-block'],
+                ['clean']
+              ],
+              handlers: toolbarHandlers
+            },
+            keyboard: {}
+          },
+          placeholder: "Start typing..."
+        });
+      
+        window.parent.postMessage({ type: 'iframe-init', message: 'Quill editor loaded' }, '*');
+        myQuill.on('text-change', function(delta) {
+          window.parent.postMessage({ type: 'content-change', delta: myQuill.getContents() }, '*');
+        });
+      };
+    </script>
+    <!-- Call initQuill after the DOM is loaded -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof window.initQuill === 'function') {
+          window.initQuill();
+        } else {
+          console.error("initQuill function is not defined.");
+        }
+      });
+    </script>
+  </body>
+</html>
+        `;
+    }, [initialHTML]);
+
+    useEffect(() => {
+        const messageHandler = (event: MessageEvent) => {
+            if (event.data && event.data.type === 'content-change') {
+                const delta = event.data.delta;
+                if (bulletMode && delta.ops) {
+                    delta.ops = delta.ops.map((op: any) => {
+                        if (op.attributes && op.attributes.list === 'ordered') {
+                            return {
+                                ...op,
+                                attributes: {
+                                    ...op.attributes,
+                                    list: 'bullet',
+                                },
+                            };
+                        }
+                        return op;
+                    });
+                }
+                const markdown = convertDeltaToMarkdown(delta.ops);
+                console.log('Markdown:', markdown);
+                onChange(markdown);
             }
         };
-    }, []);
-
-    // Delay adding title and aria-label to allow the toolbar button to render
-    useEffect(() => {
-        setTimeout(() => {
-            const btn = document.querySelector('.ql-insertTable');
-            if (btn) {
-                btn.setAttribute('title', 'Insert Table');
-                btn.setAttribute('aria-label', 'Insert Table');
-            }
-        }, 500);
-    }, []);
-
-    const handleChange = (content: string) => {
-        setValue(content);
-        // Convert the HTML content to Markdown (with our custom spoiler rule) before calling onChange
-        const markdown = turndownService.turndown(content);
-        onChange(markdown);
-    };
+        window.addEventListener('message', messageHandler);
+        return () => window.removeEventListener('message', messageHandler);
+    }, [onChange, bulletMode]);
 
     return (
         <View style={styles.container}>
-            <ReactQuill
-                ref={quillRef}
-                value={value}
-                onChange={handleChange}
-                modules={ReactQuill.modules}
-                theme="snow"
-                style={styles.webEditor}
-            />
+            <style>{`
+        .my-editor-iframe {
+          width: 100% !important;
+          height: 100% !important;
+          transform: none !important;
+        }
+      `}</style>
+            <div style={styles.flexWrapper}>
+                <iframe
+                    ref={iframeRef}
+                    className="my-editor-iframe"
+                    title="Quill Editor Iframe"
+                    srcDoc={srcDoc}
+                    style={styles.webEditor}
+                />
+            </div>
         </View>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
+        width: '100%',
+        height: '250px',
+        display: 'flex',
+        flexDirection: 'column',
+    },
+    flexWrapper: {
         flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        width: '100%',
+        height: '100%',
     },
     webEditor: {
-        minHeight: 200,
+        flex: 1,
+        width: '100%',
+        height: '100%',
+        border: 'none',
     },
 });

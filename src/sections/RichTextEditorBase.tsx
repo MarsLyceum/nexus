@@ -1,5 +1,5 @@
-import { COLORS } from '../constants';
 import { marked } from 'marked';
+import { COLORS } from '../constants';
 
 // --- Custom Marked Extension for Spoilers ---
 const spoilerExtension = {
@@ -179,15 +179,15 @@ export function getRichTextEditorHtml(initialContent: string = ''): string {
           static create() {
             var node = super.create();
             node.setAttribute('class', 'spoiler');
-            // Append a zero-width space to ensure proper rendering in Quill.
-            node.append(document.createTextNode('\u200B'));
+            // Removed insertion of zero-width space.
             return node;
           }
           static formats(node) { 
             return node.getAttribute('class') === 'spoiler'; 
           }
           static value(node) { 
-            return node.innerText.replace(/\u200B/g, ''); 
+            // Removed zero-width space removal as none are inserted.
+            return node.innerText;
           }
         }
         SpoilerBlot.blotName = 'spoiler';
@@ -201,14 +201,14 @@ export function getRichTextEditorHtml(initialContent: string = ''): string {
           spoiler: function() {
             var range = this.quill.getSelection();
             if (!range) return;
+            var currentFormat = this.quill.getFormat(range);
+            // If text is selected, toggle spoiler format on that text.
             if (range.length > 0) {
-              var currentFormat = this.quill.getFormat(range);
               var isActive = !!currentFormat.spoiler;
               this.quill.formatText(range.index, range.length, 'spoiler', !isActive);
             } else {
-              var insertIndex = range.index;
-              this.quill.insertText(insertIndex, '\u200B', { spoiler: true });
-              this.quill.setSelection(insertIndex + 1, 0);
+              // Instead of inserting a zero-width space, toggle the format for future input.
+              this.quill.format('spoiler', !currentFormat.spoiler);
             }
           },
           bullet: function() {

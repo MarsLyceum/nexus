@@ -20,6 +20,7 @@ import { COLORS } from '../constants';
 import { LargeImageModal } from './LargeImageModal';
 import { AttachmentImageGallery } from './AttachmentImageGallery';
 import { LinkPreview, MarkdownRenderer } from '../small-components';
+import { stripHtml, extractUrls } from '../utils';
 
 const styles = StyleSheet.create({
     postContainer: {
@@ -102,17 +103,6 @@ const styles = StyleSheet.create({
         marginLeft: 4,
     },
 });
-
-// Helper to extract URLs from text using a refined regex.
-const extractUrls = (text: string): string[] => {
-    const urlRegex = /https?:\/\/[^\s"<]+/g;
-    const matches = text.match(urlRegex);
-    return matches || [];
-};
-
-// Helper to strip HTML tags from a string.
-const stripHTML = (html: string): string =>
-    html.replaceAll(/<[^>]+>/g, '').trim();
 
 export type PostItemProps = {
     id: string;
@@ -224,7 +214,7 @@ export const PostItem: React.FC<PostItemProps> = ({
             : `peeps://post/${id}`);
 
     // Prepare Open Graph meta tags for web only
-    const ogDescription = stripHTML(content).slice(0, 160);
+    const ogDescription = stripHtml(content).slice(0, 160);
     const ogImage = thumbnail || avatarUri;
     const ogType = 'article';
 
@@ -274,7 +264,7 @@ export const PostItem: React.FC<PostItemProps> = ({
     );
 
     const urlsInContent = extractUrls(content);
-    const plainContent = stripHTML(content);
+    const plainContent = stripHtml(content);
     const isJustLink =
         urlsInContent.length === 1 && plainContent === urlsInContent[0];
 

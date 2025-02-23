@@ -6,6 +6,7 @@ import { COLORS } from '../constants';
 import { AttachmentPreviews } from '../sections';
 import { Attachment } from '../types';
 import { MarkdownTextInput } from './MarkdownTextInput';
+import { extractUrls } from '../utils';
 
 // Utility to check if a URL is an image
 const isImageUrl = (url: string): boolean => /\.(jpeg|jpg|gif|png)$/i.test(url);
@@ -33,35 +34,45 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     onInlineImagePress,
     onAttachmentPreviewPress,
 }) => {
-    const trimmed = messageText.trim();
-    const inlineImageUrl =
-        trimmed.startsWith('http') &&
-        !trimmed.includes(' ') &&
-        isImageUrl(trimmed)
-            ? trimmed
-            : undefined;
+    // Use extractUrls to get all URLs and filter to only image URLs.
+    const inlineImageUrls = extractUrls(messageText).filter((element) =>
+        isImageUrl(element)
+    );
 
     return (
         <View>
             <View style={styles.inputBorderLine} />
-            {inlineImageUrl && (
+
+            {/* Render an inline preview for each image URL */}
+            {inlineImageUrls.length > 0 && (
                 <View style={styles.inlineAttachmentContainer}>
-                    <View style={styles.attachmentPreview}>
-                        <TouchableOpacity
-                            onPress={() => onInlineImagePress(inlineImageUrl)}
-                        >
-                            <ExpoImage
-                                source={{ uri: inlineImageUrl }}
-                                style={styles.attachmentImage}
-                            />
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            style={styles.removeAttachmentButton}
-                            onPress={() => setMessageText('')}
-                        >
-                            <Icon name="times" size={18} color={COLORS.White} />
-                        </TouchableOpacity>
-                    </View>
+                    {inlineImageUrls.map((url, index) => (
+                        <View key={index} style={styles.attachmentPreview}>
+                            <TouchableOpacity
+                                onPress={() => onInlineImagePress(url)}
+                            >
+                                <ExpoImage
+                                    source={{ uri: url }}
+                                    style={styles.attachmentImage}
+                                />
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={styles.removeAttachmentButton}
+                                onPress={() => {
+                                    // Remove the clicked URL from the message text.
+                                    setMessageText(
+                                        messageText.replace(url, '').trim()
+                                    );
+                                }}
+                            >
+                                <Icon
+                                    name="times"
+                                    size={18}
+                                    color={COLORS.White}
+                                />
+                            </TouchableOpacity>
+                        </View>
+                    ))}
                 </View>
             )}
 

@@ -10,6 +10,7 @@ import { Image as ExpoImage } from 'expo-image';
 import { LinkPreview } from './LinkPreview';
 import { MessageWithAvatar } from '../types';
 import { MarkdownRenderer } from './MarkdownRenderer';
+import { extractUrls } from '../utils';
 
 const formatDateTime = (date: Date) => {
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -64,9 +65,19 @@ const NativeSizeAttachmentImage: React.FC<{ uri: string }> = ({ uri }) => {
 
 // If the message is solely a URL, use LinkPreview; otherwise, render markdown.
 const renderMessageContent = (content: string, width: number) => {
-    const isOnlyUrl = content.startsWith('http') && !content.includes(' ');
-    if (isOnlyUrl) {
-        return <LinkPreview url={content} containerWidth={width - 32} />;
+    const urls = extractUrls(content);
+    if (urls.length > 0) {
+        return (
+            <>
+                {urls.map((url, index) => (
+                    <LinkPreview
+                        url={url}
+                        key={index}
+                        containerWidth={width - 32}
+                    />
+                ))}
+            </>
+        );
     }
     return <MarkdownRenderer text={content} />;
 };

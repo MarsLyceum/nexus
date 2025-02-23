@@ -21,6 +21,7 @@ const styles = StyleSheet.create({
         color: 'white',
         fontSize: 16,
         lineHeight: 22,
+        fontFamily: 'Roboto_400Regular',
     },
     code_inline: {
         fontFamily: 'monospace',
@@ -38,12 +39,20 @@ const styles = StyleSheet.create({
     },
     spoilerText: {
         fontSize: 16,
-        // Optionally add additional padding if needed.
     },
     linkText: {
-        color: COLORS.Link, // Updated to use COLORS.Link (#3254a8)
+        color: COLORS.Link,
         textDecorationLine: 'underline',
         fontSize: 16,
+    },
+    heading1: {
+        fontSize: 32,
+        fontWeight: 'bold',
+        marginTop: 8,
+        marginBottom: 8,
+        color: COLORS.White,
+        fontFamily: 'Roboto_700Bold',
+        lineHeight: 40,
     },
 });
 
@@ -55,7 +64,9 @@ const extractTextFromTnode = (tnode: any): string => {
         return tnode.data;
     }
     if (tnode.children && Array.isArray(tnode.children)) {
-        return tnode.children.map(extractTextFromTnode).join('');
+        return tnode.children
+            .map((element: unknown) => extractTextFromTnode(element))
+            .join('');
     }
     return '';
 };
@@ -76,7 +87,7 @@ const InlineSpoiler: React.FC<{ children: React.ReactNode }> = ({
                 {
                     backgroundColor: revealed ? 'transparent' : COLORS.White,
                     color: COLORS.White,
-                    alignSelf: 'flex-start', // Keeps the element inline
+                    alignSelf: 'flex-start',
                 },
             ]}
         >
@@ -90,7 +101,6 @@ const InlineSpoiler: React.FC<{ children: React.ReactNode }> = ({
 // ---------------------
 const InlineLink: React.FC<{ tnode: any }> = ({ tnode }) => {
     let href = tnode.attributes?.href || '';
-    // If href does not start with a protocol, prepend "http://"
     if (!href.match(/^https?:\/\//)) {
         href = 'http://' + href;
     }
@@ -104,10 +114,7 @@ const InlineLink: React.FC<{ tnode: any }> = ({ tnode }) => {
                 }
             }}
             selectable={true}
-            style={[
-                styles.linkText,
-                { alignSelf: 'flex-start' }, // Ensures the inline element only takes up necessary width
-            ]}
+            style={[styles.linkText, { alignSelf: 'flex-start' }]}
         >
             {content}
         </Text>
@@ -115,7 +122,7 @@ const InlineLink: React.FC<{ tnode: any }> = ({ tnode }) => {
 };
 
 // ---------------------
-// Markdown-It Plugin for Inline Spoilers
+// Markdown-It Plugin for Discord-Style Inline Spoilers (using ||spoiler||)
 // ---------------------
 function inlineSpoilerPlugin(md: MarkdownIt) {
     function tokenize(state: any, silent: boolean) {
@@ -134,6 +141,25 @@ function inlineSpoilerPlugin(md: MarkdownIt) {
 }
 
 // ---------------------
+// Markdown-It Plugin for Reddit-Style Inline Spoilers (using >!spoiler!<)
+// ---------------------
+function redditSpoilerPlugin(md: MarkdownIt) {
+    function tokenize(state: any, silent: boolean) {
+        const pos = state.pos;
+        if (state.src.slice(pos, pos + 2) !== '>!') return false;
+        const end = state.src.indexOf('!<', pos + 2);
+        if (end === -1) return false;
+        if (!silent) {
+            const token = state.push('spoiler', 'spoiler', 0);
+            token.content = state.src.slice(pos + 2, end);
+        }
+        state.pos = end + 2;
+        return true;
+    }
+    md.inline.ruler.before('text', 'redditSpoiler', tokenize);
+}
+
+// ---------------------
 // Custom Renderer for Spoiler Tokens in Markdown-It
 // ---------------------
 function spoilerRenderer(tokens: any, idx: number) {
@@ -141,14 +167,15 @@ function spoilerRenderer(tokens: any, idx: number) {
 }
 
 // ---------------------
-// Create Markdown-It Instance with Plugin and Linkify enabled
+// Create Markdown-It Instance with Plugins and Linkify enabled
 // ---------------------
 const mdInstance = new MarkdownIt({
     typographer: true,
     html: true,
-    linkify: true, // Enables automatic linking of plain URLs like www.google.com
+    linkify: true,
 });
 mdInstance.use(inlineSpoilerPlugin);
+mdInstance.use(redditSpoilerPlugin);
 mdInstance.renderer.rules.spoiler = spoilerRenderer;
 
 // ---------------------
@@ -156,13 +183,11 @@ mdInstance.renderer.rules.spoiler = spoilerRenderer;
 // ---------------------
 const customRenderers = {
     spoiler: ({ tnode }: any) => {
-        // Extract text content either from the domNode or by traversing children.
         const content =
             tnode.domNode?.textContent || extractTextFromTnode(tnode) || '';
         return <InlineSpoiler>{content}</InlineSpoiler>;
     },
     a: ({ tnode }: any) => {
-        // Render the link as an inline element with our custom styling.
         return <InlineLink tnode={tnode} />;
     },
 };
@@ -174,12 +199,12 @@ const customHTMLElementModels = {
     ...defaultHTMLElementModels,
     spoiler: {
         ...defaultHTMLElementModels.span,
-        contentModel: HTMLContentModel.textual, // Inline behavior
+        contentModel: HTMLContentModel.textual,
         isTranslatableTextual: () => true,
     },
     a: {
         ...defaultHTMLElementModels.a,
-        contentModel: HTMLContentModel.textual, // Ensure inline behavior
+        contentModel: HTMLContentModel.textual,
         isTranslatableTextual: () => true,
     },
 };
@@ -188,7 +213,8 @@ const customHTMLElementModels = {
 // Main MarkdownRenderer Component
 // ---------------------
 export const MarkdownRenderer: React.FC<{ text: string }> = ({ text }) => {
-    const htmlContent = mdInstance.render(text);
+    // Wrap the rendered markdown in a <div> to ensure proper container styling
+    const htmlContent = `<div>${mdInstance.render(text)}</div>`;
     const contentWidth = Dimensions.get('window').width;
 
     return (
@@ -198,10 +224,13 @@ export const MarkdownRenderer: React.FC<{ text: string }> = ({ text }) => {
                 source={{ html: htmlContent }}
                 renderers={customRenderers}
                 customHTMLElementModels={customHTMLElementModels}
+                // Apply baseStyle to control the overall layout of the rendered content
+                baseStyle={{ marginTop: 0, paddingTop: 0 }}
                 tagsStyles={{
-                    body: styles.document,
+                    div: styles.document,
                     code: styles.code_inline,
                     blockquote: styles.blockquote,
+                    h1: styles.heading1,
                 }}
                 defaultTextProps={{ selectable: true }}
             />

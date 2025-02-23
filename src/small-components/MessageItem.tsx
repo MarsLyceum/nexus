@@ -63,12 +63,23 @@ const NativeSizeAttachmentImage: React.FC<{ uri: string }> = ({ uri }) => {
     );
 };
 
-// If the message is solely a URL, use LinkPreview; otherwise, render markdown.
+// Updated renderMessageContent function
+// - First, trim the content to remove extra whitespace.
+// - Extract URLs from the trimmed content.
+// - If there is a single URL and the trimmed content is exactly that URL, only render the LinkPreview.
+// - Otherwise, render the markdown and any link previews.
 const renderMessageContent = (content: string, width: number) => {
-    const urls = extractUrls(content);
+    const trimmedContent = content.trim();
+    const urls = extractUrls(trimmedContent);
+
+    if (urls.length === 1 && trimmedContent === urls[0]) {
+        return <LinkPreview url={urls[0]} containerWidth={width - 32} />;
+    }
+
     if (urls.length > 0) {
         return (
             <>
+                <MarkdownRenderer text={content} />
                 {urls.map((url, index) => (
                     <LinkPreview
                         url={url}

@@ -89,7 +89,11 @@ const InlineSpoiler: React.FC<{ children: React.ReactNode }> = ({
 // Custom Inline Link Component
 // ---------------------
 const InlineLink: React.FC<{ tnode: any }> = ({ tnode }) => {
-    const href = tnode.attributes?.href || '';
+    let href = tnode.attributes?.href || '';
+    // If href does not start with a protocol, prepend "http://"
+    if (!href.match(/^https?:\/\//)) {
+        href = 'http://' + href;
+    }
     const content =
         tnode.domNode?.textContent || extractTextFromTnode(tnode) || '';
     return (
@@ -137,11 +141,12 @@ function spoilerRenderer(tokens: any, idx: number) {
 }
 
 // ---------------------
-// Create Markdown-It Instance with Plugin
+// Create Markdown-It Instance with Plugin and Linkify enabled
 // ---------------------
 const mdInstance = new MarkdownIt({
     typographer: true,
     html: true,
+    linkify: true, // Enables automatic linking of plain URLs like www.google.com
 });
 mdInstance.use(inlineSpoilerPlugin);
 mdInstance.renderer.rules.spoiler = spoilerRenderer;

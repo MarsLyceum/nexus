@@ -290,7 +290,9 @@ export const PostItem: React.FC<PostItemProps> = ({
             )}
             {content !== '' && (
                 <>
-                    {!isJustLink && <MarkdownRenderer text={content} />}
+                    {!isJustLink && (
+                        <MarkdownRenderer text={content} preview={preview} />
+                    )}
                     {urlsInContent.map((url, index) => (
                         <LinkPreview
                             key={index}

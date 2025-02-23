@@ -5,6 +5,8 @@ import {
     Dimensions,
     ScrollView,
     Linking,
+    View,
+    TouchableOpacity,
 } from 'react-native';
 import MarkdownIt from 'markdown-it';
 import RenderHTML, {
@@ -53,6 +55,10 @@ const styles = StyleSheet.create({
         color: COLORS.White,
         fontFamily: 'Roboto_700Bold',
         lineHeight: 40,
+    },
+    ellipsisText: {
+        color: 'white',
+        fontSize: 18,
     },
 });
 
@@ -210,21 +216,35 @@ const customHTMLElementModels = {
 };
 
 // ---------------------
-// Main MarkdownRenderer Component
+// Constants for preview mode
 // ---------------------
-export const MarkdownRenderer: React.FC<{ text: string }> = ({ text }) => {
-    // Wrap the rendered markdown in a <div> to ensure proper container styling
+const PREVIEW_MAX_HEIGHT = 200;
+const ELLIPSIS_HEIGHT = 30;
+
+// ---------------------
+// Main MarkdownRenderer Component with Preview Prop (boolean)
+// ---------------------
+export const MarkdownRenderer: React.FC<{
+    text: string;
+    preview?: boolean;
+}> = ({ text, preview }) => {
+    const [contentHeight, setContentHeight] = React.useState(0);
+    const [expanded, setExpanded] = React.useState(false);
     const htmlContent = `<div>${mdInstance.render(text)}</div>`;
     const contentWidth = Dimensions.get('window').width;
 
-    return (
-        <ScrollView>
+    // Full content element used for measuring height
+    const fullContent = (
+        <View
+            onLayout={(event) =>
+                setContentHeight(event.nativeEvent.layout.height)
+            }
+        >
             <RenderHTML
                 contentWidth={contentWidth}
                 source={{ html: htmlContent }}
                 renderers={customRenderers}
                 customHTMLElementModels={customHTMLElementModels}
-                // Apply baseStyle to control the overall layout of the rendered content
                 baseStyle={{ marginTop: 0, paddingTop: 0 }}
                 tagsStyles={{
                     div: styles.document,
@@ -234,6 +254,59 @@ export const MarkdownRenderer: React.FC<{ text: string }> = ({ text }) => {
                 }}
                 defaultTextProps={{ selectable: true }}
             />
-        </ScrollView>
+        </View>
+    );
+
+    // If not in preview mode or if expanded, render full content in a ScrollView.
+    if (!preview || expanded) {
+        return <ScrollView>{fullContent}</ScrollView>;
+    }
+
+    // Determine if the content is truncated (i.e. its height exceeds the preview max)
+    const isTruncated = contentHeight > PREVIEW_MAX_HEIGHT;
+
+    // If preview mode is active but content is short enough, render it normally.
+    if (!isTruncated) {
+        return <View>{fullContent}</View>;
+    }
+
+    // If content is truncated in preview mode, render a fixed-height container.
+    // The container is split into:
+    // 1. A content area (clipped to PREVIEW_MAX_HEIGHT - ELLIPSIS_HEIGHT).
+    // 2. An inline ellipsis footer at the bottom that is clickable.
+    return (
+        <View style={{ height: PREVIEW_MAX_HEIGHT }}>
+            <View
+                style={{
+                    height: PREVIEW_MAX_HEIGHT - ELLIPSIS_HEIGHT,
+                    overflow: 'hidden',
+                }}
+            >
+                <RenderHTML
+                    contentWidth={contentWidth}
+                    source={{ html: htmlContent }}
+                    renderers={customRenderers}
+                    customHTMLElementModels={customHTMLElementModels}
+                    baseStyle={{ marginTop: 0, paddingTop: 0 }}
+                    tagsStyles={{
+                        div: styles.document,
+                        code: styles.code_inline,
+                        blockquote: styles.blockquote,
+                        h1: styles.heading1,
+                    }}
+                    defaultTextProps={{ selectable: true }}
+                />
+            </View>
+            <TouchableOpacity
+                style={{
+                    height: ELLIPSIS_HEIGHT,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                }}
+                onPress={() => setExpanded(true)}
+            >
+                <Text style={styles.ellipsisText}>...</Text>
+            </TouchableOpacity>
+        </View>
     );
 };

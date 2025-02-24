@@ -120,7 +120,8 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
                     total={attachmentUrls.length}
                 />
 
-                {isDesktop && (
+                {/* Only show arrows if on desktop and there is more than one image */}
+                {isDesktop && attachmentUrls.length > 1 && (
                     <>
                         <ArrowButton
                             direction="left"
@@ -180,7 +181,7 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
 const styles = StyleSheet.create({
     imageContainer: {
         position: 'relative',
-        alignSelf: 'flex-start', // left aligned container
+        alignSelf: 'center',
     },
     galleryImage: {
         borderRadius: 8,

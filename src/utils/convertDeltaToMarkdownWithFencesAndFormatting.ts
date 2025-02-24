@@ -6,6 +6,7 @@ export function convertDeltaToMarkdownWithFencesAndFormatting(
     const segments: { isCode: boolean; ops: any[] }[] = [];
     let currentSegment: { isCode: boolean; ops: any[] } | null = null;
 
+    // Split operations into segments based on whether they are code or non-code.
     for (let i = 0; i < ops.length; i++) {
         const op = ops[i];
         let opIsCode = false;
@@ -39,16 +40,27 @@ export function convertDeltaToMarkdownWithFencesAndFormatting(
             const codeText = segment.ops.map((op) => op.insert).join('');
             markdown += `\n\`\`\`\n${codeText}\n\`\`\`\n`;
         } else {
-            // Pre-process non-code ops to wrap spoiler text with Discord-style markers.
+            // Pre-process non-code ops to wrap spoiler and strike text with Markdown markers.
             const processedOps = segment.ops.map((op) => {
-                if (op.attributes && op.attributes.spoiler) {
-                    return {
-                        ...op,
-                        insert: `||${op.insert}||`,
-                        attributes: { ...op.attributes, spoiler: undefined },
-                    };
+                let newInsert = op.insert;
+                // Copy attributes if they exist.
+                let newAttributes = op.attributes ? { ...op.attributes } : {};
+
+                // If op has a spoiler attribute, wrap the text with Discord-style spoiler markers.
+                if (newAttributes.spoiler) {
+                    newInsert = `||${newInsert}||`;
+                    newAttributes.spoiler = undefined;
                 }
-                return op;
+                // If op has a strike attribute, wrap the text with Markdown strike-through markers.
+                if (newAttributes.strike) {
+                    newInsert = `~~${newInsert}~~`;
+                    newAttributes.strike = undefined;
+                }
+                return {
+                    ...op,
+                    insert: newInsert,
+                    attributes: newAttributes,
+                };
             });
             const nonCodeMarkdown = deltaToMarkdown(processedOps);
             markdown += nonCodeMarkdown;

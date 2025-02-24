@@ -18,10 +18,6 @@ const spoilerExtension = {
         const cleaned = src.replace(/[\u200B\u200C\u200D\uFEFF]/g, '');
         // Handle Discord-style spoilers: ||spoiler||
         if (cleaned.startsWith('||')) {
-            // Revised regex:
-            // - Matches opening "||"
-            // - Captures one or more non-pipe, non-newline characters (allowing internal single pipes)
-            // - Matches closing "||" only if immediately followed by the end-of-string or a newline.
             const match = /^\|\|([^|\n]+(?:\|(?!\|)[^|\n]+)*)\|\|(?=$|\n)/.exec(
                 cleaned
             );
@@ -54,6 +50,7 @@ const spoilerExtension = {
 marked.use({ extensions: [spoilerExtension] });
 
 export function getRichTextEditorHtml(initialContent: string = ''): string {
+    // Convert the initial markdown to HTML.
     const initialHTML = initialContent ? marked(initialContent) : '<p><br></p>';
     return `<!DOCTYPE html>
 <html>
@@ -159,7 +156,8 @@ export function getRichTextEditorHtml(initialContent: string = ''): string {
     </style>
   </head>
   <body>
-    <div id="editor">${initialHTML}</div>
+    <!-- Note: The editor is initialized empty. -->
+    <div id="editor"></div>
     <!-- Load Quill JS -->
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
     <script>
@@ -179,14 +177,12 @@ export function getRichTextEditorHtml(initialContent: string = ''): string {
           static create() {
             var node = super.create();
             node.setAttribute('class', 'spoiler');
-            // Removed insertion of zero-width space.
             return node;
           }
           static formats(node) { 
             return node.getAttribute('class') === 'spoiler'; 
           }
           static value(node) { 
-            // Removed zero-width space removal as none are inserted.
             return node.innerText;
           }
         }
@@ -202,12 +198,10 @@ export function getRichTextEditorHtml(initialContent: string = ''): string {
             var range = this.quill.getSelection();
             if (!range) return;
             var currentFormat = this.quill.getFormat(range);
-            // If text is selected, toggle spoiler format on that text.
             if (range.length > 0) {
               var isActive = !!currentFormat.spoiler;
               this.quill.formatText(range.index, range.length, 'spoiler', !isActive);
             } else {
-              // Instead of inserting a zero-width space, toggle the format for future input.
               this.quill.format('spoiler', !currentFormat.spoiler);
             }
           },
@@ -225,7 +219,7 @@ export function getRichTextEditorHtml(initialContent: string = ''): string {
           modules: {
             toolbar: {
               container: [
-                ['bold', 'italic', 'underline'],
+                ['bold', 'italic', 'underline', 'strike'],
                 [{ header: [1, 2, 3, false] }],
                 [{ list: 'ordered' }, { list: 'bullet' }],
                 ['link', 'spoiler', 'blockquote', 'code-block'],
@@ -237,7 +231,7 @@ export function getRichTextEditorHtml(initialContent: string = ''): string {
           placeholder: "Start typing..."
         });
       
-        // Add a clipboard matcher to ensure <span class="spoiler"> is parsed as a spoiler.
+        // Matcher for <span class="spoiler">
         quill.clipboard.addMatcher('span', function(node, delta) {
           if (node.classList && node.classList.contains('spoiler')) {
             delta.ops.forEach(op => {
@@ -248,13 +242,35 @@ export function getRichTextEditorHtml(initialContent: string = ''): string {
           return delta;
         });
       
-        // Add titles to toolbar buttons and select elements for hover text.
+        // Simplified Clipboard Matcher for Strike-Through (<del> and <s>)
+        function strikeMatcher(node, delta) {
+          const tag = node.tagName && node.tagName.toLowerCase();
+          if (tag === 'del' || tag === 's') {
+            delta.ops.forEach(op => {
+              op.attributes = op.attributes || {};
+              op.attributes.strike = true;
+            });
+          }
+          return delta;
+        }
+        quill.clipboard.addMatcher('del', strikeMatcher);
+        quill.clipboard.addMatcher('s', strikeMatcher);
+      
+        // Load the initial HTML via clipboard conversion so that matchers are applied.
+        const initialHTML = ${JSON.stringify(initialHTML)};
+        if (initialHTML) {
+          const delta = quill.clipboard.convert(initialHTML);
+          quill.setContents(delta, 'silent');
+        }
+      
+        // Add titles to toolbar buttons and select elements.
         var toolbarModule = quill.getModule('toolbar');
         if (toolbarModule && toolbarModule.container) {
           const titleMapping = {
             'ql-bold': 'Bold',
             'ql-italic': 'Italic',
             'ql-underline': 'Underline',
+            'ql-strike': 'Strikethrough',
             'ql-header': 'Header',
             'ql-list': { ordered: 'Ordered List', bullet: 'Bullet List' },
             'ql-link': 'Link',
@@ -279,7 +295,7 @@ export function getRichTextEditorHtml(initialContent: string = ''): string {
           });
         }
       
-        // Unified postMessage function for both web (iframe) and mobile (WebView).
+        // Unified postMessage function.
         var postMessageFn = (msg) => {
           if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
             window.ReactNativeWebView.postMessage(msg);

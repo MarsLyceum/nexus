@@ -78,19 +78,14 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
     }, [visible, attachments.length, currentIndex]);
 
     // Render each image item with error handling.
-    const renderItem = ({ item }: { item: string }) => {
-        console.log('Rendering image:', item);
-        return (
-            <ExpoImage
-                source={{ uri: item }}
-                style={styles.modalImage}
-                resizeMode="contain"
-                onError={(error) =>
-                    console.error('Image load error:', item, error)
-                }
-            />
-        );
-    };
+    const renderItem = ({ item }: { item: string }) => (
+        <ExpoImage
+            source={{ uri: item }}
+            style={styles.modalImage}
+            resizeMode="contain"
+            onError={(error) => console.error('Image load error:', item, error)}
+        />
+    );
 
     return (
         <Modal

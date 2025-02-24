@@ -33,10 +33,11 @@ export const MessageList: React.FC<MessageListProps> = ({
 
     return (
         <FlatList
-            data={[...chatMessages].reverse()}
+            data={chatMessages}
             keyExtractor={(item) => item.id}
             onEndReached={loadMoreMessages}
             onEndReachedThreshold={0.1}
+            inverted
             renderItem={({ item }) => (
                 <MessageItem
                     item={item}

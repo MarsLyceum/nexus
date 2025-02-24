@@ -280,18 +280,17 @@ const baseStyles = StyleSheet.create({
         top: 0,
         left: 0,
         right: 0,
-        // Base fontSize and color can be overridden via overlayStyle.
         fontSize: 14,
         color: 'white',
-        fontFamily: 'Roboto_400Regular',
+        // REMOVED fontFamily to prevent overriding child styles:
+        // fontFamily: 'Roboto_400Regular',
     },
     input: {
-        // Base input style; specifics (padding, height, etc.) can be provided by the caller.
         color: 'white',
         fontSize: 14,
         fontFamily: 'Roboto_400Regular',
+        textAlignVertical: 'top',
     },
-    // Common text styles for markdown rendering
     plainText: {
         color: 'white',
         fontFamily: 'Roboto_400Regular',
@@ -305,7 +304,6 @@ const baseStyles = StyleSheet.create({
         fontFamily: 'monospace',
         backgroundColor: '#2f3136',
         color: '#c7c7c7',
-        // Removed padding to match inline code styling
     },
     boldText: {
         fontWeight: 'bold',

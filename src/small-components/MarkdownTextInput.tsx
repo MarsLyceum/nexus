@@ -1,4 +1,3 @@
-// MarkdownTextInput.tsx
 import React from 'react';
 import { StyleSheet } from 'react-native';
 import { COLORS } from '../constants';
@@ -30,8 +29,11 @@ const styles = StyleSheet.create({
     inputWrapper: {
         height: 40,
         position: 'relative',
+        backgroundColor: COLORS.TextInput, // NEW: Moved background color to the wrapper
+        borderRadius: 20, // Ensures the background respects the rounded corners
     },
     inputTextOverlay: {
+        position: 'absolute', // Ensure overlay is positioned absolutely
         top: 0,
         left: 10,
         right: 0,
@@ -40,16 +42,18 @@ const styles = StyleSheet.create({
         color: 'white',
         textAlignVertical: 'center',
         lineHeight: 40,
-        fontFamily: 'Roboto_400Regular',
+        zIndex: 1, // NEW: Overlay must appear above the TextInput
     },
     input: {
         height: 40,
-        backgroundColor: COLORS.TextInput,
+        backgroundColor: 'transparent', // Keep transparent so wrapper's background shows
         paddingHorizontal: 10,
         borderRadius: 20,
         fontSize: 14,
         textAlignVertical: 'center',
-        color: 'white',
+        color: 'transparent',
         fontFamily: 'Roboto_400Regular',
+        caretColor: 'white',
+        zIndex: 2, // NEW: Lower than overlay
     },
 });

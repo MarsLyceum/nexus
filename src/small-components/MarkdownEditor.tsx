@@ -12,7 +12,7 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
     style,
     ...rest
 }) => {
-    // Step 2: Add state to track focus.
+    // State to track focus.
     const [isFocused, setIsFocused] = React.useState(false);
 
     return (
@@ -22,10 +22,8 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
                 onChangeText={onChangeText}
                 placeholder={placeholder}
                 {...rest}
-                // Pass focus event handlers to update state.
                 onFocus={() => setIsFocused(true)}
                 onBlur={() => setIsFocused(false)}
-                // Step 3: Conditionally add active border style.
                 wrapperStyle={[
                     styles.inputWrapper,
                     isFocused && styles.activeInputWrapper,
@@ -41,21 +39,18 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
 const styles = StyleSheet.create({
     container: {
         width: '100%',
-        height: '250px',
-        display: 'flex',
+        height: 250, // Numeric height for mobile compatibility
         flexDirection: 'column',
     },
-    // Default wrapper style without a visible border.
     inputWrapper: {
         flex: 1,
         position: 'relative',
         backgroundColor: COLORS.PrimaryBackground,
         borderRadius: 20,
         overflow: 'hidden',
-        borderWidth: 0, // no border by default
+        borderWidth: 0,
         borderColor: 'transparent',
     },
-    // New style for active state (focused input).
     activeInputWrapper: {
         borderWidth: 1,
         borderColor: COLORS.White,
@@ -65,7 +60,6 @@ const styles = StyleSheet.create({
         top: 0,
         left: 0,
         right: 0,
-        bottom: 0,
         paddingHorizontal: 10,
         paddingVertical: 5,
         fontSize: 14,
@@ -76,13 +70,14 @@ const styles = StyleSheet.create({
     input: {
         flex: 1,
         fontSize: 14,
-        color: 'rgba(255,255,255,0.01)',
+        color: 'rgba(255,255,255,0.01)', // nearly invisible text
         caretColor: 'white',
         lineHeight: 20,
         paddingHorizontal: 10,
         paddingVertical: 5,
         borderRadius: 20,
-        backgroundColor: COLORS.PrimaryBackground,
+        backgroundColor: 'transparent', // UPDATED: Transparent to show overlay beneath
         fontFamily: 'Roboto_400Regular',
+        textAlignVertical: 'top',
     },
 });

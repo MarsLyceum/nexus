@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     StyleSheet,
     TouchableOpacity,
     LayoutChangeEvent,
+    Image as RNImage,
 } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { CarouselDots } from './CarouselDots';
@@ -19,6 +20,7 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
 }) => {
     const [currentAttachmentIndex] = useState(0);
     const [containerWidth, setContainerWidth] = useState(480); // default width fallback
+    const [imageAspectRatio, setImageAspectRatio] = useState(1); // default ratio (square) until loaded
 
     // Capture the container layout dimensions
     const handleContainerLayout = (event: LayoutChangeEvent) => {
@@ -28,13 +30,30 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
 
     // Calculate the image width based on container width
     const imageWidth = containerWidth < 480 ? containerWidth : 480;
+    // Compute the image height based on its aspect ratio
+    const computedImageHeight = imageWidth / imageAspectRatio;
+
+    // Retrieve the natural dimensions of the image to compute its aspect ratio
+    useEffect(() => {
+        if (attachmentUrls[currentAttachmentIndex]) {
+            RNImage.getSize(
+                attachmentUrls[currentAttachmentIndex],
+                (width, height) => {
+                    setImageAspectRatio(width / height);
+                },
+                (error) => {
+                    console.error('Failed to get image dimensions', error);
+                }
+            );
+        }
+    }, [attachmentUrls, currentAttachmentIndex]);
 
     return (
         <View onLayout={handleContainerLayout}>
             <View
                 style={[
                     styles.imageContainer,
-                    { width: imageWidth, height: 480 },
+                    { width: imageWidth, height: computedImageHeight },
                 ]}
             >
                 <TouchableOpacity
@@ -43,7 +62,10 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
                 >
                     <ExpoImage
                         source={{ uri: attachmentUrls[currentAttachmentIndex] }}
-                        style={[styles.galleryImage, { width: imageWidth }]}
+                        style={[
+                            styles.galleryImage,
+                            { width: imageWidth, height: computedImageHeight },
+                        ]}
                     />
                 </TouchableOpacity>
                 {attachmentUrls.length > 1 && (
@@ -62,10 +84,9 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
 const styles = StyleSheet.create({
     imageContainer: {
         position: 'relative',
-        alignSelf: 'center',
+        alignSelf: 'flex-start', // left aligned container
     },
     galleryImage: {
-        height: 480,
         borderRadius: 8,
         resizeMode: 'contain',
     },

@@ -1,3 +1,4 @@
+// LargeImageModal.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import {
     Modal,
@@ -11,6 +12,7 @@ import { Image as ExpoImage } from 'expo-image';
 import Carousel from 'react-native-reanimated-carousel';
 import { ArrowButton } from './ArrowButton';
 import { CarouselDots } from './CarouselDots';
+import { ImageCountOverlay } from '../small-components';
 import { COLORS } from '../constants';
 
 type LargeImageModalProps = {
@@ -72,7 +74,6 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
             }
         };
         window.addEventListener('keydown', handleKeyDown);
-        // eslint-disable-next-line consistent-return
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [visible, attachments.length, currentIndex]);
 
@@ -101,18 +102,25 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
             {/* Outer Pressable dismisses modal on press */}
             <Pressable style={styles.modalOverlay} onPress={onClose}>
                 <View style={styles.centeredContent} pointerEvents="box-none">
-                    <Carousel
-                        ref={carouselRef}
-                        data={attachments}
-                        renderItem={renderItem}
-                        width={deviceWidth * 0.9}
-                        height={carouselHeight}
-                        defaultIndex={initialIndex}
-                        onSnapToItem={(index: number) => {
-                            console.log('Snapped to index:', index);
-                            setCurrentIndex(index);
-                        }}
-                    />
+                    <View style={styles.carouselContainer}>
+                        <Carousel
+                            ref={carouselRef}
+                            data={attachments}
+                            renderItem={renderItem}
+                            width={deviceWidth * 0.9}
+                            height={carouselHeight}
+                            defaultIndex={initialIndex}
+                            onSnapToItem={(index: number) => {
+                                console.log('Snapped to index:', index);
+                                setCurrentIndex(index);
+                            }}
+                        />
+                        {/* New Image Count Overlay */}
+                        <ImageCountOverlay
+                            currentIndex={currentIndex}
+                            total={attachments.length}
+                        />
+                    </View>
                     {/* Arrow buttons */}
                     {attachments.length > 1 && (
                         <View
@@ -180,6 +188,11 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    carouselContainer: {
+        position: 'relative',
+        width: Dimensions.get('window').width * 0.9,
+        height: Dimensions.get('window').height * 0.8,
     },
     modalImage: {
         width: '100%',

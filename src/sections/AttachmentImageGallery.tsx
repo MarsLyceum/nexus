@@ -1,3 +1,4 @@
+// AttachmentImageGallery.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import {
     View,
@@ -10,6 +11,7 @@ import {
 import { Image as ExpoImage } from 'expo-image';
 import { CarouselDots } from './CarouselDots';
 import { ArrowButton } from './ArrowButton';
+import { ImageCountOverlay } from '../small-components';
 
 export type AttachmentImageGalleryProps = {
     attachmentUrls: string[];
@@ -111,6 +113,13 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
                         </TouchableOpacity>
                     ))}
                 </ScrollView>
+
+                {/* New Image Count Overlay */}
+                <ImageCountOverlay
+                    currentIndex={currentAttachmentIndex}
+                    total={attachmentUrls.length}
+                />
+
                 {isDesktop && (
                     <>
                         <ArrowButton

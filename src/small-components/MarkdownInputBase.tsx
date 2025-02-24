@@ -1,10 +1,13 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import {
+    ScrollView,
     View,
     Text,
     TextInput,
     TextInputProps,
     StyleSheet,
+    NativeSyntheticEvent,
+    TextInputScrollEventData,
 } from 'react-native';
 import { COLORS } from '../constants';
 
@@ -16,11 +19,9 @@ export interface MarkdownInputBaseProps extends TextInputProps {
     inputStyle?: object;
 }
 
-// Shared utility function to render markdown-highlighted text.
 export const renderHighlightedText = (text: string) => {
     const lines = text.split('\n');
     const renderedLines = lines.map((line, index) => {
-        // Check for blockquotes: line starting with ">" or ">>>"
         if (/^>{1,3}\s+/.test(line)) {
             const content = line.replace(/^>{1,3}\s+/, '');
             return (
@@ -29,7 +30,6 @@ export const renderHighlightedText = (text: string) => {
                 </Text>
             );
         }
-        // Check for list items: line starting with "-" or "1. "
         if (/^(-\s|\d+\.\s)/.test(line)) {
             return (
                 <Text key={index} style={baseStyles.listText}>
@@ -37,7 +37,6 @@ export const renderHighlightedText = (text: string) => {
                 </Text>
             );
         }
-        // Process inline markdown
         const segments: JSX.Element[] = [];
         let lastIndex = 0;
         const regex =
@@ -52,7 +51,6 @@ export const renderHighlightedText = (text: string) => {
                     </Text>
                 );
             }
-            // Group 1: Multi-line code block using triple backticks
             if (match[1]) {
                 segments.push(
                     <Text key={key++} style={baseStyles.plainText}>
@@ -65,9 +63,7 @@ export const renderHighlightedText = (text: string) => {
                         {'```'}
                     </Text>
                 );
-            }
-            // Group 3: Inline code using single backticks
-            else if (match[3]) {
+            } else if (match[3]) {
                 segments.push(
                     <Text key={key++} style={baseStyles.plainText}>
                         {'`'}
@@ -79,9 +75,7 @@ export const renderHighlightedText = (text: string) => {
                         {'`'}
                     </Text>
                 );
-            }
-            // Group 5: Underline using double underscores __text__
-            else if (match[5]) {
+            } else if (match[5]) {
                 segments.push(
                     <Text key={key++} style={baseStyles.plainText}>
                         {'__'}
@@ -93,9 +87,7 @@ export const renderHighlightedText = (text: string) => {
                         {'__'}
                     </Text>
                 );
-            }
-            // Group 7: Bold+Italic using triple asterisks
-            else if (match[7]) {
+            } else if (match[7]) {
                 segments.push(
                     <Text key={key++} style={baseStyles.plainText}>
                         {'***'}
@@ -107,9 +99,7 @@ export const renderHighlightedText = (text: string) => {
                         {'***'}
                     </Text>
                 );
-            }
-            // Group 9: Bold using double asterisks
-            else if (match[9]) {
+            } else if (match[9]) {
                 segments.push(
                     <Text key={key++} style={baseStyles.plainText}>
                         {'**'}
@@ -121,9 +111,7 @@ export const renderHighlightedText = (text: string) => {
                         {'**'}
                     </Text>
                 );
-            }
-            // Group 11: Italic using single asterisk
-            else if (match[11]) {
+            } else if (match[11]) {
                 segments.push(
                     <Text key={key++} style={baseStyles.plainText}>
                         {'*'}
@@ -135,9 +123,7 @@ export const renderHighlightedText = (text: string) => {
                         {'*'}
                     </Text>
                 );
-            }
-            // Group 13: Italic using underscores
-            else if (match[13]) {
+            } else if (match[13]) {
                 segments.push(
                     <Text key={key++} style={baseStyles.plainText}>
                         {'_'}
@@ -149,9 +135,7 @@ export const renderHighlightedText = (text: string) => {
                         {'_'}
                     </Text>
                 );
-            }
-            // Group 15: Strikethrough using double tildes
-            else if (match[15]) {
+            } else if (match[15]) {
                 segments.push(
                     <Text key={key++} style={baseStyles.plainText}>
                         {'~~'}
@@ -163,9 +147,7 @@ export const renderHighlightedText = (text: string) => {
                         {'~~'}
                     </Text>
                 );
-            }
-            // Group 17: Reddit spoiler (>!text!<)
-            else if (match[17]) {
+            } else if (match[17]) {
                 segments.push(
                     <Text key={key++} style={baseStyles.plainText}>
                         {'>!'}
@@ -177,9 +159,7 @@ export const renderHighlightedText = (text: string) => {
                         {'!<'}
                     </Text>
                 );
-            }
-            // Group 19: Discord spoiler (||text||)
-            else if (match[19]) {
+            } else if (match[19]) {
                 segments.push(
                     <Text key={key++} style={baseStyles.plainText}>
                         {'||'}
@@ -191,9 +171,7 @@ export const renderHighlightedText = (text: string) => {
                         {'||'}
                     </Text>
                 );
-            }
-            // Group 21: Link [text](URL) – render all text, styling only the part inside the square brackets
-            else if (match[21]) {
+            } else if (match[21]) {
                 segments.push(
                     <Text key={key++} style={baseStyles.plainText}>
                         {'['}
@@ -205,20 +183,16 @@ export const renderHighlightedText = (text: string) => {
                         {'](' + match[23] + ')'}
                     </Text>
                 );
-            }
-            // Group 24: Image ![alt](URL) – render the alt text with image styling
-            else if (match[24]) {
+            } else if (match[24]) {
                 segments.push(
                     <Text key={key++} style={baseStyles.imageText}>
                         {match[25]}
                     </Text>
                 );
-            }
-            // Group 27: Auto-link (plain URL)
-            else if (match[27]) {
+            } else if (match[27]) {
                 segments.push(
                     <Text key={key++} style={baseStyles.linkText}>
-                        {match[28]}
+                        {match[27]}
                     </Text>
                 );
             }
@@ -233,8 +207,6 @@ export const renderHighlightedText = (text: string) => {
         }
         return <Text key={index}>{segments}</Text>;
     });
-
-    // Interleave with newline characters.
     return renderedLines.reduce((prev, curr, idx) => {
         if (idx === 0) return [curr];
         return [...prev, <Text key={`newline-${idx}`}>{'\n'}</Text>, curr];
@@ -250,20 +222,46 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
     inputStyle,
     ...rest
 }) => {
+    const overlayScrollRef = useRef<ScrollView>(null);
+
+    // Sync the overlay scroll directly with the TextInput's scroll offset.
+    const handleScroll = (
+        e: NativeSyntheticEvent<TextInputScrollEventData> & { nativeEvent: any }
+    ) => {
+        const offsetY =
+            e.nativeEvent.contentOffset?.y ?? e.nativeEvent.target?.scrollTop;
+        overlayScrollRef.current?.scrollTo({ y: offsetY, animated: false });
+    };
+
     return (
         <View style={[baseStyles.inputWrapper, wrapperStyle]}>
-            <Text
-                style={[baseStyles.inputTextOverlay, overlayStyle]}
+            <ScrollView
+                ref={overlayScrollRef}
+                style={[baseStyles.overlayContainer, overlayStyle]}
+                contentContainerStyle={{
+                    paddingHorizontal: 10,
+                    paddingVertical: 5,
+                    paddingBottom: 25, // Added extra bottom padding to match TextInput's scroll range
+                }}
+                scrollEnabled={false}
+                showsVerticalScrollIndicator={false}
                 pointerEvents="none"
             >
-                {renderHighlightedText(value)}
-            </Text>
+                <Text style={[baseStyles.inputTextOverlay, inputStyle]}>
+                    {renderHighlightedText(value)}
+                </Text>
+            </ScrollView>
             <TextInput
                 style={[baseStyles.input, inputStyle]}
                 value={value}
                 onChangeText={onChangeText}
                 placeholder={placeholder}
                 placeholderTextColor="gray"
+                multiline
+                scrollEnabled
+                textAlignVertical="top"
+                onScroll={handleScroll}
+                scrollEventThrottle={16}
                 {...rest}
             />
         </View>
@@ -272,28 +270,39 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
 
 const baseStyles = StyleSheet.create({
     inputWrapper: {
-        flex: 1,
         position: 'relative',
+        height: 200,
+        borderWidth: 1,
+        borderColor: 'gray',
     },
-    inputTextOverlay: {
+    overlayContainer: {
         position: 'absolute',
         top: 0,
         left: 0,
         right: 0,
+        bottom: 0,
+        overflow: 'hidden',
+    },
+    inputTextOverlay: {
         fontSize: 14,
         color: 'white',
-        // REMOVED fontFamily to prevent overriding child styles:
-        // fontFamily: 'Roboto_400Regular',
+        lineHeight: 20,
     },
     input: {
+        flex: 1,
         color: 'white',
         fontSize: 14,
         fontFamily: 'Roboto_400Regular',
         textAlignVertical: 'top',
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        lineHeight: 20,
     },
     plainText: {
         color: 'white',
         fontFamily: 'Roboto_400Regular',
+        fontSize: 14,
+        lineHeight: 20,
     },
     codeText: {
         fontFamily: 'monospace',

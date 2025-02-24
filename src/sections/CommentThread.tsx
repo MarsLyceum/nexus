@@ -6,12 +6,17 @@ import {
     TouchableOpacity,
     TextInput,
     StyleSheet,
+    Dimensions,
 } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { VoteActions } from './VoteActions';
 import { COLORS } from '../constants';
 import { useAppSelector, RootState, UserType } from '../redux';
+
+// New imports for markdown and link preview logic
+import { MarkdownRenderer, LinkPreview } from '../small-components';
+import { stripHtml, extractUrls } from '../utils';
 
 const styles = StyleSheet.create({
     commentContainer: {
@@ -164,6 +169,16 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
         }
     };
 
+    // Compute the inner width for link previews (similar to post item)
+    const { width: windowWidth } = Dimensions.get('window');
+    const commentInnerWidth = windowWidth - 30;
+
+    // Determine if the comment content is a pure link
+    const urlsInContent = extractUrls(comment.content);
+    const plainContent = stripHtml(comment.content);
+    const isJustLink =
+        urlsInContent.length === 1 && plainContent === urlsInContent[0];
+
     return (
         <View
             style={[
@@ -210,10 +225,23 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
                 {!collapsed && (
                     <>
                         <View style={styles.commentContentWrapper}>
-                            {/* Removed the TouchableOpacity wrapper to allow text selection */}
-                            <Text style={styles.commentText} selectable>
-                                {comment.content}
-                            </Text>
+                            {/* Using MarkdownRenderer and LinkPreview for comment content */}
+                            {comment.content !== '' && (
+                                <>
+                                    {!isJustLink && (
+                                        <MarkdownRenderer
+                                            text={comment.content}
+                                        />
+                                    )}
+                                    {urlsInContent.map((url, index) => (
+                                        <LinkPreview
+                                            key={index}
+                                            url={url}
+                                            containerWidth={commentInnerWidth}
+                                        />
+                                    ))}
+                                </>
+                            )}
                             <View style={styles.actionsRow}>
                                 <TouchableOpacity
                                     onPress={() => setIsReplying(true)}

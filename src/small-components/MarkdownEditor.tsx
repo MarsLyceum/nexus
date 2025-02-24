@@ -60,21 +60,22 @@ const styles = StyleSheet.create({
         top: 0,
         left: 0,
         right: 0,
-        paddingHorizontal: 10,
-        paddingVertical: 5,
+        // paddingHorizontal: 10,
+        // paddingVertical: 5,
         fontSize: 14,
         color: 'white',
         lineHeight: 20,
+        // paddingHorizontal: 10,
+        // paddingVertical: 5,
+        // borderRadius: 20,
         fontFamily: 'Roboto_400Regular',
     },
     input: {
         flex: 1,
         fontSize: 14,
-        color: 'rgba(255,255,255,0.01)', // nearly invisible text
+        color: 'transparent', // nearly invisible text
         caretColor: 'white',
         lineHeight: 20,
-        paddingHorizontal: 10,
-        paddingVertical: 5,
         borderRadius: 20,
         backgroundColor: 'transparent', // UPDATED: Transparent to show overlay beneath
         fontFamily: 'Roboto_400Regular',

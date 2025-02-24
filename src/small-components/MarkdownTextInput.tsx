@@ -1,9 +1,11 @@
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 import { COLORS } from '../constants';
 import { MarkdownInputBase, MarkdownInputBaseProps } from './MarkdownInputBase';
 
 export interface MarkdownTextInputProps extends MarkdownInputBaseProps {}
+
+const isWeb = Platform.OS === 'web';
 
 export const MarkdownTextInput: React.FC<MarkdownTextInputProps> = ({
     value,
@@ -35,27 +37,27 @@ const styles = StyleSheet.create({
     },
     inputTextOverlay: {
         position: 'absolute', // Ensure overlay is positioned absolutely
-        top: 0,
+        top: isWeb ? 0 : -5, // mobile adds some extra padding
         left: 0,
         right: 0,
         height: 40,
         fontSize: 14,
         color: 'white',
         textAlignVertical: 'center',
-        lineHeight: 40,
-        zIndex: 2,
+        lineHeight: 20,
+        zIndex: 1,
+        borderRadius: 20,
     },
     input: {
         height: 40,
         backgroundColor: 'transparent', // Keep transparent so wrapper's background shows
-        // paddingHorizontal: 10,
         borderRadius: 20,
         fontSize: 14,
         textAlignVertical: 'center',
-        // color: 'transparent',
-        color: 'black',
+        color: 'transparent',
+        paddingTop: 10,
         fontFamily: 'Roboto_400Regular',
         caretColor: 'white',
-        zIndex: 1,
+        zIndex: 2,
     },
 });

@@ -13,10 +13,7 @@ export const RichTextEditorMobile: React.FC<RichTextEditorMobileProps> = ({
     initialContent = '',
     onChange,
 }) => {
-    const editorHtml = useMemo(
-        () => getRichTextEditorHtml(initialContent),
-        [initialContent]
-    );
+    const editorHtml = useMemo(() => getRichTextEditorHtml(initialContent), []);
 
     const handleMessage = (event: any) => {
         const { data } = event.nativeEvent;
@@ -32,7 +29,6 @@ export const RichTextEditorMobile: React.FC<RichTextEditorMobileProps> = ({
                 const markdown = convertDeltaToMarkdownWithFencesAndFormatting(
                     delta.ops
                 );
-                console.log('Markdown from WebView:', markdown);
                 onChange(markdown);
                 return;
             }

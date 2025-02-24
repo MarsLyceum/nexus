@@ -35,7 +35,6 @@ export const RichTextEditorWeb: React.FC<RichTextEditorWebProps> = ({
                             convertDeltaToMarkdownWithFencesAndFormatting(
                                 delta.ops
                             );
-                        console.log('Markdown from iframe:', markdown);
                         onChange(markdown);
                         return;
                     }

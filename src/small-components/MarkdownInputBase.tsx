@@ -240,7 +240,6 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
                 style={[baseStyles.overlayContainer, overlayStyle]}
                 contentContainerStyle={{
                     paddingHorizontal: 10,
-                    paddingVertical: 5,
                     paddingBottom: 25, // Added extra bottom padding to match TextInput's scroll range
                 }}
                 scrollEnabled={false}
@@ -281,7 +280,6 @@ const baseStyles = StyleSheet.create({
         left: 0,
         right: 0,
         bottom: 0,
-        overflow: 'hidden',
     },
     inputTextOverlay: {
         fontSize: 14,
@@ -295,7 +293,6 @@ const baseStyles = StyleSheet.create({
         fontFamily: 'Roboto_400Regular',
         textAlignVertical: 'top',
         paddingHorizontal: 10,
-        paddingVertical: 5,
         lineHeight: 20,
     },
     plainText: {

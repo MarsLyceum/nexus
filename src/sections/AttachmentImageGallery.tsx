@@ -40,7 +40,7 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
     };
 
     // Calculate the image width based on container width (with a max fallback of 480).
-    const imageWidth = containerWidth < 480 ? containerWidth : 480;
+    const imageWidth = containerWidth < 360 ? containerWidth : 360;
     // Compute the image height based on its aspect ratio.
     const computedImageHeight = imageWidth / imageAspectRatio;
 

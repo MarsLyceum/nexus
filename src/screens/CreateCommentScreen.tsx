@@ -42,21 +42,27 @@ export const CreateCommentScreen: React.FC<CreateCommentScreenProps> = ({
     return (
         // @ts-expect-error web only types
         <SafeAreaView style={styles.safeContainer}>
+            {/* @ts-expect-error web only types */}
             <ScrollView
                 style={styles.scrollSection}
                 contentContainerStyle={styles.scrollContainerStyle}
             >
+                {/* @ts-expect-error web only types */}
                 <View style={styles.modalContainer}>
+                    {/* @ts-expect-error web only types */}
                     <Text style={styles.userInfo}>
                         {parentUser} • {getRelativeTime(parentDate)}
                     </Text>
+                    {/* @ts-expect-error web only types */}
                     <View style={styles.parentContentContainer}>
                         <MarkdownRenderer text={parentContent} preview />
                     </View>
                     <Pressable
                         onPress={() => setUseMarkdown((prev) => !prev)}
+                        // @ts-expect-error web only types
                         style={styles.toggleButton}
                     >
+                        {/* @ts-expect-error web only types */}
                         <Text style={styles.toggleButtonText}>
                             {useMarkdown
                                 ? 'Switch to Rich Text Editor'
@@ -64,6 +70,7 @@ export const CreateCommentScreen: React.FC<CreateCommentScreenProps> = ({
                         </Text>
                     </Pressable>
 
+                    {/* @ts-expect-error web only types */}
                     <View style={styles.editorContainer}>
                         {useMarkdown ? (
                             <MarkdownEditor
@@ -84,17 +91,22 @@ export const CreateCommentScreen: React.FC<CreateCommentScreenProps> = ({
                         onAttachmentPress={() => {}}
                         onRemoveAttachment={onRemoveAttachment}
                     />
+                    {/* @ts-expect-error web only types */}
                     <View style={styles.modalButtonRow}>
                         <Pressable
+                            // @ts-expect-error web only types
                             style={styles.modalButton}
                             onPress={() => navigation.goBack()}
                         >
+                            {/* @ts-expect-error web only types */}
                             <Text style={styles.modalButtonText}>Cancel</Text>
                         </Pressable>
                         <Pressable
+                            // @ts-expect-error web only types
                             style={styles.modalButton}
                             onPress={() => alert('making comment')}
                         >
+                            {/* @ts-expect-error web only types */}
                             <Text style={styles.modalButtonText}>Post</Text>
                         </Pressable>
                     </View>

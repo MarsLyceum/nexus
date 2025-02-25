@@ -1,22 +1,23 @@
 // CommentThread.tsx
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import {
     View,
     Text,
     TouchableOpacity,
-    TextInput,
     StyleSheet,
     Dimensions,
 } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
+import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { VoteActions } from './VoteActions';
 import { COLORS } from '../constants';
 import { useAppSelector, RootState, UserType } from '../redux';
+import { CurrentCommentContext } from '../providers';
 
 // New imports for markdown and link preview logic
 import { MarkdownRenderer, LinkPreview } from '../small-components';
-import { stripHtml, extractUrls } from '../utils';
+import { stripHtml, extractUrls, getRelativeTime } from '../utils';
 
 const styles = StyleSheet.create({
     commentContainer: {
@@ -141,8 +142,8 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
 }) => {
     const [voteCount, setVoteCount] = useState(comment.upvotes);
     const [collapsed, setCollapsed] = useState(comment.upvotes < -1);
-    const [isReplying, setIsReplying] = useState(false);
     const [replyText, setReplyText] = useState('');
+    const navigation = useNavigation();
     const [childReplies, setChildReplies] = useState<CommentNode[]>(
         comment.children
     );
@@ -152,22 +153,9 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
 
     const onUpvote = () => setVoteCount((prev) => prev + 1);
     const onDownvote = () => setVoteCount((prev) => prev - 1);
-
-    const handleSubmitReply = () => {
-        if (replyText.trim() !== '') {
-            const newReply: CommentNode = {
-                id: `reply-${Date.now()}`,
-                user: user?.username ?? '',
-                time: 'Just now',
-                upvotes: 0,
-                content: replyText,
-                children: [],
-            };
-            setChildReplies([...childReplies, newReply]);
-            setReplyText('');
-            setIsReplying(false);
-        }
-    };
+    const { setParentUser, setParentContent, setParentDate } = useContext(
+        CurrentCommentContext
+    );
 
     // Compute the inner width for link previews (similar to post item)
     const { width: windowWidth } = Dimensions.get('window');
@@ -211,7 +199,9 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
                     {opUser && opUser === comment.user && (
                         <Text style={styles.opBadge}>OP</Text>
                     )}
-                    <Text style={styles.commentTime}>{comment.time}</Text>
+                    <Text style={styles.commentTime}>
+                        {getRelativeTime(comment.time)}
+                    </Text>
                     {collapsed && (
                         <Text
                             style={styles.collapsedCommentText}
@@ -244,7 +234,13 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
                             )}
                             <View style={styles.actionsRow}>
                                 <TouchableOpacity
-                                    onPress={() => setIsReplying(true)}
+                                    onPress={() => {
+                                        setParentUser(comment.user);
+                                        setParentContent(comment.content);
+                                        setParentDate(comment.time);
+                                        // @ts-expect-error navigation
+                                        navigation.navigate('CreateComment');
+                                    }}
                                     style={styles.replyIcon}
                                 >
                                     <Icon
@@ -262,27 +258,6 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
                                     />
                                 </View>
                             </View>
-                            {isReplying && (
-                                <View style={styles.replyInputContainer}>
-                                    <TextInput
-                                        style={styles.replyInput}
-                                        value={replyText}
-                                        onChangeText={setReplyText}
-                                        placeholder="Write a reply..."
-                                        placeholderTextColor={
-                                            COLORS.InactiveText
-                                        }
-                                    />
-                                    <TouchableOpacity
-                                        onPress={handleSubmitReply}
-                                        style={styles.sendReplyButton}
-                                    >
-                                        <Text style={styles.sendReplyText}>
-                                            Send
-                                        </Text>
-                                    </TouchableOpacity>
-                                </View>
-                            )}
                         </View>
                         {childReplies.map((child) => (
                             // Pass the opUser prop to nested CommentThreads as well

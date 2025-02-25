@@ -252,7 +252,7 @@ export const PostScreen: React.FC<PostScreenProps> = ({
         {
             id: 'comment-1',
             user: 'myersthekid',
-            time: '6h',
+            time: '2025-02-25T17:05:05Z',
             upvotes: 107,
             content:
                 "I hear people all the time say they've done a 360 in their life instead of a 180. Haha",
@@ -260,7 +260,7 @@ export const PostScreen: React.FC<PostScreenProps> = ({
                 {
                     id: 'comment-2',
                     user: 'FrostySand8997',
-                    time: '5h',
+                    time: '2025-02-25T17:05:05Z',
                     upvotes: 30,
                     content:
                         'This trashy girl once told me and my wife that she did a 380. We still laugh about her dumb ass 20 years later... so u spun around all the way plus a little bit?',
@@ -268,7 +268,7 @@ export const PostScreen: React.FC<PostScreenProps> = ({
                         {
                             id: 'comment-3',
                             user: 'myersthekid',
-                            time: '5h',
+                            time: '2025-02-25T17:05:05Z',
                             upvotes: 12,
                             content:
                                 'Okay, but a 380 is actually super impressive hahaha',

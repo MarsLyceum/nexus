@@ -122,9 +122,11 @@ const styles = StyleSheet.create({
 export type CommentNode = {
     id: string;
     user: string;
-    time: string;
+    postedAt: string;
+    edited: false;
     upvotes: number;
     content: string;
+    parentCommentId: null;
     children: CommentNode[];
 };
 
@@ -200,7 +202,7 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
                         <Text style={styles.opBadge}>OP</Text>
                     )}
                     <Text style={styles.commentTime}>
-                        {getRelativeTime(comment.time)}
+                        {getRelativeTime(comment.postedAt)}
                     </Text>
                     {collapsed && (
                         <Text
@@ -237,7 +239,7 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
                                     onPress={() => {
                                         setParentUser(comment.user);
                                         setParentContent(comment.content);
-                                        setParentDate(comment.time);
+                                        setParentDate(comment.postedAt);
                                         // @ts-expect-error navigation
                                         navigation.navigate('CreateComment');
                                     }}

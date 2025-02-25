@@ -9,8 +9,12 @@ import {
     Text,
 } from 'react-native';
 import { NavigationProp, RouteProp } from '@react-navigation/native';
-import { useQuery } from '@apollo/client';
-import { FETCH_POST_QUERY, FETCH_USER_QUERY } from '../queries';
+import { useQuery, useApolloClient } from '@apollo/client';
+import {
+    FETCH_POST_QUERY,
+    FETCH_USER_QUERY,
+    FETCH_POST_COMMENTS_QUERY,
+} from '../queries';
 import { PostItem, CommentThread, CommentNode } from '../sections';
 import { COLORS } from '../constants';
 import { CreateContentButton } from '../buttons';
@@ -194,6 +198,18 @@ export const PostScreen: React.FC<PostScreenProps> = ({
         skip: !!post, // skip if a post was already passed in
     });
 
+    const {
+        data: commentsData,
+        loading: commentsLoading,
+        error: commentsError,
+    } = useQuery(FETCH_POST_COMMENTS_QUERY, {
+        variables: {
+            postId: post ? post.id : id?.toString(),
+            offset: 0,
+            limit: 10,
+        },
+    });
+
     // Compute the user id from the passed post or fetched post.
     const computedUserId =
         post?.postedByUserId ||
@@ -248,37 +264,56 @@ export const PostScreen: React.FC<PostScreenProps> = ({
     }, [postData?.user, postData?.content, feedPost?.postedAt]);
 
     // Always call these state hooks.
-    const [comments, setComments] = useState<CommentNode[]>([
-        {
-            id: 'comment-1',
-            user: 'myersthekid',
-            time: '2025-02-25T17:05:05Z',
-            upvotes: 107,
-            content:
-                "I hear people all the time say they've done a 360 in their life instead of a 180. Haha",
-            children: [
-                {
-                    id: 'comment-2',
-                    user: 'FrostySand8997',
-                    time: '2025-02-25T17:05:05Z',
-                    upvotes: 30,
-                    content:
-                        'This trashy girl once told me and my wife that she did a 380. We still laugh about her dumb ass 20 years later... so u spun around all the way plus a little bit?',
-                    children: [
-                        {
-                            id: 'comment-3',
-                            user: 'myersthekid',
-                            time: '2025-02-25T17:05:05Z',
-                            upvotes: 12,
-                            content:
-                                'Okay, but a 380 is actually super impressive hahaha',
-                            children: [],
-                        },
-                    ],
-                },
-            ],
-        },
-    ]);
+    const [comments, setComments] = useState<CommentNode[]>([]);
+
+    const client = useApolloClient();
+
+    useEffect(() => {
+        async function fetchUsersForComments() {
+            if (commentsData?.fetchPostComments) {
+                // Helper function that fetches user for a comment and its nested comments recursively.
+                // eslint-disable-next-line no-inner-declarations
+                const fetchUserForComment = async (
+                    comment: any
+                ): Promise<any> => {
+                    // Fetch the user details for this comment.
+                    const { data: commentUserData } = await client.query({
+                        query: FETCH_USER_QUERY,
+                        variables: { userId: comment.postedByUserId },
+                    });
+
+                    // Check if there are nested comments and process them recursively.
+                    let childrenWithUsers = [];
+                    if (comment.children && comment.children.length > 0) {
+                        childrenWithUsers = await Promise.all(
+                            comment.children.map((nestedComment: any) =>
+                                fetchUserForComment(nestedComment)
+                            )
+                        );
+                    }
+
+                    // Return the comment with the fetched username and processed nested comments.
+                    return {
+                        ...comment,
+                        user: commentUserData?.fetchUser?.username || 'Unknown',
+                        // Replace the nestedComments with the processed ones.
+                        children: childrenWithUsers,
+                    };
+                };
+
+                // Process all top-level comments recursively.
+                const commentsWithUser = await Promise.all(
+                    commentsData.fetchPostComments.map((comment: any) =>
+                        fetchUserForComment(comment)
+                    )
+                );
+                setComments(commentsWithUser);
+            }
+        }
+
+        // Call the async function.
+        void fetchUsersForComments();
+    }, [commentsData, client]);
 
     // If the post query is still loading, render the skeleton screen.
     if (loading) {

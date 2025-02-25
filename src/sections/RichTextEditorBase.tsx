@@ -49,7 +49,10 @@ const spoilerExtension = {
 // Register the extension with marked.
 marked.use({ extensions: [spoilerExtension] });
 
-export function getRichTextEditorHtml(initialContent: string = ''): string {
+export function getRichTextEditorHtml(
+    placeholder: string = 'Start typing...',
+    initialContent: string = ''
+): string {
     // Convert the initial markdown to HTML.
     const initialHTML = initialContent ? marked(initialContent) : '<p><br></p>';
     return `<!DOCTYPE html>
@@ -228,7 +231,7 @@ export function getRichTextEditorHtml(initialContent: string = ''): string {
               handlers: toolbarHandlers
             }
           },
-          placeholder: "Start typing..."
+          placeholder: "${placeholder}"
         });
       
         // Matcher for <span class="spoiler">

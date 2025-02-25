@@ -5,15 +5,20 @@ import { getRichTextEditorHtml } from './RichTextEditorBase';
 import { convertDeltaToMarkdownWithFencesAndFormatting } from '../utils';
 
 interface RichTextEditorMobileProps {
+    placeholder?: string;
     initialContent?: string;
     onChange: (markdown: string) => void;
 }
 
 export const RichTextEditorMobile: React.FC<RichTextEditorMobileProps> = ({
+    placeholder = '',
     initialContent = '',
     onChange,
 }) => {
-    const editorHtml = useMemo(() => getRichTextEditorHtml(initialContent), []);
+    const editorHtml = useMemo(
+        () => getRichTextEditorHtml(placeholder, initialContent),
+        []
+    );
 
     const handleMessage = (event: any) => {
         const { data } = event.nativeEvent;

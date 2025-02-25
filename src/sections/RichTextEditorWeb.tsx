@@ -4,17 +4,19 @@ import { getRichTextEditorHtml } from './RichTextEditorBase';
 import { convertDeltaToMarkdownWithFencesAndFormatting } from '../utils';
 
 interface RichTextEditorWebProps {
+    placeholder?: string;
     initialContent?: string;
     onChange: (markdown: string) => void;
 }
 
 export const RichTextEditorWeb: React.FC<RichTextEditorWebProps> = ({
+    placeholder = '',
     initialContent = '',
     onChange,
 }) => {
     // Compute srcDoc only once when the component mounts.
     const srcDoc = useMemo(
-        () => getRichTextEditorHtml(initialContent),
+        () => getRichTextEditorHtml(placeholder, initialContent),
         [] // removed initialContent dependency to avoid reloading
     );
 

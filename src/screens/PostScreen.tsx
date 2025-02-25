@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import {
     View,
     ScrollView,
@@ -11,12 +11,12 @@ import {
 import { NavigationProp, RouteProp } from '@react-navigation/native';
 import { useQuery } from '@apollo/client';
 import { FETCH_POST_QUERY, FETCH_USER_QUERY } from '../queries';
-import { PostItem, CommentThread, CommentNode, Attachment } from '../sections';
+import { PostItem, CommentThread, CommentNode } from '../sections';
 import { COLORS } from '../constants';
 import { CreateContentButton } from '../buttons';
-import { useAppSelector, RootState, UserType } from '../redux';
 import { getRelativeTime } from '../utils';
 import { Post, PostData } from '../types';
+import { CurrentCommentContext } from '../providers';
 
 type RootStackParamList = {
     PostScreen: { id?: number; post?: Post };
@@ -208,6 +208,45 @@ export const PostScreen: React.FC<PostScreenProps> = ({
         skip: computedUserId === '',
     });
 
+    // Use the provided post if available; otherwise, use the fetched post.
+    const feedPost: Post | undefined = post || data?.fetchPost;
+
+    // Format the time using our utility function.
+    const rawTime = feedPost?.postedAt || feedPost?.time || '';
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    const formattedTime = rawTime ? getRelativeTime(rawTime) : 'Unknown time';
+
+    // Resolve the username from the fetched user data.
+    const resolvedUsername = userData?.fetchUser?.username || 'Username';
+
+    // Map the post fields into our local PostData type.
+    const postData: PostData = {
+        id: feedPost?.id ?? '',
+        user: resolvedUsername,
+        time: formattedTime,
+        title: feedPost?.title ?? '',
+        flair: feedPost?.flair || '',
+        upvotes: feedPost?.upvotes ?? 0,
+        commentsCount: feedPost?.commentsCount ?? 0,
+        content: feedPost?.content ?? '',
+        attachmentUrls: feedPost?.attachmentUrls || [],
+    };
+    const { setParentUser, setParentContent, setParentDate } = useContext(
+        CurrentCommentContext
+    );
+
+    useEffect(() => {
+        if (postData?.user) {
+            setParentUser(postData.user);
+        }
+        if (postData?.content) {
+            setParentContent(postData.content);
+        }
+        if (feedPost?.postedAt) {
+            setParentDate(feedPost.postedAt);
+        }
+    }, [postData?.user, postData?.content, feedPost?.postedAt]);
+
     // Always call these state hooks.
     const [comments, setComments] = useState<CommentNode[]>([
         {
@@ -240,13 +279,6 @@ export const PostScreen: React.FC<PostScreenProps> = ({
             ],
         },
     ]);
-    const [modalVisible, setModalVisible] = useState(false);
-    const [newCommentContent, setNewCommentContent] = useState('');
-    // NEW: Attachments state for CreateContentButton
-    const [attachments, setAttachments] = useState<Attachment[]>([]);
-    const user: UserType = useAppSelector(
-        (state: RootState) => state.user.user
-    );
 
     // If the post query is still loading, render the skeleton screen.
     if (loading) {
@@ -289,45 +321,21 @@ export const PostScreen: React.FC<PostScreenProps> = ({
         );
     }
 
-    // Use the provided post if available; otherwise, use the fetched post.
-    const feedPost: Post = post || data.fetchPost;
-
-    // Format the time using our utility function.
-    const rawTime = feedPost.postedAt || feedPost.time || '';
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    const formattedTime = rawTime ? getRelativeTime(rawTime) : 'Unknown time';
-
-    // Resolve the username from the fetched user data.
-    const resolvedUsername = userData?.fetchUser?.username || 'Username';
-
-    // Map the post fields into our local PostData type.
-    const postData: PostData = {
-        id: feedPost.id,
-        user: resolvedUsername,
-        time: formattedTime,
-        title: feedPost.title,
-        flair: feedPost.flair || '',
-        upvotes: feedPost.upvotes,
-        commentsCount: feedPost.commentsCount,
-        content: feedPost.content,
-        attachmentUrls: feedPost.attachmentUrls || [],
-    };
-
-    const handleCreateComment = () => {
-        if (newCommentContent.trim() !== '') {
-            const newComment: CommentNode = {
-                id: `comment-new-${Date.now()}`,
-                user: user?.username ?? '',
-                time: 'Just now',
-                upvotes: 0,
-                content: newCommentContent,
-                children: [],
-            };
-            setComments((prevComments) => [newComment, ...prevComments]);
-            setNewCommentContent('');
-            setModalVisible(false);
-        }
-    };
+    // const handleCreateComment = () => {
+    //     if (newCommentContent.trim() !== '') {
+    //         const newComment: CommentNode = {
+    //             id: `comment-new-${Date.now()}`,
+    //             user: user?.username ?? '',
+    //             time: 'Just now',
+    //             upvotes: 0,
+    //             content: newCommentContent,
+    //             children: [],
+    //         };
+    //         setComments((prevComments) => [newComment, ...prevComments]);
+    //         setNewCommentContent('');
+    //         setModalVisible(false);
+    //     }
+    // };
 
     const ContainerComponent = isWeb ? View : KeyboardAvoidingView;
     const containerProps = isWeb
@@ -385,14 +393,9 @@ export const PostScreen: React.FC<PostScreenProps> = ({
                     {/* @ts-expect-error web only types */}
                     <View style={styles.createContentButtonContainer}>
                         <CreateContentButton
-                            modalVisible={modalVisible}
-                            setModalVisible={setModalVisible}
-                            contentText={newCommentContent}
-                            setContentText={setNewCommentContent}
-                            handleCreate={handleCreateComment}
                             buttonText="Write a comment..."
-                            attachments={attachments}
-                            setAttachments={setAttachments}
+                            // @ts-expect-error navigation
+                            onPress={() => navigation.navigate('CreateComment')}
                         />
                     </View>
                 </View>

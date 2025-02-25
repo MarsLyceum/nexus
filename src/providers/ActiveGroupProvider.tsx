@@ -29,9 +29,7 @@ interface ActiveGroupProviderProps {
 export const ActiveGroupProvider: FC<ActiveGroupProviderProps> = ({
     children,
 }) => {
-    const [activeGroup, setActiveGroup] = useState<Group | undefined>(
-        
-    );
+    const [activeGroup, setActiveGroup] = useState<Group | undefined>();
     const [activeChannel, setActiveChannel] = useState<
         GroupChannel | undefined
     >();

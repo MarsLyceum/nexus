@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { NavigationProp, RouteProp } from '@react-navigation/native';
 import { useQuery, useApolloClient } from '@apollo/client';
+import { useAppDispatch, loadUser } from '../redux';
 import {
     FETCH_POST_QUERY,
     FETCH_USER_QUERY,
@@ -209,6 +210,11 @@ export const PostScreen: React.FC<PostScreenProps> = ({
             limit: 10,
         },
     });
+    const dispatch = useAppDispatch();
+
+    useEffect(() => {
+        dispatch(loadUser());
+    }, [dispatch]);
 
     // Compute the user id from the passed post or fetched post.
     const computedUserId =
@@ -247,11 +253,13 @@ export const PostScreen: React.FC<PostScreenProps> = ({
         content: feedPost?.content ?? '',
         attachmentUrls: feedPost?.attachmentUrls || [],
     };
-    const { setParentUser, setParentContent, setParentDate } = useContext(
-        CurrentCommentContext
-    );
+    const { setParentUser, setParentContent, setParentDate, setPostId } =
+        useContext(CurrentCommentContext);
 
     useEffect(() => {
+        if (postData?.id) {
+            setPostId(postData.id);
+        }
         if (postData?.user) {
             setParentUser(postData.user);
         }
@@ -261,7 +269,7 @@ export const PostScreen: React.FC<PostScreenProps> = ({
         if (feedPost?.postedAt) {
             setParentDate(feedPost.postedAt);
         }
-    }, [postData?.user, postData?.content, feedPost?.postedAt]);
+    }, [postData?.id, postData?.user, postData?.content, feedPost?.postedAt]);
 
     // Always call these state hooks.
     const [comments, setComments] = useState<CommentNode[]>([]);

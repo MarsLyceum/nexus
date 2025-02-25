@@ -16,6 +16,8 @@ import { MarkdownRenderer } from '../small-components/MarkdownRenderer';
 import { RichTextEditor } from '../sections/RichTextEditor';
 import { getRelativeTime } from '../utils';
 import { CurrentCommentContext } from '../providers';
+import { useCreateComment } from '../hooks';
+import { useAppSelector, RootState, UserType } from '../redux';
 
 type RootStackParamList = {
     CreateComment: Record<string, unknown>;
@@ -31,12 +33,53 @@ export const CreateCommentScreen: React.FC<CreateCommentScreenProps> = ({
     const [useMarkdown, setUseMarkdown] = useState(false);
     const [attachments, setAttachments] = useState<Attachment[]>([]);
     const [newCommentContent, setNewCommentContent] = useState('');
-    const { parentUser, parentContent, parentDate } = useContext(
-        CurrentCommentContext
+    const { parentUser, parentContent, parentDate, parentCommentId, postId } =
+        useContext(CurrentCommentContext);
+    const user: UserType = useAppSelector(
+        (state: RootState) => state.user.user
     );
 
     const onRemoveAttachment = (attachmentId: string) => {
         setAttachments((prev) => prev.filter((att) => att.id !== attachmentId));
+    };
+
+    const { createComment, creatingComment } = useCreateComment(() => {
+        setAttachments([]); // Clear attachments on success
+    });
+
+    const handleCreateComment = async () => {
+        console.log('creating comment');
+        console.log('user:', user);
+        console.log(
+            'postId:',
+            postId,
+            'user.id:',
+            user?.id,
+            'creatingComment:',
+            creatingComment
+        );
+        if (!postId || !user?.id || creatingComment) return;
+        console.log('creating comment with variables:', {
+            postedByUserId: user.id,
+            postId,
+            content: newCommentContent,
+            attachments: attachments.map((att) => att.file),
+            parentCommentId,
+            hasChildren: false,
+            children: [],
+            upvotes: 1,
+        });
+        await createComment({
+            postedByUserId: user.id,
+            postId,
+            content: newCommentContent,
+            attachments: attachments.map((att) => att.file),
+            parentCommentId,
+            hasChildren: false,
+            children: [],
+            upvotes: 1,
+        });
+        navigation.goBack();
     };
 
     return (
@@ -104,7 +147,7 @@ export const CreateCommentScreen: React.FC<CreateCommentScreenProps> = ({
                         <Pressable
                             // @ts-expect-error web only types
                             style={styles.modalButton}
-                            onPress={() => alert('making comment')}
+                            onPress={handleCreateComment}
                         >
                             {/* @ts-expect-error web only types */}
                             <Text style={styles.modalButtonText}>Post</Text>

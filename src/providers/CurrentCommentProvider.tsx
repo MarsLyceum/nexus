@@ -7,6 +7,10 @@ export type CurrentCommentContextType = {
     setParentContent: (parentContent: string) => void;
     parentDate: string;
     setParentDate: (parentDate: string) => void;
+    postId: string;
+    setPostId: (postId: string) => void;
+    parentCommentId: string;
+    setParentCommentId: (parentCommentId: string | null) => void;
 };
 
 const defaultContext: CurrentCommentContextType = {
@@ -16,6 +20,10 @@ const defaultContext: CurrentCommentContextType = {
     setParentContent: () => {},
     parentDate: '',
     setParentDate: () => {},
+    postId: '',
+    setPostId: () => {},
+    parentCommentId: '',
+    setParentCommentId: () => {},
 };
 
 export const CurrentCommentContext =
@@ -27,6 +35,8 @@ export const CurrentCommentProvider: FC<{ children: React.ReactNode }> = ({
     const [parentUser, setParentUser] = useState<string>('');
     const [parentContent, setParentContent] = useState<string>('');
     const [parentDate, setParentDate] = useState<string>('');
+    const [postId, setPostId] = useState<string>('');
+    const [parentCommentId, setParentCommentId] = useState<string | null>(null);
 
     return useMemo(
         () => (
@@ -38,6 +48,10 @@ export const CurrentCommentProvider: FC<{ children: React.ReactNode }> = ({
                     setParentContent,
                     parentDate,
                     setParentDate,
+                    postId,
+                    setPostId,
+                    parentCommentId,
+                    setParentCommentId,
                 }}
             >
                 {children}
@@ -50,6 +64,10 @@ export const CurrentCommentProvider: FC<{ children: React.ReactNode }> = ({
             setParentContent,
             parentDate,
             setParentDate,
+            postId,
+            setPostId,
+            parentCommentId,
+            setParentCommentId,
         ]
     );
 };

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useCallback } from 'react';
 import {
     Text,
     StyleSheet,
@@ -230,29 +230,42 @@ export const MarkdownRenderer: React.FC<{
 }> = ({ text, preview }) => {
     const [contentHeight, setContentHeight] = React.useState(0);
     const [expanded, setExpanded] = React.useState(false);
-    const htmlContent = `<div>${mdInstance.render(text)}</div>`;
+    const htmlContent = useMemo(
+        () => `<div>${mdInstance.render(text)}</div>`,
+        [text]
+    );
     const contentWidth = Dimensions.get('window').width;
+
+    const handleOnLayout = useCallback(
+        (event: any) => {
+            setContentHeight(event.nativeEvent.layout.height);
+        },
+        [setContentHeight]
+    );
+
+    const baseStyle = useMemo(() => ({ marginTop: 0, paddingTop: 0 }), []);
+    const tagsStyles = useMemo(
+        () => ({
+            div: styles.document,
+            code: styles.code_inline,
+            blockquote: styles.blockquote,
+            h1: styles.heading1,
+        }),
+        []
+    );
+    const defaultTextProps = useMemo(() => ({ selectable: true }), []);
 
     // Full content element used for measuring height
     const fullContent = (
-        <View
-            onLayout={(event) =>
-                setContentHeight(event.nativeEvent.layout.height)
-            }
-        >
+        <View onLayout={handleOnLayout}>
             <RenderHTML
                 contentWidth={contentWidth}
                 source={{ html: htmlContent }}
                 renderers={customRenderers}
                 customHTMLElementModels={customHTMLElementModels}
-                baseStyle={{ marginTop: 0, paddingTop: 0 }}
-                tagsStyles={{
-                    div: styles.document,
-                    code: styles.code_inline,
-                    blockquote: styles.blockquote,
-                    h1: styles.heading1,
-                }}
-                defaultTextProps={{ selectable: true }}
+                baseStyle={baseStyle}
+                tagsStyles={tagsStyles}
+                defaultTextProps={defaultTextProps}
             />
         </View>
     );

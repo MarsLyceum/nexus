@@ -155,9 +155,12 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
 
     const onUpvote = () => setVoteCount((prev) => prev + 1);
     const onDownvote = () => setVoteCount((prev) => prev - 1);
-    const { setParentUser, setParentContent, setParentDate } = useContext(
-        CurrentCommentContext
-    );
+    const {
+        setParentUser,
+        setParentContent,
+        setParentDate,
+        setParentCommentId,
+    } = useContext(CurrentCommentContext);
 
     // Compute the inner width for link previews (similar to post item)
     const { width: windowWidth } = Dimensions.get('window');
@@ -240,6 +243,7 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
                                         setParentUser(comment.user);
                                         setParentContent(comment.content);
                                         setParentDate(comment.postedAt);
+                                        setParentCommentId(comment.id);
                                         // @ts-expect-error navigation
                                         navigation.navigate('CreateComment');
                                     }}

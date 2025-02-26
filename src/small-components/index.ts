@@ -1,5 +1,4 @@
 export * from './ChatInput';
-export * from '../screens/CreateCommentScreen';
 export * from './CreateEventCommentModal';
 export * from './CreatePostModal';
 export * from './EmbedPreview';
@@ -13,4 +12,6 @@ export * from './MarkdownRenderer';
 export * from './MarkdownTextInput';
 export * from './MessageItem';
 export * from './MessageList';
+export * from './SkeletonComment';
 export * from './SkeletonMessageItem';
+export * from './SkeletonPostItem';

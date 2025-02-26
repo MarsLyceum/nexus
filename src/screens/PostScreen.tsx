@@ -1,4 +1,11 @@
-import React, { useState, useContext, useEffect, useCallback } from 'react';
+import React, {
+    useState,
+    useContext,
+    useEffect,
+    useCallback,
+    useMemo,
+    useRef,
+} from 'react';
 import {
     View,
     ScrollView,
@@ -36,19 +43,16 @@ const BOTTOM_INPUT_HEIGHT = 60;
 const isWeb = Platform.OS === 'web';
 
 const styles = StyleSheet.create({
-    // @ts-expect-error web only type
     safeContainer: {
         flex: 1,
         backgroundColor: COLORS.SecondaryBackground,
         paddingTop: 15,
         ...(isWeb && { height: '100vh', display: 'flex' }),
     },
-    container: {
-        flex: 1,
-    },
+    container: { flex: 1 },
     mainContainer: {
         flex: 1,
-        position: 'relative', // Added to allow absolute positioning of the button
+        position: 'relative',
     },
     scrollSection: isWeb
         ? {
@@ -64,7 +68,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: 15,
         paddingBottom: 20,
     },
-    // New style for the CreateContentButton container
     createContentButtonContainer: {
         position: 'absolute',
         bottom: 0,
@@ -75,12 +78,11 @@ const styles = StyleSheet.create({
 });
 
 /* =======================
-   Skeleton Components
-   ======================= */
+     Skeleton Components
+     ======================= */
 
 const SkeletonPostItem: React.FC = () => (
     <View style={skeletonStyles.container}>
-        {/* Header with avatar and user info */}
         <View style={skeletonStyles.header}>
             <View style={skeletonStyles.avatar} />
             <View style={skeletonStyles.userInfo}>
@@ -88,9 +90,7 @@ const SkeletonPostItem: React.FC = () => (
                 <View style={skeletonStyles.time} />
             </View>
         </View>
-        {/* Title */}
         <View style={skeletonStyles.title} />
-        {/* Content lines */}
         <View style={skeletonStyles.contentLine} />
         <View style={[skeletonStyles.contentLine, { width: '80%' }]} />
         <View style={[skeletonStyles.contentLine, { width: '90%' }]} />
@@ -183,47 +183,222 @@ const skeletonCommentStyles = StyleSheet.create({
 });
 
 /* =======================
-   PostScreen Component
-   ======================= */
+     Normalized Comments Setup
+     ======================= */
+
+type NormalizedComments = {
+    byId: {
+        [id: string]: CommentNode & { childrenIds: string[] };
+    };
+    rootIds: string[];
+};
+
+// Helper: flatten nested comments (drop nested children)
+const flattenComments = (comments: CommentNode[]): CommentNode[] => {
+    const flat: CommentNode[] = [];
+    const traverse = (comment: CommentNode) => {
+        flat.push({ ...comment, children: [] });
+        comment.children?.forEach(traverse);
+    };
+    comments.forEach(traverse);
+    return flat;
+};
+
+/* =======================
+     Cached Tree Builder
+     ======================= */
+
+// This hook builds the comment tree from normalized state.
+// It reuses cached tree nodes if the underlying normalized node hasn’t changed.
+const useCommentTree = (normalized: NormalizedComments): CommentNode[] => {
+    const treeCacheRef = useRef(
+        new Map<
+            string,
+            {
+                normalized: CommentNode & { childrenIds: string[] };
+                treeNode: CommentNode;
+            }
+        >()
+    );
+
+    const buildTree = useCallback(
+        (id: string, norm: NormalizedComments): CommentNode => {
+            const current = norm.byId[id];
+            const children = current.childrenIds.map((childId) =>
+                buildTree(childId, norm)
+            );
+            const treeNode: CommentNode = { ...current, children };
+
+            treeCacheRef.current.set(id, { normalized: current, treeNode });
+            return treeNode;
+        },
+        []
+    );
+
+    return useMemo(
+        () => normalized.rootIds.map((id) => buildTree(id, normalized)),
+        [normalized, buildTree]
+    );
+};
+
+/* =======================
+     PostScreen Component
+     ======================= */
 
 export const PostScreen: React.FC<PostScreenProps> = ({
     route,
     navigation,
 }) => {
-    // Destructure the post (if available) and the id from the route params.
     const { id, post } = route.params;
-    const [
-        loadMoreCommentsParentCommentId,
-        setLoadMoreCommentsParentCommentId,
-    ] = useState<string | null>(null);
+    const dispatch = useAppDispatch();
+    const client = useApolloClient();
 
-    // Fetch the post if it wasn’t passed in via navigation.
-    const { data, loading, error } = useQuery(FETCH_POST_QUERY, {
-        variables: {
-            postId: post ? post.id : id?.toString(),
-        },
-        skip: !!post, // skip if a post was already passed in
-    });
-
+    // Load initial root comments.
     const {
-        data: commentsData,
-        loading: commentsLoading,
-        error: commentsError,
+        data: initialCommentsData,
+        loading: initialCommentsLoading,
+        error: initialCommentsError,
     } = useQuery(FETCH_POST_COMMENTS_QUERY, {
         variables: {
             postId: post ? post.id : id?.toString(),
             offset: 0,
             limit: 10,
-            parentCommentId: loadMoreCommentsParentCommentId,
         },
     });
-    const dispatch = useAppDispatch();
 
+    // This state triggers loading more (child) comments.
+    const [
+        loadMoreCommentsParentCommentId,
+        setLoadMoreCommentsParentCommentId,
+    ] = useState<string | null>(null);
+
+    // Normalized comments state.
+    const [normalizedComments, setNormalizedComments] =
+        useState<NormalizedComments>({
+            byId: {},
+            rootIds: [],
+        });
+
+    // Helper to update normalized state with new comments.
+    const updateNormalizedState = async (newCommentsData: CommentNode[]) => {
+        const flatComments = flattenComments(newCommentsData);
+        const commentsWithUser = await Promise.all(
+            flatComments.map(async (comment) => {
+                const { data: commentUserData } = await client.query({
+                    query: FETCH_USER_QUERY,
+                    variables: { userId: comment.postedByUserId },
+                });
+                return {
+                    ...comment,
+                    user: commentUserData?.fetchUser?.username || 'Unknown',
+                };
+            })
+        );
+        setNormalizedComments((prev) => {
+            const newById = { ...prev.byId };
+            const newRootIds = [...prev.rootIds];
+            commentsWithUser.forEach((comment) => {
+                const newChildrenIds =
+                    comment.children && comment.children.length > 0
+                        ? comment.children.map((child) => child.id)
+                        : [];
+                const existing = prev.byId[comment.id];
+                if (existing) {
+                    const sameChildren =
+                        existing.childrenIds.length === newChildrenIds.length &&
+                        existing.childrenIds.every(
+                            (id, i) => id === newChildrenIds[i]
+                        );
+                    if (
+                        !sameChildren ||
+                        existing.content !== comment.content ||
+                        existing.user !== comment.user
+                    ) {
+                        newById[comment.id] = {
+                            ...comment,
+                            childrenIds: newChildrenIds,
+                        };
+                    } else {
+                        newById[comment.id] = existing;
+                    }
+                } else {
+                    newById[comment.id] = {
+                        ...comment,
+                        childrenIds: newChildrenIds,
+                    };
+                }
+                // **Force update the parent if a new child was added**
+                if (comment.parentCommentId) {
+                    const parent =
+                        newById[comment.parentCommentId] ||
+                        prev.byId[comment.parentCommentId];
+                    if (parent && !parent.childrenIds.includes(comment.id)) {
+                        const _newChildrenIds = [
+                            ...parent.childrenIds,
+                            comment.id,
+                        ];
+                        newById[comment.parentCommentId] = {
+                            ...parent,
+                            childrenIds: _newChildrenIds,
+                        };
+                    }
+                } else {
+                    // For root comments, add their id if not already present.
+                    if (!newRootIds.includes(comment.id)) {
+                        newRootIds.push(comment.id);
+                    }
+                }
+            });
+
+            return { byId: newById, rootIds: newRootIds };
+        });
+    };
+
+    // Update normalized state with initial comments.
     useEffect(() => {
-        dispatch(loadUser());
-    }, [dispatch]);
+        if (initialCommentsData && initialCommentsData.fetchPostComments) {
+            updateNormalizedState(initialCommentsData.fetchPostComments);
+        }
+    }, [initialCommentsData]);
 
-    // Compute the user id from the passed post or fetched post.
+    // When loadMoreCommentsParentCommentId is set, fetch additional comments.
+    useEffect(() => {
+        if (loadMoreCommentsParentCommentId) {
+            client
+                .query({
+                    query: FETCH_POST_COMMENTS_QUERY,
+                    variables: {
+                        postId: post ? post.id : id?.toString(),
+                        offset: 0,
+                        limit: 10,
+                        parentCommentId: loadMoreCommentsParentCommentId,
+                    },
+                    fetchPolicy: 'network-only',
+                })
+                .then((result) => {
+                    if (result.data && result.data.fetchPostComments) {
+                        updateNormalizedState(result.data.fetchPostComments);
+                    }
+                    setLoadMoreCommentsParentCommentId(null);
+                })
+                .catch((err) => {
+                    console.error('Load more error:', err);
+                    setLoadMoreCommentsParentCommentId(null);
+                });
+        }
+    }, [loadMoreCommentsParentCommentId, client, id, post]);
+
+    // Handle load more: defined here so it can be passed to CommentThread.
+    const handleLoadMore = useCallback((parentCommentId: string) => {
+        setLoadMoreCommentsParentCommentId(parentCommentId);
+    }, []);
+
+    // Post and user queries.
+    const { data, loading, error } = useQuery(FETCH_POST_QUERY, {
+        variables: { postId: post ? post.id : id?.toString() },
+        skip: !!post,
+    });
+
     const computedUserId =
         post?.postedByUserId ||
         post?.user ||
@@ -231,24 +406,16 @@ export const PostScreen: React.FC<PostScreenProps> = ({
         data?.fetchPost?.user ||
         '';
 
-    // Fetch user details based on the computed user id.
     const { data: userData } = useQuery(FETCH_USER_QUERY, {
         variables: { userId: computedUserId },
         skip: computedUserId === '',
     });
 
-    // Use the provided post if available; otherwise, use the fetched post.
     const feedPost: Post | undefined = post || data?.fetchPost;
-
-    // Format the time using our utility function.
     const rawTime = feedPost?.postedAt || feedPost?.time || '';
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const formattedTime = rawTime ? getRelativeTime(rawTime) : 'Unknown time';
-
-    // Resolve the username from the fetched user data.
     const resolvedUsername = userData?.fetchUser?.username || 'Username';
 
-    // Map the post fields into our local PostData type.
     const postData: PostData = {
         id: feedPost?.id ?? '',
         user: resolvedUsername,
@@ -260,146 +427,30 @@ export const PostScreen: React.FC<PostScreenProps> = ({
         content: feedPost?.content ?? '',
         attachmentUrls: feedPost?.attachmentUrls || [],
     };
+
     const { setParentUser, setParentContent, setParentDate, setPostId } =
         useContext(CurrentCommentContext);
 
     useEffect(() => {
-        if (postData?.id) {
-            setPostId(postData.id);
-        }
-        if (postData?.user) {
-            setParentUser(postData.user);
-        }
-        if (postData?.content) {
-            setParentContent(postData.content);
-        }
-        if (feedPost?.postedAt) {
-            setParentDate(feedPost.postedAt);
-        }
+        if (postData?.id) setPostId(postData.id);
+        if (postData?.user) setParentUser(postData.user);
+        if (postData?.content) setParentContent(postData.content);
+        if (feedPost?.postedAt) setParentDate(feedPost.postedAt);
     }, [postData?.id, postData?.user, postData?.content, feedPost?.postedAt]);
 
-    // Always call these state hooks.
-    const [comments, setComments] = useState<CommentNode[]>([]);
-    const handleLoadMore = useCallback((parentCommentId: string) => {
-        setLoadMoreCommentsParentCommentId(parentCommentId);
-    }, []);
+    // Build the comment tree using our cache-aware hook.
+    const commentTree: CommentNode[] = useCommentTree(normalizedComments);
 
-    const client = useApolloClient();
-
-    useEffect(() => {
-        const updateComments = async () => {
-            async function fetchUsersForComments(newComments: CommentNode[]) {
-                if (newComments) {
-                    // Helper function that fetches user for a comment and its nested comments recursively.
-                    // eslint-disable-next-line no-inner-declarations
-                    const fetchUserForComment = async (
-                        comment: any
-                    ): Promise<any> => {
-                        // Fetch the user details for this comment.
-                        const { data: commentUserData } = await client.query({
-                            query: FETCH_USER_QUERY,
-                            variables: {
-                                userId: comment.postedByUserId,
-                            },
-                        });
-
-                        // Check if there are nested comments and process them recursively.
-                        let childrenWithUsers = [];
-                        if (comment.children && comment.children.length > 0) {
-                            childrenWithUsers = await Promise.all(
-                                comment.children.map((nestedComment: any) =>
-                                    fetchUserForComment(nestedComment)
-                                )
-                            );
-                        }
-
-                        // Return the comment with the fetched username and processed nested comments.
-                        return {
-                            ...comment,
-                            user:
-                                commentUserData?.fetchUser?.username ||
-                                'Unknown',
-                            // Replace the nestedComments with the processed ones.
-                            children: childrenWithUsers,
-                        };
-                    };
-
-                    // Process all top-level comments recursively.
-                    const commentsWithUser = await Promise.all(
-                        newComments.map((comment: any) =>
-                            fetchUserForComment(comment)
-                        )
-                    );
-                    return commentsWithUser;
-                }
-            }
-
-            const insertCommentRecursive = (
-                comments: CommentNode[],
-                newComment: CommentNode
-            ): CommentNode[] => {
-                // If no comments, simply return an array with the new comment.
-                if (comments.length === 0) return [newComment];
-
-                return comments.map((comment) => {
-                    // Check if this comment is the target parent.
-                    if (comment.id === newComment.parentCommentId) {
-                        // Create a new object for this branch with updated children.
-                        return {
-                            ...comment,
-                            children: comment.children
-                                ? [...comment.children, newComment]
-                                : [newComment],
-                        };
-                    }
-                    // If there are children, recursively update.
-                    if (comment.children && comment.children.length > 0) {
-                        const updatedChildren = insertCommentRecursive(
-                            comment.children,
-                            newComment
-                        );
-                        // If children have changed, return a new comment object; otherwise return the same comment.
-                        if (updatedChildren !== comment.children) {
-                            return { ...comment, children: updatedChildren };
-                        }
-                    }
-                    return comment; // unchanged branch
-                });
-            };
-
-            if (commentsData) {
-                // Determine the accumulator: if we're loading more, use the current state; otherwise, start fresh.
-                const accumulator = loadMoreCommentsParentCommentId
-                    ? comments
-                    : [];
-                const newComments = commentsData.fetchPostComments.reduce(
-                    (acc, newComment) =>
-                        insertCommentRecursive(acc, newComment),
-                    accumulator
-                );
-                const updatedCommentsWithUsers =
-                    await fetchUsersForComments(newComments);
-                setComments(updatedCommentsWithUsers);
-            }
-        };
-        void updateComments();
-    }, [commentsData, client]);
-
-    // If the post query is still loading, render the skeleton screen.
     if (loading) {
         return (
-            // @ts-expect-error web only types
             <SafeAreaView style={styles.safeContainer}>
-                {/* @ts-expect-error web only types */}
                 <View style={styles.mainContainer}>
-                    {/* @ts-expect-error web only types */}
                     <ScrollView
                         style={styles.scrollSection}
                         contentContainerStyle={styles.scrollView}
                         keyboardShouldPersistTaps="handled"
                     >
                         <SkeletonPostItem />
-                        {/* Render a few skeleton comment placeholders */}
                         <SkeletonComment />
                         <SkeletonComment />
                         <SkeletonComment />
@@ -411,7 +462,6 @@ export const PostScreen: React.FC<PostScreenProps> = ({
 
     if (error) {
         return (
-            // @ts-expect-error web only types
             <SafeAreaView style={styles.safeContainer}>
                 <View
                     style={{
@@ -435,13 +485,9 @@ export const PostScreen: React.FC<PostScreenProps> = ({
           };
 
     return (
-        // @ts-expect-error web only types
         <SafeAreaView style={styles.safeContainer}>
-            {/* @ts-expect-error props */}
             <ContainerComponent {...containerProps}>
-                {/* @ts-expect-error web only types */}
                 <View style={styles.mainContainer}>
-                    {/* @ts-expect-error web only types */}
                     <ScrollView
                         style={styles.scrollSection}
                         contentContainerStyle={styles.scrollView}
@@ -461,7 +507,6 @@ export const PostScreen: React.FC<PostScreenProps> = ({
                                 if (navigation.canGoBack()) {
                                     navigation.goBack();
                                 } else {
-                                    // @ts-expect-error navigation
                                     navigation.navigate('AppDrawer');
                                 }
                             }}
@@ -469,14 +514,14 @@ export const PostScreen: React.FC<PostScreenProps> = ({
                             variant="details"
                             group="My cool group"
                         />
-                        {commentsLoading ? (
+                        {initialCommentsLoading ? (
                             <>
                                 <SkeletonComment />
                                 <SkeletonComment />
                                 <SkeletonComment />
                             </>
                         ) : (
-                            comments.map((c) => (
+                            commentTree.map((c) => (
                                 <CommentThread
                                     key={c.id}
                                     comment={c}
@@ -487,12 +532,9 @@ export const PostScreen: React.FC<PostScreenProps> = ({
                             ))
                         )}
                     </ScrollView>
-                    {/* Fixed CreateContentButton at the bottom */}
-                    {/* @ts-expect-error web only types */}
                     <View style={styles.createContentButtonContainer}>
                         <CreateContentButton
                             buttonText="Write a comment..."
-                            // @ts-expect-error navigation
                             onPress={() => navigation.navigate('CreateComment')}
                         />
                     </View>

@@ -153,6 +153,11 @@ const CommentChildrenComponent = ({
     level,
     opUser,
     onLoadMore,
+}: {
+    childrenComments: CommentNode[];
+    level?: number;
+    opUser?: string;
+    onLoadMore: (parentCommentId: string) => void;
 }) => (
     <>
         {childrenComments.map((child) => (
@@ -202,7 +207,9 @@ const CommentThreadComponent = ({
         <View
             style={[
                 styles.commentContainer,
-                level === 0 && { borderLeftWidth: 0, paddingLeft: 0 },
+                level === 0
+                    ? { borderLeftWidth: 0, paddingLeft: 0 }
+                    : { marginTop: 16 },
             ]}
         >
             <View style={styles.singleComment}>

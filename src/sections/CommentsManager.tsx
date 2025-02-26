@@ -23,7 +23,9 @@ const flattenComments = (comments: CommentNode[]): CommentNode[] => {
         flat.push({ ...comment, children: [] });
         comment.children?.forEach(traverse);
     };
-    comments.forEach(traverse);
+    comments.forEach((element) => {
+        traverse(element);
+    });
     return flat;
 };
 
@@ -116,18 +118,15 @@ export const CommentsManager: React.FC<CommentsManagerProps> = ({ postId }) => {
                         existing.childrenIds.every(
                             (id, i) => id === newChildrenIds[i]
                         );
-                    if (
+                    newById[comment.id] =
                         !sameChildren ||
                         existing.content !== comment.content ||
                         existing.user !== comment.user
-                    ) {
-                        newById[comment.id] = {
-                            ...comment,
-                            childrenIds: newChildrenIds,
-                        };
-                    } else {
-                        newById[comment.id] = existing;
-                    }
+                            ? {
+                                  ...comment,
+                                  childrenIds: newChildrenIds,
+                              }
+                            : existing;
                 } else {
                     newById[comment.id] = {
                         ...comment,
@@ -140,6 +139,7 @@ export const CommentsManager: React.FC<CommentsManagerProps> = ({ postId }) => {
                         newById[comment.parentCommentId] ||
                         prev.byId[comment.parentCommentId];
                     if (parent && !parent.childrenIds.includes(comment.id)) {
+                        // eslint-disable-next-line @typescript-eslint/naming-convention, no-underscore-dangle
                         const _newChildrenIds = [
                             ...parent.childrenIds,
                             comment.id,
@@ -179,7 +179,6 @@ export const CommentsManager: React.FC<CommentsManagerProps> = ({ postId }) => {
                         limit: 10,
                         parentCommentId: loadMoreCommentsParentCommentId,
                     },
-                    fetchPolicy: 'network-only',
                 })
                 .then((result) => {
                     if (result.data && result.data.fetchPostComments) {

@@ -13,9 +13,11 @@ import Icon from 'react-native-vector-icons/FontAwesome5';
 import { VoteActions } from './VoteActions';
 import { COLORS } from '../constants';
 import { CurrentCommentContext } from '../providers';
-
-// New imports for markdown and link preview logic
-import { MarkdownRenderer, LinkPreview } from '../small-components';
+import {
+    MarkdownRenderer,
+    LinkPreview,
+    NexusTooltip,
+} from '../small-components';
 import { stripHtml, extractUrls, getRelativeTime } from '../utils';
 
 const styles = StyleSheet.create({
@@ -271,23 +273,27 @@ const CommentThreadComponent = ({
                                 </>
                             )}
                             <View style={styles.actionsRow}>
-                                <TouchableOpacity
-                                    onPress={() => {
-                                        setParentUser(comment.user);
-                                        setParentContent(comment.content);
-                                        setParentDate(comment.postedAt);
-                                        setParentCommentId(comment.id);
-                                        // @ts-expect-error navigation
-                                        navigation.navigate('CreateComment');
-                                    }}
-                                    style={styles.replyIcon}
-                                >
-                                    <Icon
-                                        name="reply"
-                                        size={16}
-                                        color={COLORS.White}
-                                    />
-                                </TouchableOpacity>
+                                <NexusTooltip tooltipText="Reply">
+                                    <TouchableOpacity
+                                        onPress={() => {
+                                            setParentUser(comment.user);
+                                            setParentContent(comment.content);
+                                            setParentDate(comment.postedAt);
+                                            setParentCommentId(comment.id);
+                                            // @ts-expect-error navigation
+                                            navigation.navigate(
+                                                'CreateComment'
+                                            );
+                                        }}
+                                        style={styles.replyIcon}
+                                    >
+                                        <Icon
+                                            name="reply"
+                                            size={16}
+                                            color={COLORS.White}
+                                        />
+                                    </TouchableOpacity>
+                                </NexusTooltip>
                                 <View style={styles.voteActionsContainer}>
                                     <VoteActions
                                         voteCount={voteCount}

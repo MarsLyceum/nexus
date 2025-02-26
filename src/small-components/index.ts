@@ -12,6 +12,7 @@ export * from './MarkdownRenderer';
 export * from './MarkdownTextInput';
 export * from './MessageItem';
 export * from './MessageList';
+export * from './NexusTooltip';
 export * from './SkeletonComment';
 export * from './SkeletonMessageItem';
 export * from './SkeletonPostItem';

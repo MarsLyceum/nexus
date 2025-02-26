@@ -14,6 +14,7 @@
         "typecheck": "tsc --noEmit"
     },
     "dependencies": {
+        "reselect": "^5.1.1",
         "quill-delta-to-markdown": "^0.6.0",
         "turndown-plugin-gfm": "^1.0.2",
         "@types/markdown-it": "^14.1.2",

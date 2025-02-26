@@ -12,7 +12,6 @@ import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { VoteActions } from './VoteActions';
 import { COLORS } from '../constants';
-import { useAppSelector, RootState, UserType } from '../redux';
 import { CurrentCommentContext } from '../providers';
 
 // New imports for markdown and link preview logic
@@ -117,6 +116,17 @@ const styles = StyleSheet.create({
         color: COLORS.White,
         fontSize: 14,
     },
+    loadMoreButton: {
+        marginTop: 10,
+        padding: 8,
+        backgroundColor: COLORS.Primary,
+        borderRadius: 4,
+        alignSelf: 'center',
+    },
+    loadMoreText: {
+        color: COLORS.White,
+        fontSize: 14,
+    },
 });
 
 export type CommentNode = {
@@ -126,32 +136,48 @@ export type CommentNode = {
     edited: false;
     upvotes: number;
     content: string;
-    parentCommentId: null;
+    parentCommentId: string | null;
+    hasChildren: boolean;
     children: CommentNode[];
 };
 
 type CommentThreadProps = {
     comment: CommentNode;
     level?: number;
-    // New optional prop for the original poster's username
     opUser?: string;
+    onLoadMore: (parentCommentId: string) => void;
 };
 
-export const CommentThread: React.FC<CommentThreadProps> = ({
+const CommentChildrenComponent = ({
+    childrenComments,
+    level,
+    opUser,
+    onLoadMore,
+}) => (
+    <>
+        {childrenComments.map((child) => (
+            <CommentThread
+                key={child.id}
+                comment={child}
+                level={level}
+                opUser={opUser}
+                onLoadMore={onLoadMore}
+            />
+        ))}
+    </>
+);
+
+const CommentChildren = React.memo(CommentChildrenComponent);
+
+const CommentThreadComponent = ({
     comment,
     level = 0,
     opUser,
-}) => {
+    onLoadMore,
+}: CommentThreadProps) => {
     const [voteCount, setVoteCount] = useState(comment.upvotes);
     const [collapsed, setCollapsed] = useState(comment.upvotes < -1);
-    const [replyText, setReplyText] = useState('');
     const navigation = useNavigation();
-    const [childReplies, setChildReplies] = useState<CommentNode[]>(
-        comment.children
-    );
-    const user: UserType = useAppSelector(
-        (state: RootState) => state.user.user
-    );
 
     const onUpvote = () => setVoteCount((prev) => prev + 1);
     const onDownvote = () => setVoteCount((prev) => prev - 1);
@@ -265,18 +291,40 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
                                 </View>
                             </View>
                         </View>
-                        {childReplies.map((child) => (
-                            // Pass the opUser prop to nested CommentThreads as well
-                            <CommentThread
-                                key={child.id}
-                                comment={child}
+                        {comment.children.length > 0 && (
+                            <CommentChildren
+                                childrenComments={comment.children}
                                 level={level + 1}
                                 opUser={opUser}
+                                onLoadMore={onLoadMore}
                             />
-                        ))}
+                        )}
+                        {comment.hasChildren &&
+                            comment.children.length === 0 && (
+                                <TouchableOpacity
+                                    onPress={() => onLoadMore(comment.id)}
+                                    style={styles.loadMoreButton} // new style for the button
+                                >
+                                    <Text style={styles.loadMoreText}>
+                                        Load more comments
+                                    </Text>
+                                </TouchableOpacity>
+                            )}
                     </>
                 )}
             </View>
         </View>
     );
 };
+
+const areCommentsEqual = (prevComment: CommentNode, nextComment: CommentNode) =>
+    prevComment.id === nextComment.id &&
+    prevComment.content === nextComment.content &&
+    prevComment.upvotes === nextComment.upvotes &&
+    prevComment.children === nextComment.children;
+
+export const CommentThread: React.FC<CommentThreadProps> = React.memo(
+    CommentThreadComponent,
+    (prevProps, nextProps) =>
+        areCommentsEqual(prevProps.comment, nextProps.comment)
+);

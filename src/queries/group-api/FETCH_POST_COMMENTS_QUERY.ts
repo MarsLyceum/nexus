@@ -1,8 +1,18 @@
 import { gql } from '@apollo/client';
 
 export const FETCH_POST_COMMENTS_QUERY = gql`
-    query FetchPostComments($postId: String!, $offset: Int, $limit: Int) {
-        fetchPostComments(postId: $postId, offset: $offset, limit: $limit) {
+    query FetchPostComments(
+        $postId: String!
+        $parentCommentId: String
+        $offset: Int
+        $limit: Int
+    ) {
+        fetchPostComments(
+            postId: $postId
+            parentCommentId: $parentCommentId
+            offset: $offset
+            limit: $limit
+        ) {
             id
             content
             postedAt
@@ -11,6 +21,7 @@ export const FETCH_POST_COMMENTS_QUERY = gql`
             postId
             parentCommentId
             upvotes
+            hasChildren
             children {
                 id
                 content
@@ -20,6 +31,7 @@ export const FETCH_POST_COMMENTS_QUERY = gql`
                 postId
                 parentCommentId
                 upvotes
+                hasChildren
                 children {
                     id
                     content
@@ -29,6 +41,7 @@ export const FETCH_POST_COMMENTS_QUERY = gql`
                     postId
                     parentCommentId
                     upvotes
+                    hasChildren
                     children {
                         id
                         content
@@ -38,6 +51,7 @@ export const FETCH_POST_COMMENTS_QUERY = gql`
                         postId
                         parentCommentId
                         upvotes
+                        hasChildren
                         children {
                             id
                             content
@@ -47,6 +61,7 @@ export const FETCH_POST_COMMENTS_QUERY = gql`
                             postId
                             parentCommentId
                             upvotes
+                            hasChildren
                             children {
                                 id
                                 content
@@ -56,6 +71,7 @@ export const FETCH_POST_COMMENTS_QUERY = gql`
                                 postId
                                 parentCommentId
                                 upvotes
+                                hasChildren
                                 children {
                                     id
                                     content
@@ -65,6 +81,7 @@ export const FETCH_POST_COMMENTS_QUERY = gql`
                                     postId
                                     parentCommentId
                                     upvotes
+                                    hasChildren
                                     children {
                                         id
                                         content
@@ -74,6 +91,7 @@ export const FETCH_POST_COMMENTS_QUERY = gql`
                                         postId
                                         parentCommentId
                                         upvotes
+                                        hasChildren
                                         children {
                                             id
                                             content
@@ -83,6 +101,7 @@ export const FETCH_POST_COMMENTS_QUERY = gql`
                                             postId
                                             parentCommentId
                                             upvotes
+                                            hasChildren
                                             children {
                                                 id
                                                 content
@@ -92,6 +111,7 @@ export const FETCH_POST_COMMENTS_QUERY = gql`
                                                 postId
                                                 parentCommentId
                                                 upvotes
+                                                hasChildren
                                                 children {
                                                     id
                                                     content
@@ -101,6 +121,7 @@ export const FETCH_POST_COMMENTS_QUERY = gql`
                                                     postId
                                                     parentCommentId
                                                     upvotes
+                                                    hasChildren
                                                 }
                                             }
                                         }

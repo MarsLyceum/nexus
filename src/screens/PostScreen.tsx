@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext, useEffect, useCallback } from 'react';
 import {
     View,
     ScrollView,
@@ -192,10 +192,16 @@ export const PostScreen: React.FC<PostScreenProps> = ({
 }) => {
     // Destructure the post (if available) and the id from the route params.
     const { id, post } = route.params;
+    const [
+        loadMoreCommentsParentCommentId,
+        setLoadMoreCommentsParentCommentId,
+    ] = useState<string | null>(null);
 
     // Fetch the post if it wasn’t passed in via navigation.
     const { data, loading, error } = useQuery(FETCH_POST_QUERY, {
-        variables: { postId: post ? post.id : id?.toString() },
+        variables: {
+            postId: post ? post.id : id?.toString(),
+        },
         skip: !!post, // skip if a post was already passed in
     });
 
@@ -208,6 +214,7 @@ export const PostScreen: React.FC<PostScreenProps> = ({
             postId: post ? post.id : id?.toString(),
             offset: 0,
             limit: 10,
+            parentCommentId: loadMoreCommentsParentCommentId,
         },
     });
     const dispatch = useAppDispatch();
@@ -273,54 +280,109 @@ export const PostScreen: React.FC<PostScreenProps> = ({
 
     // Always call these state hooks.
     const [comments, setComments] = useState<CommentNode[]>([]);
+    const handleLoadMore = useCallback((parentCommentId: string) => {
+        setLoadMoreCommentsParentCommentId(parentCommentId);
+    }, []);
 
     const client = useApolloClient();
 
     useEffect(() => {
-        async function fetchUsersForComments() {
-            if (commentsData?.fetchPostComments) {
-                // Helper function that fetches user for a comment and its nested comments recursively.
-                // eslint-disable-next-line no-inner-declarations
-                const fetchUserForComment = async (
-                    comment: any
-                ): Promise<any> => {
-                    // Fetch the user details for this comment.
-                    const { data: commentUserData } = await client.query({
-                        query: FETCH_USER_QUERY,
-                        variables: { userId: comment.postedByUserId },
-                    });
+        const updateComments = async () => {
+            async function fetchUsersForComments(newComments: CommentNode[]) {
+                if (newComments) {
+                    // Helper function that fetches user for a comment and its nested comments recursively.
+                    // eslint-disable-next-line no-inner-declarations
+                    const fetchUserForComment = async (
+                        comment: any
+                    ): Promise<any> => {
+                        // Fetch the user details for this comment.
+                        const { data: commentUserData } = await client.query({
+                            query: FETCH_USER_QUERY,
+                            variables: {
+                                userId: comment.postedByUserId,
+                            },
+                        });
 
-                    // Check if there are nested comments and process them recursively.
-                    let childrenWithUsers = [];
-                    if (comment.children && comment.children.length > 0) {
-                        childrenWithUsers = await Promise.all(
-                            comment.children.map((nestedComment: any) =>
-                                fetchUserForComment(nestedComment)
-                            )
-                        );
-                    }
+                        // Check if there are nested comments and process them recursively.
+                        let childrenWithUsers = [];
+                        if (comment.children && comment.children.length > 0) {
+                            childrenWithUsers = await Promise.all(
+                                comment.children.map((nestedComment: any) =>
+                                    fetchUserForComment(nestedComment)
+                                )
+                            );
+                        }
 
-                    // Return the comment with the fetched username and processed nested comments.
-                    return {
-                        ...comment,
-                        user: commentUserData?.fetchUser?.username || 'Unknown',
-                        // Replace the nestedComments with the processed ones.
-                        children: childrenWithUsers,
+                        // Return the comment with the fetched username and processed nested comments.
+                        return {
+                            ...comment,
+                            user:
+                                commentUserData?.fetchUser?.username ||
+                                'Unknown',
+                            // Replace the nestedComments with the processed ones.
+                            children: childrenWithUsers,
+                        };
                     };
-                };
 
-                // Process all top-level comments recursively.
-                const commentsWithUser = await Promise.all(
-                    commentsData.fetchPostComments.map((comment: any) =>
-                        fetchUserForComment(comment)
-                    )
-                );
-                setComments(commentsWithUser);
+                    // Process all top-level comments recursively.
+                    const commentsWithUser = await Promise.all(
+                        newComments.map((comment: any) =>
+                            fetchUserForComment(comment)
+                        )
+                    );
+                    return commentsWithUser;
+                }
             }
-        }
 
-        // Call the async function.
-        void fetchUsersForComments();
+            const insertCommentRecursive = (
+                comments: CommentNode[],
+                newComment: CommentNode
+            ): CommentNode[] => {
+                // If no comments, simply return an array with the new comment.
+                if (comments.length === 0) return [newComment];
+
+                return comments.map((comment) => {
+                    // Check if this comment is the target parent.
+                    if (comment.id === newComment.parentCommentId) {
+                        // Create a new object for this branch with updated children.
+                        return {
+                            ...comment,
+                            children: comment.children
+                                ? [...comment.children, newComment]
+                                : [newComment],
+                        };
+                    }
+                    // If there are children, recursively update.
+                    if (comment.children && comment.children.length > 0) {
+                        const updatedChildren = insertCommentRecursive(
+                            comment.children,
+                            newComment
+                        );
+                        // If children have changed, return a new comment object; otherwise return the same comment.
+                        if (updatedChildren !== comment.children) {
+                            return { ...comment, children: updatedChildren };
+                        }
+                    }
+                    return comment; // unchanged branch
+                });
+            };
+
+            if (commentsData) {
+                // Determine the accumulator: if we're loading more, use the current state; otherwise, start fresh.
+                const accumulator = loadMoreCommentsParentCommentId
+                    ? comments
+                    : [];
+                const newComments = commentsData.fetchPostComments.reduce(
+                    (acc, newComment) =>
+                        insertCommentRecursive(acc, newComment),
+                    accumulator
+                );
+                const updatedCommentsWithUsers =
+                    await fetchUsersForComments(newComments);
+                setComments(updatedCommentsWithUsers);
+            }
+        };
+        void updateComments();
     }, [commentsData, client]);
 
     // If the post query is still loading, render the skeleton screen.
@@ -363,22 +425,6 @@ export const PostScreen: React.FC<PostScreenProps> = ({
             </SafeAreaView>
         );
     }
-
-    // const handleCreateComment = () => {
-    //     if (newCommentContent.trim() !== '') {
-    //         const newComment: CommentNode = {
-    //             id: `comment-new-${Date.now()}`,
-    //             user: user?.username ?? '',
-    //             time: 'Just now',
-    //             upvotes: 0,
-    //             content: newCommentContent,
-    //             children: [],
-    //         };
-    //         setComments((prevComments) => [newComment, ...prevComments]);
-    //         setNewCommentContent('');
-    //         setModalVisible(false);
-    //     }
-    // };
 
     const ContainerComponent = isWeb ? View : KeyboardAvoidingView;
     const containerProps = isWeb
@@ -423,14 +469,23 @@ export const PostScreen: React.FC<PostScreenProps> = ({
                             variant="details"
                             group="My cool group"
                         />
-                        {comments.map((c) => (
-                            <CommentThread
-                                key={c.id}
-                                comment={c}
-                                level={0}
-                                opUser={postData.user}
-                            />
-                        ))}
+                        {commentsLoading ? (
+                            <>
+                                <SkeletonComment />
+                                <SkeletonComment />
+                                <SkeletonComment />
+                            </>
+                        ) : (
+                            comments.map((c) => (
+                                <CommentThread
+                                    key={c.id}
+                                    comment={c}
+                                    level={0}
+                                    opUser={postData.user}
+                                    onLoadMore={handleLoadMore}
+                                />
+                            ))
+                        )}
                     </ScrollView>
                     {/* Fixed CreateContentButton at the bottom */}
                     {/* @ts-expect-error web only types */}

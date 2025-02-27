@@ -92,8 +92,8 @@ export const CommentsManager = ({
     // Configuration values
     const limit = 10; // comments per API call
     const WINDOW_SIZE = 50; // max number of comments in our window
-    const upperThreshold = 100; // trigger upward load when scrollY is less than this
-    const lowerThreshold = 400; // trigger downward load when scrollY is near bottom
+    const upperThreshold = 10; // trigger upward load when scrollY is less than this
+    const lowerThreshold = 500; // trigger downward load when scrollY is near bottom
 
     // Window state: windowStartOffset is the index (in overall order) of the first comment in the window.
     // windowEndOffset is the index after the last comment in the window.

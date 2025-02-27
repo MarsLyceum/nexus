@@ -43,6 +43,7 @@ const styles = StyleSheet.create({
     mainContainer: {
         flex: 1,
         position: 'relative',
+        paddingBottom: BOTTOM_INPUT_HEIGHT,
     },
     scrollSection: isWeb
         ? {
@@ -146,13 +147,6 @@ export const PostScreen: React.FC<PostScreenProps> = ({
     const handleContentSizeChange = (w: number, h: number) => {
         setContentHeight(h);
     };
-
-    useEffect(() => {
-        if (!loading && scrollViewRef.current) {
-            // Scroll to top when comments have loaded
-            scrollViewRef.current.scrollTo({ y: 0, animated: false });
-        }
-    }, [loading]);
 
     if (loading) {
         return (

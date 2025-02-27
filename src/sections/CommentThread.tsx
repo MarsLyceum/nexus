@@ -30,6 +30,7 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.PrimaryBackground,
         borderRadius: 6,
         paddingLeft: 2,
+        paddingTop: 15,
     },
     commentHeader: {
         flexDirection: 'row',
@@ -214,7 +215,10 @@ const CommentThreadComponent = ({
             ]}
         >
             <View
-                style={styles.singleComment}
+                style={[
+                    styles.singleComment,
+                    level === 0 && { paddingLeft: 10 },
+                ]}
                 onLayout={(event) => {
                     const { width } = event.nativeEvent.layout;
                     setContainerWidth(width);

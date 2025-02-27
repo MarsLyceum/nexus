@@ -71,7 +71,7 @@ export const PostScreen: React.FC<PostScreenProps> = ({
     route,
     navigation,
 }) => {
-    const { id, post } = route.params;
+    const { id, post, parentCommentId } = route.params;
     const dispatch = useAppDispatch();
     const client = useApolloClient();
 
@@ -194,7 +194,10 @@ export const PostScreen: React.FC<PostScreenProps> = ({
                             group="My cool group"
                         />
                         {/* Render the CommentsManager, which handles comment state and display */}
-                        <CommentsManager postId={postData.id} />
+                        <CommentsManager
+                            postId={postData.id}
+                            parentCommentId={parentCommentId}
+                        />
                     </ScrollView>
                     <View style={styles.createContentButtonContainer}>
                         <CreateContentButton

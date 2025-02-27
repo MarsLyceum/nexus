@@ -63,9 +63,13 @@ const useCommentTree = (normalized: NormalizedComments): CommentNode[] => {
 
 type CommentsManagerProps = {
     postId: string;
+    parentCommentId?: string;
 };
 
-export const CommentsManager: React.FC<CommentsManagerProps> = ({ postId }) => {
+export const CommentsManager: React.FC<CommentsManagerProps> = ({
+    postId,
+    parentCommentId,
+}) => {
     const client = useApolloClient();
 
     // Normalized comments state.
@@ -74,57 +78,7 @@ export const CommentsManager: React.FC<CommentsManagerProps> = ({ postId }) => {
             byId: {},
             rootIds: [],
         });
-    const [commentHistory, setCommentHistory] = useState<NormalizedComments[]>(
-        []
-    );
     const navigation = useNavigation();
-
-    const handleBack = useCallback(() => {
-        setCommentHistory((prevHistory) => {
-            if (prevHistory.length === 0) return prevHistory; // No history to go back to.
-            const newHistory = [...prevHistory];
-            const previousState = newHistory.pop();
-            if (previousState) {
-                setNormalizedComments(previousState);
-            }
-            return newHistory;
-        });
-    }, []);
-
-    useEffect(() => {
-        const unsubscribe = navigation.addListener('beforeRemove', (e) => {
-            // If we have history, intercept the back event
-            if (commentHistory.length > 0) {
-                e.preventDefault(); // Prevent default navigation
-                handleBack();
-            }
-            // If no history, allow navigation to continue normally.
-        });
-        return unsubscribe;
-    }, [navigation, commentHistory, handleBack]);
-
-    useEffect(() => {
-        if (typeof window !== 'undefined' && window.addEventListener) {
-            const onPopState = (e: PopStateEvent) => {
-                if (commentHistory.length > 0) {
-                    // Cancel default behavior by pushing a new state.
-                    window.history.pushState(null, '', window.location.href);
-                    handleBack();
-                }
-            };
-
-            window.addEventListener('popstate', onPopState);
-            return () => {
-                window.removeEventListener('popstate', onPopState);
-            };
-        }
-    }, [commentHistory, handleBack]);
-
-    // State to trigger load-more (continue conversation) for child comments.
-    const [
-        loadMoreCommentsParentCommentId,
-        setLoadMoreCommentsParentCommentId,
-    ] = useState<string | null>(null);
 
     // Initial comments query.
     const {
@@ -132,22 +86,18 @@ export const CommentsManager: React.FC<CommentsManagerProps> = ({ postId }) => {
         loading: initialCommentsLoading,
         error: initialCommentsError,
     } = useQuery(FETCH_POST_COMMENTS_QUERY, {
-        variables: { postId, offset: 0, limit: 10 },
+        variables: {
+            postId,
+            offset: 0,
+            limit: 10,
+            ...(parentCommentId ? { parentCommentId } : {}),
+        },
     });
 
     // Helper: update full normalized state for initial load or full replacement.
     const updateFullNormalizedState = async (
         newCommentsData: CommentNode[]
     ) => {
-        setCommentHistory((prevHistory) => {
-            // Assuming normalizedComments is accessible in this scope.
-            // Only push if there's data in the current state.
-            if (Object.keys(normalizedComments.byId).length > 0) {
-                return [...prevHistory, normalizedComments];
-            }
-            return prevHistory;
-        });
-
         const flatComments = flattenComments(newCommentsData);
         const commentsWithUser = await Promise.all(
             flatComments.map(async (comment) => {
@@ -179,59 +129,28 @@ export const CommentsManager: React.FC<CommentsManagerProps> = ({ postId }) => {
             }
         });
         setNormalizedComments({ byId: newById, rootIds: newRootIds });
-
-        if (
-            typeof window !== 'undefined' &&
-            window.history &&
-            window.history.pushState
-        ) {
-            window.history.pushState(
-                { comments: { byId: newById, rootIds: newRootIds } },
-                ''
-            );
-        }
     };
 
     // Update normalized state with initial comments.
     useEffect(() => {
         if (initialCommentsData && initialCommentsData.fetchPostComments) {
-            updateFullNormalizedState(initialCommentsData.fetchPostComments);
+            void updateFullNormalizedState(
+                initialCommentsData.fetchPostComments
+            );
         }
     }, [initialCommentsData]);
 
-    // Load more comments (continue conversation) when triggered.
-    useEffect(() => {
-        if (loadMoreCommentsParentCommentId) {
-            client
-                .query({
-                    query: FETCH_POST_COMMENTS_QUERY,
-                    variables: {
-                        postId,
-                        offset: 0,
-                        limit: 10,
-                        parentCommentId: loadMoreCommentsParentCommentId,
-                    },
-                })
-                .then((result) => {
-                    if (result.data && result.data.fetchPostComments) {
-                        // Replace the entire normalized state with the new tree.
-                        updateFullNormalizedState(
-                            result.data.fetchPostComments
-                        );
-                    }
-                    setLoadMoreCommentsParentCommentId(null);
-                })
-                .catch((err) => {
-                    console.error('Load more error:', err);
-                    setLoadMoreCommentsParentCommentId(null);
-                });
-        }
-    }, [loadMoreCommentsParentCommentId, client, postId]);
-
     // Callback to trigger load more (continue conversation).
-    const handleLoadMore = useCallback((parentCommentId: string) => {
-        setLoadMoreCommentsParentCommentId(parentCommentId);
-    }, []);
+    const handleLoadMore = useCallback(
+        (childCommentId: string) => {
+            // @ts-expect-error navigation params
+            navigation.push('PostScreen', {
+                id: postId,
+                parentCommentId: childCommentId,
+            });
+        },
+        [navigation]
+    );
 
     // Build comment tree.
     const commentTree: CommentNode[] = useCommentTree(normalizedComments);

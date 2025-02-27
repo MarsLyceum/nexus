@@ -26,11 +26,13 @@ const styles = StyleSheet.create({
         borderLeftColor: COLORS.TextInput,
         paddingLeft: 10,
         marginBottom: 15,
+        flex: 1,
     },
     singleComment: {
         backgroundColor: COLORS.PrimaryBackground,
         borderRadius: 6,
         padding: 10,
+        flex: 1,
     },
     commentHeader: {
         flexDirection: 'row',

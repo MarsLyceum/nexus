@@ -272,7 +272,7 @@ export const MarkdownRenderer: React.FC<{
 
     // If not in preview mode or if expanded, render full content in a ScrollView.
     if (!preview || expanded) {
-        return <ScrollView>{fullContent}</ScrollView>;
+        return <View>{fullContent}</View>;
     }
 
     // Determine if the content is truncated (i.e. its height exceeds the preview max)

@@ -1,4 +1,4 @@
-import React, { useEffect, useContext, useRef } from 'react';
+import React, { useEffect, useContext, useRef, useState } from 'react';
 import {
     View,
     ScrollView,
@@ -73,6 +73,10 @@ export const PostScreen: React.FC<PostScreenProps> = ({
 }) => {
     const { id, post, parentCommentId } = route.params;
     const dispatch = useAppDispatch();
+    const [scrollY, setScrollY] = useState(0);
+    const scrollViewRef = useRef<ScrollView>(null);
+    // Track the content height to detect changes when new comments are prepended.
+    const [contentHeight, setContentHeight] = useState(0);
 
     useEffect(() => {
         dispatch(loadUser());
@@ -123,23 +127,39 @@ export const PostScreen: React.FC<PostScreenProps> = ({
         if (feedPost?.postedAt) setParentDate(feedPost.postedAt);
     }, [postData?.id, postData?.user, postData?.content, feedPost?.postedAt]);
 
-    // Create a ref for CommentsManager
+    // Create a ref for CommentsManager (if needed for additional control)
     const commentsManagerRef = useRef<{ checkScrollPosition: () => void }>(
         null
     );
 
-    // Define the onScroll handler that calls CommentsManager's checkScrollPosition
-    const handleScroll = () => {
+    // onScroll handler: update scrollY state.
+    const handleScroll = (event: any) => {
+        const currentY = event.nativeEvent.contentOffset.y;
+        setScrollY(currentY);
+        // Also call the CommentsManager's checkScrollPosition
         if (commentsManagerRef.current) {
             commentsManagerRef.current.checkScrollPosition();
         }
     };
+
+    // onContentSizeChange: detect when content height increases due to new (prepended) comments.
+    const handleContentSizeChange = (w: number, h: number) => {
+        setContentHeight(h);
+    };
+
+    useEffect(() => {
+        if (!loading && scrollViewRef.current) {
+            // Scroll to top when comments have loaded
+            scrollViewRef.current.scrollTo({ y: 0, animated: false });
+        }
+    }, [loading]);
 
     if (loading) {
         return (
             <SafeAreaView style={styles.safeContainer}>
                 <View style={styles.mainContainer}>
                     <ScrollView
+                        ref={scrollViewRef}
                         style={styles.scrollSection}
                         contentContainerStyle={styles.scrollView}
                         keyboardShouldPersistTaps="handled"
@@ -183,11 +203,13 @@ export const PostScreen: React.FC<PostScreenProps> = ({
             <ContainerComponent {...containerProps}>
                 <View style={styles.mainContainer}>
                     <ScrollView
+                        ref={scrollViewRef}
                         style={styles.scrollSection}
                         contentContainerStyle={styles.scrollView}
                         keyboardShouldPersistTaps="handled"
                         onScroll={handleScroll}
                         scrollEventThrottle={16}
+                        onContentSizeChange={handleContentSizeChange}
                     >
                         <PostItem
                             id={postData.id}
@@ -214,6 +236,7 @@ export const PostScreen: React.FC<PostScreenProps> = ({
                             ref={commentsManagerRef}
                             postId={postData.id}
                             parentCommentId={parentCommentId}
+                            scrollY={scrollY}
                         />
                     </ScrollView>
                     <View style={styles.createContentButtonContainer}>

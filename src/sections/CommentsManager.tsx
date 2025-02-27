@@ -1,10 +1,4 @@
-import React, {
-    useState,
-    useEffect,
-    useRef,
-    forwardRef,
-    useImperativeHandle,
-} from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     View,
     ActivityIndicator,
@@ -79,123 +73,169 @@ const buildCommentTree = (normalized: NormalizedComments): CommentNode[] => {
     return normalized.rootIds.map(buildTree);
 };
 
-type CommentsManagerProps = {
+export type CommentsManagerProps = {
     postId: string;
     parentCommentId?: string;
+    // scrollY is the current vertical scroll offset from the parent ScrollView.
+    scrollY: number;
 };
 
-export const CommentsManager = forwardRef<
-    { checkScrollPosition: () => void },
-    CommentsManagerProps
->(({ postId, parentCommentId }, ref) => {
+export const CommentsManager = ({
+    postId,
+    parentCommentId,
+    scrollY,
+}: CommentsManagerProps) => {
     const client = useApolloClient();
-    const [offset, setOffset] = useState(0);
-    const limit = 10;
-    const [normalizedComments, setNormalizedComments] =
-        useState<NormalizedComments>({
-            byId: {},
-            rootIds: [],
-        });
-    const [hasMore, setHasMore] = useState(true);
-    const [loadingMore, setLoadingMore] = useState(false);
     const navigation = useNavigation();
-
-    // Cache for user data so that we don't refetch usernames repeatedly.
-    const userCache = useRef<{ [userId: string]: string }>({});
-
     const { height: windowHeight } = useWindowDimensions();
 
-    const { data, loading, error, fetchMore } = useQuery(
-        FETCH_POST_COMMENTS_QUERY,
-        {
-            variables: {
-                postId,
-                offset,
-                limit,
-                ...(parentCommentId ? { parentCommentId } : {}),
-            },
-        }
-    );
+    // Configuration values
+    const limit = 10; // comments per API call
+    const WINDOW_SIZE = 50; // max number of comments in our window
+    const upperThreshold = 100; // trigger upward load when scrollY is less than this
+    const lowerThreshold = 400; // trigger downward load when scrollY is near bottom
 
+    // Window state: windowStartOffset is the index (in overall order) of the first comment in the window.
+    // windowEndOffset is the index after the last comment in the window.
+    const [windowStartOffset, setWindowStartOffset] = useState(0);
+    const [windowEndOffset, setWindowEndOffset] = useState(0);
+    const [commentsWindow, setCommentsWindow] = useState<CommentNode[]>([]);
+    const [hasMoreDown, setHasMoreDown] = useState(true);
+    const [hasMoreUp, setHasMoreUp] = useState(false);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [normalizedComments, setNormalizedComments] =
+        useState<NormalizedComments>({ byId: {}, rootIds: [] });
+
+    const userCache = useRef<{ [userId: string]: string }>({});
+
+    // Initial fetch: get first page.
+    const { data, loading, error } = useQuery(FETCH_POST_COMMENTS_QUERY, {
+        variables: {
+            postId,
+            offset: 0,
+            limit,
+            ...(parentCommentId ? { parentCommentId } : {}),
+        },
+        notifyOnNetworkStatusChange: true,
+    });
+
+    // On initial load, set up the window.
     useEffect(() => {
-        let cancelled = false;
         if (data && data.fetchPostComments) {
-            (async () => {
-                const norm = await buildNormalizedState(
-                    data.fetchPostComments,
-                    client,
-                    userCache
-                );
-                if (!cancelled) {
-                    setNormalizedComments(norm);
-                    if (data.fetchPostComments.length < limit) {
-                        setHasMore(false);
-                    }
-                }
-            })();
+            const initialComments: CommentNode[] = data.fetchPostComments;
+            setCommentsWindow(initialComments);
+            setWindowStartOffset(0);
+            setWindowEndOffset(initialComments.length);
+            setHasMoreDown(initialComments.length === limit);
+            setHasMoreUp(false);
+            buildNormalizedState(initialComments, client, userCache).then(
+                setNormalizedComments
+            );
         }
-        return () => {
-            cancelled = true;
-        };
     }, [data, client, limit]);
 
-    const loadMoreComments = () => {
-        if (loadingMore || !hasMore) return;
-        setLoadingMore(true);
-        const newOffset = offset + limit;
-        fetchMore({
-            variables: {
-                offset: newOffset,
-                limit,
-                ...(parentCommentId ? { parentCommentId } : {}),
-            },
-            updateQuery: (prev, { fetchMoreResult }) => {
-                if (!fetchMoreResult) return prev;
-                const combined = [
-                    ...prev.fetchPostComments,
-                    ...fetchMoreResult.fetchPostComments,
-                ];
-                if (fetchMoreResult.fetchPostComments.length < limit) {
-                    setHasMore(false);
-                }
-                (async () => {
-                    const norm = await buildNormalizedState(
-                        combined,
-                        client,
-                        userCache
-                    );
-                    setNormalizedComments(norm);
-                })();
-                return { ...prev, fetchPostComments: combined };
-            },
-        }).finally(() => {
-            setOffset(newOffset);
-            setLoadingMore(false);
-        });
+    // Helper: update normalized state.
+    const updateNormalizedState = async (rawComments: CommentNode[]) => {
+        const norm = await buildNormalizedState(rawComments, client, userCache);
+        setNormalizedComments(norm);
     };
 
-    // Sentinel ref to detect if we need to load more comments
-    const sentinelRef = useRef<View>(null);
-    const thresholdOffset = 500;
-
-    // Expose the checkScrollPosition function to parent via ref.
-    const checkScrollPosition = () => {
-        if (sentinelRef.current) {
-            sentinelRef.current.measureInWindow((x, y, width, height) => {
-                if (
-                    y < windowHeight + thresholdOffset &&
-                    hasMore &&
-                    !loadingMore
-                ) {
-                    loadMoreComments();
-                }
+    // Downward load: fetch older comments.
+    const loadNextPage = async () => {
+        if (loadingMore || !hasMoreDown) return;
+        setLoadingMore(true);
+        try {
+            const offset = windowEndOffset;
+            const { data: moreData } = await client.query({
+                query: FETCH_POST_COMMENTS_QUERY,
+                variables: {
+                    postId,
+                    offset,
+                    limit,
+                    ...(parentCommentId ? { parentCommentId } : {}),
+                },
             });
+            const newComments: CommentNode[] = moreData.fetchPostComments;
+            if (newComments.length < limit) {
+                setHasMoreDown(false);
+            }
+            const existingIds = new Set(commentsWindow.map((c) => c.id));
+            const filteredNew = newComments.filter(
+                (c) => !existingIds.has(c.id)
+            );
+            let newWindow = [...commentsWindow, ...filteredNew];
+            if (newWindow.length > WINDOW_SIZE) {
+                const excess = newWindow.length - WINDOW_SIZE;
+                newWindow = newWindow.slice(excess);
+                setWindowStartOffset(windowStartOffset + excess);
+            }
+            setCommentsWindow(newWindow);
+            setWindowEndOffset(windowEndOffset + filteredNew.length);
+            if (windowStartOffset > 0) setHasMoreUp(true);
+            await updateNormalizedState(newWindow);
+        } catch (err) {
+            console.error('Error loading next page', err);
+        } finally {
+            setLoadingMore(false);
         }
     };
 
-    useImperativeHandle(ref, () => ({
-        checkScrollPosition,
-    }));
+    // Upward load: fetch newer comments.
+    const loadPrevPage = async () => {
+        if (loadingMore || !hasMoreUp) return;
+        setLoadingMore(true);
+        try {
+            const newOffset = Math.max(windowStartOffset - limit, 0);
+            const { data: moreData } = await client.query({
+                query: FETCH_POST_COMMENTS_QUERY,
+                variables: {
+                    postId,
+                    offset: newOffset,
+                    limit,
+                    ...(parentCommentId ? { parentCommentId } : {}),
+                },
+            });
+            const newComments: CommentNode[] = moreData.fetchPostComments;
+            if (newOffset === 0 || newComments.length < limit) {
+                setHasMoreUp(false);
+            }
+            const existingIds = new Set(commentsWindow.map((c) => c.id));
+            const filteredNew = newComments.filter(
+                (c) => !existingIds.has(c.id)
+            );
+            let newWindow = [...filteredNew, ...commentsWindow];
+            if (newWindow.length > WINDOW_SIZE) {
+                newWindow = newWindow.slice(0, WINDOW_SIZE);
+            }
+            setCommentsWindow(newWindow);
+            setWindowStartOffset(newOffset);
+            setWindowEndOffset(newOffset + newWindow.length);
+            if (filteredNew.length === limit) setHasMoreDown(true);
+            await updateNormalizedState(newWindow);
+        } catch (err) {
+            console.error('Error loading previous page', err);
+        } finally {
+            setLoadingMore(false);
+        }
+    };
+
+    // Use parent's scrollY prop to decide when to load more comments.
+    // We assume that scrollY represents the vertical offset (in pixels) of the parent scroll view.
+    useEffect(() => {
+        // When near the top, try loading newer comments.
+        if (scrollY < upperThreshold && windowStartOffset > 0 && !loadingMore) {
+            loadPrevPage();
+        }
+        // When near the bottom, try loading older comments.
+        if (
+            scrollY > windowHeight - lowerThreshold &&
+            hasMoreDown &&
+            !loadingMore
+        ) {
+            loadNextPage();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [scrollY, windowHeight, loadingMore, windowStartOffset, hasMoreDown]);
 
     const handleContinueConversation = (childCommentId: string) => {
         navigation.push('PostScreen', {
@@ -204,9 +244,7 @@ export const CommentsManager = forwardRef<
         });
     };
 
-    const commentTree = buildCommentTree(normalizedComments);
-
-    if (loading && offset === 0) {
+    if (loading && windowEndOffset === 0) {
         return (
             <View style={styles.center}>
                 <ActivityIndicator />
@@ -221,6 +259,8 @@ export const CommentsManager = forwardRef<
         );
     }
 
+    const commentTree = buildCommentTree(normalizedComments);
+
     return (
         <View>
             {commentTree.map((comment) => (
@@ -233,11 +273,9 @@ export const CommentsManager = forwardRef<
                 />
             ))}
             {loadingMore && <ActivityIndicator />}
-            {/* Invisible sentinel to trigger loading more when it becomes visible */}
-            <View ref={sentinelRef} style={{ height: 1 }} />
         </View>
     );
-});
+};
 
 const styles = StyleSheet.create({
     center: {

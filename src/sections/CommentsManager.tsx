@@ -7,6 +7,7 @@ import React, {
 } from 'react';
 import { View, StyleSheet, Text } from 'react-native';
 import { useApolloClient, useQuery } from '@apollo/client';
+import { useNavigation } from '@react-navigation/native';
 import { FETCH_POST_COMMENTS_QUERY, FETCH_USER_QUERY } from '../queries';
 import { CommentThread, CommentNode } from './CommentThread';
 import { SkeletonComment } from '../small-components';
@@ -73,6 +74,52 @@ export const CommentsManager: React.FC<CommentsManagerProps> = ({ postId }) => {
             byId: {},
             rootIds: [],
         });
+    const [commentHistory, setCommentHistory] = useState<NormalizedComments[]>(
+        []
+    );
+    const navigation = useNavigation();
+
+    const handleBack = useCallback(() => {
+        setCommentHistory((prevHistory) => {
+            if (prevHistory.length === 0) return prevHistory; // No history to go back to.
+            const newHistory = [...prevHistory];
+            const previousState = newHistory.pop();
+            if (previousState) {
+                setNormalizedComments(previousState);
+            }
+            return newHistory;
+        });
+    }, []);
+
+    useEffect(() => {
+        const unsubscribe = navigation.addListener('beforeRemove', (e) => {
+            // If we have history, intercept the back event
+            if (commentHistory.length > 0) {
+                e.preventDefault(); // Prevent default navigation
+                handleBack();
+            }
+            // If no history, allow navigation to continue normally.
+        });
+        return unsubscribe;
+    }, [navigation, commentHistory, handleBack]);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined' && window.addEventListener) {
+            const onPopState = (e: PopStateEvent) => {
+                if (commentHistory.length > 0) {
+                    // Cancel default behavior by pushing a new state.
+                    window.history.pushState(null, '', window.location.href);
+                    handleBack();
+                }
+            };
+
+            window.addEventListener('popstate', onPopState);
+            return () => {
+                window.removeEventListener('popstate', onPopState);
+            };
+        }
+    }, [commentHistory, handleBack]);
+
     // State to trigger load-more (continue conversation) for child comments.
     const [
         loadMoreCommentsParentCommentId,
@@ -92,6 +139,15 @@ export const CommentsManager: React.FC<CommentsManagerProps> = ({ postId }) => {
     const updateFullNormalizedState = async (
         newCommentsData: CommentNode[]
     ) => {
+        setCommentHistory((prevHistory) => {
+            // Assuming normalizedComments is accessible in this scope.
+            // Only push if there's data in the current state.
+            if (Object.keys(normalizedComments.byId).length > 0) {
+                return [...prevHistory, normalizedComments];
+            }
+            return prevHistory;
+        });
+
         const flatComments = flattenComments(newCommentsData);
         const commentsWithUser = await Promise.all(
             flatComments.map(async (comment) => {
@@ -123,6 +179,17 @@ export const CommentsManager: React.FC<CommentsManagerProps> = ({ postId }) => {
             }
         });
         setNormalizedComments({ byId: newById, rootIds: newRootIds });
+
+        if (
+            typeof window !== 'undefined' &&
+            window.history &&
+            window.history.pushState
+        ) {
+            window.history.pushState(
+                { comments: { byId: newById, rootIds: newRootIds } },
+                ''
+            );
+        }
     };
 
     // Update normalized state with initial comments.

@@ -24,13 +24,12 @@ const styles = StyleSheet.create({
     commentContainer: {
         borderLeftWidth: 3,
         borderLeftColor: COLORS.TextInput,
-        // paddingLeft: 10,
         marginBottom: 15,
     },
     singleComment: {
         backgroundColor: COLORS.PrimaryBackground,
         borderRadius: 6,
-        padding: 10,
+        paddingLeft: 2,
     },
     commentHeader: {
         flexDirection: 'row',
@@ -73,8 +72,10 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     commentContentWrapper: {
-        alignSelf: 'flex-start',
+        alignSelf: 'stretch',
+        flex: 1,
         maxWidth: '100%',
+        paddingLeft: 10,
         marginTop: 4,
     },
     commentText: {
@@ -118,14 +119,14 @@ const styles = StyleSheet.create({
         color: COLORS.White,
         fontSize: 14,
     },
-    loadMoreButton: {
+    continueConversationButton: {
         marginTop: 10,
         padding: 8,
         backgroundColor: COLORS.Primary,
         borderRadius: 4,
         alignSelf: 'center',
     },
-    loadMoreText: {
+    continueConversationText: {
         color: COLORS.White,
         fontSize: 14,
     },
@@ -147,19 +148,19 @@ type CommentThreadProps = {
     comment: CommentNode;
     level?: number;
     opUser?: string;
-    onLoadMore: (parentCommentId: string) => void;
+    onContinueConversation: (parentCommentId: string) => void;
 };
 
 const CommentChildrenComponent = ({
     childrenComments,
     level,
     opUser,
-    onLoadMore,
+    onContinueConversation,
 }: {
     childrenComments: CommentNode[];
     level?: number;
     opUser?: string;
-    onLoadMore: (parentCommentId: string) => void;
+    onContinueConversation: (parentCommentId: string) => void;
 }) => (
     <>
         {childrenComments.map((child) => (
@@ -168,7 +169,7 @@ const CommentChildrenComponent = ({
                 comment={child}
                 level={level}
                 opUser={opUser}
-                onLoadMore={onLoadMore}
+                onContinueConversation={onContinueConversation}
             />
         ))}
     </>
@@ -180,7 +181,7 @@ const CommentThreadComponent = ({
     comment,
     level = 0,
     opUser,
-    onLoadMore,
+    onContinueConversation,
 }: CommentThreadProps) => {
     const [voteCount, setVoteCount] = useState(comment.upvotes);
     const [collapsed, setCollapsed] = useState(comment.upvotes < -1);
@@ -202,7 +203,6 @@ const CommentThreadComponent = ({
     const plainContent = stripHtml(comment.content);
     const isJustLink =
         urlsInContent.length === 1 && plainContent === urlsInContent[0];
-    const indentation = Math.min(level, 2);
 
     return (
         <View
@@ -210,7 +210,7 @@ const CommentThreadComponent = ({
                 styles.commentContainer,
                 level === 0
                     ? { borderLeftWidth: 0, paddingLeft: 0 }
-                    : { marginTop: 16, paddingLeft: indentation },
+                    : { marginTop: 16, paddingLeft: 10 },
             ]}
         >
             <View
@@ -314,17 +314,21 @@ const CommentThreadComponent = ({
                                 childrenComments={comment.children}
                                 level={level + 1}
                                 opUser={opUser}
-                                onLoadMore={onLoadMore}
+                                onContinueConversation={onContinueConversation}
                             />
                         )}
                         {comment.hasChildren &&
                             comment.children.length === 0 && (
                                 <TouchableOpacity
-                                    onPress={() => onLoadMore(comment.id)}
-                                    style={styles.loadMoreButton} // new style for the button
+                                    onPress={() =>
+                                        onContinueConversation(comment.id)
+                                    }
+                                    style={styles.continueConversationButton} // new style for the button
                                 >
-                                    <Text style={styles.loadMoreText}>
-                                        Load more comments
+                                    <Text
+                                        style={styles.continueConversationText}
+                                    >
+                                        Continue the conversation
                                     </Text>
                                 </TouchableOpacity>
                             )}

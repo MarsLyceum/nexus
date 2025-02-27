@@ -1,12 +1,6 @@
 // CommentThread.tsx
 import React, { useState, useContext } from 'react';
-import {
-    View,
-    Text,
-    TouchableOpacity,
-    StyleSheet,
-    Dimensions,
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
@@ -31,6 +25,7 @@ const styles = StyleSheet.create({
         borderRadius: 6,
         paddingLeft: 2,
         paddingTop: 15,
+        paddingBottom: 15,
     },
     commentHeader: {
         flexDirection: 'row',

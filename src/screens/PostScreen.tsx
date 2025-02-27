@@ -1,4 +1,4 @@
-import React, { useEffect, useContext } from 'react';
+import React, { useEffect, useContext, useRef } from 'react';
 import {
     View,
     ScrollView,
@@ -9,8 +9,8 @@ import {
     Text,
 } from 'react-native';
 import { NavigationProp, RouteProp } from '@react-navigation/native';
-import { useQuery, useApolloClient } from '@apollo/client';
-import { useAppDispatch } from '../redux';
+import { useQuery } from '@apollo/client';
+import { useAppDispatch, loadUser } from '../redux';
 import { FETCH_POST_QUERY, FETCH_USER_QUERY } from '../queries';
 import { PostItem, CommentsManager } from '../sections';
 import { COLORS } from '../constants';
@@ -21,7 +21,7 @@ import { CurrentCommentContext } from '../providers';
 import { SkeletonPostItem, SkeletonComment } from '../small-components';
 
 type RootStackParamList = {
-    PostScreen: { id?: number; post?: Post };
+    PostScreen: { id?: number; post?: Post; parentCommentId?: string };
 };
 
 type PostScreenProps = {
@@ -73,7 +73,10 @@ export const PostScreen: React.FC<PostScreenProps> = ({
 }) => {
     const { id, post, parentCommentId } = route.params;
     const dispatch = useAppDispatch();
-    const client = useApolloClient();
+
+    useEffect(() => {
+        dispatch(loadUser());
+    }, [dispatch]);
 
     // Fetch post if not passed in route params.
     const { data, loading, error } = useQuery(FETCH_POST_QUERY, {
@@ -119,6 +122,18 @@ export const PostScreen: React.FC<PostScreenProps> = ({
         if (postData?.content) setParentContent(postData.content);
         if (feedPost?.postedAt) setParentDate(feedPost.postedAt);
     }, [postData?.id, postData?.user, postData?.content, feedPost?.postedAt]);
+
+    // Create a ref for CommentsManager
+    const commentsManagerRef = useRef<{ checkScrollPosition: () => void }>(
+        null
+    );
+
+    // Define the onScroll handler that calls CommentsManager's checkScrollPosition
+    const handleScroll = () => {
+        if (commentsManagerRef.current) {
+            commentsManagerRef.current.checkScrollPosition();
+        }
+    };
 
     if (loading) {
         return (
@@ -171,6 +186,8 @@ export const PostScreen: React.FC<PostScreenProps> = ({
                         style={styles.scrollSection}
                         contentContainerStyle={styles.scrollView}
                         keyboardShouldPersistTaps="handled"
+                        onScroll={handleScroll}
+                        scrollEventThrottle={16}
                     >
                         <PostItem
                             id={postData.id}
@@ -193,8 +210,8 @@ export const PostScreen: React.FC<PostScreenProps> = ({
                             variant="details"
                             group="My cool group"
                         />
-                        {/* Render the CommentsManager, which handles comment state and display */}
                         <CommentsManager
+                            ref={commentsManagerRef}
                             postId={postData.id}
                             parentCommentId={parentCommentId}
                         />

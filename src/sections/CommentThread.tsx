@@ -24,15 +24,13 @@ const styles = StyleSheet.create({
     commentContainer: {
         borderLeftWidth: 3,
         borderLeftColor: COLORS.TextInput,
-        paddingLeft: 10,
+        // paddingLeft: 10,
         marginBottom: 15,
-        flex: 1,
     },
     singleComment: {
         backgroundColor: COLORS.PrimaryBackground,
         borderRadius: 6,
         padding: 10,
-        flex: 1,
     },
     commentHeader: {
         flexDirection: 'row',
@@ -197,15 +195,14 @@ const CommentThreadComponent = ({
         setParentCommentId,
     } = useContext(CurrentCommentContext);
 
-    // Compute the inner width for link previews (similar to post item)
-    const { width: windowWidth } = Dimensions.get('window');
-    const commentInnerWidth = windowWidth - 30;
+    const [containerWidth, setContainerWidth] = useState(0);
 
     // Determine if the comment content is a pure link
     const urlsInContent = extractUrls(comment.content);
     const plainContent = stripHtml(comment.content);
     const isJustLink =
         urlsInContent.length === 1 && plainContent === urlsInContent[0];
+    const indentation = Math.min(level, 2);
 
     return (
         <View
@@ -213,10 +210,16 @@ const CommentThreadComponent = ({
                 styles.commentContainer,
                 level === 0
                     ? { borderLeftWidth: 0, paddingLeft: 0 }
-                    : { marginTop: 16 },
+                    : { marginTop: 16, paddingLeft: indentation },
             ]}
         >
-            <View style={styles.singleComment}>
+            <View
+                style={styles.singleComment}
+                onLayout={(event) => {
+                    const { width } = event.nativeEvent.layout;
+                    setContainerWidth(width);
+                }}
+            >
                 <TouchableOpacity
                     onPress={() => setCollapsed(!collapsed)}
                     style={styles.commentHeader}
@@ -269,7 +272,7 @@ const CommentThreadComponent = ({
                                         <LinkPreview
                                             key={index}
                                             url={url}
-                                            containerWidth={commentInnerWidth}
+                                            containerWidth={containerWidth}
                                         />
                                     ))}
                                 </>

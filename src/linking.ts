@@ -1,7 +1,7 @@
 import { getStateFromPath as defaultGetStateFromPath } from '@react-navigation/native';
 
 export const linking = {
-    prefixes: ['peeps://', 'http://localhost:8081'],
+    prefixes: ['nexus://', 'http://localhost:8081'],
     config: {
         screens: {
             Main: {

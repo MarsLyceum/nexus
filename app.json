@@ -1,12 +1,13 @@
 {
   "expo": {
-    "name": "Peeps",
-    "slug": "peeps",
-    "version": "1.0.1",
+    "name": "Nexus",
+    "slug": "nexus",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
-    "scheme": "peeps",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "scheme": "nexus",
     "platforms": [
       "ios",
       "android",
@@ -15,7 +16,7 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#1F1524"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -32,7 +33,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.marslyceum.peeps",
+      "package": "com.marslyceum.nexus",
       "permissions": [
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION"

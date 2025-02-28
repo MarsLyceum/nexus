@@ -215,7 +215,7 @@ export const PostItem: React.FC<PostItemProps> = ({
         shareUrl ||
         (Platform.OS === 'web' && typeof window !== 'undefined'
             ? `${window.location.origin}/post/${id}`
-            : `peeps://post/${id}`);
+            : `nexus://post/${id}`);
 
     // Prepare Open Graph meta tags for web only
     const ogDescription = stripHtml(content).slice(0, 160);

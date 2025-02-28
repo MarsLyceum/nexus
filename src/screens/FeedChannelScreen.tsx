@@ -43,10 +43,10 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: COLORS.SecondaryBackground,
-        paddingBottom: BOTTOM_INPUT_HEIGHT,
     },
     feedList: {
         padding: 15,
+        paddingBottom: BOTTOM_INPUT_HEIGHT,
     },
     skeletonContainer: {
         backgroundColor: COLORS.PrimaryBackground,

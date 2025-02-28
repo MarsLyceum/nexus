@@ -215,8 +215,7 @@ const sseLink = new ApolloLink(
 const wsLink = new GraphQLWsLink(
     createClient({
         // url: graphqlApiGatewayEndpointWs,
-        // url: 'ws://192.168.1.48:4000/graphql', // Ensure this URL matches your WS server endpoint
-        url: '',
+        url: 'ws://192.168.1.48:4000/graphql', // Ensure this URL matches your WS server endpoint
     })
 );
 

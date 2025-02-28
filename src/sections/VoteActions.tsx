@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
+import { NexusTooltip } from '../small-components';
 
 const styles = StyleSheet.create({
     container: {
@@ -42,15 +43,19 @@ export const VoteActions: React.FC<VoteActionsProps> = ({
 }) => (
     <View style={styles.container}>
         {/* Upvote */}
-        <TouchableOpacity onPress={onUpvote} style={styles.actionButton}>
-            <Icon name="arrow-up" size={14} color="#bbb" />
-            <Text style={styles.countText}>{voteCount}</Text>
-        </TouchableOpacity>
+        <NexusTooltip tooltipText="Up vote">
+            <TouchableOpacity onPress={onUpvote} style={styles.actionButton}>
+                <Icon name="arrow-up" size={14} color="#bbb" />
+                <Text style={styles.countText}>{voteCount}</Text>
+            </TouchableOpacity>
+        </NexusTooltip>
 
         {/* Downvote */}
-        <TouchableOpacity onPress={onDownvote} style={styles.actionButton}>
-            <Icon name="arrow-down" size={14} color="#bbb" />
-        </TouchableOpacity>
+        <NexusTooltip tooltipText="Down vote">
+            <TouchableOpacity onPress={onDownvote} style={styles.actionButton}>
+                <Icon name="arrow-down" size={14} color="#bbb" />
+            </TouchableOpacity>
+        </NexusTooltip>
 
         {/* Show comment count if not compact */}
         {!compact && commentCount !== undefined && (

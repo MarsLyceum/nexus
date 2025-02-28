@@ -7,6 +7,8 @@ import {
 import EventSource from 'react-native-event-source';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Platform, StatusBar } from 'react-native';
+import { createClient } from 'graphql-ws';
+import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import Toast from 'react-native-toast-message';
 import createUploadLink from 'apollo-upload-client/createUploadLink.mjs';
 import {
@@ -121,6 +123,8 @@ const quotaLink = new ApolloLink((operation, forward) => {
 
 // const graphqlApiGatewayEndpointHttp =
 //     'https://peeps-web-service-iwesf7iypq-uw.a.run.app/graphql';
+const graphqlApiGatewayEndpointWs =
+    'wss://peeps-web-service-iwesf7iypq-uw.a.run.app/graphql';
 const graphqlApiGatewayEndpointSse = ''; // SSE turned off
 
 const httpLink = from([
@@ -208,6 +212,14 @@ const sseLink = new ApolloLink(
         })
 );
 
+const wsLink = new GraphQLWsLink(
+    createClient({
+        // url: graphqlApiGatewayEndpointWs,
+        // url: 'ws://192.168.1.48:4000/graphql', // Ensure this URL matches your WS server endpoint
+        url: '',
+    })
+);
+
 const splitLink = split(
     ({ query }) => {
         const definition = getMainDefinition(query);
@@ -216,7 +228,7 @@ const splitLink = split(
             definition.operation === 'subscription'
         );
     },
-    sseLink,
+    wsLink,
     from([quotaLink, httpLink])
 );
 

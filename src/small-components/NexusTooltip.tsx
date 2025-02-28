@@ -47,7 +47,9 @@ export const NexusTooltip = ({
             </TriggerView>
             {open && (
                 <View style={styles.tooltip}>
-                    <Text style={styles.tooltipText}>{tooltipText}</Text>
+                    <Text style={styles.tooltipText} numberOfLines={1}>
+                        {tooltipText}
+                    </Text>
                 </View>
             )}
         </View>

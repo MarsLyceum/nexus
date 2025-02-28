@@ -19,7 +19,11 @@ import { BackArrow } from '../buttons';
 import { COLORS } from '../constants';
 import { LargeImageModal } from './LargeImageModal';
 import { AttachmentImageGallery } from './AttachmentImageGallery';
-import { LinkPreview, MarkdownRenderer } from '../small-components';
+import {
+    LinkPreview,
+    MarkdownRenderer,
+    NexusTooltip,
+} from '../small-components';
 import { stripHtml, extractUrls } from '../utils';
 
 const styles = StyleSheet.create({
@@ -310,16 +314,23 @@ export const PostItem: React.FC<PostItemProps> = ({
                     onDownvote={onDownvote}
                     commentCount={commentsCount}
                 />
-                <TouchableOpacity onPress={onShare} style={styles.shareButton}>
-                    <MaterialCommunityIcons
-                        name="share-outline"
-                        size={20}
-                        color={COLORS.White}
-                    />
-                    {shareCount > 0 && (
-                        <Text style={styles.shareCountText}>{shareCount}</Text>
-                    )}
-                </TouchableOpacity>
+                <NexusTooltip tooltipText="Share">
+                    <TouchableOpacity
+                        onPress={onShare}
+                        style={styles.shareButton}
+                    >
+                        <MaterialCommunityIcons
+                            name="share-outline"
+                            size={20}
+                            color={COLORS.White}
+                        />
+                        {shareCount > 0 && (
+                            <Text style={styles.shareCountText}>
+                                {shareCount}
+                            </Text>
+                        )}
+                    </TouchableOpacity>
+                </NexusTooltip>
             </View>
         </View>
     );

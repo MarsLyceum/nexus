@@ -10,17 +10,7 @@ import { Image as ExpoImage } from 'expo-image';
 import { LinkPreview } from './LinkPreview';
 import { MessageWithAvatar } from '../types';
 import { MarkdownRenderer } from './MarkdownRenderer';
-import { extractUrls } from '../utils';
-
-const formatDateTime = (date: Date) => {
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const year = date.getFullYear();
-    const hours = date.getHours() % 12 || 12;
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const ampm = date.getHours() >= 12 ? 'PM' : 'AM';
-    return `${month}/${day}/${year} ${hours}:${minutes} ${ampm}`;
-};
+import { extractUrls, formatFullDate } from '../utils';
 
 export type MessageItemProps = {
     item: MessageWithAvatar;
@@ -45,7 +35,7 @@ const NativeSizeAttachmentImage: React.FC<{ uri: string }> = ({ uri }) => {
 
     if (!dimensions) {
         // Optionally, you can return a placeholder or spinner while dimensions load.
-        return null;
+        return undefined;
     }
 
     return (
@@ -103,9 +93,11 @@ export const MessageItem: React.FC<MessageItemProps> = ({
         <View style={styles.messageContent}>
             <Text style={styles.userName}>
                 {item.username}{' '}
-                <Text style={styles.time}>{formatDateTime(item.postedAt)}</Text>
+                <Text style={styles.time}>{formatFullDate(item.postedAt)}</Text>
             </Text>
-            {item.content ? renderMessageContent(item.content, width) : null}
+            {item.content
+                ? renderMessageContent(item.content, width)
+                : undefined}
             {item.attachmentUrls && item.attachmentUrls.length > 0 && (
                 <View style={styles.messageAttachmentsContainer}>
                     {item.attachmentUrls.map((url, index) => (

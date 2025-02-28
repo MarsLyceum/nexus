@@ -9,7 +9,7 @@ export type CurrentCommentContextType = {
     setParentDate: (parentDate: string) => void;
     postId: string;
     setPostId: (postId: string) => void;
-    parentCommentId: string;
+    parentCommentId: string | null;
     setParentCommentId: (parentCommentId: string | null) => void;
 };
 
@@ -36,6 +36,7 @@ export const CurrentCommentProvider: FC<{ children: React.ReactNode }> = ({
     const [parentContent, setParentContent] = useState<string>('');
     const [parentDate, setParentDate] = useState<string>('');
     const [postId, setPostId] = useState<string>('');
+    // eslint-disable-next-line unicorn/no-null
     const [parentCommentId, setParentCommentId] = useState<string | null>(null);
 
     return useMemo(
@@ -68,6 +69,7 @@ export const CurrentCommentProvider: FC<{ children: React.ReactNode }> = ({
             setPostId,
             parentCommentId,
             setParentCommentId,
+            children,
         ]
     );
 };

@@ -61,6 +61,7 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
     }, [attachmentUrls, currentAttachmentIndex]);
 
     // Handler for swipe events; calculate the new image index based on scroll offset.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleMomentumScrollEnd = (event: any) => {
         const offsetX = event.nativeEvent.contentOffset.x;
         const newIndex = Math.round(offsetX / imageWidth);

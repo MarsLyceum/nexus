@@ -74,6 +74,7 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
             }
         };
         window.addEventListener('keydown', handleKeyDown);
+        // eslint-disable-next-line consistent-return
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [visible, attachments.length, currentIndex]);
 

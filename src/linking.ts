@@ -1,4 +1,7 @@
-import { getStateFromPath as defaultGetStateFromPath } from '@react-navigation/native';
+import {
+    getStateFromPath as defaultGetStateFromPath,
+    PathConfigMap,
+} from '@react-navigation/native';
 
 export const linking = {
     prefixes: ['nexus://', 'http://localhost:8081'],
@@ -11,10 +14,12 @@ export const linking = {
             },
         },
     },
-    getPathFromState(state, options) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    getPathFromState(state: any) {
         // We use findLatestRoute to build the URL (see next section for that function).
         const route = findLatestRoute(state, 'PostScreen');
-        if (route && route.params) {
+        //
+        if (route?.params) {
             const { id, parentCommentId } = route.params;
             if (id) {
                 // The linking config already supplies "post/", so we return the extra segments.
@@ -26,7 +31,12 @@ export const linking = {
         }
         return '';
     },
-    getStateFromPath(path, options) {
+    getStateFromPath(
+        path: string,
+        options:
+            | { initialRouteName?: string; screens: PathConfigMap<object> }
+            | undefined
+    ) {
         // Handle URL with comment thread
         const commentMatch = path.match(/^\/?post\/([^/]+)\/comment\/(.+)$/);
         if (commentMatch) {
@@ -74,9 +84,11 @@ export const linking = {
 };
 
 // Helper: recursively find the deepest route matching the given name.
-function findLatestRoute(state, routeName) {
-    let latestRoute = null;
-    function traverse(s) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function findLatestRoute(state: any, routeName: string): any {
+    let latestRoute;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    function traverse(s: { name: string; routes: any[] }) {
         if (!s) return;
         if (s.name === routeName) {
             latestRoute = s;

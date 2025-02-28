@@ -13,12 +13,13 @@ const spoilerExtension = {
         if (redditIndex === -1) return discordIndex;
         return Math.min(discordIndex, redditIndex);
     },
+    // eslint-disable-next-line consistent-return
     tokenizer(src: string) {
         // Remove common zero-width characters so that invisible characters don’t interfere.
-        const cleaned = src.replace(/[\u200B\u200C\u200D\uFEFF]/g, '');
+        const cleaned = src.replaceAll(/[\u200B-\u200D\uFEFF]/g, '');
         // Handle Discord-style spoilers: ||spoiler||
         if (cleaned.startsWith('||')) {
-            const match = /^\|\|([^|\n]+(?:\|(?!\|)[^|\n]+)*)\|\|(?=$|\n)/.exec(
+            const match = /^\|\|([^\n|]+(?:\|(?!\|)[^\n|]+)*)\|\|(?=$|\n)/.exec(
                 cleaned
             );
             if (match) {
@@ -41,6 +42,7 @@ const spoilerExtension = {
             }
         }
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     renderer(token: any) {
         return `<span class="spoiler">${token.text}</span>`;
     },
@@ -326,4 +328,3 @@ export function getRichTextEditorHtml(
   </body>
 </html>`;
 }
-export { getRichTextEditorHtml };

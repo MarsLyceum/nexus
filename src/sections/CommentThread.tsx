@@ -136,6 +136,7 @@ export type CommentNode = {
     upvotes: number;
     content: string;
     parentCommentId: string | null;
+    postedByUserId: string;
     hasChildren: boolean;
     children: CommentNode[];
 };
@@ -144,6 +145,7 @@ type CommentThreadProps = {
     comment: CommentNode;
     level?: number;
     opUser?: string;
+    postId: string;
     onContinueConversation: (parentCommentId: string) => void;
 };
 

@@ -20,6 +20,7 @@ export const RichTextEditorMobile: React.FC<RichTextEditorMobileProps> = ({
         []
     );
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleMessage = (event: any) => {
         const { data } = event.nativeEvent;
         try {
@@ -30,15 +31,14 @@ export const RichTextEditorMobile: React.FC<RichTextEditorMobileProps> = ({
             }
             if (parsed.type === 'text-change') {
                 // Convert the raw delta to markdown.
-                const delta = parsed.delta;
+                const { delta } = parsed;
                 const markdown = convertDeltaToMarkdownWithFencesAndFormatting(
                     delta.ops
                 );
                 onChange(markdown);
-                return;
             }
-        } catch (e) {
-            console.error('Failed to parse message from WebView:', e);
+        } catch (error) {
+            console.error('Failed to parse message from WebView:', error);
         }
     };
 

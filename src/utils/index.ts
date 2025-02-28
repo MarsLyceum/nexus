@@ -1,6 +1,7 @@
 export * from './config';
 export * from './convertDeltaToMarkdownWithFencesAndFormatting';
 export * from './extractUrls';
+export * from './formatFullDate';
 export * from './getRelativeTime';
 export * from './linkPreviewUtils';
 export * from './setupAxiosQuotas';

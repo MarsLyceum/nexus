@@ -4,7 +4,7 @@ import {
     createStackNavigator,
     TransitionPresets,
 } from '@react-navigation/stack';
-import EventSource from 'react-native-event-source';
+// import EventSource from 'react-native-event-source';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Platform, StatusBar } from 'react-native';
 import { createClient } from 'graphql-ws';
@@ -122,10 +122,10 @@ const quotaLink = new ApolloLink((operation, forward) => {
 });
 
 // const graphqlApiGatewayEndpointHttp =
-//     'https://peeps-web-service-iwesf7iypq-uw.a.run.app/graphql';
-const graphqlApiGatewayEndpointWs =
-    'wss://peeps-web-service-iwesf7iypq-uw.a.run.app/graphql';
-const graphqlApiGatewayEndpointSse = ''; // SSE turned off
+//     'https://nexus-web-service-197277044151.us-west1.run.app/graphql';
+// const graphqlApiGatewayEndpointWs =
+//     'wss://nexus-web-service-197277044151.us-west1.run.app/graphql';
+// const graphqlApiGatewayEndpointSse = ''; // SSE turned off
 
 const httpLink = from([
     errorLink,
@@ -174,43 +174,43 @@ const httpLink = from([
     }),
 ]);
 
-const sseLink = new ApolloLink(
-    () =>
-        new Observable((observer) => {
-            const eventSource: EventSource = new EventSource(
-                graphqlApiGatewayEndpointSse,
-                { withCredentials: false }
-            );
-            eventSource.addEventListener(
-                'message',
-                (event: { data: string }) => {
-                    try {
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                        const parsedData = JSON.parse(event.data);
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                        if (parsedData.errors) {
-                            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                            observer.error(parsedData.errors);
-                        } else {
-                            observer.next({
-                                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                                data: { greetings: parsedData.greetings },
-                            });
-                        }
-                    } catch (error) {
-                        observer.error(error);
-                    }
-                }
-            );
-            eventSource.addEventListener('error', (error: unknown) => {
-                observer.error(error);
-                eventSource.close();
-            });
-            return () => {
-                eventSource.close();
-            };
-        })
-);
+// const sseLink = new ApolloLink(
+//     () =>
+//         new Observable((observer) => {
+//             const eventSource: EventSource = new EventSource(
+//                 graphqlApiGatewayEndpointSse,
+//                 { withCredentials: false }
+//             );
+//             eventSource.addEventListener(
+//                 'message',
+//                 (event: { data: string }) => {
+//                     try {
+//                         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+//                         const parsedData = JSON.parse(event.data);
+//                         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+//                         if (parsedData.errors) {
+//                             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+//                             observer.error(parsedData.errors);
+//                         } else {
+//                             observer.next({
+//                                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+//                                 data: { greetings: parsedData.greetings },
+//                             });
+//                         }
+//                     } catch (error) {
+//                         observer.error(error);
+//                     }
+//                 }
+//             );
+//             eventSource.addEventListener('error', (error: unknown) => {
+//                 observer.error(error);
+//                 eventSource.close();
+//             });
+//             return () => {
+//                 eventSource.close();
+//             };
+//         })
+// );
 
 const wsLink = new GraphQLWsLink(
     createClient({

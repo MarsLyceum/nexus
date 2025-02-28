@@ -3,7 +3,6 @@ import {
     Text,
     StyleSheet,
     Dimensions,
-    ScrollView,
     Linking,
     View,
     TouchableOpacity,
@@ -65,6 +64,7 @@ const styles = StyleSheet.create({
 // ---------------------
 // Helper function to extract text recursively from tnode children
 // ---------------------
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const extractTextFromTnode = (tnode: any): string => {
     if (tnode.data) {
         return tnode.data;
@@ -87,7 +87,7 @@ const InlineSpoiler: React.FC<{ children: React.ReactNode }> = ({
     return (
         <Text
             onPress={() => setRevealed((prev) => !prev)}
-            selectable={true}
+            selectable
             style={[
                 styles.spoilerText,
                 {
@@ -105,10 +105,11 @@ const InlineSpoiler: React.FC<{ children: React.ReactNode }> = ({
 // ---------------------
 // Custom Inline Link Component
 // ---------------------
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const InlineLink: React.FC<{ tnode: any }> = ({ tnode }) => {
     let href = tnode.attributes?.href || '';
-    if (!href.match(/^https?:\/\//)) {
-        href = 'http://' + href;
+    if (!/^https?:\/\//.test(href)) {
+        href = `http://${href}`;
     }
     const content =
         tnode.domNode?.textContent || extractTextFromTnode(tnode) || '';
@@ -116,10 +117,10 @@ const InlineLink: React.FC<{ tnode: any }> = ({ tnode }) => {
         <Text
             onPress={() => {
                 if (href) {
-                    Linking.openURL(href);
+                    void Linking.openURL(href);
                 }
             }}
-            selectable={true}
+            selectable
             style={[styles.linkText, { alignSelf: 'flex-start' }]}
         >
             {content}
@@ -131,8 +132,9 @@ const InlineLink: React.FC<{ tnode: any }> = ({ tnode }) => {
 // Markdown-It Plugin for Discord-Style Inline Spoilers (using ||spoiler||)
 // ---------------------
 function inlineSpoilerPlugin(md: MarkdownIt) {
+    // eslint-disable-next-line unicorn/consistent-function-scoping, @typescript-eslint/no-explicit-any
     function tokenize(state: any, silent: boolean) {
-        const pos = state.pos;
+        const { pos } = state;
         if (state.src.slice(pos, pos + 2) !== '||') return false;
         const end = state.src.indexOf('||', pos + 2);
         if (end === -1) return false;
@@ -140,6 +142,7 @@ function inlineSpoilerPlugin(md: MarkdownIt) {
             const token = state.push('spoiler', 'spoiler', 0);
             token.content = state.src.slice(pos + 2, end);
         }
+        // eslint-disable-next-line no-param-reassign
         state.pos = end + 2;
         return true;
     }
@@ -150,8 +153,9 @@ function inlineSpoilerPlugin(md: MarkdownIt) {
 // Markdown-It Plugin for Reddit-Style Inline Spoilers (using >!spoiler!<)
 // ---------------------
 function redditSpoilerPlugin(md: MarkdownIt) {
+    // eslint-disable-next-line unicorn/consistent-function-scoping, @typescript-eslint/no-explicit-any
     function tokenize(state: any, silent: boolean) {
-        const pos = state.pos;
+        const { pos } = state;
         if (state.src.slice(pos, pos + 2) !== '>!') return false;
         const end = state.src.indexOf('!<', pos + 2);
         if (end === -1) return false;
@@ -159,6 +163,7 @@ function redditSpoilerPlugin(md: MarkdownIt) {
             const token = state.push('spoiler', 'spoiler', 0);
             token.content = state.src.slice(pos + 2, end);
         }
+        // eslint-disable-next-line no-param-reassign
         state.pos = end + 2;
         return true;
     }
@@ -168,6 +173,7 @@ function redditSpoilerPlugin(md: MarkdownIt) {
 // ---------------------
 // Custom Renderer for Spoiler Tokens in Markdown-It
 // ---------------------
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function spoilerRenderer(tokens: any, idx: number) {
     return `<spoiler>${tokens[idx].content}</spoiler>`;
 }
@@ -188,14 +194,14 @@ mdInstance.renderer.rules.spoiler = spoilerRenderer;
 // Custom Renderers for react-native-render-html
 // ---------------------
 const customRenderers = {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     spoiler: ({ tnode }: any) => {
         const content =
             tnode.domNode?.textContent || extractTextFromTnode(tnode) || '';
         return <InlineSpoiler>{content}</InlineSpoiler>;
     },
-    a: ({ tnode }: any) => {
-        return <InlineLink tnode={tnode} />;
-    },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    a: ({ tnode }: any) => <InlineLink tnode={tnode} />,
 };
 
 // ---------------------
@@ -237,6 +243,7 @@ export const MarkdownRenderer: React.FC<{
     const contentWidth = Dimensions.get('window').width;
 
     const handleOnLayout = useCallback(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (event: any) => {
             setContentHeight(event.nativeEvent.layout.height);
         },
@@ -262,6 +269,7 @@ export const MarkdownRenderer: React.FC<{
                 contentWidth={contentWidth}
                 source={{ html: htmlContent }}
                 renderers={customRenderers}
+                // @ts-expect-error broken type
                 customHTMLElementModels={customHTMLElementModels}
                 baseStyle={baseStyle}
                 tagsStyles={tagsStyles}
@@ -299,6 +307,7 @@ export const MarkdownRenderer: React.FC<{
                     contentWidth={contentWidth}
                     source={{ html: htmlContent }}
                     renderers={customRenderers}
+                    // @ts-expect-error broken type
                     customHTMLElementModels={customHTMLElementModels}
                     baseStyle={{ marginTop: 0, paddingTop: 0 }}
                     tagsStyles={{

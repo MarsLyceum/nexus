@@ -249,6 +249,7 @@ export const PostItem: React.FC<PostItemProps> = ({
                 if (result.action === Share.sharedAction) {
                     setShareCount((prev) => prev + 1);
                 }
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (error: any) {
                 Alert.alert('Share error', error.message);
             }

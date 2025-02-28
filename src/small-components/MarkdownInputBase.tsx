@@ -43,6 +43,7 @@ export const renderHighlightedText = (text: string) => {
             /(```([\S\s]+?)```)|(`([^`]+)`)|(__(.+?)__)|(\*\*\*([^*]+)\*\*\*)|(\*\*([^*]+)\*\*)|(\*([^*]+)\*)|(_([^_]+)_)|(~~(.*?)~~)|(>!(.*?)!<)|(\|\|([\S\s]+?)\|\|)|(\[([^\]]+)]\(([^)]+)\))|(!\[([^\]]*)]\(([^)]+)\))|(https?:\/\/\S+)/g;
         let match;
         let key = 0;
+        // eslint-disable-next-line no-cond-assign
         while ((match = regex.exec(line)) !== null) {
             if (match.index > lastIndex) {
                 segments.push(
@@ -180,7 +181,7 @@ export const renderHighlightedText = (text: string) => {
                         {match[22]}
                     </Text>,
                     <Text key={key++} style={baseStyles.plainText}>
-                        {'](' + match[23] + ')'}
+                        {`](${match[23]})`}
                     </Text>
                 );
             } else if (match[24]) {
@@ -207,6 +208,7 @@ export const renderHighlightedText = (text: string) => {
         }
         return <Text key={index}>{segments}</Text>;
     });
+    // eslint-disable-next-line unicorn/no-array-reduce
     return renderedLines.reduce((prev, curr, idx) => {
         if (idx === 0) return [curr];
         return [...prev, <Text key={`newline-${idx}`}>{'\n'}</Text>, curr];
@@ -226,6 +228,7 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
 
     // Sync the overlay scroll directly with the TextInput's scroll offset.
     const handleScroll = (
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         e: NativeSyntheticEvent<TextInputScrollEventData> & { nativeEvent: any }
     ) => {
         const offsetY =
@@ -260,6 +263,7 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
                 scrollEnabled
                 textAlignVertical="top"
                 onScroll={handleScroll}
+                // @ts-expect-error broken type
                 scrollEventThrottle={16}
                 {...rest}
             />

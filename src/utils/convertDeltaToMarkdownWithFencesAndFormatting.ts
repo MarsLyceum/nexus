@@ -1,10 +1,14 @@
+// @ts-expect-error no types
 import { deltaToMarkdown } from 'quill-delta-to-markdown';
 
 export function convertDeltaToMarkdownWithFencesAndFormatting(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ops: any[]
 ): string {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const segments: { isCode: boolean; ops: any[] }[] = [];
-    let currentSegment: { isCode: boolean; ops: any[] } | null = null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let currentSegment: { isCode: boolean; ops: any[] } | undefined;
 
     // Split operations into segments based on whether they are code or non-code.
     for (let i = 0; i < ops.length; i++) {
@@ -44,7 +48,7 @@ export function convertDeltaToMarkdownWithFencesAndFormatting(
             const processedOps = segment.ops.map((op) => {
                 let newInsert = op.insert;
                 // Copy attributes if they exist.
-                let newAttributes = op.attributes ? { ...op.attributes } : {};
+                const newAttributes = op.attributes ? { ...op.attributes } : {};
 
                 // If op has a spoiler attribute, wrap the text with Discord-style spoiler markers.
                 if (newAttributes.spoiler) {

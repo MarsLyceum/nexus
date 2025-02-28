@@ -33,6 +33,7 @@ const BOTTOM_INPUT_HEIGHT = 60;
 const isWeb = Platform.OS === 'web';
 
 const styles = StyleSheet.create({
+    // @ts-expect-error web only types
     safeContainer: {
         flex: 1,
         backgroundColor: COLORS.SecondaryBackground,
@@ -76,8 +77,6 @@ export const PostScreen: React.FC<PostScreenProps> = ({
     const dispatch = useAppDispatch();
     const [scrollY, setScrollY] = useState(0);
     const scrollViewRef = useRef<ScrollView>(null);
-    // Track the content height to detect changes when new comments are prepended.
-    const [contentHeight, setContentHeight] = useState(0);
 
     useEffect(() => {
         dispatch(loadUser());
@@ -134,6 +133,7 @@ export const PostScreen: React.FC<PostScreenProps> = ({
     );
 
     // onScroll handler: update scrollY state.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleScroll = (event: any) => {
         const currentY = event.nativeEvent.contentOffset.y;
         setScrollY(currentY);
@@ -143,15 +143,13 @@ export const PostScreen: React.FC<PostScreenProps> = ({
         }
     };
 
-    // onContentSizeChange: detect when content height increases due to new (prepended) comments.
-    const handleContentSizeChange = (w: number, h: number) => {
-        setContentHeight(h);
-    };
-
     if (loading) {
         return (
+            // @ts-expect-error web only types
             <SafeAreaView style={styles.safeContainer}>
+                {/* @ts-expect-error web only types */}
                 <View style={styles.mainContainer}>
+                    {/* @ts-expect-error web only types */}
                     <ScrollView
                         ref={scrollViewRef}
                         style={styles.scrollSection}
@@ -170,6 +168,7 @@ export const PostScreen: React.FC<PostScreenProps> = ({
 
     if (error) {
         return (
+            // @ts-expect-error web only types
             <SafeAreaView style={styles.safeContainer}>
                 <View
                     style={{
@@ -193,9 +192,13 @@ export const PostScreen: React.FC<PostScreenProps> = ({
           };
 
     return (
+        // @ts-expect-error web only types
         <SafeAreaView style={styles.safeContainer}>
+            {/* @ts-expect-error web only types */}
             <ContainerComponent {...containerProps}>
+                {/* @ts-expect-error web only types */}
                 <View style={styles.mainContainer}>
+                    {/* @ts-expect-error web only types */}
                     <ScrollView
                         ref={scrollViewRef}
                         style={styles.scrollSection}
@@ -203,7 +206,6 @@ export const PostScreen: React.FC<PostScreenProps> = ({
                         keyboardShouldPersistTaps="handled"
                         onScroll={handleScroll}
                         scrollEventThrottle={16}
-                        onContentSizeChange={handleContentSizeChange}
                     >
                         <PostItem
                             id={postData.id}
@@ -219,6 +221,7 @@ export const PostScreen: React.FC<PostScreenProps> = ({
                                 if (navigation.canGoBack()) {
                                     navigation.goBack();
                                 } else {
+                                    // @ts-expect-error navigation
                                     navigation.navigate('AppDrawer');
                                 }
                             }}
@@ -227,15 +230,18 @@ export const PostScreen: React.FC<PostScreenProps> = ({
                             group="My cool group"
                         />
                         <CommentsManager
+                            // @ts-expect-error ref
                             ref={commentsManagerRef}
                             postId={postData.id}
                             parentCommentId={parentCommentId}
                             scrollY={scrollY}
                         />
                     </ScrollView>
+                    {/* @ts-expect-error web only types */}
                     <View style={styles.createContentButtonContainer}>
                         <CreateContentButton
                             buttonText="Write a comment..."
+                            // @ts-expect-error navigation
                             onPress={() => navigation.navigate('CreateComment')}
                         />
                     </View>

@@ -6,10 +6,12 @@ module.exports = {
         'promise',
         'unicorn',
         'react',
+        'react-hooks',
     ],
     extends: [
         'eslint:recommended',
         'plugin:react/recommended',
+        'plugin:react-hooks/recommended-legacy',
         'airbnb-base',
         'airbnb-typescript/base',
         'plugin:@typescript-eslint/recommended',

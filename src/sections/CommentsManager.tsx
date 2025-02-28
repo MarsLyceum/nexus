@@ -7,7 +7,7 @@ import {
     useWindowDimensions,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { useApolloClient, useQuery } from '@apollo/client';
+import { useApolloClient, useQuery, ApolloClient } from '@apollo/client';
 import { FETCH_POST_COMMENTS_QUERY, FETCH_USER_QUERY } from '../queries';
 import { CommentThread, CommentNode } from './CommentThread';
 
@@ -22,13 +22,15 @@ const flattenComments = (comments: CommentNode[]): CommentNode[] => {
         flat.push({ ...comment, children: [] });
         comment.children?.forEach(traverse);
     };
-    comments.forEach(traverse);
+    comments.forEach((element) => {
+        traverse(element);
+    });
     return flat;
 };
 
 const buildNormalizedState = async (
     rawComments: CommentNode[],
-    client: any,
+    client: ApolloClient<object>,
     userCache: React.MutableRefObject<{ [userId: string]: string }>
 ): Promise<NormalizedComments> => {
     const flatComments = flattenComments(rawComments);
@@ -40,6 +42,7 @@ const buildNormalizedState = async (
                     query: FETCH_USER_QUERY,
                     variables: { userId },
                 });
+                // eslint-disable-next-line no-param-reassign
                 userCache.current[userId] =
                     userData?.fetchUser?.username || 'Unknown';
             }
@@ -67,10 +70,12 @@ const buildNormalizedState = async (
 const buildCommentTree = (normalized: NormalizedComments): CommentNode[] => {
     const buildTree = (id: string): CommentNode => {
         const current = normalized.byId[id];
-        const children = current.childrenIds.map(buildTree);
+        const children = current.childrenIds.map((element) =>
+            buildTree(element)
+        );
         return { ...current, children };
     };
-    return normalized.rootIds.map(buildTree);
+    return normalized.rootIds.map((element) => buildTree(element));
 };
 
 export type CommentsManagerProps = {
@@ -128,7 +133,7 @@ export const CommentsManager = ({
             setWindowEndOffset(initialComments.length);
             setHasMoreDown(initialComments.length === limit);
             setHasMoreUp(false);
-            buildNormalizedState(initialComments, client, userCache).then(
+            void buildNormalizedState(initialComments, client, userCache).then(
                 setNormalizedComments
             );
         }
@@ -173,8 +178,8 @@ export const CommentsManager = ({
             setWindowEndOffset(windowEndOffset + filteredNew.length);
             if (windowStartOffset > 0) setHasMoreUp(true);
             await updateNormalizedState(newWindow);
-        } catch (err) {
-            console.error('Error loading next page', err);
+        } catch (error_) {
+            console.error('Error loading next page', error_);
         } finally {
             setLoadingMore(false);
         }
@@ -212,8 +217,8 @@ export const CommentsManager = ({
             setWindowEndOffset(newOffset + newWindow.length);
             if (filteredNew.length === limit) setHasMoreDown(true);
             await updateNormalizedState(newWindow);
-        } catch (err) {
-            console.error('Error loading previous page', err);
+        } catch (error_) {
+            console.error('Error loading previous page', error_);
         } finally {
             setLoadingMore(false);
         }
@@ -224,7 +229,7 @@ export const CommentsManager = ({
     useEffect(() => {
         // When near the top, try loading newer comments.
         if (scrollY < upperThreshold && windowStartOffset > 0 && !loadingMore) {
-            loadPrevPage();
+            void loadPrevPage();
         }
         // When near the bottom, try loading older comments.
         if (
@@ -232,13 +237,13 @@ export const CommentsManager = ({
             hasMoreDown &&
             !loadingMore
         ) {
-            loadNextPage();
+            void loadNextPage();
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [scrollY, windowHeight, loadingMore, windowStartOffset, hasMoreDown]);
 
     const handleContinueConversation = (childCommentId: string) => {
-        navigation.push('PostScreen', {
+        // @ts-expect-error navigation
+        navigation.navigate('PostScreen', {
             id: postId,
             parentCommentId: childCommentId,
         });

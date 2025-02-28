@@ -32,16 +32,16 @@ export const RichTextEditorWeb: React.FC<RichTextEditorWebProps> = ({
                         return;
                     }
                     if (parsed.type === 'text-change') {
-                        const delta = parsed.delta;
+                        const {delta} = parsed;
                         const markdown =
                             convertDeltaToMarkdownWithFencesAndFormatting(
                                 delta.ops
                             );
                         onChange(markdown);
-                        return;
+                        
                     }
-                } catch (e) {
-                    console.error('Failed to parse message:', e);
+                } catch (error) {
+                    console.error('Failed to parse message:', error);
                 }
             }
         };

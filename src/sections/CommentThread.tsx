@@ -1,29 +1,31 @@
 // CommentThread.tsx
-import React, { useState } from 'react';
-import {
-    View,
-    Text,
-    TouchableOpacity,
-    TextInput,
-    StyleSheet,
-} from 'react-native';
+import React, { useState, useContext } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
+import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { VoteActions } from './VoteActions';
 import { COLORS } from '../constants';
-import { useAppSelector, RootState, UserType } from '../redux';
+import { CurrentCommentContext } from '../providers';
+import {
+    MarkdownRenderer,
+    LinkPreview,
+    NexusTooltip,
+} from '../small-components';
+import { stripHtml, extractUrls, getRelativeTime } from '../utils';
 
 const styles = StyleSheet.create({
     commentContainer: {
         borderLeftWidth: 3,
         borderLeftColor: COLORS.TextInput,
-        paddingLeft: 10,
         marginBottom: 15,
     },
     singleComment: {
         backgroundColor: COLORS.PrimaryBackground,
         borderRadius: 6,
-        padding: 10,
+        paddingLeft: 2,
+        paddingTop: 15,
+        paddingBottom: 15,
     },
     commentHeader: {
         flexDirection: 'row',
@@ -66,8 +68,10 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     commentContentWrapper: {
-        alignSelf: 'flex-start',
+        alignSelf: 'stretch',
+        flex: 1,
         maxWidth: '100%',
+        paddingLeft: 10,
         marginTop: 4,
     },
     commentText: {
@@ -111,67 +115,111 @@ const styles = StyleSheet.create({
         color: COLORS.White,
         fontSize: 14,
     },
+    continueConversationButton: {
+        marginTop: 10,
+        padding: 8,
+        backgroundColor: COLORS.Primary,
+        borderRadius: 4,
+        alignSelf: 'center',
+    },
+    continueConversationText: {
+        color: COLORS.White,
+        fontSize: 14,
+    },
 });
 
 export type CommentNode = {
     id: string;
     user: string;
-    time: string;
+    postedAt: string;
+    edited: false;
     upvotes: number;
     content: string;
+    parentCommentId: string | null;
+    postedByUserId: string;
+    hasChildren: boolean;
     children: CommentNode[];
 };
 
 type CommentThreadProps = {
     comment: CommentNode;
     level?: number;
-    // New optional prop for the original poster's username
     opUser?: string;
+    onContinueConversation: (parentCommentId: string) => void;
 };
 
-export const CommentThread: React.FC<CommentThreadProps> = ({
+const CommentChildrenComponent = ({
+    childrenComments,
+    level,
+    opUser,
+    onContinueConversation,
+}: {
+    childrenComments: CommentNode[];
+    level?: number;
+    opUser?: string;
+    onContinueConversation: (parentCommentId: string) => void;
+}) => (
+    <>
+        {childrenComments.map((child) => (
+            <CommentThread
+                key={child.id}
+                comment={child}
+                level={level}
+                opUser={opUser}
+                onContinueConversation={onContinueConversation}
+            />
+        ))}
+    </>
+);
+
+const CommentChildren = React.memo(CommentChildrenComponent);
+
+const CommentThreadComponent = ({
     comment,
     level = 0,
     opUser,
-}) => {
+    onContinueConversation,
+}: CommentThreadProps) => {
     const [voteCount, setVoteCount] = useState(comment.upvotes);
     const [collapsed, setCollapsed] = useState(comment.upvotes < -1);
-    const [isReplying, setIsReplying] = useState(false);
-    const [replyText, setReplyText] = useState('');
-    const [childReplies, setChildReplies] = useState<CommentNode[]>(
-        comment.children
-    );
-    const user: UserType = useAppSelector(
-        (state: RootState) => state.user.user
-    );
+    const navigation = useNavigation();
 
     const onUpvote = () => setVoteCount((prev) => prev + 1);
     const onDownvote = () => setVoteCount((prev) => prev - 1);
+    const {
+        setParentUser,
+        setParentContent,
+        setParentDate,
+        setParentCommentId,
+    } = useContext(CurrentCommentContext);
 
-    const handleSubmitReply = () => {
-        if (replyText.trim() !== '') {
-            const newReply: CommentNode = {
-                id: `reply-${Date.now()}`,
-                user: user?.username ?? '',
-                time: 'Just now',
-                upvotes: 0,
-                content: replyText,
-                children: [],
-            };
-            setChildReplies([...childReplies, newReply]);
-            setReplyText('');
-            setIsReplying(false);
-        }
-    };
+    const [containerWidth, setContainerWidth] = useState(0);
+
+    // Determine if the comment content is a pure link
+    const urlsInContent = extractUrls(comment.content);
+    const plainContent = stripHtml(comment.content);
+    const isJustLink =
+        urlsInContent.length === 1 && plainContent === urlsInContent[0];
 
     return (
         <View
             style={[
                 styles.commentContainer,
-                level === 0 && { borderLeftWidth: 0, paddingLeft: 0 },
+                level === 0
+                    ? { borderLeftWidth: 0, paddingLeft: 0 }
+                    : { marginTop: 16, paddingLeft: 10 },
             ]}
         >
-            <View style={styles.singleComment}>
+            <View
+                style={[
+                    styles.singleComment,
+                    level === 0 && { paddingLeft: 10 },
+                ]}
+                onLayout={(event) => {
+                    const { width } = event.nativeEvent.layout;
+                    setContainerWidth(width);
+                }}
+            >
                 <TouchableOpacity
                     onPress={() => setCollapsed(!collapsed)}
                     style={styles.commentHeader}
@@ -196,7 +244,9 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
                     {opUser && opUser === comment.user && (
                         <Text style={styles.opBadge}>OP</Text>
                     )}
-                    <Text style={styles.commentTime}>{comment.time}</Text>
+                    <Text style={styles.commentTime}>
+                        {getRelativeTime(comment.postedAt)}
+                    </Text>
                     {collapsed && (
                         <Text
                             style={styles.collapsedCommentText}
@@ -210,21 +260,45 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
                 {!collapsed && (
                     <>
                         <View style={styles.commentContentWrapper}>
-                            {/* Removed the TouchableOpacity wrapper to allow text selection */}
-                            <Text style={styles.commentText} selectable>
-                                {comment.content}
-                            </Text>
+                            {/* Using MarkdownRenderer and LinkPreview for comment content */}
+                            {comment.content !== '' && (
+                                <>
+                                    {!isJustLink && (
+                                        <MarkdownRenderer
+                                            text={comment.content}
+                                        />
+                                    )}
+                                    {urlsInContent.map((url, index) => (
+                                        <LinkPreview
+                                            key={index}
+                                            url={url}
+                                            containerWidth={containerWidth}
+                                        />
+                                    ))}
+                                </>
+                            )}
                             <View style={styles.actionsRow}>
-                                <TouchableOpacity
-                                    onPress={() => setIsReplying(true)}
-                                    style={styles.replyIcon}
-                                >
-                                    <Icon
-                                        name="reply"
-                                        size={16}
-                                        color={COLORS.White}
-                                    />
-                                </TouchableOpacity>
+                                <NexusTooltip tooltipText="Reply">
+                                    <TouchableOpacity
+                                        onPress={() => {
+                                            setParentUser(comment.user);
+                                            setParentContent(comment.content);
+                                            setParentDate(comment.postedAt);
+                                            setParentCommentId(comment.id);
+                                            navigation.navigate(
+                                                // @ts-expect-error navigation
+                                                'CreateComment'
+                                            );
+                                        }}
+                                        style={styles.replyIcon}
+                                    >
+                                        <Icon
+                                            name="reply"
+                                            size={16}
+                                            color={COLORS.White}
+                                        />
+                                    </TouchableOpacity>
+                                </NexusTooltip>
                                 <View style={styles.voteActionsContainer}>
                                     <VoteActions
                                         voteCount={voteCount}
@@ -234,40 +308,45 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
                                     />
                                 </View>
                             </View>
-                            {isReplying && (
-                                <View style={styles.replyInputContainer}>
-                                    <TextInput
-                                        style={styles.replyInput}
-                                        value={replyText}
-                                        onChangeText={setReplyText}
-                                        placeholder="Write a reply..."
-                                        placeholderTextColor={
-                                            COLORS.InactiveText
-                                        }
-                                    />
-                                    <TouchableOpacity
-                                        onPress={handleSubmitReply}
-                                        style={styles.sendReplyButton}
-                                    >
-                                        <Text style={styles.sendReplyText}>
-                                            Send
-                                        </Text>
-                                    </TouchableOpacity>
-                                </View>
-                            )}
                         </View>
-                        {childReplies.map((child) => (
-                            // Pass the opUser prop to nested CommentThreads as well
-                            <CommentThread
-                                key={child.id}
-                                comment={child}
+                        {comment.children.length > 0 && (
+                            <CommentChildren
+                                childrenComments={comment.children}
                                 level={level + 1}
                                 opUser={opUser}
+                                onContinueConversation={onContinueConversation}
                             />
-                        ))}
+                        )}
+                        {comment.hasChildren &&
+                            comment.children.length === 0 && (
+                                <TouchableOpacity
+                                    onPress={() =>
+                                        onContinueConversation(comment.id)
+                                    }
+                                    style={styles.continueConversationButton} // new style for the button
+                                >
+                                    <Text
+                                        style={styles.continueConversationText}
+                                    >
+                                        Continue the conversation
+                                    </Text>
+                                </TouchableOpacity>
+                            )}
                     </>
                 )}
             </View>
         </View>
     );
 };
+
+const areCommentsEqual = (prevComment: CommentNode, nextComment: CommentNode) =>
+    prevComment.id === nextComment.id &&
+    prevComment.content === nextComment.content &&
+    prevComment.upvotes === nextComment.upvotes &&
+    prevComment.children === nextComment.children;
+
+export const CommentThread: React.FC<CommentThreadProps> = React.memo(
+    CommentThreadComponent,
+    (prevProps, nextProps) =>
+        areCommentsEqual(prevProps.comment, nextProps.comment)
+);

@@ -9,17 +9,8 @@ import {
 import { Image as ExpoImage } from 'expo-image';
 import { LinkPreview } from './LinkPreview';
 import { MessageWithAvatar } from '../types';
-import { renderMarkdown } from './MarkdownRenderer';
-
-const formatDateTime = (date: Date) => {
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const year = date.getFullYear();
-    const hours = date.getHours() % 12 || 12;
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const ampm = date.getHours() >= 12 ? 'PM' : 'AM';
-    return `${month}/${day}/${year} ${hours}:${minutes} ${ampm}`;
-};
+import { MarkdownRenderer } from './MarkdownRenderer';
+import { extractUrls, formatFullDate } from '../utils';
 
 export type MessageItemProps = {
     item: MessageWithAvatar;
@@ -44,7 +35,6 @@ const NativeSizeAttachmentImage: React.FC<{ uri: string }> = ({ uri }) => {
 
     if (!dimensions) {
         // Optionally, you can return a placeholder or spinner while dimensions load.
-        // eslint-disable-next-line unicorn/no-useless-undefined
         return undefined;
     }
 
@@ -63,13 +53,34 @@ const NativeSizeAttachmentImage: React.FC<{ uri: string }> = ({ uri }) => {
     );
 };
 
-// If the message is solely a URL, use LinkPreview; otherwise, render markdown.
+// Updated renderMessageContent function
+// - First, trim the content to remove extra whitespace.
+// - Extract URLs from the trimmed content.
+// - If there is a single URL and the trimmed content is exactly that URL, only render the LinkPreview.
+// - Otherwise, render the markdown and any link previews.
 const renderMessageContent = (content: string, width: number) => {
-    const isOnlyUrl = content.startsWith('http') && !content.includes(' ');
-    if (isOnlyUrl) {
-        return <LinkPreview url={content} containerWidth={width - 32} />;
+    const trimmedContent = content.trim();
+    const urls = extractUrls(trimmedContent);
+
+    if (urls.length === 1 && trimmedContent === urls[0]) {
+        return <LinkPreview url={urls[0]} containerWidth={width - 32} />;
     }
-    return <Text style={styles.messageText}>{renderMarkdown(content)}</Text>;
+
+    if (urls.length > 0) {
+        return (
+            <>
+                <MarkdownRenderer text={content} />
+                {urls.map((url, index) => (
+                    <LinkPreview
+                        url={url}
+                        key={index}
+                        containerWidth={width - 32}
+                    />
+                ))}
+            </>
+        );
+    }
+    return <MarkdownRenderer text={content} />;
 };
 
 export const MessageItem: React.FC<MessageItemProps> = ({
@@ -82,7 +93,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
         <View style={styles.messageContent}>
             <Text style={styles.userName}>
                 {item.username}{' '}
-                <Text style={styles.time}>{formatDateTime(item.postedAt)}</Text>
+                <Text style={styles.time}>{formatFullDate(item.postedAt)}</Text>
             </Text>
             {item.content
                 ? renderMessageContent(item.content, width)

@@ -16,6 +16,7 @@ import { CreateContentButton } from '../buttons';
 import { COLORS } from '../constants';
 import { CommentThread, CommentNode, Attachment } from '../sections';
 import { useAppSelector, RootState, UserType } from '../redux';
+import { CreateEventCommentModal } from '../small-components';
 
 type EventDetails = {
     id: string;
@@ -51,6 +52,7 @@ const styles = StyleSheet.create<{
     scrollView: ViewStyle;
     descriptionContainer: ViewStyle;
     descriptionText: TextStyle;
+    createContentButtonContainer: ViewStyle;
 }>({
     // @ts-expect-error web only types
     safeContainer: {
@@ -90,6 +92,13 @@ const styles = StyleSheet.create<{
         fontSize: 14,
         lineHeight: 20,
     },
+    createContentButtonContainer: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: BOTTOM_INPUT_HEIGHT,
+    },
 });
 
 export const EventDetailsScreen: React.FC<EventDetailsScreenProps> = ({
@@ -113,10 +122,11 @@ export const EventDetailsScreen: React.FC<EventDetailsScreenProps> = ({
 
     const handleCreateComment = () => {
         if (newComment.trim() !== '') {
+            // @ts-expect-error broken for now
             const comment: CommentNode = {
                 id: `comment-${Date.now()}`,
                 user: user?.username ?? '',
-                time: 'Just now',
+                postedAt: Date.now().toString(),
                 upvotes: 0,
                 content: newComment,
                 children: [],
@@ -168,21 +178,28 @@ export const EventDetailsScreen: React.FC<EventDetailsScreenProps> = ({
                                 comment={c}
                                 level={0}
                                 opUser={event.postedByUser.username}
+                                onContinueConversation={() => {}}
                             />
                         ))}
                     </ScrollView>
-                    <CreateContentButton
-                        modalVisible={modalVisible}
-                        setModalVisible={setModalVisible}
-                        contentText={newComment}
-                        setContentText={setNewComment}
-                        handleCreate={handleCreateComment}
-                        buttonText="Write a comment..."
-                        attachments={attachments}
-                        setAttachments={setAttachments}
-                    />
+                    <View style={styles.createContentButtonContainer}>
+                        <CreateContentButton
+                            buttonText="Write a comment..."
+                            onPress={() => setModalVisible(true)}
+                        />
+                    </View>
                 </View>
             </ContainerComponent>
+            <CreateEventCommentModal
+                modalVisible={modalVisible}
+                setModalVisible={setModalVisible}
+                contentText={newComment}
+                setContentText={setNewComment}
+                handleCreate={handleCreateComment}
+                buttonText="Write a comment..."
+                attachments={attachments}
+                setAttachments={setAttachments}
+            />
         </SafeAreaView>
     );
 };

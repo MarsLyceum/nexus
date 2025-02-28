@@ -1,7 +1,7 @@
 // components/LinkPreview.tsx
 
 import React from 'react';
-import { Text } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { useLinkPreview } from '../hooks/useLinkPreview';
 import { ImagePreview } from './ImagePreview';
 import { EmbedPreview } from './EmbedPreview';
@@ -21,28 +21,50 @@ export const LinkPreview: React.FC<LinkPreviewProps> = ({
         useLinkPreview(url);
 
     if (loading) {
-        return <Text style={{ color: COLORS.White }}>Loading preview...</Text>;
+        return (
+            <View style={styles.container}>
+                <Text style={styles.loadingText}>Loading preview...</Text>
+            </View>
+        );
     }
 
     if (isImage) {
         return (
-            <ImagePreview
-                url={url}
-                containerWidth={containerWidth}
-                imageDimensions={imageDimensions}
-            />
+            <View style={styles.container}>
+                <ImagePreview
+                    url={url}
+                    containerWidth={containerWidth}
+                    imageDimensions={imageDimensions}
+                />
+            </View>
         );
     }
 
     if (previewData.embedHtml) {
         return (
-            <EmbedPreview
-                url={url}
-                previewData={previewData}
-                containerWidth={containerWidth}
-            />
+            <View style={styles.container}>
+                <EmbedPreview
+                    url={url}
+                    previewData={previewData}
+                    containerWidth={containerWidth}
+                />
+            </View>
         );
     }
 
-    return <FallbackPreview url={url} previewData={previewData} />;
+    return (
+        <View style={styles.container}>
+            <FallbackPreview url={url} previewData={previewData} />
+        </View>
+    );
 };
+
+const styles = StyleSheet.create({
+    container: {
+        alignSelf: 'flex-start',
+        // width is "auto" by default, so this container will only occupy the space it needs.
+    },
+    loadingText: {
+        color: COLORS.White,
+    },
+});

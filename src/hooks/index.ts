@@ -1,6 +1,7 @@
 export * from './useAsync';
 export * from './useChannelMessages';
 export * from './useCounter';
+export * from './useCreateComment';
 export * from './useCreatePost';
 export * from './useCurrentLocation';
 export * from './useDistanceBetweenAddresses';

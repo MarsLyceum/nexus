@@ -10,4 +10,5 @@ export const COLORS = {
     TextInput: '#3A2A4A',
     OffWhite: '#F2F3F5',
     AccentText: '#D3A3EC',
+    Link: '#3254a8',
 };

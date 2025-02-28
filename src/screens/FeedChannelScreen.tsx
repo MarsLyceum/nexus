@@ -16,6 +16,7 @@ import { useAppSelector, RootState, UserType } from '../redux';
 import { FeedPost } from '../types';
 import { useFeedPosts } from '../hooks/useFeedPosts';
 import { useCreatePost } from '../hooks/useCreatePost';
+import { CreatePostModal } from '../small-components';
 
 type RootStackParamList = {
     FeedChannelScreen: {
@@ -34,6 +35,7 @@ interface FeedChannelScreenProps {
     route?: RouteProp<RootStackParamList, 'FeedChannelScreen'>;
 }
 
+const BOTTOM_INPUT_HEIGHT = 60;
 /** -----------------------------
  * Styles
  ----------------------------- */
@@ -44,6 +46,7 @@ const styles = StyleSheet.create({
     },
     feedList: {
         padding: 15,
+        paddingBottom: BOTTOM_INPUT_HEIGHT,
     },
     skeletonContainer: {
         backgroundColor: COLORS.PrimaryBackground,
@@ -83,6 +86,13 @@ const styles = StyleSheet.create({
         height: 60,
         backgroundColor: COLORS.InactiveText,
         borderRadius: 4,
+    },
+    createContentButtonContainer: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: BOTTOM_INPUT_HEIGHT,
     },
 });
 
@@ -199,17 +209,23 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
                 />
             )}
 
-            <CreateContentButton
+            <View style={styles.createContentButtonContainer}>
+                <CreateContentButton
+                    buttonText="Create a new post"
+                    onPress={() => setModalVisible(true)}
+                />
+            </View>
+
+            <CreatePostModal
                 modalVisible={modalVisible}
                 setModalVisible={setModalVisible}
                 contentText={newPostTitle}
                 setContentText={setNewPostTitle}
+                secondContentText={newPostContent}
+                setSecondContentText={setNewPostContent}
                 handleCreate={handleCreatePost}
                 buttonText="Create a new post"
                 modalTitle="Create New Post"
-                showSecondField
-                secondContentText={newPostContent}
-                setSecondContentText={setNewPostContent}
                 placeholderText="Title"
                 placeholderText2="Content"
                 multilineSecondField

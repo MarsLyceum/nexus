@@ -17,10 +17,14 @@ import Toast from 'react-native-toast-message';
 import { VoteActions } from './VoteActions';
 import { BackArrow } from '../buttons';
 import { COLORS } from '../constants';
-import { HtmlRenderer } from './HtmlRenderer';
 import { LargeImageModal } from './LargeImageModal';
 import { AttachmentImageGallery } from './AttachmentImageGallery';
-import { LinkPreview } from '../small-components';
+import {
+    LinkPreview,
+    MarkdownRenderer,
+    NexusTooltip,
+} from '../small-components';
+import { stripHtml, extractUrls } from '../utils';
 
 const styles = StyleSheet.create({
     postContainer: {
@@ -102,19 +106,7 @@ const styles = StyleSheet.create({
         fontSize: 12,
         marginLeft: 4,
     },
-    // Other styles remain unchanged.
 });
-
-// Helper to extract URLs from text using a refined regex.
-const extractUrls = (text: string): string[] => {
-    const urlRegex = /https?:\/\/[^\s"<]+/g;
-    const matches = text.match(urlRegex);
-    return matches || [];
-};
-
-// Helper to strip HTML tags from a string.
-const stripHTML = (html: string): string =>
-    html.replaceAll(/<[^>]+>/g, '').trim();
 
 export type PostItemProps = {
     id: string;
@@ -223,10 +215,10 @@ export const PostItem: React.FC<PostItemProps> = ({
         shareUrl ||
         (Platform.OS === 'web' && typeof window !== 'undefined'
             ? `${window.location.origin}/post/${id}`
-            : `peeps://post/${id}`);
+            : `nexus://post/${id}`);
 
     // Prepare Open Graph meta tags for web only
-    const ogDescription = stripHTML(content).slice(0, 160);
+    const ogDescription = stripHtml(content).slice(0, 160);
     const ogImage = thumbnail || avatarUri;
     const ogType = 'article';
 
@@ -259,7 +251,6 @@ export const PostItem: React.FC<PostItemProps> = ({
                 }
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (error: any) {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                 Alert.alert('Share error', error.message);
             }
         }
@@ -278,7 +269,7 @@ export const PostItem: React.FC<PostItemProps> = ({
     );
 
     const urlsInContent = extractUrls(content);
-    const plainContent = stripHTML(content);
+    const plainContent = stripHtml(content);
     const isJustLink =
         urlsInContent.length === 1 && plainContent === urlsInContent[0];
 
@@ -305,11 +296,7 @@ export const PostItem: React.FC<PostItemProps> = ({
             {content !== '' && (
                 <>
                     {!isJustLink && (
-                        <HtmlRenderer
-                            content={content}
-                            preview={preview}
-                            innerWidth={innerWidth}
-                        />
+                        <MarkdownRenderer text={content} preview={preview} />
                     )}
                     {urlsInContent.map((url, index) => (
                         <LinkPreview
@@ -328,16 +315,23 @@ export const PostItem: React.FC<PostItemProps> = ({
                     onDownvote={onDownvote}
                     commentCount={commentsCount}
                 />
-                <TouchableOpacity onPress={onShare} style={styles.shareButton}>
-                    <MaterialCommunityIcons
-                        name="share-outline"
-                        size={20}
-                        color={COLORS.White}
-                    />
-                    {shareCount > 0 && (
-                        <Text style={styles.shareCountText}>{shareCount}</Text>
-                    )}
-                </TouchableOpacity>
+                <NexusTooltip tooltipText="Share">
+                    <TouchableOpacity
+                        onPress={onShare}
+                        style={styles.shareButton}
+                    >
+                        <MaterialCommunityIcons
+                            name="share-outline"
+                            size={20}
+                            color={COLORS.White}
+                        />
+                        {shareCount > 0 && (
+                            <Text style={styles.shareCountText}>
+                                {shareCount}
+                            </Text>
+                        )}
+                    </TouchableOpacity>
+                </NexusTooltip>
             </View>
         </View>
     );

@@ -5,6 +5,7 @@ import { RichTextEditorWeb } from './RichTextEditorWeb';
 import { RichTextEditorMobile } from './RichTextEditorMobile_WebView';
 
 interface RichTextEditorProps {
+    placeholder?: string;
     initialContent?: string;
     onChange: (html: string) => void;
 }

@@ -6,10 +6,12 @@ module.exports = {
         'promise',
         'unicorn',
         'react',
+        'react-hooks',
     ],
     extends: [
         'eslint:recommended',
         'plugin:react/recommended',
+        'plugin:react-hooks/recommended-legacy',
         'airbnb-base',
         'airbnb-typescript/base',
         'plugin:@typescript-eslint/recommended',
@@ -35,6 +37,7 @@ module.exports = {
         },
     },
     rules: {
+        'unicorn/no-useless-undefined': 'off',
         '@typescript-eslint/no-unsafe-argument': 'off',
         '@typescript-eslint/no-unsafe-return': 'off',
         '@typescript-eslint/no-unsafe-call': 'off',

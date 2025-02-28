@@ -274,7 +274,6 @@ export const CommentsManager = ({
                     comment={comment}
                     level={0}
                     onContinueConversation={handleContinueConversation}
-                    postId={postId}
                 />
             ))}
             {loadingMore && <ActivityIndicator />}

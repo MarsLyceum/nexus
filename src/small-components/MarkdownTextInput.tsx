@@ -57,6 +57,7 @@ const styles = StyleSheet.create({
         color: 'transparent',
         paddingTop: 10,
         fontFamily: 'Roboto_400Regular',
+        // @ts-expect-error web only type
         caretColor: 'white',
         zIndex: 2,
     },

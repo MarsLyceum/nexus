@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
         flex: 1,
         fontSize: 14,
         color: 'transparent', // nearly invisible text
-        // color: 'black',
+        // @ts-expect-error web only type
         caretColor: 'white',
         paddingTop: 10,
         lineHeight: 20,

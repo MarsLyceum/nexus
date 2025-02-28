@@ -145,7 +145,6 @@ type CommentThreadProps = {
     comment: CommentNode;
     level?: number;
     opUser?: string;
-    postId: string;
     onContinueConversation: (parentCommentId: string) => void;
 };
 
@@ -286,8 +285,8 @@ const CommentThreadComponent = ({
                                             setParentContent(comment.content);
                                             setParentDate(comment.postedAt);
                                             setParentCommentId(comment.id);
-                                            // @ts-expect-error navigation
                                             navigation.navigate(
+                                                // @ts-expect-error navigation
                                                 'CreateComment'
                                             );
                                         }}

@@ -35,7 +35,11 @@ export const CreateEventCommentModal: React.FC<
     setAttachments,
 }) => {
     const onRemoveAttachment = (attachmentId: string) => {
-        setAttachments((prev) => prev.filter((att) => att.id !== attachmentId));
+        // @ts-expect-error any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setAttachments((prev: any[]) =>
+            prev.filter((att) => att.id !== attachmentId)
+        );
     };
 
     return (

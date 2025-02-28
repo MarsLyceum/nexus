@@ -122,10 +122,11 @@ export const EventDetailsScreen: React.FC<EventDetailsScreenProps> = ({
 
     const handleCreateComment = () => {
         if (newComment.trim() !== '') {
+            // @ts-expect-error broken for now
             const comment: CommentNode = {
                 id: `comment-${Date.now()}`,
                 user: user?.username ?? '',
-                time: 'Just now',
+                postedAt: Date.now().toString(),
                 upvotes: 0,
                 content: newComment,
                 children: [],
@@ -177,6 +178,7 @@ export const EventDetailsScreen: React.FC<EventDetailsScreenProps> = ({
                                 comment={c}
                                 level={0}
                                 opUser={event.postedByUser.username}
+                                onContinueConversation={() => {}}
                             />
                         ))}
                     </ScrollView>

@@ -32,13 +32,12 @@ export const RichTextEditorWeb: React.FC<RichTextEditorWebProps> = ({
                         return;
                     }
                     if (parsed.type === 'text-change') {
-                        const {delta} = parsed;
+                        const { delta } = parsed;
                         const markdown =
                             convertDeltaToMarkdownWithFencesAndFormatting(
                                 delta.ops
                             );
                         onChange(markdown);
-                        
                     }
                 } catch (error) {
                     console.error('Failed to parse message:', error);
@@ -83,7 +82,7 @@ export const RichTextEditorWeb: React.FC<RichTextEditorWebProps> = ({
 const styles = StyleSheet.create({
     container: {
         width: '100%',
-        height: '250px',
+        height: 250,
         display: 'flex',
         flexDirection: 'column',
     },
@@ -98,6 +97,7 @@ const styles = StyleSheet.create({
         flex: 1,
         width: '100%',
         height: '100%',
+        // @ts-expect-error web only type
         border: 'none',
     },
 });

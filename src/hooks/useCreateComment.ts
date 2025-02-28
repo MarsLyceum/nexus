@@ -8,7 +8,7 @@ type CreateCommentVariables = {
     postId: string;
     content: string;
     attachments: AttachmentFile[];
-    parentCommentId: string;
+    parentCommentId: string | null;
     hasChildren: boolean;
     children: CreateCommentVariables[];
     upvotes: number;

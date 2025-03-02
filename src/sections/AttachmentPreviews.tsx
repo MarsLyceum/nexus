@@ -2,6 +2,7 @@ import React from 'react';
 import { View, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import Icon from 'react-native-vector-icons/FontAwesome5';
+import { NexusVideo } from '../small-components';
 import { COLORS } from '../constants';
 
 export interface Attachment {
@@ -21,8 +22,7 @@ export const AttachmentPreviews: React.FC<AttachmentPreviewsProps> = ({
     onAttachmentPress,
     onRemoveAttachment,
 }) => {
-    // eslint-disable-next-line unicorn/no-useless-undefined
-    if (attachments.length === 0) return undefined;
+    if (attachments.length === 0) return null;
     return (
         <View style={styles.attachmentsContainer}>
             <ScrollView
@@ -30,32 +30,46 @@ export const AttachmentPreviews: React.FC<AttachmentPreviewsProps> = ({
                 contentContainerStyle={styles.attachmentsPreviewContainer}
                 showsHorizontalScrollIndicator={false}
             >
-                {attachments.map((att) => (
-                    <View key={att.id} style={styles.attachmentPreview}>
-                        <TouchableOpacity
-                            onPress={() =>
-                                onAttachmentPress && onAttachmentPress(att)
-                            }
-                        >
-                            <ExpoImage
-                                source={{ uri: att.previewUri }}
-                                style={styles.attachmentImage}
-                            />
-                        </TouchableOpacity>
-                        {onRemoveAttachment && (
+                {attachments.map((att) => {
+                    const isVideo = att.file?.type?.startsWith('video');
+                    return (
+                        <View key={att.id} style={styles.attachmentPreview}>
                             <TouchableOpacity
-                                style={styles.removeAttachmentButton}
-                                onPress={() => onRemoveAttachment(att.id)}
+                                onPress={() =>
+                                    onAttachmentPress && onAttachmentPress(att)
+                                }
                             >
-                                <Icon
-                                    name="times"
-                                    size={18}
-                                    color={COLORS.White}
-                                />
+                                {isVideo ? (
+                                    <NexusVideo
+                                        source={{ uri: att.previewUri }}
+                                        style={styles.attachmentImage}
+                                        muted
+                                        repeat
+                                        resizeMode="cover"
+                                        paused
+                                    />
+                                ) : (
+                                    <ExpoImage
+                                        source={{ uri: att.previewUri }}
+                                        style={styles.attachmentImage}
+                                    />
+                                )}
                             </TouchableOpacity>
-                        )}
-                    </View>
-                ))}
+                            {onRemoveAttachment && (
+                                <TouchableOpacity
+                                    style={styles.removeAttachmentButton}
+                                    onPress={() => onRemoveAttachment(att.id)}
+                                >
+                                    <Icon
+                                        name="times"
+                                        size={18}
+                                        color={COLORS.White}
+                                    />
+                                </TouchableOpacity>
+                            )}
+                        </View>
+                    );
+                })}
             </ScrollView>
         </View>
     );

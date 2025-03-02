@@ -11,7 +11,8 @@ import {
 import { Image as ExpoImage } from 'expo-image';
 import { CarouselDots } from './CarouselDots';
 import { ArrowButton } from './ArrowButton';
-import { ImageCountOverlay } from '../small-components';
+import { ImageCountOverlay, NexusVideo } from '../small-components';
+import { useMediaTypes } from '../hooks';
 
 export type AttachmentImageGalleryProps = {
     attachmentUrls: string[];
@@ -22,53 +23,56 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
     attachmentUrls,
     onImagePress,
 }) => {
-    // State for the current image index.
     const [currentAttachmentIndex, setCurrentAttachmentIndex] = useState(0);
-    const [containerWidth, setContainerWidth] = useState(480); // default width fallback
-    const [imageAspectRatio, setImageAspectRatio] = useState(1); // default ratio (square) until loaded
+    const [containerWidth, setContainerWidth] = useState(480); // Default width fallback
+    const [imageAspectRatio, setImageAspectRatio] = useState(1); // Default ratio (square)
 
-    // Ref for ScrollView to programmatically scroll when using arrow buttons.
     const scrollViewRef = useRef<ScrollView>(null);
-
-    // Determine if the device is considered desktop (container width greater than 768px).
     const isDesktop = containerWidth > 768;
 
-    // Capture the container layout dimensions.
     const handleContainerLayout = (event: LayoutChangeEvent) => {
         const { width } = event.nativeEvent.layout;
         setContainerWidth(width);
     };
 
-    // Calculate the image width based on container width (with a max fallback of 480).
+    // Use 360 as a fallback width if container width is larger than 360.
     const imageWidth = containerWidth < 360 ? containerWidth : 360;
-    // Compute the image height based on its aspect ratio.
     const computedImageHeight = imageWidth / imageAspectRatio;
 
-    // Retrieve the natural dimensions of the current image to compute its aspect ratio.
+    // Use the custom hook to get media types for each URL.
+    const mediaTypes = useMediaTypes(attachmentUrls);
+
+    // Update aspect ratio based on the current attachment's media type.
     useEffect(() => {
         const currentUrl = attachmentUrls[currentAttachmentIndex];
-        if (currentUrl) {
-            RNImage.getSize(
-                currentUrl,
-                (width, height) => {
-                    setImageAspectRatio(width / height);
-                },
-                (error) => {
-                    console.error('Failed to get image dimensions', error);
-                }
-            );
+        // Only attempt to set the aspect ratio if we have determined the media type
+        const mediaType = mediaTypes[currentUrl];
+        if (currentUrl && mediaType) {
+            if (mediaType === 'video') {
+                // Default aspect ratio for videos: 16:9
+                setImageAspectRatio(16 / 9);
+            } else if (mediaType === 'image') {
+                RNImage.getSize(
+                    currentUrl,
+                    (width, height) => {
+                        setImageAspectRatio(width / height);
+                    },
+                    (error) => {
+                        console.error('Failed to get image dimensions', error);
+                        // Fallback aspect ratio in case of error
+                        setImageAspectRatio(1);
+                    }
+                );
+            }
         }
-    }, [attachmentUrls, currentAttachmentIndex]);
+    }, [attachmentUrls, currentAttachmentIndex, mediaTypes]);
 
-    // Handler for swipe events; calculate the new image index based on scroll offset.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleMomentumScrollEnd = (event: any) => {
         const offsetX = event.nativeEvent.contentOffset.x;
         const newIndex = Math.round(offsetX / imageWidth);
         setCurrentAttachmentIndex(newIndex);
     };
 
-    // Helper to update the index and scroll to the appropriate position.
     const goToIndex = (newIndex: number) => {
         setCurrentAttachmentIndex(newIndex);
         scrollViewRef.current?.scrollTo({
@@ -95,33 +99,52 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
                     }}
                     ref={scrollViewRef}
                 >
-                    {attachmentUrls.map((url, index) => (
-                        <TouchableOpacity
-                            key={index}
-                            onPress={() => onImagePress(index)}
-                            activeOpacity={0.8}
-                        >
-                            <ExpoImage
-                                source={{ uri: url }}
-                                style={[
-                                    styles.galleryImage,
-                                    {
-                                        width: imageWidth,
-                                        height: computedImageHeight,
-                                    },
-                                ]}
-                            />
-                        </TouchableOpacity>
-                    ))}
+                    {attachmentUrls.map((url, index) => {
+                        // Default to 'image' if media type is not yet determined.
+                        const mediaType = mediaTypes[url] || 'image';
+                        return (
+                            <TouchableOpacity
+                                key={index}
+                                onPress={() => onImagePress(index)}
+                                activeOpacity={0.8}
+                            >
+                                {mediaType === 'video' ? (
+                                    <NexusVideo
+                                        source={{ uri: url }}
+                                        style={[
+                                            styles.galleryImage,
+                                            {
+                                                width: imageWidth,
+                                                height: computedImageHeight,
+                                            },
+                                        ]}
+                                        muted={false}
+                                        repeat={true}
+                                        paused={true}
+                                        resizeMode="contain"
+                                    />
+                                ) : (
+                                    <ExpoImage
+                                        source={{ uri: url }}
+                                        style={[
+                                            styles.galleryImage,
+                                            {
+                                                width: imageWidth,
+                                                height: computedImageHeight,
+                                            },
+                                        ]}
+                                    />
+                                )}
+                            </TouchableOpacity>
+                        );
+                    })}
                 </ScrollView>
 
-                {/* New Image Count Overlay */}
                 <ImageCountOverlay
                     currentIndex={currentAttachmentIndex}
                     total={attachmentUrls.length}
                 />
 
-                {/* Only show arrows if on desktop and there is more than one image */}
                 {isDesktop && attachmentUrls.length > 1 && (
                     <>
                         <ArrowButton

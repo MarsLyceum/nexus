@@ -13,6 +13,7 @@ export * from './MarkdownTextInput';
 export * from './MessageItem';
 export * from './MessageList';
 export * from './NexusTooltip';
+export * from './NexusVideo';
 export * from './SkeletonComment';
 export * from './SkeletonMessageItem';
 export * from './SkeletonPostItem';

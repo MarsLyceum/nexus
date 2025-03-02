@@ -14,6 +14,7 @@ import { ArrowButton } from './ArrowButton';
 import { CarouselDots } from './CarouselDots';
 import { ImageCountOverlay } from '../small-components';
 import { COLORS } from '../constants';
+import { useMediaTypes } from '../hooks';
 
 type LargeImageModalProps = {
     visible: boolean;
@@ -28,44 +29,54 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
     initialIndex,
     onClose,
 }) => {
+    // Always call hooks in the same order
+    const mediaTypes = useMediaTypes(attachments);
+
+    // Filter out any attachments that are videos.
+    const imageAttachments = attachments.filter((url) => {
+        const type = mediaTypes[url];
+        // If media type is undefined, we assume it's an image.
+        return type === 'image' || type === undefined;
+    });
+
     const [currentIndex, setCurrentIndex] = useState(initialIndex);
     const deviceWidth = Dimensions.get('window').width;
     const deviceHeight = Dimensions.get('window').height;
     const carouselHeight = deviceHeight * 0.8;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const carouselRef = useRef<any>(null);
 
-    // When modal becomes visible, reset the carousel to the initial index.
+    // Adjust the initial index in case the original index pointed to a video.
+    const effectiveInitialIndex =
+        imageAttachments.length > 0
+            ? Math.min(initialIndex, imageAttachments.length - 1)
+            : 0;
+
+    // When modal becomes visible, reset the carousel to the effective initial index.
     useEffect(() => {
         if (visible && carouselRef.current) {
             carouselRef.current.scrollTo({
-                index: initialIndex,
+                index: effectiveInitialIndex,
                 animated: false,
             });
-            setCurrentIndex(initialIndex);
+            setCurrentIndex(effectiveInitialIndex);
         }
-    }, [visible, initialIndex, attachments]);
+    }, [visible, effectiveInitialIndex, imageAttachments]);
 
     // Web keyboard navigation.
     useEffect(() => {
         if (!visible || Platform.OS !== 'web') return;
 
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (attachments.length > 1) {
+            if (imageAttachments.length > 1) {
                 if (
                     e.key === 'ArrowRight' &&
-                    currentIndex < attachments.length - 1
+                    currentIndex < imageAttachments.length - 1
                 ) {
-                    console.log('Navigating to next image:', currentIndex + 1);
                     carouselRef?.current.scrollTo({
                         index: currentIndex + 1,
                         animated: true,
                     });
                 } else if (e.key === 'ArrowLeft' && currentIndex > 0) {
-                    console.log(
-                        'Navigating to previous image:',
-                        currentIndex - 1
-                    );
                     carouselRef?.current.scrollTo({
                         index: currentIndex - 1,
                         animated: true,
@@ -74,11 +85,10 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
             }
         };
         window.addEventListener('keydown', handleKeyDown);
-        // eslint-disable-next-line consistent-return
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [visible, attachments.length, currentIndex]);
+    }, [visible, imageAttachments.length, currentIndex]);
 
-    // Render each image item with error handling.
+    // Render each carousel item (only images).
     const renderItem = ({ item }: { item: string }) => (
         <ExpoImage
             source={{ uri: item }}
@@ -87,6 +97,11 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
             onError={(error) => console.error('Image load error:', item, error)}
         />
     );
+
+    // Now, in the return block we conditionally render null if there are no images.
+    if (imageAttachments.length === 0) {
+        return null;
+    }
 
     return (
         <Modal
@@ -101,37 +116,35 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
                     <View style={styles.carouselContainer}>
                         <Carousel
                             ref={carouselRef}
-                            data={attachments}
+                            data={imageAttachments}
                             renderItem={renderItem}
                             width={deviceWidth * 0.9}
                             height={carouselHeight}
-                            defaultIndex={initialIndex}
+                            defaultIndex={effectiveInitialIndex}
                             onSnapToItem={(index: number) => {
-                                console.log('Snapped to index:', index);
                                 setCurrentIndex(index);
                             }}
                         />
-                        {/* New Image Count Overlay */}
+                        {/* Image Count Overlay */}
                         <ImageCountOverlay
                             currentIndex={currentIndex}
-                            total={attachments.length}
+                            total={imageAttachments.length}
                         />
                     </View>
                     {/* Arrow buttons */}
-                    {attachments.length > 1 && (
+                    {imageAttachments.length > 1 && (
                         <View
                             style={styles.arrowsContainer}
                             pointerEvents="box-none"
                         >
                             <ArrowButton
                                 direction="left"
-                                onPress={() => {
-                                    console.log('Left arrow pressed');
+                                onPress={() =>
                                     carouselRef?.current.scrollTo({
                                         index: currentIndex - 1,
                                         animated: true,
-                                    });
-                                }}
+                                    })
+                                }
                                 disabled={currentIndex === 0}
                                 iconSize={30}
                                 activeColor={COLORS.White}
@@ -140,15 +153,14 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
                             />
                             <ArrowButton
                                 direction="right"
-                                onPress={() => {
-                                    console.log('Right arrow pressed');
+                                onPress={() =>
                                     carouselRef?.current.scrollTo({
                                         index: currentIndex + 1,
                                         animated: true,
-                                    });
-                                }}
+                                    })
+                                }
                                 disabled={
-                                    currentIndex === attachments.length - 1
+                                    currentIndex === imageAttachments.length - 1
                                 }
                                 iconSize={30}
                                 activeColor={COLORS.White}
@@ -159,10 +171,10 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
                     )}
                 </View>
                 {/* Carousel dots area */}
-                {attachments.length > 1 && (
+                {imageAttachments.length > 1 && (
                     <Pressable style={styles.dotsWrapper} onPress={onClose}>
                         <CarouselDots
-                            totalItems={attachments.length}
+                            totalItems={imageAttachments.length}
                             currentIndex={currentIndex}
                             containerStyle={styles.dotsContainer}
                             dotStyle={styles.dot}

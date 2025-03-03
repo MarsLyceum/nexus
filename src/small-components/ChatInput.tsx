@@ -82,6 +82,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 onRemoveAttachment={(id) =>
                     setAttachments((prev) => prev.filter((a) => a.id !== id))
                 }
+                onAttachmentsReorder={setAttachments}
             />
 
             <View style={styles.inputContainerNoBorder}>

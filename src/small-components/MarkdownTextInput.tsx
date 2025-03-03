@@ -38,9 +38,7 @@ const styles = StyleSheet.create({
     },
     inputTextOverlay: {
         position: 'absolute', // Ensure overlay is positioned absolutely
-        // top: isWeb ? -5 : -5, // mobile adds some extra padding
-        // top: -5,
-        top: 10,
+        top: isWeb ? 10 : 0, // mobile adds some extra padding
         left: 0,
         right: 0,
         height: 40,

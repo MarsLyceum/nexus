@@ -63,6 +63,7 @@ export const CreateEventCommentModal: React.FC<
                         attachments={attachments}
                         onAttachmentPress={() => {}}
                         onRemoveAttachment={onRemoveAttachment}
+                        onAttachmentsReorder={setAttachments}
                     />
                     <View style={styles.modalButtonRow}>
                         <Pressable

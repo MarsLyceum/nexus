@@ -11,7 +11,7 @@ import { Image as ExpoImage } from 'expo-image';
 import Carousel from 'react-native-reanimated-carousel';
 import { ArrowButton } from './ArrowButton';
 import { CarouselDots } from './CarouselDots';
-import { ImageCountOverlay } from '../small-components';
+import { ImageCountOverlay, NexusVideo } from '../small-components';
 import { COLORS } from '../constants';
 import { useMediaTypes } from '../hooks';
 
@@ -28,29 +28,54 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
     initialIndex,
     onClose,
 }) => {
-    // Use the updated hook, which returns a mapping of URL to MediaInfo.
+    // Get media type information for all attachments.
     const mediaInfos = useMediaTypes(attachments);
 
-    // Filter out any attachments that are videos.
-    // If MediaInfo is undefined for a URL, assume it's an image.
-    const imageAttachments = attachments.filter((url) => {
-        const info = mediaInfos[url];
-        return !info || info.type === 'image';
-    });
+    // Use all attachments to preserve the original order.
+    const mediaAttachments = attachments;
 
-    const [currentIndex, setCurrentIndex] = useState(initialIndex);
+    // Render each carousel item based on media type.
+    const renderItem = ({ item }: { item: string }) => {
+        const info = mediaInfos[item];
+        if (info && info.type === 'video') {
+            // If the attachment is a video, play it using NexusVideo.
+            return (
+                <NexusVideo
+                    source={{ uri: item }}
+                    style={styles.modalImage}
+                    muted={false}
+                    repeat
+                    paused={false}
+                    contentFit="contain"
+                    controls
+                />
+            );
+        }
+        return (
+            <ExpoImage
+                source={{ uri: item }}
+                style={styles.modalImage}
+                resizeMode="contain"
+                onError={(error) =>
+                    console.error('Image load error:', item, error)
+                }
+            />
+        );
+    };
+
+    // Determine the effective initial index.
+    const effectiveInitialIndex =
+        mediaAttachments.length > 0
+            ? Math.min(initialIndex, mediaAttachments.length - 1)
+            : 0;
+
+    const [currentIndex, setCurrentIndex] = useState(effectiveInitialIndex);
     const deviceWidth = Dimensions.get('window').width;
     const deviceHeight = Dimensions.get('window').height;
     const carouselHeight = deviceHeight * 0.8;
     const carouselRef = useRef<any>(null);
 
-    // Adjust the initial index in case the original index pointed to a video.
-    const effectiveInitialIndex =
-        imageAttachments.length > 0
-            ? Math.min(initialIndex, imageAttachments.length - 1)
-            : 0;
-
-    // When modal becomes visible, reset the carousel to the effective initial index.
+    // Reset the carousel to the effective initial index when the modal becomes visible.
     useEffect(() => {
         if (visible && carouselRef.current) {
             carouselRef.current.scrollTo({
@@ -59,17 +84,17 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
             });
             setCurrentIndex(effectiveInitialIndex);
         }
-    }, [visible, effectiveInitialIndex, imageAttachments]);
+    }, [visible, effectiveInitialIndex, mediaAttachments]);
 
     // Web keyboard navigation.
     useEffect(() => {
         if (!visible || Platform.OS !== 'web') return;
 
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (imageAttachments.length > 1) {
+            if (mediaAttachments.length > 1) {
                 if (
                     e.key === 'ArrowRight' &&
-                    currentIndex < imageAttachments.length - 1
+                    currentIndex < mediaAttachments.length - 1
                 ) {
                     carouselRef?.current.scrollTo({
                         index: currentIndex + 1,
@@ -85,19 +110,9 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [visible, imageAttachments.length, currentIndex]);
+    }, [visible, mediaAttachments.length, currentIndex]);
 
-    // Render each carousel item (images only).
-    const renderItem = ({ item }: { item: string }) => (
-        <ExpoImage
-            source={{ uri: item }}
-            style={styles.modalImage}
-            resizeMode="contain"
-            onError={(error) => console.error('Image load error:', item, error)}
-        />
-    );
-
-    if (imageAttachments.length === 0) {
+    if (mediaAttachments.length === 0) {
         return null;
     }
 
@@ -114,7 +129,7 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
                     <View style={styles.carouselContainer}>
                         <Carousel
                             ref={carouselRef}
-                            data={imageAttachments}
+                            data={mediaAttachments}
                             renderItem={renderItem}
                             width={deviceWidth * 0.9}
                             height={carouselHeight}
@@ -123,14 +138,14 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
                                 setCurrentIndex(index)
                             }
                         />
-                        {/* Image Count Overlay */}
+                        {/* Media Count Overlay */}
                         <ImageCountOverlay
                             currentIndex={currentIndex}
-                            total={imageAttachments.length}
+                            total={mediaAttachments.length}
                         />
                     </View>
                     {/* Arrow buttons */}
-                    {imageAttachments.length > 1 && (
+                    {mediaAttachments.length > 1 && (
                         <View
                             style={styles.arrowsContainer}
                             pointerEvents="box-none"
@@ -158,7 +173,7 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
                                     })
                                 }
                                 disabled={
-                                    currentIndex === imageAttachments.length - 1
+                                    currentIndex === mediaAttachments.length - 1
                                 }
                                 iconSize={30}
                                 activeColor={COLORS.White}
@@ -169,10 +184,10 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
                     )}
                 </View>
                 {/* Carousel dots area */}
-                {imageAttachments.length > 1 && (
+                {mediaAttachments.length > 1 && (
                     <Pressable style={styles.dotsWrapper} onPress={onClose}>
                         <CarouselDots
-                            totalItems={imageAttachments.length}
+                            totalItems={mediaAttachments.length}
                             currentIndex={currentIndex}
                             containerStyle={styles.dotsContainer}
                             dotStyle={styles.dot}

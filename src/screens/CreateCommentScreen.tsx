@@ -133,6 +133,7 @@ export const CreateCommentScreen: React.FC<CreateCommentScreenProps> = ({
                         attachments={attachments}
                         onAttachmentPress={() => {}}
                         onRemoveAttachment={onRemoveAttachment}
+                        onAttachmentsReorder={setAttachments}
                     />
                     {/* @ts-expect-error web only types */}
                     <View style={styles.modalButtonRow}>

@@ -37,7 +37,7 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
     const imageWidth = containerWidth < 360 ? containerWidth : 360;
     const computedImageHeight = imageWidth / imageAspectRatio;
 
-    // Use the updated hook to get media info (type, width, height, aspectRatio) for each URL.
+    // Get media info (type, width, height, aspectRatio) for each URL.
     const mediaInfos = useMediaTypes(attachmentUrls);
 
     // Update container's aspect ratio based on the current attachment's media info.
@@ -88,13 +88,20 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
                         const attachmentHeight = info
                             ? imageWidth / info.aspectRatio
                             : computedImageHeight;
+                        // Determine if this attachment is a video.
+                        const isVideo = info && info.type === 'video';
                         return (
                             <TouchableOpacity
                                 key={index}
-                                onPress={() => onImagePress(index)}
-                                activeOpacity={0.8}
+                                // Only enable onPress if it's not a video.
+                                onPress={
+                                    !isVideo
+                                        ? () => onImagePress(index)
+                                        : undefined
+                                }
+                                activeOpacity={!isVideo ? 0.8 : 1}
                             >
-                                {info && info.type === 'video' ? (
+                                {isVideo ? (
                                     <NexusVideo
                                         source={{ uri: url }}
                                         style={[

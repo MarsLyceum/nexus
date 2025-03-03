@@ -174,6 +174,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
                             attachments={attachments}
                             onAttachmentPress={onAttachmentPress}
                             onRemoveAttachment={onRemoveAttachment}
+                            onAttachmentsReorder={setAttachments}
                         />
 
                         <View style={styles.modalButtonRow}>

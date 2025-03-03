@@ -2,12 +2,8 @@ import React from 'react';
 import { View, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import Icon from 'react-native-vector-icons/FontAwesome5';
-import { NexusVideo } from '../small-components';
-import { COLORS } from '../constants';
-
 // Mobile drag and drop library
 import DraggableFlatList from 'react-native-draggable-flatlist';
-
 // For web: using dnd-kit
 import {
     DndContext,
@@ -25,18 +21,21 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-export interface Attachment {
+import { NexusVideo } from '../small-components';
+import { COLORS } from '../constants';
+
+export type Attachment = {
     id: string;
     previewUri: string;
     file: File | { uri: string; type: string; name: string };
-}
+};
 
-interface AttachmentPreviewsProps {
+type AttachmentPreviewsProps = {
     attachments: Attachment[];
     onAttachmentPress?: (attachment: Attachment) => void;
     onRemoveAttachment?: (attachmentId: string) => void;
     onAttachmentsReorder?: (newOrder: Attachment[]) => void;
-}
+};
 
 export const AttachmentPreviews: React.FC<AttachmentPreviewsProps> = ({
     attachments,
@@ -44,121 +43,130 @@ export const AttachmentPreviews: React.FC<AttachmentPreviewsProps> = ({
     onRemoveAttachment,
     onAttachmentsReorder,
 }) => {
-    if (attachments.length === 0) return null;
+    if (attachments.length > 0) {
+        // WEB IMPLEMENTATION USING dnd-kit
+        if (Platform.OS === 'web') {
+            // eslint-disable-next-line react-hooks/rules-of-hooks
+            const sensors = useSensors(
+                // eslint-disable-next-line react-hooks/rules-of-hooks
+                useSensor(PointerSensor, {
+                    activationConstraint: { distance: 5 },
+                })
+            );
 
-    // WEB IMPLEMENTATION USING dnd-kit
-    if (Platform.OS === 'web') {
-        const sensors = useSensors(
-            useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
-        );
+            const handleDragEnd = (event: DragEndEvent) => {
+                const { active, over } = event;
+                if (over && active.id !== over.id) {
+                    const oldIndex = attachments.findIndex(
+                        (item) => item.id === active.id
+                    );
+                    const newIndex = attachments.findIndex(
+                        (item) => item.id === over.id
+                    );
+                    const newOrder = arrayMove(attachments, oldIndex, newIndex);
+                    if (onAttachmentsReorder) onAttachmentsReorder(newOrder);
+                }
+            };
 
-        const handleDragEnd = (event: DragEndEvent) => {
-            const { active, over } = event;
-            if (over && active.id !== over.id) {
-                const oldIndex = attachments.findIndex(
-                    (item) => item.id === active.id
-                );
-                const newIndex = attachments.findIndex(
-                    (item) => item.id === over.id
-                );
-                const newOrder = arrayMove(attachments, oldIndex, newIndex);
-                if (onAttachmentsReorder) onAttachmentsReorder(newOrder);
-            }
+            return (
+                <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                >
+                    <SortableContext
+                        items={attachments.map((item) => item.id)}
+                        strategy={horizontalListSortingStrategy}
+                    >
+                        <View
+                            style={[
+                                styles.attachmentsContainer,
+                                styles.attachmentsPreviewContainer,
+                            ]}
+                        >
+                            {attachments.map((item) => (
+                                <SortableItem
+                                    key={item.id}
+                                    id={item.id}
+                                    attachment={item}
+                                    onAttachmentPress={onAttachmentPress}
+                                    onRemoveAttachment={onRemoveAttachment}
+                                />
+                            ))}
+                        </View>
+                    </SortableContext>
+                </DndContext>
+            );
+        }
+
+        // MOBILE IMPLEMENTATION USING react-native-draggable-flatlist
+        const renderItem = ({
+            item,
+            drag,
+            isActive,
+        }: {
+            item: Attachment;
+            drag: () => void;
+            isActive: boolean;
+        }) => {
+            const isVideo = item.file?.type?.startsWith('video');
+            return (
+                <TouchableOpacity
+                    onLongPress={drag}
+                    onPress={() => onAttachmentPress && onAttachmentPress(item)}
+                    style={styles.draggableItem}
+                    delayLongPress={200}
+                >
+                    <View style={styles.attachmentPreview}>
+                        {isVideo ? (
+                            <NexusVideo
+                                source={{ uri: item.previewUri }}
+                                style={styles.attachmentImage}
+                                muted
+                                repeat
+                                contentFit="cover"
+                                paused
+                                controls={false}
+                            />
+                        ) : (
+                            <ExpoImage
+                                source={{ uri: item.previewUri }}
+                                style={styles.attachmentImage}
+                            />
+                        )}
+                        {onRemoveAttachment && (
+                            <TouchableOpacity
+                                style={styles.removeAttachmentButton}
+                                onPress={() => onRemoveAttachment(item.id)}
+                            >
+                                <Icon
+                                    name="times"
+                                    size={18}
+                                    color={COLORS.White}
+                                />
+                            </TouchableOpacity>
+                        )}
+                    </View>
+                </TouchableOpacity>
+            );
         };
 
         return (
-            <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-            >
-                <SortableContext
-                    items={attachments.map((item) => item.id)}
-                    strategy={horizontalListSortingStrategy}
-                >
-                    <View
-                        style={[
-                            styles.attachmentsContainer,
-                            styles.attachmentsPreviewContainer,
-                        ]}
-                    >
-                        {attachments.map((item) => (
-                            <SortableItem
-                                key={item.id}
-                                id={item.id}
-                                attachment={item}
-                                onAttachmentPress={onAttachmentPress}
-                                onRemoveAttachment={onRemoveAttachment}
-                            />
-                        ))}
-                    </View>
-                </SortableContext>
-            </DndContext>
+            <View style={styles.attachmentsContainer}>
+                <DraggableFlatList
+                    horizontal
+                    data={attachments}
+                    renderItem={renderItem}
+                    keyExtractor={(item) => item.id}
+                    onDragEnd={({ data }) =>
+                        onAttachmentsReorder && onAttachmentsReorder(data)
+                    }
+                    contentContainerStyle={styles.attachmentsPreviewContainer}
+                />
+            </View>
         );
     }
-
-    // MOBILE IMPLEMENTATION USING react-native-draggable-flatlist
-    const renderItem = ({
-        item,
-        drag,
-        isActive,
-    }: {
-        item: Attachment;
-        drag: () => void;
-        isActive: boolean;
-    }) => {
-        const isVideo = item.file?.type?.startsWith('video');
-        return (
-            <TouchableOpacity
-                onLongPress={drag}
-                onPress={() => onAttachmentPress && onAttachmentPress(item)}
-                style={styles.draggableItem}
-                delayLongPress={200}
-            >
-                <View style={styles.attachmentPreview}>
-                    {isVideo ? (
-                        <NexusVideo
-                            source={{ uri: item.previewUri }}
-                            style={styles.attachmentImage}
-                            muted
-                            repeat
-                            contentFit="cover"
-                            paused
-                            controls={false}
-                        />
-                    ) : (
-                        <ExpoImage
-                            source={{ uri: item.previewUri }}
-                            style={styles.attachmentImage}
-                        />
-                    )}
-                    {onRemoveAttachment && (
-                        <TouchableOpacity
-                            style={styles.removeAttachmentButton}
-                            onPress={() => onRemoveAttachment(item.id)}
-                        >
-                            <Icon name="times" size={18} color={COLORS.White} />
-                        </TouchableOpacity>
-                    )}
-                </View>
-            </TouchableOpacity>
-        );
-    };
-
-    return (
-        <View style={styles.attachmentsContainer}>
-            <DraggableFlatList
-                horizontal
-                data={attachments}
-                renderItem={renderItem}
-                keyExtractor={(item) => item.id}
-                onDragEnd={({ data }) =>
-                    onAttachmentsReorder && onAttachmentsReorder(data)
-                }
-                contentContainerStyle={styles.attachmentsPreviewContainer}
-            />
-        </View>
-    );
+    return undefined;
 };
 
 interface SortableItemProps {

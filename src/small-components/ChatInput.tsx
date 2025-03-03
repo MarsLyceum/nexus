@@ -1,7 +1,15 @@
-import React from 'react';
-import { View, TouchableOpacity, Platform, StyleSheet } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import {
+    View,
+    TouchableOpacity,
+    Platform,
+    StyleSheet,
+    Text,
+    ScrollView,
+} from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { Image as ExpoImage } from 'expo-image';
+import emoji from 'emoji-dictionary';
 import { COLORS } from '../constants';
 import { AttachmentPreviews } from '../sections';
 import { Attachment } from '../types';
@@ -10,6 +18,9 @@ import { extractUrls } from '../utils';
 
 // Utility to check if a URL is an image
 const isImageUrl = (url: string): boolean => /\.(jpeg|jpg|gif|png)$/i.test(url);
+
+// Use all supported emoji names from emoji-dictionary using emoji.names.
+const emojiNames = emoji.names;
 
 export type ChatInputProps = {
     messageText: string;
@@ -34,16 +45,115 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     onInlineImagePress,
     onAttachmentPreviewPress,
 }) => {
-    // Use extractUrls to get all URLs and filter to only image URLs.
-    const inlineImageUrls = extractUrls(messageText).filter((element) =>
-        isImageUrl(element)
+    // State for emoji search query, suggestions, and active suggestion index.
+    const [emojiQuery, setEmojiQuery] = useState('');
+    const [emojiSuggestions, setEmojiSuggestions] = useState<
+        { name: string; emoji: string }[]
+    >([]);
+    const [activeEmojiIndex, setActiveEmojiIndex] = useState(0);
+    const scrollViewRef = useRef<ScrollView>(null);
+
+    // Effect to scroll the suggestions list so the active emoji is centered.
+    useEffect(() => {
+        if (scrollViewRef.current) {
+            const containerHeight = 150; // same as maxHeight in style
+            const itemHeight = 40; // assumed height per emoji suggestion
+            let offset =
+                activeEmojiIndex * itemHeight -
+                containerHeight / 2 +
+                itemHeight / 2;
+            if (offset < 0) offset = 0;
+            scrollViewRef.current.scrollTo({ y: offset, animated: true });
+        }
+    }, [activeEmojiIndex]);
+
+    // Updates emoji suggestions based on the last colon query.
+    const updateEmojiSuggestions = (text: string) => {
+        const colonIndex = text.lastIndexOf(':');
+        if (colonIndex !== -1) {
+            const query = text.substring(colonIndex + 1);
+            if (query.length > 0 && /^[a-zA-Z0-9_]+$/.test(query)) {
+                setEmojiQuery(query);
+                const suggestions = emojiNames
+                    .filter((name) => name.startsWith(query.toLowerCase()))
+                    .map((name) => ({ name, emoji: emoji.getUnicode(name) }));
+                setEmojiSuggestions(suggestions);
+                if (suggestions.length > 0) {
+                    setActiveEmojiIndex(0);
+                }
+            } else {
+                setEmojiQuery('');
+                setEmojiSuggestions([]);
+            }
+        } else {
+            setEmojiQuery('');
+            setEmojiSuggestions([]);
+        }
+    };
+
+    // Wraps setMessageText to update emoji suggestions as the user types.
+    const onMessageTextChange = (text: string) => {
+        setMessageText(text);
+        updateEmojiSuggestions(text);
+    };
+
+    // When an emoji suggestion is selected, replace the emoji query in the text.
+    const handleEmojiSelect = (selected: { name: string; emoji: string }) => {
+        const colonIndex = messageText.lastIndexOf(':');
+        if (colonIndex !== -1) {
+            // Replace the :query with the selected emoji and add a trailing space.
+            const newText =
+                messageText.substring(0, colonIndex) +
+                selected.emoji +
+                ' ' +
+                messageText.substring(colonIndex + emojiQuery.length + 1);
+            setMessageText(newText);
+            setEmojiQuery('');
+            setEmojiSuggestions([]);
+        }
+    };
+
+    // Keyboard handler for navigating emoji suggestions.
+    const handleKeyPress = (e: any) => {
+        if (emojiSuggestions.length > 0) {
+            const key = e.nativeEvent.key;
+            if (key === 'ArrowDown') {
+                setActiveEmojiIndex(
+                    (prev) => (prev + 1) % emojiSuggestions.length
+                );
+                e.preventDefault && e.preventDefault();
+            } else if (key === 'ArrowUp') {
+                setActiveEmojiIndex(
+                    (prev) =>
+                        (prev - 1 + emojiSuggestions.length) %
+                        emojiSuggestions.length
+                );
+                e.preventDefault && e.preventDefault();
+            } else if (key === 'Enter') {
+                // If the emoji list is visible, select the active emoji instead of sending the message.
+                handleEmojiSelect(emojiSuggestions[activeEmojiIndex]);
+                e.preventDefault && e.preventDefault();
+            }
+        }
+    };
+
+    // onSubmitEditing only sends the message if no emoji suggestions are visible.
+    const handleSubmitEditing = () => {
+        if (emojiSuggestions.length === 0) {
+            sendMessageHandler();
+        }
+    };
+
+    // Get inline image URLs from the message text.
+    const inlineImageUrls = extractUrls(messageText).filter((url) =>
+        isImageUrl(url)
     );
 
     return (
         <View>
             <View style={styles.inputBorderLine} />
 
-            {/* Render an inline preview for each image URL */}
+            {/* Render inline image previews */}
             {inlineImageUrls.length > 0 && (
                 <View style={styles.inlineAttachmentContainer}>
                     {inlineImageUrls.map((url, index) => (
@@ -59,7 +169,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                             <TouchableOpacity
                                 style={styles.removeAttachmentButton}
                                 onPress={() => {
-                                    // Remove the clicked URL from the message text.
                                     setMessageText(
                                         messageText.replace(url, '').trim()
                                     );
@@ -85,6 +194,30 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 onAttachmentsReorder={setAttachments}
             />
 
+            {/* Emoji suggestion list wrapped in a ScrollView */}
+            {emojiSuggestions.length > 0 && (
+                <ScrollView
+                    ref={scrollViewRef}
+                    style={styles.emojiSuggestionContainer}
+                >
+                    {emojiSuggestions.map((suggestion, index) => (
+                        <TouchableOpacity
+                            key={index}
+                            onPress={() => handleEmojiSelect(suggestion)}
+                            style={[
+                                styles.emojiSuggestionButton,
+                                index === activeEmojiIndex &&
+                                    styles.activeEmojiSuggestionButton,
+                            ]}
+                        >
+                            <Text style={styles.emojiSuggestionText}>
+                                {suggestion.emoji} {suggestion.name}
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
+                </ScrollView>
+            )}
+
             <View style={styles.inputContainerNoBorder}>
                 <TouchableOpacity
                     onPress={handleImageUpload}
@@ -94,9 +227,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 </TouchableOpacity>
                 <MarkdownTextInput
                     value={messageText}
-                    onChangeText={setMessageText}
+                    onChangeText={onMessageTextChange}
+                    onKeyPress={handleKeyPress}
+                    onSubmitEditing={handleSubmitEditing}
                     placeholder={`Message ${recipientName}`}
-                    onSubmitEditing={sendMessageHandler}
                     returnKeyType="send"
                 />
                 {(messageText.length > 0 || attachments.length > 0) &&
@@ -158,5 +292,29 @@ const styles = StyleSheet.create({
     sendButton: {
         marginLeft: 10,
         padding: 8,
+    },
+    emojiSuggestionContainer: {
+        backgroundColor: COLORS.AppBackground,
+        padding: 8,
+        borderRadius: 8,
+        marginHorizontal: 10,
+        marginBottom: 5,
+        maxHeight: 150, // Limits the container height and enables scrolling if needed
+    },
+    emojiSuggestionButton: {
+        paddingVertical: 5,
+        paddingHorizontal: 10,
+        marginRight: 5,
+        marginBottom: 5,
+        backgroundColor: COLORS.PrimaryBackground,
+        borderRadius: 5,
+        height: 40, // fixed height per suggestion
+    },
+    activeEmojiSuggestionButton: {
+        backgroundColor: COLORS.SecondaryBackground, // Highlight the active emoji suggestion
+    },
+    emojiSuggestionText: {
+        color: COLORS.White,
+        fontSize: 14,
     },
 });

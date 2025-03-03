@@ -45,8 +45,9 @@ export const AttachmentPreviews: React.FC<AttachmentPreviewsProps> = ({
                                         style={styles.attachmentImage}
                                         muted
                                         repeat
-                                        resizeMode="cover"
+                                        contentFit="cover"
                                         paused
+                                        controls={false}
                                     />
                                 ) : (
                                     <ExpoImage

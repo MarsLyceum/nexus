@@ -1,4 +1,3 @@
-// LargeImageModal.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import {
     Modal,
@@ -29,14 +28,14 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
     initialIndex,
     onClose,
 }) => {
-    // Always call hooks in the same order
-    const mediaTypes = useMediaTypes(attachments);
+    // Use the updated hook, which returns a mapping of URL to MediaInfo.
+    const mediaInfos = useMediaTypes(attachments);
 
     // Filter out any attachments that are videos.
+    // If MediaInfo is undefined for a URL, assume it's an image.
     const imageAttachments = attachments.filter((url) => {
-        const type = mediaTypes[url];
-        // If media type is undefined, we assume it's an image.
-        return type === 'image' || type === undefined;
+        const info = mediaInfos[url];
+        return !info || info.type === 'image';
     });
 
     const [currentIndex, setCurrentIndex] = useState(initialIndex);
@@ -88,7 +87,7 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [visible, imageAttachments.length, currentIndex]);
 
-    // Render each carousel item (only images).
+    // Render each carousel item (images only).
     const renderItem = ({ item }: { item: string }) => (
         <ExpoImage
             source={{ uri: item }}
@@ -98,7 +97,6 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
         />
     );
 
-    // Now, in the return block we conditionally render null if there are no images.
     if (imageAttachments.length === 0) {
         return null;
     }
@@ -121,9 +119,9 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
                             width={deviceWidth * 0.9}
                             height={carouselHeight}
                             defaultIndex={effectiveInitialIndex}
-                            onSnapToItem={(index: number) => {
-                                setCurrentIndex(index);
-                            }}
+                            onSnapToItem={(index: number) =>
+                                setCurrentIndex(index)
+                            }
                         />
                         {/* Image Count Overlay */}
                         <ImageCountOverlay

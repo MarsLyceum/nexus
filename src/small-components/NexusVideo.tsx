@@ -8,7 +8,7 @@ type NexusVideoProps = {
     muted?: boolean;
     repeat?: boolean;
     paused?: boolean;
-    resizeMode?: 'cover' | 'contain' | 'stretch' | 'center';
+    contentFit?: 'contain' | 'cover' | 'fill';
     controls?: boolean;
 };
 
@@ -18,25 +18,9 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
     muted = true,
     repeat = true,
     paused = true,
-    resizeMode = 'cover',
+    contentFit = 'cover',
     controls = true,
 }) => {
-    // Map resizeMode to expo-video's contentFit.
-    let contentFit: 'contain' | 'cover' | 'fill';
-    switch (resizeMode) {
-        case 'contain':
-            contentFit = 'contain';
-            break;
-        case 'stretch':
-        case 'center':
-            contentFit = 'fill';
-            break;
-        case 'cover':
-        default:
-            contentFit = 'cover';
-            break;
-    }
-
     // Create the video player instance using expo-video's hook.
     const player = useVideoPlayer(source.uri, (player) => {
         player.loop = repeat;

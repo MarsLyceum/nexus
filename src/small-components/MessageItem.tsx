@@ -11,6 +11,8 @@ import { LinkPreview } from './LinkPreview';
 import { MessageWithAvatar } from '../types';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { extractUrls, formatFullDate } from '../utils';
+import { useMediaTypes } from '../hooks/useMediaTypes';
+import { NexusVideo } from '../small-components';
 
 export type MessageItemProps = {
     item: MessageWithAvatar;
@@ -18,11 +20,11 @@ export type MessageItemProps = {
     onAttachmentPress: (attachments: string[], index: number) => void;
 };
 
-// This component renders an attachment image at 30% of its native size.
+// This component renders an image attachment at 30% of its native size.
 const NativeSizeAttachmentImage: React.FC<{ uri: string }> = ({ uri }) => {
     const [dimensions, setDimensions] = React.useState<
         { width: number; height: number } | undefined
-    >();
+    >(undefined);
 
     React.useEffect(() => {
         RNImage.getSize(
@@ -34,8 +36,7 @@ const NativeSizeAttachmentImage: React.FC<{ uri: string }> = ({ uri }) => {
     }, [uri]);
 
     if (!dimensions) {
-        // Optionally, you can return a placeholder or spinner while dimensions load.
-        return undefined;
+        return null;
     }
 
     return (
@@ -53,11 +54,32 @@ const NativeSizeAttachmentImage: React.FC<{ uri: string }> = ({ uri }) => {
     );
 };
 
-// Updated renderMessageContent function
-// - First, trim the content to remove extra whitespace.
-// - Extract URLs from the trimmed content.
-// - If there is a single URL and the trimmed content is exactly that URL, only render the LinkPreview.
-// - Otherwise, render the markdown and any link previews.
+// This component renders a video attachment using NexusVideo.
+// It uses the native width and height from the media info and scales them by 30%.
+const NativeSizeAttachmentVideo: React.FC<{
+    uri: string;
+    nativeWidth: number;
+    nativeHeight: number;
+    aspectRatio: number;
+}> = ({ uri, nativeWidth, nativeHeight, aspectRatio }) => {
+    const scaledWidth = nativeWidth * 0.3;
+    const scaledHeight = nativeHeight * 0.3;
+
+    return (
+        <NexusVideo
+            source={{ uri }}
+            style={[
+                styles.messageAttachmentImage,
+                { width: scaledWidth, height: scaledHeight },
+            ]}
+            muted={false}
+            repeat
+            paused
+            contentFit="contain"
+        />
+    );
+};
+
 const renderMessageContent = (content: string, width: number) => {
     const trimmedContent = content.trim();
     const urls = extractUrls(trimmedContent);
@@ -72,8 +94,8 @@ const renderMessageContent = (content: string, width: number) => {
                 <MarkdownRenderer text={content} />
                 {urls.map((url, index) => (
                     <LinkPreview
-                        url={url}
                         key={index}
+                        url={url}
                         containerWidth={width - 32}
                     />
                 ))}
@@ -87,37 +109,57 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     item,
     width,
     onAttachmentPress,
-}) => (
-    <View style={styles.messageContainer}>
-        <ExpoImage source={{ uri: item.avatar }} style={styles.avatar} />
-        <View style={styles.messageContent}>
-            <Text style={styles.userName}>
-                {item.username}{' '}
-                <Text style={styles.time}>{formatFullDate(item.postedAt)}</Text>
-            </Text>
-            {item.content
-                ? renderMessageContent(item.content, width)
-                : undefined}
-            {item.attachmentUrls && item.attachmentUrls.length > 0 && (
-                <View style={styles.messageAttachmentsContainer}>
-                    {item.attachmentUrls.map((url, index) => (
-                        <TouchableOpacity
-                            key={index}
-                            onPress={() =>
-                                onAttachmentPress(
-                                    item.attachmentUrls ?? [],
-                                    index
-                                )
-                            }
-                        >
-                            <NativeSizeAttachmentImage uri={url} />
-                        </TouchableOpacity>
-                    ))}
-                </View>
-            )}
+}) => {
+    // useMediaTypes now returns an object mapping each URL to a MediaInfo object,
+    // which includes the media type, native width, native height, and aspect ratio.
+    const mediaInfos = useMediaTypes(item.attachmentUrls || []);
+
+    return (
+        <View style={styles.messageContainer}>
+            <ExpoImage source={{ uri: item.avatar }} style={styles.avatar} />
+            <View style={styles.messageContent}>
+                <Text style={styles.userName}>
+                    {item.username}{' '}
+                    <Text style={styles.time}>
+                        {formatFullDate(item.postedAt)}
+                    </Text>
+                </Text>
+                {item.content
+                    ? renderMessageContent(item.content, width)
+                    : null}
+                {item.attachmentUrls && item.attachmentUrls.length > 0 && (
+                    <View style={styles.messageAttachmentsContainer}>
+                        {item.attachmentUrls.map((url, index) => {
+                            const info = mediaInfos[url];
+                            return (
+                                <TouchableOpacity
+                                    key={index}
+                                    onPress={() =>
+                                        onAttachmentPress(
+                                            item.attachmentUrls ?? [],
+                                            index
+                                        )
+                                    }
+                                >
+                                    {info && info.type === 'video' ? (
+                                        <NativeSizeAttachmentVideo
+                                            uri={url}
+                                            nativeWidth={info.width}
+                                            nativeHeight={info.height}
+                                            aspectRatio={info.aspectRatio}
+                                        />
+                                    ) : (
+                                        <NativeSizeAttachmentImage uri={url} />
+                                    )}
+                                </TouchableOpacity>
+                            );
+                        })}
+                    </View>
+                )}
+            </View>
         </View>
-    </View>
-);
+    );
+};
 
 const styles = StyleSheet.create({
     messageContainer: {

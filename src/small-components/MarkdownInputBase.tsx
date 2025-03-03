@@ -222,6 +222,7 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
     wrapperStyle,
     overlayStyle,
     inputStyle,
+    multiline,
     ...rest
 }) => {
     const overlayScrollRef = useRef<ScrollView>(null);
@@ -259,7 +260,7 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
                 onChangeText={onChangeText}
                 placeholder={placeholder}
                 placeholderTextColor="gray"
-                multiline
+                multiline={multiline}
                 scrollEnabled
                 textAlignVertical="top"
                 onScroll={handleScroll}

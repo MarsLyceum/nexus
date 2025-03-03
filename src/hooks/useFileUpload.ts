@@ -125,7 +125,7 @@ export const useFileUpload = () => {
 
         // Launch the image picker with cropping enabled, but no forced aspect ratio
         const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ['images'], // Updated: use an array of media types
+            mediaTypes: ['images', 'videos', 'livePhotos'], // Updated: use an array of media types
             allowsEditing: true, // Allows cropping, but no fixed aspect ratio
             quality: 1,
             base64: Platform.OS === 'web', // Request base64 on web

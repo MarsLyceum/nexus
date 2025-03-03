@@ -1,5 +1,6 @@
 import {
     getStateFromPath as defaultGetStateFromPath,
+    getPathFromState as defaultGetPathFromState,
     PathConfigMap,
 } from '@react-navigation/native';
 
@@ -15,21 +16,25 @@ export const linking = {
         },
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    getPathFromState(state: any) {
-        // We use findLatestRoute to build the URL (see next section for that function).
-        const route = findLatestRoute(state, 'PostScreen');
-        //
-        if (route?.params) {
-            const { id, parentCommentId } = route.params;
-            if (id) {
-                // The linking config already supplies "post/", so we return the extra segments.
-                if (parentCommentId && parentCommentId.trim() !== '') {
-                    return `${id}/comment/${parentCommentId}`;
-                }
-                return `${id}`;
+    getPathFromState(state) {
+        const activeRoute = getActiveRoute(state);
+
+        // Only override for PostScreen
+        if (activeRoute?.name === 'PostScreen' && activeRoute.params?.id) {
+            const { id, parentCommentId } = activeRoute.params;
+            // Note: Since your linking config already supplies "post/",
+            // we only append the extra segments.
+            if (parentCommentId && parentCommentId.trim() !== '') {
+                return `${id}/comment/${parentCommentId}`;
             }
+            return `${id}`;
         }
-        return '';
+
+        // For all other routes, delegate to the default logic.
+        return defaultGetPathFromState(state, {
+            // @ts-expect-error navigation
+            screens: linking.config.screens,
+        });
     },
     getStateFromPath(
         path: string,
@@ -82,6 +87,15 @@ export const linking = {
         return defaultGetStateFromPath(path, options);
     },
 };
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getActiveRoute(state: any) {
+    let route = state;
+    while (route.routes && route.routes.length > 0) {
+        route = route.routes[route.index || 0];
+    }
+    return route;
+}
 
 // Helper: recursively find the deepest route matching the given name.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

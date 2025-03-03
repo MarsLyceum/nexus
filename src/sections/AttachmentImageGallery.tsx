@@ -1,11 +1,9 @@
-// AttachmentImageGallery.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import {
     View,
     StyleSheet,
     TouchableOpacity,
     LayoutChangeEvent,
-    Image as RNImage,
     ScrollView,
 } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
@@ -24,7 +22,7 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
     onImagePress,
 }) => {
     const [currentAttachmentIndex, setCurrentAttachmentIndex] = useState(0);
-    const [containerWidth, setContainerWidth] = useState(480); // Default width fallback
+    const [containerWidth, setContainerWidth] = useState(480); // Default fallback width
     const [imageAspectRatio, setImageAspectRatio] = useState(1); // Default ratio (square)
 
     const scrollViewRef = useRef<ScrollView>(null);
@@ -39,33 +37,17 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
     const imageWidth = containerWidth < 360 ? containerWidth : 360;
     const computedImageHeight = imageWidth / imageAspectRatio;
 
-    // Use the custom hook to get media types for each URL.
-    const mediaTypes = useMediaTypes(attachmentUrls);
+    // Use the updated hook to get media info (type, width, height, aspectRatio) for each URL.
+    const mediaInfos = useMediaTypes(attachmentUrls);
 
-    // Update aspect ratio based on the current attachment's media type.
+    // Update container's aspect ratio based on the current attachment's media info.
     useEffect(() => {
         const currentUrl = attachmentUrls[currentAttachmentIndex];
-        // Only attempt to set the aspect ratio if we have determined the media type
-        const mediaType = mediaTypes[currentUrl];
-        if (currentUrl && mediaType) {
-            if (mediaType === 'video') {
-                // Default aspect ratio for videos: 16:9
-                setImageAspectRatio(16 / 9);
-            } else if (mediaType === 'image') {
-                RNImage.getSize(
-                    currentUrl,
-                    (width, height) => {
-                        setImageAspectRatio(width / height);
-                    },
-                    (error) => {
-                        console.error('Failed to get image dimensions', error);
-                        // Fallback aspect ratio in case of error
-                        setImageAspectRatio(1);
-                    }
-                );
-            }
+        const info = mediaInfos[currentUrl];
+        if (currentUrl && info) {
+            setImageAspectRatio(info.aspectRatio);
         }
-    }, [attachmentUrls, currentAttachmentIndex, mediaTypes]);
+    }, [attachmentUrls, currentAttachmentIndex, mediaInfos]);
 
     const handleMomentumScrollEnd = (event: any) => {
         const offsetX = event.nativeEvent.contentOffset.x;
@@ -100,28 +82,32 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
                     ref={scrollViewRef}
                 >
                     {attachmentUrls.map((url, index) => {
-                        // Default to 'image' if media type is not yet determined.
-                        const mediaType = mediaTypes[url] || 'image';
+                        // Get the media info for this URL.
+                        const info = mediaInfos[url];
+                        // Compute the height for this attachment based on its aspect ratio.
+                        const attachmentHeight = info
+                            ? imageWidth / info.aspectRatio
+                            : computedImageHeight;
                         return (
                             <TouchableOpacity
                                 key={index}
                                 onPress={() => onImagePress(index)}
                                 activeOpacity={0.8}
                             >
-                                {mediaType === 'video' ? (
+                                {info && info.type === 'video' ? (
                                     <NexusVideo
                                         source={{ uri: url }}
                                         style={[
                                             styles.galleryImage,
                                             {
                                                 width: imageWidth,
-                                                height: computedImageHeight,
+                                                height: attachmentHeight,
                                             },
                                         ]}
                                         muted={false}
-                                        repeat={true}
-                                        paused={true}
-                                        resizeMode="contain"
+                                        repeat
+                                        paused
+                                        contentFit="contain"
                                     />
                                 ) : (
                                     <ExpoImage
@@ -130,7 +116,7 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
                                             styles.galleryImage,
                                             {
                                                 width: imageWidth,
-                                                height: computedImageHeight,
+                                                height: attachmentHeight,
                                             },
                                         ]}
                                     />

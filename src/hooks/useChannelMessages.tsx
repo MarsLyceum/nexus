@@ -37,6 +37,7 @@ export const useChannelMessages = (channelId: string) => {
                     return;
                 }
 
+                // Map and convert timestamps, and fetch usernames if needed.
                 const newMessages: MessageWithAvatar[] = await Promise.all(
                     messagesArray.map(async (msg: GroupChannelMessage) => {
                         if (userCacheRef.current[msg.postedByUserId]) {
@@ -67,11 +68,47 @@ export const useChannelMessages = (channelId: string) => {
                     })
                 );
 
+                // Sort messages in descending order (newest first).
+                newMessages.sort(
+                    (a, b) => b.postedAt.getTime() - a.postedAt.getTime()
+                );
+
                 if (!cancelled) {
                     if (offset === 0) {
-                        setChatMessages(newMessages);
+                        // Merge the fetched messages with any existing ones, deduplicating by id.
+                        setChatMessages((prev) => {
+                            const messagesMap = new Map<
+                                string,
+                                MessageWithAvatar
+                            >();
+                            // Insert fetched messages first.
+                            newMessages.forEach((msg) =>
+                                messagesMap.set(msg.id, msg)
+                            );
+                            // Add any existing messages that are not in the new fetch.
+                            prev.forEach((msg) => {
+                                if (!messagesMap.has(msg.id)) {
+                                    messagesMap.set(msg.id, msg);
+                                }
+                            });
+                            const merged = Array.from(messagesMap.values());
+                            // Ensure merged messages remain sorted in descending order.
+                            merged.sort(
+                                (a, b) =>
+                                    b.postedAt.getTime() - a.postedAt.getTime()
+                            );
+                            return merged;
+                        });
                     } else {
-                        setChatMessages((prev) => [...prev, ...newMessages]);
+                        // For pagination (loading older messages), prepend them.
+                        setChatMessages((prev) => {
+                            const merged = [...newMessages, ...prev];
+                            merged.sort(
+                                (a, b) =>
+                                    b.postedAt.getTime() - a.postedAt.getTime()
+                            );
+                            return merged;
+                        });
                     }
                 }
             } catch (error) {
@@ -99,20 +136,23 @@ export const useChannelMessages = (channelId: string) => {
     );
 
     useEffect(() => {
+        console.log('Updated chatMessages:', chatMessages);
+    }, [chatMessages]);
+
+    useEffect(() => {
         if (subscriptionData && subscriptionData.messageAdded) {
             const msg = subscriptionData.messageAdded;
-            // You might want to do additional processing (e.g. fetching username data) before merging.
-            setChatMessages((prev) => [
-                ...prev,
-                {
-                    ...msg,
-                    postedAt: new Date(msg.postedAt),
-                    username:
-                        userCacheRef.current[msg.postedByUserId] ||
-                        'Unknown User',
-                    avatar: 'https://picsum.photos/50?random=10',
-                },
-            ]);
+            console.log('got message added:', msg);
+            const newMessage: MessageWithAvatar = {
+                ...msg,
+                postedAt: new Date(msg.postedAt),
+                username:
+                    userCacheRef.current[msg.postedByUserId] || 'Unknown User',
+                avatar: 'https://picsum.photos/50?random=10',
+            };
+            // Insert at index 0 so that in the descending array,
+            // the newest message (at index 0) appears at the bottom when rendered via an inverted FlatList.
+            setChatMessages((prev) => [newMessage, ...prev]);
         }
     }, [subscriptionData]);
 

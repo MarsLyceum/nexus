@@ -6,7 +6,11 @@ export const MESSAGE_ADDED_SUBSCRIPTION = gql`
             id
             content
             channelId
-            createdAt
+            postedAt
+            postedByUserId
+            edited
+            # channel
+            # attachmentUrls
         }
     }
 `;

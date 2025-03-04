@@ -43,7 +43,6 @@ export const renderHighlightedText = (text: string) => {
             /(```([\S\s]+?)```)|(`([^`]+)`)|(__(.+?)__)|(\*\*\*([^*]+)\*\*\*)|(\*\*([^*]+)\*\*)|(\*([^*]+)\*)|(_([^_]+)_)|(~~(.*?)~~)|(>!(.*?)!<)|(\|\|([\S\s]+?)\|\|)|(\[([^\]]+)]\(([^)]+)\))|(!\[([^\]]*)]\(([^)]+)\))|(https?:\/\/\S+)/g;
         let match;
         let key = 0;
-        // eslint-disable-next-line no-cond-assign
         while ((match = regex.exec(line)) !== null) {
             if (match.index > lastIndex) {
                 segments.push(
@@ -208,7 +207,6 @@ export const renderHighlightedText = (text: string) => {
         }
         return <Text key={index}>{segments}</Text>;
     });
-    // eslint-disable-next-line unicorn/no-array-reduce
     return renderedLines.reduce((prev, curr, idx) => {
         if (idx === 0) return [curr];
         return [...prev, <Text key={`newline-${idx}`}>{'\n'}</Text>, curr];
@@ -227,9 +225,8 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
 }) => {
     const overlayScrollRef = useRef<ScrollView>(null);
 
-    // Sync the overlay scroll directly with the TextInput's scroll offset.
-    const handleScroll = (
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // For multiline, sync vertical scroll.
+    const handleVerticalScroll = (
         e: NativeSyntheticEvent<TextInputScrollEventData> & { nativeEvent: any }
     ) => {
         const offsetY =
@@ -237,23 +234,58 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
         overlayScrollRef.current?.scrollTo({ y: offsetY, animated: false });
     };
 
+    // For non-multiline, sync horizontal scroll.
+    const handleHorizontalScroll = (
+        e: NativeSyntheticEvent<TextInputScrollEventData> & { nativeEvent: any }
+    ) => {
+        const offsetX =
+            e.nativeEvent.contentOffset?.x ?? e.nativeEvent.target?.scrollLeft;
+        overlayScrollRef.current?.scrollTo({ x: offsetX, animated: false });
+    };
+
     return (
         <View style={[baseStyles.inputWrapper, wrapperStyle]}>
-            <ScrollView
-                ref={overlayScrollRef}
-                style={[baseStyles.overlayContainer, overlayStyle]}
-                contentContainerStyle={{
-                    paddingHorizontal: 10,
-                    paddingBottom: 25, // Added extra bottom padding to match TextInput's scroll range
-                }}
-                scrollEnabled={false}
-                showsVerticalScrollIndicator={false}
-                pointerEvents="none"
-            >
-                <Text style={[baseStyles.inputTextOverlay, inputStyle]}>
-                    {renderHighlightedText(value)}
-                </Text>
-            </ScrollView>
+            {multiline ? (
+                <ScrollView
+                    ref={overlayScrollRef}
+                    style={[baseStyles.overlayContainer, overlayStyle]}
+                    contentContainerStyle={{
+                        paddingHorizontal: 10,
+                        paddingBottom: 25,
+                    }}
+                    scrollEnabled={false}
+                    showsVerticalScrollIndicator={false}
+                    pointerEvents="none"
+                >
+                    <Text style={[baseStyles.inputTextOverlay, inputStyle]}>
+                        {renderHighlightedText(value)}
+                    </Text>
+                </ScrollView>
+            ) : (
+                // For non-multiline, use a horizontal ScrollView.
+                // Remove horizontal padding from contentContainerStyle and apply it directly on the Text.
+                <ScrollView
+                    ref={overlayScrollRef}
+                    horizontal
+                    style={[baseStyles.singleLineOverlay, overlayStyle]}
+                    contentContainerStyle={{
+                        paddingVertical: 4,
+                    }}
+                    scrollEnabled={true}
+                    showsHorizontalScrollIndicator={false}
+                    pointerEvents="none"
+                >
+                    <Text
+                        style={[
+                            baseStyles.inputTextOverlay,
+                            inputStyle,
+                            { flexWrap: 'nowrap', paddingHorizontal: 10 },
+                        ]}
+                    >
+                        {renderHighlightedText(value)}
+                    </Text>
+                </ScrollView>
+            )}
             <TextInput
                 style={[baseStyles.input, inputStyle]}
                 value={value}
@@ -261,10 +293,11 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
                 placeholder={placeholder}
                 placeholderTextColor="gray"
                 multiline={multiline}
-                scrollEnabled
+                scrollEnabled={true}
                 textAlignVertical="top"
-                onScroll={handleScroll}
-                // @ts-expect-error broken type
+                onScroll={
+                    multiline ? handleVerticalScroll : handleHorizontalScroll
+                }
                 scrollEventThrottle={16}
                 {...rest}
             />
@@ -285,6 +318,9 @@ const baseStyles = StyleSheet.create({
         left: 0,
         right: 0,
         bottom: 0,
+    },
+    singleLineOverlay: {
+        // Remove any additional horizontal padding
     },
     inputTextOverlay: {
         fontSize: 14,

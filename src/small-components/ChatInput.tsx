@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { Image as ExpoImage } from 'expo-image';
+// @ts-expect-error no types
 import emoji from 'emoji-dictionary';
 import { COLORS } from '../constants';
 import { AttachmentPreviews } from '../sections';

@@ -1,6 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import { useApolloClient } from '@apollo/client';
-import { FETCH_CHANNEL_MESSAGES_QUERY, FETCH_USER_QUERY } from '../queries';
+import { useApolloClient, useSubscription } from '@apollo/client';
+import {
+    FETCH_CHANNEL_MESSAGES_QUERY,
+    FETCH_USER_QUERY,
+    MESSAGE_ADDED_SUBSCRIPTION,
+} from '../queries';
 import { GroupChannelMessage, User, MessageWithAvatar } from '../types';
 
 export const useChannelMessages = (channelId: string) => {
@@ -13,6 +17,7 @@ export const useChannelMessages = (channelId: string) => {
     const [refreshTrigger, setRefreshTrigger] = useState(0);
     const userCacheRef = useRef<Record<string, string>>({});
 
+    // Fetch the initial (and paginated) messages
     useEffect(() => {
         let cancelled = false;
         const fetchMessages = async () => {
@@ -84,6 +89,32 @@ export const useChannelMessages = (channelId: string) => {
             cancelled = true;
         };
     }, [channelId, offset, refreshTrigger, apolloClient]);
+
+    // Subscribe for new messages on this channel
+    const { data: subscriptionData } = useSubscription(
+        MESSAGE_ADDED_SUBSCRIPTION,
+        {
+            variables: { channelId },
+        }
+    );
+
+    useEffect(() => {
+        if (subscriptionData && subscriptionData.messageAdded) {
+            const msg = subscriptionData.messageAdded;
+            // You might want to do additional processing (e.g. fetching username data) before merging.
+            setChatMessages((prev) => [
+                ...prev,
+                {
+                    ...msg,
+                    postedAt: new Date(msg.postedAt),
+                    username:
+                        userCacheRef.current[msg.postedByUserId] ||
+                        'Unknown User',
+                    avatar: 'https://picsum.photos/50?random=10',
+                },
+            ]);
+        }
+    }, [subscriptionData]);
 
     const loadMoreMessages = () => {
         if (loadingMore) return;

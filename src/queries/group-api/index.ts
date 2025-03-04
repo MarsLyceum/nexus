@@ -7,3 +7,4 @@ export * from './FETCH_CHANNEL_POSTS_QUERY';
 export * from './FETCH_POST_COMMENTS_QUERY';
 export * from './FETCH_POST_QUERY';
 export * from './FETCH_USER_GROUPS_QUERY';
+export * from './MESSAGE_ADDED_SUBSCRIPTION';

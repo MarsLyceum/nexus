@@ -245,7 +245,7 @@ const GREETINGS_SUBSCRIPTION = gql`
 client.subscribe({ query: GREETINGS_SUBSCRIPTION }).subscribe({
     next({ data }) {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        // console.log('Greeting:', data.greetings);
+        console.log('Greeting:', data.greetings);
     },
     error(err) {
         console.error('Subscription error:', err);

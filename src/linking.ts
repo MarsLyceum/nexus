@@ -7,10 +7,27 @@ import {
 export const linking = {
     prefixes: ['nexus://', 'http://localhost:8081'],
     config: {
+        // screens: {
+        //     Main: {
+        //         // screens: {
+        //         //     PostScreen: [
+        //         //         'post/:id',
+        //         //         'post/:id/comment/:parentCommentId',
+        //         //     ], // the base path for PostScreen
+        //         // },
+        //     },
+        // },
         screens: {
             Main: {
+                path: '', // omit Main from the URL as well
+                // You can leave PostScreen mapping out or set to null,
+                // since your custom getPathFromState is handling it.
+                // For example:
+                // screens: { PostScreen: 'post/:id' },
                 screens: {
-                    PostScreen: 'post/:id', // the base path for PostScreen
+                    AppDrawer: {
+                        path: '', // omit AppDrawer from the URL
+                    },
                 },
             },
         },
@@ -25,9 +42,9 @@ export const linking = {
             // Note: Since your linking config already supplies "post/",
             // we only append the extra segments.
             if (parentCommentId && parentCommentId.trim() !== '') {
-                return `${id}/comment/${parentCommentId}`;
+                return `post/${id}/comment/${parentCommentId}`;
             }
-            return `${id}`;
+            return `post/${id}`;
         }
 
         // For all other routes, delegate to the default logic.
@@ -91,8 +108,19 @@ export const linking = {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getActiveRoute(state: any) {
     let route = state;
-    while (route.routes && route.routes.length > 0) {
-        route = route.routes[route.index || 0];
+    // Traverse into nested states if available.
+    while (route) {
+        if (
+            route.state &&
+            route.state.routes &&
+            route.state.routes.length > 0
+        ) {
+            route = route.state.routes[route.state.index || 0];
+        } else if (route.routes && route.routes.length > 0) {
+            route = route.routes[route.index || 0];
+        } else {
+            break;
+        }
     }
     return route;
 }

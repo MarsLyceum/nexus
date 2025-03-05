@@ -72,12 +72,17 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     const updateEmojiSuggestions = (text: string) => {
         const colonIndex = text.lastIndexOf(':');
         if (colonIndex !== -1) {
-            const query = text.substring(colonIndex + 1);
-            if (query.length > 0 && /^[a-zA-Z0-9_]+$/.test(query)) {
+            const query = text.slice(Math.max(0, colonIndex + 1));
+            if (query.length > 0 && /^\w+$/.test(query)) {
                 setEmojiQuery(query);
                 const suggestions = emojiNames
-                    .filter((name) => name.startsWith(query.toLowerCase()))
-                    .map((name) => ({ name, emoji: emoji.getUnicode(name) }));
+                    .filter((name: string) =>
+                        name.startsWith(query.toLowerCase())
+                    )
+                    .map((name: string) => ({
+                        name,
+                        emoji: emoji.getUnicode(name),
+                    }));
                 setEmojiSuggestions(suggestions);
                 if (suggestions.length > 0) {
                     setActiveEmojiIndex(0);
@@ -103,11 +108,11 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         const colonIndex = messageText.lastIndexOf(':');
         if (colonIndex !== -1) {
             // Replace the :query with the selected emoji and add a trailing space.
-            const newText =
-                messageText.substring(0, colonIndex) +
-                selected.emoji +
-                ' ' +
-                messageText.substring(colonIndex + emojiQuery.length + 1);
+            const newText = `${
+                messageText.slice(0, Math.max(0, colonIndex)) + selected.emoji
+            } ${messageText.slice(
+                Math.max(0, colonIndex + emojiQuery.length + 1)
+            )}`;
             setMessageText(newText);
             setEmojiQuery('');
             setEmojiSuggestions([]);
@@ -115,25 +120,38 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     };
 
     // Keyboard handler for navigating emoji suggestions.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleKeyPress = (e: any) => {
         if (emojiSuggestions.length > 0) {
-            const key = e.nativeEvent.key;
-            if (key === 'ArrowDown') {
-                setActiveEmojiIndex(
-                    (prev) => (prev + 1) % emojiSuggestions.length
-                );
-                e.preventDefault && e.preventDefault();
-            } else if (key === 'ArrowUp') {
-                setActiveEmojiIndex(
-                    (prev) =>
-                        (prev - 1 + emojiSuggestions.length) %
-                        emojiSuggestions.length
-                );
-                e.preventDefault && e.preventDefault();
-            } else if (key === 'Enter') {
-                // If the emoji list is visible, select the active emoji instead of sending the message.
-                handleEmojiSelect(emojiSuggestions[activeEmojiIndex]);
-                e.preventDefault && e.preventDefault();
+            const { key } = e.nativeEvent;
+            // eslint-disable-next-line default-case
+            switch (key) {
+                case 'ArrowDown': {
+                    setActiveEmojiIndex(
+                        (prev) => (prev + 1) % emojiSuggestions.length
+                    );
+                    e?.preventDefault();
+
+                    break;
+                }
+                case 'ArrowUp': {
+                    setActiveEmojiIndex(
+                        (prev) =>
+                            (prev - 1 + emojiSuggestions.length) %
+                            emojiSuggestions.length
+                    );
+                    e?.preventDefault();
+
+                    break;
+                }
+                case 'Enter': {
+                    // If the emoji list is visible, select the active emoji instead of sending the message.
+                    handleEmojiSelect(emojiSuggestions[activeEmojiIndex]);
+                    e?.preventDefault();
+
+                    break;
+                }
+                // No default
             }
         }
     };

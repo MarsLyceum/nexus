@@ -12,7 +12,7 @@ import { MessageWithAvatar } from '../types';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { extractUrls, formatFullDate } from '../utils';
 import { useMediaTypes } from '../hooks/useMediaTypes';
-import { NexusVideo } from '../small-components';
+import { NexusVideo } from '.';
 
 export type MessageItemProps = {
     item: MessageWithAvatar;
@@ -36,7 +36,7 @@ const NativeSizeAttachmentImage: React.FC<{ uri: string }> = ({ uri }) => {
     }, [uri]);
 
     if (!dimensions) {
-        return null;
+        return undefined;
     }
 
     return (
@@ -61,7 +61,7 @@ const NativeSizeAttachmentVideo: React.FC<{
     nativeWidth: number;
     nativeHeight: number;
     aspectRatio: number;
-}> = ({ uri, nativeWidth, nativeHeight, aspectRatio }) => {
+}> = ({ uri, nativeWidth, nativeHeight }) => {
     const scaledWidth = nativeWidth * 0.3;
     const scaledHeight = nativeHeight * 0.3;
 
@@ -126,7 +126,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                 </Text>
                 {item.content
                     ? renderMessageContent(item.content, width)
-                    : null}
+                    : undefined}
                 {item.attachmentUrls && item.attachmentUrls.length > 0 && (
                     <View style={styles.messageAttachmentsContainer}>
                         {item.attachmentUrls.map((url, index) => {

@@ -1,9 +1,9 @@
 import React from 'react';
-import { View } from 'react-native';
 import { useVideoPlayer, VideoView } from 'expo-video';
 
 type NexusVideoProps = {
     source: { uri: string };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     style?: any;
     muted?: boolean;
     repeat?: boolean;
@@ -22,13 +22,15 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
     controls = true,
 }) => {
     // Create the video player instance using expo-video's hook.
-    const player = useVideoPlayer(source.uri, (player) => {
-        player.loop = repeat;
-        player.muted = muted;
+    const player = useVideoPlayer(source.uri, (_player) => {
+        // eslint-disable-next-line no-param-reassign
+        _player.loop = repeat;
+        // eslint-disable-next-line no-param-reassign
+        _player.muted = muted;
         if (!paused) {
-            player.play();
+            _player.play();
         } else {
-            player.pause();
+            _player.pause();
         }
     });
 

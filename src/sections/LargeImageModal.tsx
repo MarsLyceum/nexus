@@ -73,6 +73,7 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
     const deviceWidth = Dimensions.get('window').width;
     const deviceHeight = Dimensions.get('window').height;
     const carouselHeight = deviceHeight * 0.8;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const carouselRef = useRef<any>(null);
 
     // Reset the carousel to the effective initial index when the modal becomes visible.
@@ -109,11 +110,12 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
             }
         };
         window.addEventListener('keydown', handleKeyDown);
+        // eslint-disable-next-line consistent-return
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [visible, mediaAttachments.length, currentIndex]);
 
     if (mediaAttachments.length === 0) {
-        return null;
+        return undefined;
     }
 
     return (

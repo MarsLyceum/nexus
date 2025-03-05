@@ -103,11 +103,9 @@ export const AttachmentPreviews: React.FC<AttachmentPreviewsProps> = ({
         const renderItem = ({
             item,
             drag,
-            isActive,
         }: {
             item: Attachment;
             drag: () => void;
-            isActive: boolean;
         }) => {
             const isVideo = item.file?.type?.startsWith('video');
             return (
@@ -192,6 +190,7 @@ const SortableItem: React.FC<SortableItemProps> = ({
     };
     const isVideo = attachment.file?.type?.startsWith('video');
     return (
+        // @ts-expect-error web only styles
         <View
             ref={setNodeRef}
             style={[styles.draggableItem, style]}

@@ -43,6 +43,7 @@ export const renderHighlightedText = (text: string) => {
             /(```([\S\s]+?)```)|(`([^`]+)`)|(__(.+?)__)|(\*\*\*([^*]+)\*\*\*)|(\*\*([^*]+)\*\*)|(\*([^*]+)\*)|(_([^_]+)_)|(~~(.*?)~~)|(>!(.*?)!<)|(\|\|([\S\s]+?)\|\|)|(\[([^\]]+)]\(([^)]+)\))|(!\[([^\]]*)]\(([^)]+)\))|(https?:\/\/\S+)/g;
         let match;
         let key = 0;
+        // eslint-disable-next-line no-cond-assign
         while ((match = regex.exec(line)) !== null) {
             if (match.index > lastIndex) {
                 segments.push(
@@ -207,6 +208,7 @@ export const renderHighlightedText = (text: string) => {
         }
         return <Text key={index}>{segments}</Text>;
     });
+    // eslint-disable-next-line unicorn/no-array-reduce
     return renderedLines.reduce((prev, curr, idx) => {
         if (idx === 0) return [curr];
         return [...prev, <Text key={`newline-${idx}`}>{'\n'}</Text>, curr];
@@ -227,6 +229,7 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
 
     // For multiline, sync vertical scroll.
     const handleVerticalScroll = (
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         e: NativeSyntheticEvent<TextInputScrollEventData> & { nativeEvent: any }
     ) => {
         const offsetY =
@@ -236,6 +239,7 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
 
     // For non-multiline, sync horizontal scroll.
     const handleHorizontalScroll = (
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         e: NativeSyntheticEvent<TextInputScrollEventData> & { nativeEvent: any }
     ) => {
         const offsetX =
@@ -271,7 +275,7 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
                     contentContainerStyle={{
                         paddingVertical: 4,
                     }}
-                    scrollEnabled={true}
+                    scrollEnabled
                     showsHorizontalScrollIndicator={false}
                     pointerEvents="none"
                 >
@@ -293,11 +297,12 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
                 placeholder={placeholder}
                 placeholderTextColor="gray"
                 multiline={multiline}
-                scrollEnabled={true}
+                scrollEnabled
                 textAlignVertical="top"
                 onScroll={
                     multiline ? handleVerticalScroll : handleHorizontalScroll
                 }
+                // @ts-expect-error prop
                 scrollEventThrottle={16}
                 {...rest}
             />

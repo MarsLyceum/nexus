@@ -91,7 +91,7 @@ export const useChannelMessages = (channelId: string) => {
                                     messagesMap.set(msg.id, msg);
                                 }
                             });
-                            const merged = Array.from(messagesMap.values());
+                            const merged = [...messagesMap.values()];
                             // Ensure merged messages remain sorted in descending order.
                             merged.sort(
                                 (a, b) =>

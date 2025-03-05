@@ -222,12 +222,13 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
     wrapperStyle,
     overlayStyle,
     inputStyle,
+    multiline,
     ...rest
 }) => {
     const overlayScrollRef = useRef<ScrollView>(null);
 
-    // Sync the overlay scroll directly with the TextInput's scroll offset.
-    const handleScroll = (
+    // For multiline, sync vertical scroll.
+    const handleVerticalScroll = (
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         e: NativeSyntheticEvent<TextInputScrollEventData> & { nativeEvent: any }
     ) => {
@@ -236,34 +237,72 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
         overlayScrollRef.current?.scrollTo({ y: offsetY, animated: false });
     };
 
+    // For non-multiline, sync horizontal scroll.
+    const handleHorizontalScroll = (
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        e: NativeSyntheticEvent<TextInputScrollEventData> & { nativeEvent: any }
+    ) => {
+        const offsetX =
+            e.nativeEvent.contentOffset?.x ?? e.nativeEvent.target?.scrollLeft;
+        overlayScrollRef.current?.scrollTo({ x: offsetX, animated: false });
+    };
+
     return (
         <View style={[baseStyles.inputWrapper, wrapperStyle]}>
-            <ScrollView
-                ref={overlayScrollRef}
-                style={[baseStyles.overlayContainer, overlayStyle]}
-                contentContainerStyle={{
-                    paddingHorizontal: 10,
-                    paddingBottom: 25, // Added extra bottom padding to match TextInput's scroll range
-                }}
-                scrollEnabled={false}
-                showsVerticalScrollIndicator={false}
-                pointerEvents="none"
-            >
-                <Text style={[baseStyles.inputTextOverlay, inputStyle]}>
-                    {renderHighlightedText(value)}
-                </Text>
-            </ScrollView>
+            {multiline ? (
+                <ScrollView
+                    ref={overlayScrollRef}
+                    style={[baseStyles.overlayContainer, overlayStyle]}
+                    contentContainerStyle={{
+                        paddingHorizontal: 10,
+                        paddingBottom: 25,
+                    }}
+                    scrollEnabled={false}
+                    showsVerticalScrollIndicator={false}
+                    pointerEvents="none"
+                >
+                    <Text style={[baseStyles.inputTextOverlay, inputStyle]}>
+                        {renderHighlightedText(value)}
+                    </Text>
+                </ScrollView>
+            ) : (
+                // For non-multiline, use a horizontal ScrollView.
+                // Remove horizontal padding from contentContainerStyle and apply it directly on the Text.
+                <ScrollView
+                    ref={overlayScrollRef}
+                    horizontal
+                    style={[baseStyles.singleLineOverlay, overlayStyle]}
+                    contentContainerStyle={{
+                        paddingVertical: 4,
+                    }}
+                    scrollEnabled
+                    showsHorizontalScrollIndicator={false}
+                    pointerEvents="none"
+                >
+                    <Text
+                        style={[
+                            baseStyles.inputTextOverlay,
+                            inputStyle,
+                            { flexWrap: 'nowrap', paddingHorizontal: 10 },
+                        ]}
+                    >
+                        {renderHighlightedText(value)}
+                    </Text>
+                </ScrollView>
+            )}
             <TextInput
                 style={[baseStyles.input, inputStyle]}
                 value={value}
                 onChangeText={onChangeText}
                 placeholder={placeholder}
                 placeholderTextColor="gray"
-                multiline
+                multiline={multiline}
                 scrollEnabled
                 textAlignVertical="top"
-                onScroll={handleScroll}
-                // @ts-expect-error broken type
+                onScroll={
+                    multiline ? handleVerticalScroll : handleHorizontalScroll
+                }
+                // @ts-expect-error prop
                 scrollEventThrottle={16}
                 {...rest}
             />
@@ -284,6 +323,9 @@ const baseStyles = StyleSheet.create({
         left: 0,
         right: 0,
         bottom: 0,
+    },
+    singleLineOverlay: {
+        // Remove any additional horizontal padding
     },
     inputTextOverlay: {
         fontSize: 14,

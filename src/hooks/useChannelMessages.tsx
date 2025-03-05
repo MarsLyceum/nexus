@@ -1,6 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import { useApolloClient } from '@apollo/client';
-import { FETCH_CHANNEL_MESSAGES_QUERY, FETCH_USER_QUERY } from '../queries';
+import { useApolloClient, useSubscription } from '@apollo/client';
+import {
+    FETCH_CHANNEL_MESSAGES_QUERY,
+    FETCH_USER_QUERY,
+    MESSAGE_ADDED_SUBSCRIPTION,
+} from '../queries';
 import { GroupChannelMessage, User, MessageWithAvatar } from '../types';
 
 export const useChannelMessages = (channelId: string) => {
@@ -13,6 +17,7 @@ export const useChannelMessages = (channelId: string) => {
     const [refreshTrigger, setRefreshTrigger] = useState(0);
     const userCacheRef = useRef<Record<string, string>>({});
 
+    // Fetch the initial (and paginated) messages
     useEffect(() => {
         let cancelled = false;
         const fetchMessages = async () => {
@@ -32,6 +37,7 @@ export const useChannelMessages = (channelId: string) => {
                     return;
                 }
 
+                // Map and convert timestamps, and fetch usernames if needed.
                 const newMessages: MessageWithAvatar[] = await Promise.all(
                     messagesArray.map(async (msg: GroupChannelMessage) => {
                         if (userCacheRef.current[msg.postedByUserId]) {
@@ -62,11 +68,47 @@ export const useChannelMessages = (channelId: string) => {
                     })
                 );
 
+                // Sort messages in descending order (newest first).
+                newMessages.sort(
+                    (a, b) => b.postedAt.getTime() - a.postedAt.getTime()
+                );
+
                 if (!cancelled) {
                     if (offset === 0) {
-                        setChatMessages(newMessages);
+                        // Merge the fetched messages with any existing ones, deduplicating by id.
+                        setChatMessages((prev) => {
+                            const messagesMap = new Map<
+                                string,
+                                MessageWithAvatar
+                            >();
+                            // Insert fetched messages first.
+                            newMessages.forEach((msg) =>
+                                messagesMap.set(msg.id, msg)
+                            );
+                            // Add any existing messages that are not in the new fetch.
+                            prev.forEach((msg) => {
+                                if (!messagesMap.has(msg.id)) {
+                                    messagesMap.set(msg.id, msg);
+                                }
+                            });
+                            const merged = [...messagesMap.values()];
+                            // Ensure merged messages remain sorted in descending order.
+                            merged.sort(
+                                (a, b) =>
+                                    b.postedAt.getTime() - a.postedAt.getTime()
+                            );
+                            return merged;
+                        });
                     } else {
-                        setChatMessages((prev) => [...prev, ...newMessages]);
+                        // For pagination (loading older messages), prepend them.
+                        setChatMessages((prev) => {
+                            const merged = [...newMessages, ...prev];
+                            merged.sort(
+                                (a, b) =>
+                                    b.postedAt.getTime() - a.postedAt.getTime()
+                            );
+                            return merged;
+                        });
                     }
                 }
             } catch (error) {
@@ -84,6 +126,30 @@ export const useChannelMessages = (channelId: string) => {
             cancelled = true;
         };
     }, [channelId, offset, refreshTrigger, apolloClient]);
+
+    // Subscribe for new messages on this channel
+    const { data: subscriptionData } = useSubscription(
+        MESSAGE_ADDED_SUBSCRIPTION,
+        {
+            variables: { channelId },
+        }
+    );
+
+    useEffect(() => {
+        if (subscriptionData && subscriptionData.messageAdded) {
+            const msg = subscriptionData.messageAdded;
+            const newMessage: MessageWithAvatar = {
+                ...msg,
+                postedAt: new Date(msg.postedAt),
+                username:
+                    userCacheRef.current[msg.postedByUserId] || 'Unknown User',
+                avatar: 'https://picsum.photos/50?random=10',
+            };
+            // Insert at index 0 so that in the descending array,
+            // the newest message (at index 0) appears at the bottom when rendered via an inverted FlatList.
+            setChatMessages((prev) => [newMessage, ...prev]);
+        }
+    }, [subscriptionData]);
 
     const loadMoreMessages = () => {
         if (loadingMore) return;

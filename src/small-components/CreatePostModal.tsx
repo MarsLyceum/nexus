@@ -165,7 +165,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
                                 style={styles.attachImageButton}
                             >
                                 <Text style={styles.attachImageButtonText}>
-                                    Add Image
+                                    Add Image or Video
                                 </Text>
                             </TouchableOpacity>
                         )}
@@ -174,6 +174,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
                             attachments={attachments}
                             onAttachmentPress={onAttachmentPress}
                             onRemoveAttachment={onRemoveAttachment}
+                            onAttachmentsReorder={setAttachments}
                         />
 
                         <View style={styles.modalButtonRow}>

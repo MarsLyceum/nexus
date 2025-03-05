@@ -1,17 +1,16 @@
-// AttachmentImageGallery.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import {
     View,
     StyleSheet,
     TouchableOpacity,
     LayoutChangeEvent,
-    Image as RNImage,
     ScrollView,
 } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { CarouselDots } from './CarouselDots';
 import { ArrowButton } from './ArrowButton';
-import { ImageCountOverlay } from '../small-components';
+import { ImageCountOverlay, NexusVideo } from '../small-components';
+import { useMediaTypes } from '../hooks';
 
 export type AttachmentImageGalleryProps = {
     attachmentUrls: string[];
@@ -22,45 +21,34 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
     attachmentUrls,
     onImagePress,
 }) => {
-    // State for the current image index.
     const [currentAttachmentIndex, setCurrentAttachmentIndex] = useState(0);
-    const [containerWidth, setContainerWidth] = useState(480); // default width fallback
-    const [imageAspectRatio, setImageAspectRatio] = useState(1); // default ratio (square) until loaded
+    const [containerWidth, setContainerWidth] = useState(480); // Default fallback width
+    const [imageAspectRatio, setImageAspectRatio] = useState(1); // Default ratio (square)
 
-    // Ref for ScrollView to programmatically scroll when using arrow buttons.
     const scrollViewRef = useRef<ScrollView>(null);
-
-    // Determine if the device is considered desktop (container width greater than 768px).
     const isDesktop = containerWidth > 768;
 
-    // Capture the container layout dimensions.
     const handleContainerLayout = (event: LayoutChangeEvent) => {
         const { width } = event.nativeEvent.layout;
         setContainerWidth(width);
     };
 
-    // Calculate the image width based on container width (with a max fallback of 480).
+    // Use 360 as a fallback width if container width is larger than 360.
     const imageWidth = containerWidth < 360 ? containerWidth : 360;
-    // Compute the image height based on its aspect ratio.
     const computedImageHeight = imageWidth / imageAspectRatio;
 
-    // Retrieve the natural dimensions of the current image to compute its aspect ratio.
+    // Get media info (type, width, height, aspectRatio) for each URL.
+    const mediaInfos = useMediaTypes(attachmentUrls);
+
+    // Update container's aspect ratio based on the current attachment's media info.
     useEffect(() => {
         const currentUrl = attachmentUrls[currentAttachmentIndex];
-        if (currentUrl) {
-            RNImage.getSize(
-                currentUrl,
-                (width, height) => {
-                    setImageAspectRatio(width / height);
-                },
-                (error) => {
-                    console.error('Failed to get image dimensions', error);
-                }
-            );
+        const info = mediaInfos[currentUrl];
+        if (currentUrl && info) {
+            setImageAspectRatio(info.aspectRatio);
         }
-    }, [attachmentUrls, currentAttachmentIndex]);
+    }, [attachmentUrls, currentAttachmentIndex, mediaInfos]);
 
-    // Handler for swipe events; calculate the new image index based on scroll offset.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleMomentumScrollEnd = (event: any) => {
         const offsetX = event.nativeEvent.contentOffset.x;
@@ -68,7 +56,6 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
         setCurrentAttachmentIndex(newIndex);
     };
 
-    // Helper to update the index and scroll to the appropriate position.
     const goToIndex = (newIndex: number) => {
         setCurrentAttachmentIndex(newIndex);
         scrollViewRef.current?.scrollTo({
@@ -95,33 +82,63 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
                     }}
                     ref={scrollViewRef}
                 >
-                    {attachmentUrls.map((url, index) => (
-                        <TouchableOpacity
-                            key={index}
-                            onPress={() => onImagePress(index)}
-                            activeOpacity={0.8}
-                        >
-                            <ExpoImage
-                                source={{ uri: url }}
-                                style={[
-                                    styles.galleryImage,
-                                    {
-                                        width: imageWidth,
-                                        height: computedImageHeight,
-                                    },
-                                ]}
-                            />
-                        </TouchableOpacity>
-                    ))}
+                    {attachmentUrls.map((url, index) => {
+                        // Get the media info for this URL.
+                        const info = mediaInfos[url];
+                        // Compute the height for this attachment based on its aspect ratio.
+                        const attachmentHeight = info
+                            ? imageWidth / info.aspectRatio
+                            : computedImageHeight;
+                        // Determine if this attachment is a video.
+                        const isVideo = info && info.type === 'video';
+                        return (
+                            <TouchableOpacity
+                                key={index}
+                                // Only enable onPress if it's not a video.
+                                onPress={
+                                    !isVideo
+                                        ? () => onImagePress(index)
+                                        : undefined
+                                }
+                                activeOpacity={!isVideo ? 0.8 : 1}
+                            >
+                                {isVideo ? (
+                                    <NexusVideo
+                                        source={{ uri: url }}
+                                        style={[
+                                            styles.galleryImage,
+                                            {
+                                                width: imageWidth,
+                                                height: attachmentHeight,
+                                            },
+                                        ]}
+                                        muted={false}
+                                        repeat
+                                        paused
+                                        contentFit="contain"
+                                    />
+                                ) : (
+                                    <ExpoImage
+                                        source={{ uri: url }}
+                                        style={[
+                                            styles.galleryImage,
+                                            {
+                                                width: imageWidth,
+                                                height: attachmentHeight,
+                                            },
+                                        ]}
+                                    />
+                                )}
+                            </TouchableOpacity>
+                        );
+                    })}
                 </ScrollView>
 
-                {/* New Image Count Overlay */}
                 <ImageCountOverlay
                     currentIndex={currentAttachmentIndex}
                     total={attachmentUrls.length}
                 />
 
-                {/* Only show arrows if on desktop and there is more than one image */}
                 {isDesktop && attachmentUrls.length > 1 && (
                     <>
                         <ArrowButton

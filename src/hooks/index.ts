@@ -8,5 +8,6 @@ export * from './useDistanceBetweenAddresses';
 export * from './useFeedPosts';
 export * from './useFileUpload';
 export * from './useLinkPreview';
+export * from './useMediaTypes';
 export * from './useSearchFilter';
 export * from './useSendMessages';

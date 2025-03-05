@@ -98,12 +98,13 @@ const styles = StyleSheet.create({
     activeDot: {
         backgroundColor: '#fff', // default active color
     },
-    // Small indicator dot style for when there are more items off-screen.
+    // Modified small indicator dot style: 50% larger and vertically centered.
     indicatorDot: {
-        width: 4,
-        height: 4,
-        borderRadius: 2,
+        width: 6,
+        height: 6,
+        borderRadius: 3,
         backgroundColor: '#888',
         marginHorizontal: 3,
+        alignSelf: 'center',
     },
 });

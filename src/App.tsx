@@ -336,7 +336,6 @@ export default function App() {
                                 <CustomScrollbar />
                                 <ApolloProvider client={client}>
                                     <ReduxProvider store={store}>
-                                        {/* @ts-expect-error navigator */}
                                         <NavigationContainer linking={linking}>
                                             <RootStack.Navigator
                                                 screenOptions={{

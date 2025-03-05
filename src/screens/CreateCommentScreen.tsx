@@ -48,27 +48,7 @@ export const CreateCommentScreen: React.FC<CreateCommentScreenProps> = ({
     });
 
     const handleCreateComment = async () => {
-        console.log('creating comment');
-        console.log('user:', user);
-        console.log(
-            'postId:',
-            postId,
-            'user.id:',
-            user?.id,
-            'creatingComment:',
-            creatingComment
-        );
         if (!postId || !user?.id || creatingComment) return;
-        console.log('creating comment with variables:', {
-            postedByUserId: user.id,
-            postId,
-            content: newCommentContent,
-            attachments: attachments.map((att) => att.file),
-            parentCommentId,
-            hasChildren: false,
-            children: [],
-            upvotes: 1,
-        });
         await createComment({
             postedByUserId: user.id,
             postId,
@@ -133,6 +113,7 @@ export const CreateCommentScreen: React.FC<CreateCommentScreenProps> = ({
                         attachments={attachments}
                         onAttachmentPress={() => {}}
                         onRemoveAttachment={onRemoveAttachment}
+                        onAttachmentsReorder={setAttachments}
                     />
                     {/* @ts-expect-error web only types */}
                     <View style={styles.modalButtonRow}>

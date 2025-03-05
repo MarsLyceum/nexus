@@ -136,13 +136,8 @@ export const useChannelMessages = (channelId: string) => {
     );
 
     useEffect(() => {
-        console.log('Updated chatMessages:', chatMessages);
-    }, [chatMessages]);
-
-    useEffect(() => {
         if (subscriptionData && subscriptionData.messageAdded) {
             const msg = subscriptionData.messageAdded;
-            console.log('got message added:', msg);
             const newMessage: MessageWithAvatar = {
                 ...msg,
                 postedAt: new Date(msg.postedAt),

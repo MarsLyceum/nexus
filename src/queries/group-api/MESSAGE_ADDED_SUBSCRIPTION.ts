@@ -9,8 +9,7 @@ export const MESSAGE_ADDED_SUBSCRIPTION = gql`
             postedAt
             postedByUserId
             edited
-            # channel
-            # attachmentUrls
+            attachmentUrls
         }
     }
 `;

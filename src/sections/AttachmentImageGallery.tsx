@@ -49,6 +49,7 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
         }
     }, [attachmentUrls, currentAttachmentIndex, mediaInfos]);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleMomentumScrollEnd = (event: any) => {
         const offsetX = event.nativeEvent.contentOffset.x;
         const newIndex = Math.round(offsetX / imageWidth);

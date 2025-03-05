@@ -29,6 +29,7 @@ export const useMediaTypes = (urls: string[]): { [url: string]: MediaInfo } => {
                             ? 'video'
                             : 'image';
 
+                        // eslint-disable-next-line promise/always-return
                         if (type === 'image') {
                             // For images, use RNImage.getSize.
                             RNImage.getSize(
@@ -63,6 +64,7 @@ export const useMediaTypes = (urls: string[]): { [url: string]: MediaInfo } => {
                             );
                         } else {
                             // For videos:
+                            // eslint-disable-next-line no-lonely-if
                             if (Platform.OS === 'web') {
                                 // Use an HTMLVideoElement on web.
                                 const video = document.createElement('video');
@@ -122,6 +124,7 @@ export const useMediaTypes = (urls: string[]): { [url: string]: MediaInfo } => {
                                 player
                                     .generateThumbnailsAsync([0])
                                     .then((thumbnails) => {
+                                        // eslint-disable-next-line promise/always-return
                                         if (
                                             thumbnails &&
                                             thumbnails.length > 0

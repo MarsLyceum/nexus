@@ -16,6 +16,7 @@ import {
     GroupButton,
     EventsButton,
     CreateGroupButton,
+    FriendsButton,
 } from '../buttons';
 import { FETCH_USER_GROUPS_QUERY } from '../queries';
 import { COLORS } from '../constants';
@@ -77,7 +78,7 @@ const SkeletonGroupButton = () => (
 );
 
 export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
-    const [selectedButton, setSelectedButton] = useState<string>('chat');
+    const [selectedButton, setSelectedButton] = useState<string>('friends');
     const user: UserType = useAppSelector(
         (state: RootState) => state.user.user
     );
@@ -168,6 +169,17 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
                 style={styles.sidebarButtonsContainer}
                 ref={sidebarButtonsContainerRef}
             >
+                <View
+                    onLayout={handleLayout('friends')}
+                    style={styles.buttonContainer}
+                >
+                    <FriendsButton
+                        onPress={() => {
+                            setSelectedButton('friends');
+                            navigation.navigate('Friends');
+                        }}
+                    />
+                </View>
                 <View
                     onLayout={handleLayout('chat')}
                     style={styles.buttonContainer}

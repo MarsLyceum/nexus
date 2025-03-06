@@ -158,7 +158,9 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
     const isDesktop = Platform.OS === 'web' && width > 768;
 
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView
+            style={[styles.container, isDesktop ? { paddingBottom: 60 } : {}]}
+        >
             <Header
                 isLargeScreen={width > 768}
                 headerText={channel?.name ?? ''}
@@ -171,10 +173,7 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
                     data={[0, 1, 2, 3, 4]} // 5 skeleton items
                     keyExtractor={(item) => item.toString()}
                     renderItem={() => <SkeletonPostItem />}
-                    contentContainerStyle={[
-                        styles.feedList,
-                        isDesktop ? { paddingBottom: 60 } : {},
-                    ]}
+                    contentContainerStyle={[styles.feedList]}
                 />
             ) : (
                 <FlatList
@@ -202,10 +201,7 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
                             attachmentUrls={item.attachmentUrls}
                         />
                     )}
-                    contentContainerStyle={[
-                        styles.feedList,
-                        isDesktop ? { paddingBottom: 60 } : {},
-                    ]}
+                    contentContainerStyle={[styles.feedList]}
                 />
             )}
 

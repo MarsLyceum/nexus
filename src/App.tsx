@@ -54,6 +54,7 @@ import {
     EventDetailsScreen,
     AppDrawerScreen,
     CreateCommentScreen,
+    AddFriendsScreen,
 } from './screens';
 import {
     SearchProvider,
@@ -264,6 +265,7 @@ function MainStackScreen() {
             <MainStack.Screen name="AppDrawer" component={AppDrawerScreen} />
             {/* @ts-expect-error navigator */}
             <MainStack.Screen name="Chat" component={ChatScreen} />
+            <MainStack.Screen name="AddFriends" component={AddFriendsScreen} />
             <MainStack.Screen
                 name="ServerMessages"
                 component={ServerMessagesScreen}

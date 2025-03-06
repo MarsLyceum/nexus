@@ -10,11 +10,12 @@ import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { COLORS } from '../constants';
 import { useAppSelector, RootState, UserGroupsType } from '../redux';
 import {
-    ServerScreen,
+    GroupScreen,
     SidebarScreen,
     DMListScreen,
     EventsScreen,
     SearchScreen,
+    FriendsScreen,
 } from '.';
 import { SearchBox } from '../sections';
 import { SearchContext, ActiveGroupContext } from '../providers'; // Make sure ActiveGroupContext is exported from your providers
@@ -115,6 +116,7 @@ export function AppDrawerScreen() {
             })}
             drawerContent={(props) => <SidebarScreen {...props} />}
         >
+            <DrawerNavigator.Screen name="Friends" component={FriendsScreen} />
             <DrawerNavigator.Screen name="Messages" component={DMListScreen} />
             <DrawerNavigator.Screen name="Events" component={EventsScreen} />
 
@@ -122,7 +124,7 @@ export function AppDrawerScreen() {
                 <DrawerNavigator.Screen
                     key={group.id}
                     name={group.name}
-                    component={ServerScreen}
+                    component={GroupScreen}
                     // When this screen is focused, set the active group in context.
                     listeners={{
                         focus: () => {

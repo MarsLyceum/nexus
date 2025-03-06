@@ -92,6 +92,7 @@
         "metro": "^0.81.0",
         "metro-react-native-babel-preset": "^0.77.0",
         "pako": "^2.1.0",
+        "peeps": "file:",
         "prettier": "3.2.5",
         "quill-better-table": "^1.2.10",
         "quill-delta-to-markdown": "^0.6.0",

@@ -13,7 +13,7 @@ import { COLORS } from '../constants';
 import { ServerMessagesScreen } from './ServerMessagesScreen';
 import { GroupEventsScreen } from './GroupEventsScreen';
 import { Group, GroupChannel } from '../types';
-import { Feed } from '../icons';
+import { Feed, Chat, Events } from '../icons';
 import { ActiveGroupContext } from '../providers';
 
 const styles = StyleSheet.create({
@@ -141,15 +141,13 @@ const ChannelList: React.FC<ChannelListProps> = ({
                             }
                         />
                     ) : (
-                        <Icon
-                            name="comment"
-                            size={16}
+                        <Chat
+                            style={styles.icon}
                             color={
                                 isActiveChannel
                                     ? COLORS.White
                                     : COLORS.InactiveText
                             }
-                            style={styles.icon}
                         />
                     )}
                     <Text
@@ -199,9 +197,7 @@ const ChannelList: React.FC<ChannelListProps> = ({
                         }
                     }}
                 >
-                    <Icon
-                        name="calendar"
-                        size={16}
+                    <Events
                         color={
                             activeView === 'events'
                                 ? COLORS.White
@@ -223,7 +219,7 @@ const ChannelList: React.FC<ChannelListProps> = ({
     );
 };
 
-export function ServerScreen({ navigation }: { navigation: NavProp }) {
+export function GroupScreen({ navigation }: { navigation: NavProp }) {
     const { activeGroup, activeChannel, setActiveChannel } =
         useContext(ActiveGroupContext);
     const { width } = useWindowDimensions();

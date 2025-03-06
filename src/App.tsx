@@ -7,6 +7,7 @@ import {
 // import EventSource from 'react-native-event-source';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Platform, StatusBar } from 'react-native';
+import ReconnectingWebSocket from 'reconnecting-websocket';
 import { createClient } from 'graphql-ws';
 import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import Toast from 'react-native-toast-message';
@@ -175,48 +176,11 @@ const httpLink = from([
     }),
 ]);
 
-// const sseLink = new ApolloLink(
-//     () =>
-//         new Observable((observer) => {
-//             const eventSource: EventSource = new EventSource(
-//                 graphqlApiGatewayEndpointSse,
-//                 { withCredentials: false }
-//             );
-//             eventSource.addEventListener(
-//                 'message',
-//                 (event: { data: string }) => {
-//                     try {
-//                         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-//                         const parsedData = JSON.parse(event.data);
-//                         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-//                         if (parsedData.errors) {
-//                             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-//                             observer.error(parsedData.errors);
-//                         } else {
-//                             observer.next({
-//                                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-//                                 data: { greetings: parsedData.greetings },
-//                             });
-//                         }
-//                     } catch (error) {
-//                         observer.error(error);
-//                     }
-//                 }
-//             );
-//             eventSource.addEventListener('error', (error: unknown) => {
-//                 observer.error(error);
-//                 eventSource.close();
-//             });
-//             return () => {
-//                 eventSource.close();
-//             };
-//         })
-// );
-
 const wsLink = new GraphQLWsLink(
     createClient({
         // url: graphqlApiGatewayEndpointWs,
         url: 'ws://192.168.1.48:4000/graphql', // Ensure this URL matches your WS server endpoint
+        webSocketImpl: ReconnectingWebSocket,
     })
 );
 
@@ -235,22 +199,6 @@ const splitLink = split(
 const client = new ApolloClient({
     link: splitLink,
     cache: new InMemoryCache(),
-});
-
-const GREETINGS_SUBSCRIPTION = gql`
-    subscription OnGreeting {
-        greetings
-    }
-`;
-
-client.subscribe({ query: GREETINGS_SUBSCRIPTION }).subscribe({
-    next({ data }) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        console.log('Greeting:', data.greetings);
-    },
-    error(err) {
-        console.error('Subscription error:', err);
-    },
 });
 
 function MainStackScreen() {

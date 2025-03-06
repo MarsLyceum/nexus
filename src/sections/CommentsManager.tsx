@@ -243,7 +243,7 @@ export const CommentsManager = ({
 
     const handleContinueConversation = (childCommentId: string) => {
         // @ts-expect-error navigation
-        navigation.navigate('PostScreen', {
+        navigation.push('PostScreen', {
             id: postId,
             parentCommentId: childCommentId,
         });

@@ -148,7 +148,7 @@ export const FriendsScreen = () => {
                         </Text>
                     </TouchableOpacity>
                     <Text style={styles.tabItem}>Pending</Text>
-                    {/* Add more tabs if needed */}
+                    <Text style={styles.tabItem}>Requests</Text>
                 </View>
                 <TouchableOpacity
                     style={styles.addFriendButton}
@@ -197,7 +197,7 @@ const styles = {
     },
     tabItem: {
         marginRight: 16,
-        color: '#FFFFFF',
+        color: COLORS.White,
         opacity: 0.7,
     },
     activeTab: {
@@ -213,7 +213,7 @@ const styles = {
         borderRadius: 4,
     },
     addFriendText: {
-        color: '#FFFFFF',
+        color: COLORS.White,
     },
     friendsListArea: {
         flex: 1,
@@ -226,7 +226,7 @@ const styles = {
         marginBottom: 4,
     },
     friendStatus: {
-        color: '#B9BBBE',
+        color: COLORS.InactiveText,
         fontSize: 12,
     },
     friendItem: {
@@ -262,6 +262,6 @@ const styles = {
         height: 15,
         borderRadius: 7,
         borderWidth: 2,
-        borderColor: '#2F3136', // matches background
+        borderColor: COLORS.SecondaryBackground, // matches background
     },
 };

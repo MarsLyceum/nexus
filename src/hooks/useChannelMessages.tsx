@@ -151,6 +151,14 @@ export const useChannelMessages = (channelId: string) => {
         }
     }, [subscriptionData]);
 
+    useEffect(() => {
+        // When the channelId changes, clear the previous messages and reset pagination.
+        setChatMessages([]);
+        setOffset(0);
+        setLoadingMessages(true);
+        // Optionally, reset any other state (e.g., refreshTrigger) if needed.
+    }, [channelId]);
+
     const loadMoreMessages = () => {
         if (loadingMore) return;
         setLoadingMore(true);

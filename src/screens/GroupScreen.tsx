@@ -228,8 +228,20 @@ export function GroupScreen({ navigation }: { navigation: NavProp }) {
 
     // When an active group becomes available and no active channel is set, use the first channel.
     useEffect(() => {
-        if (activeGroup && !activeChannel) {
-            setActiveChannel(activeGroup.channels[0] || undefined);
+        if (activeGroup?.channels && activeGroup?.channels.length > 0) {
+            // Check if the current activeChannel belongs to the activeGroup.
+            const channelExists = activeChannel
+                ? activeGroup.channels.some(
+                      (channel) => channel.id === activeChannel.id
+                  )
+                : false;
+            // If not, select the first channel from the new group.
+            if (!channelExists) {
+                setActiveChannel(activeGroup.channels[0]);
+            }
+        } else {
+            // If there are no channels, clear the active channel.
+            setActiveChannel(undefined);
         }
     }, [activeGroup, activeChannel, setActiveChannel]);
 

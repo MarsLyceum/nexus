@@ -45,7 +45,7 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
                     style={styles.modalImage}
                     muted={false}
                     repeat
-                    paused={false}
+                    paused
                     contentFit="contain"
                     controls
                 />
@@ -110,12 +110,11 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
             }
         };
         window.addEventListener('keydown', handleKeyDown);
-        // eslint-disable-next-line consistent-return
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [visible, mediaAttachments.length, currentIndex]);
 
     if (mediaAttachments.length === 0) {
-        return undefined;
+        return null;
     }
 
     return (
@@ -125,9 +124,11 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
             animationType="fade"
             onRequestClose={onClose}
         >
-            {/* Outer Pressable dismisses modal on press */}
-            <Pressable style={styles.modalOverlay} onPress={onClose}>
-                <View style={styles.centeredContent} pointerEvents="box-none">
+            <View style={styles.modalOverlay}>
+                {/* Background dismiss overlay */}
+                <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+
+                <View style={styles.centeredContent}>
                     <View style={styles.carouselContainer}>
                         <Carousel
                             ref={carouselRef}
@@ -146,7 +147,7 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
                             total={mediaAttachments.length}
                         />
                     </View>
-                    {/* Arrow buttons */}
+
                     {mediaAttachments.length > 1 && (
                         <View
                             style={styles.arrowsContainer}
@@ -185,7 +186,7 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
                         </View>
                     )}
                 </View>
-                {/* Carousel dots area */}
+
                 {mediaAttachments.length > 1 && (
                     <Pressable style={styles.dotsWrapper} onPress={onClose}>
                         <CarouselDots
@@ -197,7 +198,7 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
                         />
                     </Pressable>
                 )}
-            </Pressable>
+            </View>
         </Modal>
     );
 };

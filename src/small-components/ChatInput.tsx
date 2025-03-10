@@ -6,15 +6,18 @@ import {
     StyleSheet,
     Text,
     ScrollView,
+    TouchableWithoutFeedback,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import emoji from 'emoji-dictionary';
+import { Image as ExpoImage } from 'expo-image';
 import { COLORS } from '../constants';
 import { AttachmentPreviews } from '../sections';
 import { Attachment } from '../types';
 import { MarkdownTextInput } from './MarkdownTextInput';
 import { extractUrls } from '../utils';
 import { GiphyModal } from './GiphyModal';
+import { MiniModal } from './MiniModal';
 
 export type ChatInputProps = {
     messageText: string;
@@ -39,30 +42,12 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     onInlineImagePress,
     onAttachmentPreviewPress,
 }) => {
-    // State for emoji query, suggestions, and active suggestion index.
     const [emojiQuery, setEmojiQuery] = useState('');
     const [emojiSuggestions, setEmojiSuggestions] = useState<
         { name: string; emoji: string }[]
     >([]);
     const [activeEmojiIndex, setActiveEmojiIndex] = useState(0);
-    const scrollViewRef = useRef<ScrollView>(null);
-
-    // State for controlling the Giphy modal visibility.
     const [showGiphy, setShowGiphy] = useState(false);
-
-    // Effect to auto-scroll the emoji suggestions container.
-    useEffect(() => {
-        if (scrollViewRef.current) {
-            const containerHeight = 150;
-            const itemHeight = 40;
-            let offset =
-                activeEmojiIndex * itemHeight -
-                containerHeight / 2 +
-                itemHeight / 2;
-            if (offset < 0) offset = 0;
-            scrollViewRef.current.scrollTo({ y: offset, animated: true });
-        }
-    }, [activeEmojiIndex]);
 
     // Update emoji suggestions based on the last colon query.
     const updateEmojiSuggestions = (text: string) => {
@@ -194,30 +179,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 onAttachmentsReorder={setAttachments}
             />
 
-            {/* Emoji suggestions list */}
-            {emojiSuggestions.length > 0 && (
-                <ScrollView
-                    ref={scrollViewRef}
-                    style={styles.emojiSuggestionContainer}
-                >
-                    {emojiSuggestions.map((suggestion, index) => (
-                        <TouchableOpacity
-                            key={index}
-                            onPress={() => handleEmojiSelect(suggestion)}
-                            style={[
-                                styles.emojiSuggestionButton,
-                                index === activeEmojiIndex &&
-                                    styles.activeEmojiSuggestionButton,
-                            ]}
-                        >
-                            <Text style={styles.emojiSuggestionText}>
-                                {suggestion.emoji} {suggestion.name}
-                            </Text>
-                        </TouchableOpacity>
-                    ))}
-                </ScrollView>
-            )}
-
             <View style={styles.inputContainerNoBorder}>
                 <TouchableOpacity
                     onPress={handleImageUpload}
@@ -249,6 +210,30 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                         </TouchableOpacity>
                     )}
             </View>
+
+            {/* Emoji suggestions modal using MiniModal */}
+            <MiniModal
+                visible={emojiSuggestions.length > 0}
+                onClose={() => setEmojiSuggestions([])}
+            >
+                <ScrollView>
+                    {emojiSuggestions.map((suggestion, index) => (
+                        <TouchableOpacity
+                            key={index}
+                            onPress={() => handleEmojiSelect(suggestion)}
+                            style={[
+                                styles.emojiSuggestionButton,
+                                index === activeEmojiIndex &&
+                                    styles.activeEmojiSuggestionButton,
+                            ]}
+                        >
+                            <Text style={styles.emojiSuggestionText}>
+                                {suggestion.emoji} {suggestion.name}
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
+                </ScrollView>
+            </MiniModal>
 
             {/* Render the Giphy modal */}
             <GiphyModal
@@ -317,22 +302,12 @@ const styles = StyleSheet.create({
         marginLeft: 10,
         padding: 8,
     },
-    emojiSuggestionContainer: {
-        backgroundColor: COLORS.AppBackground,
-        padding: 8,
-        borderRadius: 8,
-        marginHorizontal: 10,
-        marginBottom: 5,
-        maxHeight: 150,
-    },
     emojiSuggestionButton: {
         paddingVertical: 5,
         paddingHorizontal: 10,
-        marginRight: 5,
         marginBottom: 5,
         backgroundColor: COLORS.PrimaryBackground,
         borderRadius: 5,
-        height: 40,
     },
     activeEmojiSuggestionButton: {
         backgroundColor: COLORS.SecondaryBackground,

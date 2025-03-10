@@ -49,8 +49,8 @@ const NativeSizeAttachmentImage: React.FC<{ uri: string }> = ({ uri }) => {
             style={[
                 styles.messageAttachmentImage,
                 {
-                    width: dimensions.width * 0.3,
-                    height: dimensions.height * 0.3,
+                    width: dimensions.width * 0.5,
+                    height: dimensions.height * 0.5,
                 },
             ]}
             contentFit="contain"
@@ -66,8 +66,8 @@ const NativeSizeAttachmentVideo: React.FC<{
     nativeHeight: number;
     aspectRatio: number;
 }> = ({ uri, nativeWidth, nativeHeight }) => {
-    const scaledWidth = nativeWidth * 0.3;
-    const scaledHeight = nativeHeight * 0.3;
+    const scaledWidth = nativeWidth * 0.5;
+    const scaledHeight = nativeHeight * 0.5;
 
     return (
         <NexusVideo

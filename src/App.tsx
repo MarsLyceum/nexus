@@ -37,6 +37,7 @@ import {
     Roboto_700Bold_Italic,
 } from '@expo-google-fonts/roboto';
 import * as SplashScreen from 'expo-splash-screen';
+import { Provider as PortalProvider } from 'react-native-paper';
 
 import { linking } from './linking';
 import { COLORS } from './constants';
@@ -286,39 +287,45 @@ export default function App() {
                                 <CustomScrollbar />
                                 <ApolloProvider client={client}>
                                     <ReduxProvider store={store}>
-                                        <NavigationContainer linking={linking}>
-                                            <RootStack.Navigator
-                                                screenOptions={{
-                                                    headerShown: false,
-                                                    presentation:
-                                                        'transparentModal', // This makes the screens render as modals by default
-                                                }}
+                                        <PortalProvider>
+                                            <NavigationContainer
+                                                linking={linking}
                                             >
-                                                <RootStack.Screen
-                                                    name="Main"
-                                                    component={MainStackScreen}
-                                                />
-                                                <RootStack.Screen
-                                                    name="CreateGroup"
-                                                    // @ts-expect-error navigator
-                                                    component={
-                                                        CreateGroupModalScreen
-                                                    }
-                                                    options={{
+                                                <RootStack.Navigator
+                                                    screenOptions={{
+                                                        headerShown: false,
                                                         presentation:
-                                                            'transparentModal',
-                                                        cardStyle: {
-                                                            backgroundColor:
-                                                                'transparent',
-                                                        },
-                                                        ...Platform.select({
-                                                            ios: TransitionPresets.ModalPresentationIOS,
-                                                        }),
+                                                            'transparentModal', // This makes the screens render as modals by default
                                                     }}
-                                                />
-                                            </RootStack.Navigator>
-                                            <Toast />
-                                        </NavigationContainer>
+                                                >
+                                                    <RootStack.Screen
+                                                        name="Main"
+                                                        component={
+                                                            MainStackScreen
+                                                        }
+                                                    />
+                                                    <RootStack.Screen
+                                                        name="CreateGroup"
+                                                        // @ts-expect-error navigator
+                                                        component={
+                                                            CreateGroupModalScreen
+                                                        }
+                                                        options={{
+                                                            presentation:
+                                                                'transparentModal',
+                                                            cardStyle: {
+                                                                backgroundColor:
+                                                                    'transparent',
+                                                            },
+                                                            ...Platform.select({
+                                                                ios: TransitionPresets.ModalPresentationIOS,
+                                                            }),
+                                                        }}
+                                                    />
+                                                </RootStack.Navigator>
+                                                <Toast />
+                                            </NavigationContainer>
+                                        </PortalProvider>
                                     </ReduxProvider>
                                 </ApolloProvider>
                             </SafeAreaView>

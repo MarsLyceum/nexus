@@ -1,4 +1,3 @@
-// File: buttons/CreatePostModal.tsx
 import React, { useState } from 'react';
 import {
     View,
@@ -14,6 +13,8 @@ import { COLORS } from '../constants';
 import { useFileUpload } from '../hooks';
 import { AttachmentPreviews, Attachment, RichTextEditor } from '../sections';
 import { MarkdownEditor } from './MarkdownEditor';
+import Icon from 'react-native-vector-icons/FontAwesome5';
+import { GiphyModal } from './GiphyModal';
 
 type CreatePostModalProps = {
     modalVisible: boolean;
@@ -56,6 +57,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
         Attachment | undefined
     >(undefined);
     const [useMarkdown, setUseMarkdown] = useState(false);
+    const [showGiphy, setShowGiphy] = useState(false);
 
     const handleAttachmentInsert = async () => {
         try {
@@ -79,6 +81,11 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
         } catch (error) {
             console.error('Error in handleAttachmentInsert:', error);
         }
+    };
+
+    // Updated GIF button handler to open the Giphy modal.
+    const handleGifPress = () => {
+        setShowGiphy(true);
     };
 
     const onAttachmentPress = (attachment: Attachment) => {
@@ -160,14 +167,26 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
                         )}
 
                         {enableImageAttachments && (
-                            <TouchableOpacity
-                                onPress={handleAttachmentInsert}
-                                style={styles.attachImageButton}
-                            >
-                                <Text style={styles.attachImageButtonText}>
-                                    Add Image or Video
-                                </Text>
-                            </TouchableOpacity>
+                            <View style={styles.buttonRow}>
+                                <TouchableOpacity
+                                    onPress={handleAttachmentInsert}
+                                    style={styles.imageButton}
+                                >
+                                    <Icon
+                                        name="image"
+                                        size={24}
+                                        color="white"
+                                    />
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    onPress={handleGifPress}
+                                    style={styles.gifButton}
+                                >
+                                    <Text style={styles.gifButtonText}>
+                                        GIF
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
                         )}
 
                         <AttachmentPreviews
@@ -198,6 +217,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
                     </View>
                 </View>
             </Modal>
+
             {previewModalVisible && selectedAttachment && (
                 <Modal
                     visible={previewModalVisible}
@@ -217,6 +237,15 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
                     </TouchableOpacity>
                 </Modal>
             )}
+
+            {/* Render the GiphyModal like in ChatInput */}
+            <GiphyModal
+                visible={showGiphy}
+                onClose={() => setShowGiphy(false)}
+                onSelectGif={(attachment) =>
+                    setAttachments((prev) => [...prev, attachment])
+                }
+            />
         </>
     );
 };
@@ -251,6 +280,39 @@ const styles = StyleSheet.create({
     editorContainer: {
         marginBottom: 20,
     },
+    toggleButton: {
+        alignSelf: 'flex-end',
+        marginBottom: 10,
+        paddingVertical: 6,
+        paddingHorizontal: 10,
+        backgroundColor: COLORS.SecondaryBackground,
+        borderRadius: 5,
+    },
+    toggleButtonText: {
+        color: COLORS.White,
+        fontWeight: '600',
+    },
+    buttonRow: {
+        flexDirection: 'row',
+        marginBottom: 15,
+    },
+    imageButton: {
+        marginRight: 10,
+        padding: 8,
+    },
+    gifButton: {
+        marginHorizontal: 10,
+        padding: 8,
+        backgroundColor: COLORS.SecondaryBackground,
+        borderRadius: 5,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    gifButtonText: {
+        color: COLORS.White,
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
     modalButtonRow: {
         flexDirection: 'row',
         justifyContent: 'flex-end',
@@ -277,29 +339,5 @@ const styles = StyleSheet.create({
         height: '90%',
         borderWidth: 2,
         borderColor: 'white',
-    },
-    attachImageButton: {
-        backgroundColor: COLORS.Primary,
-        paddingVertical: 8,
-        paddingHorizontal: 15,
-        borderRadius: 5,
-        alignSelf: 'flex-start',
-        marginBottom: 15,
-    },
-    attachImageButtonText: {
-        color: COLORS.White,
-        fontWeight: '600',
-    },
-    toggleButton: {
-        alignSelf: 'flex-end',
-        marginBottom: 10,
-        paddingVertical: 6,
-        paddingHorizontal: 10,
-        backgroundColor: COLORS.SecondaryBackground,
-        borderRadius: 5,
-    },
-    toggleButtonText: {
-        color: COLORS.White,
-        fontWeight: '600',
     },
 });

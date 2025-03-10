@@ -31,14 +31,13 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
     // Get media type information for all attachments.
     const mediaInfos = useMediaTypes(attachments);
 
-    // Use all attachments to preserve the original order.
+    // Preserve original order.
     const mediaAttachments = attachments;
 
     // Render each carousel item based on media type.
     const renderItem = ({ item }: { item: string }) => {
         const info = mediaInfos[item];
         if (info && info.type === 'video') {
-            // If the attachment is a video, play it using NexusVideo.
             return (
                 <NexusVideo
                     source={{ uri: item }}
@@ -55,7 +54,7 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
             <ExpoImage
                 source={{ uri: item }}
                 style={styles.modalImage}
-                resizeMode="contain"
+                contentFit="contain"
                 onError={(error) =>
                     console.error('Image load error:', item, error)
                 }
@@ -124,81 +123,83 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
             animationType="fade"
             onRequestClose={onClose}
         >
-            <View style={styles.modalOverlay}>
-                {/* Background dismiss overlay */}
-                <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-
+            {/* Outer Pressable: Taps anywhere here (outside inner content) will dismiss */}
+            <Pressable style={styles.modalOverlay} onPress={onClose}>
                 <View style={styles.centeredContent}>
-                    <View style={styles.carouselContainer}>
-                        <Carousel
-                            ref={carouselRef}
-                            data={mediaAttachments}
-                            renderItem={renderItem}
-                            width={deviceWidth * 0.9}
-                            height={carouselHeight}
-                            defaultIndex={effectiveInitialIndex}
-                            onSnapToItem={(index: number) =>
-                                setCurrentIndex(index)
-                            }
-                        />
-                        {/* Media Count Overlay */}
-                        <ImageCountOverlay
-                            currentIndex={currentIndex}
-                            total={mediaAttachments.length}
-                        />
-                    </View>
-
-                    {mediaAttachments.length > 1 && (
-                        <View
-                            style={styles.arrowsContainer}
-                            pointerEvents="box-none"
-                        >
-                            <ArrowButton
-                                direction="left"
-                                onPress={() =>
-                                    carouselRef?.current.scrollTo({
-                                        index: currentIndex - 1,
-                                        animated: true,
-                                    })
+                    {/* Inner Pressable: Stops tap propagation so inner touches don't dismiss */}
+                    <Pressable
+                        onPress={(e) => e.stopPropagation()}
+                        style={styles.contentWrapper}
+                    >
+                        <View style={styles.carouselContainer}>
+                            <Carousel
+                                ref={carouselRef}
+                                data={mediaAttachments}
+                                renderItem={renderItem}
+                                width={deviceWidth * 0.9}
+                                height={carouselHeight}
+                                defaultIndex={effectiveInitialIndex}
+                                onSnapToItem={(index: number) =>
+                                    setCurrentIndex(index)
                                 }
-                                disabled={currentIndex === 0}
-                                iconSize={30}
-                                activeColor={COLORS.White}
-                                inactiveColor={COLORS.InactiveText}
-                                style={styles.navButton}
                             />
-                            <ArrowButton
-                                direction="right"
-                                onPress={() =>
-                                    carouselRef?.current.scrollTo({
-                                        index: currentIndex + 1,
-                                        animated: true,
-                                    })
-                                }
-                                disabled={
-                                    currentIndex === mediaAttachments.length - 1
-                                }
-                                iconSize={30}
-                                activeColor={COLORS.White}
-                                inactiveColor={COLORS.InactiveText}
-                                style={styles.navButton}
+                            <ImageCountOverlay
+                                currentIndex={currentIndex}
+                                total={mediaAttachments.length}
                             />
                         </View>
-                    )}
-                </View>
-
-                {mediaAttachments.length > 1 && (
-                    <Pressable style={styles.dotsWrapper} onPress={onClose}>
-                        <CarouselDots
-                            totalItems={mediaAttachments.length}
-                            currentIndex={currentIndex}
-                            containerStyle={styles.dotsContainer}
-                            dotStyle={styles.dot}
-                            activeDotStyle={styles.activeDot}
-                        />
+                        {mediaAttachments.length > 1 && (
+                            <View
+                                style={styles.arrowsContainer}
+                                pointerEvents="box-none"
+                            >
+                                <ArrowButton
+                                    direction="left"
+                                    onPress={() =>
+                                        carouselRef?.current.scrollTo({
+                                            index: currentIndex - 1,
+                                            animated: true,
+                                        })
+                                    }
+                                    disabled={currentIndex === 0}
+                                    iconSize={30}
+                                    activeColor={COLORS.White}
+                                    inactiveColor={COLORS.InactiveText}
+                                    style={styles.navButton}
+                                />
+                                <ArrowButton
+                                    direction="right"
+                                    onPress={() =>
+                                        carouselRef?.current.scrollTo({
+                                            index: currentIndex + 1,
+                                            animated: true,
+                                        })
+                                    }
+                                    disabled={
+                                        currentIndex ===
+                                        mediaAttachments.length - 1
+                                    }
+                                    iconSize={30}
+                                    activeColor={COLORS.White}
+                                    inactiveColor={COLORS.InactiveText}
+                                    style={styles.navButton}
+                                />
+                            </View>
+                        )}
+                        {mediaAttachments.length > 1 && (
+                            <View style={styles.dotsWrapper}>
+                                <CarouselDots
+                                    totalItems={mediaAttachments.length}
+                                    currentIndex={currentIndex}
+                                    containerStyle={styles.dotsContainer}
+                                    dotStyle={styles.dot}
+                                    activeDotStyle={styles.activeDot}
+                                />
+                            </View>
+                        )}
                     </Pressable>
-                )}
-            </View>
+                </View>
+            </Pressable>
         </Modal>
     );
 };
@@ -207,19 +208,26 @@ const styles = StyleSheet.create({
     modalOverlay: {
         flex: 1,
         backgroundColor: 'rgba(0,0,0,0.9)',
-    },
-    centeredContent: {
-        flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
     },
+    centeredContent: {
+        width: '100%',
+        height: '100%',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    contentWrapper: {
+        width: '100%',
+        alignItems: 'center',
+    },
     carouselContainer: {
-        position: 'relative',
-        width: Dimensions.get('window').width * 0.9,
+        width: Dimensions.get('window').width * 0.8,
         height: Dimensions.get('window').height * 0.8,
+        position: 'relative',
     },
     modalImage: {
-        width: '100%',
+        // width: '100%',
         height: '100%',
     },
     arrowsContainer: {

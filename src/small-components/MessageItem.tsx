@@ -31,7 +31,11 @@ const NativeSizeAttachmentImage: React.FC<{ uri: string }> = ({ uri }) => {
             uri,
             (width, height) => setDimensions({ width, height }),
             (error) =>
-                console.error('Failed to get image dimensions for', uri, error)
+                console.error(
+                    'Failed to get image dimensions for image in message',
+                    uri,
+                    error
+                )
         );
     }, [uri]);
 
@@ -152,9 +156,10 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                                             nativeHeight={info.height}
                                             aspectRatio={info.aspectRatio}
                                         />
-                                    ) : (
+                                    ) : undefined}
+                                    {info && info.type === 'image' ? (
                                         <NativeSizeAttachmentImage uri={url} />
-                                    )}
+                                    ) : undefined}
                                 </TouchableOpacity>
                             );
                         })}

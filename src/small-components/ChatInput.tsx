@@ -6,6 +6,8 @@ import {
     StyleSheet,
     Text,
     ScrollView,
+    Modal,
+    TextInput,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { Image as ExpoImage } from 'expo-image';
@@ -22,6 +24,9 @@ const isImageUrl = (url: string): boolean => /\.(jpeg|jpg|gif|png)$/i.test(url);
 
 // Use all supported emoji names from emoji-dictionary using emoji.names.
 const emojiNames = emoji.names;
+
+// Replace with your actual Giphy API key
+const GIPHY_API_KEY = 'x7H5rEtEkVkLocnLJsmZoLPBaGbMdEqC';
 
 export type ChatInputProps = {
     messageText: string;
@@ -54,6 +59,11 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     const [activeEmojiIndex, setActiveEmojiIndex] = useState(0);
     const scrollViewRef = useRef<ScrollView>(null);
 
+    // Local state for showing the Giphy GIF search modal and handling Giphy search.
+    const [showGiphy, setShowGiphy] = useState(false);
+    const [giphyQuery, setGiphyQuery] = useState('');
+    const [giphyResults, setGiphyResults] = useState<any[]>([]);
+
     // Effect to scroll the suggestions list so the active emoji is centered.
     useEffect(() => {
         if (scrollViewRef.current) {
@@ -67,6 +77,24 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             scrollViewRef.current.scrollTo({ y: offset, animated: true });
         }
     }, [activeEmojiIndex]);
+
+    // Fetch trending GIFs when modal opens and no search query is present.
+    useEffect(() => {
+        const fetchTrending = async () => {
+            try {
+                const response = await fetch(
+                    `https://api.giphy.com/v1/gifs/trending?api_key=${GIPHY_API_KEY}&limit=20`
+                );
+                const data = await response.json();
+                setGiphyResults(data.data);
+            } catch (error) {
+                console.error('Error fetching trending GIFs:', error);
+            }
+        };
+        if (showGiphy && !giphyQuery) {
+            fetchTrending();
+        }
+    }, [showGiphy, giphyQuery]);
 
     // Updates emoji suggestions based on the last colon query.
     const updateEmojiSuggestions = (text: string) => {
@@ -124,14 +152,12 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     const handleKeyPress = (e: any) => {
         if (emojiSuggestions.length > 0) {
             const { key } = e.nativeEvent;
-            // eslint-disable-next-line default-case
             switch (key) {
                 case 'ArrowDown': {
                     setActiveEmojiIndex(
                         (prev) => (prev + 1) % emojiSuggestions.length
                     );
                     e?.preventDefault();
-
                     break;
                 }
                 case 'ArrowUp': {
@@ -141,17 +167,13 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                             emojiSuggestions.length
                     );
                     e?.preventDefault();
-
                     break;
                 }
                 case 'Enter': {
-                    // If the emoji list is visible, select the active emoji instead of sending the message.
                     handleEmojiSelect(emojiSuggestions[activeEmojiIndex]);
                     e?.preventDefault();
-
                     break;
                 }
-                // No default
             }
         }
     };
@@ -160,6 +182,27 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     const handleSubmitEditing = () => {
         if (emojiSuggestions.length === 0) {
             sendMessageHandler();
+        }
+    };
+
+    // Handler for opening the Giphy GIF search modal.
+    const handleGifPress = () => {
+        setShowGiphy(true);
+    };
+
+    // Function to search Giphy using their API.
+    const searchGiphy = async (query: string) => {
+        if (!query) return;
+        try {
+            const response = await fetch(
+                `https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_API_KEY}&q=${encodeURIComponent(
+                    query
+                )}&limit=20`
+            );
+            const data = await response.json();
+            setGiphyResults(data.data);
+        } catch (error) {
+            console.error('Error searching Giphy:', error);
         }
     };
 
@@ -252,6 +295,15 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                     placeholder={`Message ${recipientName}`}
                     returnKeyType="send"
                 />
+
+                {/* Updated GIF Button using text */}
+                <TouchableOpacity
+                    onPress={handleGifPress}
+                    style={styles.gifButton}
+                >
+                    <Text style={styles.gifButtonText}>GIF</Text>
+                </TouchableOpacity>
+
                 {(messageText.length > 0 || attachments.length > 0) &&
                     Platform.OS !== 'web' && (
                         <TouchableOpacity
@@ -262,6 +314,60 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                         </TouchableOpacity>
                     )}
             </View>
+
+            {/* Modal for Giphy GIF Search */}
+            <Modal
+                visible={showGiphy}
+                animationType="slide"
+                onRequestClose={() => setShowGiphy(false)}
+            >
+                <View style={styles.modalContainer}>
+                    <Text style={styles.modalTitle}>Giphy GIF Search</Text>
+                    <TextInput
+                        style={styles.giphySearchInput}
+                        value={giphyQuery}
+                        onChangeText={setGiphyQuery}
+                        placeholder="Search GIFs"
+                        placeholderTextColor="#ccc"
+                    />
+                    <TouchableOpacity
+                        onPress={() => searchGiphy(giphyQuery)}
+                        style={styles.giphySearchButton}
+                    >
+                        <Text style={styles.giphySearchButtonText}>Search</Text>
+                    </TouchableOpacity>
+                    <ScrollView style={styles.giphyResultsContainer}>
+                        <View style={styles.giphyGridContainer}>
+                            {giphyResults.map((result) => (
+                                <TouchableOpacity
+                                    key={result.id}
+                                    onPress={() => {
+                                        // Set the message text to the GIF URL when selected.
+                                        setMessageText(
+                                            result.images.original.url
+                                        );
+                                        setShowGiphy(false);
+                                    }}
+                                    style={styles.giphyResultItem}
+                                >
+                                    <ExpoImage
+                                        source={{
+                                            uri: result.images.original.url,
+                                        }}
+                                        style={styles.giphyResultImage}
+                                    />
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    </ScrollView>
+                    <TouchableOpacity
+                        onPress={() => setShowGiphy(false)}
+                        style={styles.closeModalButton}
+                    >
+                        <Text style={styles.closeModalText}>Close</Text>
+                    </TouchableOpacity>
+                </View>
+            </Modal>
         </View>
     );
 };
@@ -308,6 +414,15 @@ const styles = StyleSheet.create({
         marginRight: 10,
         padding: 8,
     },
+    gifButton: {
+        marginHorizontal: 10,
+        padding: 8,
+    },
+    gifButtonText: {
+        color: COLORS.White,
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
     sendButton: {
         marginLeft: 10,
         padding: 8,
@@ -318,7 +433,7 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         marginHorizontal: 10,
         marginBottom: 5,
-        maxHeight: 150, // Limits the container height and enables scrolling if needed
+        maxHeight: 150,
     },
     emojiSuggestionButton: {
         paddingVertical: 5,
@@ -327,13 +442,74 @@ const styles = StyleSheet.create({
         marginBottom: 5,
         backgroundColor: COLORS.PrimaryBackground,
         borderRadius: 5,
-        height: 40, // fixed height per suggestion
+        height: 40,
     },
     activeEmojiSuggestionButton: {
-        backgroundColor: COLORS.SecondaryBackground, // Highlight the active emoji suggestion
+        backgroundColor: COLORS.SecondaryBackground,
     },
     emojiSuggestionText: {
         color: COLORS.White,
         fontSize: 14,
+    },
+    modalContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: COLORS.AppBackground,
+        padding: 20,
+    },
+    modalTitle: {
+        fontSize: 24,
+        color: COLORS.White,
+        marginBottom: 20,
+    },
+    giphySearchInput: {
+        height: 40,
+        width: '100%',
+        borderColor: '#ccc',
+        borderWidth: 1,
+        borderRadius: 5,
+        paddingHorizontal: 10,
+        marginBottom: 10,
+        color: COLORS.White,
+    },
+    giphySearchButton: {
+        backgroundColor: COLORS.PrimaryBackground,
+        padding: 10,
+        borderRadius: 5,
+        alignItems: 'center',
+        marginBottom: 10,
+        width: '100%',
+    },
+    giphySearchButtonText: {
+        color: COLORS.White,
+        fontSize: 16,
+    },
+    giphyResultsContainer: {
+        width: '100%',
+        marginBottom: 20,
+    },
+    giphyGridContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
+    },
+    giphyResultItem: {
+        width: '30%',
+        marginBottom: 10,
+    },
+    giphyResultImage: {
+        width: '100%',
+        height: 100,
+        borderRadius: 10,
+    },
+    closeModalButton: {
+        padding: 10,
+        backgroundColor: COLORS.PrimaryBackground,
+        borderRadius: 5,
+    },
+    closeModalText: {
+        color: COLORS.White,
+        fontSize: 16,
     },
 });

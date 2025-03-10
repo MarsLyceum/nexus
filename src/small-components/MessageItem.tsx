@@ -10,7 +10,7 @@ import { Image as ExpoImage } from 'expo-image';
 import { LinkPreview } from './LinkPreview';
 import { MessageWithAvatar } from '../types';
 import { MarkdownRenderer } from './MarkdownRenderer';
-import { extractUrls, formatFullDate } from '../utils';
+import { extractUrls, formatFullDate, isImageExtensionUrl } from '../utils';
 import { useMediaTypes } from '../hooks/useMediaTypes';
 import { NexusVideo } from '.';
 
@@ -84,7 +84,11 @@ const renderMessageContent = (content: string, width: number) => {
     const trimmedContent = content.trim();
     const urls = extractUrls(trimmedContent);
 
-    if (urls.length === 1 && trimmedContent === urls[0]) {
+    if (
+        urls.length === 1 &&
+        trimmedContent === urls[0] &&
+        isImageExtensionUrl(urls[0])
+    ) {
         return <LinkPreview url={urls[0]} containerWidth={width - 32} />;
     }
 

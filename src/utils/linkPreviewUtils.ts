@@ -1,8 +1,12 @@
 // utils/linkPreviewUtils.ts
 
-export async function isImageUrl(url: string): Promise<boolean> {
+export function isImageExtensionUrl(url: string): boolean {
     const regex = /\.(jpeg|jpg|gif|png|webp)(\?.*)?$/i;
-    if (regex.test(url)) {
+    return regex.test(url);
+}
+
+export async function isImageUrl(url: string): Promise<boolean> {
+    if (isImageExtensionUrl(url)) {
         return true;
     }
     try {

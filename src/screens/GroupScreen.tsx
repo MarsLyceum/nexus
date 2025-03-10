@@ -3,10 +3,10 @@ import { NavigationProp } from '@react-navigation/native';
 import {
     View,
     Text,
-    FlatList,
     TouchableOpacity,
     StyleSheet,
     useWindowDimensions,
+    Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { COLORS } from '../constants';
@@ -15,6 +15,26 @@ import { GroupEventsScreen } from './GroupEventsScreen';
 import { Group, GroupChannel } from '../types';
 import { Feed, Chat, Events } from '../icons';
 import { ActiveGroupContext } from '../providers';
+
+// For mobile drag and drop
+import DraggableFlatList from 'react-native-draggable-flatlist';
+
+// For web drag and drop using dnd-kit
+import {
+    DndContext,
+    closestCenter,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    DragEndEvent,
+} from '@dnd-kit/core';
+import {
+    SortableContext,
+    verticalListSortingStrategy,
+    arrayMove,
+    useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 const styles = StyleSheet.create({
     largeScreenContainer: {
@@ -95,130 +115,6 @@ type ChannelListProps = {
     setActiveView: (view: ActiveView) => void;
 };
 
-const ChannelList: React.FC<ChannelListProps> = ({
-    group,
-    navigation,
-    activeChannel,
-    setActiveChannel,
-    isLargeScreen,
-    activeView,
-    setActiveView,
-}) => {
-    // Define mock data for member and online counts
-    const mockMemberCount = 123;
-    const mockOnlineCount = 45;
-
-    // Render a channel item (always in full view)
-    const renderChannelItem = ({ item }: { item: GroupChannel }) => {
-        const isActiveChannel =
-            activeView === 'messages' && activeChannel?.id === item.id;
-        return (
-            <View
-                style={
-                    isActiveChannel
-                        ? styles.activeChannelItemWrapper
-                        : undefined
-                }
-            >
-                <TouchableOpacity
-                    style={styles.channelItem}
-                    onPress={() => {
-                        setActiveChannel(item);
-                        if (isLargeScreen) {
-                            setActiveView('messages');
-                        } else {
-                            navigation.navigate('ServerMessages');
-                        }
-                    }}
-                >
-                    {item.type === 'feed' ? (
-                        <Feed
-                            style={styles.icon}
-                            color={
-                                isActiveChannel
-                                    ? COLORS.White
-                                    : COLORS.InactiveText
-                            }
-                        />
-                    ) : (
-                        <Chat
-                            style={styles.icon}
-                            color={
-                                isActiveChannel
-                                    ? COLORS.White
-                                    : COLORS.InactiveText
-                            }
-                        />
-                    )}
-                    <Text
-                        style={[
-                            styles.channelText,
-                            isActiveChannel && styles.activeChannelText,
-                        ]}
-                    >
-                        {item.name}
-                    </Text>
-                </TouchableOpacity>
-            </View>
-        );
-    };
-
-    return (
-        <View style={styles.channelListContainer}>
-            <Text style={styles.serverTitle}>{group.name}</Text>
-            <Text style={styles.memberInfo}>
-                {`${mockMemberCount} members ${mockOnlineCount} online`}
-            </Text>
-            <Text style={styles.groupDescription}>
-                {group.description ||
-                    'Join us as we explore the boundaries of innovation and collaboration! Our community thrives on sharing ideas, inspiring creativity, and building a better future together.'}
-            </Text>
-            <FlatList
-                data={group.channels}
-                keyExtractor={(item) => item.id}
-                renderItem={renderChannelItem}
-            />
-            {/* "Events" button */}
-            <View
-                style={
-                    activeView === 'events'
-                        ? styles.activeChannelItemWrapper
-                        : undefined
-                }
-            >
-                <TouchableOpacity
-                    style={styles.channelItem}
-                    onPress={() => {
-                        if (isLargeScreen) {
-                            setActiveChannel(undefined);
-                            setActiveView('events');
-                        } else {
-                            navigation.navigate('GroupEvents', { group });
-                        }
-                    }}
-                >
-                    <Events
-                        color={
-                            activeView === 'events'
-                                ? COLORS.White
-                                : COLORS.InactiveText
-                        }
-                        style={styles.icon}
-                    />
-                    <Text
-                        style={[
-                            styles.channelText,
-                            activeView === 'events' && styles.activeChannelText,
-                        ]}
-                    >
-                        Events
-                    </Text>
-                </TouchableOpacity>
-            </View>
-        </View>
-    );
-};
-
 export function GroupScreen({ navigation }: { navigation: NavProp }) {
     const { activeGroup, activeChannel, setActiveChannel } =
         useContext(ActiveGroupContext);
@@ -229,18 +125,15 @@ export function GroupScreen({ navigation }: { navigation: NavProp }) {
     // When an active group becomes available and no active channel is set, use the first channel.
     useEffect(() => {
         if (activeGroup?.channels && activeGroup?.channels.length > 0) {
-            // Check if the current activeChannel belongs to the activeGroup.
             const channelExists = activeChannel
                 ? activeGroup.channels.some(
                       (channel) => channel.id === activeChannel.id
                   )
                 : false;
-            // If not, select the first channel from the new group.
             if (!channelExists) {
                 setActiveChannel(activeGroup.channels[0]);
             }
         } else {
-            // If there are no channels, clear the active channel.
             setActiveChannel(undefined);
         }
     }, [activeGroup, activeChannel, setActiveChannel]);
@@ -278,7 +171,6 @@ export function GroupScreen({ navigation }: { navigation: NavProp }) {
                 </View>
                 <View style={styles.chatWrapper}>
                     {activeView === 'messages' ? (
-                        // @ts-expect-error navigation
                         <ServerMessagesScreen navigation={navigation} />
                     ) : (
                         <GroupEventsScreen navigation={navigation} />
@@ -288,7 +180,6 @@ export function GroupScreen({ navigation }: { navigation: NavProp }) {
         );
     }
 
-    // On smaller screens, render just the channel list.
     return (
         <ChannelList
             group={activeGroup}
@@ -301,3 +192,256 @@ export function GroupScreen({ navigation }: { navigation: NavProp }) {
         />
     );
 }
+
+const ChannelList: React.FC<ChannelListProps> = ({
+    group,
+    navigation,
+    activeChannel,
+    setActiveChannel,
+    isLargeScreen,
+    activeView,
+    setActiveView,
+}) => {
+    // Mock data for member and online counts.
+    const mockMemberCount = 123;
+    const mockOnlineCount = 45;
+
+    // Local state for channel order.
+    const [channels, setChannels] = useState<GroupChannel[]>(group.channels);
+
+    // Update local channels if the group prop changes.
+    useEffect(() => {
+        setChannels(group.channels);
+    }, [group.channels]);
+
+    // Setup sensors for dnd-kit (web).
+    const sensors = useSensors(
+        useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+    );
+
+    // Web drag-end handler.
+    const handleDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event;
+        if (over && active.id !== over.id) {
+            const oldIndex = channels.findIndex(
+                (item) => item.id === active.id
+            );
+            const newIndex = channels.findIndex((item) => item.id === over.id);
+            setChannels(arrayMove(channels, oldIndex, newIndex));
+        }
+    };
+
+    // Mobile: Render draggable channel item.
+    const renderDraggableChannelItem = ({
+        item,
+        drag,
+    }: {
+        item: GroupChannel;
+        drag: () => void;
+    }) => {
+        const isActive =
+            activeView === 'messages' && activeChannel?.id === item.id;
+        return (
+            <TouchableOpacity
+                onLongPress={drag}
+                onPress={() => {
+                    setActiveChannel(item);
+                    if (isLargeScreen) {
+                        setActiveView('messages');
+                    } else {
+                        navigation.navigate('ServerMessages');
+                    }
+                }}
+                style={isActive ? styles.activeChannelItemWrapper : undefined}
+            >
+                <View style={styles.channelItem}>
+                    {item.type === 'feed' ? (
+                        <Feed
+                            style={styles.icon}
+                            color={
+                                isActive ? COLORS.White : COLORS.InactiveText
+                            }
+                        />
+                    ) : (
+                        <Chat
+                            style={styles.icon}
+                            color={
+                                isActive ? COLORS.White : COLORS.InactiveText
+                            }
+                        />
+                    )}
+                    <Text
+                        style={[
+                            styles.channelText,
+                            isActive && styles.activeChannelText,
+                        ]}
+                    >
+                        {item.name}
+                    </Text>
+                </View>
+            </TouchableOpacity>
+        );
+    };
+
+    // Web: Create a sortable channel item using dnd-kit's useSortable hook.
+    type SortableChannelItemProps = {
+        id: string;
+        channel: GroupChannel;
+        isActive: boolean;
+        onPress: () => void;
+    };
+
+    const SortableChannelItem: React.FC<SortableChannelItemProps> = ({
+        id,
+        channel,
+        isActive,
+        onPress,
+    }) => {
+        const { attributes, listeners, setNodeRef, transform, transition } =
+            useSortable({ id });
+        const style = {
+            transform: CSS.Transform.toString(transform),
+            transition,
+            cursor: 'grab',
+        };
+        return (
+            <View
+                ref={setNodeRef}
+                style={[
+                    isActive ? styles.activeChannelItemWrapper : undefined,
+                    style,
+                ]}
+                {...attributes}
+                {...listeners}
+            >
+                <TouchableOpacity onPress={onPress} style={styles.channelItem}>
+                    {channel.type === 'feed' ? (
+                        <Feed
+                            style={styles.icon}
+                            color={
+                                isActive ? COLORS.White : COLORS.InactiveText
+                            }
+                        />
+                    ) : (
+                        <Chat
+                            style={styles.icon}
+                            color={
+                                isActive ? COLORS.White : COLORS.InactiveText
+                            }
+                        />
+                    )}
+                    <Text
+                        style={[
+                            styles.channelText,
+                            isActive && styles.activeChannelText,
+                        ]}
+                    >
+                        {channel.name}
+                    </Text>
+                </TouchableOpacity>
+            </View>
+        );
+    };
+
+    return (
+        <View style={styles.channelListContainer}>
+            <Text style={styles.serverTitle}>{group.name}</Text>
+            <Text
+                style={styles.memberInfo}
+            >{`${mockMemberCount} members ${mockOnlineCount} online`}</Text>
+            <Text style={styles.groupDescription}>
+                {group.description ||
+                    'Join us as we explore the boundaries of innovation and collaboration! Our community thrives on sharing ideas, inspiring creativity, and building a better future together.'}
+            </Text>
+
+            {/* Container for the channels list */}
+            <View style={{ flex: 1 }}>
+                {Platform.OS === 'web' ? (
+                    <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={handleDragEnd}
+                    >
+                        <SortableContext
+                            items={channels.map((item) => item.id)}
+                            strategy={verticalListSortingStrategy}
+                        >
+                            {channels.map((channel) => {
+                                const isActive =
+                                    activeView === 'messages' &&
+                                    activeChannel?.id === channel.id;
+                                return (
+                                    <SortableChannelItem
+                                        key={channel.id}
+                                        id={channel.id}
+                                        channel={channel}
+                                        isActive={isActive}
+                                        onPress={() => {
+                                            setActiveChannel(channel);
+                                            if (isLargeScreen) {
+                                                setActiveView('messages');
+                                            } else {
+                                                navigation.navigate(
+                                                    'ServerMessages'
+                                                );
+                                            }
+                                        }}
+                                    />
+                                );
+                            })}
+                        </SortableContext>
+                    </DndContext>
+                ) : (
+                    <DraggableFlatList
+                        data={channels}
+                        keyExtractor={(item) => item.id}
+                        renderItem={renderDraggableChannelItem}
+                        onDragEnd={({ data }) => setChannels(data)}
+                        contentContainerStyle={{ paddingBottom: 20 }}
+                    />
+                )}
+            </View>
+
+            {/* Container for the "Events" button pinned at the bottom */}
+            <View style={{ marginTop: 'auto' }}>
+                <View
+                    style={
+                        activeView === 'events'
+                            ? styles.activeChannelItemWrapper
+                            : undefined
+                    }
+                >
+                    <TouchableOpacity
+                        style={styles.channelItem}
+                        onPress={() => {
+                            if (isLargeScreen) {
+                                setActiveChannel(undefined);
+                                setActiveView('events');
+                            } else {
+                                navigation.navigate('GroupEvents', { group });
+                            }
+                        }}
+                    >
+                        <Events
+                            color={
+                                activeView === 'events'
+                                    ? COLORS.White
+                                    : COLORS.InactiveText
+                            }
+                            style={styles.icon}
+                        />
+                        <Text
+                            style={[
+                                styles.channelText,
+                                activeView === 'events' &&
+                                    styles.activeChannelText,
+                            ]}
+                        >
+                            Events
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+        </View>
+    );
+};

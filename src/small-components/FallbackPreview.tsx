@@ -16,6 +16,7 @@ export const FallbackPreview: React.FC<FallbackPreviewProps> = ({
     url,
     previewData,
 }) => {
+    console.log('previewData:', previewData);
     const previewImage =
         previewData.images && previewData.images[0]
             ? previewData.images[0]
@@ -30,7 +31,7 @@ export const FallbackPreview: React.FC<FallbackPreviewProps> = ({
                 <ExpoImage
                     source={{ uri: previewImage }}
                     style={styles.linkPreviewImage}
-                    contentFit="cover"
+                    contentFit="contain"
                 />
             ) : undefined}
             {previewData.title ? (

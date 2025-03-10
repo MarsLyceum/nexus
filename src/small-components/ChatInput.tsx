@@ -11,9 +11,10 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { Image as ExpoImage } from 'expo-image';
+import * as FileSystem from 'expo-file-system';
 // @ts-expect-error no types
 import emoji from 'emoji-dictionary';
-import { COLORS } from '../constants';
+import { COLORS, GIPHY_API_KEY } from '../constants';
 import { AttachmentPreviews } from '../sections';
 import { Attachment } from '../types';
 import { MarkdownTextInput } from './MarkdownTextInput';
@@ -24,9 +25,6 @@ const isImageUrl = (url: string): boolean => /\.(jpeg|jpg|gif|png)$/i.test(url);
 
 // Use all supported emoji names from emoji-dictionary using emoji.names.
 const emojiNames = emoji.names;
-
-// Replace with your actual Giphy API key
-const GIPHY_API_KEY = 'x7H5rEtEkVkLocnLJsmZoLPBaGbMdEqC';
 
 export type ChatInputProps = {
     messageText: string;
@@ -341,12 +339,70 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                             {giphyResults.map((result) => (
                                 <TouchableOpacity
                                     key={result.id}
-                                    onPress={() => {
-                                        // Set the message text to the GIF URL when selected.
-                                        setMessageText(
-                                            result.images.original.url
-                                        );
-                                        setShowGiphy(false);
+                                    onPress={async () => {
+                                        try {
+                                            const gifUrl =
+                                                result.images.original.url;
+                                            let localUri = '';
+                                            let fileData:
+                                                | File
+                                                | {
+                                                      uri: string;
+                                                      type: string;
+                                                      name: string;
+                                                  };
+                                            if (Platform.OS === 'web') {
+                                                // On web, fetch the gif and convert to a File (which is a Blob subtype)
+                                                const response =
+                                                    await fetch(gifUrl);
+                                                const blob =
+                                                    await response.blob();
+                                                const previewUri =
+                                                    URL.createObjectURL(blob);
+                                                // Create a File from the blob
+                                                fileData = new File(
+                                                    [blob],
+                                                    `${result.id}.gif`,
+                                                    {
+                                                        type: 'image/gif',
+                                                    }
+                                                );
+                                                localUri = previewUri;
+                                            } else {
+                                                // On native, download the file using expo-file-system
+                                                const fileUri =
+                                                    FileSystem.documentDirectory +
+                                                    result.id +
+                                                    '.gif';
+                                                const { uri } =
+                                                    await FileSystem.downloadAsync(
+                                                        gifUrl,
+                                                        fileUri
+                                                    );
+                                                fileData = {
+                                                    uri,
+                                                    type: 'gif',
+                                                    name: `${result.id}.gif`,
+                                                };
+                                                localUri = uri;
+                                            }
+                                            // Create a new attachment matching your required type
+                                            const newAttachment: Attachment = {
+                                                id: result.id,
+                                                previewUri: localUri,
+                                                file: fileData,
+                                            };
+                                            setAttachments((prev) => [
+                                                ...prev,
+                                                newAttachment,
+                                            ]);
+                                            setShowGiphy(false);
+                                        } catch (error) {
+                                            console.error(
+                                                'Error downloading gif:',
+                                                error
+                                            );
+                                        }
                                     }}
                                     style={styles.giphyResultItem}
                                 >

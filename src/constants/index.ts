@@ -8,5 +8,6 @@ function getPlatformTopPadding() {
 }
 
 export const PLATFORM_TOP_PADDING = getPlatformTopPadding();
+export const GIPHY_API_KEY = 'x7H5rEtEkVkLocnLJsmZoLPBaGbMdEqC';
 
 export * from './colors';

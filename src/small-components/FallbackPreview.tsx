@@ -1,7 +1,13 @@
 // components/FallbackPreview.tsx
 
 import React from 'react';
-import { TouchableOpacity, Linking, Text, StyleSheet } from 'react-native';
+import {
+    View,
+    TouchableOpacity,
+    Linking,
+    Text,
+    StyleSheet,
+} from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { getDomainFromUrl } from '../utils/linkPreviewUtils';
 import { COLORS } from '../constants';
@@ -16,23 +22,21 @@ export const FallbackPreview: React.FC<FallbackPreviewProps> = ({
     url,
     previewData,
 }) => {
-    console.log('previewData:', previewData);
     const previewImage =
         previewData.images && previewData.images[0]
             ? previewData.images[0]
             : previewData.logo;
     const siteToShow = previewData.siteName || getDomainFromUrl(url);
     return (
-        <TouchableOpacity
-            onPress={() => Linking.openURL(url)}
-            style={styles.linkPreviewContainer}
-        >
+        <View style={styles.linkPreviewContainer}>
             {previewImage ? (
-                <ExpoImage
-                    source={{ uri: previewImage }}
-                    style={styles.linkPreviewImage}
-                    contentFit="contain"
-                />
+                <TouchableOpacity onPress={() => Linking.openURL(url)}>
+                    <ExpoImage
+                        source={{ uri: previewImage }}
+                        style={styles.linkPreviewImage}
+                        contentFit="contain"
+                    />
+                </TouchableOpacity>
             ) : undefined}
             {previewData.title ? (
                 <Text style={styles.linkPreviewTitle}>{previewData.title}</Text>
@@ -43,7 +47,7 @@ export const FallbackPreview: React.FC<FallbackPreviewProps> = ({
                 </Text>
             ) : undefined}
             <Text style={styles.linkPreviewSite}>{siteToShow}</Text>
-        </TouchableOpacity>
+        </View>
     );
 };
 

@@ -30,11 +30,16 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
     const [modalInitialIndex, setModalInitialIndex] = useState(0);
 
     // Custom hook to fetch messages
-    const { chatMessages, loadingMessages, loadMoreMessages, refreshMessages } =
-        useChannelMessages(channel.id);
+    const {
+        chatMessages,
+        loadingMessages,
+        loadMoreMessages,
+        refreshMessages,
+        addMessage,
+    } = useChannelMessages(channel.id);
 
     // Custom hook to send messages
-    const sendMsg = useSendMessage();
+    const sendMsg = useSendMessage(addMessage);
 
     // Handler for inline image preview tap
     const handleInlineImagePress = (url: string) => {
@@ -63,6 +68,7 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
     // onSend callback for ChatInputContainer
     const handleSend = async (text: string, attachments: Attachment[]) => {
         await sendMsg(
+            user?.username ?? '',
             user?.id ?? '',
             channel.id,
             text,

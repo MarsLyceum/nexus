@@ -136,19 +136,42 @@ export const useChannelMessages = (channelId: string) => {
     );
 
     useEffect(() => {
-        if (subscriptionData && subscriptionData.messageAdded) {
-            const msg = subscriptionData.messageAdded;
-            const newMessage: MessageWithAvatar = {
-                ...msg,
-                postedAt: new Date(msg.postedAt),
-                username:
-                    userCacheRef.current[msg.postedByUserId] || 'Unknown User',
-                avatar: 'https://picsum.photos/50?random=10',
-            };
-            // Insert at index 0 so that in the descending array,
-            // the newest message (at index 0) appears at the bottom when rendered via an inverted FlatList.
-            setChatMessages((prev) => [newMessage, ...prev]);
-        }
+        void (async () => {
+            if (subscriptionData && subscriptionData.messageAdded) {
+                const msg = subscriptionData.messageAdded;
+                let newMessage: MessageWithAvatar | undefined;
+                if (userCacheRef.current[msg.postedByUserId]) {
+                    newMessage = {
+                        ...msg,
+                        postedAt: new Date(msg.postedAt),
+                        username:
+                            userCacheRef.current[msg.postedByUserId] ||
+                            'Unknown User',
+                        avatar: 'https://picsum.photos/50?random=10',
+                    };
+                }
+
+                const fetchUserResult = await apolloClient.query<{
+                    fetchUser: User;
+                }>({
+                    query: FETCH_USER_QUERY,
+                    variables: { userId: msg.postedByUserId },
+                });
+                const fetchedUsername = fetchUserResult.data.fetchUser.username;
+                userCacheRef.current[msg.postedByUserId] = fetchedUsername;
+
+                newMessage = {
+                    ...msg,
+                    postedAt: new Date(msg.postedAt),
+                    username: fetchedUsername,
+                    avatar: 'https://picsum.photos/50?random=10',
+                };
+
+                // Insert at index 0 so that in the descending array,
+                // the newest message (at index 0) appears at the bottom when rendered via an inverted FlatList.
+                setChatMessages((prev) => [newMessage, ...prev]);
+            }
+        })();
     }, [subscriptionData]);
 
     useEffect(() => {

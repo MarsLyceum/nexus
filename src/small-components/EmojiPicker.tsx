@@ -75,7 +75,6 @@ const EmojiPickerComponent = (
             const newText =
                 messageText.slice(0, colonIndex) +
                 selected.emoji +
-                ' ' +
                 messageText.slice(colonIndex + emojiQuery.length + 1);
             setMessageText(newText);
             setEmojiQuery('');

@@ -125,7 +125,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 {(messageText.length > 0 || attachments.length > 0) &&
                     Platform.OS !== 'web' && (
                         <TouchableOpacity
-                            onPress={sendMessageHandler}
+                            onPress={() => sendMessageHandler()}
                             style={styles.sendButton}
                         >
                             <Icon name="paper-plane" size={18} color="white" />

@@ -1,10 +1,11 @@
+import 'react-native-get-random-values';
+
 import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import {
     createStackNavigator,
     TransitionPresets,
 } from '@react-navigation/stack';
-// import EventSource from 'react-native-event-source';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Platform, StatusBar } from 'react-native';
 import ReconnectingWebSocket from 'reconnecting-websocket';

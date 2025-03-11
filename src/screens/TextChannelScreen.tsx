@@ -1,5 +1,4 @@
-// TextChannelScreen.tsx
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, useWindowDimensions } from 'react-native';
 import { NavigationProp } from '@react-navigation/core';
 import { useAppSelector, RootState, UserType } from '../redux';
@@ -21,11 +20,19 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
     const user: UserType = useAppSelector(
         (state: RootState) => state.user.user
     );
-    const [messageText, setMessageText] = useState('');
     const { width } = useWindowDimensions();
     const isLargeScreen = width > 768;
-    const [attachments, setAttachments] = useState<Attachment[]>([]);
 
+    // State for input display and a ref for the current message text.
+    const [messageText, setMessageText] = useState('');
+    const messageTextRef = useRef('');
+    // This updater synchronizes both the state and the ref.
+    const updateMessageText = (text: string) => {
+        messageTextRef.current = text;
+        setMessageText(text);
+    };
+
+    const [attachments, setAttachments] = useState<Attachment[]>([]);
     // Modal state for image previews
     const [modalVisible, setModalVisible] = useState(false);
     const [modalAttachments, setModalAttachments] = useState<string[]>([]);
@@ -38,22 +45,28 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
     // Custom hook to send messages
     const sendMsg = useSendMessage();
 
-    // Modified sendMessageHandler accepts an optional override for messageText.
+    // Modified sendMessageHandler uses the ref value
     const sendMessageHandler = async (overrideMessageText?: string) => {
         const textToSend =
             overrideMessageText !== undefined
                 ? overrideMessageText
-                : messageText;
+                : messageTextRef.current;
         if (!textToSend.trim() && attachments.length === 0) return;
+
+        const attachmentsCopy = attachments;
+
+        // Clear both the ref and state after sending.
+        messageTextRef.current = '';
+        setMessageText('');
+        setAttachments([]);
+
         await sendMsg(
             user?.id ?? '',
             channel.id,
             textToSend,
-            attachments,
+            attachmentsCopy,
             refreshMessages
         );
-        setMessageText('');
-        setAttachments([]);
     };
 
     const { pickFile } = useFileUpload();
@@ -114,11 +127,10 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
 
             <ChatInput
                 messageText={messageText}
-                setMessageText={setMessageText}
+                setMessageText={updateMessageText}
                 attachments={attachments}
                 setAttachments={setAttachments}
                 handleImageUpload={handleImageUpload}
-                // Pass the modified sendMessageHandler which accepts an optional override
                 sendMessageHandler={sendMessageHandler}
                 recipientName={`#${channel.name}`}
                 onInlineImagePress={handleInlineImagePress}

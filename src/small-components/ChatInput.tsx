@@ -1,4 +1,3 @@
-// ChatInput.tsx
 import React, { useState } from 'react';
 import {
     View,
@@ -241,7 +240,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 visible={showGiphy}
                 onClose={() => setShowGiphy(false)}
                 onSelectGif={(attachment) => {
-                    // Instead of setting local state, call sendMessageHandler with the GIF URL.
+                    // Immediately send a message using the GIF URL.
                     sendMessageHandler(attachment.file.uri);
                 }}
             />

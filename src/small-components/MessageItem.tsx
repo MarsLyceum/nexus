@@ -10,7 +10,7 @@ import { Image as ExpoImage } from 'expo-image';
 import { LinkPreview } from './LinkPreview';
 import { MessageWithAvatar } from '../types';
 import { MarkdownRenderer } from './MarkdownRenderer';
-import { extractUrls, formatFullDate, isImageExtensionUrl } from '../utils';
+import { extractUrls, formatDateForChat, isImageExtensionUrl } from '../utils';
 import { useMediaTypes } from '../hooks/useMediaTypes';
 import { NexusVideo } from '.';
 
@@ -129,7 +129,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                 <Text style={styles.userName}>
                     {item.username}{' '}
                     <Text style={styles.time}>
-                        {formatFullDate(item.postedAt)}
+                        {formatDateForChat(item.postedAt)}
                     </Text>
                 </Text>
                 {item.content

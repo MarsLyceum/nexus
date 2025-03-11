@@ -6,6 +6,8 @@ import {
     View,
     Platform,
     Dimensions,
+    GestureResponderEvent,
+    Image as RNImage,
 } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import Carousel from 'react-native-reanimated-carousel';
@@ -30,52 +32,36 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
 }) => {
     // Get media type information for all attachments.
     const mediaInfos = useMediaTypes(attachments);
+    const mediaAttachments = attachments; // Preserve original order.
 
-    // Preserve original order.
-    const mediaAttachments = attachments;
-
-    // Render each carousel item based on media type.
-    const renderItem = ({ item }: { item: string }) => {
-        const info = mediaInfos[item];
-        if (info && info.type === 'video') {
-            return (
-                <NexusVideo
-                    source={{ uri: item }}
-                    style={styles.modalImage}
-                    muted={false}
-                    repeat
-                    paused
-                    contentFit="contain"
-                    controls
-                />
-            );
-        }
-        return (
-            <ExpoImage
-                source={{ uri: item }}
-                style={styles.modalImage}
-                contentFit="contain"
-                onError={(error) =>
-                    console.error('Image load error:', item, error)
-                }
-            />
-        );
-    };
-
-    // Determine the effective initial index.
+    // Determine effective initial index.
     const effectiveInitialIndex =
         mediaAttachments.length > 0
             ? Math.min(initialIndex, mediaAttachments.length - 1)
             : 0;
 
+    // State for the currently visible carousel index.
     const [currentIndex, setCurrentIndex] = useState(effectiveInitialIndex);
-    const deviceWidth = Dimensions.get('window').width;
-    const deviceHeight = Dimensions.get('window').height;
-    const carouselHeight = deviceHeight * 0.8;
+
+    // State to store the actual rendered image layout (computed).
+    const [imageLayout, setImageLayout] = useState<{
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+    } | null>(null);
+
+    // Ref to the carousel.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const carouselRef = useRef<any>(null);
 
-    // Reset the carousel to the effective initial index when the modal becomes visible.
+    const deviceWidth = Dimensions.get('window').width;
+    const deviceHeight = Dimensions.get('window').height;
+    // We use the same dimensions for both the container and the carousel item.
+    const containerWidth = deviceWidth * 0.8;
+    const containerHeight = deviceHeight * 0.8;
+
+    // Reset carousel to the effective initial index when modal is shown.
     useEffect(() => {
         if (visible && carouselRef.current) {
             carouselRef.current.scrollTo({
@@ -86,10 +72,59 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
         }
     }, [visible, effectiveInitialIndex, mediaAttachments]);
 
+    // Compute the actual rendered image dimensions (only for images, not videos).
+    useEffect(() => {
+        if (mediaAttachments.length === 0) return;
+        const currentMediaUrl = mediaAttachments[currentIndex];
+        const info = mediaInfos[currentMediaUrl];
+
+        // If it is a video, use full container.
+        if (info && info.type === 'video') {
+            setImageLayout({
+                x: (deviceWidth - containerWidth) / 2,
+                y: (deviceHeight - containerHeight) / 2,
+                width: containerWidth,
+                height: containerHeight,
+            });
+            return;
+        }
+
+        // For images, get intrinsic size and compute rendered dimensions.
+        RNImage.getSize(
+            currentMediaUrl,
+            (intrinsicWidth, intrinsicHeight) => {
+                const scale = Math.min(
+                    containerWidth / intrinsicWidth,
+                    containerHeight / intrinsicHeight
+                );
+                const renderedWidth = intrinsicWidth * scale;
+                const renderedHeight = intrinsicHeight * scale;
+                const leftOffset = (containerWidth - renderedWidth) / 2;
+                const topOffset = (containerHeight - renderedHeight) / 2;
+                setImageLayout({
+                    x: (deviceWidth - containerWidth) / 2 + leftOffset,
+                    y: (deviceHeight - containerHeight) / 2 + topOffset,
+                    width: renderedWidth,
+                    height: renderedHeight,
+                });
+            },
+            (error) => {
+                console.error('Error getting image size:', error);
+            }
+        );
+    }, [
+        currentIndex,
+        mediaAttachments,
+        mediaInfos,
+        deviceWidth,
+        deviceHeight,
+        containerWidth,
+        containerHeight,
+    ]);
+
     // Web keyboard navigation.
     useEffect(() => {
         if (!visible || Platform.OS !== 'web') return;
-
         const handleKeyDown = (e: KeyboardEvent) => {
             if (mediaAttachments.length > 1) {
                 if (
@@ -116,6 +151,55 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
         return null;
     }
 
+    // Render each carousel item.
+    const renderItem = ({ item, index }: { item: string; index: number }) => {
+        const info = mediaInfos[item];
+        const content =
+            info && info.type === 'video' ? (
+                <NexusVideo
+                    source={{ uri: item }}
+                    style={styles.modalMedia}
+                    muted={false}
+                    repeat
+                    paused
+                    contentFit="contain"
+                    controls
+                />
+            ) : (
+                <ExpoImage
+                    source={{ uri: item }}
+                    style={styles.modalMedia}
+                    contentFit="contain"
+                    onError={(error) =>
+                        console.error('Image load error:', item, error)
+                    }
+                />
+            );
+
+        // For the current visible image, just render the content.
+        // We no longer use onLayout here because we compute the actual layout separately.
+        return <View style={{ width: '100%', height: '100%' }}>{content}</View>;
+    };
+
+    // Outer press handler that dismisses the modal only if tap is outside the actual rendered image.
+    const handleOuterPress = (e: GestureResponderEvent) => {
+        const { pageX, pageY } = e.nativeEvent;
+        if (imageLayout) {
+            const withinX =
+                pageX >= imageLayout.x &&
+                pageX <= imageLayout.x + imageLayout.width;
+            const withinY =
+                pageY >= imageLayout.y &&
+                pageY <= imageLayout.y + imageLayout.height;
+            if (withinX && withinY) {
+                // Tap is inside the image.
+                return;
+            }
+        }
+        // Tap outside the image: dismiss the modal.
+        onClose();
+    };
+
     return (
         <Modal
             visible={visible}
@@ -123,21 +207,17 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
             animationType="fade"
             onRequestClose={onClose}
         >
-            {/* Outer Pressable: Taps anywhere here (outside inner content) will dismiss */}
-            <Pressable style={styles.modalOverlay} onPress={onClose}>
+            {/* Outer Pressable: Dismisses the modal when tap is outside the measured image */}
+            <Pressable style={styles.modalOverlay} onPress={handleOuterPress}>
                 <View style={styles.centeredContent}>
-                    {/* Inner Pressable: Stops tap propagation so inner touches don't dismiss */}
-                    <Pressable
-                        onPress={(e) => e.stopPropagation()}
-                        style={styles.contentWrapper}
-                    >
+                    <View style={styles.contentWrapper}>
                         <View style={styles.carouselContainer}>
                             <Carousel
                                 ref={carouselRef}
                                 data={mediaAttachments}
                                 renderItem={renderItem}
-                                width={deviceWidth * 0.9}
-                                height={carouselHeight}
+                                width={containerWidth}
+                                height={containerHeight}
                                 defaultIndex={effectiveInitialIndex}
                                 onSnapToItem={(index: number) =>
                                     setCurrentIndex(index)
@@ -197,7 +277,7 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
                                 />
                             </View>
                         )}
-                    </Pressable>
+                    </View>
                 </View>
             </Pressable>
         </Modal>
@@ -218,7 +298,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     contentWrapper: {
-        width: '100%',
         alignItems: 'center',
     },
     carouselContainer: {
@@ -226,9 +305,10 @@ const styles = StyleSheet.create({
         height: Dimensions.get('window').height * 0.8,
         position: 'relative',
     },
-    modalImage: {
-        // width: '100%',
+    modalMedia: {
+        width: '100%',
         height: '100%',
+        resizeMode: 'contain',
     },
     arrowsContainer: {
         position: 'absolute',

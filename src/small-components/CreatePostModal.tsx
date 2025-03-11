@@ -2,19 +2,21 @@ import React, { useState } from 'react';
 import {
     View,
     Text,
-    Modal,
     TextInput,
     Pressable,
     TouchableOpacity,
     StyleSheet,
+    SafeAreaView,
+    ScrollView,
 } from 'react-native';
+import Icon from 'react-native-vector-icons/FontAwesome5';
 import { Image as ExpoImage } from 'expo-image';
 import { COLORS } from '../constants';
 import { useFileUpload } from '../hooks';
 import { AttachmentPreviews, Attachment, RichTextEditor } from '../sections';
 import { MarkdownEditor } from './MarkdownEditor';
-import Icon from 'react-native-vector-icons/FontAwesome5';
 import { GiphyModal } from './GiphyModal';
+import { CustomPortalModal } from './CustomPortalModal';
 
 type CreatePostModalProps = {
     modalVisible: boolean;
@@ -76,14 +78,12 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
                 previewUri,
             };
             // @ts-expect-error any
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             setAttachments((prev: any) => [...prev, newAttachment]);
         } catch (error) {
             console.error('Error in handleAttachmentInsert:', error);
         }
     };
 
-    // Updated GIF button handler to open the Giphy modal.
     const handleGifPress = () => {
         setShowGiphy(true);
     };
@@ -95,7 +95,6 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
 
     const onRemoveAttachment = (attachmentId: string) => {
         // @ts-expect-error any
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setAttachments((prev: any[]) =>
             prev.filter((att) => att.id !== attachmentId)
         );
@@ -103,14 +102,14 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
 
     return (
         <>
-            <Modal
+            <CustomPortalModal
                 visible={modalVisible}
-                transparent
-                animationType="fade"
-                onRequestClose={() => setModalVisible(false)}
+                onClose={() => setModalVisible(false)}
             >
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modalContainer}>
+                <SafeAreaView style={{ flex: 1 }}>
+                    <ScrollView
+                        contentContainerStyle={styles.modalContentContainer}
+                    >
                         <Text style={styles.modalTitle}>
                             {modalTitle || buttonText}
                         </Text>
@@ -214,16 +213,14 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
                                 </Text>
                             </Pressable>
                         </View>
-                    </View>
-                </View>
-            </Modal>
+                    </ScrollView>
+                </SafeAreaView>
+            </CustomPortalModal>
 
             {previewModalVisible && selectedAttachment && (
-                <Modal
+                <CustomPortalModal
                     visible={previewModalVisible}
-                    transparent
-                    animationType="fade"
-                    onRequestClose={() => setPreviewModalVisible(false)}
+                    onClose={() => setPreviewModalVisible(false)}
                 >
                     <TouchableOpacity
                         style={styles.previewModalOverlay}
@@ -235,10 +232,9 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
                             resizeMode="contain"
                         />
                     </TouchableOpacity>
-                </Modal>
+                </CustomPortalModal>
             )}
 
-            {/* Render the GiphyModal like in ChatInput */}
             <GiphyModal
                 visible={showGiphy}
                 onClose={() => setShowGiphy(false)}
@@ -251,17 +247,10 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
 };
 
 const styles = StyleSheet.create({
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    modalContainer: {
-        width: '85%',
-        backgroundColor: COLORS.AppBackground,
-        borderRadius: 8,
+    modalContentContainer: {
         padding: 20,
+        flexGrow: 1,
+        overflowY: 'auto',
     },
     modalTitle: {
         fontSize: 18,
@@ -299,6 +288,7 @@ const styles = StyleSheet.create({
     imageButton: {
         marginRight: 10,
         padding: 8,
+        backgroundColor: COLORS.SecondaryBackground,
     },
     gifButton: {
         marginHorizontal: 10,

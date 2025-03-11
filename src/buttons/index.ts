@@ -5,3 +5,4 @@ export * from './CreateGroupButton';
 export * from './EventsButton';
 export * from './FriendsButton';
 export * from './GroupButton';
+export * from './SearchButton';

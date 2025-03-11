@@ -1,14 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
     View,
     TouchableOpacity,
     Platform,
     StyleSheet,
     Text,
-    ScrollView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
-import emoji from 'emoji-dictionary';
 import { Image as ExpoImage } from 'expo-image';
 import { COLORS } from '../constants';
 import { AttachmentPreviews } from '../sections';
@@ -16,7 +14,7 @@ import { Attachment } from '../types';
 import { MarkdownTextInput } from './MarkdownTextInput';
 import { extractUrls } from '../utils';
 import { GiphyModal } from './GiphyModal';
-import { MiniModal } from './MiniModal';
+import { EmojiPicker, EmojiPickerHandle } from './EmojiPicker';
 
 export type ChatInputProps = {
     messageText: string;
@@ -24,7 +22,6 @@ export type ChatInputProps = {
     attachments: Attachment[];
     setAttachments: React.Dispatch<React.SetStateAction<Attachment[]>>;
     handleImageUpload: () => void;
-    // Updated sendMessageHandler now accepts an optional override message text.
     sendMessageHandler: (overrideMessageText?: string) => void;
     recipientName: string;
     onInlineImagePress: (url: string) => void;
@@ -42,97 +39,22 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     onInlineImagePress,
     onAttachmentPreviewPress,
 }) => {
-    const [emojiQuery, setEmojiQuery] = useState('');
-    const [emojiSuggestions, setEmojiSuggestions] = useState<
-        { name: string; emoji: string }[]
-    >([]);
-    const [activeEmojiIndex, setActiveEmojiIndex] = useState(0);
     const [showGiphy, setShowGiphy] = useState(false);
-
-    // Update emoji suggestions based on the last colon query.
-    const updateEmojiSuggestions = (text: string) => {
-        const colonIndex = text.lastIndexOf(':');
-        if (colonIndex !== -1) {
-            const query = text.slice(Math.max(0, colonIndex + 1));
-            if (query.length > 0 && /^\w+$/.test(query)) {
-                setEmojiQuery(query);
-                const suggestions = emoji.names
-                    .filter((name: string) =>
-                        name.startsWith(query.toLowerCase())
-                    )
-                    .map((name: string) => ({
-                        name,
-                        emoji: emoji.getUnicode(name),
-                    }));
-                setEmojiSuggestions(suggestions);
-                if (suggestions.length > 0) {
-                    setActiveEmojiIndex(0);
-                }
-            } else {
-                setEmojiQuery('');
-                setEmojiSuggestions([]);
-            }
-        } else {
-            setEmojiQuery('');
-            setEmojiSuggestions([]);
-        }
-    };
-
-    // Wrap setMessageText to update emoji suggestions.
-    const onMessageTextChange = (text: string) => {
-        setMessageText(text);
-        updateEmojiSuggestions(text);
-    };
-
-    // Replace the current colon query with the selected emoji.
-    const handleEmojiSelect = (selected: { name: string; emoji: string }) => {
-        const colonIndex = messageText.lastIndexOf(':');
-        if (colonIndex !== -1) {
-            const newText =
-                messageText.slice(0, colonIndex) +
-                selected.emoji +
-                ' ' +
-                messageText.slice(colonIndex + emojiQuery.length + 1);
-            setMessageText(newText);
-            setEmojiQuery('');
-            setEmojiSuggestions([]);
-        }
-    };
-
-    // Keyboard handler to navigate emoji suggestions.
-    const handleKeyPress = (e: any) => {
-        if (emojiSuggestions.length > 0) {
-            const { key } = e.nativeEvent;
-            if (key === 'ArrowDown') {
-                setActiveEmojiIndex(
-                    (prev) => (prev + 1) % emojiSuggestions.length
-                );
-                e.preventDefault();
-            } else if (key === 'ArrowUp') {
-                setActiveEmojiIndex(
-                    (prev) =>
-                        (prev - 1 + emojiSuggestions.length) %
-                        emojiSuggestions.length
-                );
-                e.preventDefault();
-            } else if (key === 'Enter') {
-                handleEmojiSelect(emojiSuggestions[activeEmojiIndex]);
-                e.preventDefault();
-            }
-        }
-    };
-
-    // Send message only if no emoji suggestions are visible.
-    const handleSubmitEditing = () => {
-        if (emojiSuggestions.length === 0) {
-            sendMessageHandler();
-        }
-    };
+    const emojiPickerRef = useRef<EmojiPickerHandle>(null);
 
     // Extract inline image URLs from the message text.
     const inlineImageUrls = extractUrls(messageText).filter((url) =>
         url.match(/\.(jpeg|jpg|gif|png)$/i)
     );
+
+    const handleSubmitEditing = () => {
+        sendMessageHandler();
+    };
+
+    // Delegate key events from the text input to the emoji picker.
+    const handleTextInputKeyDown = (e: any) => {
+        emojiPickerRef.current?.handleKeyDown(e);
+    };
 
     return (
         <View>
@@ -188,11 +110,11 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 </TouchableOpacity>
                 <MarkdownTextInput
                     value={messageText}
-                    onChangeText={onMessageTextChange}
-                    onKeyPress={handleKeyPress}
+                    onChangeText={setMessageText}
                     onSubmitEditing={handleSubmitEditing}
                     placeholder={`Message ${recipientName}`}
                     returnKeyType="send"
+                    onKeyPress={handleTextInputKeyDown}
                 />
                 <TouchableOpacity
                     onPress={() => setShowGiphy(true)}
@@ -211,36 +133,17 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                     )}
             </View>
 
-            {/* Emoji suggestions modal using MiniModal */}
-            <MiniModal
-                visible={emojiSuggestions.length > 0}
-                onClose={() => setEmojiSuggestions([])}
-            >
-                <ScrollView>
-                    {emojiSuggestions.map((suggestion, index) => (
-                        <TouchableOpacity
-                            key={index}
-                            onPress={() => handleEmojiSelect(suggestion)}
-                            style={[
-                                styles.emojiSuggestionButton,
-                                index === activeEmojiIndex &&
-                                    styles.activeEmojiSuggestionButton,
-                            ]}
-                        >
-                            <Text style={styles.emojiSuggestionText}>
-                                {suggestion.emoji} {suggestion.name}
-                            </Text>
-                        </TouchableOpacity>
-                    ))}
-                </ScrollView>
-            </MiniModal>
+            {/* Render the EmojiPicker with the ref */}
+            <EmojiPicker
+                ref={emojiPickerRef}
+                messageText={messageText}
+                setMessageText={setMessageText}
+            />
 
-            {/* Render the Giphy modal */}
             <GiphyModal
                 visible={showGiphy}
                 onClose={() => setShowGiphy(false)}
                 onSelectGif={(attachment) => {
-                    // Immediately send a message using the GIF URL.
                     sendMessageHandler(attachment.file.uri);
                 }}
             />
@@ -302,19 +205,5 @@ const styles = StyleSheet.create({
     sendButton: {
         marginLeft: 10,
         padding: 8,
-    },
-    emojiSuggestionButton: {
-        paddingVertical: 5,
-        paddingHorizontal: 10,
-        marginBottom: 5,
-        backgroundColor: COLORS.PrimaryBackground,
-        borderRadius: 5,
-    },
-    activeEmojiSuggestionButton: {
-        backgroundColor: COLORS.SecondaryBackground,
-    },
-    emojiSuggestionText: {
-        color: COLORS.White,
-        fontSize: 14,
     },
 });

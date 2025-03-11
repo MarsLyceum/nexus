@@ -59,6 +59,12 @@ const styles = StyleSheet.create({
         color: 'white',
         fontSize: 18,
     },
+    // New style for emoji-only content
+    emojiLarge: {
+        fontSize: 64,
+        textAlign: 'left',
+        fontFamily: 'Roboto_400Regular',
+    },
 });
 
 // ---------------------
@@ -75,6 +81,17 @@ const extractTextFromTnode = (tnode: any): string => {
             .join('');
     }
     return '';
+};
+
+// ---------------------
+// Helper function to check if text is only emojis (and whitespace)
+// ---------------------
+const isOnlyEmojis = (text: string): boolean => {
+    // This regex matches emoji presentation characters.
+    // It might need adjustments for different cases.
+    const emojiRegex =
+        /^(?:\s*(?:\p{Emoji_Presentation}|\p{Emoji}\uFE0F)\s*)+$/u;
+    return emojiRegex.test(text.trim());
 };
 
 // ---------------------
@@ -234,13 +251,23 @@ export const MarkdownRenderer: React.FC<{
     text: string;
     preview?: boolean;
 }> = ({ text, preview }) => {
+    const contentWidth = Dimensions.get('window').width;
+
+    // Check if the text contains only emojis (and whitespace)
+    if (isOnlyEmojis(text)) {
+        return (
+            <View>
+                <Text style={styles.emojiLarge}>{text.trim()}</Text>
+            </View>
+        );
+    }
+
     const [contentHeight, setContentHeight] = React.useState(0);
     const [expanded, setExpanded] = React.useState(false);
     const htmlContent = useMemo(
         () => `<div>${mdInstance.render(text)}</div>`,
         [text]
     );
-    const contentWidth = Dimensions.get('window').width;
 
     const handleOnLayout = useCallback(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -278,7 +305,7 @@ export const MarkdownRenderer: React.FC<{
         </View>
     );
 
-    // If not in preview mode or if expanded, render full content in a ScrollView.
+    // If not in preview mode or if expanded, render full content.
     if (!preview || expanded) {
         return <View>{fullContent}</View>;
     }

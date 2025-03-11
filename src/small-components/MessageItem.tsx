@@ -198,6 +198,7 @@ const styles = StyleSheet.create({
     time: {
         fontSize: 12,
         color: 'gray',
+        fontFamily: 'Roboto_400Regular',
     },
     messageText: {
         fontSize: 14,

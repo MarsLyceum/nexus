@@ -8,7 +8,7 @@ export const Events = ({
     color = COLORS.White,
 }: {
     style?: ViewStyle | ViewStyle[];
-    color: string;
+    color?: string;
 }) => (
     <Svg width={15} height={15} viewBox="0 0 15 15" fill="none" style={style}>
         <G

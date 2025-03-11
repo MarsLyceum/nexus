@@ -45,6 +45,7 @@ export const loginUser =
 export const loadUser = (): AppThunk => async (dispatch) => {
     try {
         const userData = await getItem(USER_KEY);
+
         if (userData) {
             const user = JSON.parse(userData) as User;
             dispatch(setUser(user));

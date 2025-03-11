@@ -79,7 +79,6 @@ export const GiphyModal: React.FC<GiphyModalProps> = ({
     // Updated container style for Giphy modal to align above the input box.
     const giphyContainerStyle = {
         position: 'absolute',
-        left: '50%',
         bottom: 70, // Aligns modal above the input box
         width: 350,
         maxHeight: 350, // Allows expansion for larger results
@@ -91,7 +90,6 @@ export const GiphyModal: React.FC<GiphyModalProps> = ({
         shadowOpacity: 0.3,
         shadowRadius: 4,
         elevation: 5,
-        transform: [{ translateX: 80 }], // Center horizontally
     };
 
     return (
@@ -142,6 +140,7 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.TextInput,
         borderRadius: 5,
         paddingHorizontal: 10,
+        paddingVertical: 5,
         marginBottom: 10,
         color: COLORS.MainText,
     },

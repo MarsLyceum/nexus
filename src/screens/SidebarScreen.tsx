@@ -17,6 +17,7 @@ import {
     EventsButton,
     CreateGroupButton,
     FriendsButton,
+    SearchButton,
 } from '../buttons';
 import { FETCH_USER_GROUPS_QUERY } from '../queries';
 import { COLORS } from '../constants';
@@ -99,7 +100,6 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
 
     useEffect(() => {
         void (async () => {
-            console.log('user:', user);
             const result = await apolloClient.query<{
                 fetchUserGroups: UserGroupsType;
             }>({
@@ -200,6 +200,17 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
                         onPress={() => {
                             setSelectedButton('events');
                             navigation.navigate('Events');
+                        }}
+                    />
+                </View>
+                <View
+                    onLayout={handleLayout('search')}
+                    style={styles.buttonContainer}
+                >
+                    <SearchButton
+                        onPress={() => {
+                            setSelectedButton('search');
+                            navigation.navigate('Search');
                         }}
                     />
                 </View>

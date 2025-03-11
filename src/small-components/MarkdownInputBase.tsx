@@ -8,12 +8,14 @@ import {
     StyleSheet,
     NativeSyntheticEvent,
     TextInputScrollEventData,
+    Platform,
 } from 'react-native';
 import { COLORS } from '../constants';
 
 export interface MarkdownInputBaseProps extends TextInputProps {
     value: string;
     onChangeText: (text: string) => void;
+    onKeyPress?: (e: any) => void;
     wrapperStyle?: object;
     overlayStyle?: object;
     inputStyle?: object;
@@ -218,6 +220,7 @@ export const renderHighlightedText = (text: string) => {
 export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
     value,
     onChangeText,
+    onKeyPress,
     placeholder,
     wrapperStyle,
     overlayStyle,
@@ -302,6 +305,7 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
                 onScroll={
                     multiline ? handleVerticalScroll : handleHorizontalScroll
                 }
+                {...(Platform.OS === 'web' && { onKeyPress })}
                 // @ts-expect-error prop
                 scrollEventThrottle={16}
                 {...rest}

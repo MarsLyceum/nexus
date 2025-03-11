@@ -54,7 +54,7 @@ export function AppDrawerScreen() {
             }: {
                 navigation: DrawerNavigationProp<DrawerParamList>;
             }) => ({
-                headerShown: true,
+                headerShown: !isDesktop,
                 headerStyle: {
                     backgroundColor: COLORS.AppBackground,
                     elevation: 0, // Remove Android shadow
@@ -78,31 +78,7 @@ export function AppDrawerScreen() {
                         </TouchableOpacity>
                     ),
 
-                headerTitle: () =>
-                    isDesktop ? (
-                        <SearchBox
-                            value={searchText}
-                            onChangeText={setSearchText}
-                            desktop
-                            onSubmitEditing={() =>
-                                navigation.navigate('Search')
-                            }
-                        />
-                    ) : undefined, // Use undefined when not on desktop
-
-                headerRight: () =>
-                    !isDesktop && (
-                        <TouchableOpacity
-                            onPress={() => navigation.navigate('Search')}
-                            style={{ marginRight: 15 }}
-                        >
-                            <FontAwesome
-                                name="search"
-                                size={24}
-                                color="white"
-                            />
-                        </TouchableOpacity>
-                    ),
+                headerTitle: () => undefined,
 
                 // On desktop, the drawer is always open; on mobile, it slides in.
                 drawerType: isDesktop ? 'permanent' : 'slide',
@@ -119,6 +95,7 @@ export function AppDrawerScreen() {
             <DrawerNavigator.Screen name="Friends" component={FriendsScreen} />
             <DrawerNavigator.Screen name="Messages" component={DMListScreen} />
             <DrawerNavigator.Screen name="Events" component={EventsScreen} />
+            <DrawerNavigator.Screen name="Search" component={SearchScreen} />
 
             {userGroups.map((group) => (
                 <DrawerNavigator.Screen
@@ -138,13 +115,6 @@ export function AppDrawerScreen() {
         The Search screen is hidden from the drawer menu (height: 0)
         but accessible via the header right icon on mobile.
       */}
-            <DrawerNavigator.Screen
-                name="Search"
-                component={SearchScreen}
-                options={{
-                    drawerItemStyle: { height: 0 },
-                }}
-            />
         </DrawerNavigator.Navigator>
     );
 }

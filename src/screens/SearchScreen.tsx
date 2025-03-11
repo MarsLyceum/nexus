@@ -133,14 +133,9 @@ export const SearchScreen = () => {
             </View>
 
             {/* SearchBox below the header row */}
-            {!isDesktop && (
-                <View style={styles.searchBoxContainer}>
-                    <SearchBox
-                        value={searchText}
-                        onChangeText={setSearchText}
-                    />
-                </View>
-            )}
+            <View style={styles.searchBoxContainer}>
+                <SearchBox value={searchText} onChangeText={setSearchText} />
+            </View>
 
             <ScrollView style={styles.resultsContainer}>
                 {filteredResults.map((item) => (

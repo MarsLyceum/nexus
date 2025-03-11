@@ -1,3 +1,4 @@
+// ChatScreen.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import {
     View,
@@ -9,13 +10,10 @@ import {
 import { NavigationProp, RouteProp } from '@react-navigation/core';
 import { Image as ExpoImage } from 'expo-image';
 import Icon from 'react-native-vector-icons/FontAwesome5';
-
 import { COLORS } from '../constants';
-import { ChatInput } from '../small-components';
 import { Attachment } from '../types';
-import { useFileUpload } from '../hooks';
+import { ChatInputContainer } from '../small-components';
 
-// Define the Message type
 export type Message = {
     id: string;
     user: string;
@@ -25,7 +23,6 @@ export type Message = {
     edited: boolean;
 };
 
-// Define the type for navigation parameters
 type RootStackParamList = {
     ChatScreen: {
         user: {
@@ -108,7 +105,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     const { width } = useWindowDimensions();
     const isLargeScreen = width > 768;
 
-    // Initialize messages with an explicit Message type.
+    // Local messages state.
     const [messages, setMessages] = useState<Message[]>([
         {
             id: '1',
@@ -152,36 +149,10 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
         },
     ]);
 
-    const [messageText, setMessageText] = useState('');
-    const [attachments, setAttachments] = useState<Attachment[]>([]);
     const flatListRef = useRef<FlatList<Message>>(null);
 
-    // Use file upload hook for handling image upload
-    const { pickFile } = useFileUpload();
-
-    // Updated handleImageUpload function using useFileUpload hook.
-    const handleImageUpload = async () => {
-        const file = await pickFile();
-        if (file) {
-            let previewUri = '';
-            previewUri = 'uri' in file ? file.uri : URL.createObjectURL(file);
-            const newAttachment: Attachment = {
-                id: `${Date.now()}-${Math.random()}`,
-                file,
-                previewUri,
-            };
-            setAttachments((prev) => [...prev, newAttachment]);
-        }
-    };
-
-    // Updated sendMessageHandler accepts an optional overrideMessageText.
-    const sendMessageHandler = (overrideMessageText?: string) => {
-        const textToSend =
-            overrideMessageText !== undefined
-                ? overrideMessageText
-                : messageText;
-        if (!textToSend.trim() && attachments.length === 0) return;
-
+    // onSend callback that creates a new message and updates the messages state.
+    const handleSend = (text: string, attachments: Attachment[]) => {
         const newMessage: Message = {
             id: Math.random().toString(),
             user: 'You',
@@ -193,17 +164,14 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
                 minute: '2-digit',
                 hour12: true,
             }),
-            text: textToSend,
+            text,
             avatar: 'https://picsum.photos/50?random=99',
             edited: false,
         };
-
         setMessages((prevMessages) => [...prevMessages, newMessage]);
-        setMessageText('');
-        setAttachments([]);
     };
 
-    // Handlers for inline image and attachment preview presses
+    // Handlers for inline image and attachment preview presses.
     const onInlineImagePress = (url: string) => {
         console.log('Inline image pressed:', url);
     };
@@ -263,14 +231,9 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
                 )}
             />
 
-            {/* Chat Input using the ChatInput component */}
-            <ChatInput
-                messageText={messageText}
-                setMessageText={setMessageText}
-                attachments={attachments}
-                setAttachments={setAttachments}
-                handleImageUpload={handleImageUpload}
-                sendMessageHandler={sendMessageHandler}
+            {/* Chat Input using the extracted ChatInputContainer */}
+            <ChatInputContainer
+                onSend={handleSend}
                 recipientName={user.name}
                 onInlineImagePress={onInlineImagePress}
                 onAttachmentPreviewPress={onAttachmentPreviewPress}

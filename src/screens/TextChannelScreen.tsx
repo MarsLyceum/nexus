@@ -1,12 +1,13 @@
-import React, { useState, useRef } from 'react';
+// TextChannelScreen.tsx
+import React, { useState } from 'react';
 import { View, useWindowDimensions } from 'react-native';
 import { NavigationProp } from '@react-navigation/core';
 import { useAppSelector, RootState, UserType } from '../redux';
 import { Header, LargeImageModal } from '../sections';
 import { COLORS } from '../constants';
 import { GroupChannel, Attachment } from '../types';
-import { MessageList, ChatInput } from '../small-components';
-import { useFileUpload, useChannelMessages, useSendMessage } from '../hooks';
+import { MessageList, ChatInputContainer } from '../small-components';
+import { useChannelMessages, useSendMessage } from '../hooks';
 
 export type TextChannelScreenProps = {
     channel: GroupChannel;
@@ -23,16 +24,6 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
     const { width } = useWindowDimensions();
     const isLargeScreen = width > 768;
 
-    // State for input display and a ref for the current message text.
-    const [messageText, setMessageText] = useState('');
-    const messageTextRef = useRef('');
-    // This updater synchronizes both the state and the ref.
-    const updateMessageText = (text: string) => {
-        messageTextRef.current = text;
-        setMessageText(text);
-    };
-
-    const [attachments, setAttachments] = useState<Attachment[]>([]);
     // Modal state for image previews
     const [modalVisible, setModalVisible] = useState(false);
     const [modalAttachments, setModalAttachments] = useState<string[]>([]);
@@ -44,46 +35,6 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
 
     // Custom hook to send messages
     const sendMsg = useSendMessage();
-
-    // Modified sendMessageHandler uses the ref value
-    const sendMessageHandler = async (overrideMessageText?: string) => {
-        const textToSend =
-            overrideMessageText !== undefined
-                ? overrideMessageText
-                : messageTextRef.current;
-        if (!textToSend.trim() && attachments.length === 0) return;
-
-        const attachmentsCopy = attachments;
-
-        // Clear both the ref and state after sending.
-        messageTextRef.current = '';
-        setMessageText('');
-        setAttachments([]);
-
-        await sendMsg(
-            user?.id ?? '',
-            channel.id,
-            textToSend,
-            attachmentsCopy,
-            refreshMessages
-        );
-    };
-
-    const { pickFile } = useFileUpload();
-
-    const handleImageUpload = async () => {
-        const file = await pickFile();
-        if (file) {
-            let previewUri = '';
-            previewUri = 'uri' in file ? file.uri : URL.createObjectURL(file);
-            const newAttachment: Attachment = {
-                id: `${Date.now()}-${Math.random()}`,
-                file,
-                previewUri,
-            };
-            setAttachments((prev) => [...prev, newAttachment]);
-        }
-    };
 
     // Handler for inline image preview tap
     const handleInlineImagePress = (url: string) => {
@@ -109,6 +60,17 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
         setModalVisible(true);
     };
 
+    // onSend callback for ChatInputContainer
+    const handleSend = async (text: string, attachments: Attachment[]) => {
+        await sendMsg(
+            user?.id ?? '',
+            channel.id,
+            text,
+            attachments,
+            refreshMessages
+        );
+    };
+
     return (
         <View style={{ flex: 1, backgroundColor: COLORS.SecondaryBackground }}>
             <Header
@@ -125,13 +87,8 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
                 onAttachmentPress={handleMessageItemAttachmentPress}
             />
 
-            <ChatInput
-                messageText={messageText}
-                setMessageText={updateMessageText}
-                attachments={attachments}
-                setAttachments={setAttachments}
-                handleImageUpload={handleImageUpload}
-                sendMessageHandler={sendMessageHandler}
+            <ChatInputContainer
+                onSend={handleSend}
                 recipientName={`#${channel.name}`}
                 onInlineImagePress={handleInlineImagePress}
                 onAttachmentPreviewPress={handleAttachmentPreviewPress}

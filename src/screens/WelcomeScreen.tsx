@@ -9,11 +9,13 @@ import { PrimaryGradientButton } from '../PrimaryGradientButton';
 import { SecondaryButton } from '../SecondaryButton';
 import { Footer } from '../Footer';
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+import { COLORS } from '../constants';
+
 const Tagline = styled.Text`
     font-family: Lato_700Bold;
     font-size: 24px;
     margin-top: 63px;
+    color: ${COLORS.MainText};
 `;
 
 const styles = StyleSheet.create({
@@ -32,7 +34,7 @@ const styles = StyleSheet.create({
     },
     outerContainer: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: COLORS.AppBackground, // changed from '#fff'
     },
     innerScrollContainer: {
         width: '100%',

@@ -30,6 +30,8 @@ import { Email, Lock, GoogleLogo } from '../icons';
 import { LoginIllustration, HorizontalLine } from '../images';
 import { PrimaryGradientButton } from '../PrimaryGradientButton';
 
+import { COLORS } from '../constants';
+
 const auth0 = new Auth0({
     domain: AUTH0_DOMAIN ?? '',
     clientId: AUTH0_CLIENT_ID ?? '',
@@ -49,7 +51,7 @@ const styles = StyleSheet.create({
     },
     outerContainer: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: COLORS.AppBackground, // replaced '#fff'
         alignItems: 'center',
         justifyContent: 'center',
     },
@@ -58,7 +60,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#fff',
+        backgroundColor: COLORS.PrimaryBackground, // replaced '#fff'
     },
     image: {
         width: 100,
@@ -68,13 +70,13 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 32,
         fontWeight: 'bold',
-        color: '#333',
+        color: COLORS.MainText, // replaced '#333'
         marginTop: -125,
         textAlign: 'center',
     },
     subtitle: {
         fontSize: 16,
-        color: '#666',
+        color: COLORS.InactiveText, // replaced '#666'
         marginBottom: 20,
         textAlign: 'center',
     },
@@ -86,16 +88,18 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     input: {
-        borderColor: '#ddd',
+        borderColor: COLORS.OffWhite, // replaced '#ddd'
         height: 45,
         flex: 1,
         fontSize: 16,
         marginRight: 5,
-        backgroundColor: '#f9f9f9',
+        backgroundColor: COLORS.TextInput, // replaced '#f9f9f9'
+        color: COLORS.MainText,
+        paddingHorizontal: 10,
     },
     orText: {
         fontSize: 16,
-        color: '#666',
+        color: COLORS.InactiveText, // replaced '#666'
         marginVertical: 15,
         textAlign: 'center',
         marginLeft: 20,
@@ -113,33 +117,33 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         borderRadius: 25,
-        backgroundColor: '#f9f9f9',
+        backgroundColor: COLORS.OffWhite, // replaced '#f9f9f9'
         marginLeft: 10,
         marginRight: 10,
     },
     button: {
         width: '100%',
         height: 50,
-        backgroundColor: '#ff5a5f',
+        backgroundColor: COLORS.Primary, // replaced '#ff5a5f'
         justifyContent: 'center',
         alignItems: 'center',
         borderRadius: 25,
         marginBottom: 15,
     },
     buttonText: {
-        color: '#fff',
+        color: COLORS.White, // replaced '#fff'
         fontSize: 16,
         fontWeight: 'bold',
     },
     forgotPasswordText: {
         fontSize: 16,
-        color: '#666',
+        color: COLORS.InactiveText, // replaced '#666'
         marginTop: 17,
         marginBottom: 53,
         textAlign: 'center',
     },
     forgotPasswordLink: {
-        color: '#A63FA3',
+        color: COLORS.Link, // replaced '#A63FA3'
         fontWeight: 'bold',
     },
     innerScrollContainer: {
@@ -159,11 +163,11 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         width: 285,
-        borderColor: '#ddd',
+        borderColor: COLORS.OffWhite, // replaced '#ddd'
         borderWidth: 1,
         borderRadius: 25,
         paddingHorizontal: 10,
-        backgroundColor: '#f9f9f9',
+        backgroundColor: COLORS.TextInput, // replaced '#f9f9f9'
         height: 50,
         flex: 1,
         fontSize: 16,

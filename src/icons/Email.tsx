@@ -1,6 +1,7 @@
 import * as React from 'react';
 import Svg, { Path } from 'react-native-svg';
 import { ViewStyle } from 'react-native';
+import { COLORS } from '../constants';
 
 export function Email({
     style,
@@ -15,7 +16,7 @@ export function Email({
         >
             <Path
                 d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"
-                stroke="#000"
+                stroke={COLORS.White}
                 strokeOpacity={0.3}
                 strokeWidth={2}
                 strokeLinecap="round"

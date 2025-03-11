@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
+// ChatInput.tsx
+import React, { useState } from 'react';
 import {
     View,
     TouchableOpacity,
@@ -6,7 +7,6 @@ import {
     StyleSheet,
     Text,
     ScrollView,
-    TouchableWithoutFeedback,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import emoji from 'emoji-dictionary';
@@ -25,7 +25,8 @@ export type ChatInputProps = {
     attachments: Attachment[];
     setAttachments: React.Dispatch<React.SetStateAction<Attachment[]>>;
     handleImageUpload: () => void;
-    sendMessageHandler: () => void;
+    // Updated sendMessageHandler now accepts an optional override message text.
+    sendMessageHandler: (overrideMessageText?: string) => void;
     recipientName: string;
     onInlineImagePress: (url: string) => void;
     onAttachmentPreviewPress: (att: Attachment) => void;
@@ -239,9 +240,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             <GiphyModal
                 visible={showGiphy}
                 onClose={() => setShowGiphy(false)}
-                onSelectGif={(attachment) =>
-                    setAttachments((prev) => [...prev, attachment])
-                }
+                onSelectGif={(attachment) => {
+                    // Instead of setting local state, call sendMessageHandler with the GIF URL.
+                    sendMessageHandler(attachment.file.uri);
+                }}
             />
         </View>
     );

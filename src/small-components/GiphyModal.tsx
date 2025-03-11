@@ -6,10 +6,8 @@ import {
     TouchableOpacity,
     StyleSheet,
     ScrollView,
-    Platform,
 } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
-import * as FileSystem from 'expo-file-system';
 import { COLORS, GIPHY_API_KEY } from '../constants';
 import { Attachment } from '../types';
 import { MiniModal } from './MiniModal';
@@ -63,39 +61,17 @@ export const GiphyModal: React.FC<GiphyModalProps> = ({
     };
 
     // Handle selection of a GIF result.
-    const handleSelectGif = async (result: any) => {
-        try {
-            const gifUrl = result.images.original.url;
-            let localUri = '';
-            let fileData: File | { uri: string; type: string; name: string };
+    const handleSelectGif = (result: any) => {
+        const gifUrl = result.images.original.url;
+        // Create attachment using URL only.
+        const attachment: Attachment = {
+            id: result.id,
+            previewUri: gifUrl,
+            file: { uri: gifUrl, type: 'gif', name: `${result.id}.gif` },
+        };
 
-            if (Platform.OS === 'web') {
-                const response = await fetch(gifUrl);
-                const blob = await response.blob();
-                const previewUri = URL.createObjectURL(blob);
-                fileData = new File([blob], `${result.id}.gif`, {
-                    type: 'image/gif',
-                });
-                localUri = previewUri;
-            } else {
-                const fileUri =
-                    FileSystem.documentDirectory + result.id + '.gif';
-                const { uri } = await FileSystem.downloadAsync(gifUrl, fileUri);
-                fileData = { uri, type: 'gif', name: `${result.id}.gif` };
-                localUri = uri;
-            }
-
-            const attachment: Attachment = {
-                id: result.id,
-                previewUri: localUri,
-                file: fileData,
-            };
-
-            onSelectGif(attachment);
-            onClose();
-        } catch (error) {
-            console.error('Error downloading gif:', error);
-        }
+        onSelectGif(attachment);
+        onClose();
     };
 
     if (!visible) return null;

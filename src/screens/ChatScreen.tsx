@@ -174,9 +174,13 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
         }
     };
 
-    // Function to send a message using the new ChatInput component
-    const sendMessageHandler = () => {
-        if (!messageText.trim() && attachments.length === 0) return;
+    // Updated sendMessageHandler accepts an optional overrideMessageText.
+    const sendMessageHandler = (overrideMessageText?: string) => {
+        const textToSend =
+            overrideMessageText !== undefined
+                ? overrideMessageText
+                : messageText;
+        if (!textToSend.trim() && attachments.length === 0) return;
 
         const newMessage: Message = {
             id: Math.random().toString(),
@@ -189,7 +193,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
                 minute: '2-digit',
                 hour12: true,
             }),
-            text: messageText,
+            text: textToSend,
             avatar: 'https://picsum.photos/50?random=99',
             edited: false,
         };
@@ -200,7 +204,6 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     };
 
     // Handlers for inline image and attachment preview presses
-    // eslint-disable-next-line unicorn/consistent-function-scoping
     const onInlineImagePress = (url: string) => {
         console.log('Inline image pressed:', url);
     };

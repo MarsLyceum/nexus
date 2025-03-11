@@ -31,19 +31,24 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
     const [modalAttachments, setModalAttachments] = useState<string[]>([]);
     const [modalInitialIndex, setModalInitialIndex] = useState(0);
 
-    // Use our custom hook to fetch messages
+    // Custom hook to fetch messages
     const { chatMessages, loadingMessages, loadMoreMessages, refreshMessages } =
         useChannelMessages(channel.id);
 
-    // Use our custom hook to send messages
+    // Custom hook to send messages
     const sendMsg = useSendMessage();
 
-    const sendMessageHandler = async () => {
-        if (!messageText.trim() && attachments.length === 0) return;
+    // Modified sendMessageHandler accepts an optional override for messageText.
+    const sendMessageHandler = async (overrideMessageText?: string) => {
+        const textToSend =
+            overrideMessageText !== undefined
+                ? overrideMessageText
+                : messageText;
+        if (!textToSend.trim() && attachments.length === 0) return;
         await sendMsg(
             user?.id ?? '',
             channel.id,
-            messageText,
+            textToSend,
             attachments,
             refreshMessages
         );
@@ -113,6 +118,7 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
                 attachments={attachments}
                 setAttachments={setAttachments}
                 handleImageUpload={handleImageUpload}
+                // Pass the modified sendMessageHandler which accepts an optional override
                 sendMessageHandler={sendMessageHandler}
                 recipientName={`#${channel.name}`}
                 onInlineImagePress={handleInlineImagePress}

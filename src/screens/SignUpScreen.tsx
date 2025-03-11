@@ -264,7 +264,7 @@ export function SignUpScreen({
             });
 
             const user: User = {
-                ...result.data,
+                ...result.data.registerUser,
                 token: auth0Data.token,
             };
 

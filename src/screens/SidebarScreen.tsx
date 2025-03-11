@@ -99,6 +99,7 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
 
     useEffect(() => {
         void (async () => {
+            console.log('user:', user);
             const result = await apolloClient.query<{
                 fetchUserGroups: UserGroupsType;
             }>({

@@ -6,6 +6,7 @@ import {
     ScrollView,
     Pressable,
     StyleSheet,
+    Platform,
 } from 'react-native';
 import React, { useCallback } from 'react';
 import { FontAwesome } from '@expo/vector-icons';
@@ -27,10 +28,12 @@ import {
 } from '../utils';
 
 import { Email, Lock, GoogleLogo } from '../icons';
-import { LoginIllustration, HorizontalLine } from '../images';
+import { HorizontalLine } from '../images';
 import { PrimaryGradientButton } from '../PrimaryGradientButton';
 
 import { COLORS } from '../constants';
+
+const isWeb = Platform.OS === 'web';
 
 const auth0 = new Auth0({
     domain: AUTH0_DOMAIN ?? '',
@@ -51,16 +54,14 @@ const styles = StyleSheet.create({
     },
     outerContainer: {
         flex: 1,
-        backgroundColor: COLORS.AppBackground, // replaced '#fff'
-        alignItems: 'center',
-        justifyContent: 'center',
+        backgroundColor: COLORS.AppBackground,
     },
     container: {
         flex: 1,
         paddingHorizontal: 20,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: COLORS.PrimaryBackground, // replaced '#fff'
+        backgroundColor: COLORS.PrimaryBackground,
     },
     image: {
         width: 100,
@@ -70,13 +71,13 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 32,
         fontWeight: 'bold',
-        color: COLORS.MainText, // replaced '#333'
-        marginTop: -125,
+        color: COLORS.MainText,
+        marginTop: 20, // Changed from -125 to 20 to keep content within view
         textAlign: 'center',
     },
     subtitle: {
         fontSize: 16,
-        color: COLORS.InactiveText, // replaced '#666'
+        color: COLORS.InactiveText,
         marginBottom: 20,
         textAlign: 'center',
     },
@@ -88,18 +89,18 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     input: {
-        borderColor: COLORS.OffWhite, // replaced '#ddd'
+        borderColor: COLORS.OffWhite,
         height: 45,
         flex: 1,
         fontSize: 16,
         marginRight: 5,
-        backgroundColor: COLORS.TextInput, // replaced '#f9f9f9'
+        backgroundColor: COLORS.TextInput,
         color: COLORS.MainText,
         paddingHorizontal: 10,
     },
     orText: {
         fontSize: 16,
-        color: COLORS.InactiveText, // replaced '#666'
+        color: COLORS.InactiveText,
         marginVertical: 15,
         textAlign: 'center',
         marginLeft: 20,
@@ -117,39 +118,48 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         borderRadius: 25,
-        backgroundColor: COLORS.OffWhite, // replaced '#f9f9f9'
+        backgroundColor: COLORS.OffWhite,
         marginLeft: 10,
         marginRight: 10,
     },
     button: {
         width: '100%',
         height: 50,
-        backgroundColor: COLORS.Primary, // replaced '#ff5a5f'
+        backgroundColor: COLORS.Primary,
         justifyContent: 'center',
         alignItems: 'center',
         borderRadius: 25,
         marginBottom: 15,
     },
     buttonText: {
-        color: COLORS.White, // replaced '#fff'
+        color: COLORS.White,
         fontSize: 16,
         fontWeight: 'bold',
     },
     forgotPasswordText: {
         fontSize: 16,
-        color: COLORS.InactiveText, // replaced '#666'
+        color: COLORS.InactiveText,
         marginTop: 17,
         marginBottom: 53,
         textAlign: 'center',
     },
     forgotPasswordLink: {
-        color: COLORS.Link, // replaced '#A63FA3'
+        color: COLORS.Link,
         fontWeight: 'bold',
     },
-    innerScrollContainer: {
-        width: '100%',
-        flexGrow: 1,
-    },
+    innerScrollContainer: isWeb
+        ? {
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              overflowY: 'auto',
+          }
+        : {
+              width: '100%',
+              flexGrow: 1,
+          },
     orContainer: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -163,11 +173,11 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         width: 285,
-        borderColor: COLORS.OffWhite, // replaced '#ddd'
+        borderColor: COLORS.OffWhite,
         borderWidth: 1,
         borderRadius: 25,
         paddingHorizontal: 10,
-        backgroundColor: COLORS.TextInput, // replaced '#f9f9f9'
+        backgroundColor: COLORS.TextInput,
         height: 50,
         flex: 1,
         fontSize: 16,
@@ -263,7 +273,6 @@ export function LoginScreen({
                         errors,
                     }) => (
                         <View style={styles.container}>
-                            <LoginIllustration />
                             <Text style={styles.title}>Log in</Text>
 
                             <View style={styles.inputContainer}>

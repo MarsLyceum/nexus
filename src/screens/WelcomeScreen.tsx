@@ -1,4 +1,10 @@
-import { SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
+import {
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    View,
+    Platform,
+} from 'react-native';
 import React, { useEffect } from 'react';
 import { NavigationProp, useFocusEffect } from '@react-navigation/core';
 import styled from 'styled-components/native';
@@ -10,6 +16,8 @@ import { SecondaryButton } from '../SecondaryButton';
 import { Footer } from '../Footer';
 
 import { COLORS } from '../constants';
+
+const isWeb = Platform.OS === 'web';
 
 const Tagline = styled.Text`
     font-family: Lato_700Bold;
@@ -36,10 +44,19 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: COLORS.AppBackground, // changed from '#fff'
     },
-    innerScrollContainer: {
-        width: '100%',
-        flexGrow: 1,
-    },
+    innerScrollContainer: isWeb
+        ? {
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              overflowY: 'auto',
+          }
+        : {
+              width: '100%',
+              flexGrow: 1,
+          },
     footerContainer: {
         flexShrink: 0,
         justifyContent: 'center',

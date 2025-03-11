@@ -144,13 +144,18 @@ export const useChannelMessages = (channelId: string) => {
                 setChatMessages((prev) => {
                     const optimisticIndex = prev.findIndex(
                         (m) =>
-                            m.id.startsWith('temp-') &&
                             m.content === newMessage.content &&
                             m.postedByUserId === newMessage.postedByUserId
                     );
+                    console.log('optimisticIndex:', optimisticIndex);
                     if (optimisticIndex !== -1) {
+                        const oldMessage = prev[optimisticIndex];
+                        console.log('oldMessage:', oldMessage);
+                        // Merge the confirmed message data into the optimistic message
+                        const mergedMessage = { ...oldMessage, ...newMessage };
+                        console.log('mergedMessage:', mergedMessage);
                         const updated = [...prev];
-                        updated[optimisticIndex] = newMessage;
+                        updated[optimisticIndex] = mergedMessage;
                         return updated;
                     }
                     return [newMessage, ...prev];

@@ -1,5 +1,6 @@
 import { Keyboard } from 'react-native';
 import { useApolloClient } from '@apollo/client';
+import { v4 as uuidv4 } from 'uuid';
 import { CREATE_GROUP_CHANNEL_MESSAGE_MUTATION } from '../queries';
 import { Attachment, MessageWithAvatar } from '../types';
 
@@ -20,10 +21,11 @@ export const useSendMessage = (
         try {
             const cappedAttachments = attachments.slice(0, 10);
             const attachmentsArray = cappedAttachments.map((att) => att.file);
+            const messageId = uuidv4();
 
             // Create an optimistic message that mirrors the server's expected response.
             const optimisticMessage: MessageWithAvatar = {
-                id: `temp-${Date.now()}`,
+                id: messageId,
                 username,
                 postedByUserId: userId,
                 channelId,
@@ -31,6 +33,7 @@ export const useSendMessage = (
                 postedAt: new Date(), // Stored as Date for local state
                 avatar: 'https://picsum.photos/50?random=10',
                 edited: false,
+                messageType: 'message',
                 // Optionally include additional fields such as username if available.
             };
 
@@ -40,6 +43,7 @@ export const useSendMessage = (
             await apolloClient.mutate({
                 mutation: CREATE_GROUP_CHANNEL_MESSAGE_MUTATION,
                 variables: {
+                    id: messageId,
                     postedByUserId: userId,
                     channelId,
                     content: messageText.trim(),

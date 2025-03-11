@@ -5,7 +5,7 @@ export type BaseGroupChannelMessage = {
     postedAt: Date;
     edited: boolean;
     // eslint-disable-next-line no-use-before-define
-    channel: GroupChannel;
+    channel?: GroupChannel;
     channelId: string;
     postedByUserId: string;
     attachmentUrls?: string[];

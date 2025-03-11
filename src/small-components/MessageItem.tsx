@@ -113,7 +113,7 @@ const renderMessageContent = (content: string, width: number) => {
     return <MarkdownRenderer text={content} />;
 };
 
-export const MessageItem: React.FC<MessageItemProps> = ({
+const MessageItemComponent: React.FC<MessageItemProps> = ({
     item,
     width,
     onAttachmentPress,
@@ -169,6 +169,8 @@ export const MessageItem: React.FC<MessageItemProps> = ({
         </View>
     );
 };
+
+export const MessageItem = React.memo(MessageItemComponent);
 
 const styles = StyleSheet.create({
     messageContainer: {

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import {
     View,
     TouchableOpacity,
@@ -14,7 +14,6 @@ import { Attachment } from '../types';
 import { MarkdownTextInput } from './MarkdownTextInput';
 import { extractUrls } from '../utils';
 import { GiphyModal } from './GiphyModal';
-import { EmojiPicker, EmojiPickerHandle } from './EmojiPicker';
 
 export type ChatInputProps = {
     messageText: string;
@@ -40,7 +39,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     onAttachmentPreviewPress,
 }) => {
     const [showGiphy, setShowGiphy] = useState(false);
-    const emojiPickerRef = useRef<EmojiPickerHandle>(null);
 
     // Extract inline image URLs from the message text.
     const inlineImageUrls = extractUrls(messageText).filter((url) =>
@@ -49,11 +47,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
     const handleSubmitEditing = () => {
         sendMessageHandler();
-    };
-
-    // Delegate key events from the text input to the emoji picker.
-    const handleTextInputKeyDown = (e: any) => {
-        emojiPickerRef.current?.handleKeyDown(e);
     };
 
     return (
@@ -108,13 +101,13 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 >
                     <Icon name="image" size={24} color="white" />
                 </TouchableOpacity>
+                {/* The MarkdownTextInput now internally integrates the emoji picker */}
                 <MarkdownTextInput
                     value={messageText}
                     onChangeText={setMessageText}
                     onSubmitEditing={handleSubmitEditing}
                     placeholder={`Message ${recipientName}`}
                     returnKeyType="send"
-                    onKeyPress={handleTextInputKeyDown}
                 />
                 <TouchableOpacity
                     onPress={() => setShowGiphy(true)}
@@ -132,13 +125,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                         </TouchableOpacity>
                     )}
             </View>
-
-            {/* Render the EmojiPicker with the ref */}
-            <EmojiPicker
-                ref={emojiPickerRef}
-                messageText={messageText}
-                setMessageText={setMessageText}
-            />
 
             <GiphyModal
                 visible={showGiphy}

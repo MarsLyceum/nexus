@@ -12,7 +12,6 @@ export const MarkdownTextInput: React.FC<MarkdownTextInputProps> = ({
     onChangeText,
     placeholder,
     style,
-    onKeyPress,
     ...rest
 }) => (
     <MarkdownInputBase
@@ -20,7 +19,6 @@ export const MarkdownTextInput: React.FC<MarkdownTextInputProps> = ({
         onChangeText={onChangeText}
         placeholder={placeholder}
         {...rest}
-        onKeyPress={onKeyPress}
         // Apply single-line styles
         wrapperStyle={styles.inputWrapper}
         overlayStyle={styles.inputTextOverlay}

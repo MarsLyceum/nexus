@@ -11,11 +11,12 @@ import {
 } from 'react-native';
 import { MarkdownOverlay } from './MarkdownOverlay';
 import { COLORS } from '../constants';
+// <-- New import for emoji picker integration
+import { EmojiPicker, EmojiPickerHandle } from './EmojiPicker';
 
 export interface MarkdownInputBaseProps extends TextInputProps {
     value: string;
     onChangeText: (text: string) => void;
-    onKeyPress?: (e: any) => void;
     wrapperStyle?: object;
     overlayStyle?: object;
     inputStyle?: object;
@@ -25,7 +26,6 @@ export interface MarkdownInputBaseProps extends TextInputProps {
 export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
     value,
     onChangeText,
-    onKeyPress,
     placeholder,
     wrapperStyle,
     overlayStyle,
@@ -34,8 +34,10 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
     ...rest
 }) => {
     const overlayScrollRef = useRef<ScrollView>(null);
+    // <-- Create a ref for the EmojiPicker
+    const emojiPickerRef = useRef<EmojiPickerHandle>(null);
 
-    // Sync scroll position for multiline and single-line modes.
+    // Scroll syncing functions remain unchanged
     const handleVerticalScroll = (
         e: NativeSyntheticEvent<TextInputScrollEventData> & { nativeEvent: any }
     ) => {
@@ -50,6 +52,11 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
         const offsetX =
             e.nativeEvent.contentOffset?.x ?? e.nativeEvent.target?.scrollLeft;
         overlayScrollRef.current?.scrollTo({ x: offsetX, animated: false });
+    };
+
+    // Delegate key events to the EmojiPicker
+    const handleKeyPressInternal = (e: any) => {
+        emojiPickerRef.current?.handleKeyDown(e);
     };
 
     return (
@@ -73,9 +80,18 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
                 onScroll={
                     multiline ? handleVerticalScroll : handleHorizontalScroll
                 }
-                {...(Platform.OS === 'web' && { onKeyPress })}
+                // Use our internal key press handler
+                {...(Platform.OS === 'web'
+                    ? { onKeyPress: handleKeyPressInternal }
+                    : { onKeyPress: handleKeyPressInternal })}
                 scrollEventThrottle={16}
                 {...rest}
+            />
+            {/* Render the EmojiPicker here so it overlays the text input */}
+            <EmojiPicker
+                ref={emojiPickerRef}
+                messageText={value}
+                setMessageText={onChangeText}
             />
         </View>
     );

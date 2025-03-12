@@ -289,6 +289,9 @@ const styles = StyleSheet.create({
         marginRight: 10,
         padding: 8,
         backgroundColor: COLORS.SecondaryBackground,
+        borderRadius: 5,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     gifButton: {
         marginHorizontal: 10,

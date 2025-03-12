@@ -10,6 +10,7 @@ import { Image as ExpoImage } from 'expo-image';
 import { useNavigation } from '@react-navigation/core';
 import { useQuery } from '@apollo/client';
 
+import { More } from '../icons';
 import { GET_FRIENDS_QUERY } from '../queries';
 import { COLORS } from '../constants';
 import { useAppSelector, RootState, UserType } from '../redux';
@@ -85,7 +86,7 @@ export const FriendsScreen = () => {
                     </Text>
                 </View>
                 <View style={styles.friendAction}>
-                    <Text style={{ color: COLORS.White }}>...</Text>
+                    <More />
                 </View>
             </View>
         );
@@ -140,7 +141,6 @@ export const FriendsScreen = () => {
                         </Text>
                     </TouchableOpacity>
                     <Text style={styles.tabItem}>Pending</Text>
-                    <Text style={styles.tabItem}>Requests</Text>
                 </View>
                 <TouchableOpacity
                     style={styles.addFriendButton}

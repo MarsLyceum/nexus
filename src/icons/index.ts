@@ -14,6 +14,7 @@ export * from './LocationPin';
 export * from './Lock';
 export * from './MatchingIcon';
 export * from './MessagesIcon';
+export * from './More';
 export * from './PeepsBirdSimplified';
 export * from './Phone';
 export * from './Settings';

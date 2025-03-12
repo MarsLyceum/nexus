@@ -6,63 +6,77 @@ import {
     FlatList,
     TouchableOpacity,
     StyleSheet,
+    ActivityIndicator,
     Image,
     useWindowDimensions,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/core';
+import { useQuery } from '@apollo/client';
 
+import { useAppSelector, RootState, UserType } from '../redux';
 import { COLORS } from '../constants';
 import { BackArrow } from '../buttons';
-
-// Example dataset for available friends
-const availableFriends = [
-    {
-        id: '1',
-        username: 'alex',
-        email: 'alex@example.com',
-        avatarUrl: 'https://picsum.photos/seed/alex/40',
-    },
-    {
-        id: '2',
-        username: 'moth',
-        email: 'moth@example.com',
-        avatarUrl: 'https://picsum.photos/seed/moth/40',
-    },
-    {
-        id: '3',
-        username: 'geno',
-        email: 'geno@example.com',
-        avatarUrl: 'https://picsum.photos/seed/geno/40',
-    },
-    // ... add more friend objects as needed
-];
+import { SEARCH_FOR_USERS_QUERY, GET_FRIENDS_QUERY } from '../queries'; // Adjust paths as needed
 
 export const AddFriendsScreen = () => {
+    // State for the text input and the actual search query
+    const [inputText, setInputText] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
     const navigation = useNavigation();
     const { width } = useWindowDimensions();
     const isLargeScreen = width > 768;
 
-    // Filter available friends by matching username or email (case-insensitive)
-    const filteredFriends = availableFriends.filter((friend) => {
-        const lowerQuery = searchQuery.toLowerCase();
-        return (
-            friend.username.toLowerCase().includes(lowerQuery) ||
-            friend.email.toLowerCase().includes(lowerQuery)
-        );
+    const user: UserType = useAppSelector(
+        (state: RootState) => state.user.user
+    );
+
+    // Query to fetch users based on the searchQuery state
+    const {
+        data: searchData,
+        loading: searchLoading,
+        error: searchError,
+    } = useQuery(SEARCH_FOR_USERS_QUERY, {
+        variables: { searchQuery },
+        skip: searchQuery.trim() === '',
     });
 
-    // Render a single friend item
+    // Query to fetch current user's friends list
+    const {
+        data: friendsData,
+        loading: friendsLoading,
+        error: friendsError,
+    } = useQuery(GET_FRIENDS_QUERY, {
+        variables: { userId: user?.id },
+    });
+
+    // Extract search results and friends list
+    const searchResults = searchData ? searchData.searchForUsers : [];
+    const friendIds = new Set(
+        friendsData ? friendsData.getFriends.map((item) => item.friend.id) : []
+    );
+
+    // Render a single search result item
     const renderFriendItem = ({ item }) => (
         <View style={styles.friendItem}>
-            <Image source={{ uri: item.avatarUrl }} style={styles.avatar} />
+            <Image
+                source={{
+                    uri: `https://picsum.photos/seed/${item.username}/40`,
+                }}
+                style={styles.avatar}
+            />
             <View style={styles.friendInfo}>
                 <Text style={styles.friendName}>{item.username}</Text>
+                <Text style={styles.friendFullName}>
+                    {item.firstName} {item.lastName}
+                </Text>
                 <Text style={styles.friendEmail}>{item.email}</Text>
             </View>
-            <TouchableOpacity style={styles.addButton}>
-                <Text style={styles.addButtonText}>Add</Text>
-            </TouchableOpacity>
+            {/* Only show the add button if this user is not already a friend and is not the logged-in user */}
+            {!friendIds.has(item.id) && item.id !== user?.id && (
+                <TouchableOpacity style={styles.addButton}>
+                    <Text style={styles.addButtonText}>Add</Text>
+                </TouchableOpacity>
+            )}
         </View>
     );
 
@@ -76,13 +90,31 @@ export const AddFriendsScreen = () => {
             </View>
             <TextInput
                 style={styles.searchBox}
-                placeholder="Search by email or username"
-                placeholderTextColor="#AAAAAA"
-                value={searchQuery}
-                onChangeText={setSearchQuery}
+                placeholder="Search for user"
+                placeholderTextColor={COLORS.InactiveText}
+                value={inputText}
+                onChangeText={setInputText}
+                // Trigger search on pressing enter
+                onSubmitEditing={() => setSearchQuery(inputText)}
+                autoComplete="off"
+                textContentType="none"
+                data-lpignore="true"
+                importantForAutofill="no"
             />
+            {(searchLoading || friendsLoading) && (
+                <ActivityIndicator
+                    size="large"
+                    color={COLORS.Primary}
+                    style={{ marginVertical: 16 }}
+                />
+            )}
+            {(searchError || friendsError) && (
+                <Text style={{ color: 'red', marginVertical: 16 }}>
+                    Error fetching data.
+                </Text>
+            )}
             <FlatList
-                data={filteredFriends}
+                data={searchResults}
                 keyExtractor={(item) => item.id}
                 renderItem={renderFriendItem}
                 contentContainerStyle={styles.listContainer}
@@ -129,6 +161,10 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         fontFamily: 'Roboto_700Bold',
         fontSize: 16,
+    },
+    friendFullName: {
+        color: COLORS.White,
+        fontSize: 14,
     },
     friendEmail: {
         color: COLORS.InactiveText,

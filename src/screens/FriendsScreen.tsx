@@ -8,61 +8,33 @@ import {
 } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { useNavigation } from '@react-navigation/core';
+import { useQuery } from '@apollo/client';
+
+import { GET_FRIENDS_QUERY } from '../queries';
 import { COLORS } from '../constants';
+import { useAppSelector, RootState, UserType } from '../redux';
 import { AddFriendsScreen } from './AddFriendsScreen';
 
-const friendsData = [
-    {
-        id: '1',
-        name: 'Alex Spills The Beans',
-        status: 'Online',
-        avatarUrl: 'https://picsum.photos/seed/alex/40',
-    },
-    {
-        id: '2',
-        name: 'AngryFluffyMoth',
-        status: 'Online',
-        avatarUrl: 'https://picsum.photos/seed/moth/40',
-    },
-    {
-        id: '3',
-        name: 'Geno',
-        status: 'Online',
-        avatarUrl: 'https://picsum.photos/seed/geno/40',
-    },
-    {
-        id: '4',
-        name: 'grumpygoblinwizard',
-        status: 'Idle',
-        avatarUrl: 'https://picsum.photos/seed/grumpygoblinwizard/40',
-    },
-    {
-        id: '5',
-        name: 'CaptCrunch',
-        status: 'Offline',
-        avatarUrl: 'https://picsum.photos/seed/CaptCrunch/40',
-    },
-    // ... more friends
-];
-
-const getDotColor = (status: string) => {
-    switch (status.toLowerCase()) {
+const getDotColor = (status?: string) => {
+    const currentStatus = status ? status.toLowerCase() : 'online';
+    switch (currentStatus) {
         case 'online': {
             return '#43B581';
-        } // green
+        }
         case 'idle': {
             return '#FAA61A';
-        } // orange
+        }
         case 'dnd':
         case 'do not disturb': {
             return '#F04747';
-        } // red
+        }
         default: {
             return '#B9BBBE';
-        } // default grey
+        }
     }
 };
-const getStatusStyle = (status: string) => ({ color: getDotColor(status) });
+
+const getStatusStyle = (status?: string) => ({ color: getDotColor(status) });
 
 export const FriendsScreen = () => {
     const [activeTab, setActiveTab] = useState('Online');
@@ -70,15 +42,33 @@ export const FriendsScreen = () => {
     const { width } = useWindowDimensions();
     const isLargeScreen = width > 768;
 
+    const user: UserType = useAppSelector(
+        (state: RootState) => state.user.user
+    );
+
+    const { data, loading, error } = useQuery(GET_FRIENDS_QUERY, {
+        variables: { userId: user?.id },
+    });
+
+    // Dummy skeleton data for rendering
+    const skeletonData = Array.from({ length: 5 }).map((_, i) => ({
+        id: `skeleton-${i}`,
+    }));
+
     const renderFriendItem = ({ item }) => {
-        const dotColor = getDotColor(item.status);
+        const { friend } = item;
+        // Use friend.status, defaulting to "Online" if missing
+        const status = friend.status || 'Online';
+        const dotColor = getDotColor(status);
+        // Use username for display
+        const friendName = friend.username;
+        const avatarUrl = `https://picsum.photos/seed/${friend.username}/40`;
 
         return (
             <View style={styles.friendItem}>
                 <View style={styles.avatarAndDot}>
-                    {/* Left side: avatar */}
                     <ExpoImage
-                        source={{ uri: item.avatarUrl }} // or a local asset
+                        source={{ uri: avatarUrl }}
                         style={styles.avatar}
                     />
                     <View
@@ -88,48 +78,51 @@ export const FriendsScreen = () => {
                         ]}
                     />
                 </View>
-
-                {/* Middle: name + status */}
                 <View style={styles.friendDetails}>
-                    <Text style={styles.friendName}>{item.name}</Text>
-                    <Text
-                        style={[
-                            styles.friendStatus,
-                            getStatusStyle(item.status),
-                        ]}
-                    >
-                        {item.status}
+                    <Text style={styles.friendName}>{friendName}</Text>
+                    <Text style={[styles.friendStatus, getStatusStyle(status)]}>
+                        {status}
                     </Text>
                 </View>
-
-                {/* Right side: could be a switch, icon, or a "..." button */}
                 <View style={styles.friendAction}>
-                    {/* Example placeholder text or an icon */}
-                    <Text style={{ color: '#FFF' }}>...</Text>
+                    <Text style={{ color: COLORS.White }}>...</Text>
                 </View>
             </View>
         );
     };
 
-    const filteredFriends =
-        activeTab === 'Online'
-            ? friendsData.filter(
-                  (friend) => friend.status.toLowerCase() !== 'offline'
-              )
-            : friendsData;
+    const renderSkeletonItem = ({ item }) => {
+        return (
+            <View style={styles.skeletonFriendItem}>
+                <View style={styles.skeletonAvatarAndDot}>
+                    <View style={styles.skeletonAvatar} />
+                    <View style={styles.skeletonStatusDot} />
+                </View>
+                <View style={styles.skeletonDetails}>
+                    <View style={styles.skeletonNameLine} />
+                    <View style={styles.skeletonStatusLine} />
+                </View>
+                <View style={styles.skeletonAction} />
+            </View>
+        );
+    };
+
+    // Filter based on friend.status, defaulting to "Online" if missing
+    const friendsList = data?.getFriends || [];
+    const filteredFriends = friendsList.filter(
+        (item: { friend: any }) =>
+            (item.friend.status || 'Online').toLowerCase() !== 'offline'
+    );
 
     return (
         <View style={styles.container}>
             {/* Header Section */}
-            {/* @ts-expect-error  web only type */}
             <View style={styles.header}>
-                {/* @ts-expect-error  web only type */}
                 <View style={styles.tabsContainer}>
                     <TouchableOpacity onPress={() => setActiveTab('Online')}>
                         <Text
                             style={[
                                 styles.tabItem,
-                                // @ts-expect-error web only type
                                 activeTab === 'Online' && styles.activeTab,
                             ]}
                         >
@@ -140,7 +133,6 @@ export const FriendsScreen = () => {
                         <Text
                             style={[
                                 styles.tabItem,
-                                // @ts-expect-error web only type
                                 activeTab === 'All' && styles.activeTab,
                             ]}
                         >
@@ -165,14 +157,15 @@ export const FriendsScreen = () => {
             </View>
 
             {activeTab === 'AddFriends' ? (
-                isLargeScreen &&
-                activeTab === 'AddFriends' && <AddFriendsScreen />
+                isLargeScreen && <AddFriendsScreen />
             ) : (
                 <View style={styles.friendsListArea}>
                     <FlatList
-                        data={filteredFriends}
+                        data={loading ? skeletonData : filteredFriends}
                         keyExtractor={(item) => item.id}
-                        renderItem={renderFriendItem}
+                        renderItem={
+                            loading ? renderSkeletonItem : renderFriendItem
+                        }
                     />
                 </View>
             )}
@@ -183,7 +176,7 @@ export const FriendsScreen = () => {
 const styles = {
     container: {
         flex: 1,
-        backgroundColor: COLORS.SecondaryBackground, // Discord-like dark background
+        backgroundColor: COLORS.SecondaryBackground,
     },
     header: {
         flexDirection: 'row',
@@ -219,16 +212,6 @@ const styles = {
         flex: 1,
         padding: 8,
     },
-    friendName: {
-        fontWeight: 'bold',
-        fontFamily: 'Roboto_700Bold',
-        color: COLORS.White,
-        marginBottom: 4,
-    },
-    friendStatus: {
-        color: COLORS.InactiveText,
-        fontSize: 12,
-    },
     friendItem: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -237,21 +220,14 @@ const styles = {
         borderRadius: 4,
         padding: 12,
     },
+    avatarAndDot: {
+        position: 'relative',
+        marginRight: 8,
+    },
     avatar: {
         width: 32,
         height: 32,
-        borderRadius: 16, // circular
-        marginRight: 8,
-    },
-    friendDetails: {
-        flex: 1, // so it expands and pushes friendAction to the right
-        justifyContent: 'center',
-    },
-    friendAction: {
-        marginLeft: 8,
-    },
-    avatarAndDot: {
-        position: 'relative',
+        borderRadius: 16,
         marginRight: 8,
     },
     statusDot: {
@@ -262,6 +238,78 @@ const styles = {
         height: 15,
         borderRadius: 7,
         borderWidth: 2,
-        borderColor: COLORS.SecondaryBackground, // matches background
+        borderColor: COLORS.SecondaryBackground,
+    },
+    friendDetails: {
+        flex: 1,
+        justifyContent: 'center',
+    },
+    friendName: {
+        fontWeight: 'bold',
+        fontFamily: 'Roboto_700Bold',
+        color: COLORS.White,
+        marginBottom: 4,
+    },
+    friendStatus: {
+        color: COLORS.InactiveText,
+        fontSize: 12,
+    },
+    friendAction: {
+        marginLeft: 8,
+    },
+    // Skeleton styles (mimicking the real friend item)
+    skeletonFriendItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: COLORS.SecondaryBackground,
+        marginVertical: 4,
+        borderRadius: 4,
+        padding: 12,
+    },
+    skeletonAvatarAndDot: {
+        position: 'relative',
+        marginRight: 8,
+    },
+    skeletonAvatar: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: COLORS.TextInput,
+        marginRight: 8,
+    },
+    skeletonStatusDot: {
+        position: 'absolute',
+        bottom: 0,
+        right: 5,
+        width: 15,
+        height: 15,
+        borderRadius: 7,
+        borderWidth: 2,
+        borderColor: COLORS.SecondaryBackground,
+        backgroundColor: COLORS.InactiveText,
+    },
+    skeletonDetails: {
+        flex: 1,
+        justifyContent: 'center',
+    },
+    skeletonNameLine: {
+        height: 12,
+        width: '30%', // reduced width to mimic shorter text
+        backgroundColor: COLORS.InactiveText,
+        borderRadius: 4,
+        marginBottom: 4,
+    },
+    skeletonStatusLine: {
+        height: 10,
+        width: '20%', // reduced width to mimic shorter text
+        backgroundColor: COLORS.InactiveText,
+        borderRadius: 4,
+    },
+    skeletonAction: {
+        width: 20,
+        height: 20,
+        backgroundColor: COLORS.TextInput,
+        borderRadius: 4,
+        marginLeft: 8,
     },
 };

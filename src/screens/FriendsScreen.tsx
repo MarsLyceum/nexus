@@ -29,7 +29,7 @@ export const FriendsScreen: React.FC = () => {
     // Tab and dropdown state.
     const [activeTab, setActiveTab] = useState<string>('Online');
     const [dropdownVisible, setDropdownVisible] = useState<boolean>(false);
-    // Now we store the raw measured rectangle from the More button.
+    // Measured rectangle from the More button.
     const [dropdownRawRect, setDropdownRawRect] = useState<RawRect | null>(
         null
     );
@@ -48,23 +48,22 @@ export const FriendsScreen: React.FC = () => {
     });
 
     // Dummy skeleton data for loading.
+    // We include a main status ("accepted") so filtering works consistently.
     const skeletonData: FriendItemData[] = Array.from({ length: 5 }).map(
         (_, i) => ({
             id: `skeleton-${i}`,
-            friend: { username: 'Loading...', status: 'Online' },
+            status: 'accepted',
+            friend: { username: 'Loading...', status: 'online' },
         })
     );
 
     const handleConfirmRemoveFriend = () => {
-        console.log('Remove Friend pressed for', friendToRemove?.username);
         setRemoveFriendModalVisible(false);
         setFriendToRemove(null);
     };
 
     // When More is pressed, store the measured rect.
     const handleMorePress = (friend: Friend, measuredRect: RawRect) => {
-        // For debugging, you can log the measuredRect:
-        console.log('Measured Rect:', measuredRect);
         setDropdownRawRect(measuredRect);
         setDropdownFriend(friend);
         setDropdownVisible(true);
@@ -88,9 +87,35 @@ export const FriendsScreen: React.FC = () => {
     );
 
     const friendsList: FriendItemData[] = data?.getFriends || [];
-    const filteredFriends = friendsList.filter(
-        (item) => (item.friend.status || 'Online').toLowerCase() !== 'offline'
-    );
+
+    // Compute pending requests count using the main status.
+    const pendingCount = friendsList.filter(
+        (item) => (item.status?.toLowerCase() || '') === 'pending'
+    ).length;
+
+    // Filtering logic based on activeTab.
+    let filteredFriends: FriendItemData[] = [];
+    if (activeTab === 'Online') {
+        // Only accepted friends (main status) that are online (friend status).
+        filteredFriends = friendsList.filter((item) => {
+            const isAccepted =
+                (item.status?.toLowerCase() || '') === 'accepted';
+            // Default online status to 'online' if missing.
+            const isOnline =
+                (item.friend.status?.toLowerCase() || 'online') === 'online';
+            return isAccepted && isOnline;
+        });
+    } else if (activeTab === 'All') {
+        // All accepted friends (main status), regardless of their online status.
+        filteredFriends = friendsList.filter(
+            (item) => (item.status?.toLowerCase() || '') === 'accepted'
+        );
+    } else if (activeTab === 'Pending') {
+        // Only pending friend requests (main status).
+        filteredFriends = friendsList.filter(
+            (item) => (item.status?.toLowerCase() || '') === 'pending'
+        );
+    }
 
     return (
         <View style={styles.container}>
@@ -116,7 +141,16 @@ export const FriendsScreen: React.FC = () => {
                         All
                     </Text>
                 </Pressable>
-                <Text style={styles.tabItem}>Pending</Text>
+                <Pressable onPress={() => setActiveTab('Pending')}>
+                    <Text
+                        style={[
+                            styles.tabItem,
+                            activeTab === 'Pending' && styles.activeTab,
+                        ]}
+                    >
+                        Pending {pendingCount > 0 ? `(${pendingCount})` : ''}
+                    </Text>
+                </Pressable>
                 <Pressable
                     style={styles.addFriendButton}
                     onPress={() => {
@@ -157,15 +191,8 @@ export const FriendsScreen: React.FC = () => {
                         onDismiss={() => setDropdownVisible(false)}
                     >
                         <Pressable
-                            style={({ hovered }) => [
-                                styles.dropdownMenuItem,
-                                hovered &&
-                                    Platform.OS === 'web' && {
-                                        cursor: 'pointer',
-                                    },
-                            ]}
+                            style={styles.dropdownMenuItem}
                             onPress={() => {
-                                console.log('Remove Friend tapped');
                                 setFriendToRemove(dropdownFriend);
                                 setRemoveFriendModalVisible(true);
                                 setDropdownVisible(false);

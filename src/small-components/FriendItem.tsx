@@ -1,18 +1,9 @@
 import React, { useRef } from 'react';
-import {
-    View,
-    Text,
-    Pressable,
-    Platform,
-    StyleSheet,
-    View as RNView,
-} from 'react-native';
+import { View, Text, StyleSheet, View as RNView } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
-import { useMutation } from '@apollo/client';
 import { More, Checkmark, Cancel } from '../icons';
 import { COLORS } from '../constants';
-import { NexusTooltip } from './NexusTooltip';
-import { ACCEPT_FRIEND_REQUEST, REMOVE_FRIEND } from '../queries';
+import { ActionButton } from './ActionButton';
 
 export type Friend = {
     username: string;
@@ -117,7 +108,6 @@ export const FriendItem: React.FC<FriendItemProps> = ({
     const dotColor = getDotColor(statusForDot);
     const avatarUrl = `https://picsum.photos/seed/${friend.username}/40`;
 
-    // If onAccept or onReject are provided via props, use them in the pending actions.
     return (
         <View style={styles.friendItem}>
             {/* Avatar + (optional) Status Dot */}
@@ -142,44 +132,24 @@ export const FriendItem: React.FC<FriendItemProps> = ({
             {/* If pending and NOT requested by me, show accept & ignore actions */}
             {isPending && !isRequestedByMe ? (
                 <View style={styles.pendingActions}>
-                    <NexusTooltip tooltipText="Accept">
-                        <Pressable
-                            onPress={() => {
-                                if (onAccept) {
-                                    onAccept();
-                                }
-                            }}
-                            style={({ hovered }) => [
-                                styles.iconButton,
-                                hovered &&
-                                    Platform.OS === 'web' && { opacity: 0.7 },
-                            ]}
-                        >
-                            <Checkmark />
-                        </Pressable>
-                    </NexusTooltip>
-                    <NexusTooltip tooltipText="Ignore">
-                        <Pressable
-                            onPress={() => {
-                                if (onReject) {
-                                    onReject();
-                                }
-                            }}
-                            style={({ hovered }) => [
-                                styles.iconButton,
-                                hovered &&
-                                    Platform.OS === 'web' && { opacity: 0.9 },
-                            ]}
-                        >
-                            <Cancel />
-                        </Pressable>
-                    </NexusTooltip>
+                    <ActionButton
+                        onPress={() => onAccept && onAccept()}
+                        tooltipText="Accept"
+                    >
+                        <Checkmark />
+                    </ActionButton>
+                    <ActionButton
+                        onPress={() => onReject && onReject()}
+                        tooltipText="Ignore"
+                    >
+                        <Cancel />
+                    </ActionButton>
                 </View>
             ) : (
                 // For accepted friends or outgoing requests
                 <View style={styles.friendAction}>
                     <View ref={moreButtonContainerRef}>
-                        <Pressable
+                        <ActionButton
                             onPress={() => {
                                 if (
                                     moreButtonContainerRef.current &&
@@ -202,16 +172,10 @@ export const FriendItem: React.FC<FriendItemProps> = ({
                                     );
                                 }
                             }}
-                            style={({ hovered }) => [
-                                styles.moreButton,
-                                hovered &&
-                                    Platform.OS === 'web' && {
-                                        cursor: 'pointer',
-                                    },
-                            ]}
+                            tooltipText="More"
                         >
                             <More />
-                        </Pressable>
+                        </ActionButton>
                     </View>
                 </View>
             )}
@@ -266,21 +230,9 @@ const styles = StyleSheet.create({
         marginLeft: 8,
         position: 'relative',
     },
-    moreButton: {
-        padding: 4,
-    },
     pendingActions: {
         flexDirection: 'row',
         alignItems: 'center',
         marginLeft: 8,
-    },
-    iconButton: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        backgroundColor: COLORS.AppBackground,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 8,
     },
 });

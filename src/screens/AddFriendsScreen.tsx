@@ -11,15 +11,19 @@ import {
     useWindowDimensions,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/core';
-import { useQuery } from '@apollo/client';
+import { useQuery, useMutation } from '@apollo/client';
 
 import { useAppSelector, RootState, UserType } from '../redux';
 import { COLORS } from '../constants';
 import { BackArrow } from '../buttons';
-import { SEARCH_FOR_USERS_QUERY, GET_FRIENDS_QUERY } from '../queries'; // Adjust paths as needed
+import {
+    SEARCH_FOR_USERS_QUERY,
+    GET_FRIENDS_QUERY,
+    SEND_FRIEND_REQUEST,
+} from '../queries';
 
 export const AddFriendsScreen = () => {
-    // State for the text input and the actual search query
+    // State for the text input and the actual search query.
     const [inputText, setInputText] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
     const navigation = useNavigation();
@@ -30,7 +34,7 @@ export const AddFriendsScreen = () => {
         (state: RootState) => state.user.user
     );
 
-    // Query to fetch users based on the searchQuery state
+    // Query to fetch users based on the searchQuery state.
     const {
         data: searchData,
         loading: searchLoading,
@@ -40,7 +44,7 @@ export const AddFriendsScreen = () => {
         skip: searchQuery.trim() === '',
     });
 
-    // Query to fetch current user's friends list
+    // Query to fetch current user's friends list.
     const {
         data: friendsData,
         loading: friendsLoading,
@@ -49,14 +53,37 @@ export const AddFriendsScreen = () => {
         variables: { userId: user?.id },
     });
 
-    // Extract search results and friends list
+    // Mutation to send a friend request.
+    const [
+        sendFriendRequest,
+        { loading: sendRequestLoading, error: sendRequestError },
+    ] = useMutation(SEND_FRIEND_REQUEST, {
+        refetchQueries: [
+            { query: GET_FRIENDS_QUERY, variables: { userId: user?.id } },
+        ],
+    });
+
+    // Extract search results and friend IDs.
     const searchResults = searchData ? searchData.searchForUsers : [];
     const friendIds = new Set(
-        friendsData ? friendsData.getFriends.map((item) => item.friend.id) : []
+        friendsData
+            ? friendsData.getFriends.map((item: any) => item.friend.id)
+            : []
     );
 
-    // Render a single search result item
-    const renderFriendItem = ({ item }) => (
+    // Function to handle adding a friend.
+    const handleAddFriend = async (friendUserId: string) => {
+        try {
+            await sendFriendRequest({
+                variables: { userId: user?.id, friendUserId },
+            });
+        } catch (error) {
+            console.error('Error sending friend request:', error);
+        }
+    };
+
+    // Render a single search result item.
+    const renderFriendItem = ({ item }: { item: any }) => (
         <View style={styles.friendItem}>
             <Image
                 source={{
@@ -70,10 +97,16 @@ export const AddFriendsScreen = () => {
                     {item.firstName} {item.lastName}
                 </Text>
             </View>
-            {/* Only show the add button if this user is not already a friend and is not the logged-in user */}
+            {/* Show the Add Friend button only if this user is not already a friend and is not the logged-in user */}
             {!friendIds.has(item.id) && item.id !== user?.id && (
-                <TouchableOpacity style={styles.addButton}>
-                    <Text style={styles.addButtonText}>Add Friend</Text>
+                <TouchableOpacity
+                    style={styles.addButton}
+                    onPress={() => handleAddFriend(item.id)}
+                    disabled={sendRequestLoading}
+                >
+                    <Text style={styles.addButtonText}>
+                        {sendRequestLoading ? 'Sending...' : 'Add Friend'}
+                    </Text>
                 </TouchableOpacity>
             )}
         </View>
@@ -107,7 +140,7 @@ export const AddFriendsScreen = () => {
                     style={{ marginVertical: 16 }}
                 />
             )}
-            {(searchError || friendsError) && (
+            {(searchError || friendsError || sendRequestError) && (
                 <Text style={{ color: 'red', marginVertical: 16 }}>
                     Error fetching data.
                 </Text>
@@ -163,10 +196,6 @@ const styles = StyleSheet.create({
     },
     friendFullName: {
         color: COLORS.White,
-        fontSize: 14,
-    },
-    friendEmail: {
-        color: COLORS.InactiveText,
         fontSize: 14,
     },
     addButton: {

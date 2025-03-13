@@ -166,9 +166,9 @@ export const DMListScreen: React.FC<DMListScreenProps> = ({ navigation }) => {
                                 source={{ uri: item.avatar }}
                                 // Ensure the path to your default avatar is correct
                                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, global-require, unicorn/prefer-module
-                                defaultSource={require('../../assets/default-avatar.png')}
+                                placeholder={require('../../assets/default-avatar.png')}
                                 style={styles.avatar}
-                                resizeMode="cover"
+                                contentFit="cover"
                             />
                             <View>
                                 <Text style={styles.userName}>{item.name}</Text>

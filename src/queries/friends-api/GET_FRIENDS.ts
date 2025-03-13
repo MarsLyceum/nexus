@@ -13,6 +13,14 @@ export const GET_FRIENDS_QUERY = gql`
                 lastName
                 phoneNumber
             }
+            requestedBy {
+                id
+                email
+                username
+                firstName
+                lastName
+                phoneNumber
+            }
         }
     }
 `;

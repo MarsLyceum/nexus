@@ -56,7 +56,7 @@ export const GroupButton = ({
                 <ExpoImage
                     source={imageSource}
                     style={styles.image}
-                    resizeMode="cover" // Ensures the image fills the entire rectangle
+                    contentFit="cover" // Ensures the image fills the entire rectangle
                 />
             </View>
         </View>

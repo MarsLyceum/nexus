@@ -229,7 +229,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
                         <ExpoImage
                             source={{ uri: selectedAttachment.previewUri }}
                             style={styles.previewModalImage}
-                            resizeMode="contain"
+                            contentFit="contain"
                         />
                     </TouchableOpacity>
                 </CustomPortalModal>

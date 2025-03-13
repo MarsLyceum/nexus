@@ -5,12 +5,11 @@ import {
     FlatList,
     useWindowDimensions,
     Pressable,
-    Platform,
     StyleSheet,
     Modal,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/core';
-import { useQuery } from '@apollo/client';
+import { useQuery, useMutation } from '@apollo/client';
 
 import {
     FriendItem,
@@ -20,23 +19,31 @@ import {
     RawRect,
     ConfirmRemoveFriendModal,
 } from '../small-components';
-import { GET_FRIENDS_QUERY } from '../queries';
+import {
+    GET_FRIENDS_QUERY,
+    REMOVE_FRIEND,
+    ACCEPT_FRIEND_REQUEST,
+} from '../queries';
 import { COLORS } from '../constants';
 import { useAppSelector, RootState } from '../redux';
 import { AddFriendsScreen } from './AddFriendsScreen';
+
+type RemoveFriendData = {
+    connectionId: string;
+    friend: Friend;
+};
 
 export const FriendsScreen: React.FC = () => {
     // Tab and dropdown state.
     const [activeTab, setActiveTab] = useState<string>('Online');
     const [dropdownVisible, setDropdownVisible] = useState<boolean>(false);
-    // Measured rectangle from the More button.
     const [dropdownRawRect, setDropdownRawRect] = useState<RawRect | null>(
         null
     );
-    const [dropdownFriend, setDropdownFriend] = useState<Friend | null>(null);
+    const [friendToRemove, setFriendToRemove] =
+        useState<RemoveFriendData | null>(null);
     const [removeFriendModalVisible, setRemoveFriendModalVisible] =
         useState<boolean>(false);
-    const [friendToRemove, setFriendToRemove] = useState<Friend | null>(null);
 
     const navigation = useNavigation();
     const { width: windowWidth } = useWindowDimensions();
@@ -47,32 +54,102 @@ export const FriendsScreen: React.FC = () => {
         variables: { userId: user?.id },
     });
 
+    const [removeFriendMutation] = useMutation(REMOVE_FRIEND, {
+        refetchQueries: [
+            { query: GET_FRIENDS_QUERY, variables: { userId: user?.id } },
+        ],
+    });
+
+    const [acceptFriendMutation] = useMutation(ACCEPT_FRIEND_REQUEST, {
+        refetchQueries: [
+            { query: GET_FRIENDS_QUERY, variables: { userId: user?.id } },
+        ],
+    });
+
     // Dummy skeleton data for loading.
-    // We include a main status ("accepted") so filtering works consistently.
     const skeletonData: FriendItemData[] = Array.from({ length: 5 }).map(
         (_, i) => ({
             id: `skeleton-${i}`,
             status: 'accepted',
             friend: { username: 'Loading...', status: 'online' },
+            requestedBy: null,
         })
     );
 
-    const handleConfirmRemoveFriend = () => {
-        setRemoveFriendModalVisible(false);
-        setFriendToRemove(null);
+    // Remove friend callback (used for accepted friends).
+    const handleConfirmRemoveFriend = async () => {
+        if (!friendToRemove) return;
+        try {
+            await removeFriendMutation({
+                variables: { friendId: friendToRemove.connectionId },
+            });
+        } catch (err) {
+            console.error('Error removing friend:', err);
+        } finally {
+            setRemoveFriendModalVisible(false);
+            setFriendToRemove(null);
+        }
     };
 
-    // When More is pressed, store the measured rect.
-    const handleMorePress = (friend: Friend, measuredRect: RawRect) => {
+    // When More is pressed for an accepted friend.
+    const handleMorePress = (
+        item: FriendItemData,
+        measuredRect: { x: number; y: number; width: number; height: number }
+    ) => {
         setDropdownRawRect(measuredRect);
-        setDropdownFriend(friend);
+        setFriendToRemove({ connectionId: item.id, friend: item.friend });
         setDropdownVisible(true);
     };
 
-    const renderFriendItem = ({ item }: { item: FriendItemData }) => (
-        <FriendItem item={item} onMorePress={handleMorePress} />
-    );
+    // Accept a pending friend request (only relevant if it's incoming).
+    const handleAcceptFriend = async (item: FriendItemData) => {
+        try {
+            await acceptFriendMutation({
+                variables: { friendId: item.id },
+            });
+        } catch (err) {
+            console.error('Error accepting friend request:', err);
+        }
+    };
 
+    // Reject a pending friend request (only relevant if it's incoming).
+    const handleRejectFriend = async (item: FriendItemData) => {
+        console.log('Rejected friend request:', item);
+        try {
+            await removeFriendMutation({
+                variables: { friendId: item.id },
+            });
+        } catch (err) {
+            console.error('Error rejecting friend request:', err);
+        }
+    };
+
+    // Render function for each friend item.
+    const renderFriendItem = ({ item }: { item: FriendItemData }) => {
+        if ((item.status?.toLowerCase() || '') === 'pending') {
+            // Pass current user id, accept, and reject handlers
+            return (
+                <FriendItem
+                    item={item}
+                    currentUserId={user?.id}
+                    onAccept={() => handleAcceptFriend(item)}
+                    onReject={() => handleRejectFriend(item)}
+                />
+            );
+        }
+        // Otherwise, show the normal friend item with the "more" button.
+        return (
+            <FriendItem
+                item={item}
+                currentUserId={user?.id}
+                onMorePress={(_ignored, measuredRect) =>
+                    handleMorePress(item, measuredRect)
+                }
+            />
+        );
+    };
+
+    // Skeleton item placeholder (loading state).
     const renderSkeletonItem = () => (
         <View style={styles.skeletonFriendItem}>
             <View style={styles.skeletonAvatarAndDot}>
@@ -87,31 +164,25 @@ export const FriendsScreen: React.FC = () => {
     );
 
     const friendsList: FriendItemData[] = data?.getFriends || [];
-
-    // Compute pending requests count using the main status.
     const pendingCount = friendsList.filter(
         (item) => (item.status?.toLowerCase() || '') === 'pending'
     ).length;
 
-    // Filtering logic based on activeTab.
+    // Filter logic based on the active tab.
     let filteredFriends: FriendItemData[] = [];
     if (activeTab === 'Online') {
-        // Only accepted friends (main status) that are online (friend status).
         filteredFriends = friendsList.filter((item) => {
             const isAccepted =
                 (item.status?.toLowerCase() || '') === 'accepted';
-            // Default online status to 'online' if missing.
             const isOnline =
                 (item.friend.status?.toLowerCase() || 'online') === 'online';
             return isAccepted && isOnline;
         });
     } else if (activeTab === 'All') {
-        // All accepted friends (main status), regardless of their online status.
         filteredFriends = friendsList.filter(
             (item) => (item.status?.toLowerCase() || '') === 'accepted'
         );
     } else if (activeTab === 'Pending') {
-        // Only pending friend requests (main status).
         filteredFriends = friendsList.filter(
             (item) => (item.status?.toLowerCase() || '') === 'pending'
         );
@@ -179,6 +250,7 @@ export const FriendsScreen: React.FC = () => {
                 </View>
             )}
 
+            {/* Dropdown for the "more" button */}
             {dropdownVisible && dropdownRawRect && (
                 <Modal
                     transparent={true}
@@ -193,7 +265,6 @@ export const FriendsScreen: React.FC = () => {
                         <Pressable
                             style={styles.dropdownMenuItem}
                             onPress={() => {
-                                setFriendToRemove(dropdownFriend);
                                 setRemoveFriendModalVisible(true);
                                 setDropdownVisible(false);
                             }}
@@ -209,9 +280,10 @@ export const FriendsScreen: React.FC = () => {
                 </Modal>
             )}
 
+            {/* Confirm Remove Friend Modal */}
             <ConfirmRemoveFriendModal
                 visible={removeFriendModalVisible}
-                friend={friendToRemove}
+                friend={friendToRemove ? friendToRemove.friend : null}
                 onConfirm={handleConfirmRemoveFriend}
                 onCancel={() => setRemoveFriendModalVisible(false)}
             />

@@ -1,5 +1,7 @@
 export * from './ArrowLeft';
+export * from './Cancel';
 export * from './Chat';
+export * from './Checkmark';
 export * from './Circle';
 export * from './CreateGroup';
 export * from './Email';

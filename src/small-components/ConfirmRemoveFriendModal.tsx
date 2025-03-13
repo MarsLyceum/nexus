@@ -28,10 +28,13 @@ export const ConfirmRemoveFriendModal: React.FC<ConfirmationModalProps> = ({
             <View style={styles.modalContainer}>
                 <View style={styles.modalContent}>
                     <Text style={styles.modalTitle}>
-                        Remove {friend?.username}?
+                        Remove{' '}
+                        {friend?.username ? friend.username : 'this friend'}?
                     </Text>
                     <Text style={styles.modalMessage}>
-                        Are you sure you want to remove from your friends?
+                        Are you sure you want to remove{' '}
+                        {friend?.username ? friend.username : 'this friend'}{' '}
+                        from your friends?
                     </Text>
                     <Pressable
                         style={({ hovered }) => [

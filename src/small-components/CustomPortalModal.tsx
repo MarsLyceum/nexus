@@ -16,7 +16,7 @@ export const CustomPortalModal: React.FC<CustomPortalModalProps> = ({
     children,
     containerStyle,
 }) => {
-    if (!visible) return null;
+    if (!visible) return undefined;
     return (
         <Portal>
             <TouchableWithoutFeedback onPress={onClose}>

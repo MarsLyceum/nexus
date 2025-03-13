@@ -69,12 +69,11 @@ export const AddFriendsScreen = () => {
                 <Text style={styles.friendFullName}>
                     {item.firstName} {item.lastName}
                 </Text>
-                <Text style={styles.friendEmail}>{item.email}</Text>
             </View>
             {/* Only show the add button if this user is not already a friend and is not the logged-in user */}
             {!friendIds.has(item.id) && item.id !== user?.id && (
                 <TouchableOpacity style={styles.addButton}>
-                    <Text style={styles.addButtonText}>Add</Text>
+                    <Text style={styles.addButtonText}>Add Friend</Text>
                 </TouchableOpacity>
             )}
         </View>

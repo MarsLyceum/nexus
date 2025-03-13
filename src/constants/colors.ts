@@ -11,4 +11,5 @@ export const COLORS = {
     OffWhite: '#F2F3F5',
     AccentText: '#b3a3ec',
     Link: '#3254a8',
+    Error: '#bb1817',
 };

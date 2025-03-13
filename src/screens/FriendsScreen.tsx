@@ -2,147 +2,122 @@ import React, { useState } from 'react';
 import {
     View,
     Text,
-    TouchableOpacity,
     FlatList,
     useWindowDimensions,
+    Pressable,
+    Platform,
+    StyleSheet,
+    Modal,
 } from 'react-native';
-import { Image as ExpoImage } from 'expo-image';
 import { useNavigation } from '@react-navigation/core';
 import { useQuery } from '@apollo/client';
 
-import { More } from '../icons';
+import {
+    FriendItem,
+    Friend,
+    FriendItemData,
+    DropdownMenu,
+    RawRect,
+    ConfirmRemoveFriendModal,
+} from '../small-components';
 import { GET_FRIENDS_QUERY } from '../queries';
 import { COLORS } from '../constants';
-import { useAppSelector, RootState, UserType } from '../redux';
+import { useAppSelector, RootState } from '../redux';
 import { AddFriendsScreen } from './AddFriendsScreen';
 
-const getDotColor = (status?: string) => {
-    const currentStatus = status ? status.toLowerCase() : 'online';
-    switch (currentStatus) {
-        case 'online': {
-            return '#43B581';
-        }
-        case 'idle': {
-            return '#FAA61A';
-        }
-        case 'dnd':
-        case 'do not disturb': {
-            return '#F04747';
-        }
-        default: {
-            return '#B9BBBE';
-        }
-    }
-};
-
-const getStatusStyle = (status?: string) => ({ color: getDotColor(status) });
-
-export const FriendsScreen = () => {
-    const [activeTab, setActiveTab] = useState('Online');
-    const navigation = useNavigation();
-    const { width } = useWindowDimensions();
-    const isLargeScreen = width > 768;
-
-    const user: UserType = useAppSelector(
-        (state: RootState) => state.user.user
+export const FriendsScreen: React.FC = () => {
+    // Tab and dropdown state.
+    const [activeTab, setActiveTab] = useState<string>('Online');
+    const [dropdownVisible, setDropdownVisible] = useState<boolean>(false);
+    // Now we store the raw measured rectangle from the More button.
+    const [dropdownRawRect, setDropdownRawRect] = useState<RawRect | null>(
+        null
     );
+    const [dropdownFriend, setDropdownFriend] = useState<Friend | null>(null);
+    const [removeFriendModalVisible, setRemoveFriendModalVisible] =
+        useState<boolean>(false);
+    const [friendToRemove, setFriendToRemove] = useState<Friend | null>(null);
 
-    const { data, loading, error } = useQuery(GET_FRIENDS_QUERY, {
+    const navigation = useNavigation();
+    const { width: windowWidth } = useWindowDimensions();
+    const isLargeScreen = windowWidth > 768;
+
+    const user = useAppSelector((state: RootState) => state.user.user);
+    const { data } = useQuery(GET_FRIENDS_QUERY, {
         variables: { userId: user?.id },
     });
 
-    // Dummy skeleton data for rendering
-    const skeletonData = Array.from({ length: 5 }).map((_, i) => ({
-        id: `skeleton-${i}`,
-    }));
+    // Dummy skeleton data for loading.
+    const skeletonData: FriendItemData[] = Array.from({ length: 5 }).map(
+        (_, i) => ({
+            id: `skeleton-${i}`,
+            friend: { username: 'Loading...', status: 'Online' },
+        })
+    );
 
-    const renderFriendItem = ({ item }) => {
-        const { friend } = item;
-        // Use friend.status, defaulting to "Online" if missing
-        const status = friend.status || 'Online';
-        const dotColor = getDotColor(status);
-        // Use username for display
-        const friendName = friend.username;
-        const avatarUrl = `https://picsum.photos/seed/${friend.username}/40`;
-
-        return (
-            <View style={styles.friendItem}>
-                <View style={styles.avatarAndDot}>
-                    <ExpoImage
-                        source={{ uri: avatarUrl }}
-                        style={styles.avatar}
-                    />
-                    <View
-                        style={[
-                            styles.statusDot,
-                            { backgroundColor: dotColor },
-                        ]}
-                    />
-                </View>
-                <View style={styles.friendDetails}>
-                    <Text style={styles.friendName}>{friendName}</Text>
-                    <Text style={[styles.friendStatus, getStatusStyle(status)]}>
-                        {status}
-                    </Text>
-                </View>
-                <View style={styles.friendAction}>
-                    <More />
-                </View>
-            </View>
-        );
+    const handleConfirmRemoveFriend = () => {
+        console.log('Remove Friend pressed for', friendToRemove?.username);
+        setRemoveFriendModalVisible(false);
+        setFriendToRemove(null);
     };
 
-    const renderSkeletonItem = ({ item }) => {
-        return (
-            <View style={styles.skeletonFriendItem}>
-                <View style={styles.skeletonAvatarAndDot}>
-                    <View style={styles.skeletonAvatar} />
-                    <View style={styles.skeletonStatusDot} />
-                </View>
-                <View style={styles.skeletonDetails}>
-                    <View style={styles.skeletonNameLine} />
-                    <View style={styles.skeletonStatusLine} />
-                </View>
-                <View style={styles.skeletonAction} />
-            </View>
-        );
+    // When More is pressed, store the measured rect.
+    const handleMorePress = (friend: Friend, measuredRect: RawRect) => {
+        // For debugging, you can log the measuredRect:
+        console.log('Measured Rect:', measuredRect);
+        setDropdownRawRect(measuredRect);
+        setDropdownFriend(friend);
+        setDropdownVisible(true);
     };
 
-    // Filter based on friend.status, defaulting to "Online" if missing
-    const friendsList = data?.getFriends || [];
+    const renderFriendItem = ({ item }: { item: FriendItemData }) => (
+        <FriendItem item={item} onMorePress={handleMorePress} />
+    );
+
+    const renderSkeletonItem = () => (
+        <View style={styles.skeletonFriendItem}>
+            <View style={styles.skeletonAvatarAndDot}>
+                <View style={styles.skeletonAvatar} />
+                <View style={styles.skeletonStatusDot} />
+            </View>
+            <View style={styles.skeletonDetails}>
+                <View style={styles.skeletonNameLine} />
+                <View style={styles.skeletonStatusLine} />
+            </View>
+        </View>
+    );
+
+    const friendsList: FriendItemData[] = data?.getFriends || [];
     const filteredFriends = friendsList.filter(
-        (item: { friend: any }) =>
-            (item.friend.status || 'Online').toLowerCase() !== 'offline'
+        (item) => (item.friend.status || 'Online').toLowerCase() !== 'offline'
     );
 
     return (
         <View style={styles.container}>
-            {/* Header Section */}
+            {/* Header */}
             <View style={styles.header}>
-                <View style={styles.tabsContainer}>
-                    <TouchableOpacity onPress={() => setActiveTab('Online')}>
-                        <Text
-                            style={[
-                                styles.tabItem,
-                                activeTab === 'Online' && styles.activeTab,
-                            ]}
-                        >
-                            Online
-                        </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => setActiveTab('All')}>
-                        <Text
-                            style={[
-                                styles.tabItem,
-                                activeTab === 'All' && styles.activeTab,
-                            ]}
-                        >
-                            All
-                        </Text>
-                    </TouchableOpacity>
-                    <Text style={styles.tabItem}>Pending</Text>
-                </View>
-                <TouchableOpacity
+                <Pressable onPress={() => setActiveTab('Online')}>
+                    <Text
+                        style={[
+                            styles.tabItem,
+                            activeTab === 'Online' && styles.activeTab,
+                        ]}
+                    >
+                        Online
+                    </Text>
+                </Pressable>
+                <Pressable onPress={() => setActiveTab('All')}>
+                    <Text
+                        style={[
+                            styles.tabItem,
+                            activeTab === 'All' && styles.activeTab,
+                        ]}
+                    >
+                        All
+                    </Text>
+                </Pressable>
+                <Text style={styles.tabItem}>Pending</Text>
+                <Pressable
                     style={styles.addFriendButton}
                     onPress={() => {
                         if (isLargeScreen) {
@@ -153,7 +128,7 @@ export const FriendsScreen = () => {
                     }}
                 >
                     <Text style={styles.addFriendText}>Add Friend</Text>
-                </TouchableOpacity>
+                </Pressable>
             </View>
 
             {activeTab === 'AddFriends' ? (
@@ -161,32 +136,73 @@ export const FriendsScreen = () => {
             ) : (
                 <View style={styles.friendsListArea}>
                     <FlatList
-                        data={loading ? skeletonData : filteredFriends}
+                        data={data ? filteredFriends : skeletonData}
                         keyExtractor={(item) => item.id}
                         renderItem={
-                            loading ? renderSkeletonItem : renderFriendItem
+                            data ? renderFriendItem : renderSkeletonItem
                         }
                     />
                 </View>
             )}
+
+            {dropdownVisible && dropdownRawRect && (
+                <Modal
+                    transparent={true}
+                    animationType="none"
+                    visible={dropdownVisible}
+                    onRequestClose={() => setDropdownVisible(false)}
+                >
+                    <DropdownMenu
+                        rawRect={dropdownRawRect}
+                        onDismiss={() => setDropdownVisible(false)}
+                    >
+                        <Pressable
+                            style={({ hovered }) => [
+                                styles.dropdownMenuItem,
+                                hovered &&
+                                    Platform.OS === 'web' && {
+                                        cursor: 'pointer',
+                                    },
+                            ]}
+                            onPress={() => {
+                                console.log('Remove Friend tapped');
+                                setFriendToRemove(dropdownFriend);
+                                setRemoveFriendModalVisible(true);
+                                setDropdownVisible(false);
+                            }}
+                        >
+                            <Text
+                                style={styles.dropdownMenuItemText}
+                                numberOfLines={1}
+                            >
+                                Remove Friend
+                            </Text>
+                        </Pressable>
+                    </DropdownMenu>
+                </Modal>
+            )}
+
+            <ConfirmRemoveFriendModal
+                visible={removeFriendModalVisible}
+                friend={friendToRemove}
+                onConfirm={handleConfirmRemoveFriend}
+                onCancel={() => setRemoveFriendModalVisible(false)}
+            />
         </View>
     );
 };
 
-const styles = {
+const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: COLORS.SecondaryBackground,
+        position: 'relative',
     },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         padding: 16,
         backgroundColor: COLORS.PrimaryBackground,
-    },
-    tabsContainer: {
-        flex: 1,
-        flexDirection: 'row',
     },
     tabItem: {
         marginRight: 16,
@@ -212,52 +228,6 @@ const styles = {
         flex: 1,
         padding: 8,
     },
-    friendItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: COLORS.SecondaryBackground,
-        marginVertical: 4,
-        borderRadius: 4,
-        padding: 12,
-    },
-    avatarAndDot: {
-        position: 'relative',
-        marginRight: 8,
-    },
-    avatar: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        marginRight: 8,
-    },
-    statusDot: {
-        position: 'absolute',
-        bottom: 0,
-        right: 5,
-        width: 15,
-        height: 15,
-        borderRadius: 7,
-        borderWidth: 2,
-        borderColor: COLORS.SecondaryBackground,
-    },
-    friendDetails: {
-        flex: 1,
-        justifyContent: 'center',
-    },
-    friendName: {
-        fontWeight: 'bold',
-        fontFamily: 'Roboto_700Bold',
-        color: COLORS.White,
-        marginBottom: 4,
-    },
-    friendStatus: {
-        color: COLORS.InactiveText,
-        fontSize: 12,
-    },
-    friendAction: {
-        marginLeft: 8,
-    },
-    // Skeleton styles (mimicking the real friend item)
     skeletonFriendItem: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -294,22 +264,23 @@ const styles = {
     },
     skeletonNameLine: {
         height: 12,
-        width: '30%', // reduced width to mimic shorter text
+        width: '30%',
         backgroundColor: COLORS.InactiveText,
         borderRadius: 4,
         marginBottom: 4,
     },
     skeletonStatusLine: {
         height: 10,
-        width: '20%', // reduced width to mimic shorter text
+        width: '20%',
         backgroundColor: COLORS.InactiveText,
         borderRadius: 4,
     },
-    skeletonAction: {
-        width: 20,
-        height: 20,
-        backgroundColor: COLORS.TextInput,
-        borderRadius: 4,
-        marginLeft: 8,
+    dropdownMenuItem: {
+        paddingVertical: 8,
+        paddingHorizontal: 4,
     },
-};
+    dropdownMenuItemText: {
+        color: COLORS.Error,
+        fontSize: 14,
+    },
+});

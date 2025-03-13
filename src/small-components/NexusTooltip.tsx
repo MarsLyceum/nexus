@@ -9,6 +9,7 @@ import {
     LayoutChangeEvent,
 } from 'react-native';
 import { Portal } from 'react-native-paper';
+import Svg, { Path } from 'react-native-svg';
 import { COLORS } from '../constants';
 
 // Choose trigger component based on platform
@@ -34,6 +35,9 @@ export const NexusTooltip = ({
     const [bubbleWidth, setBubbleWidth] = useState(0);
     const [bubbleHeight, setBubbleHeight] = useState(0);
     const triangleHeight = 6; // Height of the triangle indicator
+
+    // Extra offset so the tooltip is a little higher above the trigger
+    const verticalOffset = 4;
 
     const triggerWrapperRef = useRef<RNView>(null);
 
@@ -69,7 +73,9 @@ export const NexusTooltip = ({
     let computedTop = 0;
     if (triggerPos) {
         computedLeft = triggerPos.x + triggerPos.width / 2 - bubbleWidth / 2;
-        computedTop = triggerPos.y - bubbleHeight - triangleHeight;
+        // Subtract an extra offset to place the tooltip a bit further above the trigger element
+        computedTop =
+            triggerPos.y - bubbleHeight - triangleHeight - verticalOffset;
     }
 
     return (
@@ -97,8 +103,8 @@ export const NexusTooltip = ({
                                 {tooltipText}
                             </Text>
                         </View>
-                        {/* Triangle indicator */}
-                        <View style={styles.triangle} />
+                        {/* Rounded triangle indicator */}
+                        <RoundedTriangle color={COLORS.AppBackground} />
                     </View>
                 </Portal>
             )}
@@ -106,12 +112,31 @@ export const NexusTooltip = ({
     );
 };
 
+// A rounded triangle component using react-native-svg.
+// This triangle is drawn with quadratic curves to round the corners.
+// The shape is designed to match the tooltip bubble background.
+export const RoundedTriangle = ({ color }: { color: string }) => (
+    <Svg width="12" height="6" viewBox="0 0 12 6">
+        <Path
+            d="
+        M2,0 
+        Q6,0 10,0 
+        L6,6 
+        Q6,6 2,0 
+        Z
+      "
+            fill={color}
+        />
+    </Svg>
+);
+
 const styles = StyleSheet.create({
     tooltipContainer: {
         position: 'relative',
     },
     portalContainer: {
         position: 'absolute',
+        alignItems: 'center',
     },
     tooltipBubble: {
         paddingHorizontal: 8,
@@ -128,16 +153,5 @@ const styles = StyleSheet.create({
     tooltipText: {
         color: COLORS.White,
         fontSize: 14,
-    },
-    triangle: {
-        width: 0,
-        height: 0,
-        borderLeftWidth: 6,
-        borderRightWidth: 6,
-        borderTopWidth: 6,
-        borderLeftColor: 'transparent',
-        borderRightColor: 'transparent',
-        borderTopColor: COLORS.AppBackground,
-        alignSelf: 'center',
     },
 });

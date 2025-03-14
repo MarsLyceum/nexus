@@ -17,14 +17,8 @@ import {
     UserType,
     UserGroupsType,
 } from '../redux';
-import {
-    ChatButton,
-    GroupButton,
-    EventsButton,
-    CreateGroupButton,
-    FriendsButton,
-    SearchButton,
-} from '../buttons';
+import { GroupButton, SidebarButton } from '../buttons';
+import { Friends, Chat, Events, Search, Add } from '../icons';
 import { FETCH_USER_GROUPS_QUERY } from '../queries';
 import { COLORS } from '../constants';
 
@@ -68,15 +62,15 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     skeletonAvatar: {
-        width: 32,
-        height: 32,
+        width: 45,
+        height: 45,
         borderRadius: 20,
         backgroundColor: COLORS.InactiveText,
         marginRight: 10,
     },
     skeletonText: {
         width: 100,
-        height: 15,
+        height: 16,
         borderRadius: 4,
         backgroundColor: COLORS.InactiveText,
     },
@@ -197,44 +191,52 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
                     onLayout={handleLayout('friends')}
                     style={styles.buttonContainer}
                 >
-                    <FriendsButton
+                    <SidebarButton
                         onPress={() => {
                             setSelectedButton('friends');
                             navigation.navigate('Friends');
                         }}
+                        icon={<Friends />}
+                        text="Friends"
                     />
                 </View>
                 <View
-                    onLayout={handleLayout('chat')}
+                    onLayout={handleLayout('messages')}
                     style={styles.buttonContainer}
                 >
-                    <ChatButton
+                    <SidebarButton
                         onPress={() => {
-                            setSelectedButton('chat');
+                            setSelectedButton('messages');
                             navigation.navigate('Messages');
                         }}
+                        icon={<Chat />}
+                        text="Messages"
                     />
                 </View>
                 <View
                     onLayout={handleLayout('events')}
                     style={styles.buttonContainer}
                 >
-                    <EventsButton
+                    <SidebarButton
                         onPress={() => {
                             setSelectedButton('events');
                             navigation.navigate('Events');
                         }}
+                        icon={<Events />}
+                        text="Events"
                     />
                 </View>
                 <View
                     onLayout={handleLayout('search')}
                     style={styles.buttonContainer}
                 >
-                    <SearchButton
+                    <SidebarButton
                         onPress={() => {
                             setSelectedButton('search');
                             navigation.navigate('Search');
                         }}
+                        icon={<Search />}
+                        text="Search"
                     />
                 </View>
                 {loadingGroups
@@ -267,11 +269,13 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
                     onLayout={handleLayout('createGroup')}
                     style={styles.buttonContainer}
                 >
-                    <CreateGroupButton
+                    <SidebarButton
                         onPress={() => {
                             setSelectedButton('createGroup');
                             navigation.navigate('CreateGroup');
                         }}
+                        icon={<Add />}
+                        text="Create Group"
                     />
                 </View>
             </View>

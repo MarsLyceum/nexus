@@ -49,9 +49,9 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
 
 const styles = StyleSheet.create({
     iconButton: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
+        width: 45,
+        height: 45,
+        borderRadius: 23,
         backgroundColor: COLORS.AppBackground,
         justifyContent: 'center',
         alignItems: 'center',
@@ -64,7 +64,7 @@ const styles = StyleSheet.create({
     activeOverlay: {
         ...StyleSheet.absoluteFillObject,
         backgroundColor: 'rgba(255, 255, 255, 0.04)', // extremely subtle white overlay
-        borderRadius: 16,
+        borderRadius: 23,
     },
     childrenContainer: {
         flex: 1,

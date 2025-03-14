@@ -3,9 +3,9 @@ import Svg, { Path, G, Defs, ClipPath } from 'react-native-svg';
 import { ViewStyle } from 'react-native';
 import { COLORS } from '../constants';
 
-export const CheckMark = ({
+export const Add = ({
     style,
-    color = COLORS.Success,
+    color = COLORS.White,
     size = 18,
 }: {
     style?: ViewStyle | ViewStyle[];
@@ -15,19 +15,19 @@ export const CheckMark = ({
     <Svg
         width={size}
         height={size}
-        viewBox="0 0 15 15"
+        viewBox="0 0 18 18"
         fill="none"
         style={style}
     >
-        <G clipPath="url(#clip0_302_148)">
+        <G clipPath="url(#clip0_327_6)">
             <Path
-                d="M14.652.484c-.465-.646-1.218-.645-1.683 0L5.397 11.008 2.03 6.33c-.464-.646-1.218-.646-1.682 0-.465.646-.465 1.693 0 2.338l4.206 5.846c.232.323.537.485.841.485.305 0 .61-.161.842-.485l8.413-11.692c.465-.646.465-1.693 0-2.339z"
+                d="M16.393 7.393h-5.464a.322.322 0 01-.322-.322V1.607a1.607 1.607 0 00-3.214 0v5.464a.321.321 0 01-.322.322H1.607a1.607 1.607 0 000 3.214h5.464c.178 0 .322.144.322.322v5.464a1.607 1.607 0 003.214 0v-5.464c0-.178.144-.322.322-.322h5.464a1.607 1.607 0 000-3.214z"
                 fill={color}
             />
         </G>
         <Defs>
-            <ClipPath id="clip0_302_148">
-                <Path fill="#fff" d="M0 0H15V15H0z" />
+            <ClipPath id="clip0_327_6">
+                <Path fill={color} d="M0 0H18V18H0z" />
             </ClipPath>
         </Defs>
     </Svg>

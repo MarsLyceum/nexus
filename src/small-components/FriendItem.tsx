@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { View, Text, StyleSheet, View as RNView } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
-import { More, Checkmark, Cancel } from '../icons';
+import { More, CheckMark, Cancel } from '../icons';
 import { COLORS } from '../constants';
 import { ActionButton } from './ActionButton';
 
@@ -136,7 +136,7 @@ export const FriendItem: React.FC<FriendItemProps> = ({
                         onPress={() => onAccept && onAccept()}
                         tooltipText="Accept"
                     >
-                        <Checkmark />
+                        <CheckMark />
                     </ActionButton>
                     <ActionButton
                         onPress={() => onReject && onReject()}

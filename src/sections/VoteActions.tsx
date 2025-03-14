@@ -96,9 +96,9 @@ const styles = StyleSheet.create({
     },
     // Vote button style with 15% reduced dimensions.
     voteButton: {
-        width: 41, // 48 * 0.85 ≈ 41
-        height: 41,
-        borderRadius: 20, // 24 * 0.85 ≈ 20
+        width: 45, // 48 * 0.85 ≈ 41
+        height: 45,
+        borderRadius: 23, // 24 * 0.85 ≈ 20
         justifyContent: 'center',
         alignItems: 'center',
     },

@@ -102,9 +102,9 @@ const styles = StyleSheet.create({
     },
     // Share button style matching the vote actions.
     shareButton: {
-        width: 41,
-        height: 41,
-        borderRadius: 20,
+        width: 45,
+        height: 45,
+        borderRadius: 23,
         justifyContent: 'center',
         alignItems: 'center',
     },

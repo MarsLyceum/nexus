@@ -6,11 +6,19 @@ import { COLORS } from '../constants';
 export const Events = ({
     style,
     color = COLORS.White,
+    size = 18,
 }: {
     style?: ViewStyle | ViewStyle[];
     color?: string;
+    size?: number;
 }) => (
-    <Svg width={15} height={15} viewBox="0 0 15 15" fill="none" style={style}>
+    <Svg
+        width={size}
+        height={size}
+        viewBox="0 0 15 15"
+        fill="none"
+        style={style}
+    >
         <G
             clipPath="url(#clip0_175_1642)"
             fillRule="evenodd"

@@ -5,10 +5,17 @@ import { ViewStyle } from 'react-native';
 interface FeedProps {
     style?: ViewStyle | ViewStyle[];
     color: string;
+    size?: number;
 }
 
-export const Feed: React.FC<FeedProps> = ({ style, color }) => (
-    <Svg width={15} height={15} viewBox="0 0 15 15" fill="none" style={style}>
+export const Feed: React.FC<FeedProps> = ({ style, color, size = 18 }) => (
+    <Svg
+        width={size}
+        height={size}
+        viewBox="0 0 15 15"
+        fill="none"
+        style={style}
+    >
         <G clipPath="url(#clip0_176_118)">
             <Path
                 fillRule="evenodd"

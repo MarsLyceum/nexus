@@ -6,11 +6,19 @@ import { COLORS } from '../constants';
 export const More = ({
     style,
     color = COLORS.White,
+    size = 18,
 }: {
     style?: ViewStyle | ViewStyle[];
     color?: string;
+    size?: number;
 }) => (
-    <Svg width={15} height={15} viewBox="0 0 15 15" fill="none" style={style}>
+    <Svg
+        width={size}
+        height={size}
+        viewBox="0 0 15 15"
+        fill="none"
+        style={style}
+    >
         <Path
             d="M7.5 3.75a1.406 1.406 0 100-2.813 1.406 1.406 0 000 2.813zM7.5 8.906a1.406 1.406 0 100-2.812 1.406 1.406 0 000 2.812zM7.5 14.063a1.406 1.406 0 100-2.813 1.406 1.406 0 000 2.813z"
             fill={color}

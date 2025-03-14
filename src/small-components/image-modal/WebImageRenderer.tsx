@@ -31,7 +31,7 @@ export const WebImageRenderer: React.FC<WebImageRendererProps> = ({
     const { width: screenWidth, height: screenHeight } = useWindowDimensions();
     const [zoomed, setZoomed] = useState(false);
 
-    // Get image resolution and compute aspect ratio.
+    // Use image resolution to compute the aspect ratio.
     const { isFetching, resolution } = useImageResolution({ uri });
     const aspectRatio = useMemo(() => {
         return resolution && resolution.width && resolution.height
@@ -39,7 +39,7 @@ export const WebImageRenderer: React.FC<WebImageRendererProps> = ({
             : 1;
     }, [resolution]);
 
-    // Compute non-zoomed visible image size (using container dimensions).
+    // Compute the visible image size in non-zoomed state.
     const nonZoomedSize = useMemo(
         () =>
             fitContainer(aspectRatio, {
@@ -48,12 +48,13 @@ export const WebImageRenderer: React.FC<WebImageRendererProps> = ({
             }),
         [aspectRatio, containerWidth, containerHeight]
     );
+    const nonZoomedOffsetX = (containerWidth - nonZoomedSize.width) / 2;
+    const nonZoomedOffsetY = (containerHeight - nonZoomedSize.height) / 2;
 
     // Fixed zoom factor.
     const zoomFactor = 2.5;
     const zoomedContainerWidth = containerWidth * zoomFactor;
     const zoomedContainerHeight = containerHeight * zoomFactor;
-    // Compute the visible image size in zoomed state.
     const zoomedSize = useMemo(
         () =>
             fitContainer(aspectRatio, {
@@ -62,8 +63,10 @@ export const WebImageRenderer: React.FC<WebImageRendererProps> = ({
             }),
         [aspectRatio, zoomedContainerWidth, zoomedContainerHeight]
     );
+    const zoomedOffsetX = (zoomedContainerWidth - zoomedSize.width) / 2;
+    const zoomedOffsetY = (zoomedContainerHeight - zoomedSize.height) / 2;
 
-    // We'll measure the visible image container using onLayout.
+    // We'll measure the rendered visible image area using onLayout.
     const [visibleRect, setVisibleRect] = useState<{
         left: number;
         top: number;
@@ -88,7 +91,7 @@ export const WebImageRenderer: React.FC<WebImageRendererProps> = ({
         }
     }, []);
 
-    // Attach a document-level mousedown listener that dismisses if click is outside visibleRect.
+    // Attach a document-level mousedown listener that dismisses the modal if the click occurs outside the visible image area.
     useEffect(() => {
         if (!visibleRect) return;
         const handleDocumentClick = (event: MouseEvent) => {
@@ -108,61 +111,63 @@ export const WebImageRenderer: React.FC<WebImageRendererProps> = ({
         };
     }, [visibleRect, onClose]);
 
-    // Handler for toggling zoom when clicking on the image.
+    // Handler for toggling zoom when clicking the image.
     const handleImagePress = useCallback((e: any) => {
         e.stopPropagation();
         setZoomed((prev) => !prev);
     }, []);
 
     if (!zoomed) {
-        // Non-zoomed state: use outer container centering.
+        // Non-zoomed state: render the image in a container that centers it.
         return (
-            <Pressable
+            <View
                 style={{
                     flex: 1,
-                    cursor: 'zoom-in',
                     justifyContent: 'center',
                     alignItems: 'center',
                 }}
-                onPress={() => setZoomed(true)}
             >
-                <View
-                    ref={imageWrapperRef}
-                    onLayout={handleLayout}
+                {/* Only the visible image area has the zoom-in cursor and toggles zoom */}
+                <Pressable
+                    onPress={handleImagePress}
                     style={{
                         width: nonZoomedSize.width,
                         height: nonZoomedSize.height,
+                        cursor: 'zoom-in',
                     }}
+                    ref={imageWrapperRef}
+                    onLayout={handleLayout}
                 >
                     <ExpoImage
                         source={{ uri }}
                         style={{ width: '100%', height: '100%' }}
                         contentFit="contain"
                     />
-                </View>
-            </Pressable>
+                </Pressable>
+            </View>
         );
     } else {
-        // Zoomed state: render the image inside a ScrollView.
+        // Zoomed state: render the zoomed image inside a ScrollView so vertical scrolling works.
         return (
             <View style={{ flex: 1, cursor: 'zoom-out' }}>
                 <ScrollView
                     style={{ flex: 1, cursor: 'zoom-out' }}
                     contentContainerStyle={{
                         width: zoomedContainerWidth,
-                        // Let the content's natural height be used for vertical scrolling.
                         alignSelf: 'center', // centers horizontally
                     }}
                     showsVerticalScrollIndicator={true}
                 >
                     <Pressable
+                        onPress={handleImagePress}
                         ref={imageWrapperRef}
                         onLayout={handleLayout}
-                        onPress={handleImagePress}
                         style={{
                             width: zoomedSize.width,
                             height: zoomedSize.height,
-                            alignSelf: 'center', // center horizontally
+                            marginLeft: zoomedOffsetX,
+                            marginTop: zoomedOffsetY,
+                            cursor: 'zoom-out',
                         }}
                     >
                         <ExpoImage

@@ -21,7 +21,7 @@ export const MobileImageRenderer: React.FC<MobileImageRendererProps> = ({
     const { isFetching, resolution } = useImageResolution({ uri });
     const zoomRef = useRef<ResumableZoomType>(null);
 
-    // Instead of early return, use a ready flag.
+    // Ensure image is ready to be rendered.
     const ready =
         !isFetching &&
         resolution &&
@@ -34,26 +34,45 @@ export const MobileImageRenderer: React.FC<MobileImageRendererProps> = ({
         width: screenWidth,
         height: screenHeight,
     });
-    // Calculate offsets (empty margins) around the centered image.
+    // Calculate the margins (offsets) around the centered image.
     const offsetX = (screenWidth - size.width) / 2;
     const offsetY = (screenHeight - size.height) / 2;
 
     const handleZoomTap = useCallback(
         (e: any) => {
-            if (!e || !e.nativeEvent) return;
-            const { locationX, locationY } = e.nativeEvent;
-            // If the tap is outside the visible image area, stop propagation and dismiss.
+            // Extract x and y coordinates directly from the event.
+            const { x, y } = e;
+
+            // Attempt to use the visible rect of the zoomed image.
             if (
-                locationX < offsetX ||
-                locationX > offsetX + size.width ||
-                locationY < offsetY ||
-                locationY > offsetY + size.height
+                zoomRef.current &&
+                typeof zoomRef.current.getVisibleRect === 'function'
             ) {
-                if (e.stopPropagation) {
-                    e.stopPropagation();
+                const rect = zoomRef.current.getVisibleRect();
+                if (
+                    x < rect.x ||
+                    x > rect.x + rect.width ||
+                    y < rect.y ||
+                    y > rect.y + rect.height
+                ) {
+                    e.stopPropagation?.();
+                    onClose();
+                    return;
                 }
-                onClose();
+            } else {
+                // Fallback: use computed image bounds (centered image).
+                if (
+                    x < offsetX ||
+                    x > offsetX + size.width ||
+                    y < offsetY ||
+                    y > offsetY + size.height
+                ) {
+                    e.stopPropagation?.();
+                    onClose();
+                    return;
+                }
             }
+            // Otherwise, let ResumableZoom handle the tap as usual.
         },
         [onClose, offsetX, offsetY, size.width, size.height]
     );
@@ -70,7 +89,7 @@ export const MobileImageRenderer: React.FC<MobileImageRendererProps> = ({
                     extendGestures
                     onTap={handleZoomTap}
                     style={{ flex: 1 }}
-                    tapsEnabled={true}
+                    tapsEnabled
                 >
                     <ExpoImage
                         source={{ uri }}

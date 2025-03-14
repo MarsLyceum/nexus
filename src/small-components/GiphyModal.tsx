@@ -49,9 +49,7 @@ export const GiphyModal: React.FC<GiphyModalProps> = ({
         if (!query) return;
         try {
             const response = await fetch(
-                `https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_API_KEY}&q=${encodeURIComponent(
-                    query
-                )}&limit=20`
+                `https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_API_KEY}&q=${encodeURIComponent(query)}&limit=20`
             );
             const data = await response.json();
             setGiphyResults(data.data);
@@ -80,8 +78,8 @@ export const GiphyModal: React.FC<GiphyModalProps> = ({
     const giphyContainerStyle = {
         position: 'absolute',
         bottom: 70, // Aligns modal above the input box
-        width: 350,
-        maxHeight: 350, // Allows expansion for larger results
+        width: 400,
+        maxHeight: 400, // Allows expansion for larger results
         backgroundColor: COLORS.PrimaryBackground,
         borderRadius: 8,
         padding: 20,
@@ -153,13 +151,15 @@ const styles = StyleSheet.create({
         flexWrap: 'wrap',
         justifyContent: 'space-between',
     },
+    // Changed width to 48% so that 2 items fit per row
     giphyResultItem: {
-        width: '30%',
+        width: '48%',
         marginBottom: 10,
     },
+    // Increased height to 150 for larger display
     giphyResultImage: {
         width: '100%',
-        height: 100,
+        height: 150,
         borderRadius: 6,
     },
 });

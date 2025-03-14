@@ -6,6 +6,7 @@ import {
     TouchableOpacity,
     StyleSheet,
     ScrollView,
+    Dimensions,
 } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { COLORS, GIPHY_API_KEY } from '../constants';
@@ -25,6 +26,8 @@ export const GiphyModal: React.FC<GiphyModalProps> = ({
 }) => {
     const [giphyQuery, setGiphyQuery] = useState('');
     const [giphyResults, setGiphyResults] = useState<any[]>([]);
+
+    const windowWidth = Dimensions.get('window').width;
 
     // Fetch trending GIFs when the overlay is visible and no query is present.
     useEffect(() => {
@@ -78,7 +81,7 @@ export const GiphyModal: React.FC<GiphyModalProps> = ({
     const giphyContainerStyle = {
         position: 'absolute',
         bottom: 70, // Aligns modal above the input box
-        width: 400,
+        width: windowWidth < 768 ? 300 : 400,
         maxHeight: 400, // Allows expansion for larger results
         backgroundColor: COLORS.PrimaryBackground,
         borderRadius: 8,

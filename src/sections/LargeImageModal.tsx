@@ -1,8 +1,6 @@
-// LargeImageModal.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import {
     Modal,
-    Pressable,
     StyleSheet,
     View,
     Platform,
@@ -13,18 +11,13 @@ import {
 } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import Carousel from 'react-native-reanimated-carousel';
+import { Pressable } from 'react-native';
 import { ArrowButton } from './ArrowButton';
 import { CarouselDots } from './CarouselDots';
 import { ImageCountOverlay, NexusVideo } from '../small-components';
 import { COLORS } from '../constants';
 import { useMediaTypes } from '../hooks';
-import { PinchGestureHandler } from 'react-native-gesture-handler';
-import Animated, {
-    useAnimatedGestureHandler,
-    useSharedValue,
-    useAnimatedStyle,
-    withTiming,
-} from 'react-native-reanimated';
+import { ResumableZoom } from 'react-native-zoom-toolkit';
 
 type LargeImageModalProps = {
     visible: boolean;
@@ -52,7 +45,7 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
     // State for the currently visible carousel index.
     const [currentIndex, setCurrentIndex] = useState(effectiveInitialIndex);
 
-    // State to store the actual rendered image layout (computed).
+    // State to store the computed image layout (for images only).
     const [imageLayout, setImageLayout] = useState<{
         x: number;
         y: number;
@@ -61,16 +54,14 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
     } | null>(null);
 
     // Ref to the carousel.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const carouselRef = useRef<any>(null);
 
     const deviceWidth = Dimensions.get('window').width;
     const deviceHeight = Dimensions.get('window').height;
-    // We use the same dimensions for both the container and the carousel item.
     const containerWidth = deviceWidth * 0.8;
     const containerHeight = deviceHeight * 0.8;
 
-    // Reset carousel to the effective initial index when modal is shown.
+    // Reset carousel when modal is shown.
     useEffect(() => {
         if (visible && carouselRef.current) {
             carouselRef.current.scrollTo({
@@ -81,13 +72,12 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
         }
     }, [visible, effectiveInitialIndex, mediaAttachments]);
 
-    // Compute the actual rendered image dimensions (only for images, not videos).
+    // Compute rendered image dimensions (for images only).
     useEffect(() => {
         if (mediaAttachments.length === 0) return;
         const currentMediaUrl = mediaAttachments[currentIndex];
         const info = mediaInfos[currentMediaUrl];
 
-        // If it is a video, use full container.
         if (info && info.type === 'video') {
             setImageLayout({
                 x: (deviceWidth - containerWidth) / 2,
@@ -98,16 +88,15 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
             return;
         }
 
-        // For images, get intrinsic size and compute rendered dimensions.
         RNImage.getSize(
             currentMediaUrl,
             (intrinsicWidth, intrinsicHeight) => {
-                const scale = Math.min(
+                const scaleFactor = Math.min(
                     containerWidth / intrinsicWidth,
                     containerHeight / intrinsicHeight
                 );
-                const renderedWidth = intrinsicWidth * scale;
-                const renderedHeight = intrinsicHeight * scale;
+                const renderedWidth = intrinsicWidth * scaleFactor;
+                const renderedHeight = intrinsicHeight * scaleFactor;
                 const leftOffset = (containerWidth - renderedWidth) / 2;
                 const topOffset = (containerHeight - renderedHeight) / 2;
                 setImageLayout({
@@ -160,7 +149,12 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
         return null;
     }
 
-    // Render each carousel item.
+    // Use computed layout if available; otherwise fallback.
+    const zoomStyle =
+        imageLayout != null
+            ? { width: imageLayout.width, height: imageLayout.height }
+            : { width: containerWidth, height: containerHeight };
+
     const renderItem = ({ item, index }: { item: string; index: number }) => {
         const info = mediaInfos[item];
         const content =
@@ -185,19 +179,33 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
                     height={containerHeight}
                 />
             ) : (
-                <ZoomableImage
-                    source={{ uri: item }}
-                    style={styles.modalMedia}
-                    onError={(error) =>
-                        console.error('Image load error:', item, error)
-                    }
-                />
+                <ResumableZoom
+                    minScale={1}
+                    maxScale={6}
+                    panMode="free"
+                    extendGestures={true}
+                    allowPinchPanning={true}
+                    pinchCenteringMode="sync"
+                    decay={false}
+                    panEnabled={true}
+                    style={zoomStyle}
+                >
+                    <ExpoImage
+                        source={{ uri: item }}
+                        style={zoomStyle}
+                        onError={(error) =>
+                            console.error('Image load error:', item, error)
+                        }
+                        contentFit="contain"
+                    />
+                </ResumableZoom>
             );
 
         return <View style={{ width: '100%', height: '100%' }}>{content}</View>;
     };
 
-    // Outer press handler that dismisses the modal only if tap is outside the actual rendered image.
+    // This function dismisses the modal if the tap occurs outside the image.
+    // (This logic remains the same.)
     const handleOuterPress = (e: GestureResponderEvent) => {
         const { pageX, pageY } = e.nativeEvent;
         if (imageLayout) {
@@ -208,11 +216,9 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
                 pageY >= imageLayout.y &&
                 pageY <= imageLayout.y + imageLayout.height;
             if (withinX && withinY) {
-                // Tap is inside the image.
                 return;
             }
         }
-        // Tap outside the image: dismiss the modal.
         onClose();
     };
 
@@ -223,8 +229,17 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
             animationType="fade"
             onRequestClose={onClose}
         >
-            {/* Outer Pressable: Dismisses the modal when tap is outside the measured image */}
-            <Pressable style={styles.modalOverlay} onPress={handleOuterPress}>
+            {/* Container view for the modal */}
+            <View style={styles.modalOverlay}>
+                {/* Background Pressable that dismisses the modal.
+            It is absolutely positioned behind the interactive content.
+            Its pointerEvents are set to "auto" so it catches taps on the background,
+            but the content above will handle gestures normally. */}
+                <Pressable
+                    style={StyleSheet.absoluteFill}
+                    onPress={handleOuterPress}
+                />
+                {/* Interactive content */}
                 <View style={styles.centeredContent}>
                     <View style={styles.contentWrapper}>
                         <View style={styles.carouselContainer}>
@@ -295,52 +310,11 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
                         )}
                     </View>
                 </View>
-            </Pressable>
+            </View>
         </Modal>
     );
 };
 
-// Mobile pinch-to-zoom component.
-export const ZoomableImage: React.FC<{
-    source: { uri: string };
-    style: any;
-    onError?: (error: any) => void;
-}> = ({ source, style, onError }) => {
-    const scale = useSharedValue(1);
-
-    const pinchHandler = useAnimatedGestureHandler({
-        onActive: (event) => {
-            scale.value = event.scale;
-        },
-        onEnd: () => {
-            // Return to original scale when gesture ends.
-            scale.value = withTiming(1, { duration: 200 });
-        },
-    });
-
-    const animatedStyle = useAnimatedStyle(() => {
-        return {
-            transform: [{ scale: scale.value }],
-        };
-    });
-
-    return (
-        <PinchGestureHandler onGestureEvent={pinchHandler}>
-            <Animated.View style={[style, animatedStyle]}>
-                <ExpoImage
-                    source={source}
-                    style={style}
-                    contentFit="contain"
-                    onError={onError}
-                />
-            </Animated.View>
-        </PinchGestureHandler>
-    );
-};
-
-// Web‑specific zoomable image component.
-// On web, clicking toggles the zoom state.
-// When zoomed, the image is rendered inside a ScrollView without auto-centering.
 export const WebZoomableImage: React.FC<{
     source: { uri: string };
     style: any;
@@ -350,7 +324,6 @@ export const WebZoomableImage: React.FC<{
 }> = ({ source, style, onError, width, height }) => {
     const [isZoomed, setIsZoomed] = useState(false);
     const scrollViewRef = useRef<ScrollView>(null);
-    // Use a zoom factor of 3 when zoomed in.
     const zoomFactor = isZoomed ? 3 : 1;
     const imageWidth = width * zoomFactor;
     const imageHeight = height * zoomFactor;
@@ -388,8 +361,6 @@ const styles = StyleSheet.create({
     modalOverlay: {
         flex: 1,
         backgroundColor: 'rgba(0,0,0,0.9)',
-        justifyContent: 'center',
-        alignItems: 'center',
     },
     centeredContent: {
         width: '100%',
@@ -408,7 +379,6 @@ const styles = StyleSheet.create({
     modalMedia: {
         width: '100%',
         height: '100%',
-        resizeMode: 'contain',
     },
     arrowsContainer: {
         position: 'absolute',

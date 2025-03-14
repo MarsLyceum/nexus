@@ -1,25 +1,26 @@
 import React, { useMemo } from 'react';
 import { View, useWindowDimensions } from 'react-native';
 import { useImageResolution, fitContainer } from 'react-native-zoom-toolkit';
+
 import { NexusVideo } from '../NexusVideo';
 import { MobileImageRenderer } from './MobileImageRenderer';
-import { WebImageRenderer } from './WebImageRenderer';
+import { ComputerImageRenderer } from './ComputerImageRenderer';
 
 export type ItemRendererProps = {
     item: string;
     mediaInfo: { type: string } | undefined;
-    isWeb: boolean;
     containerWidth: number;
     containerHeight: number;
+    isComputer: boolean;
     onClose: () => void;
 };
 
 export const ItemRenderer: React.FC<ItemRendererProps> = ({
     item,
     mediaInfo,
-    isWeb,
     containerWidth,
     containerHeight,
+    isComputer,
     onClose,
 }) => {
     // Always call hooks in the same order.
@@ -57,10 +58,10 @@ export const ItemRenderer: React.FC<ItemRendererProps> = ({
                 />
             </View>
         );
-    } else if (isWeb) {
+    } else if (isComputer) {
         return (
             <View style={{ width: '100%', height: '100%' }}>
-                <WebImageRenderer
+                <ComputerImageRenderer
                     uri={item}
                     containerWidth={containerWidth}
                     containerHeight={containerHeight}

@@ -3,6 +3,8 @@ export * from './convertDeltaToMarkdownWithFencesAndFormatting';
 export * from './extractUrls';
 export * from './formatDateForChat';
 export * from './getRelativeTime';
+export * from './isMobile';
+export * from './isMobileBrowser';
 export * from './linkPreviewUtils';
 export * from './setupAxiosQuotas';
 export * from './stripHtml';

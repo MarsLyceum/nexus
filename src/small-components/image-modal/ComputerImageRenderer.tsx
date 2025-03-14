@@ -15,14 +15,14 @@ import {
 import { Image as ExpoImage } from 'expo-image';
 import { useImageResolution, fitContainer } from 'react-native-zoom-toolkit';
 
-export type WebImageRendererProps = {
+export type ComputerImageRendererProps = {
     uri: string;
     containerWidth: number;
     containerHeight: number;
     onClose: () => void;
 };
 
-export const WebImageRenderer: React.FC<WebImageRendererProps> = ({
+export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
     uri,
     containerWidth,
     containerHeight,

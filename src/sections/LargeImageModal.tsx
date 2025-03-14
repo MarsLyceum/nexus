@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Modal, StyleSheet, View, Platform, Dimensions } from 'react-native';
+import { Modal, StyleSheet, View, Dimensions } from 'react-native';
 import Carousel from 'react-native-reanimated-carousel';
-import { ArrowButton } from './ArrowButton';
-import { CarouselDots } from './CarouselDots';
+
+import { isComputer } from '../utils';
 import { ImageCountOverlay, ItemRenderer } from '../small-components';
 import { useMediaTypes } from '../hooks';
+
+import { ArrowButton } from './ArrowButton';
+import { CarouselDots } from './CarouselDots';
 
 export type LargeImageModalProps = {
     visible: boolean;
@@ -19,7 +22,7 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
     initialIndex,
     onClose,
 }) => {
-    const isWeb = Platform.OS === 'web';
+    const isComputer = isComputer();
     const mediaInfos = useMediaTypes(attachments);
     const mediaAttachments = attachments;
     const effectiveInitialIndex =
@@ -31,8 +34,8 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
     const deviceWidth = Dimensions.get('window').width;
     const deviceHeight = Dimensions.get('window').height;
     // For web, use 80% of the screen; for mobile, fill the screen.
-    const containerWidth = isWeb ? deviceWidth * 0.8 : deviceWidth;
-    const containerHeight = isWeb ? deviceHeight * 0.8 : deviceHeight;
+    const containerWidth = isComputer ? deviceWidth * 0.8 : deviceWidth;
+    const containerHeight = isComputer ? deviceHeight * 0.8 : deviceHeight;
 
     useEffect(() => {
         if (visible && carouselRef.current) {
@@ -46,7 +49,7 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
 
     // Web keyboard navigation.
     useEffect(() => {
-        if (!visible || !isWeb) return;
+        if (!visible || !isComputer) return;
         const handleKeyDown = (e: KeyboardEvent) => {
             if (mediaAttachments.length > 1) {
                 if (
@@ -67,7 +70,7 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [visible, mediaAttachments.length, currentIndex, isWeb]);
+    }, [visible, mediaAttachments.length, currentIndex, isComputer]);
 
     if (mediaAttachments.length === 0) return null;
 
@@ -79,8 +82,8 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
             <View key={key} style={{ width: '100%', height: '100%' }}>
                 <ItemRenderer
                     item={item}
+                    isComputer={isComputer}
                     mediaInfo={info}
-                    isWeb={isWeb}
                     containerWidth={containerWidth}
                     containerHeight={containerHeight}
                     onClose={onClose}

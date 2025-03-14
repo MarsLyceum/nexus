@@ -127,6 +127,15 @@ export const PostScreen: React.FC<PostScreenProps> = ({
         if (feedPost?.postedAt) setParentDate(feedPost.postedAt);
     }, [postData?.id, postData?.user, postData?.content, feedPost?.postedAt]);
 
+    // Update header title: show "Nexus" while loading, then post title once loaded.
+    useEffect(() => {
+        if (loading) {
+            navigation.setOptions({ title: 'Nexus' });
+        } else if (postData.title) {
+            navigation.setOptions({ title: postData.title });
+        }
+    }, [loading, postData.title, navigation]);
+
     // Create a ref for CommentsManager (if needed for additional control)
     const commentsManagerRef = useRef<{ checkScrollPosition: () => void }>(
         null

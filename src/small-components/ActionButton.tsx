@@ -8,6 +8,7 @@ export type ActionButtonProps = {
     tooltipText?: string;
     style?: ViewStyle;
     children: React.ReactNode;
+    transparent?: boolean;
 };
 
 export const ActionButton: React.FC<ActionButtonProps> = ({
@@ -15,6 +16,7 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
     tooltipText,
     style,
     children,
+    transparent = false,
 }) => {
     const [active, setActive] = useState(false);
 
@@ -25,7 +27,11 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
             onHoverOut={() => setActive(false)}
             onPressIn={() => setActive(true)}
             onPressOut={() => setActive(false)}
-            style={[styles.iconButton, style]}
+            style={[
+                styles.iconButton,
+                transparent && styles.transparent,
+                style,
+            ]}
         >
             {active && (
                 <View style={styles.activeOverlay} pointerEvents="none" />
@@ -49,9 +55,11 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.AppBackground,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 8,
         position: 'relative',
         overflow: 'hidden',
+    },
+    transparent: {
+        backgroundColor: 'transparent',
     },
     activeOverlay: {
         ...StyleSheet.absoluteFillObject,

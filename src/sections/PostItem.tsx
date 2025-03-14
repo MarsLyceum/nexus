@@ -22,7 +22,7 @@ import { AttachmentImageGallery } from './AttachmentImageGallery';
 import {
     LinkPreview,
     MarkdownRenderer,
-    NexusTooltip,
+    ActionButton,
 } from '../small-components';
 import { stripHtml, extractUrls } from '../utils';
 
@@ -94,12 +94,19 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-start',
         marginTop: 10,
     },
-    shareButton: {
+    // Container for grouping the share button and its count.
+    buttonGroup: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 8,
-        paddingVertical: 4,
         marginLeft: 10,
+    },
+    // Share button style matching the vote actions.
+    shareButton: {
+        width: 41,
+        height: 41,
+        borderRadius: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     shareCountText: {
         color: COLORS.White,
@@ -217,7 +224,7 @@ export const PostItem: React.FC<PostItemProps> = ({
             ? `${window.location.origin}/post/${id}`
             : `nexus://post/${id}`);
 
-    // Prepare Open Graph meta tags for web only
+    // Prepare Open Graph meta tags for web only.
     const ogDescription = stripHtml(content).slice(0, 160);
     const ogImage = thumbnail || avatarUri;
     const ogType = 'article';
@@ -249,7 +256,6 @@ export const PostItem: React.FC<PostItemProps> = ({
                 if (result.action === Share.sharedAction) {
                     setShareCount((prev) => prev + 1);
                 }
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (error: any) {
                 Alert.alert('Share error', error.message);
             }
@@ -315,23 +321,23 @@ export const PostItem: React.FC<PostItemProps> = ({
                     onDownvote={onDownvote}
                     commentCount={commentsCount}
                 />
-                <NexusTooltip tooltipText="Share">
-                    <TouchableOpacity
+                <View style={styles.buttonGroup}>
+                    <ActionButton
                         onPress={onShare}
+                        tooltipText="Share"
+                        transparent
                         style={styles.shareButton}
                     >
                         <MaterialCommunityIcons
-                            name="share-outline"
-                            size={20}
-                            color={COLORS.White}
+                            name="share"
+                            size={18}
+                            color={COLORS.MainText}
                         />
-                        {shareCount > 0 && (
-                            <Text style={styles.shareCountText}>
-                                {shareCount}
-                            </Text>
-                        )}
-                    </TouchableOpacity>
-                </NexusTooltip>
+                    </ActionButton>
+                    {shareCount > 0 && (
+                        <Text style={styles.shareCountText}>{shareCount}</Text>
+                    )}
+                </View>
             </View>
         </View>
     );

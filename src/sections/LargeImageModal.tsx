@@ -1,3 +1,4 @@
+// LargeImageModal.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import {
     Modal,
@@ -8,6 +9,7 @@ import {
     Dimensions,
     GestureResponderEvent,
     Image as RNImage,
+    ScrollView,
 } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import Carousel from 'react-native-reanimated-carousel';
@@ -16,6 +18,13 @@ import { CarouselDots } from './CarouselDots';
 import { ImageCountOverlay, NexusVideo } from '../small-components';
 import { COLORS } from '../constants';
 import { useMediaTypes } from '../hooks';
+import { PinchGestureHandler } from 'react-native-gesture-handler';
+import Animated, {
+    useAnimatedGestureHandler,
+    useSharedValue,
+    useAnimatedStyle,
+    withTiming,
+} from 'react-native-reanimated';
 
 type LargeImageModalProps = {
     visible: boolean;
@@ -165,19 +174,26 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
                     contentFit="contain"
                     controls
                 />
-            ) : (
-                <ExpoImage
+            ) : Platform.OS === 'web' ? (
+                <WebZoomableImage
                     source={{ uri: item }}
                     style={styles.modalMedia}
-                    contentFit="contain"
+                    onError={(error) =>
+                        console.error('Image load error:', item, error)
+                    }
+                    width={containerWidth}
+                    height={containerHeight}
+                />
+            ) : (
+                <ZoomableImage
+                    source={{ uri: item }}
+                    style={styles.modalMedia}
                     onError={(error) =>
                         console.error('Image load error:', item, error)
                     }
                 />
             );
 
-        // For the current visible image, just render the content.
-        // We no longer use onLayout here because we compute the actual layout separately.
         return <View style={{ width: '100%', height: '100%' }}>{content}</View>;
     };
 
@@ -284,6 +300,90 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
     );
 };
 
+// Mobile pinch-to-zoom component.
+export const ZoomableImage: React.FC<{
+    source: { uri: string };
+    style: any;
+    onError?: (error: any) => void;
+}> = ({ source, style, onError }) => {
+    const scale = useSharedValue(1);
+
+    const pinchHandler = useAnimatedGestureHandler({
+        onActive: (event) => {
+            scale.value = event.scale;
+        },
+        onEnd: () => {
+            // Return to original scale when gesture ends.
+            scale.value = withTiming(1, { duration: 200 });
+        },
+    });
+
+    const animatedStyle = useAnimatedStyle(() => {
+        return {
+            transform: [{ scale: scale.value }],
+        };
+    });
+
+    return (
+        <PinchGestureHandler onGestureEvent={pinchHandler}>
+            <Animated.View style={[style, animatedStyle]}>
+                <ExpoImage
+                    source={source}
+                    style={style}
+                    contentFit="contain"
+                    onError={onError}
+                />
+            </Animated.View>
+        </PinchGestureHandler>
+    );
+};
+
+// Web‑specific zoomable image component.
+// On web, clicking toggles the zoom state.
+// When zoomed, the image is rendered inside a ScrollView without auto-centering.
+export const WebZoomableImage: React.FC<{
+    source: { uri: string };
+    style: any;
+    onError?: (error: any) => void;
+    width: number;
+    height: number;
+}> = ({ source, style, onError, width, height }) => {
+    const [isZoomed, setIsZoomed] = useState(false);
+    const scrollViewRef = useRef<ScrollView>(null);
+    // Use a zoom factor of 3 when zoomed in.
+    const zoomFactor = isZoomed ? 3 : 1;
+    const imageWidth = width * zoomFactor;
+    const imageHeight = height * zoomFactor;
+
+    const handleToggleZoom = () => {
+        setIsZoomed((prev) => !prev);
+    };
+
+    return (
+        <ScrollView
+            ref={scrollViewRef}
+            style={[
+                styles.webImageContainer,
+                style,
+                { width, height, cursor: isZoomed ? 'zoom-out' : 'zoom-in' },
+            ]}
+            contentContainerStyle={styles.webContentContainer}
+            maximumZoomScale={3}
+            minimumZoomScale={1}
+            scrollEnabled={isZoomed}
+            directionalLockEnabled
+            onClick={handleToggleZoom}
+        >
+            <ExpoImage
+                source={source}
+                style={{ width: imageWidth, height: imageHeight }}
+                contentFit="contain"
+                onError={onError}
+            />
+        </ScrollView>
+    );
+};
+
 const styles = StyleSheet.create({
     modalOverlay: {
         flex: 1,
@@ -341,5 +441,13 @@ const styles = StyleSheet.create({
     },
     activeDot: {
         backgroundColor: COLORS.White,
+    },
+    webImageContainer: {
+        overflow: 'hidden',
+    },
+    webContentContainer: {
+        flexGrow: 1,
+        justifyContent: 'flex-start',
+        alignItems: 'center',
     },
 });

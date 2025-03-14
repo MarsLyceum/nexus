@@ -41,7 +41,8 @@ export const MobileImageRenderer: React.FC<MobileImageRendererProps> = ({
     const handleZoomTap = useCallback(
         (e: any) => {
             // Extract x and y coordinates directly from the event.
-            const { x, y } = e;
+            const { absoluteX, absoluteY } = e;
+            console.log('e:', e);
 
             // Attempt to use the visible rect of the zoomed image.
             if (
@@ -49,27 +50,34 @@ export const MobileImageRenderer: React.FC<MobileImageRendererProps> = ({
                 typeof zoomRef.current.getVisibleRect === 'function'
             ) {
                 const rect = zoomRef.current.getVisibleRect();
+                console.log('rect:', rect);
+
+                // Convert absolute coordinates to local image coordinates.
+                const localX = absoluteX - offsetX;
+                const localY = absoluteY - offsetY;
+
+                // Check if the tap is outside the visible image rect.
                 if (
-                    x < rect.x ||
-                    x > rect.x + rect.width ||
-                    y < rect.y ||
-                    y > rect.y + rect.height
+                    localX < rect.x ||
+                    localX > rect.x + rect.width ||
+                    localY < rect.y ||
+                    localY > rect.y + rect.height
                 ) {
+                    console.log('closing modal');
                     e.stopPropagation?.();
                     onClose();
-                    return;
                 }
             } else {
                 // Fallback: use computed image bounds (centered image).
+                // eslint-disable-next-line no-lonely-if
                 if (
-                    x < offsetX ||
-                    x > offsetX + size.width ||
-                    y < offsetY ||
-                    y > offsetY + size.height
+                    absoluteX < offsetX ||
+                    absoluteX > offsetX + size.width ||
+                    absoluteY < offsetY ||
+                    absoluteY > offsetY + size.height
                 ) {
                     e.stopPropagation?.();
                     onClose();
-                    return;
                 }
             }
             // Otherwise, let ResumableZoom handle the tap as usual.

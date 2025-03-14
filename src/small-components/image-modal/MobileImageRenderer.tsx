@@ -4,7 +4,6 @@ import { Image as ExpoImage } from 'expo-image';
 import {
     ResumableZoom,
     type ResumableZoomType,
-    fitContainer,
     useImageResolution,
 } from 'react-native-zoom-toolkit';
 
@@ -30,33 +29,29 @@ export const MobileImageRenderer: React.FC<MobileImageRendererProps> = ({
 
     // Compute aspect ratio (fallback to 1 if not ready)
     const aspectRatio = ready ? resolution!.width / resolution!.height : 1;
-    const size = fitContainer(aspectRatio, {
-        width: screenWidth,
-        height: screenHeight,
-    });
-    // Calculate the margins (offsets) around the centered image.
-    const offsetX = (screenWidth - size.width) / 2;
-    const offsetY = (screenHeight - size.height) / 2;
+
+    // Compute image dimensions: full screen width and height based on aspect ratio.
+    const imageWidth = screenWidth;
+    const imageHeight = screenWidth / aspectRatio;
+
+    // Calculate vertical offset for centering the image.
+    const offsetY = (screenHeight - imageHeight) / 2;
 
     const handleZoomTap = useCallback(
         (e: any) => {
-            // Extract x and y coordinates directly from the event.
             const { absoluteX, absoluteY } = e;
             console.log('e:', e);
 
-            // Attempt to use the visible rect of the zoomed image.
             if (
                 zoomRef.current &&
                 typeof zoomRef.current.getVisibleRect === 'function'
             ) {
                 const rect = zoomRef.current.getVisibleRect();
                 console.log('rect:', rect);
-
-                // Convert absolute coordinates to local image coordinates.
-                const localX = absoluteX - offsetX;
+                // Since the image is full width, horizontal offset is zero.
+                const localX = absoluteX;
                 const localY = absoluteY - offsetY;
 
-                // Check if the tap is outside the visible image rect.
                 if (
                     localX < rect.x ||
                     localX > rect.x + rect.width ||
@@ -68,25 +63,25 @@ export const MobileImageRenderer: React.FC<MobileImageRendererProps> = ({
                     onClose();
                 }
             } else {
-                // Fallback: use computed image bounds (centered image).
-                // eslint-disable-next-line no-lonely-if
-                if (
-                    absoluteX < offsetX ||
-                    absoluteX > offsetX + size.width ||
-                    absoluteY < offsetY ||
-                    absoluteY > offsetY + size.height
-                ) {
+                // Fallback: use vertical bounds based on computed offset.
+                if (absoluteY < offsetY || absoluteY > offsetY + imageHeight) {
                     e.stopPropagation?.();
                     onClose();
                 }
             }
-            // Otherwise, let ResumableZoom handle the tap as usual.
         },
-        [onClose, offsetX, offsetY, size.width, size.height]
+        [onClose, offsetY, imageHeight]
     );
 
     return (
-        <View style={{ flex: 1 }}>
+        <View
+            style={{
+                flex: 1,
+                backgroundColor: 'black',
+                justifyContent: 'center',
+                alignItems: 'center',
+            }}
+        >
             {ready ? (
                 <ResumableZoom
                     ref={zoomRef}
@@ -96,17 +91,21 @@ export const MobileImageRenderer: React.FC<MobileImageRendererProps> = ({
                     allowPinchPanning
                     extendGestures
                     onTap={handleZoomTap}
-                    style={{ flex: 1 }}
+                    style={{
+                        flex: 1,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                    }}
                     tapsEnabled
                 >
                     <ExpoImage
                         source={{ uri }}
-                        style={size}
+                        style={{ width: imageWidth, height: imageHeight }}
                         contentFit="contain"
                     />
                 </ResumableZoom>
             ) : (
-                <View style={{ flex: 1, backgroundColor: 'black' }} />
+                <View style={{ flex: 1 }} />
             )}
         </View>
     );

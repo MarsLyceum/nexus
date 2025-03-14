@@ -186,8 +186,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     carouselContainer: {
-        width: Dimensions.get('window').width * 0.8,
-        height: Dimensions.get('window').height * 0.8,
+        width: '100%',
+        height: '100%',
         position: 'relative',
     },
     arrowsContainer: {

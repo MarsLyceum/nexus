@@ -1,3 +1,4 @@
+export * from './image-modal';
 export * from './ActionButton';
 export * from './ChatInput';
 export * from './ChatInputContainer';

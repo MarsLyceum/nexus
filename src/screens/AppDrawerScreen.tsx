@@ -7,7 +7,7 @@ import {
 import { TouchableOpacity, useWindowDimensions } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
-import { COLORS } from '../constants';
+import { COLORS, SIDEBAR_WIDTH } from '../constants';
 import { useAppSelector, RootState, UserGroupsType } from '../redux';
 import {
     GroupScreen,
@@ -17,7 +17,6 @@ import {
     SearchScreen,
     FriendsScreen,
 } from '.';
-import { SearchBox } from '../sections';
 import { SearchContext, ActiveGroupContext } from '../providers'; // Make sure ActiveGroupContext is exported from your providers
 
 // Define a DrawerParamList type so navigation is properly typed.
@@ -83,7 +82,7 @@ export function AppDrawerScreen() {
                 // On desktop, the drawer is always open; on mobile, it slides in.
                 drawerType: isDesktop ? 'permanent' : 'slide',
                 drawerStyle: {
-                    width: 170,
+                    width: SIDEBAR_WIDTH,
                     borderRightWidth: 0,
                     borderRightColor: 'transparent',
                     backgroundColor: COLORS.AppBackground,

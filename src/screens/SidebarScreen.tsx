@@ -20,7 +20,7 @@ import {
 import { GroupButton, SidebarButton } from '../buttons';
 import { Friends, Chat, Events, Search, Add } from '../icons';
 import { FETCH_USER_GROUPS_QUERY } from '../queries';
-import { COLORS } from '../constants';
+import { COLORS, SIDEBAR_WIDTH } from '../constants';
 
 const BUTTON_MARGIN_TOP = 32;
 const CONTENT_PADDING_LEFT = 10;
@@ -28,7 +28,7 @@ const CONTENT_PADDING_LEFT = 10;
 const styles = StyleSheet.create({
     // Outer container for the scroll view.
     sidebarContainer: {
-        width: 170,
+        width: SIDEBAR_WIDTH,
         height: '100%',
         backgroundColor: COLORS.AppBackground,
         position: 'absolute',

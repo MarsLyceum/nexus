@@ -70,7 +70,6 @@ const styles = StyleSheet.create({
 // ---------------------
 // Helper function to extract text recursively from tnode children
 // ---------------------
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const extractTextFromTnode = (tnode: any): string => {
     if (tnode.data) {
         return tnode.data;
@@ -87,15 +86,13 @@ const extractTextFromTnode = (tnode: any): string => {
 // Helper function to check if text is only emojis (and whitespace)
 // ---------------------
 const isOnlyEmojis = (text: string): boolean => {
-    // This regex matches emoji presentation characters.
-    // It might need adjustments for different cases.
     const emojiRegex =
         /^(?:\s*(?:\p{Emoji_Presentation}|\p{Emoji}\uFE0F)\s*)+$/u;
     return emojiRegex.test(text.trim());
 };
 
 // ---------------------
-// Inline Spoiler Component (updated to be inline and not full width)
+// Inline Spoiler Component (toggles between whited out and revealed text)
 // ---------------------
 const InlineSpoiler: React.FC<{ children: React.ReactNode }> = ({
     children,
@@ -104,11 +101,16 @@ const InlineSpoiler: React.FC<{ children: React.ReactNode }> = ({
     return (
         <Text
             onPress={() => setRevealed((prev) => !prev)}
-            selectable
+            // Allow text selection only when the spoiler is revealed.
+            selectable={revealed}
             style={[
                 styles.spoilerText,
                 {
-                    backgroundColor: revealed ? 'transparent' : COLORS.White,
+                    backgroundColor: revealed
+                        ? COLORS.AppBackground
+                        : COLORS.White,
+                    // When hidden: white text on a white background ("whited out").
+                    // When revealed: white text on the app background.
                     color: COLORS.White,
                     alignSelf: 'flex-start',
                 },
@@ -122,7 +124,6 @@ const InlineSpoiler: React.FC<{ children: React.ReactNode }> = ({
 // ---------------------
 // Custom Inline Link Component
 // ---------------------
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const InlineLink: React.FC<{ tnode: any }> = ({ tnode }) => {
     let href = tnode.attributes?.href || '';
     if (!/^https?:\/\//.test(href)) {
@@ -149,7 +150,6 @@ const InlineLink: React.FC<{ tnode: any }> = ({ tnode }) => {
 // Markdown-It Plugin for Discord-Style Inline Spoilers (using ||spoiler||)
 // ---------------------
 function inlineSpoilerPlugin(md: MarkdownIt) {
-    // eslint-disable-next-line unicorn/consistent-function-scoping, @typescript-eslint/no-explicit-any
     function tokenize(state: any, silent: boolean) {
         const { pos } = state;
         if (state.src.slice(pos, pos + 2) !== '||') return false;
@@ -159,7 +159,6 @@ function inlineSpoilerPlugin(md: MarkdownIt) {
             const token = state.push('spoiler', 'spoiler', 0);
             token.content = state.src.slice(pos + 2, end);
         }
-        // eslint-disable-next-line no-param-reassign
         state.pos = end + 2;
         return true;
     }
@@ -170,7 +169,6 @@ function inlineSpoilerPlugin(md: MarkdownIt) {
 // Markdown-It Plugin for Reddit-Style Inline Spoilers (using >!spoiler!<)
 // ---------------------
 function redditSpoilerPlugin(md: MarkdownIt) {
-    // eslint-disable-next-line unicorn/consistent-function-scoping, @typescript-eslint/no-explicit-any
     function tokenize(state: any, silent: boolean) {
         const { pos } = state;
         if (state.src.slice(pos, pos + 2) !== '>!') return false;
@@ -180,7 +178,6 @@ function redditSpoilerPlugin(md: MarkdownIt) {
             const token = state.push('spoiler', 'spoiler', 0);
             token.content = state.src.slice(pos + 2, end);
         }
-        // eslint-disable-next-line no-param-reassign
         state.pos = end + 2;
         return true;
     }
@@ -190,7 +187,6 @@ function redditSpoilerPlugin(md: MarkdownIt) {
 // ---------------------
 // Custom Renderer for Spoiler Tokens in Markdown-It
 // ---------------------
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function spoilerRenderer(tokens: any, idx: number) {
     return `<spoiler>${tokens[idx].content}</spoiler>`;
 }
@@ -211,13 +207,11 @@ mdInstance.renderer.rules.spoiler = spoilerRenderer;
 // Custom Renderers for react-native-render-html
 // ---------------------
 const customRenderers = {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     spoiler: ({ tnode }: any) => {
         const content =
             tnode.domNode?.textContent || extractTextFromTnode(tnode) || '';
         return <InlineSpoiler>{content}</InlineSpoiler>;
     },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     a: ({ tnode }: any) => <InlineLink tnode={tnode} />,
 };
 
@@ -253,7 +247,6 @@ export const MarkdownRenderer: React.FC<{
 }> = ({ text, preview }) => {
     const contentWidth = Dimensions.get('window').width;
 
-    // Check if the text contains only emojis (and whitespace)
     if (isOnlyEmojis(text)) {
         return (
             <View>
@@ -269,13 +262,9 @@ export const MarkdownRenderer: React.FC<{
         [text]
     );
 
-    const handleOnLayout = useCallback(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (event: any) => {
-            setContentHeight(event.nativeEvent.layout.height);
-        },
-        [setContentHeight]
-    );
+    const handleOnLayout = useCallback((event: any) => {
+        setContentHeight(event.nativeEvent.layout.height);
+    }, []);
 
     const baseStyle = useMemo(() => ({ marginTop: 0, paddingTop: 0 }), []);
     const tagsStyles = useMemo(
@@ -289,14 +278,12 @@ export const MarkdownRenderer: React.FC<{
     );
     const defaultTextProps = useMemo(() => ({ selectable: true }), []);
 
-    // Full content element used for measuring height
     const fullContent = (
         <View onLayout={handleOnLayout}>
             <RenderHTML
                 contentWidth={contentWidth}
                 source={{ html: htmlContent }}
                 renderers={customRenderers}
-                // @ts-expect-error broken type
                 customHTMLElementModels={customHTMLElementModels}
                 baseStyle={baseStyle}
                 tagsStyles={tagsStyles}
@@ -305,23 +292,16 @@ export const MarkdownRenderer: React.FC<{
         </View>
     );
 
-    // If not in preview mode or if expanded, render full content.
     if (!preview || expanded) {
         return <View>{fullContent}</View>;
     }
 
-    // Determine if the content is truncated (i.e. its height exceeds the preview max)
     const isTruncated = contentHeight > PREVIEW_MAX_HEIGHT;
 
-    // If preview mode is active but content is short enough, render it normally.
     if (!isTruncated) {
         return <View>{fullContent}</View>;
     }
 
-    // If content is truncated in preview mode, render a fixed-height container.
-    // The container is split into:
-    // 1. A content area (clipped to PREVIEW_MAX_HEIGHT - ELLIPSIS_HEIGHT).
-    // 2. An inline ellipsis footer at the bottom that is clickable.
     return (
         <View style={{ height: PREVIEW_MAX_HEIGHT }}>
             <View
@@ -334,7 +314,6 @@ export const MarkdownRenderer: React.FC<{
                     contentWidth={contentWidth}
                     source={{ html: htmlContent }}
                     renderers={customRenderers}
-                    // @ts-expect-error broken type
                     customHTMLElementModels={customHTMLElementModels}
                     baseStyle={{ marginTop: 0, paddingTop: 0 }}
                     tagsStyles={{

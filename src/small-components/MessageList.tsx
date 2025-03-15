@@ -38,6 +38,10 @@ export const MessageList: React.FC<MessageListProps> = ({
             onEndReached={loadMoreMessages}
             onEndReachedThreshold={0.1}
             inverted
+            maintainVisibleContentPosition={{
+                minIndexForVisible: 1, // adjust this value if needed
+                autoscrollToTopThreshold: 50,
+            }}
             renderItem={({ item }) => (
                 <MessageItem
                     item={item}

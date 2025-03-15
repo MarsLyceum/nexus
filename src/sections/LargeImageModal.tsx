@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Modal, StyleSheet, View, Dimensions } from 'react-native';
 import Carousel from 'react-native-reanimated-carousel';
 
-import { isComputer } from '../utils';
+import { isComputer as isComputerUtil } from '../utils';
 import { ImageCountOverlay, ItemRenderer } from '../small-components';
 import { useMediaTypes } from '../hooks';
 
@@ -22,7 +22,7 @@ export const LargeImageModal: React.FC<LargeImageModalProps> = ({
     initialIndex,
     onClose,
 }) => {
-    const isComputer = isComputer();
+    const isComputer = isComputerUtil();
     const mediaInfos = useMediaTypes(attachments);
     const mediaAttachments = attachments;
     const effectiveInitialIndex =

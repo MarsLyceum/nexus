@@ -197,7 +197,6 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
                                     id: item.id,
                                 })
                             }
-                            fromReddit={item.fromReddit}
                             attachmentUrls={item.attachmentUrls}
                         />
                     )}

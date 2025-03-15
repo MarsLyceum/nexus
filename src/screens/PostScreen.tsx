@@ -234,7 +234,6 @@ export const PostScreen: React.FC<PostScreenProps> = ({
                                     navigation.navigate('AppDrawer');
                                 }
                             }}
-                            fromReddit={Math.random() < 0.2}
                             variant="details"
                             group="My cool group"
                         />

@@ -11,7 +11,7 @@ export const useChannelMessages = (channelId: string) => {
     const apolloClient = useApolloClient();
     const [chatMessages, setChatMessages] = useState<MessageWithAvatar[]>([]);
     const [offset, setOffset] = useState(0);
-    const limit = 100;
+    const limit = 1000;
     const [loadingMore, setLoadingMore] = useState(false);
     const [loadingMessages, setLoadingMessages] = useState(true);
     const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -54,7 +54,7 @@ export const useChannelMessages = (channelId: string) => {
     const { data, loading } = useQuery<{
         fetchChannelMessages: GroupChannelMessage[];
     }>(FETCH_CHANNEL_MESSAGES_QUERY, {
-        variables: { channelId, offset, refreshTrigger },
+        variables: { channelId, offset, refreshTrigger, limit },
     });
 
     useEffect(() => {

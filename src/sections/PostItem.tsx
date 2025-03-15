@@ -131,7 +131,6 @@ export type PostItemProps = {
     onPress?: () => void;
     variant?: 'feed' | 'default' | 'details';
     shareUrl?: string;
-    fromReddit?: boolean;
     attachmentUrls?: string[];
 };
 
@@ -191,7 +190,6 @@ export const PostItem: React.FC<PostItemProps> = ({
         headerElement = (
             <Text style={styles.subText}>
                 {username} • {time}
-                {fromReddit ? ' • From Reddit' : ''}
             </Text>
         );
     } else if (variant === 'details') {
@@ -201,7 +199,6 @@ export const PostItem: React.FC<PostItemProps> = ({
                 <Text style={styles.groupText}>{group}</Text>
                 <Text style={styles.subText}>
                     {username} • {time}
-                    {fromReddit ? ' • From Reddit' : ''}
                 </Text>
             </View>
         );
@@ -212,7 +209,6 @@ export const PostItem: React.FC<PostItemProps> = ({
                 <Text style={styles.groupText}>{group}</Text>
                 <Text style={styles.subText}>
                     {username} • {time}
-                    {fromReddit ? ' • From Reddit' : ''}
                 </Text>
             </View>
         );

@@ -29,7 +29,7 @@ export const useCreatePost = (
             refetchQueries: [
                 {
                     query: FETCH_CHANNEL_POSTS_QUERY,
-                    variables: { channelId, offset: 0 },
+                    variables: { channelId, offset: 0, limit: 100 },
                 },
             ],
             awaitRefetchQueries: true,

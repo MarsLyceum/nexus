@@ -6,6 +6,5 @@ export * from './getRelativeTime';
 export * from './isMobile';
 export * from './isMobileBrowser';
 export * from './linkPreviewUtils';
-export * from './setupAxiosQuotas';
 export * from './stripHtml';
 export * from './validatePassword';

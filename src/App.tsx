@@ -18,10 +18,7 @@ import {
     InMemoryCache,
     ApolloProvider,
     from,
-    ApolloLink,
-    Observable,
     split,
-    gql,
 } from '@apollo/client';
 import { Provider as ReduxProvider } from 'react-redux';
 import { onError, ErrorResponse } from '@apollo/client/link/error';
@@ -42,7 +39,6 @@ import { Provider as PortalProvider } from 'react-native-paper';
 
 import { linking } from './linking';
 import { COLORS } from './constants';
-import { setupAxiosQuotas } from './utils/setupAxiosQuotas';
 import { store } from './redux';
 import {
     LoginScreen,
@@ -64,8 +60,6 @@ import {
     ActiveGroupProvider,
     CurrentCommentProvider,
 } from './providers';
-
-setupAxiosQuotas();
 
 if (__DEV__) {
     loadDevMessages();
@@ -110,19 +104,6 @@ const errorLink = onError((error: ErrorResponse) => {
     if (error) {
         console.log('Apollo Error:', error);
     }
-});
-
-const requestQuota = 20;
-let requestCount = 0;
-const quotaLink = new ApolloLink((operation, forward) => {
-    if (requestCount < requestQuota) {
-        requestCount += 1;
-        return forward(operation);
-    }
-    console.error('Request quota exceeded');
-    return new Observable((observer) => {
-        observer.error(new Error('Request quota exceeded'));
-    });
 });
 
 // const graphqlApiGatewayEndpointHttp =
@@ -195,7 +176,7 @@ const splitLink = split(
         );
     },
     wsLink,
-    from([quotaLink, httpLink])
+    httpLink
 );
 
 const client = new ApolloClient({

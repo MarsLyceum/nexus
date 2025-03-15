@@ -71,6 +71,9 @@ importers:
       '@reduxjs/toolkit':
         specifier: ^2.5.1
         version: 2.5.1(react-redux@9.2.0(@types/react@18.3.18)(react@18.3.1)(redux@5.0.1))(react@18.3.1)
+      '@shopify/flash-list':
+        specifier: ^1.7.5
+        version: 1.7.5(@babel/runtime@7.26.7)(react-native@0.76.6(@babel/core@7.26.7)(@babel/preset-env@7.24.7(@babel/core@7.26.7))(@react-native-community/cli-server-api@13.6.9(encoding@0.1.13))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)
       '@supabase/supabase-js':
         specifier: ^2.48.1
         version: 2.48.1
@@ -344,9 +347,6 @@ importers:
       react-redux:
         specifier: ^9.2.0
         version: 9.2.0(@types/react@18.3.18)(react@18.3.1)(redux@5.0.1)
-      react-virtuoso:
-        specifier: ^4.12.5
-        version: 4.12.5(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       reconnecting-websocket:
         specifier: ^4.4.0
         version: 4.4.0
@@ -1847,6 +1847,13 @@ packages:
 
   '@segment/loosely-validate-event@2.0.0':
     resolution: {integrity: sha512-ZMCSfztDBqwotkl848ODgVcAmN4OItEWDCkshcKz0/W6gGSQayuuCtWV/MlodFivAZD793d6UgANd6wCXUfrIw==}
+
+  '@shopify/flash-list@1.7.5':
+    resolution: {integrity: sha512-TPNCqvDINgd1ko8IvVPJeq+74bz+o5TkxnnBig+GbDAvrOiwLBU+qnmvHWjFsivoATUZVtuUApAKTRk/C26yiw==}
+    peerDependencies:
+      '@babel/runtime': '*'
+      react: '*'
+      react-native: '*'
 
   '@sideway/address@4.1.5':
     resolution: {integrity: sha512-IqO/DUQHUkPeixNQ8n0JA6102hT9CmaljNTPmQ1u8MEhBo/R4Q8eKLN/vGZxuebwOroDB4cbpjheD4+/sKFK4Q==}
@@ -6575,12 +6582,6 @@ packages:
     peerDependencies:
       react: ^16.3.0 || ^17.0.0 || ^18.0.0
 
-  react-virtuoso@4.12.5:
-    resolution: {integrity: sha512-YeCbRRsC9CLf0buD0Rct7WsDbzf+yBU1wGbo05/XjbcN2nJuhgh040m3y3+6HVogTZxEqVm45ac9Fpae4/MxRQ==}
-    peerDependencies:
-      react: '>=16 || >=17 || >= 18 || >= 19'
-      react-dom: '>=16 || >=17 || >= 18 || >=19'
-
   react@18.3.1:
     resolution: {integrity: sha512-wS+hAgJShR0KhEvPJArfuPVN1+Hz1t0Y6n5jLrGQbkb4urgPE/0Rve+1kMB1v/oWgHgm4WIcV+i7F2pTVj+2iQ==}
     engines: {node: '>=0.10.0'}
@@ -6613,6 +6614,12 @@ packages:
 
   reconnecting-websocket@4.4.0:
     resolution: {integrity: sha512-D2E33ceRPga0NvTDhJmphEgJ7FUYF0v4lr1ki0csq06OdlxKfugGzN0dSkxM/NfqCxYELK4KcaTOUOjTV6Dcng==}
+
+  recyclerlistview@4.2.2:
+    resolution: {integrity: sha512-tN6Aeob/mOD75Gco+vtjK4mbCjjsvev5me96TrwInuomYtYhLzUXSHjMOklEf2odK/eaV7uebimpZAe8YN6veg==}
+    peerDependencies:
+      react: '>= 15.2.1'
+      react-native: '>= 0.30.0'
 
   redeyed@2.1.1:
     resolution: {integrity: sha512-FNpGGo1DycYAdnrKFxCMmKYgo/mILAqtRYbkdQD8Ep/Hk2PQ5+aEAEx+IU713RTDmuBaH0c8P5ZozurNu5ObRQ==}
@@ -7391,6 +7398,9 @@ packages:
         optional: true
       '@swc/wasm':
         optional: true
+
+  ts-object-utils@0.0.5:
+    resolution: {integrity: sha512-iV0GvHqOmilbIKJsfyfJY9/dNHCs969z3so90dQWsO1eMMozvTpnB1MEaUbb3FYtZTGjv5sIy/xmslEz0Rg2TA==}
 
   ts-toolbelt@6.15.5:
     resolution: {integrity: sha512-FZIXf1ksVyLcfr7M317jbB67XFJhOO1YqdTcuGaq9q5jLUoTikukZ+98TPjKiP2jC5CgmYdWWYs0s2nLSU0/1A==}
@@ -10224,6 +10234,14 @@ snapshots:
     dependencies:
       component-type: 1.2.2
       join-component: 1.1.0
+
+  '@shopify/flash-list@1.7.5(@babel/runtime@7.26.7)(react-native@0.76.6(@babel/core@7.26.7)(@babel/preset-env@7.24.7(@babel/core@7.26.7))(@react-native-community/cli-server-api@13.6.9(encoding@0.1.13))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)':
+    dependencies:
+      '@babel/runtime': 7.26.7
+      react: 18.3.1
+      react-native: 0.76.6(@babel/core@7.26.7)(@babel/preset-env@7.24.7(@babel/core@7.26.7))(@react-native-community/cli-server-api@13.6.9(encoding@0.1.13))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1)
+      recyclerlistview: 4.2.2(react-native@0.76.6(@babel/core@7.26.7)(@babel/preset-env@7.24.7(@babel/core@7.26.7))(@react-native-community/cli-server-api@13.6.9(encoding@0.1.13))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)
+      tslib: 2.8.1
 
   '@sideway/address@4.1.5':
     dependencies:
@@ -16244,6 +16262,7 @@ snapshots:
       '@react-navigation/native-stack': 6.11.0(@react-navigation/native@6.1.18(react-native@0.76.6(@babel/core@7.26.7)(@babel/preset-env@7.24.7(@babel/core@7.26.7))(@react-native-community/cli-server-api@13.6.9(encoding@0.1.13))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1))(react@18.3.1))(react-native-safe-area-context@4.12.0(react-native@0.76.6(@babel/core@7.26.7)(@babel/preset-env@7.24.7(@babel/core@7.26.7))(@react-native-community/cli-server-api@13.6.9(encoding@0.1.13))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1))(react@18.3.1))(react-native-screens@4.5.0(react-native@0.76.6(@babel/core@7.26.7)(@babel/preset-env@7.24.7(@babel/core@7.26.7))(@react-native-community/cli-server-api@13.6.9(encoding@0.1.13))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1))(react@18.3.1))(react-native@0.76.6(@babel/core@7.26.7)(@babel/preset-env@7.24.7(@babel/core@7.26.7))(@react-native-community/cli-server-api@13.6.9(encoding@0.1.13))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)
       '@react-navigation/stack': 6.4.1(e62f813498a3c8f5af3d96dc3620528a)
       '@reduxjs/toolkit': 2.5.1(react-redux@9.2.0(@types/react@18.3.18)(react@18.3.1)(redux@5.0.1))(react@18.3.1)
+      '@shopify/flash-list': 1.7.5(@babel/runtime@7.26.7)(react-native@0.76.6(@babel/core@7.26.7)(@babel/preset-env@7.24.7(@babel/core@7.26.7))(@react-native-community/cli-server-api@13.6.9(encoding@0.1.13))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)
       '@supabase/supabase-js': 2.48.1
       '@turf/turf': 7.2.0
       '@types/apollo-upload-client': 18.0.0(@types/react@18.3.18)(graphql-ws@5.16.2(graphql@15.10.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(subscriptions-transport-ws@0.11.0(graphql@15.10.1))
@@ -16334,7 +16353,6 @@ snapshots:
       react-native-zoom-toolkit: 4.0.1(react-native-gesture-handler@2.22.1(react-native@0.76.6(@babel/core@7.26.7)(@babel/preset-env@7.24.7(@babel/core@7.26.7))(@react-native-community/cli-server-api@13.6.9(encoding@0.1.13))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1))(react@18.3.1))(react-native-reanimated@3.16.7(@babel/core@7.26.7)(react-native@0.76.6(@babel/core@7.26.7)(@babel/preset-env@7.24.7(@babel/core@7.26.7))(@react-native-community/cli-server-api@13.6.9(encoding@0.1.13))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1))(react@18.3.1))(react-native@0.76.6(@babel/core@7.26.7)(@babel/preset-env@7.24.7(@babel/core@7.26.7))(@react-native-community/cli-server-api@13.6.9(encoding@0.1.13))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)
       react-quill-new: 3.3.3(quill-delta@5.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react-redux: 9.2.0(@types/react@18.3.18)(react@18.3.1)(redux@5.0.1)
-      react-virtuoso: 4.12.5(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       reconnecting-websocket: 4.4.0
       slate: 0.112.0
       slate-history: 0.110.3(slate@0.112.0)
@@ -16971,11 +16989,6 @@ snapshots:
     dependencies:
       react: 18.3.1
 
-  react-virtuoso@4.12.5(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
-    dependencies:
-      react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
-
   react@18.3.1:
     dependencies:
       loose-envify: 1.4.0
@@ -17023,6 +17036,14 @@ snapshots:
       tslib: 2.8.1
 
   reconnecting-websocket@4.4.0: {}
+
+  recyclerlistview@4.2.2(react-native@0.76.6(@babel/core@7.26.7)(@babel/preset-env@7.24.7(@babel/core@7.26.7))(@react-native-community/cli-server-api@13.6.9(encoding@0.1.13))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1))(react@18.3.1):
+    dependencies:
+      lodash.debounce: 4.0.8
+      prop-types: 15.8.1
+      react: 18.3.1
+      react-native: 0.76.6(@babel/core@7.26.7)(@babel/preset-env@7.24.7(@babel/core@7.26.7))(@react-native-community/cli-server-api@13.6.9(encoding@0.1.13))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1)
+      ts-object-utils: 0.0.5
 
   redeyed@2.1.1:
     dependencies:
@@ -17874,6 +17895,8 @@ snapshots:
       typescript: 5.3.3
       v8-compile-cache-lib: 3.0.1
       yn: 3.1.1
+
+  ts-object-utils@0.0.5: {}
 
   ts-toolbelt@6.15.5: {}
 

@@ -11,7 +11,7 @@ export const useChannelMessages = (channelId: string) => {
     const apolloClient = useApolloClient();
     const [chatMessages, setChatMessages] = useState<MessageWithAvatar[]>([]);
     const [offset, setOffset] = useState(0);
-    const limit = 100;
+    const limit = 20;
     const [loadingMore, setLoadingMore] = useState(false);
     const [loadingMessages, setLoadingMessages] = useState(true);
     const [refreshTrigger, setRefreshTrigger] = useState(0);

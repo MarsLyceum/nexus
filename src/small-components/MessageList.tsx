@@ -1,6 +1,7 @@
 // MessageList.tsx
-import React from 'react';
-import { FlatList } from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import { StyleSheet } from 'react-native';
+import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { MessageWithAvatar } from '../types';
 import { MessageItem } from './MessageItem';
 import { SkeletonMessageItem } from './SkeletonMessageItem';
@@ -22,33 +23,50 @@ export const MessageList: React.FC<MessageListProps> = ({
 }) => {
     if (loadingMessages) {
         return (
-            <FlatList
+            <Virtuoso
                 data={[0, 1, 2, 3, 4]}
-                keyExtractor={(item) => item.toString()}
-                renderItem={() => <SkeletonMessageItem />}
-                contentContainerStyle={{ paddingBottom: 80 }}
+                itemContent={(_index, _item) => <SkeletonMessageItem />}
+                style={styles.container}
             />
         );
     }
 
+    // Reverse messages so that oldest is first, newest is last.
+    const orderedMessages = [...chatMessages].reverse();
+    const virtuosoRef = useRef<VirtuosoHandle>(null);
+
+    // On mount or when orderedMessages change, scroll to the newest message.
+    useEffect(() => {
+        if (orderedMessages.length && virtuosoRef.current) {
+            virtuosoRef.current.scrollToIndex({
+                index: orderedMessages.length - 1,
+                align: 'end',
+                behavior: 'auto',
+            });
+        }
+    }, [orderedMessages]);
+
     return (
-        <FlatList
-            data={chatMessages}
-            keyExtractor={(item) => item.id}
-            onEndReached={loadMoreMessages}
-            onEndReachedThreshold={0.1}
-            inverted
-            maintainVisibleContentPosition={{
-                minIndexForVisible: 1, // adjust this value if needed
-                autoscrollToTopThreshold: 50,
-            }}
-            renderItem={({ item }) => (
+        <Virtuoso
+            ref={virtuosoRef}
+            data={orderedMessages}
+            followOutput
+            // Load older messages when the user scrolls to the top.
+            startReached={loadMoreMessages}
+            itemContent={(_index, item) => (
                 <MessageItem
                     item={item}
                     width={width}
                     onAttachmentPress={onAttachmentPress}
                 />
             )}
+            style={styles.container}
         />
     );
 };
+
+const styles = StyleSheet.create({
+    container: {
+        paddingBottom: 80,
+    },
+});

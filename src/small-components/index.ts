@@ -25,6 +25,7 @@ export * from './MessageList';
 export * from './MiniModal';
 export * from './NexusTooltip';
 export * from './NexusVideo';
+export * from './PatchedFlashList';
 export * from './SkeletonComment';
 export * from './SkeletonMessageItem';
 export * from './SkeletonPostItem';

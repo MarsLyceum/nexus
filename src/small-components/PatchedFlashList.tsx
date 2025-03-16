@@ -1,15 +1,10 @@
-// PatchedFlashList.tsx
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { Platform } from 'react-native';
 import { FlashList, FlashListProps } from '@shopify/flash-list';
 
 export function PatchedFlashList<T>(props: FlashListProps<T>) {
-    const flashListRef = useRef<FlashList<T>>(null);
-
-    // eslint-disable-next-line consistent-return
     useEffect(() => {
-        // Only run on web
-        if (props.inverted && Platform.OS === 'web' && flashListRef.current) {
+        if (props.inverted && Platform.OS === 'web') {
             // Use nativeID to find the DOM element.
             // Ensure your FlashList has nativeID="chat-items"
             const node = document.querySelector('#chat-items');
@@ -33,7 +28,8 @@ export function PatchedFlashList<T>(props: FlashListProps<T>) {
                 };
             }
         }
-    }, []);
+    }, [props.inverted]);
 
-    return <FlashList {...props} ref={flashListRef} nativeID="chat-items" />;
+    // Removed the ref prop to avoid forwarding it to internal components.
+    return <FlashList {...props} nativeID="chat-items" />;
 }

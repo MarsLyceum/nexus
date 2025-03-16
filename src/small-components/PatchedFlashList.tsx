@@ -6,12 +6,13 @@ import { FlashList, FlashListProps } from '@shopify/flash-list';
 export function PatchedFlashList<T>(props: FlashListProps<T>) {
     const flashListRef = useRef<FlashList<T>>(null);
 
+    // eslint-disable-next-line consistent-return
     useEffect(() => {
         // Only run on web
         if (props.inverted && Platform.OS === 'web' && flashListRef.current) {
             // Use nativeID to find the DOM element.
             // Ensure your FlashList has nativeID="chat-items"
-            const node = document.getElementById('chat-items');
+            const node = document.querySelector('#chat-items');
             if (node) {
                 const wheelHandler = (e: WheelEvent) => {
                     // Invert the wheel deltas

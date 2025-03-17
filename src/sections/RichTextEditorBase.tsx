@@ -51,7 +51,7 @@ export function getRichTextEditorHtml(
     height: string = '80vh',
     width: string = '100%',
     borderRadius: string = '5px',
-    backgroundColor: string = COLORS.PrimaryBackground // <-- new parameter for background color
+    backgroundColor: string = COLORS.SecondaryBackground // new parameter for background color
 ): string {
     const editorHeight = height;
     const editorWidth = width;
@@ -117,6 +117,9 @@ export function getRichTextEditorHtml(
       .ql-editor.ql-blank::before { 
         color: ${COLORS.MainText} !important;
       }
+      .ql-toolbar button {
+        color: ${COLORS.MainText} !important;
+      }
       .ql-toolbar button svg { 
         stroke: ${COLORS.MainText} !important;
         fill: ${COLORS.MainText} !important;
@@ -129,16 +132,16 @@ export function getRichTextEditorHtml(
       }
       .ql-toolbar button:hover svg,
       .ql-toolbar button.ql-active svg {
-        stroke: ${COLORS.Primary} !important;
-        fill: ${COLORS.Primary} !important;
+        stroke: ${COLORS.Secondary} !important;
+        fill: ${COLORS.Secondary} !important;
       }
       .ql-toolbar button:hover .ql-stroke,
       .ql-toolbar button.ql-active .ql-stroke { 
-        stroke: ${COLORS.Primary} !important;
+        stroke: ${COLORS.Secondary} !important;
       }
       .ql-toolbar button:hover .ql-fill,
       .ql-toolbar button.ql-active .ql-fill { 
-        fill: ${COLORS.Primary} !important;
+        fill: ${COLORS.Secondary} !important;
       }
       .ql-toolbar .ql-picker-label,
       .ql-toolbar .ql-picker-item { 
@@ -148,7 +151,7 @@ export function getRichTextEditorHtml(
       .ql-toolbar .ql-picker-item:hover,
       .ql-toolbar .ql-picker-label.ql-active,
       .ql-toolbar .ql-picker-item.ql-selected { 
-        color: ${COLORS.Primary} !important;
+        color: ${COLORS.Secondary} !important;
       }
       .ql-picker-options { 
         background-color: ${COLORS.AppBackground} !important;
@@ -169,7 +172,7 @@ export function getRichTextEditorHtml(
         padding: 5px;
       }
       .ql-tooltip .ql-action { 
-        color: ${COLORS.Primary} !important;
+        color: ${COLORS.Secondary} !important;
       }
       .spoiler {
         background-color: ${COLORS.InactiveText} !important;
@@ -186,7 +189,11 @@ export function getRichTextEditorHtml(
         display: inline-block;
         width: 1em;
         margin-right: 0.2em;
-        color: ${COLORS.Primary};
+        color: ${COLORS.Secondary};
+      }
+      /* Ensure the line in our spoiler icon inherits the correct color */
+      .ql-toolbar button svg.ql-spoiler-icon line {
+        stroke: currentColor !important;
       }
     </style>
   </head>
@@ -225,9 +232,9 @@ export function getRichTextEditorHtml(
         SpoilerBlot.tagName = 'span';
         Quill.register(SpoilerBlot);
       
-        // Define a custom icon for the spoiler button using an inline SVG.
+        // Define a custom icon for the spoiler button using an inline SVG with a custom class.
         var icons = Quill.import('ui/icons');
-        icons['spoiler'] = '<svg viewBox="0 0 24 24" width="16" height="16" xmlns="http://www.w3.org/2000/svg"><path fill="${COLORS.White}" d="M12 4.5c-4.97 0-9.27 3.11-11 7.5 1.73 4.39 6.03 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6.03-7.5-11-7.5zm0 13c-3.31 0-6-2.69-6-6 0-.89.22-1.73.61-2.46l8.85 8.85C13.73 17.78 12.89 18 12 18zm4.39-2.03l-8.85-8.85c.73-.39 1.57-.61 2.46-.61 3.31 0 6 2.69 6 6 0 .89-.22 1.73-.61 2.46z"/><line x1="1" y1="1" x2="23" y2="23" stroke="${COLORS.White}" stroke-width="2"/></svg>';
+        icons['spoiler'] = '<svg class="ql-spoiler-icon" viewBox="0 0 24 24" width="16" height="16" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M12 4.5c-4.97 0-9.27 3.11-11 7.5 1.73 4.39 6.03 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6.03-7.5-11-7.5zm0 13c-3.31 0-6-2.69-6-6 0-.89.22-1.73.61-2.46l8.85 8.85C13.73 17.78 12.89 18 12 18zm4.39-2.03l-8.85-8.85c.73-.39 1.57-.61 2.46-.61 3.31 0 6 2.69 6 6 0 .89-.22 1.73-.61 2.46z"/><line x1="1" y1="1" x2="23" y2="23" stroke="currentColor" stroke-width="2"/></svg>';
       
         var toolbarHandlers = {
           spoiler: function() {

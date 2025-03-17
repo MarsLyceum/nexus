@@ -151,17 +151,18 @@ const InlineLink: React.FC<{ tnode: any }> = ({ tnode }) => {
 // ---------------------
 function inlineSpoilerPlugin(md: MarkdownIt) {
     function tokenize(state: any, silent: boolean) {
-        const { pos } = state;
-        if (state.src.slice(pos, pos + 2) !== '||') return false;
-        const end = state.src.indexOf('||', pos + 2);
+        const startPos = state.pos;
+        if (state.src.slice(startPos, startPos + 2) !== '||') return false;
+        const end = state.src.indexOf('||', startPos + 2);
         if (end === -1) return false;
         if (!silent) {
             const token = state.push('spoiler', 'spoiler', 0);
-            token.content = state.src.slice(pos + 2, end);
+            token.content = state.src.slice(startPos + 2, end);
         }
         state.pos = end + 2;
         return true;
     }
+    // Register before the "text" rule so inline spoilers are caught even mid-string.
     md.inline.ruler.before('text', 'spoiler', tokenize);
 }
 
@@ -185,6 +186,52 @@ function redditSpoilerPlugin(md: MarkdownIt) {
 }
 
 // ---------------------
+// Postprocessor to handle spoilers embedded within larger text tokens
+// ---------------------
+function spoilerPostProcessor(state: any) {
+    state.tokens.forEach((token: any) => {
+        if (token.type === 'inline' && token.children) {
+            const newChildren: any[] = [];
+            token.children.forEach((child: any) => {
+                // Only process text tokens that include our spoiler delimiters.
+                if (child.type === 'text' && child.content.includes('||')) {
+                    const text = child.content;
+                    let lastIndex = 0;
+                    const regex = /\|\|(.+?)\|\|/g;
+                    let match;
+                    while ((match = regex.exec(text)) !== null) {
+                        // Push any text before the spoiler as a text token.
+                        if (match.index > lastIndex) {
+                            const t = new state.Token('text', '', 0);
+                            t.content = text.slice(lastIndex, match.index);
+                            newChildren.push(t);
+                        }
+                        // Create a spoiler token for the matched content.
+                        const spoilerToken = new state.Token(
+                            'spoiler',
+                            'spoiler',
+                            0
+                        );
+                        spoilerToken.content = match[1];
+                        newChildren.push(spoilerToken);
+                        lastIndex = regex.lastIndex;
+                    }
+                    // If there's text after the last spoiler, add it as well.
+                    if (lastIndex < text.length) {
+                        const t = new state.Token('text', '', 0);
+                        t.content = text.slice(lastIndex);
+                        newChildren.push(t);
+                    }
+                } else {
+                    newChildren.push(child);
+                }
+            });
+            token.children = newChildren;
+        }
+    });
+}
+
+// ---------------------
 // Custom Renderer for Spoiler Tokens in Markdown-It
 // ---------------------
 function spoilerRenderer(tokens: any, idx: number) {
@@ -202,6 +249,12 @@ const mdInstance = new MarkdownIt({
 mdInstance.use(inlineSpoilerPlugin);
 mdInstance.use(redditSpoilerPlugin);
 mdInstance.renderer.rules.spoiler = spoilerRenderer;
+// Register the postprocessor to catch inline spoilers embedded in larger text.
+mdInstance.core.ruler.after(
+    'inline',
+    'spoiler_postprocessor',
+    spoilerPostProcessor
+);
 
 // ---------------------
 // Custom Renderers for react-native-render-html

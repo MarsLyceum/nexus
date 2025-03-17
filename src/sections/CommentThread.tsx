@@ -4,6 +4,8 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
+import { useApolloClient } from '@apollo/client';
+
 import { VoteActions } from './VoteActions';
 import { COLORS } from '../constants';
 import { CurrentCommentContext } from '../providers';
@@ -18,7 +20,6 @@ import { stripHtml, extractUrls, getRelativeTime, isComputer } from '../utils';
 import { useCreateComment } from '../hooks';
 import { useAppSelector, RootState } from '../redux';
 // NEW: Import Apollo Client hook and comments query to allow refetching comments.
-import { useApolloClient } from '@apollo/client';
 import { FETCH_POST_COMMENTS_QUERY } from '../queries';
 
 const styles = StyleSheet.create({

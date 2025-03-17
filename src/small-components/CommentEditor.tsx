@@ -1,14 +1,21 @@
-// CommentEditor.tsx
 import React, { useState } from 'react';
-import { View, Pressable, Text, StyleSheet } from 'react-native';
+import {
+    View,
+    Pressable,
+    Text,
+    StyleSheet,
+    TouchableOpacity,
+} from 'react-native';
+import Icon from 'react-native-vector-icons/FontAwesome5';
 import { MarkdownEditor } from '../small-components/MarkdownEditor';
 import { Tooltip } from './Tooltip';
 import { RichTextEditor } from '../sections/RichTextEditor';
 import { AttachmentPreviews, Attachment } from '../sections';
-import { useCreateComment } from '../hooks';
+import { useCreateComment, useFileUpload } from '../hooks';
 import { useAppSelector, RootState, UserType } from '../redux';
 import { COLORS } from '../constants';
 import { FormattingOptions } from '../icons/FormattingOptions';
+import { GiphyModal } from './GiphyModal';
 
 type CommentEditorProps = {
     postId: string;
@@ -42,6 +49,11 @@ export const CommentEditor: React.FC<CommentEditorProps> = ({
     const [isExpanded, setIsExpanded] = useState(false);
     // State to toggle the formatting toolbar in the rich text editor.
     const [showFormattingOptions, setShowFormattingOptions] = useState(false);
+    // State for Giphy modal visibility
+    const [showGiphy, setShowGiphy] = useState(false);
+
+    // Hook for file upload functionality
+    const { pickFile } = useFileUpload();
 
     // Custom hook to create comments
     const { createComment, creatingComment } = useCreateComment(() => {
@@ -86,6 +98,34 @@ export const CommentEditor: React.FC<CommentEditorProps> = ({
         if (onCancel) onCancel();
     };
 
+    // Handle image attachment insertion
+    const handleAttachmentInsert = async () => {
+        try {
+            const result = await pickFile();
+            if (!result) return;
+            const file = result;
+            let previewUri = '';
+            if (file && 'uri' in file) {
+                previewUri = file.uri;
+            } else if (file) {
+                previewUri = URL.createObjectURL(file);
+            }
+            const newAttachment: Attachment = {
+                id: `${Date.now()}-${Math.random()}`,
+                file,
+                previewUri,
+            };
+            setAttachments((prev) => [...prev, newAttachment]);
+        } catch (error) {
+            console.error('Error in handleAttachmentInsert:', error);
+        }
+    };
+
+    // Handle GIF button press to show the Giphy modal
+    const handleGifPress = () => {
+        setShowGiphy(true);
+    };
+
     return (
         <View style={styles.container}>
             {isExpanded ? (
@@ -123,34 +163,48 @@ export const CommentEditor: React.FC<CommentEditorProps> = ({
                         )}
                     </View>
 
-                    {/* Formatting Options toggle (only in Rich Text mode) */}
+                    {/* Formatting Options and Attachment Buttons (only in Rich Text mode) */}
                     {!useMarkdown && (
-                        <Pressable
-                            style={[
-                                styles.formatToggleButton,
-                                {
-                                    backgroundColor: showFormattingOptions
-                                        ? COLORS.Primary
-                                        : 'transparent',
-                                },
-                            ]}
-                            onPress={() =>
-                                setShowFormattingOptions((prev) => !prev)
-                            }
-                        >
-                            <Tooltip
-                                tooltipText={
-                                    showFormattingOptions
-                                        ? 'Hide formatting options'
-                                        : 'Show formatting options'
+                        <View style={styles.formatAndAttachContainer}>
+                            <TouchableOpacity
+                                onPress={handleAttachmentInsert}
+                                style={styles.imageButton}
+                            >
+                                <Icon name="image" size={24} color="white" />
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                onPress={handleGifPress}
+                                style={styles.gifButton}
+                            >
+                                <Text style={styles.gifButtonText}>GIF</Text>
+                            </TouchableOpacity>
+                            <Pressable
+                                style={[
+                                    styles.formatToggleButton,
+                                    {
+                                        backgroundColor: showFormattingOptions
+                                            ? COLORS.Primary
+                                            : 'transparent',
+                                    },
+                                ]}
+                                onPress={() =>
+                                    setShowFormattingOptions((prev) => !prev)
                                 }
                             >
-                                <FormattingOptions
-                                    size={18}
-                                    color={COLORS.White}
-                                />
-                            </Tooltip>
-                        </Pressable>
+                                <Tooltip
+                                    tooltipText={
+                                        showFormattingOptions
+                                            ? 'Hide formatting options'
+                                            : 'Show formatting options'
+                                    }
+                                >
+                                    <FormattingOptions
+                                        size={18}
+                                        color={COLORS.White}
+                                    />
+                                </Tooltip>
+                            </Pressable>
+                        </View>
                     )}
 
                     {/* Attachment previews */}
@@ -203,6 +257,15 @@ export const CommentEditor: React.FC<CommentEditorProps> = ({
                     )}
                 </>
             )}
+
+            {/* Giphy Modal */}
+            <GiphyModal
+                visible={showGiphy}
+                onClose={() => setShowGiphy(false)}
+                onSelectGif={(attachment) =>
+                    setAttachments((prev) => [...prev, attachment])
+                }
+            />
         </View>
     );
 };
@@ -232,6 +295,37 @@ const styles = StyleSheet.create({
     editorContainer: {
         marginBottom: 10,
     },
+    formatAndAttachContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 10,
+    },
+    formatToggleButton: {
+        paddingVertical: 6,
+        paddingHorizontal: 10,
+        borderRadius: 5,
+    },
+    imageButton: {
+        marginLeft: 10,
+        padding: 8,
+        backgroundColor: COLORS.SecondaryBackground,
+        borderRadius: 5,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    gifButton: {
+        marginLeft: 10,
+        padding: 8,
+        backgroundColor: COLORS.SecondaryBackground,
+        borderRadius: 5,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    gifButtonText: {
+        color: COLORS.White,
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
     buttonRow: {
         flexDirection: 'row',
         justifyContent: 'flex-end',
@@ -259,14 +353,5 @@ const styles = StyleSheet.create({
     postButtonText: {
         color: COLORS.White,
         fontWeight: '600',
-    },
-    formatToggleButton: {
-        position: 'absolute',
-        left: 10,
-        bottom: 10,
-        paddingVertical: 6,
-        paddingHorizontal: 10,
-        borderRadius: 5,
-        zIndex: 1000,
     },
 });

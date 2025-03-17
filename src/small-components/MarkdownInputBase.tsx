@@ -23,6 +23,8 @@ export interface MarkdownInputBaseProps extends TextInputProps {
     // New props for dynamic dimensions as strings
     width?: string;
     height?: string;
+    // New prop for background color
+    backgroundColor?: string;
 }
 
 export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
@@ -35,6 +37,7 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
     multiline,
     width,
     height,
+    backgroundColor,
     ...rest
 }) => {
     const overlayScrollRef = useRef<ScrollView>(null);
@@ -63,11 +66,31 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
         emojiPickerRef.current?.handleKeyDown(e);
     };
 
-    // Only add width and height if they are provided
+    // Only add width, height, and backgroundColor if they are provided
     const containerStyle: object = {
         ...(width ? { width } : {}),
         ...(height ? { height } : {}),
+        ...(backgroundColor ? { backgroundColor } : {}), // applied to container
     };
+
+    // Also apply backgroundColor to the overlay and input styles
+    const overlayCombinedStyle = [
+        {
+            width: '100%',
+            height: '100%',
+            backgroundColor: backgroundColor || 'transparent',
+        },
+        overlayStyle,
+    ];
+    const inputCombinedStyle = [
+        styles.input,
+        {
+            width: '100%',
+            height: '100%',
+            backgroundColor: backgroundColor || 'transparent',
+        },
+        inputStyle,
+    ];
 
     return (
         <View style={[styles.inputWrapper, containerStyle, wrapperStyle]}>
@@ -76,15 +99,11 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
                 value={value}
                 multiline={multiline}
                 // Ensure the overlay fills the container
-                overlayStyle={[{ width: '100%', height: '100%' }, overlayStyle]}
+                overlayStyle={overlayCombinedStyle}
                 inputStyle={[{ width: '100%', height: '100%' }, inputStyle]}
             />
             <TextInput
-                style={[
-                    styles.input,
-                    { width: '100%', height: '100%' },
-                    inputStyle,
-                ]}
+                style={inputCombinedStyle}
                 value={value}
                 onChangeText={onChangeText}
                 placeholder={placeholder}

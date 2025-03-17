@@ -7,8 +7,19 @@ import Icon from 'react-native-vector-icons/FontAwesome5';
 import { VoteActions } from './VoteActions';
 import { COLORS } from '../constants';
 import { CurrentCommentContext } from '../providers';
-import { MarkdownRenderer, LinkPreview, Tooltip } from '../small-components';
-import { stripHtml, extractUrls, getRelativeTime } from '../utils';
+import {
+    MarkdownRenderer,
+    LinkPreview,
+    Tooltip,
+    CommentEditor,
+} from '../small-components';
+import { stripHtml, extractUrls, getRelativeTime, isComputer } from '../utils';
+// Import hooks for inline comment creation (used for mobile navigation)
+import { useCreateComment } from '../hooks';
+import { useAppSelector, RootState } from '../redux';
+// NEW: Import Apollo Client hook and comments query to allow refetching comments.
+import { useApolloClient } from '@apollo/client';
+import { FETCH_POST_COMMENTS_QUERY } from '../queries';
 
 const styles = StyleSheet.create({
     commentContainer: {
@@ -42,7 +53,6 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         marginRight: 6,
     },
-    // New style for the OP badge
     opBadge: {
         backgroundColor: COLORS.Primary,
         color: COLORS.White,
@@ -86,30 +96,7 @@ const styles = StyleSheet.create({
     },
     voteActionsContainer: {},
     replyInputContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginTop: 8,
-    },
-    replyInput: {
-        flex: 1,
-        borderWidth: 1,
-        borderColor: COLORS.InactiveText,
-        borderRadius: 4,
-        paddingHorizontal: 10,
-        paddingVertical: 6,
-        fontSize: 14,
-        color: COLORS.White,
-    },
-    sendReplyButton: {
-        backgroundColor: COLORS.Primary,
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        borderRadius: 4,
-        marginLeft: 8,
-    },
-    sendReplyText: {
-        color: COLORS.White,
-        fontSize: 14,
+        marginTop: 10,
     },
     continueConversationButton: {
         marginTop: 10,
@@ -142,6 +129,7 @@ type CommentThreadProps = {
     level?: number;
     opUser?: string;
     onContinueConversation: (parentCommentId: string) => void;
+    postId?: string; // <-- New prop to pass the post id for inline replies
 };
 
 const CommentChildrenComponent = ({
@@ -149,11 +137,13 @@ const CommentChildrenComponent = ({
     level,
     opUser,
     onContinueConversation,
+    postId,
 }: {
     childrenComments: CommentNode[];
     level?: number;
     opUser?: string;
     onContinueConversation: (parentCommentId: string) => void;
+    postId?: string;
 }) => (
     <>
         {childrenComments.map((child) => (
@@ -163,6 +153,7 @@ const CommentChildrenComponent = ({
                 level={level}
                 opUser={opUser}
                 onContinueConversation={onContinueConversation}
+                postId={postId}
             />
         ))}
     </>
@@ -175,10 +166,21 @@ const CommentThreadComponent = ({
     level = 0,
     opUser,
     onContinueConversation,
+    postId,
 }: CommentThreadProps) => {
+    // NEW: Get a reference to the Apollo Client instance for refetching queries.
+    const client = useApolloClient();
     const [voteCount, setVoteCount] = useState(comment.upvotes);
     const [collapsed, setCollapsed] = useState(comment.upvotes < -1);
     const navigation = useNavigation();
+    const [showInlineReply, setShowInlineReply] = useState(false); // State for inline reply editor
+
+    // Inline comment creation hook (used for mobile navigation) and current user from Redux.
+    const user = useAppSelector((state: RootState) => state.user.user);
+    const { createComment, creatingComment } = useCreateComment(() => {
+        // This callback is used for the mobile flow (navigating to a dedicated comment screen).
+        // It is not used in the inline comment editor.
+    });
 
     const onUpvote = () => setVoteCount((prev) => prev + 1);
     const onDownvote = () => setVoteCount((prev) => prev - 1);
@@ -191,7 +193,6 @@ const CommentThreadComponent = ({
 
     const [containerWidth, setContainerWidth] = useState(0);
 
-    // Determine if the comment content is a pure link
     const urlsInContent = extractUrls(comment.content);
     const plainContent = stripHtml(comment.content);
     const isJustLink =
@@ -236,7 +237,6 @@ const CommentThreadComponent = ({
                         style={styles.commentUserPic}
                     />
                     <Text style={styles.commentUser}>{comment.user}</Text>
-                    {/* If the comment's user matches the original poster, show the OP badge */}
                     {opUser && opUser === comment.user && (
                         <Text style={styles.opBadge}>OP</Text>
                     )}
@@ -256,7 +256,6 @@ const CommentThreadComponent = ({
                 {!collapsed && (
                     <>
                         <View style={styles.commentContentWrapper}>
-                            {/* Using MarkdownRenderer and LinkPreview for comment content */}
                             {comment.content !== '' && (
                                 <>
                                     {!isJustLink && (
@@ -277,14 +276,21 @@ const CommentThreadComponent = ({
                                 <Tooltip tooltipText="Reply">
                                     <TouchableOpacity
                                         onPress={() => {
-                                            setParentUser(comment.user);
-                                            setParentContent(comment.content);
-                                            setParentDate(comment.postedAt);
-                                            setParentCommentId(comment.id);
-                                            navigation.navigate(
-                                                // @ts-expect-error navigation
-                                                'CreateComment'
-                                            );
+                                            if (isComputer()) {
+                                                // On computer, show inline comment editor
+                                                setShowInlineReply(true);
+                                            } else {
+                                                // On mobile, navigate to dedicated comment screen
+                                                setParentUser(comment.user);
+                                                setParentContent(
+                                                    comment.content
+                                                );
+                                                setParentDate(comment.postedAt);
+                                                setParentCommentId(comment.id);
+                                                navigation.navigate(
+                                                    'CreateComment'
+                                                );
+                                            }
                                         }}
                                         style={styles.replyIcon}
                                     >
@@ -305,12 +311,35 @@ const CommentThreadComponent = ({
                                 </View>
                             </View>
                         </View>
+                        {/* Render inline CommentEditor for computer devices */}
+                        {showInlineReply && isComputer() && (
+                            <View style={styles.replyInputContainer}>
+                                <CommentEditor
+                                    postId={postId || ''}
+                                    parentCommentId={comment.id}
+                                    onCancel={() => setShowInlineReply(false)}
+                                    onCommentCreated={() => {
+                                        setShowInlineReply(false);
+                                        // Refetch comments to show the newly added comment.
+                                        client.refetchQueries({
+                                            include: [
+                                                FETCH_POST_COMMENTS_QUERY,
+                                            ],
+                                        });
+                                    }}
+                                    editorBackgroundColor={
+                                        COLORS.SecondaryBackground
+                                    }
+                                />
+                            </View>
+                        )}
                         {comment.children.length > 0 && (
                             <CommentChildren
                                 childrenComments={comment.children}
                                 level={level + 1}
                                 opUser={opUser}
                                 onContinueConversation={onContinueConversation}
+                                postId={postId}
                             />
                         )}
                         {comment.hasChildren &&
@@ -319,7 +348,7 @@ const CommentThreadComponent = ({
                                     onPress={() =>
                                         onContinueConversation(comment.id)
                                     }
-                                    style={styles.continueConversationButton} // new style for the button
+                                    style={styles.continueConversationButton}
                                 >
                                     <Text
                                         style={styles.continueConversationText}

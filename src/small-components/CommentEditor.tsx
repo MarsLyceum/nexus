@@ -28,6 +28,10 @@ type CommentEditorProps = {
      * Called after a comment is successfully created
      */
     onCommentCreated?: () => void;
+    /**
+     * Editor background color for both Markdown and Rich Text editors
+     */
+    editorBackgroundColor?: string;
 };
 
 export const CommentEditor: React.FC<CommentEditorProps> = ({
@@ -35,6 +39,7 @@ export const CommentEditor: React.FC<CommentEditorProps> = ({
     parentCommentId,
     onCancel,
     onCommentCreated,
+    editorBackgroundColor = COLORS.PrimaryBackground,
 }) => {
     // Grab the current user from Redux
     const user: UserType = useAppSelector(
@@ -57,9 +62,10 @@ export const CommentEditor: React.FC<CommentEditorProps> = ({
 
     // Custom hook to create comments
     const { createComment, creatingComment } = useCreateComment(() => {
-        // Clear attachments and text on success
+        // On success, clear attachments and text, collapse the editor, and call the onCommentCreated callback if provided.
         setAttachments([]);
         setNewCommentContent('');
+        setIsExpanded(false); // Close the editor
         if (onCommentCreated) onCommentCreated();
     });
 
@@ -86,7 +92,6 @@ export const CommentEditor: React.FC<CommentEditorProps> = ({
     // When the editor is focused, expand the editor.
     const handleExpand = () => {
         setIsExpanded(true);
-        setShowFormattingOptions(true);
     };
 
     // When cancel is pressed, collapse and clear content (and hide extra options)
@@ -149,8 +154,8 @@ export const CommentEditor: React.FC<CommentEditorProps> = ({
                                 placeholder="Write a comment..."
                                 value={newCommentContent}
                                 onChangeText={setNewCommentContent}
-                                // Optionally, pass onFocus if supported
                                 height="150px"
+                                backgroundColor={editorBackgroundColor}
                             />
                         ) : (
                             <RichTextEditor
@@ -159,6 +164,7 @@ export const CommentEditor: React.FC<CommentEditorProps> = ({
                                 onChange={setNewCommentContent}
                                 showToolbar={showFormattingOptions}
                                 height="150px"
+                                backgroundColor={editorBackgroundColor}
                             />
                         )}
                     </View>
@@ -243,6 +249,7 @@ export const CommentEditor: React.FC<CommentEditorProps> = ({
                             height="40px"
                             editable
                             onFocus={handleExpand}
+                            backgroundColor={editorBackgroundColor}
                         />
                     ) : (
                         <RichTextEditor
@@ -251,8 +258,8 @@ export const CommentEditor: React.FC<CommentEditorProps> = ({
                             onChange={setNewCommentContent}
                             showToolbar={false}
                             height="40px"
-                            // Assuming RichTextEditor supports onFocus:
                             onFocus={handleExpand}
+                            backgroundColor={editorBackgroundColor}
                         />
                     )}
                 </>
@@ -277,7 +284,6 @@ const styles = StyleSheet.create({
         borderWidth: 0,
         borderRadius: 5,
         padding: 10,
-        backgroundColor: COLORS.SecondaryBackground,
         position: 'relative',
     },
     toggleButton: {
@@ -301,9 +307,11 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     formatToggleButton: {
-        paddingVertical: 6,
-        paddingHorizontal: 10,
+        marginLeft: 10,
+        padding: 8,
         borderRadius: 5,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     imageButton: {
         marginLeft: 10,

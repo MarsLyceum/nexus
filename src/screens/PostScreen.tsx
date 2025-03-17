@@ -10,7 +10,7 @@ import {
     Text,
 } from 'react-native';
 import { NavigationProp, RouteProp } from '@react-navigation/native';
-import { useQuery } from '@apollo/client';
+import { useQuery, useApolloClient } from '@apollo/client';
 import {
     useAppDispatch,
     loadUser,
@@ -18,7 +18,11 @@ import {
     RootState,
     UserType,
 } from '../redux';
-import { FETCH_POST_QUERY, FETCH_USER_QUERY } from '../queries';
+import {
+    FETCH_POST_QUERY,
+    FETCH_USER_QUERY,
+    FETCH_POST_COMMENTS_QUERY,
+} from '../queries';
 import { PostItem, CommentsManager } from '../sections';
 import { COLORS } from '../constants';
 // Removed CreateContentButton import since we’ll show the editor inline
@@ -87,6 +91,9 @@ export const PostScreen: React.FC<PostScreenProps> = ({
     const dispatch = useAppDispatch();
     const [scrollY, setScrollY] = useState(0);
     const scrollViewRef = useRef<ScrollView>(null);
+
+    // NEW: Get the Apollo client instance for refetching queries.
+    const client = useApolloClient();
 
     useEffect(() => {
         dispatch(loadUser());
@@ -279,11 +286,14 @@ export const PostScreen: React.FC<PostScreenProps> = ({
                             postId={postData.id}
                             parentCommentId={parentCommentId}
                             onCommentCreated={() => {
-                                // Optional: do something on success, e.g. scroll to new comment
+                                // When a top-level comment is created,
+                                // refetch the comments so the new comment is shown.
+                                client.refetchQueries({
+                                    include: [FETCH_POST_COMMENTS_QUERY],
+                                });
                             }}
                             onCancel={() => {
-                                // If you want a cancel action, handle it here
-                                // or remove this prop entirely if you don’t need it
+                                // Optional cancel handler
                             }}
                         />
 

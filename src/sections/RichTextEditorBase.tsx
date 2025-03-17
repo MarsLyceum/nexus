@@ -50,7 +50,8 @@ export function getRichTextEditorHtml(
     showToolbar: boolean = true,
     height: string = '80vh',
     width: string = '100%',
-    borderRadius: string = '5px'
+    borderRadius: string = '5px',
+    backgroundColor: string = COLORS.PrimaryBackground // <-- new parameter for background color
 ): string {
     const editorHeight = height;
     const editorWidth = width;
@@ -75,7 +76,7 @@ export function getRichTextEditorHtml(
         border-radius: ${borderRadius} !important;
         width: 100%;
         height: ${editorHeight} !important;
-        background-color: ${COLORS.PrimaryBackground} !important;
+        background-color: ${backgroundColor} !important;
         overflow: hidden;
         box-sizing: border-box;
       }
@@ -91,12 +92,12 @@ export function getRichTextEditorHtml(
       .ql-toolbar {
         border-top-left-radius: ${borderRadius} !important;
         border-top-right-radius: ${borderRadius} !important;
-        background-color: ${COLORS.PrimaryBackground} !important;
+        background-color: ${backgroundColor} !important;
       }
       .ql-container.ql-snow {
         border-bottom-left-radius: ${borderRadius} !important;
         border-bottom-right-radius: ${borderRadius} !important;
-        background-color: ${COLORS.PrimaryBackground} !important;
+        background-color: ${backgroundColor} !important;
       }
       ${
           !showToolbar
@@ -153,7 +154,7 @@ export function getRichTextEditorHtml(
         background-color: ${COLORS.AppBackground} !important;
       }
       .ql-tooltip {
-        background-color: ${COLORS.PrimaryBackground} !important;
+        background-color: ${backgroundColor} !important;
         border: 1px solid ${COLORS.TextInput} !important;
         color: ${COLORS.MainText} !important;
         border-radius: 5px !important;

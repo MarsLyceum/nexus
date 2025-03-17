@@ -1,9 +1,9 @@
-// RichTextEditor.tsx
 import React, { useEffect, useMemo, useRef } from 'react';
-import { View, StyleSheet, Platform, Text, Pressable } from 'react-native';
+import { View, StyleSheet, Platform, Pressable } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { getRichTextEditorHtml } from './RichTextEditorBase';
 import { convertDeltaToMarkdownWithFencesAndFormatting } from '../utils';
+import { COLORS } from '../constants';
 
 export const RichTextEditor: React.FC<{
     placeholder?: string;
@@ -14,6 +14,7 @@ export const RichTextEditor: React.FC<{
     width?: string;
     height?: string;
     borderRadius?: string; // <-- new prop for border radius
+    backgroundColor?: string; // <-- new prop for editor background color
 }> = ({
     placeholder = '',
     initialContent = '',
@@ -23,6 +24,7 @@ export const RichTextEditor: React.FC<{
     height = '80vh',
     width = '100%',
     borderRadius = '20px', // <-- default value
+    backgroundColor = COLORS.PrimaryBackground,
 }) => {
     const isWeb = Platform.OS === 'web';
 
@@ -34,9 +36,10 @@ export const RichTextEditor: React.FC<{
                 showToolbar,
                 height,
                 width,
-                borderRadius // <-- pass custom border radius here
+                borderRadius, // pass custom border radius
+                backgroundColor // pass custom background color
             ),
-        [placeholder, showToolbar, height, width, borderRadius]
+        [placeholder, showToolbar, height, width, borderRadius, backgroundColor]
     );
 
     const mobileHtml = useMemo(
@@ -47,9 +50,10 @@ export const RichTextEditor: React.FC<{
                 showToolbar,
                 height,
                 width,
-                borderRadius // <-- pass custom border radius here
+                borderRadius, // pass custom border radius
+                backgroundColor // pass custom background color
             ),
-        [placeholder, showToolbar, height, width, borderRadius]
+        [placeholder, showToolbar, height, width, borderRadius, backgroundColor]
     );
 
     const iframeRef = useRef<HTMLIFrameElement>(null);

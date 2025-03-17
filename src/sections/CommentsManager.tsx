@@ -270,6 +270,7 @@ export const CommentsManager = ({
         <View>
             {commentTree.map((comment) => (
                 <CommentThread
+                    postId={postId}
                     key={comment.id}
                     comment={comment}
                     level={0}

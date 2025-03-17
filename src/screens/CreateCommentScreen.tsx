@@ -131,7 +131,7 @@ export const CreateCommentScreen: React.FC<CreateCommentScreenProps> = ({
                             onPress={handleCreateComment}
                         >
                             {/* @ts-expect-error web only types */}
-                            <Text style={styles.modalButtonText}>Post</Text>
+                            <Text style={styles.modalButtonText}>Comment</Text>
                         </Pressable>
                     </View>
                 </View>

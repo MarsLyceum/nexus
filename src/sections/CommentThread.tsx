@@ -7,11 +7,7 @@ import Icon from 'react-native-vector-icons/FontAwesome5';
 import { VoteActions } from './VoteActions';
 import { COLORS } from '../constants';
 import { CurrentCommentContext } from '../providers';
-import {
-    MarkdownRenderer,
-    LinkPreview,
-    NexusTooltip,
-} from '../small-components';
+import { MarkdownRenderer, LinkPreview, Tooltip } from '../small-components';
 import { stripHtml, extractUrls, getRelativeTime } from '../utils';
 
 const styles = StyleSheet.create({
@@ -278,7 +274,7 @@ const CommentThreadComponent = ({
                                 </>
                             )}
                             <View style={styles.actionsRow}>
-                                <NexusTooltip tooltipText="Reply">
+                                <Tooltip tooltipText="Reply">
                                     <TouchableOpacity
                                         onPress={() => {
                                             setParentUser(comment.user);
@@ -298,7 +294,7 @@ const CommentThreadComponent = ({
                                             color={COLORS.White}
                                         />
                                     </TouchableOpacity>
-                                </NexusTooltip>
+                                </Tooltip>
                                 <View style={styles.voteActionsContainer}>
                                     <VoteActions
                                         voteCount={voteCount}

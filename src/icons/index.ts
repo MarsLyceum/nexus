@@ -9,6 +9,7 @@ export * from './Email';
 export * from './Events';
 export * from './Feed';
 export * from './Filters';
+export * from './FormattingOptions';
 export * from './Friends';
 export * from './GoogleLogo';
 export * from './LocationPin';

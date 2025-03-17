@@ -1,18 +1,191 @@
 // RichTextEditor.tsx
-import React from 'react';
-import { Platform } from 'react-native';
-import { RichTextEditorWeb } from './RichTextEditorWeb';
-import { RichTextEditorMobile } from './RichTextEditorMobile_WebView';
+import React, { useEffect, useMemo, useRef } from 'react';
+import { View, StyleSheet, Platform, Text, Pressable } from 'react-native';
+import { WebView } from 'react-native-webview';
+import { getRichTextEditorHtml } from './RichTextEditorBase';
+import { convertDeltaToMarkdownWithFencesAndFormatting } from '../utils';
 
-interface RichTextEditorProps {
+export const RichTextEditor: React.FC<{
     placeholder?: string;
     initialContent?: string;
-    onChange: (html: string) => void;
-}
+    onChange: (markdown: string) => void;
+    onFocus?: () => void;
+    showToolbar?: boolean;
+    width?: string;
+    height?: string;
+}> = ({
+    placeholder = '',
+    initialContent = '',
+    onChange,
+    onFocus,
+    showToolbar = true,
+    height = '80vh',
+    width = '100%',
+}) => {
+    const isWeb = Platform.OS === 'web';
 
-export const RichTextEditor: React.FC<RichTextEditorProps> = (props) => {
-    if (Platform.OS === 'web') {
-        return <RichTextEditorWeb {...props} />;
+    const webSrcDoc = useMemo(
+        () =>
+            getRichTextEditorHtml(
+                placeholder,
+                initialContent,
+                showToolbar,
+                height,
+                width
+            ),
+        [placeholder, initialContent, showToolbar, height, width]
+    );
+
+    const mobileHtml = useMemo(
+        () =>
+            getRichTextEditorHtml(
+                placeholder,
+                initialContent,
+                showToolbar,
+                height,
+                width
+            ),
+        [placeholder, initialContent, showToolbar, height, width]
+    );
+
+    const iframeRef = useRef<HTMLIFrameElement>(null);
+
+    useEffect(() => {
+        if (!isWeb) return;
+        const messageHandler = (event: MessageEvent) => {
+            if (event.data && typeof event.data === 'string') {
+                try {
+                    const parsed = JSON.parse(event.data);
+                    if (parsed.type === 'iframe-init') {
+                        console.log(parsed.message);
+                        return;
+                    }
+                    if (parsed.type === 'focus') {
+                        if (onFocus) onFocus();
+                        return;
+                    }
+                    if (parsed.type === 'text-change') {
+                        const { delta } = parsed;
+                        const markdown =
+                            convertDeltaToMarkdownWithFencesAndFormatting(
+                                delta.ops
+                            );
+                        onChange(markdown);
+                    }
+                } catch (error) {
+                    console.error('Failed to parse message:', error);
+                }
+            }
+        };
+        window.addEventListener('message', messageHandler);
+        return () => window.removeEventListener('message', messageHandler);
+    }, [isWeb, onChange, onFocus]);
+
+    const handleMessage = (event: any) => {
+        const { data } = event.nativeEvent;
+        try {
+            const parsed = JSON.parse(data);
+            if (parsed.type === 'iframe-init') {
+                console.log(parsed.message);
+                return;
+            }
+            if (parsed.type === 'text-change') {
+                const { delta } = parsed;
+                const markdown = convertDeltaToMarkdownWithFencesAndFormatting(
+                    delta.ops
+                );
+                onChange(markdown);
+            }
+        } catch (error) {
+            console.error('Failed to parse message from WebView:', error);
+        }
+    };
+
+    if (isWeb) {
+        return (
+            <View style={[webStyles.container, { width, height }]}>
+                <style>{`
+                    .my-editor-iframe {
+                        width: 100% !important;
+                        height: 100% !important;
+                        transform: none !important;
+                    }
+                `}</style>
+                <div style={webStyles.flexWrapper}>
+                    <iframe
+                        ref={iframeRef}
+                        className="my-editor-iframe"
+                        title="Rich Text Editor Iframe"
+                        srcDoc={webSrcDoc}
+                        style={webStyles.webEditor}
+                        // onFocus here is now less useful since focus is handled inside the iframe.
+                        onFocus={onFocus}
+                    />
+                </div>
+            </View>
+        );
     }
-    return <RichTextEditorMobile {...props} />;
+    const webViewComponent = (
+        <WebView
+            source={{ html: mobileHtml }}
+            onMessage={handleMessage}
+            style={mobileStyles.webview}
+            javaScriptEnabled
+            domStorageEnabled
+            mixedContentMode="always"
+            onLoadEnd={() => console.log('WebView load end')}
+            onError={(syntheticEvent) => {
+                const { nativeEvent } = syntheticEvent;
+                console.warn('WebView error:', nativeEvent);
+            }}
+        />
+    );
+    return (
+        <View style={mobileStyles.outerContainer}>
+            <View style={mobileStyles.container}>
+                {onFocus ? (
+                    <Pressable onPress={onFocus} style={{ flex: 1 }}>
+                        {webViewComponent}
+                    </Pressable>
+                ) : (
+                    webViewComponent
+                )}
+            </View>
+        </View>
+    );
 };
+
+const webStyles = StyleSheet.create({
+    container: {
+        display: 'flex',
+        flexDirection: 'column',
+    },
+    flexWrapper: {
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        width: '100%',
+        height: '100%',
+    },
+    webEditor: {
+        flex: 1,
+        width: '100%',
+        height: '100%',
+        // @ts-expect-error: web-only type for border styling
+        border: 'none',
+    },
+});
+
+const mobileStyles = StyleSheet.create({
+    outerContainer: {
+        width: '100%',
+        height: 350,
+    },
+    container: {
+        flex: 1,
+    },
+    webview: {
+        flex: 1,
+        backgroundColor: '#fff',
+    },
+});

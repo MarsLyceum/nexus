@@ -1,23 +1,20 @@
+// RichTextEditorBase.ts
 import { marked } from 'marked';
 import { COLORS } from '../constants';
 
 // --- Custom Marked Extension for Spoilers ---
 const spoilerExtension = {
     name: 'spoiler',
-    level: 'inline', // This is an inline-level tokenizer.
+    level: 'inline',
     start(src: string) {
-        // Find the earliest index of either Discord or Reddit spoiler tokens.
         const discordIndex = src.indexOf('||');
         const redditIndex = src.indexOf('>!');
         if (discordIndex === -1) return redditIndex;
         if (redditIndex === -1) return discordIndex;
         return Math.min(discordIndex, redditIndex);
     },
-    // eslint-disable-next-line consistent-return
     tokenizer(src: string) {
-        // Remove common zero-width characters so that invisible characters don’t interfere.
         const cleaned = src.replaceAll(/[\u200B-\u200D\uFEFF]/g, '');
-        // Handle Discord-style spoilers: ||spoiler||
         if (cleaned.startsWith('||')) {
             const match = /^\|\|([^\n|]+(?:\|(?!\|)[^\n|]+)*)\|\|(?=$|\n)/.exec(
                 cleaned
@@ -30,7 +27,6 @@ const spoilerExtension = {
                 };
             }
         }
-        // Handle Reddit-style spoilers: >!spoiler!<
         if (src.startsWith('>!')) {
             const match = /^>!([^!]+(?:!(?!<)[^!]+)*)!</.exec(src);
             if (match) {
@@ -42,26 +38,28 @@ const spoilerExtension = {
             }
         }
     },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     renderer(token: any) {
         return `<span class="spoiler">${token.text}</span>`;
     },
 };
 
-// Register the extension with marked.
 marked.use({ extensions: [spoilerExtension] });
 
 export function getRichTextEditorHtml(
     placeholder: string = 'Start typing...',
-    initialContent: string = ''
+    initialContent: string = '',
+    showToolbar: boolean = true,
+    height: string = '80vh',
+    width: string = '100%'
 ): string {
-    // Convert the initial markdown to HTML.
+    const editorHeight = height;
+    const editorWidth = width;
     const initialHTML = initialContent ? marked(initialContent) : '<p><br></p>';
     return `<!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=${editorWidth}, initial-scale=1">
     <title>Quill Editor Iframe</title>
     <!-- Quill CSS -->
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
@@ -69,15 +67,16 @@ export function getRichTextEditorHtml(
       html, body { 
         margin: 0; 
         padding: 0; 
-        height: 100%; 
-        width: 100%; 
+        height: ${editorHeight} !important;
+        width: ${editorWidth} !important;
         background-color: ${COLORS.AppBackground} !important;
+        overflow: hidden;
       }
       #editor { width: 100%; }
       .ql-container.ql-snow {
         border: 1px solid ${COLORS.TextInput} !important;
         border-radius: 5px !important;
-        height: 80vh !important;
+        height: ${editorHeight} !important;
         width: 100% !important;
         max-width: none !important;
       }
@@ -161,12 +160,10 @@ export function getRichTextEditorHtml(
     </style>
   </head>
   <body>
-    <!-- Note: The editor is initialized empty. -->
     <div id="editor"></div>
     <!-- Load Quill JS -->
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
     <script>
-      // Initialize Quill editor and register custom formats.
       function initQuill() {
         var CodeBlock = Quill.import('formats/code-block');
         CodeBlock.create = function() {
@@ -218,25 +215,30 @@ export function getRichTextEditorHtml(
             this.quill.format('list', isActive ? false : 'bullet');
           }
         };
-      
-        var quill = new Quill('#editor', {
+
+        var showToolbar = ${JSON.stringify(showToolbar)};
+
+        var quillOptions = {
           theme: 'snow',
-          modules: {
-            toolbar: {
-              container: [
-                ['bold', 'italic', 'underline', 'strike'],
-                [{ header: [1, 2, 3, false] }],
-                [{ list: 'ordered' }, { list: 'bullet' }],
-                ['link', 'spoiler', 'blockquote', 'code-block'],
-                ['clean']
-              ],
-              handlers: toolbarHandlers
-            }
-          },
+          modules: {},
           placeholder: "${placeholder}"
-        });
+        };
+
+        if (showToolbar) {
+          quillOptions.modules.toolbar = {
+            container: [
+              ['bold', 'italic', 'underline', 'strike'],
+              [{ header: [1, 2, 3, false] }],
+              [{ list: 'ordered' }, { list: 'bullet' }],
+              ['link', 'spoiler', 'blockquote', 'code-block'],
+              ['clean']
+            ],
+            handlers: toolbarHandlers
+          };
+        }
       
-        // Matcher for <span class="spoiler">
+        var quill = new Quill('#editor', quillOptions);
+      
         quill.clipboard.addMatcher('span', function(node, delta) {
           if (node.classList && node.classList.contains('spoiler')) {
             delta.ops.forEach(op => {
@@ -247,7 +249,6 @@ export function getRichTextEditorHtml(
           return delta;
         });
       
-        // Simplified Clipboard Matcher for Strike-Through (<del> and <s>)
         function strikeMatcher(node, delta) {
           const tag = node.tagName && node.tagName.toLowerCase();
           if (tag === 'del' || tag === 's') {
@@ -261,46 +262,55 @@ export function getRichTextEditorHtml(
         quill.clipboard.addMatcher('del', strikeMatcher);
         quill.clipboard.addMatcher('s', strikeMatcher);
       
-        // Load the initial HTML via clipboard conversion so that matchers are applied.
         const initialHTML = ${JSON.stringify(initialHTML)};
         if (initialHTML) {
           const delta = quill.clipboard.convert(initialHTML);
           quill.setContents(delta, 'silent');
         }
       
-        // Add titles to toolbar buttons and select elements.
-        var toolbarModule = quill.getModule('toolbar');
-        if (toolbarModule && toolbarModule.container) {
-          const titleMapping = {
-            'ql-bold': 'Bold',
-            'ql-italic': 'Italic',
-            'ql-underline': 'Underline',
-            'ql-strike': 'Strikethrough',
-            'ql-header': 'Header',
-            'ql-list': { ordered: 'Ordered List', bullet: 'Bullet List' },
-            'ql-link': 'Link',
-            'ql-spoiler': 'Spoiler',
-            'ql-blockquote': 'Blockquote',
-            'ql-code-block': 'Code Block',
-            'ql-clean': 'Clear Formatting'
-          };
-          toolbarModule.container.querySelectorAll('button, select').forEach(el => {
-            for (const key in titleMapping) {
-              if (el.classList.contains(key)) {
-                if (typeof titleMapping[key] === 'object') {
-                  const val = el.getAttribute('value');
-                  if (val && titleMapping[key][val]) {
-                    el.setAttribute('title', titleMapping[key][val]);
+        // Add focus event listener on the editor's root.
+        quill.root.addEventListener('focus', function() {
+          postMessageFn(JSON.stringify({ type: 'focus', message: 'Editor focused' }));
+        });
+      
+        if (showToolbar) {
+          var toolbarModule = quill.getModule('toolbar');
+          if (toolbarModule && toolbarModule.container) {
+            const titleMapping = {
+              'ql-bold': 'Bold',
+              'ql-italic': 'Italic',
+              'ql-underline': 'Underline',
+              'ql-strike': 'Strikethrough',
+              'ql-header': 'Header',
+              'ql-list': { ordered: 'Ordered List', bullet: 'Bullet List' },
+              'ql-link': 'Link',
+              'ql-spoiler': 'Spoiler',
+              'ql-blockquote': 'Blockquote',
+              'ql-code-block': 'Code Block',
+              'ql-clean': 'Clear Formatting'
+            };
+            toolbarModule.container.querySelectorAll('button, select').forEach(el => {
+              for (const key in titleMapping) {
+                if (el.classList.contains(key)) {
+                  if (typeof titleMapping[key] === 'object') {
+                    const val = el.getAttribute('value');
+                    if (val && titleMapping[key][val]) {
+                      el.setAttribute('title', titleMapping[key][val]);
+                    }
+                  } else {
+                    el.setAttribute('title', titleMapping[key]);
                   }
-                } else {
-                  el.setAttribute('title', titleMapping[key]);
                 }
               }
-            }
-          });
+            });
+          }
+        } else {
+          var toolbarElement = document.querySelector('.ql-toolbar');
+          if (toolbarElement) {
+              toolbarElement.remove();
+          }
         }
       
-        // Unified postMessage function.
         var postMessageFn = (msg) => {
           if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
             window.ReactNativeWebView.postMessage(msg);

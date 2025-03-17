@@ -10,13 +10,20 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
     onChangeText,
     placeholder,
     style,
+    width = '100%',
+    height = '250px',
     ...rest
 }) => {
     // State to track focus.
     const [isFocused, setIsFocused] = React.useState(false);
 
+    const containerStyle: object = {
+        ...(width ? { width } : {}),
+        ...(height ? { height } : {}),
+    };
+
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, containerStyle]}>
             <MarkdownInputBase
                 value={value}
                 onChangeText={onChangeText}
@@ -38,8 +45,6 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
 
 const styles = StyleSheet.create({
     container: {
-        width: '100%',
-        height: 250, // Numeric height for mobile compatibility
         flexDirection: 'column',
     },
     inputWrapper: {

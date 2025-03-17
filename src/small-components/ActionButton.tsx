@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, View, ViewStyle } from 'react-native';
-import { NexusTooltip } from './NexusTooltip';
+import { Tooltip } from './Tooltip';
 import { COLORS } from '../constants';
 
 export type ActionButtonProps = {
@@ -41,7 +41,7 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
     );
 
     return tooltipText ? (
-        <NexusTooltip tooltipText={tooltipText}>{content}</NexusTooltip>
+        <Tooltip tooltipText={tooltipText}>{content}</Tooltip>
     ) : (
         content
     );

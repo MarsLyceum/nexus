@@ -1,3 +1,4 @@
+// PostScreen.tsx
 import React, { useEffect, useContext, useRef, useState } from 'react';
 import {
     View,
@@ -10,15 +11,27 @@ import {
 } from 'react-native';
 import { NavigationProp, RouteProp } from '@react-navigation/native';
 import { useQuery } from '@apollo/client';
-import { useAppDispatch, loadUser } from '../redux';
+import {
+    useAppDispatch,
+    loadUser,
+    useAppSelector,
+    RootState,
+    UserType,
+} from '../redux';
 import { FETCH_POST_QUERY, FETCH_USER_QUERY } from '../queries';
 import { PostItem, CommentsManager } from '../sections';
 import { COLORS } from '../constants';
-import { CreateContentButton } from '../buttons';
-import { getRelativeTime } from '../utils';
+// Removed CreateContentButton import since we’ll show the editor inline
+// import { CreateContentButton } from '../buttons';
+import { getRelativeTime, isComputer } from '../utils';
 import { Post, PostData } from '../types';
 import { CurrentCommentContext } from '../providers';
-import { SkeletonPostItem, SkeletonComment } from '../small-components';
+import {
+    SkeletonPostItem,
+    SkeletonComment,
+    CommentEditor,
+} from '../small-components';
+import { useCreateComment } from '../hooks';
 
 type RootStackParamList = {
     PostScreen: { id?: number; post?: Post; parentCommentId?: string };
@@ -29,7 +42,8 @@ type PostScreenProps = {
     route: RouteProp<RootStackParamList, 'PostScreen'>;
 };
 
-const BOTTOM_INPUT_HEIGHT = 60;
+// We no longer need a large bottom input height since the editor is inline
+// const BOTTOM_INPUT_HEIGHT = 60;
 const isWeb = Platform.OS === 'web';
 
 const styles = StyleSheet.create({
@@ -44,15 +58,17 @@ const styles = StyleSheet.create({
     mainContainer: {
         flex: 1,
         position: 'relative',
-        paddingBottom: BOTTOM_INPUT_HEIGHT,
+        // Removed the bottom padding approach since editor is inline
+        // paddingBottom: BOTTOM_INPUT_HEIGHT,
     },
+    // Removed the old scrollSection that offset for a bottom input
     scrollSection: isWeb
         ? {
               position: 'absolute',
               top: 0,
               left: 0,
               right: 0,
-              bottom: BOTTOM_INPUT_HEIGHT,
+              bottom: 0,
               overflowY: 'auto',
           }
         : { flex: 1 },
@@ -60,13 +76,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 15,
         paddingBottom: 20,
     },
-    createContentButtonContainer: {
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        height: BOTTOM_INPUT_HEIGHT,
-    },
+    // Removed the old createContentButtonContainer style
 });
 
 export const PostScreen: React.FC<PostScreenProps> = ({
@@ -141,6 +151,14 @@ export const PostScreen: React.FC<PostScreenProps> = ({
         null
     );
 
+    // Pull user info for creating comments
+    const user: UserType = useAppSelector(
+        (state: RootState) => state.user.user
+    );
+    const { createComment, creatingComment } = useCreateComment(() => {
+        // (Optional) do something on success, e.g. refresh or clear attachments
+    });
+
     // onScroll handler: update scrollY state.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleScroll = (event: any) => {
@@ -200,6 +218,24 @@ export const PostScreen: React.FC<PostScreenProps> = ({
               behavior: Platform.OS === 'ios' ? 'padding' : undefined,
           };
 
+    // Reusable function to create a comment
+    const handleCreateComment = async (
+        content: string,
+        attachments: { id: string; file: any }[]
+    ) => {
+        if (!postData.id || !user?.id || creatingComment) return;
+        await createComment({
+            postedByUserId: user.id,
+            postId: postData.id,
+            content,
+            attachments: attachments.map((att) => att.file),
+            parentCommentId,
+            hasChildren: false,
+            children: [],
+            upvotes: 1,
+        });
+    };
+
     return (
         // @ts-expect-error web only types
         <SafeAreaView style={styles.safeContainer}>
@@ -237,6 +273,21 @@ export const PostScreen: React.FC<PostScreenProps> = ({
                             variant="details"
                             group="My cool group"
                         />
+
+                        {/* Place the comment editor directly under the post */}
+                        <CommentEditor
+                            postId={postData.id}
+                            parentCommentId={parentCommentId}
+                            onCommentCreated={() => {
+                                // Optional: do something on success, e.g. scroll to new comment
+                            }}
+                            onCancel={() => {
+                                // If you want a cancel action, handle it here
+                                // or remove this prop entirely if you don’t need it
+                            }}
+                        />
+
+                        {/* Then render the comments below the editor */}
                         <CommentsManager
                             // @ts-expect-error ref
                             ref={commentsManagerRef}
@@ -245,14 +296,6 @@ export const PostScreen: React.FC<PostScreenProps> = ({
                             scrollY={scrollY}
                         />
                     </ScrollView>
-                    {/* @ts-expect-error web only types */}
-                    <View style={styles.createContentButtonContainer}>
-                        <CreateContentButton
-                            buttonText="Write a comment..."
-                            // @ts-expect-error navigation
-                            onPress={() => navigation.navigate('CreateComment')}
-                        />
-                    </View>
                 </View>
             </ContainerComponent>
         </SafeAreaView>

@@ -11,7 +11,6 @@ import {
 } from 'react-native';
 import { MarkdownOverlay } from './MarkdownOverlay';
 import { COLORS } from '../constants';
-// <-- New import for emoji picker integration
 import { EmojiPicker, EmojiPickerHandle } from './EmojiPicker';
 
 export interface MarkdownInputBaseProps extends TextInputProps {
@@ -21,6 +20,9 @@ export interface MarkdownInputBaseProps extends TextInputProps {
     overlayStyle?: object;
     inputStyle?: object;
     multiline?: boolean;
+    // New props for dynamic dimensions as strings
+    width?: string;
+    height?: string;
 }
 
 export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
@@ -31,6 +33,8 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
     overlayStyle,
     inputStyle,
     multiline,
+    width,
+    height,
     ...rest
 }) => {
     const overlayScrollRef = useRef<ScrollView>(null);
@@ -59,17 +63,28 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
         emojiPickerRef.current?.handleKeyDown(e);
     };
 
+    // Only add width and height if they are provided
+    const containerStyle: object = {
+        ...(width ? { width } : {}),
+        ...(height ? { height } : {}),
+    };
+
     return (
-        <View style={[styles.inputWrapper, wrapperStyle]}>
+        <View style={[styles.inputWrapper, containerStyle, wrapperStyle]}>
             <MarkdownOverlay
                 ref={overlayScrollRef}
                 value={value}
                 multiline={multiline}
-                overlayStyle={overlayStyle}
-                inputStyle={inputStyle}
+                // Ensure the overlay fills the container
+                overlayStyle={[{ width: '100%', height: '100%' }, overlayStyle]}
+                inputStyle={[{ width: '100%', height: '100%' }, inputStyle]}
             />
             <TextInput
-                style={[styles.input, inputStyle]}
+                style={[
+                    styles.input,
+                    { width: '100%', height: '100%' },
+                    inputStyle,
+                ]}
                 value={value}
                 onChangeText={onChangeText}
                 placeholder={placeholder}
@@ -100,7 +115,6 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
 const styles = StyleSheet.create({
     inputWrapper: {
         position: 'relative',
-        height: 200,
         borderWidth: 1,
         borderColor: 'gray',
     },

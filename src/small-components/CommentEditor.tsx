@@ -146,7 +146,7 @@ export const CommentEditor: React.FC<CommentEditorProps> = ({
                                 }
                             >
                                 <FormattingOptions
-                                    size={24}
+                                    size={18}
                                     color={COLORS.White}
                                 />
                             </Tooltip>

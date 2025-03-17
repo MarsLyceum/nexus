@@ -1,4 +1,3 @@
-// RichTextEditorBase.ts
 import { marked } from 'marked';
 import { COLORS } from '../constants';
 
@@ -50,7 +49,8 @@ export function getRichTextEditorHtml(
     initialContent: string = '',
     showToolbar: boolean = true,
     height: string = '80vh',
-    width: string = '100%'
+    width: string = '100%',
+    borderRadius: string = '5px'
 ): string {
     const editorHeight = height;
     const editorWidth = width;
@@ -65,38 +65,67 @@ export function getRichTextEditorHtml(
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <style>
       html, body { 
-        margin: 0; 
-        padding: 0; 
+        margin: 0;
+        padding: 0;
         height: ${editorHeight} !important;
         width: ${editorWidth} !important;
-        background-color: ${COLORS.AppBackground} !important;
-        overflow: hidden;
       }
-      #editor { width: 100%; }
-      .ql-container.ql-snow {
+      .quill-wrapper {
         border: 1px solid ${COLORS.TextInput} !important;
-        border-radius: 5px !important;
+        border-radius: ${borderRadius} !important;
+        width: 100%;
         height: ${editorHeight} !important;
-        width: 100% !important;
-        max-width: none !important;
+        background-color: ${COLORS.PrimaryBackground} !important;
+        overflow: hidden;
+        box-sizing: border-box;
+      }
+      ${showToolbar ? `#toolbar-placeholder {}` : ''}
+      #editor { 
+        width: 100%; 
+        height: ${showToolbar ? 'calc(100% - 40px)' : '100%'};
+      }
+      .ql-container.ql-snow,
+      .ql-toolbar {
+        border: none;
+      }
+      .ql-toolbar {
+        border-top-left-radius: ${borderRadius} !important;
+        border-top-right-radius: ${borderRadius} !important;
+        background-color: ${COLORS.PrimaryBackground} !important;
+      }
+      .ql-container.ql-snow {
+        border-bottom-left-radius: ${borderRadius} !important;
+        border-bottom-right-radius: ${borderRadius} !important;
+        background-color: ${COLORS.PrimaryBackground} !important;
+      }
+      ${
+          !showToolbar
+              ? `.ql-container.ql-snow {
+        border-top-left-radius: ${borderRadius} !important;
+        border-top-right-radius: ${borderRadius} !important;
+      }`
+              : ''
       }
       .ql-editor {
         height: 100% !important;
         padding: 10px !important;
         box-sizing: border-box;
         color: ${COLORS.MainText} !important;
-        background-color: ${COLORS.PrimaryBackground} !important;
+        overflow-y: auto;
       }
-      .ql-editor.ql-blank::before { color: ${COLORS.MainText} !important; }
-      .ql-toolbar {
-        background-color: ${COLORS.AppBackground} !important;
+      .ql-editor.ql-blank::before { 
+        color: ${COLORS.MainText} !important;
       }
       .ql-toolbar button svg { 
         stroke: ${COLORS.MainText} !important;
-        fill: ${COLORS.MainText} !important; 
+        fill: ${COLORS.MainText} !important;
       }
-      .ql-stroke { stroke: ${COLORS.MainText} !important; }
-      .ql-fill { fill: ${COLORS.MainText} !important; }
+      .ql-stroke { 
+        stroke: ${COLORS.MainText} !important;
+      }
+      .ql-fill { 
+        fill: ${COLORS.MainText} !important;
+      }
       .ql-toolbar button:hover svg,
       .ql-toolbar button.ql-active svg {
         stroke: ${COLORS.Primary} !important;
@@ -104,32 +133,30 @@ export function getRichTextEditorHtml(
       }
       .ql-toolbar button:hover .ql-stroke,
       .ql-toolbar button.ql-active .ql-stroke { 
-        stroke: ${COLORS.Primary} !important; 
+        stroke: ${COLORS.Primary} !important;
       }
       .ql-toolbar button:hover .ql-fill,
       .ql-toolbar button.ql-active .ql-fill { 
-        fill: ${COLORS.Primary} !important; 
+        fill: ${COLORS.Primary} !important;
       }
       .ql-toolbar .ql-picker-label,
       .ql-toolbar .ql-picker-item { 
-        color: ${COLORS.MainText} !important; 
+        color: ${COLORS.MainText} !important;
       }
       .ql-toolbar .ql-picker-label:hover,
       .ql-toolbar .ql-picker-item:hover,
       .ql-toolbar .ql-picker-label.ql-active,
       .ql-toolbar .ql-picker-item.ql-selected { 
-        color: ${COLORS.Primary} !important; 
+        color: ${COLORS.Primary} !important;
       }
       .ql-picker-options { 
-        background-color: ${COLORS.AppBackground} !important; 
+        background-color: ${COLORS.AppBackground} !important;
       }
       .ql-tooltip {
         background-color: ${COLORS.PrimaryBackground} !important;
         border: 1px solid ${COLORS.TextInput} !important;
         color: ${COLORS.MainText} !important;
         border-radius: 5px !important;
-        top: 0 !important;
-        left: 0 !important;
         transform: translate(10%, 10%) !important;
         z-index: 1000;
       }
@@ -141,7 +168,7 @@ export function getRichTextEditorHtml(
         padding: 5px;
       }
       .ql-tooltip .ql-action { 
-        color: ${COLORS.Primary} !important; 
+        color: ${COLORS.Primary} !important;
       }
       .spoiler {
         background-color: ${COLORS.InactiveText} !important;
@@ -152,16 +179,21 @@ export function getRichTextEditorHtml(
       .ql-editor table,
       .ql-editor table th,
       .ql-editor table td { 
-        border: 1px solid ${COLORS.White} !important; 
+        border: 1px solid ${COLORS.White} !important;
       }
       .custom-bullet {
-        display: inline-block; width: 1em; margin-right: 0.2em; color: ${COLORS.Primary};
+        display: inline-block;
+        width: 1em;
+        margin-right: 0.2em;
+        color: ${COLORS.Primary};
       }
     </style>
   </head>
   <body>
-    <div id="editor"></div>
-    <!-- Load Quill JS -->
+    <div class="quill-wrapper">
+      ${showToolbar ? `<div id="toolbar-placeholder"></div>` : ''}
+      <div id="editor"></div>
+    </div>
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
     <script>
       function initQuill() {
@@ -182,7 +214,7 @@ export function getRichTextEditorHtml(
             return node;
           }
           static formats(node) { 
-            return node.getAttribute('class') === 'spoiler'; 
+            return node.getAttribute('class') === 'spoiler';
           }
           static value(node) { 
             return node.innerText;
@@ -192,8 +224,9 @@ export function getRichTextEditorHtml(
         SpoilerBlot.tagName = 'span';
         Quill.register(SpoilerBlot);
       
+        // Define a custom icon for the spoiler button using an inline SVG.
         var icons = Quill.import('ui/icons');
-        icons.spoiler = '<svg viewBox="0 0 24 24"><title>Spoiler</title><path d="M12,2L2,7v7c0,5,4,9,10,9s10-4,10-9V7L12,2z M12,17 c-3,0-5-2-5-5v-1l5-3l5,3v1C17,15,15,17,12,17z"/></svg>';
+        icons['spoiler'] = '<svg viewBox="0 0 24 24" width="16" height="16" xmlns="http://www.w3.org/2000/svg"><path fill="${COLORS.White}" d="M12 4.5c-4.97 0-9.27 3.11-11 7.5 1.73 4.39 6.03 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6.03-7.5-11-7.5zm0 13c-3.31 0-6-2.69-6-6 0-.89.22-1.73.61-2.46l8.85 8.85C13.73 17.78 12.89 18 12 18zm4.39-2.03l-8.85-8.85c.73-.39 1.57-.61 2.46-.61 3.31 0 6 2.69 6 6 0 .89-.22 1.73-.61 2.46z"/><line x1="1" y1="1" x2="23" y2="23" stroke="${COLORS.White}" stroke-width="2"/></svg>';
       
         var toolbarHandlers = {
           spoiler: function() {
@@ -215,15 +248,14 @@ export function getRichTextEditorHtml(
             this.quill.format('list', isActive ? false : 'bullet');
           }
         };
-
+      
         var showToolbar = ${JSON.stringify(showToolbar)};
-
         var quillOptions = {
           theme: 'snow',
           modules: {},
           placeholder: "${placeholder}"
         };
-
+      
         if (showToolbar) {
           quillOptions.modules.toolbar = {
             container: [
@@ -238,6 +270,20 @@ export function getRichTextEditorHtml(
         }
       
         var quill = new Quill('#editor', quillOptions);
+      
+        if (showToolbar) {
+          var generatedToolbar = quill.container.parentNode.querySelector('.ql-toolbar');
+          var toolbarPlaceholder = document.getElementById('toolbar-placeholder');
+          if (generatedToolbar && toolbarPlaceholder) {
+            toolbarPlaceholder.appendChild(generatedToolbar);
+          }
+        } else {
+          // Explicitly remove any toolbar that may have been auto-generated.
+          var defaultToolbar = quill.container.parentNode.querySelector('.ql-toolbar');
+          if (defaultToolbar) {
+            defaultToolbar.remove();
+          }
+        }
       
         quill.clipboard.addMatcher('span', function(node, delta) {
           if (node.classList && node.classList.contains('spoiler')) {
@@ -268,56 +314,9 @@ export function getRichTextEditorHtml(
           quill.setContents(delta, 'silent');
         }
       
-        // Add focus event listener on the editor's root.
         quill.root.addEventListener('focus', function() {
           postMessageFn(JSON.stringify({ type: 'focus', message: 'Editor focused' }));
         });
-      
-        if (showToolbar) {
-          var toolbarModule = quill.getModule('toolbar');
-          if (toolbarModule && toolbarModule.container) {
-            const titleMapping = {
-              'ql-bold': 'Bold',
-              'ql-italic': 'Italic',
-              'ql-underline': 'Underline',
-              'ql-strike': 'Strikethrough',
-              'ql-header': 'Header',
-              'ql-list': { ordered: 'Ordered List', bullet: 'Bullet List' },
-              'ql-link': 'Link',
-              'ql-spoiler': 'Spoiler',
-              'ql-blockquote': 'Blockquote',
-              'ql-code-block': 'Code Block',
-              'ql-clean': 'Clear Formatting'
-            };
-            toolbarModule.container.querySelectorAll('button, select').forEach(el => {
-              for (const key in titleMapping) {
-                if (el.classList.contains(key)) {
-                  if (typeof titleMapping[key] === 'object') {
-                    const val = el.getAttribute('value');
-                    if (val && titleMapping[key][val]) {
-                      el.setAttribute('title', titleMapping[key][val]);
-                    }
-                  } else {
-                    el.setAttribute('title', titleMapping[key]);
-                  }
-                }
-              }
-            });
-          }
-        } else {
-          var toolbarElement = document.querySelector('.ql-toolbar');
-          if (toolbarElement) {
-              toolbarElement.remove();
-          }
-        }
-      
-        var postMessageFn = (msg) => {
-          if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
-            window.ReactNativeWebView.postMessage(msg);
-          } else if (window.parent && window.parent.postMessage) {
-            window.parent.postMessage(msg, '*');
-          }
-        };
       
         quill.on('text-change', function() {
           var delta = quill.getContents();
@@ -325,6 +324,14 @@ export function getRichTextEditorHtml(
         });
       
         postMessageFn(JSON.stringify({ type: 'iframe-init', message: 'Quill editor loaded' }));
+      
+        function postMessageFn(msg) {
+          if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+            window.ReactNativeWebView.postMessage(msg);
+          } else if (window.parent && window.parent.postMessage) {
+            window.parent.postMessage(msg, '*');
+          }
+        }
       }
       
       document.addEventListener('DOMContentLoaded', function() {

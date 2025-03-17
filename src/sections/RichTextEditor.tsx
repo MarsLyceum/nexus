@@ -13,6 +13,7 @@ export const RichTextEditor: React.FC<{
     showToolbar?: boolean;
     width?: string;
     height?: string;
+    borderRadius?: string; // <-- new prop for border radius
 }> = ({
     placeholder = '',
     initialContent = '',
@@ -21,6 +22,7 @@ export const RichTextEditor: React.FC<{
     showToolbar = true,
     height = '80vh',
     width = '100%',
+    borderRadius = '20px', // <-- default value
 }) => {
     const isWeb = Platform.OS === 'web';
 
@@ -31,9 +33,10 @@ export const RichTextEditor: React.FC<{
                 initialContent,
                 showToolbar,
                 height,
-                width
+                width,
+                borderRadius // <-- pass custom border radius here
             ),
-        [placeholder, initialContent, showToolbar, height, width]
+        [placeholder, showToolbar, height, width, borderRadius]
     );
 
     const mobileHtml = useMemo(
@@ -43,9 +46,10 @@ export const RichTextEditor: React.FC<{
                 initialContent,
                 showToolbar,
                 height,
-                width
+                width,
+                borderRadius // <-- pass custom border radius here
             ),
-        [placeholder, initialContent, showToolbar, height, width]
+        [placeholder, showToolbar, height, width, borderRadius]
     );
 
     const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -109,6 +113,7 @@ export const RichTextEditor: React.FC<{
                         width: 100% !important;
                         height: 100% !important;
                         transform: none !important;
+                        background-color: transparent !important;
                     }
                 `}</style>
                 <div style={webStyles.flexWrapper}>
@@ -118,7 +123,6 @@ export const RichTextEditor: React.FC<{
                         title="Rich Text Editor Iframe"
                         srcDoc={webSrcDoc}
                         style={webStyles.webEditor}
-                        // onFocus here is now less useful since focus is handled inside the iframe.
                         onFocus={onFocus}
                     />
                 </div>
@@ -159,6 +163,7 @@ const webStyles = StyleSheet.create({
     container: {
         display: 'flex',
         flexDirection: 'column',
+        backgroundColor: 'transparent',
     },
     flexWrapper: {
         flex: 1,
@@ -166,6 +171,7 @@ const webStyles = StyleSheet.create({
         flexDirection: 'column',
         width: '100%',
         height: '100%',
+        backgroundColor: 'transparent',
     },
     webEditor: {
         flex: 1,
@@ -173,6 +179,7 @@ const webStyles = StyleSheet.create({
         height: '100%',
         // @ts-expect-error: web-only type for border styling
         border: 'none',
+        backgroundColor: 'transparent',
     },
 });
 
@@ -180,12 +187,14 @@ const mobileStyles = StyleSheet.create({
     outerContainer: {
         width: '100%',
         height: 350,
+        backgroundColor: 'transparent',
     },
     container: {
         flex: 1,
+        backgroundColor: 'transparent',
     },
     webview: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: 'transparent', // <-- Changed from '#fff'
     },
 });

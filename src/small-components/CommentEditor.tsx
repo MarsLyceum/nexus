@@ -50,6 +50,7 @@ export const CommentEditor: React.FC<CommentEditorProps> = ({
     const [useMarkdown, setUseMarkdown] = useState(false);
     const [attachments, setAttachments] = useState<Attachment[]>([]);
     const [newCommentContent, setNewCommentContent] = useState('');
+    const [updateContent, setUpdateContent] = useState(0);
     // Control whether the editor is expanded
     const [isExpanded, setIsExpanded] = useState(false);
     // State to toggle the formatting toolbar in the rich text editor.
@@ -84,7 +85,6 @@ export const CommentEditor: React.FC<CommentEditorProps> = ({
             attachments: attachments.map((att) => att.file),
             parentCommentId,
             hasChildren: false,
-            children: [],
             upvotes: 1,
         });
     };
@@ -165,6 +165,7 @@ export const CommentEditor: React.FC<CommentEditorProps> = ({
                                 showToolbar={showFormattingOptions}
                                 height="150px"
                                 backgroundColor={editorBackgroundColor}
+                                updateContent={updateContent}
                             />
                         )}
                     </View>
@@ -267,11 +268,13 @@ export const CommentEditor: React.FC<CommentEditorProps> = ({
 
             {/* Giphy Modal */}
             <GiphyModal
+                variant="uri"
                 visible={showGiphy}
                 onClose={() => setShowGiphy(false)}
-                onSelectGif={(attachment) =>
-                    setAttachments((prev) => [...prev, attachment])
-                }
+                onSelectGif={(attachment) => {
+                    setNewCommentContent(attachment.file.uri);
+                    setUpdateContent((prev) => prev + 1);
+                }}
             />
         </View>
     );

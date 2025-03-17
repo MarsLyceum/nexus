@@ -127,6 +127,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             </View>
 
             <GiphyModal
+                variant="uri"
                 visible={showGiphy}
                 onClose={() => setShowGiphy(false)}
                 onSelectGif={(attachment) => {

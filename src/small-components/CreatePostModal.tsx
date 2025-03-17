@@ -236,6 +236,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
             )}
 
             <GiphyModal
+                variant="download"
                 visible={showGiphy}
                 onClose={() => setShowGiphy(false)}
                 onSelectGif={(attachment) =>

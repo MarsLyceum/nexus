@@ -13,16 +13,42 @@ import { COLORS, GIPHY_API_KEY } from '../constants';
 import { Attachment } from '../types';
 import { MiniModal } from './MiniModal';
 
+// Minimal File polyfill for React Native if not available.
+if (typeof File === 'undefined') {
+    // Create a minimal polyfill for File by extending Blob.
+    // Note: This is a basic polyfill and might not support all File functionalities.
+    class RNFile extends Blob {
+        name: string;
+        lastModified: number;
+        constructor(
+            blobParts: BlobPart[],
+            fileName: string,
+            options?: FilePropertyBag
+        ) {
+            super(blobParts, options);
+            this.name = fileName;
+            this.lastModified = options?.lastModified || Date.now();
+        }
+    }
+    // @ts-ignore
+    global.File = RNFile;
+}
+
+// Extend GiphyModalProps to include a variant prop.
+// 'download' mode fetches and converts the GIF to a File,
+// 'uri' mode uses the file uri directly.
 type GiphyModalProps = {
     visible: boolean;
     onClose: () => void;
     onSelectGif: (attachment: Attachment) => void;
+    variant?: 'download' | 'uri';
 };
 
 export const GiphyModal: React.FC<GiphyModalProps> = ({
     visible,
     onClose,
     onSelectGif,
+    variant = 'download', // default to download mode if not provided
 }) => {
     const [giphyQuery, setGiphyQuery] = useState('');
     const [giphyResults, setGiphyResults] = useState<any[]>([]);
@@ -62,22 +88,42 @@ export const GiphyModal: React.FC<GiphyModalProps> = ({
     };
 
     // Handle selection of a GIF result.
-    const handleSelectGif = (result: any) => {
+    // In 'download' mode, we fetch the gif blob and convert it to a File.
+    // In 'uri' mode, we simply use the URL.
+    const handleSelectGif = async (result: any) => {
         const gifUrl = result.images.original.url;
-        // Create attachment using URL only.
-        const attachment: Attachment = {
-            id: result.id,
-            previewUri: gifUrl,
-            file: { uri: gifUrl, type: 'gif', name: `${result.id}.gif` },
-        };
-
-        onSelectGif(attachment);
-        onClose();
+        if (variant === 'download') {
+            try {
+                const response = await fetch(gifUrl);
+                const blob = await response.blob();
+                const file = new File([blob], `${result.id}.gif`, {
+                    type: 'image/gif',
+                });
+                const attachment: Attachment = {
+                    id: result.id,
+                    previewUri: gifUrl,
+                    file: file,
+                };
+                onSelectGif(attachment);
+                onClose();
+            } catch (error) {
+                console.error('Error fetching gif blob:', error);
+            }
+        } else {
+            // 'uri' mode: create the attachment using the gif URL directly.
+            const attachment: Attachment = {
+                id: result.id,
+                previewUri: gifUrl,
+                file: { uri: gifUrl, type: 'gif', name: `${result.id}.gif` },
+            };
+            onSelectGif(attachment);
+            onClose();
+        }
     };
 
     if (!visible) return null;
 
-    // Updated container style for Giphy modal to align above the input box.
+    // Container style for Giphy modal to align above the input box.
     const giphyContainerStyle = {
         position: 'absolute',
         bottom: 70, // Aligns modal above the input box
@@ -154,12 +200,12 @@ const styles = StyleSheet.create({
         flexWrap: 'wrap',
         justifyContent: 'space-between',
     },
-    // Changed width to 48% so that 2 items fit per row
+    // Changed width to 48% so that 2 items fit per row.
     giphyResultItem: {
         width: '48%',
         marginBottom: 10,
     },
-    // Increased height to 150 for larger display
+    // Increased height to 150 for larger display.
     giphyResultImage: {
         width: '100%',
         height: 150,

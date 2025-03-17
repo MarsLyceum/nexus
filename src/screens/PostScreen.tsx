@@ -238,7 +238,6 @@ export const PostScreen: React.FC<PostScreenProps> = ({
             attachments: attachments.map((att) => att.file),
             parentCommentId,
             hasChildren: false,
-            children: [],
             upvotes: 1,
         });
     };

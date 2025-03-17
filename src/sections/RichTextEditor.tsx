@@ -15,6 +15,7 @@ export const RichTextEditor: React.FC<{
     height?: string;
     borderRadius?: string; // <-- new prop for border radius
     backgroundColor?: string; // <-- new prop for editor background color
+    updateContent?: number;
 }> = ({
     placeholder = '',
     initialContent = '',
@@ -25,6 +26,7 @@ export const RichTextEditor: React.FC<{
     width = '100%',
     borderRadius = '20px', // <-- default value
     backgroundColor = COLORS.PrimaryBackground,
+    updateContent = false,
 }) => {
     const isWeb = Platform.OS === 'web';
 
@@ -39,7 +41,15 @@ export const RichTextEditor: React.FC<{
                 borderRadius, // pass custom border radius
                 backgroundColor // pass custom background color
             ),
-        [placeholder, showToolbar, height, width, borderRadius, backgroundColor]
+        [
+            placeholder,
+            showToolbar,
+            height,
+            width,
+            borderRadius,
+            backgroundColor,
+            updateContent,
+        ]
     );
 
     const mobileHtml = useMemo(

@@ -10,7 +10,6 @@ type CreateCommentVariables = {
     attachments: AttachmentFile[];
     parentCommentId: string | null;
     hasChildren: boolean;
-    children: CreateCommentVariables[];
     upvotes: number;
 };
 

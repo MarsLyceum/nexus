@@ -18,7 +18,6 @@ export const CREATE_POST_COMMENT_MUTATION = gql`
         $attachments: [Upload!]
         $parentCommentId: String
         $hasChildren: Boolean!
-        $children: [CreatePostCommentInput!]
         $upvotes: Int!
     ) {
         createPostComment(
@@ -28,7 +27,6 @@ export const CREATE_POST_COMMENT_MUTATION = gql`
             postId: $postId
             parentCommentId: $parentCommentId
             hasChildren: $hasChildren
-            children: $children
             upvotes: $upvotes
         ) {
             content

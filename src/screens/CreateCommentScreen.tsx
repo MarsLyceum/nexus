@@ -56,7 +56,6 @@ export const CreateCommentScreen: React.FC<CreateCommentScreenProps> = ({
             attachments: attachments.map((att) => att.file),
             parentCommentId,
             hasChildren: false,
-            children: [],
             upvotes: 1,
         });
         navigation.goBack();

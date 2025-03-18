@@ -42,6 +42,7 @@ export const VoteActions: React.FC<VoteActionsProps> = ({
             onPress={onDownvote}
             tooltipText="Down vote"
             transparent
+            // @ts-expect-error web only types
             style={[styles.voteButton, styles.singleButton]}
         >
             <Icon name="arrow-down" size={18} color={COLORS.MainText} />

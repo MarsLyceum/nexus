@@ -311,6 +311,7 @@ const CommentThreadComponent = ({
                                             setParentDate(comment.postedAt);
                                             setParentCommentId(comment.id);
                                             navigation.navigate(
+                                                // @ts-expect-error navigation
                                                 'CreateComment'
                                             );
                                         }

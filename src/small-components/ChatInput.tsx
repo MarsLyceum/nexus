@@ -131,6 +131,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 visible={showGiphy}
                 onClose={() => setShowGiphy(false)}
                 onSelectGif={(attachment) => {
+                    // @ts-expect-error attachment
                     sendMessageHandler(attachment.file.uri);
                 }}
             />

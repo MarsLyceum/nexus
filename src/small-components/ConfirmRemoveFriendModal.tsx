@@ -23,44 +23,42 @@ export const ConfirmRemoveFriendModal: React.FC<ConfirmationModalProps> = ({
     onConfirm,
     onCancel,
 }) => (
-        <Modal visible={visible} transparent animationType="fade">
-            <View style={styles.modalContainer}>
-                <View style={styles.modalContent}>
-                    <Text style={styles.modalTitle}>
-                        Remove{' '}
-                        {friend?.username ? friend.username : 'this friend'}?
-                    </Text>
-                    <Text style={styles.modalMessage}>
-                        Are you sure you want to remove{' '}
-                        {friend?.username ? friend.username : 'this friend'}{' '}
-                        from your friends?
-                    </Text>
-                    <Pressable
-                        style={({ hovered }) => [
-                            styles.modalButton,
-                            styles.removeButton,
-                            hovered &&
-                                Platform.OS === 'web' && { cursor: 'pointer' },
-                        ]}
-                        onPress={onConfirm}
-                    >
-                        <Text style={styles.buttonText}>Remove Friend</Text>
-                    </Pressable>
-                    <Pressable
-                        style={({ hovered }) => [
-                            styles.modalButton,
-                            styles.cancelButton,
-                            hovered &&
-                                Platform.OS === 'web' && { cursor: 'pointer' },
-                        ]}
-                        onPress={onCancel}
-                    >
-                        <Text style={styles.buttonText}>Nevermind</Text>
-                    </Pressable>
-                </View>
+    <Modal visible={visible} transparent animationType="fade">
+        <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>
+                    Remove {friend?.username || 'this friend'}?
+                </Text>
+                <Text style={styles.modalMessage}>
+                    Are you sure you want to remove{' '}
+                    {friend?.username || 'this friend'} from your friends?
+                </Text>
+                <Pressable
+                    style={({ hovered }) => [
+                        styles.modalButton,
+                        styles.removeButton,
+                        hovered &&
+                            Platform.OS === 'web' && { cursor: 'pointer' },
+                    ]}
+                    onPress={onConfirm}
+                >
+                    <Text style={styles.buttonText}>Remove Friend</Text>
+                </Pressable>
+                <Pressable
+                    style={({ hovered }) => [
+                        styles.modalButton,
+                        styles.cancelButton,
+                        hovered &&
+                            Platform.OS === 'web' && { cursor: 'pointer' },
+                    ]}
+                    onPress={onCancel}
+                >
+                    <Text style={styles.buttonText}>Nevermind</Text>
+                </Pressable>
             </View>
-        </Modal>
-    );
+        </View>
+    </Modal>
+);
 
 const styles = StyleSheet.create({
     modalContainer: {

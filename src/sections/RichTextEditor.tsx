@@ -96,9 +96,11 @@ export const RichTextEditor: React.FC<{
             }
         };
         window.addEventListener('message', messageHandler);
+        // eslint-disable-next-line consistent-return
         return () => window.removeEventListener('message', messageHandler);
     }, [isWeb, onChange, onFocus]);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleMessage = (event: any) => {
         const { data } = event.nativeEvent;
         try {
@@ -121,6 +123,7 @@ export const RichTextEditor: React.FC<{
 
     if (isWeb) {
         return (
+            // @ts-expect-error width height
             <View style={[webStyles.container, { width, height }]}>
                 <style>{`
                     .my-editor-iframe {
@@ -174,6 +177,7 @@ export const RichTextEditor: React.FC<{
         <View
             style={[
                 mobileStyles.outerContainer,
+                // @ts-expect-error width height
                 { width: containerWidth, height: containerHeight },
             ]}
         >
@@ -226,6 +230,6 @@ const mobileStyles = StyleSheet.create({
     },
     webview: {
         flex: 1,
-        backgroundColor: 'transparent', // <-- Changed from '#fff'
+        backgroundColor: 'transparent',
     },
 });

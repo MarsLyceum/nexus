@@ -12,6 +12,7 @@ const spoilerExtension = {
         if (redditIndex === -1) return discordIndex;
         return Math.min(discordIndex, redditIndex);
     },
+    // eslint-disable-next-line consistent-return
     tokenizer(src: string) {
         const cleaned = src.replaceAll(/[\u200B-\u200D\uFEFF]/g, '');
         if (cleaned.startsWith('||')) {
@@ -37,6 +38,7 @@ const spoilerExtension = {
             }
         }
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     renderer(token: any) {
         return `<span class="spoiler">${token.text}</span>`;
     },

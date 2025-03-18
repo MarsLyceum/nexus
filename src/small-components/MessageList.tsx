@@ -1,6 +1,6 @@
 // MessageList.tsx
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { MessageWithAvatar } from '../types';
 import { MessageItem } from './MessageItem';

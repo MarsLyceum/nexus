@@ -9,29 +9,24 @@ export type MessageItemSkeletonProps = {
 
 export const MessageItemSkeleton: React.FC<MessageItemSkeletonProps> = ({
     width,
-}) => {
-    return (
-        <View style={styles.container}>
-            {/* Skeleton for avatar */}
-            <View style={styles.avatarSkeleton} />
+}) => (
+    <View style={styles.container}>
+        {/* Skeleton for avatar */}
+        <View style={styles.avatarSkeleton} />
 
-            {/* Skeleton for message content */}
-            <View style={styles.contentSkeleton}>
-                <View style={styles.headerSkeleton}>
-                    <View
-                        style={[
-                            styles.usernameSkeleton,
-                            { width: width * 0.3 },
-                        ]}
-                    />
-                    <View style={styles.timeSkeleton} />
-                </View>
-                <View style={styles.textSkeleton} />
-                <View style={styles.textSkeletonShort} />
+        {/* Skeleton for message content */}
+        <View style={styles.contentSkeleton}>
+            <View style={styles.headerSkeleton}>
+                <View
+                    style={[styles.usernameSkeleton, { width: width * 0.3 }]}
+                />
+                <View style={styles.timeSkeleton} />
             </View>
+            <View style={styles.textSkeleton} />
+            <View style={styles.textSkeletonShort} />
         </View>
-    );
-};
+    </View>
+);
 
 const styles = StyleSheet.create({
     container: {

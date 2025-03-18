@@ -70,6 +70,7 @@ const styles = StyleSheet.create({
 // ---------------------
 // Helper function to extract text recursively from tnode children
 // ---------------------
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const extractTextFromTnode = (tnode: any): string => {
     if (tnode.data) {
         return tnode.data;
@@ -124,6 +125,7 @@ const InlineSpoiler: React.FC<{ children: React.ReactNode }> = ({
 // ---------------------
 // Custom Inline Link Component
 // ---------------------
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const InlineLink: React.FC<{ tnode: any }> = ({ tnode }) => {
     let href = tnode.attributes?.href || '';
     if (!/^https?:\/\//.test(href)) {
@@ -150,6 +152,7 @@ const InlineLink: React.FC<{ tnode: any }> = ({ tnode }) => {
 // Markdown-It Plugin for Discord-Style Inline Spoilers (using ||spoiler||)
 // ---------------------
 function inlineSpoilerPlugin(md: MarkdownIt) {
+    // eslint-disable-next-line unicorn/consistent-function-scoping, @typescript-eslint/no-explicit-any
     function tokenize(state: any, silent: boolean) {
         const startPos = state.pos;
         if (state.src.slice(startPos, startPos + 2) !== '||') return false;
@@ -159,6 +162,7 @@ function inlineSpoilerPlugin(md: MarkdownIt) {
             const token = state.push('spoiler', 'spoiler', 0);
             token.content = state.src.slice(startPos + 2, end);
         }
+        // eslint-disable-next-line no-param-reassign
         state.pos = end + 2;
         return true;
     }
@@ -170,6 +174,7 @@ function inlineSpoilerPlugin(md: MarkdownIt) {
 // Markdown-It Plugin for Reddit-Style Inline Spoilers (using >!spoiler!<)
 // ---------------------
 function redditSpoilerPlugin(md: MarkdownIt) {
+    // eslint-disable-next-line unicorn/consistent-function-scoping, @typescript-eslint/no-explicit-any
     function tokenize(state: any, silent: boolean) {
         const { pos } = state;
         if (state.src.slice(pos, pos + 2) !== '>!') return false;
@@ -179,6 +184,7 @@ function redditSpoilerPlugin(md: MarkdownIt) {
             const token = state.push('spoiler', 'spoiler', 0);
             token.content = state.src.slice(pos + 2, end);
         }
+        // eslint-disable-next-line no-param-reassign
         state.pos = end + 2;
         return true;
     }
@@ -188,10 +194,14 @@ function redditSpoilerPlugin(md: MarkdownIt) {
 // ---------------------
 // Postprocessor to handle spoilers embedded within larger text tokens
 // ---------------------
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function spoilerPostProcessor(state: any) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     state.tokens.forEach((token: any) => {
         if (token.type === 'inline' && token.children) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const newChildren: any[] = [];
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             token.children.forEach((child: any) => {
                 // Only process text tokens that include our spoiler delimiters.
                 if (child.type === 'text' && child.content.includes('||')) {
@@ -199,6 +209,7 @@ function spoilerPostProcessor(state: any) {
                     let lastIndex = 0;
                     const regex = /\|\|(.+?)\|\|/g;
                     let match;
+                    // eslint-disable-next-line no-cond-assign
                     while ((match = regex.exec(text)) !== null) {
                         // Push any text before the spoiler as a text token.
                         if (match.index > lastIndex) {
@@ -212,6 +223,7 @@ function spoilerPostProcessor(state: any) {
                             'spoiler',
                             0
                         );
+                        // eslint-disable-next-line prefer-destructuring
                         spoilerToken.content = match[1];
                         newChildren.push(spoilerToken);
                         lastIndex = regex.lastIndex;
@@ -226,6 +238,7 @@ function spoilerPostProcessor(state: any) {
                     newChildren.push(child);
                 }
             });
+            // eslint-disable-next-line no-param-reassign
             token.children = newChildren;
         }
     });
@@ -234,6 +247,7 @@ function spoilerPostProcessor(state: any) {
 // ---------------------
 // Custom Renderer for Spoiler Tokens in Markdown-It
 // ---------------------
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function spoilerRenderer(tokens: any, idx: number) {
     return `<spoiler>${tokens[idx].content}</spoiler>`;
 }
@@ -260,11 +274,13 @@ mdInstance.core.ruler.after(
 // Custom Renderers for react-native-render-html
 // ---------------------
 const customRenderers = {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     spoiler: ({ tnode }: any) => {
         const content =
             tnode.domNode?.textContent || extractTextFromTnode(tnode) || '';
         return <InlineSpoiler>{content}</InlineSpoiler>;
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     a: ({ tnode }: any) => <InlineLink tnode={tnode} />,
 };
 
@@ -300,14 +316,6 @@ export const MarkdownRenderer: React.FC<{
 }> = ({ text, preview }) => {
     const contentWidth = Dimensions.get('window').width;
 
-    if (isOnlyEmojis(text)) {
-        return (
-            <View>
-                <Text style={styles.emojiLarge}>{text.trim()}</Text>
-            </View>
-        );
-    }
-
     const [contentHeight, setContentHeight] = React.useState(0);
     const [expanded, setExpanded] = React.useState(false);
     const htmlContent = useMemo(
@@ -315,6 +323,7 @@ export const MarkdownRenderer: React.FC<{
         [text]
     );
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleOnLayout = useCallback((event: any) => {
         setContentHeight(event.nativeEvent.layout.height);
     }, []);
@@ -337,6 +346,7 @@ export const MarkdownRenderer: React.FC<{
                 contentWidth={contentWidth}
                 source={{ html: htmlContent }}
                 renderers={customRenderers}
+                // @ts-expect-error render html
                 customHTMLElementModels={customHTMLElementModels}
                 baseStyle={baseStyle}
                 tagsStyles={tagsStyles}
@@ -344,6 +354,14 @@ export const MarkdownRenderer: React.FC<{
             />
         </View>
     );
+
+    if (isOnlyEmojis(text)) {
+        return (
+            <View>
+                <Text style={styles.emojiLarge}>{text.trim()}</Text>
+            </View>
+        );
+    }
 
     if (!preview || expanded) {
         return <View>{fullContent}</View>;
@@ -367,6 +385,7 @@ export const MarkdownRenderer: React.FC<{
                     contentWidth={contentWidth}
                     source={{ html: htmlContent }}
                     renderers={customRenderers}
+                    // @ts-expect-error render html
                     customHTMLElementModels={customHTMLElementModels}
                     baseStyle={{ marginTop: 0, paddingTop: 0 }}
                     tagsStyles={{

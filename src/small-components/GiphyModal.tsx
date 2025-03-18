@@ -32,7 +32,7 @@ if (typeof File === 'undefined') {
             this.lastModified = options?.lastModified || Date.now();
         }
     }
-    // @ts-ignore
+    // @ts-expect-error file
     global.File = RNFile;
 }
 
@@ -53,6 +53,7 @@ export const GiphyModal: React.FC<GiphyModalProps> = ({
     variant = 'download', // default to download mode if not provided
 }) => {
     const [giphyQuery, setGiphyQuery] = useState('');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [giphyResults, setGiphyResults] = useState<any[]>([]);
 
     const windowWidth = Dimensions.get('window').width;
@@ -71,7 +72,7 @@ export const GiphyModal: React.FC<GiphyModalProps> = ({
             }
         };
         if (visible && !giphyQuery) {
-            fetchTrending();
+            void fetchTrending();
         }
     }, [visible, giphyQuery]);
 
@@ -92,6 +93,7 @@ export const GiphyModal: React.FC<GiphyModalProps> = ({
     // Handle selection of a GIF result.
     // In 'download' mode, we fetch the gif blob and convert it to a File.
     // In 'uri' mode, we simply use the URL.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleSelectGif = async (result: any) => {
         const gifUrl = result.images.original.url;
         if (variant === 'download') {
@@ -123,7 +125,7 @@ export const GiphyModal: React.FC<GiphyModalProps> = ({
         }
     };
 
-    if (!visible) return null;
+    if (!visible) return undefined;
 
     // Container style for Giphy modal to align above the input box.
     const giphyContainerStyle = {

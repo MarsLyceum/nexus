@@ -95,7 +95,8 @@ export const CommentEditor: React.FC<CommentEditorProps> = ({
             postId,
             content: newCommentContent,
             attachments: attachments.map((att) => att.file),
-            parentCommentId,
+            // eslint-disable-next-line unicorn/no-null
+            parentCommentId: parentCommentId ?? null,
             hasChildren: false,
             upvotes: 1,
         });
@@ -247,7 +248,7 @@ export const CommentEditor: React.FC<CommentEditorProps> = ({
                     {/* Display error message if any */}
                     {errorMessage ? (
                         <Text style={styles.errorMessage}>{errorMessage}</Text>
-                    ) : null}
+                    ) : undefined}
 
                     {/* Action buttons */}
                     <View style={styles.buttonRow}>
@@ -305,6 +306,7 @@ export const CommentEditor: React.FC<CommentEditorProps> = ({
                 visible={showGiphy}
                 onClose={() => setShowGiphy(false)}
                 onSelectGif={(attachment) => {
+                    // @ts-expect-error file
                     setNewCommentContent(attachment.file.uri);
                     setUpdateContent((prev) => prev + 1);
                 }}

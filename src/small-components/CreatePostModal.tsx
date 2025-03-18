@@ -78,6 +78,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
                 previewUri,
             };
             // @ts-expect-error any
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             setAttachments((prev: any) => [...prev, newAttachment]);
         } catch (error) {
             console.error('Error in handleAttachmentInsert:', error);
@@ -95,6 +96,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
 
     const onRemoveAttachment = (attachmentId: string) => {
         // @ts-expect-error any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setAttachments((prev: any[]) =>
             prev.filter((att) => att.id !== attachmentId)
         );
@@ -240,6 +242,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
                 visible={showGiphy}
                 onClose={() => setShowGiphy(false)}
                 onSelectGif={(attachment) =>
+                    // @ts-expect-error attachment
                     setAttachments((prev) => [...prev, attachment])
                 }
             />

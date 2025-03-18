@@ -46,6 +46,7 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
 
     // Scroll syncing functions remain unchanged
     const handleVerticalScroll = (
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         e: NativeSyntheticEvent<TextInputScrollEventData> & { nativeEvent: any }
     ) => {
         const offsetY =
@@ -54,6 +55,7 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
     };
 
     const handleHorizontalScroll = (
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         e: NativeSyntheticEvent<TextInputScrollEventData> & { nativeEvent: any }
     ) => {
         const offsetX =
@@ -62,12 +64,13 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
     };
 
     // Delegate key events to the EmojiPicker
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleKeyPressInternal = (e: any) => {
         emojiPickerRef.current?.handleKeyDown(e);
     };
 
     // Convert height to a number if it's a string ending with "px" on mobile.
-    let parsedHeight: string | number = height;
+    let parsedHeight: string | number = height as string;
     if (
         typeof height === 'string' &&
         height.endsWith('px') &&
@@ -77,7 +80,7 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
     }
 
     // Convert width to a number if it's a string ending with "px" on mobile.
-    let parsedWidth: string | number = width;
+    let parsedWidth: string | number = width as string;
     if (
         typeof width === 'string' &&
         width.endsWith('px') &&
@@ -138,6 +141,7 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
                 {...(Platform.OS === 'web'
                     ? { onKeyPress: handleKeyPressInternal }
                     : { onKeyPress: handleKeyPressInternal })}
+                // @ts-expect-error web only type
                 scrollEventThrottle={16}
                 {...rest}
             />

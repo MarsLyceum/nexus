@@ -30,6 +30,7 @@ export const ImageDetailsModal: React.FC<ImageDetailsModalProps> = ({
             ? Math.min(initialIndex, mediaAttachments.length - 1)
             : 0;
     const [currentIndex, setCurrentIndex] = useState(effectiveInitialIndex);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const carouselRef = useRef<any>(null);
     const deviceWidth = Dimensions.get('window').width;
     const deviceHeight = Dimensions.get('window').height;
@@ -69,15 +70,16 @@ export const ImageDetailsModal: React.FC<ImageDetailsModalProps> = ({
             }
         };
         window.addEventListener('keydown', handleKeyDown);
+        // eslint-disable-next-line consistent-return
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [visible, mediaAttachments.length, currentIndex, isComputer]);
 
-    if (mediaAttachments.length === 0) return null;
+    if (mediaAttachments.length === 0) return undefined;
 
     const renderItem = ({ item }: { item: string }) => {
         const info = mediaInfos[item];
         // Use a unique key based on the item URI and its media type.
-        const key = `${item  }_${  info ? info.type : 'unknown'}`;
+        const key = `${item}_${info ? info.type : 'unknown'}`;
         return (
             <View key={key} style={{ width: '100%', height: '100%' }}>
                 <ItemRenderer

@@ -198,6 +198,7 @@ export const renderHighlightedText = (text: string): JSX.Element[] => {
         }
         return <Text key={index}>{segments}</Text>;
     });
+    // eslint-disable-next-line unicorn/no-array-reduce
     return renderedLines.reduce((prev, curr, idx) => {
         if (idx === 0) return [curr];
         return [...prev, <Text key={`newline-${idx}`}>{'\n'}</Text>, curr];

@@ -1,6 +1,5 @@
-import React, { useMemo } from 'react';
-import { View, useWindowDimensions } from 'react-native';
-import { useImageResolution, fitContainer } from 'react-native-zoom-toolkit';
+import React from 'react';
+import { View } from 'react-native';
 
 import { NexusVideo } from '../NexusVideo';
 import { MobileImageRenderer } from './MobileImageRenderer';

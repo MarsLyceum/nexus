@@ -12,6 +12,7 @@ import {
     StyleSheet,
     View,
 } from 'react-native';
+// @ts-expect-error no types
 import emoji from 'emoji-dictionary';
 import { COLORS } from '../constants';
 import { MiniModal } from './MiniModal';
@@ -24,6 +25,7 @@ export type EmojiPickerProps = {
 };
 
 export interface EmojiPickerHandle {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     handleKeyDown: (e: any) => void;
 }
 
@@ -83,42 +85,48 @@ const EmojiPickerComponent = (
     };
 
     // This function contains the key handling logic.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleKeyDown = (e: any) => {
         const key = e?.nativeEvent?.key ?? e?.key;
 
         if (key === 'Escape') {
             setEmojiSuggestions([]);
+            // eslint-disable-next-line @typescript-eslint/no-unused-expressions
             e.preventDefault && e.preventDefault();
             return;
         }
 
         if (emojiSuggestions.length > 0) {
+            // eslint-disable-next-line default-case
             switch (key) {
-            case 'ArrowDown': {
-                setActiveEmojiIndex(
-                    (prev) => (prev + 1) % emojiSuggestions.length
-                );
-                e.preventDefault && e.preventDefault();
-            
-            break;
-            }
-            case 'ArrowUp': {
-                setActiveEmojiIndex(
-                    (prev) =>
-                        (prev - 1 + emojiSuggestions.length) %
-                        emojiSuggestions.length
-                );
-                e.preventDefault && e.preventDefault();
-            
-            break;
-            }
-            case 'Enter': {
-                handleEmojiSelect(emojiSuggestions[activeEmojiIndex]);
-                e.preventDefault && e.preventDefault();
-            
-            break;
-            }
-            // No default
+                case 'ArrowDown': {
+                    setActiveEmojiIndex(
+                        (prev) => (prev + 1) % emojiSuggestions.length
+                    );
+                    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+                    e.preventDefault && e.preventDefault();
+
+                    break;
+                }
+                case 'ArrowUp': {
+                    setActiveEmojiIndex(
+                        (prev) =>
+                            (prev - 1 + emojiSuggestions.length) %
+                            emojiSuggestions.length
+                    );
+                    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+                    e.preventDefault && e.preventDefault();
+
+                    break;
+                }
+                case 'Enter': {
+                    handleEmojiSelect(emojiSuggestions[activeEmojiIndex]);
+                    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+                    e.preventDefault && e.preventDefault();
+
+                    break;
+                }
+                // No default
             }
         }
     };

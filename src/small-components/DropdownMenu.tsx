@@ -23,10 +23,13 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
     onLayoutChange,
 }) => {
     const { width: windowWidth, height: windowHeight } = useWindowDimensions();
-    const [dropdownLayout, setDropdownLayout] = useState<{
-        width: number;
-        height: number;
-    } | null>(null);
+    const [dropdownLayout, setDropdownLayout] = useState<
+        | {
+              width: number;
+              height: number;
+          }
+        | undefined
+    >();
 
     // Default positioning: align dropdown's top left with the more button's bottom left.
     let finalLeft = rawRect.x;
@@ -67,6 +70,7 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
                         dropdownLayout.height !== height
                     ) {
                         setDropdownLayout({ width, height });
+                        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
                         onLayoutChange && onLayoutChange({ width, height });
                     }
                 }}

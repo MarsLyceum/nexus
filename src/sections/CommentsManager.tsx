@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, ActivityIndicator, Text, StyleSheet } from 'react-native';
 import { useApolloClient, useQuery, ApolloClient } from '@apollo/client';
+import { useNavigation } from '@react-navigation/core';
 import { FlashList } from '@shopify/flash-list';
 import { FETCH_POST_COMMENTS_QUERY, FETCH_USER_QUERY } from '../queries';
 import { CommentThread, CommentNode } from './CommentThread';
@@ -35,6 +36,7 @@ const buildNormalizedState = async (
                     variables: { userId },
                 });
                 // Cache the username to avoid duplicate queries
+                // eslint-disable-next-line no-param-reassign
                 userCache.current[userId] =
                     userData?.fetchUser?.username || 'Unknown';
             }
@@ -67,7 +69,7 @@ const buildCommentTree = (normalized: NormalizedComments): CommentNode[] => {
         );
         return { ...current, children };
     };
-    return normalized.rootIds.map(buildTree);
+    return normalized.rootIds.map((element) => buildTree(element));
 };
 
 export type CommentsManagerProps = {
@@ -81,6 +83,7 @@ export const CommentsManager = ({
 }: CommentsManagerProps) => {
     const client = useApolloClient();
     const userCache = useRef<{ [userId: string]: string }>({});
+    const navigation = useNavigation();
 
     // Local state to store the flat list of comments and control pagination
     const [allComments, setAllComments] = useState<CommentNode[]>([]);
@@ -167,7 +170,11 @@ export const CommentsManager = ({
                     comment={item}
                     level={0}
                     onContinueConversation={(childCommentId: string) => {
-                        // Handle navigation or additional actions here.
+                        // @ts-expect-error navigation
+                        navigation.push('PostScreen', {
+                            id: postId,
+                            parentCommentId: childCommentId,
+                        });
                     }}
                 />
             )}

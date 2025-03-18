@@ -6,7 +6,7 @@ export * from './CommentsManager';
 export * from './CommentThread';
 export * from './Header';
 export * from './HtmlRenderer';
-export * from './LargeImageModal';
+export * from './ImageDetailsModal';
 export * from './PostItem';
 export * from './RichTextEditor';
 export * from './RichTextEditorBase';

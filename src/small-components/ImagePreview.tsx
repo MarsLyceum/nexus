@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, Pressable } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
-import { LargeImageModal } from '../sections';
+import { ImageDetailsModal } from '../sections';
 
 export type ImagePreviewProps = {
     url: string;
@@ -39,7 +39,7 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({
                     contentFit="contain"
                 />
             </Pressable>
-            <LargeImageModal
+            <ImageDetailsModal
                 visible={modalVisible}
                 attachments={[url]}
                 initialIndex={0}

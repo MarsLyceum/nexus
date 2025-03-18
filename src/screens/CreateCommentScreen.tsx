@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { NavigationProp } from '@react-navigation/core';
 import { COLORS } from '../constants';
-import { AttachmentImageGallery, LargeImageModal } from '../sections';
+import { AttachmentImageGallery, ImageDetailsModal } from '../sections';
 import {
     LinkPreview,
     MarkdownRenderer,
@@ -132,7 +132,7 @@ export const CreateCommentScreen: React.FC<CreateCommentScreenProps> = ({
                     />
                 </View>
                 {parentAttachmentUrls && parentAttachmentUrls.length > 0 && (
-                    <LargeImageModal
+                    <ImageDetailsModal
                         visible={modalVisible}
                         attachments={parentAttachmentUrls}
                         initialIndex={modalStartIndex}

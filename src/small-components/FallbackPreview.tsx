@@ -10,7 +10,7 @@ import { Image as ExpoImage } from 'expo-image';
 import { getDomainFromUrl } from '../utils/linkPreviewUtils';
 import { COLORS } from '../constants';
 import { PreviewData } from '../types';
-import { LargeImageModal } from '../sections'; // Import the large image modal
+import { ImageDetailsModal } from '../sections'; // Import the large image modal
 
 export type FallbackPreviewProps = {
     url: string;
@@ -61,7 +61,7 @@ export const FallbackPreview: React.FC<FallbackPreviewProps> = ({
             >
                 <Text style={styles.linkPreviewSite}>{siteToShow}</Text>
             </TouchableOpacity>
-            <LargeImageModal
+            <ImageDetailsModal
                 visible={modalVisible}
                 attachments={attachments}
                 initialIndex={0}

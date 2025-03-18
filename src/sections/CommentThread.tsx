@@ -23,9 +23,9 @@ import {
 import { stripHtml, extractUrls, getRelativeTime, isComputer } from '../utils';
 // NEW: Import Apollo Client hook and comments query to allow refetching comments.
 import { FETCH_POST_COMMENTS_QUERY } from '../queries';
-// NEW: Import AttachmentImageGallery and LargeImageModal for rendering attachments in comments
+// NEW: Import AttachmentImageGallery and ImageDetailsModal for rendering attachments in comments
 import { AttachmentImageGallery } from './AttachmentImageGallery';
-import { LargeImageModal } from './LargeImageModal';
+import { ImageDetailsModal } from './ImageDetailsModal';
 
 const styles = StyleSheet.create({
     commentContainer: {
@@ -382,10 +382,10 @@ const CommentThreadComponent = ({
                                     </Text>
                                 </TouchableOpacity>
                             )}
-                        {/* Render LargeImageModal for comment attachments */}
+                        {/* Render ImageDetailsModal for comment attachments */}
                         {comment.attachmentUrls &&
                             comment.attachmentUrls.length > 0 && (
-                                <LargeImageModal
+                                <ImageDetailsModal
                                     visible={modalVisible}
                                     attachments={comment.attachmentUrls || []}
                                     initialIndex={modalStartIndex}

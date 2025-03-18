@@ -9,14 +9,14 @@ import { useMediaTypes } from '../hooks';
 import { ArrowButton } from './ArrowButton';
 import { CarouselDots } from './CarouselDots';
 
-export type LargeImageModalProps = {
+export type ImageDetailsModalProps = {
     visible: boolean;
     attachments: string[];
     initialIndex: number;
     onClose: () => void;
 };
 
-export const LargeImageModal: React.FC<LargeImageModalProps> = ({
+export const ImageDetailsModal: React.FC<ImageDetailsModalProps> = ({
     visible,
     attachments,
     initialIndex,

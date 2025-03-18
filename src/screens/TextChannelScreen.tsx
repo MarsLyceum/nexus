@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { View, useWindowDimensions } from 'react-native';
 import { NavigationProp } from '@react-navigation/core';
 import { useAppSelector, RootState, UserType } from '../redux';
-import { Header, LargeImageModal } from '../sections';
+import { Header, ImageDetailsModal } from '../sections';
 import { COLORS } from '../constants';
 import { GroupChannel, Attachment } from '../types';
 import { MessageList, ChatInputContainer } from '../small-components';
@@ -100,7 +100,7 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
                 onAttachmentPreviewPress={handleAttachmentPreviewPress}
             />
 
-            <LargeImageModal
+            <ImageDetailsModal
                 visible={modalVisible}
                 attachments={modalAttachments}
                 initialIndex={modalInitialIndex}

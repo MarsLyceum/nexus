@@ -1,5 +1,11 @@
 import React, { useState } from 'react';
-import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import {
+    View,
+    TouchableOpacity,
+    Text,
+    StyleSheet,
+    Linking,
+} from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { getDomainFromUrl } from '../utils/linkPreviewUtils';
 import { COLORS } from '../constants';
@@ -49,7 +55,12 @@ export const FallbackPreview: React.FC<FallbackPreviewProps> = ({
                     {previewData.description}
                 </Text>
             ) : undefined}
-            <Text style={styles.linkPreviewSite}>{siteToShow}</Text>
+            <TouchableOpacity
+                onPress={() => Linking.openURL(url)}
+                style={styles.linkPreviewSiteTouchable}
+            >
+                <Text style={styles.linkPreviewSite}>{siteToShow}</Text>
+            </TouchableOpacity>
             <LargeImageModal
                 visible={modalVisible}
                 attachments={attachments}
@@ -78,14 +89,21 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         marginBottom: 3,
         color: COLORS.White,
+        fontFamily: 'Roboto_700Bold',
     },
     linkPreviewDescription: {
         fontSize: 14,
         color: COLORS.White,
+        fontFamily: 'Roboto_400Regular',
     },
     linkPreviewSite: {
         fontSize: 12,
         color: COLORS.InactiveText,
+        fontFamily: 'Roboto_400Regular',
         marginTop: 5,
+    },
+    // New style to restrict the clickable area to just the text
+    linkPreviewSiteTouchable: {
+        alignSelf: 'flex-start',
     },
 });

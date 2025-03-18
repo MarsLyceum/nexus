@@ -112,13 +112,13 @@ export function useLinkPreview(url: string) {
                     );
                     // Use a global regex to get all <p>...</p> matches.
                     const paragraphRegex = /<p\b[^>]*>([\S\s]*?)<\/p>/gi;
-                    const paragraphs = [];
+                    const paragraphs: string[] = [];
                     let match;
-                    // Extract up to two non-empty paragraphs.
+                    // Extract only the first non-empty paragraph.
                     while (
                         // eslint-disable-next-line no-cond-assign
                         (match = paragraphRegex.exec(contentHtml)) !== null &&
-                        paragraphs.length < 2
+                        paragraphs.length < 1
                     ) {
                         // Remove any HTML tags inside the paragraph and trim whitespace.
                         const paragraphText = decode(
@@ -128,9 +128,10 @@ export function useLinkPreview(url: string) {
                             paragraphs.push(paragraphText);
                         }
                     }
-                    // Combine paragraphs as the fallback description.
-                    descriptionFallback = paragraphs.join(' ');
-                    descriptionFallback += '...';
+                    // Use the first paragraph as the fallback description.
+                    descriptionFallback = paragraphs[0]
+                        ? paragraphs[0] + '...'
+                        : '';
                 } else {
                     // Default fallback for other pages.
                     imgMatch = html.match(/<img[^>]+src=["']([^"']+)["']/i);

@@ -1,11 +1,10 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext } from 'react';
 import {
     View,
     Text,
     TouchableOpacity,
     StyleSheet,
     LayoutChangeEvent,
-    Platform,
 } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { useNavigation } from '@react-navigation/native';
@@ -18,13 +17,10 @@ import { CurrentCommentContext } from '../providers';
 import {
     MarkdownRenderer,
     LinkPreview,
-    Tooltip,
     CommentEditor,
+    ActionButton,
 } from '../small-components';
 import { stripHtml, extractUrls, getRelativeTime, isComputer } from '../utils';
-// Import hooks for inline comment creation (used for mobile navigation)
-import { useCreateComment } from '../hooks';
-import { useAppSelector, RootState } from '../redux';
 // NEW: Import Apollo Client hook and comments query to allow refetching comments.
 import { FETCH_POST_COMMENTS_QUERY } from '../queries';
 // NEW: Import AttachmentImageGallery and LargeImageModal for rendering attachments in comments
@@ -298,34 +294,32 @@ const CommentThreadComponent = ({
                                     </View>
                                 )}
                             <View style={styles.actionsRow}>
-                                <Tooltip tooltipText="Reply">
-                                    <TouchableOpacity
-                                        onPress={() => {
-                                            if (isComputer()) {
-                                                // On computer, show inline comment editor
-                                                setShowInlineReply(true);
-                                            } else {
-                                                // On mobile, navigate to dedicated comment screen
-                                                setParentUser(comment.user);
-                                                setParentContent(
-                                                    comment.content
-                                                );
-                                                setParentDate(comment.postedAt);
-                                                setParentCommentId(comment.id);
-                                                navigation.navigate(
-                                                    'CreateComment'
-                                                );
-                                            }
-                                        }}
-                                        style={styles.replyIcon}
-                                    >
-                                        <Icon
-                                            name="reply"
-                                            size={16}
-                                            color={COLORS.White}
-                                        />
-                                    </TouchableOpacity>
-                                </Tooltip>
+                                <ActionButton
+                                    onPress={() => {
+                                        if (isComputer()) {
+                                            // On computer, show inline comment editor
+                                            setShowInlineReply(true);
+                                        } else {
+                                            // On mobile, navigate to dedicated comment screen
+                                            setParentUser(comment.user);
+                                            setParentContent(comment.content);
+                                            setParentDate(comment.postedAt);
+                                            setParentCommentId(comment.id);
+                                            navigation.navigate(
+                                                'CreateComment'
+                                            );
+                                        }
+                                    }}
+                                    tooltipText="Reply"
+                                    transparent
+                                    style={styles.replyIcon}
+                                >
+                                    <Icon
+                                        name="reply"
+                                        size={18}
+                                        color={COLORS.White}
+                                    />
+                                </ActionButton>
                                 <View style={styles.voteActionsContainer}>
                                     <VoteActions
                                         voteCount={voteCount}

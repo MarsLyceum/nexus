@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Platform } from 'react-native';
 import { COLORS } from '../constants';
 import { MarkdownInputBase, MarkdownInputBaseProps } from './MarkdownInputBase';
 
@@ -10,13 +10,40 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
     onChangeText,
     placeholder,
     style,
+    width = '100%',
+    height = '250px',
     ...rest
 }) => {
     // State to track focus.
     const [isFocused, setIsFocused] = React.useState(false);
 
+    // Convert height to a number if it is a string ending with "px" on non-web platforms.
+    let parsedHeight: string | number = height;
+    if (
+        typeof height === 'string' &&
+        height.endsWith('px') &&
+        Platform.OS !== 'web'
+    ) {
+        parsedHeight = Number.parseInt(height, 10);
+    }
+
+    // Convert width to a number if it is a string ending with "px" on non-web platforms.
+    let parsedWidth: string | number = width;
+    if (
+        typeof width === 'string' &&
+        width.endsWith('px') &&
+        Platform.OS !== 'web'
+    ) {
+        parsedWidth = Number.parseInt(width, 10);
+    }
+
+    const containerStyle: object = {
+        ...(parsedWidth ? { width: parsedWidth } : {}),
+        ...(parsedHeight ? { height: parsedHeight } : {}),
+    };
+
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, containerStyle]}>
             <MarkdownInputBase
                 value={value}
                 onChangeText={onChangeText}
@@ -38,8 +65,6 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
 
 const styles = StyleSheet.create({
     container: {
-        width: '100%',
-        height: 250, // Numeric height for mobile compatibility
         flexDirection: 'column',
     },
     inputWrapper: {
@@ -75,7 +100,7 @@ const styles = StyleSheet.create({
         paddingTop: 10,
         lineHeight: 20,
         borderRadius: 20,
-        backgroundColor: 'transparent', // UPDATED: Transparent to show overlay beneath
+        backgroundColor: 'transparent', // Transparent to show overlay beneath
         fontFamily: 'Roboto_400Regular',
         textAlignVertical: 'top',
         zIndex: 2,

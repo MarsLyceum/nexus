@@ -1,11 +1,16 @@
-// components/FallbackPreview.tsx
-
-import React from 'react';
-import { TouchableOpacity, Linking, Text, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import {
+    View,
+    TouchableOpacity,
+    Text,
+    StyleSheet,
+    Linking,
+} from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { getDomainFromUrl } from '../utils/linkPreviewUtils';
 import { COLORS } from '../constants';
 import { PreviewData } from '../types';
+import { ImageDetailsModal } from '../sections'; // Import the large image modal
 
 export type FallbackPreviewProps = {
     url: string;
@@ -16,22 +21,31 @@ export const FallbackPreview: React.FC<FallbackPreviewProps> = ({
     url,
     previewData,
 }) => {
-    const previewImage =
-        previewData.images && previewData.images[0]
-            ? previewData.images[0]
-            : previewData.logo;
+    // State to control modal visibility.
+    const [modalVisible, setModalVisible] = useState(false);
+
+    // Determine attachments: use all images if available, or fallback to logo.
+    const attachments =
+        previewData.images && previewData.images.length > 0
+            ? previewData.images
+            : previewData.logo
+              ? [previewData.logo]
+              : [];
+
+    // Use the first image as the preview image.
+    const previewImage = attachments[0];
     const siteToShow = previewData.siteName || getDomainFromUrl(url);
+
     return (
-        <TouchableOpacity
-            onPress={() => Linking.openURL(url)}
-            style={styles.linkPreviewContainer}
-        >
+        <View style={styles.linkPreviewContainer}>
             {previewImage ? (
-                <ExpoImage
-                    source={{ uri: previewImage }}
-                    style={styles.linkPreviewImage}
-                    contentFit="cover"
-                />
+                <TouchableOpacity onPress={() => setModalVisible(true)}>
+                    <ExpoImage
+                        source={{ uri: previewImage }}
+                        style={styles.linkPreviewImage}
+                        contentFit="contain"
+                    />
+                </TouchableOpacity>
             ) : undefined}
             {previewData.title ? (
                 <Text style={styles.linkPreviewTitle}>{previewData.title}</Text>
@@ -41,8 +55,19 @@ export const FallbackPreview: React.FC<FallbackPreviewProps> = ({
                     {previewData.description}
                 </Text>
             ) : undefined}
-            <Text style={styles.linkPreviewSite}>{siteToShow}</Text>
-        </TouchableOpacity>
+            <TouchableOpacity
+                onPress={() => Linking.openURL(url)}
+                style={styles.linkPreviewSiteTouchable}
+            >
+                <Text style={styles.linkPreviewSite}>{siteToShow}</Text>
+            </TouchableOpacity>
+            <ImageDetailsModal
+                visible={modalVisible}
+                attachments={attachments}
+                initialIndex={0}
+                onClose={() => setModalVisible(false)}
+            />
+        </View>
     );
 };
 
@@ -64,14 +89,21 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         marginBottom: 3,
         color: COLORS.White,
+        fontFamily: 'Roboto_700Bold',
     },
     linkPreviewDescription: {
         fontSize: 14,
         color: COLORS.White,
+        fontFamily: 'Roboto_400Regular',
     },
     linkPreviewSite: {
         fontSize: 12,
         color: COLORS.InactiveText,
+        fontFamily: 'Roboto_400Regular',
         marginTop: 5,
+    },
+    // New style to restrict the clickable area to just the text
+    linkPreviewSiteTouchable: {
+        alignSelf: 'flex-start',
     },
 });

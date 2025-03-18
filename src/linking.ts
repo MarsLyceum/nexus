@@ -16,6 +16,9 @@ export const linking = {
                     AppDrawer: {
                         path: '', // omit AppDrawer from the URL
                     },
+                    PostScreen: {
+                        path: 'post/:id',
+                    },
                 },
             },
         },
@@ -75,9 +78,8 @@ export const linking = {
             // Note: Since your linking config already supplies "post/",
             // we only append the extra segments.
             if (parentCommentId && parentCommentId.trim() !== '') {
-                return `post/${id}/comment/${parentCommentId}`;
+                return `${id}/comment/${parentCommentId}`;
             }
-            return `post/${id}`;
         }
 
         // For all other routes, delegate to the default logic.

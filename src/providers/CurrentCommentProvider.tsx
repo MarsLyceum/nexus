@@ -5,6 +5,8 @@ export type CurrentCommentContextType = {
     setParentUser: (parentUser: string) => void;
     parentContent: string;
     setParentContent: (parentContent: string) => void;
+    parentAttachmentUrls: string[];
+    setParentAttachmentUrls: (parentAttachments: string[]) => void;
     parentDate: string;
     setParentDate: (parentDate: string) => void;
     postId: string;
@@ -18,6 +20,8 @@ const defaultContext: CurrentCommentContextType = {
     setParentUser: () => {},
     parentContent: '',
     setParentContent: () => {},
+    parentAttachmentUrls: [],
+    setParentAttachmentUrls: () => {},
     parentDate: '',
     setParentDate: () => {},
     postId: '',
@@ -34,6 +38,9 @@ export const CurrentCommentProvider: FC<{ children: React.ReactNode }> = ({
 }) => {
     const [parentUser, setParentUser] = useState<string>('');
     const [parentContent, setParentContent] = useState<string>('');
+    const [parentAttachmentUrls, setParentAttachmentUrls] = useState<string[]>(
+        []
+    );
     const [parentDate, setParentDate] = useState<string>('');
     const [postId, setPostId] = useState<string>('');
     // eslint-disable-next-line unicorn/no-null
@@ -53,6 +60,8 @@ export const CurrentCommentProvider: FC<{ children: React.ReactNode }> = ({
                     setPostId,
                     parentCommentId,
                     setParentCommentId,
+                    parentAttachmentUrls,
+                    setParentAttachmentUrls,
                 }}
             >
                 {children}
@@ -69,6 +78,8 @@ export const CurrentCommentProvider: FC<{ children: React.ReactNode }> = ({
             setPostId,
             parentCommentId,
             setParentCommentId,
+            parentAttachmentUrls,
+            setParentAttachmentUrls,
             children,
         ]
     );

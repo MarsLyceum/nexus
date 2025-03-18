@@ -1,8 +1,7 @@
-// components/ImagePreview.tsx
-
-import React from 'react';
-import { TouchableOpacity, Linking, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, Pressable } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
+import { ImageDetailsModal } from '../sections';
 
 export type ImagePreviewProps = {
     url: string;
@@ -15,6 +14,7 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({
     containerWidth,
     imageDimensions,
 }) => {
+    const [modalVisible, setModalVisible] = useState(false);
     const baseContainerWidth = containerWidth || 360;
     const targetWidth =
         baseContainerWidth < 360 ? baseContainerWidth * 0.85 : 360;
@@ -23,20 +23,29 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({
         : 150;
 
     return (
-        <TouchableOpacity
-            onPress={() => Linking.openURL(url)}
-            style={styles.linkPreviewContainer}
-        >
-            <ExpoImage
-                source={{ uri: url }}
-                style={{
-                    width: targetWidth,
-                    height: computedHeight,
-                    marginBottom: 5,
-                }}
-                contentFit="contain"
+        <>
+            <Pressable
+                onPress={() => setModalVisible(true)}
+                style={styles.linkPreviewContainer}
+            >
+                <ExpoImage
+                    source={{ uri: url }}
+                    style={{
+                        width: targetWidth,
+                        height: computedHeight,
+                        marginBottom: 5,
+                        borderRadius: 8,
+                    }}
+                    contentFit="contain"
+                />
+            </Pressable>
+            <ImageDetailsModal
+                visible={modalVisible}
+                attachments={[url]}
+                initialIndex={0}
+                onClose={() => setModalVisible(false)}
             />
-        </TouchableOpacity>
+        </>
     );
 };
 

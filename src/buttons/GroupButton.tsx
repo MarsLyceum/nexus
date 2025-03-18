@@ -15,17 +15,17 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     buttonContainer: {
-        width: 32,
-        height: 32,
+        width: 45,
+        height: 45,
         alignItems: 'center',
         justifyContent: 'center',
     },
     button: {
-        width: 32,
-        height: 32,
+        width: 45,
+        height: 45,
         alignItems: 'center',
         justifyContent: 'center',
-        borderRadius: 8, // Keeps edges rounded
+        borderRadius: 10, // Keeps edges rounded
         overflow: 'hidden', // Prevents image overflow outside button
     },
     image: {
@@ -34,7 +34,7 @@ const styles = StyleSheet.create({
     },
     text: {
         marginLeft: 8, // Spacing between the button and the text
-        fontSize: 14,
+        fontSize: 16,
         color: COLORS.White,
         fontFamily: 'Roboto_500Medium',
         fontWeight: 'semibold',
@@ -56,7 +56,7 @@ export const GroupButton = ({
                 <ExpoImage
                     source={imageSource}
                     style={styles.image}
-                    resizeMode="cover" // Ensures the image fills the entire rectangle
+                    contentFit="cover" // Ensures the image fills the entire rectangle
                 />
             </View>
         </View>

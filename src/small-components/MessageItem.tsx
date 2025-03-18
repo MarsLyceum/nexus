@@ -10,7 +10,7 @@ import { Image as ExpoImage } from 'expo-image';
 import { LinkPreview } from './LinkPreview';
 import { MessageWithAvatar } from '../types';
 import { MarkdownRenderer } from './MarkdownRenderer';
-import { extractUrls, formatFullDate } from '../utils';
+import { extractUrls, formatDateForChat, isImageExtensionUrl } from '../utils';
 import { useMediaTypes } from '../hooks/useMediaTypes';
 import { NexusVideo } from '.';
 
@@ -31,7 +31,11 @@ const NativeSizeAttachmentImage: React.FC<{ uri: string }> = ({ uri }) => {
             uri,
             (width, height) => setDimensions({ width, height }),
             (error) =>
-                console.error('Failed to get image dimensions for', uri, error)
+                console.error(
+                    'Failed to get image dimensions for image in message',
+                    uri,
+                    error
+                )
         );
     }, [uri]);
 
@@ -45,8 +49,8 @@ const NativeSizeAttachmentImage: React.FC<{ uri: string }> = ({ uri }) => {
             style={[
                 styles.messageAttachmentImage,
                 {
-                    width: dimensions.width * 0.3,
-                    height: dimensions.height * 0.3,
+                    width: dimensions.width * 0.5,
+                    height: dimensions.height * 0.5,
                 },
             ]}
             contentFit="contain"
@@ -62,8 +66,8 @@ const NativeSizeAttachmentVideo: React.FC<{
     nativeHeight: number;
     aspectRatio: number;
 }> = ({ uri, nativeWidth, nativeHeight }) => {
-    const scaledWidth = nativeWidth * 0.3;
-    const scaledHeight = nativeHeight * 0.3;
+    const scaledWidth = nativeWidth * 0.5;
+    const scaledHeight = nativeHeight * 0.5;
 
     return (
         <NexusVideo
@@ -84,7 +88,11 @@ const renderMessageContent = (content: string, width: number) => {
     const trimmedContent = content.trim();
     const urls = extractUrls(trimmedContent);
 
-    if (urls.length === 1 && trimmedContent === urls[0]) {
+    if (
+        urls.length === 1 &&
+        trimmedContent === urls[0] &&
+        isImageExtensionUrl(urls[0])
+    ) {
         return <LinkPreview url={urls[0]} containerWidth={width - 32} />;
     }
 
@@ -105,7 +113,7 @@ const renderMessageContent = (content: string, width: number) => {
     return <MarkdownRenderer text={content} />;
 };
 
-export const MessageItem: React.FC<MessageItemProps> = ({
+const MessageItemComponent: React.FC<MessageItemProps> = ({
     item,
     width,
     onAttachmentPress,
@@ -121,7 +129,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                 <Text style={styles.userName}>
                     {item.username}{' '}
                     <Text style={styles.time}>
-                        {formatFullDate(item.postedAt)}
+                        {formatDateForChat(item.postedAt)}
                     </Text>
                 </Text>
                 {item.content
@@ -148,9 +156,10 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                                             nativeHeight={info.height}
                                             aspectRatio={info.aspectRatio}
                                         />
-                                    ) : (
+                                    ) : undefined}
+                                    {info && info.type === 'image' ? (
                                         <NativeSizeAttachmentImage uri={url} />
-                                    )}
+                                    ) : undefined}
                                 </TouchableOpacity>
                             );
                         })}
@@ -160,6 +169,8 @@ export const MessageItem: React.FC<MessageItemProps> = ({
         </View>
     );
 };
+
+export const MessageItem = React.memo(MessageItemComponent);
 
 const styles = StyleSheet.create({
     messageContainer: {
@@ -187,6 +198,7 @@ const styles = StyleSheet.create({
     time: {
         fontSize: 12,
         color: 'gray',
+        fontFamily: 'Roboto_400Regular',
     },
     messageText: {
         fontSize: 14,

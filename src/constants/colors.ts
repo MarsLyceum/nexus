@@ -1,6 +1,6 @@
 export const COLORS = {
-    Primary: '#6F00AA',
-    Secondary: '#BDFFFD',
+    Primary: '#2d00aa',
+    Secondary: '#6F00AA',
     White: '#FFFFFF',
     PrimaryBackground: '#281B31',
     SecondaryBackground: '#382348',
@@ -9,6 +9,8 @@ export const COLORS = {
     MainText: '#C5C5C5',
     TextInput: '#3A2A4A',
     OffWhite: '#F2F3F5',
-    AccentText: '#D3A3EC',
+    AccentText: '#b3a3ec',
     Link: '#3254a8',
+    Success: '#31E143',
+    Error: '#bb1817',
 };

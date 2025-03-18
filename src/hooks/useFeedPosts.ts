@@ -22,7 +22,7 @@ export const useFeedPosts = (channelId?: string) => {
                     fetchFeedPosts: GroupChannelPostMessage[];
                 }>({
                     query: FETCH_CHANNEL_POSTS_QUERY,
-                    variables: { channelId, offset: 0 },
+                    variables: { channelId, offset: 0, limit: 100 },
                 });
 
                 const postsData = data.fetchFeedPosts.filter(

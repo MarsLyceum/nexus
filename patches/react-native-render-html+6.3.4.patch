@@ -1,7 +1,7 @@
-diff --git a/node_modules/react-native-render-html/src/RenderHTMLConfigProvider.tsx b/node_modules/react-native-render-html/src/RenderHTMLConfigProvider.tsx
+diff --git a/src/RenderHTMLConfigProvider.tsx b/src/RenderHTMLConfigProvider.tsx
 index 0df5375..39306bf 100644
---- a/node_modules/react-native-render-html/src/RenderHTMLConfigProvider.tsx
-+++ b/node_modules/react-native-render-html/src/RenderHTMLConfigProvider.tsx
+--- a/src/RenderHTMLConfigProvider.tsx
++++ b/src/RenderHTMLConfigProvider.tsx
 @@ -1,5 +1,4 @@
  import React, { PropsWithChildren, ReactElement, useMemo } from 'react';
 -import PropTypes from 'prop-types';
@@ -48,10 +48,10 @@ index 0df5375..39306bf 100644
 - * @ignore
 - */
 -RenderHTMLConfigProvider.propTypes = renderHTMLConfigPropTypes;
-diff --git a/node_modules/react-native-render-html/src/RenderHTMLSource.tsx b/node_modules/react-native-render-html/src/RenderHTMLSource.tsx
+diff --git a/src/RenderHTMLSource.tsx b/src/RenderHTMLSource.tsx
 index c91da52..c7196cc 100644
---- a/node_modules/react-native-render-html/src/RenderHTMLSource.tsx
-+++ b/node_modules/react-native-render-html/src/RenderHTMLSource.tsx
+--- a/src/RenderHTMLSource.tsx
++++ b/src/RenderHTMLSource.tsx
 @@ -1,7 +1,7 @@
 +
  import equals from 'ramda/src/equals';
@@ -136,10 +136,10 @@ index c91da52..c7196cc 100644
 -(RenderHTMLSource as any).propTypes = renderSourcePropTypes;
 -
  export default RenderHTMLSource;
-diff --git a/node_modules/react-native-render-html/src/TChildrenRenderer.tsx b/node_modules/react-native-render-html/src/TChildrenRenderer.tsx
+diff --git a/src/TChildrenRenderer.tsx b/src/TChildrenRenderer.tsx
 index 618a592..8a10df2 100644
---- a/node_modules/react-native-render-html/src/TChildrenRenderer.tsx
-+++ b/node_modules/react-native-render-html/src/TChildrenRenderer.tsx
+--- a/src/TChildrenRenderer.tsx
++++ b/src/TChildrenRenderer.tsx
 @@ -9,16 +9,4 @@ import renderChildren from './renderChildren';
  const TChildrenRenderer: FunctionComponent<TChildrenRendererProps> =
    renderChildren.bind(null);
@@ -158,10 +158,10 @@ index 618a592..8a10df2 100644
 -
  export default TChildrenRenderer;
 \ No newline at end of file
-diff --git a/node_modules/react-native-render-html/src/TNodeChildrenRenderer.tsx b/node_modules/react-native-render-html/src/TNodeChildrenRenderer.tsx
+diff --git a/src/TNodeChildrenRenderer.tsx b/src/TNodeChildrenRenderer.tsx
 index bf5aef6..1c88a84 100644
---- a/node_modules/react-native-render-html/src/TNodeChildrenRenderer.tsx
-+++ b/node_modules/react-native-render-html/src/TNodeChildrenRenderer.tsx
+--- a/src/TNodeChildrenRenderer.tsx
++++ b/src/TNodeChildrenRenderer.tsx
 @@ -1,7 +1,7 @@
 +
  import { ReactElement } from 'react';
@@ -198,10 +198,10 @@ index bf5aef6..1c88a84 100644
 -TNodeChildrenRenderer.defaultProps = tchildrenRendererDefaultProps;
 -
  export default TNodeChildrenRenderer;
-diff --git a/node_modules/react-native-render-html/src/TNodeRenderer.tsx b/node_modules/react-native-render-html/src/TNodeRenderer.tsx
+diff --git a/src/TNodeRenderer.tsx b/src/TNodeRenderer.tsx
 index d32140f..7a3d4e6 100644
---- a/node_modules/react-native-render-html/src/TNodeRenderer.tsx
-+++ b/node_modules/react-native-render-html/src/TNodeRenderer.tsx
+--- a/src/TNodeRenderer.tsx
++++ b/src/TNodeRenderer.tsx
 @@ -49,6 +49,7 @@ const TNodeRenderer = memo(function MemoizedTNodeRenderer(
    const renderRegistry = useRendererRegistry();
    const TNodeChildrenRenderer = useTNodeChildrenRenderer();
@@ -242,10 +242,10 @@ index d32140f..7a3d4e6 100644
  export {
    TDefaultBlockRenderer,
    TDefaultPhrasingRenderer,
-diff --git a/node_modules/react-native-render-html/src/TRenderEngineProvider.tsx b/node_modules/react-native-render-html/src/TRenderEngineProvider.tsx
+diff --git a/src/TRenderEngineProvider.tsx b/src/TRenderEngineProvider.tsx
 index 95b60df..f3b5503 100644
---- a/node_modules/react-native-render-html/src/TRenderEngineProvider.tsx
-+++ b/node_modules/react-native-render-html/src/TRenderEngineProvider.tsx
+--- a/src/TRenderEngineProvider.tsx
++++ b/src/TRenderEngineProvider.tsx
 @@ -1,73 +1,14 @@
 +
  import TRenderEngine from '@native-html/transient-render-engine';
@@ -348,10 +348,10 @@ index 95b60df..f3b5503 100644
 - * @ignore
 - */
 -TRenderEngineProvider.propTypes = tRenderEngineProviderPropTypes;
-diff --git a/node_modules/react-native-render-html/src/elements/IMGElement.tsx b/node_modules/react-native-render-html/src/elements/IMGElement.tsx
+diff --git a/src/elements/IMGElement.tsx b/src/elements/IMGElement.tsx
 index 573e7c1..8413ee1 100644
---- a/node_modules/react-native-render-html/src/elements/IMGElement.tsx
-+++ b/node_modules/react-native-render-html/src/elements/IMGElement.tsx
+--- a/src/elements/IMGElement.tsx
++++ b/src/elements/IMGElement.tsx
 @@ -1,19 +1,13 @@
  import React, { ReactElement, ReactNode } from 'react';
 -import PropTypes from 'prop-types';
@@ -416,10 +416,10 @@ index 573e7c1..8413ee1 100644
 -
  export default IMGElement;
 \ No newline at end of file
-diff --git a/node_modules/react-native-render-html/src/elements/useIMGElementState.ts b/node_modules/react-native-render-html/src/elements/useIMGElementState.ts
+diff --git a/src/elements/useIMGElementState.ts b/src/elements/useIMGElementState.ts
 index 6590d21..ea405e8 100644
---- a/node_modules/react-native-render-html/src/elements/useIMGElementState.ts
-+++ b/node_modules/react-native-render-html/src/elements/useIMGElementState.ts
+--- a/src/elements/useIMGElementState.ts
++++ b/src/elements/useIMGElementState.ts
 @@ -13,9 +13,9 @@ import { getIMGState } from './getIMGState';
  import useImageSpecifiedDimensions from './useImageSpecifiedDimensions';
  
@@ -462,10 +462,10 @@ index 6590d21..ea405e8 100644
      objectFit,
      initialDimensions = defaultImageInitialDimensions,
      cachedNaturalDimensions
-diff --git a/node_modules/react-native-render-html/src/elements/useImageSpecifiedDimensions.ts b/node_modules/react-native-render-html/src/elements/useImageSpecifiedDimensions.ts
+diff --git a/src/elements/useImageSpecifiedDimensions.ts b/src/elements/useImageSpecifiedDimensions.ts
 index 5d6271b..ed46fcf 100644
---- a/node_modules/react-native-render-html/src/elements/useImageSpecifiedDimensions.ts
-+++ b/node_modules/react-native-render-html/src/elements/useImageSpecifiedDimensions.ts
+--- a/src/elements/useImageSpecifiedDimensions.ts
++++ b/src/elements/useImageSpecifiedDimensions.ts
 @@ -41,12 +41,12 @@ function normalizeSize(
   * Extract specified dimensions from props.
   */
@@ -494,10 +494,10 @@ index 5d6271b..ed46fcf 100644
      props;
    const flatStyle = useMemo(() => StyleSheet.flatten(style) || {}, [style]);
    const specifiedDimensions = useMemo(
-diff --git a/node_modules/react-native-render-html/src/hooks/useTRenderEngine.ts b/node_modules/react-native-render-html/src/hooks/useTRenderEngine.ts
+diff --git a/src/hooks/useTRenderEngine.ts b/src/hooks/useTRenderEngine.ts
 index 6f706aa..e571bea 100644
---- a/node_modules/react-native-render-html/src/hooks/useTRenderEngine.ts
-+++ b/node_modules/react-native-render-html/src/hooks/useTRenderEngine.ts
+--- a/src/hooks/useTRenderEngine.ts
++++ b/src/hooks/useTRenderEngine.ts
 @@ -1,33 +1,61 @@
 +
  import { useMemo } from 'react';
@@ -581,10 +581,10 @@ index 6f706aa..e571bea 100644
    const profile = useProfiler({ name: 'TRenderEngineProvider' });
    return useMemo(() => {
      typeof __DEV__ === 'boolean' && __DEV__ && profile();
-diff --git a/node_modules/react-native-render-html/src/index.ts b/node_modules/react-native-render-html/src/index.ts
+diff --git a/src/index.ts b/src/index.ts
 index 8569583..ee985cc 100644
---- a/node_modules/react-native-render-html/src/index.ts
-+++ b/node_modules/react-native-render-html/src/index.ts
+--- a/src/index.ts
++++ b/src/index.ts
 @@ -128,7 +128,6 @@ export {
  export { default as TNodeRenderer } from './TNodeRenderer';
  export {
@@ -593,10 +593,10 @@ index 8569583..ee985cc 100644
    useAmbientTRenderEngine
  } from './TRenderEngineProvider';
  export { default as RenderHTMLConfigProvider } from './RenderHTMLConfigProvider';
-diff --git a/node_modules/react-native-render-html/src/renderChildren.tsx b/node_modules/react-native-render-html/src/renderChildren.tsx
+diff --git a/src/renderChildren.tsx b/src/renderChildren.tsx
 index a669402..20a3560 100644
---- a/node_modules/react-native-render-html/src/renderChildren.tsx
-+++ b/node_modules/react-native-render-html/src/renderChildren.tsx
+--- a/src/renderChildren.tsx
++++ b/src/renderChildren.tsx
 @@ -28,21 +28,21 @@ const mapCollapsibleChildren = (
    });
    return typeof renderChild === 'function'

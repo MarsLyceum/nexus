@@ -1,5 +1,11 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import { View, Animated, StyleSheet, LayoutChangeEvent } from 'react-native';
+import {
+    View,
+    Animated,
+    StyleSheet,
+    LayoutChangeEvent,
+    ScrollView,
+} from 'react-native';
 import { DrawerContentComponentProps } from '@react-navigation/drawer';
 import { useApolloClient } from '@apollo/client';
 
@@ -11,37 +17,39 @@ import {
     UserType,
     UserGroupsType,
 } from '../redux';
-import {
-    ChatButton,
-    GroupButton,
-    EventsButton,
-    CreateGroupButton,
-} from '../buttons';
+import { GroupButton, SidebarButton } from '../buttons';
+import { Friends, Chat, Events, Search, Add } from '../icons';
 import { FETCH_USER_GROUPS_QUERY } from '../queries';
-import { COLORS } from '../constants';
+import { COLORS, SIDEBAR_WIDTH } from '../constants';
 
 const BUTTON_MARGIN_TOP = 32;
+const CONTENT_PADDING_LEFT = 10;
 
 const styles = StyleSheet.create({
+    // Outer container for the scroll view.
     sidebarContainer: {
-        width: 170,
+        width: SIDEBAR_WIDTH,
         height: '100%',
         backgroundColor: COLORS.AppBackground,
-        paddingTop: BUTTON_MARGIN_TOP,
-        paddingLeft: 10,
         position: 'absolute',
         left: 0,
         top: 0,
         bottom: 0,
         overflow: 'hidden',
     },
-    sidebarButtonsContainer: {},
+    // This container holds the buttons.
+    sidebarButtonsContainer: {
+        // No extra horizontal padding here – we add it via contentContainerStyle.
+        // Relative positioning needed for the highlight.
+        position: 'relative',
+    },
     buttonContainer: {
         marginBottom: 16,
     },
     highlight: {
         position: 'absolute',
-        left: 0,
+        // Set left to negative of the content padding so that the highlight is flush with the left edge.
+        left: -CONTENT_PADDING_LEFT,
         width: 4,
         backgroundColor: COLORS.OffWhite,
         borderTopRightRadius: 20,
@@ -54,15 +62,15 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     skeletonAvatar: {
-        width: 32,
-        height: 32,
+        width: 45,
+        height: 45,
         borderRadius: 20,
         backgroundColor: COLORS.InactiveText,
         marginRight: 10,
     },
     skeletonText: {
         width: 100,
-        height: 15,
+        height: 16,
         borderRadius: 4,
         backgroundColor: COLORS.InactiveText,
     },
@@ -77,7 +85,7 @@ const SkeletonGroupButton = () => (
 );
 
 export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
-    const [selectedButton, setSelectedButton] = useState<string>('chat');
+    const [selectedButton, setSelectedButton] = useState<string>('friends');
     const user: UserType = useAppSelector(
         (state: RootState) => state.user.user
     );
@@ -112,6 +120,7 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
     const [buttonLayouts, setButtonLayouts] = useState<{
         [key: string]: { y: number; height: number };
     }>({});
+
     const handleLayout = (name: string) => (event: LayoutChangeEvent) => {
         const { y, height } = event.nativeEvent.layout;
         setButtonLayouts((prev) => ({ ...prev, [name]: { y, height } }));
@@ -120,14 +129,15 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
     const sidebarButtonsContainerRef = useRef<View>(null);
     const createGroupRef = useRef<View>(null);
 
-    const highlightTop = useRef(new Animated.Value(BUTTON_MARGIN_TOP)).current;
+    const highlightTop = useRef(new Animated.Value(0)).current;
     const highlightHeight = useRef(new Animated.Value(40)).current;
 
+    // Animate the highlight based on the selected button's layout.
     useEffect(() => {
         const layout = buttonLayouts[selectedButton];
         if (layout) {
             Animated.spring(highlightTop, {
-                toValue: layout.y + BUTTON_MARGIN_TOP,
+                toValue: layout.y,
                 useNativeDriver: false,
             }).start();
             Animated.spring(highlightHeight, {
@@ -137,6 +147,7 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
         }
     }, [selectedButton, buttonLayouts]);
 
+    // Update layout for createGroup if needed.
     useEffect(() => {
         if (
             selectedButton === 'createGroup' &&
@@ -156,38 +167,76 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
     }, [selectedButton]);
 
     return (
-        <View style={styles.sidebarContainer}>
-            <Animated.View
-                pointerEvents="none"
-                style={[
-                    styles.highlight,
-                    { top: highlightTop, height: highlightHeight },
-                ]}
-            />
+        <ScrollView
+            style={styles.sidebarContainer}
+            // Apply padding via contentContainerStyle so the items get the proper padding.
+            contentContainerStyle={{
+                paddingTop: BUTTON_MARGIN_TOP,
+                paddingLeft: CONTENT_PADDING_LEFT,
+            }}
+        >
+            {/* Move highlight inside the buttons container so coordinates match */}
             <View
                 style={styles.sidebarButtonsContainer}
                 ref={sidebarButtonsContainerRef}
             >
+                <Animated.View
+                    pointerEvents="none"
+                    style={[
+                        styles.highlight,
+                        { top: highlightTop, height: highlightHeight },
+                    ]}
+                />
                 <View
-                    onLayout={handleLayout('chat')}
+                    onLayout={handleLayout('friends')}
                     style={styles.buttonContainer}
                 >
-                    <ChatButton
+                    <SidebarButton
                         onPress={() => {
-                            setSelectedButton('chat');
+                            setSelectedButton('friends');
+                            navigation.navigate('Friends');
+                        }}
+                        icon={<Friends />}
+                        text="Friends"
+                    />
+                </View>
+                <View
+                    onLayout={handleLayout('messages')}
+                    style={styles.buttonContainer}
+                >
+                    <SidebarButton
+                        onPress={() => {
+                            setSelectedButton('messages');
                             navigation.navigate('Messages');
                         }}
+                        icon={<Chat />}
+                        text="Messages"
                     />
                 </View>
                 <View
                     onLayout={handleLayout('events')}
                     style={styles.buttonContainer}
                 >
-                    <EventsButton
+                    <SidebarButton
                         onPress={() => {
                             setSelectedButton('events');
                             navigation.navigate('Events');
                         }}
+                        icon={<Events />}
+                        text="Events"
+                    />
+                </View>
+                <View
+                    onLayout={handleLayout('search')}
+                    style={styles.buttonContainer}
+                >
+                    <SidebarButton
+                        onPress={() => {
+                            setSelectedButton('search');
+                            navigation.navigate('Search');
+                        }}
+                        icon={<Search />}
+                        text="Search"
                     />
                 </View>
                 {loadingGroups
@@ -206,9 +255,7 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
                               key={group.id}
                           >
                               <GroupButton
-                                  imageSource={{
-                                      uri: group.avatarUrl,
-                                  }}
+                                  imageSource={{ uri: group.avatarUrl }}
                                   onPress={() => {
                                       setSelectedButton(group.name);
                                       navigation.navigate(group.name);
@@ -222,14 +269,16 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
                     onLayout={handleLayout('createGroup')}
                     style={styles.buttonContainer}
                 >
-                    <CreateGroupButton
+                    <SidebarButton
                         onPress={() => {
                             setSelectedButton('createGroup');
                             navigation.navigate('CreateGroup');
                         }}
+                        icon={<Add />}
+                        text="Create Group"
                     />
                 </View>
             </View>
-        </View>
+        </ScrollView>
     );
 };

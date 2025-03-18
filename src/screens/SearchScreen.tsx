@@ -5,7 +5,6 @@ import {
     StyleSheet,
     ScrollView,
     TouchableOpacity,
-    useWindowDimensions,
 } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { useNavigation } from '@react-navigation/native';
@@ -84,8 +83,6 @@ const parseCount = (count: string): number => {
 
 export const SearchScreen = () => {
     const { searchText, setSearchText } = useContext(SearchContext);
-    const { width } = useWindowDimensions();
-    const isDesktop = width > 768;
     const navigation = useNavigation();
 
     const filteredResults = useSearchFilter<SearchResult>(
@@ -133,14 +130,9 @@ export const SearchScreen = () => {
             </View>
 
             {/* SearchBox below the header row */}
-            {!isDesktop && (
-                <View style={styles.searchBoxContainer}>
-                    <SearchBox
-                        value={searchText}
-                        onChangeText={setSearchText}
-                    />
-                </View>
-            )}
+            <View style={styles.searchBoxContainer}>
+                <SearchBox value={searchText} onChangeText={setSearchText} />
+            </View>
 
             <ScrollView style={styles.resultsContainer}>
                 {filteredResults.map((item) => (
@@ -157,7 +149,6 @@ export const SearchScreen = () => {
                         preview
                         variant="default" // Use default variant: shows group & username with group avatar.
                         onPress={() => console.log('Tapped:', item.title)}
-                        fromReddit={Math.random() < 0.2}
                         attachmentUrls={item.attachmentUrls || []} // <-- Pass attachments (or an empty array)
                     />
                 ))}

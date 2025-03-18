@@ -1,3 +1,4 @@
+// ChatScreen.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import {
     View,
@@ -5,17 +6,15 @@ import {
     StyleSheet,
     FlatList,
     useWindowDimensions,
+    TouchableOpacity,
 } from 'react-native';
 import { NavigationProp, RouteProp } from '@react-navigation/core';
 import { Image as ExpoImage } from 'expo-image';
 import Icon from 'react-native-vector-icons/FontAwesome5';
-
 import { COLORS } from '../constants';
-import { ChatInput } from '../small-components';
 import { Attachment } from '../types';
-import { useFileUpload } from '../hooks';
+import { ChatInputContainer } from '../small-components';
 
-// Define the Message type
 export type Message = {
     id: string;
     user: string;
@@ -23,9 +22,9 @@ export type Message = {
     text: string;
     avatar: string;
     edited: boolean;
+    attachments: Attachment[]; // <-- Added attachments property
 };
 
-// Define the type for navigation parameters
 type RootStackParamList = {
     ChatScreen: {
         user: {
@@ -98,6 +97,18 @@ const styles = StyleSheet.create({
         color: 'gray',
         marginTop: 2,
     },
+    attachmentsContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        marginTop: 5,
+    },
+    attachmentImage: {
+        width: 100,
+        height: 100,
+        borderRadius: 10,
+        marginTop: 5,
+        marginRight: 5,
+    },
 });
 
 export const ChatScreen: React.FC<ChatScreenProps> = ({
@@ -108,7 +119,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     const { width } = useWindowDimensions();
     const isLargeScreen = width > 768;
 
-    // Initialize messages with an explicit Message type.
+    // Local messages state.
     const [messages, setMessages] = useState<Message[]>([
         {
             id: '1',
@@ -117,6 +128,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             text: 'Its free on Steam atm if you want to install it ahead of time',
             avatar: 'https://picsum.photos/50?random=1',
             edited: false,
+            attachments: [], // <-- No attachments for this message.
         },
         {
             id: '2',
@@ -125,6 +137,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             text: "Ok cool I'll install it then",
             avatar: 'https://picsum.photos/50?random=2',
             edited: false,
+            attachments: [],
         },
         {
             id: '3',
@@ -133,6 +146,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             text: 'Do you like PoE2 by the way?',
             avatar: 'https://picsum.photos/50?random=1',
             edited: true,
+            attachments: [],
         },
         {
             id: '4',
@@ -141,6 +155,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             text: "He's been really caught up in other things besides games though so I wouldn't hold my breath on him joining, but maybe I can twist his arm lol",
             avatar: 'https://picsum.photos/50?random=1',
             edited: false,
+            attachments: [],
         },
         {
             id: '5',
@@ -149,35 +164,14 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             text: "Yeah I like PoE2 but it's really difficult and I'm currently stuck on a boss. It would be fun to play it sometime though.",
             avatar: 'https://picsum.photos/50?random=2',
             edited: false,
+            attachments: [],
         },
     ]);
 
-    const [messageText, setMessageText] = useState('');
-    const [attachments, setAttachments] = useState<Attachment[]>([]);
     const flatListRef = useRef<FlatList<Message>>(null);
 
-    // Use file upload hook for handling image upload
-    const { pickFile } = useFileUpload();
-
-    // Updated handleImageUpload function using useFileUpload hook.
-    const handleImageUpload = async () => {
-        const file = await pickFile();
-        if (file) {
-            let previewUri = '';
-            previewUri = 'uri' in file ? file.uri : URL.createObjectURL(file);
-            const newAttachment: Attachment = {
-                id: `${Date.now()}-${Math.random()}`,
-                file,
-                previewUri,
-            };
-            setAttachments((prev) => [...prev, newAttachment]);
-        }
-    };
-
-    // Function to send a message using the new ChatInput component
-    const sendMessageHandler = () => {
-        if (!messageText.trim() && attachments.length === 0) return;
-
+    // onSend callback that creates a new message and updates the messages state.
+    const handleSend = (text: string, attachments: Attachment[]) => {
         const newMessage: Message = {
             id: Math.random().toString(),
             user: 'You',
@@ -189,22 +183,21 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
                 minute: '2-digit',
                 hour12: true,
             }),
-            text: messageText,
+            text,
             avatar: 'https://picsum.photos/50?random=99',
             edited: false,
+            attachments, // <-- Using the attachments parameter.
         };
-
         setMessages((prevMessages) => [...prevMessages, newMessage]);
-        setMessageText('');
-        setAttachments([]);
     };
 
-    // Handlers for inline image and attachment preview presses
+    // Handlers for inline image and attachment preview presses.
     // eslint-disable-next-line unicorn/consistent-function-scoping
     const onInlineImagePress = (url: string) => {
         console.log('Inline image pressed:', url);
     };
 
+    // eslint-disable-next-line unicorn/consistent-function-scoping
     const onAttachmentPreviewPress = (att: Attachment) => {
         console.log('Attachment preview pressed:', att);
     };
@@ -255,19 +248,39 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
                             {item.edited && (
                                 <Text style={styles.editedLabel}>(edited)</Text>
                             )}
+                            {/* Render attachments if present */}
+                            {item.attachments &&
+                                item.attachments.length > 0 && (
+                                    <View style={styles.attachmentsContainer}>
+                                        {item.attachments.map((att, index) => (
+                                            <TouchableOpacity
+                                                key={index}
+                                                onPress={() =>
+                                                    onAttachmentPreviewPress(
+                                                        att
+                                                    )
+                                                }
+                                            >
+                                                <ExpoImage
+                                                    source={{
+                                                        uri: att.previewUri,
+                                                    }}
+                                                    style={
+                                                        styles.attachmentImage
+                                                    }
+                                                />
+                                            </TouchableOpacity>
+                                        ))}
+                                    </View>
+                                )}
                         </View>
                     </View>
                 )}
             />
 
-            {/* Chat Input using the ChatInput component */}
-            <ChatInput
-                messageText={messageText}
-                setMessageText={setMessageText}
-                attachments={attachments}
-                setAttachments={setAttachments}
-                handleImageUpload={handleImageUpload}
-                sendMessageHandler={sendMessageHandler}
+            {/* Chat Input using the extracted ChatInputContainer */}
+            <ChatInputContainer
+                onSend={handleSend}
                 recipientName={user.name}
                 onInlineImagePress={onInlineImagePress}
                 onAttachmentPreviewPress={onAttachmentPreviewPress}

@@ -59,6 +59,12 @@ const styles = StyleSheet.create({
         color: 'white',
         fontSize: 18,
     },
+    // New style for emoji-only content
+    emojiLarge: {
+        fontSize: 64,
+        textAlign: 'left',
+        fontFamily: 'Roboto_400Regular',
+    },
 });
 
 // ---------------------
@@ -78,7 +84,16 @@ const extractTextFromTnode = (tnode: any): string => {
 };
 
 // ---------------------
-// Inline Spoiler Component (updated to be inline and not full width)
+// Helper function to check if text is only emojis (and whitespace)
+// ---------------------
+const isOnlyEmojis = (text: string): boolean => {
+    const emojiRegex =
+        /^(?:\s*(?:\p{Emoji_Presentation}|\p{Emoji}\uFE0F)\s*)+$/u;
+    return emojiRegex.test(text.trim());
+};
+
+// ---------------------
+// Inline Spoiler Component (toggles between whited out and revealed text)
 // ---------------------
 const InlineSpoiler: React.FC<{ children: React.ReactNode }> = ({
     children,
@@ -87,11 +102,16 @@ const InlineSpoiler: React.FC<{ children: React.ReactNode }> = ({
     return (
         <Text
             onPress={() => setRevealed((prev) => !prev)}
-            selectable
+            // Allow text selection only when the spoiler is revealed.
+            selectable={revealed}
             style={[
                 styles.spoilerText,
                 {
-                    backgroundColor: revealed ? 'transparent' : COLORS.White,
+                    backgroundColor: revealed
+                        ? COLORS.AppBackground
+                        : COLORS.White,
+                    // When hidden: white text on a white background ("whited out").
+                    // When revealed: white text on the app background.
                     color: COLORS.White,
                     alignSelf: 'flex-start',
                 },
@@ -134,18 +154,19 @@ const InlineLink: React.FC<{ tnode: any }> = ({ tnode }) => {
 function inlineSpoilerPlugin(md: MarkdownIt) {
     // eslint-disable-next-line unicorn/consistent-function-scoping, @typescript-eslint/no-explicit-any
     function tokenize(state: any, silent: boolean) {
-        const { pos } = state;
-        if (state.src.slice(pos, pos + 2) !== '||') return false;
-        const end = state.src.indexOf('||', pos + 2);
+        const startPos = state.pos;
+        if (state.src.slice(startPos, startPos + 2) !== '||') return false;
+        const end = state.src.indexOf('||', startPos + 2);
         if (end === -1) return false;
         if (!silent) {
             const token = state.push('spoiler', 'spoiler', 0);
-            token.content = state.src.slice(pos + 2, end);
+            token.content = state.src.slice(startPos + 2, end);
         }
         // eslint-disable-next-line no-param-reassign
         state.pos = end + 2;
         return true;
     }
+    // Register before the "text" rule so inline spoilers are caught even mid-string.
     md.inline.ruler.before('text', 'spoiler', tokenize);
 }
 
@@ -171,6 +192,59 @@ function redditSpoilerPlugin(md: MarkdownIt) {
 }
 
 // ---------------------
+// Postprocessor to handle spoilers embedded within larger text tokens
+// ---------------------
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function spoilerPostProcessor(state: any) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    state.tokens.forEach((token: any) => {
+        if (token.type === 'inline' && token.children) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const newChildren: any[] = [];
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            token.children.forEach((child: any) => {
+                // Only process text tokens that include our spoiler delimiters.
+                if (child.type === 'text' && child.content.includes('||')) {
+                    const text = child.content;
+                    let lastIndex = 0;
+                    const regex = /\|\|(.+?)\|\|/g;
+                    let match;
+                    // eslint-disable-next-line no-cond-assign
+                    while ((match = regex.exec(text)) !== null) {
+                        // Push any text before the spoiler as a text token.
+                        if (match.index > lastIndex) {
+                            const t = new state.Token('text', '', 0);
+                            t.content = text.slice(lastIndex, match.index);
+                            newChildren.push(t);
+                        }
+                        // Create a spoiler token for the matched content.
+                        const spoilerToken = new state.Token(
+                            'spoiler',
+                            'spoiler',
+                            0
+                        );
+                        // eslint-disable-next-line prefer-destructuring
+                        spoilerToken.content = match[1];
+                        newChildren.push(spoilerToken);
+                        lastIndex = regex.lastIndex;
+                    }
+                    // If there's text after the last spoiler, add it as well.
+                    if (lastIndex < text.length) {
+                        const t = new state.Token('text', '', 0);
+                        t.content = text.slice(lastIndex);
+                        newChildren.push(t);
+                    }
+                } else {
+                    newChildren.push(child);
+                }
+            });
+            // eslint-disable-next-line no-param-reassign
+            token.children = newChildren;
+        }
+    });
+}
+
+// ---------------------
 // Custom Renderer for Spoiler Tokens in Markdown-It
 // ---------------------
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -189,6 +263,12 @@ const mdInstance = new MarkdownIt({
 mdInstance.use(inlineSpoilerPlugin);
 mdInstance.use(redditSpoilerPlugin);
 mdInstance.renderer.rules.spoiler = spoilerRenderer;
+// Register the postprocessor to catch inline spoilers embedded in larger text.
+mdInstance.core.ruler.after(
+    'inline',
+    'spoiler_postprocessor',
+    spoilerPostProcessor
+);
 
 // ---------------------
 // Custom Renderers for react-native-render-html
@@ -234,21 +314,19 @@ export const MarkdownRenderer: React.FC<{
     text: string;
     preview?: boolean;
 }> = ({ text, preview }) => {
+    const contentWidth = Dimensions.get('window').width;
+
     const [contentHeight, setContentHeight] = React.useState(0);
     const [expanded, setExpanded] = React.useState(false);
     const htmlContent = useMemo(
         () => `<div>${mdInstance.render(text)}</div>`,
         [text]
     );
-    const contentWidth = Dimensions.get('window').width;
 
-    const handleOnLayout = useCallback(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (event: any) => {
-            setContentHeight(event.nativeEvent.layout.height);
-        },
-        [setContentHeight]
-    );
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleOnLayout = useCallback((event: any) => {
+        setContentHeight(event.nativeEvent.layout.height);
+    }, []);
 
     const baseStyle = useMemo(() => ({ marginTop: 0, paddingTop: 0 }), []);
     const tagsStyles = useMemo(
@@ -262,14 +340,13 @@ export const MarkdownRenderer: React.FC<{
     );
     const defaultTextProps = useMemo(() => ({ selectable: true }), []);
 
-    // Full content element used for measuring height
     const fullContent = (
         <View onLayout={handleOnLayout}>
             <RenderHTML
                 contentWidth={contentWidth}
                 source={{ html: htmlContent }}
                 renderers={customRenderers}
-                // @ts-expect-error broken type
+                // @ts-expect-error render html
                 customHTMLElementModels={customHTMLElementModels}
                 baseStyle={baseStyle}
                 tagsStyles={tagsStyles}
@@ -278,23 +355,24 @@ export const MarkdownRenderer: React.FC<{
         </View>
     );
 
-    // If not in preview mode or if expanded, render full content in a ScrollView.
+    if (isOnlyEmojis(text)) {
+        return (
+            <View>
+                <Text style={styles.emojiLarge}>{text.trim()}</Text>
+            </View>
+        );
+    }
+
     if (!preview || expanded) {
         return <View>{fullContent}</View>;
     }
 
-    // Determine if the content is truncated (i.e. its height exceeds the preview max)
     const isTruncated = contentHeight > PREVIEW_MAX_HEIGHT;
 
-    // If preview mode is active but content is short enough, render it normally.
     if (!isTruncated) {
         return <View>{fullContent}</View>;
     }
 
-    // If content is truncated in preview mode, render a fixed-height container.
-    // The container is split into:
-    // 1. A content area (clipped to PREVIEW_MAX_HEIGHT - ELLIPSIS_HEIGHT).
-    // 2. An inline ellipsis footer at the bottom that is clickable.
     return (
         <View style={{ height: PREVIEW_MAX_HEIGHT }}>
             <View
@@ -307,7 +385,7 @@ export const MarkdownRenderer: React.FC<{
                     contentWidth={contentWidth}
                     source={{ html: htmlContent }}
                     renderers={customRenderers}
-                    // @ts-expect-error broken type
+                    // @ts-expect-error render html
                     customHTMLElementModels={customHTMLElementModels}
                     baseStyle={{ marginTop: 0, paddingTop: 0 }}
                     tagsStyles={{

@@ -17,12 +17,12 @@ import Toast from 'react-native-toast-message';
 import { VoteActions } from './VoteActions';
 import { BackArrow } from '../buttons';
 import { COLORS } from '../constants';
-import { LargeImageModal } from './LargeImageModal';
+import { ImageDetailsModal } from './ImageDetailsModal';
 import { AttachmentImageGallery } from './AttachmentImageGallery';
 import {
     LinkPreview,
     MarkdownRenderer,
-    NexusTooltip,
+    ActionButton,
 } from '../small-components';
 import { stripHtml, extractUrls } from '../utils';
 
@@ -94,12 +94,19 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-start',
         marginTop: 10,
     },
-    shareButton: {
+    // Container for grouping the share button and its count.
+    buttonGroup: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 8,
-        paddingVertical: 4,
         marginLeft: 10,
+    },
+    // Share button style matching the vote actions.
+    shareButton: {
+        width: 45,
+        height: 45,
+        borderRadius: 23,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     shareCountText: {
         color: COLORS.White,
@@ -124,7 +131,6 @@ export type PostItemProps = {
     onPress?: () => void;
     variant?: 'feed' | 'default' | 'details';
     shareUrl?: string;
-    fromReddit?: boolean;
     attachmentUrls?: string[];
 };
 
@@ -162,7 +168,6 @@ export const PostItem: React.FC<PostItemProps> = ({
     onPress,
     variant = 'default',
     shareUrl,
-    fromReddit = false,
     attachmentUrls,
 }) => {
     const [voteCount, setVoteCount] = useState(upvotes);
@@ -184,7 +189,6 @@ export const PostItem: React.FC<PostItemProps> = ({
         headerElement = (
             <Text style={styles.subText}>
                 {username} • {time}
-                {fromReddit ? ' • From Reddit' : ''}
             </Text>
         );
     } else if (variant === 'details') {
@@ -194,7 +198,6 @@ export const PostItem: React.FC<PostItemProps> = ({
                 <Text style={styles.groupText}>{group}</Text>
                 <Text style={styles.subText}>
                     {username} • {time}
-                    {fromReddit ? ' • From Reddit' : ''}
                 </Text>
             </View>
         );
@@ -205,7 +208,6 @@ export const PostItem: React.FC<PostItemProps> = ({
                 <Text style={styles.groupText}>{group}</Text>
                 <Text style={styles.subText}>
                     {username} • {time}
-                    {fromReddit ? ' • From Reddit' : ''}
                 </Text>
             </View>
         );
@@ -217,7 +219,7 @@ export const PostItem: React.FC<PostItemProps> = ({
             ? `${window.location.origin}/post/${id}`
             : `nexus://post/${id}`);
 
-    // Prepare Open Graph meta tags for web only
+    // Prepare Open Graph meta tags for web only.
     const ogDescription = stripHtml(content).slice(0, 160);
     const ogImage = thumbnail || avatarUri;
     const ogType = 'article';
@@ -265,6 +267,7 @@ export const PostItem: React.FC<PostItemProps> = ({
         <AttachmentImageGallery
             attachmentUrls={attachmentUrls}
             onImagePress={handleImagePress}
+            containerWidth={innerWidth}
         />
     );
 
@@ -315,23 +318,23 @@ export const PostItem: React.FC<PostItemProps> = ({
                     onDownvote={onDownvote}
                     commentCount={commentsCount}
                 />
-                <NexusTooltip tooltipText="Share">
-                    <TouchableOpacity
+                <View style={styles.buttonGroup}>
+                    <ActionButton
                         onPress={onShare}
+                        tooltipText="Share"
+                        transparent
                         style={styles.shareButton}
                     >
                         <MaterialCommunityIcons
-                            name="share-outline"
-                            size={20}
-                            color={COLORS.White}
+                            name="share"
+                            size={18}
+                            color={COLORS.MainText}
                         />
-                        {shareCount > 0 && (
-                            <Text style={styles.shareCountText}>
-                                {shareCount}
-                            </Text>
-                        )}
-                    </TouchableOpacity>
-                </NexusTooltip>
+                    </ActionButton>
+                    {shareCount > 0 && (
+                        <Text style={styles.shareCountText}>{shareCount}</Text>
+                    )}
+                </View>
             </View>
         </View>
     );
@@ -354,7 +357,7 @@ export const PostItem: React.FC<PostItemProps> = ({
             ) : (
                 contentElement
             )}
-            <LargeImageModal
+            <ImageDetailsModal
                 visible={modalVisible}
                 attachments={attachmentUrls || []}
                 initialIndex={modalStartIndex}

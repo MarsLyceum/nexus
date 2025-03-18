@@ -1,19 +1,22 @@
-// File: buttons/CreatePostModal.tsx
 import React, { useState } from 'react';
 import {
     View,
     Text,
-    Modal,
     TextInput,
     Pressable,
     TouchableOpacity,
     StyleSheet,
+    SafeAreaView,
+    ScrollView,
 } from 'react-native';
+import Icon from 'react-native-vector-icons/FontAwesome5';
 import { Image as ExpoImage } from 'expo-image';
 import { COLORS } from '../constants';
 import { useFileUpload } from '../hooks';
 import { AttachmentPreviews, Attachment, RichTextEditor } from '../sections';
 import { MarkdownEditor } from './MarkdownEditor';
+import { GiphyModal } from './GiphyModal';
+import { CustomPortalModal } from './CustomPortalModal';
 
 type CreatePostModalProps = {
     modalVisible: boolean;
@@ -56,6 +59,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
         Attachment | undefined
     >(undefined);
     const [useMarkdown, setUseMarkdown] = useState(false);
+    const [showGiphy, setShowGiphy] = useState(false);
 
     const handleAttachmentInsert = async () => {
         try {
@@ -81,6 +85,10 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
         }
     };
 
+    const handleGifPress = () => {
+        setShowGiphy(true);
+    };
+
     const onAttachmentPress = (attachment: Attachment) => {
         setSelectedAttachment(attachment);
         setPreviewModalVisible(true);
@@ -96,14 +104,14 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
 
     return (
         <>
-            <Modal
+            <CustomPortalModal
                 visible={modalVisible}
-                transparent
-                animationType="fade"
-                onRequestClose={() => setModalVisible(false)}
+                onClose={() => setModalVisible(false)}
             >
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modalContainer}>
+                <SafeAreaView style={{ flex: 1 }}>
+                    <ScrollView
+                        contentContainerStyle={styles.modalContentContainer}
+                    >
                         <Text style={styles.modalTitle}>
                             {modalTitle || buttonText}
                         </Text>
@@ -160,14 +168,26 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
                         )}
 
                         {enableImageAttachments && (
-                            <TouchableOpacity
-                                onPress={handleAttachmentInsert}
-                                style={styles.attachImageButton}
-                            >
-                                <Text style={styles.attachImageButtonText}>
-                                    Add Image or Video
-                                </Text>
-                            </TouchableOpacity>
+                            <View style={styles.buttonRow}>
+                                <TouchableOpacity
+                                    onPress={handleAttachmentInsert}
+                                    style={styles.imageButton}
+                                >
+                                    <Icon
+                                        name="image"
+                                        size={24}
+                                        color="white"
+                                    />
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    onPress={handleGifPress}
+                                    style={styles.gifButton}
+                                >
+                                    <Text style={styles.gifButtonText}>
+                                        GIF
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
                         )}
 
                         <AttachmentPreviews
@@ -195,15 +215,14 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
                                 </Text>
                             </Pressable>
                         </View>
-                    </View>
-                </View>
-            </Modal>
+                    </ScrollView>
+                </SafeAreaView>
+            </CustomPortalModal>
+
             {previewModalVisible && selectedAttachment && (
-                <Modal
+                <CustomPortalModal
                     visible={previewModalVisible}
-                    transparent
-                    animationType="fade"
-                    onRequestClose={() => setPreviewModalVisible(false)}
+                    onClose={() => setPreviewModalVisible(false)}
                 >
                     <TouchableOpacity
                         style={styles.previewModalOverlay}
@@ -212,27 +231,30 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
                         <ExpoImage
                             source={{ uri: selectedAttachment.previewUri }}
                             style={styles.previewModalImage}
-                            resizeMode="contain"
+                            contentFit="contain"
                         />
                     </TouchableOpacity>
-                </Modal>
+                </CustomPortalModal>
             )}
+
+            <GiphyModal
+                variant="download"
+                visible={showGiphy}
+                onClose={() => setShowGiphy(false)}
+                onSelectGif={(attachment) =>
+                    // @ts-expect-error attachment
+                    setAttachments((prev) => [...prev, attachment])
+                }
+            />
         </>
     );
 };
 
 const styles = StyleSheet.create({
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    modalContainer: {
-        width: '85%',
-        backgroundColor: COLORS.AppBackground,
-        borderRadius: 8,
+    modalContentContainer: {
         padding: 20,
+        flexGrow: 1,
+        overflowY: 'auto',
     },
     modalTitle: {
         fontSize: 18,
@@ -250,6 +272,43 @@ const styles = StyleSheet.create({
     },
     editorContainer: {
         marginBottom: 20,
+    },
+    toggleButton: {
+        alignSelf: 'flex-end',
+        marginBottom: 10,
+        paddingVertical: 6,
+        paddingHorizontal: 10,
+        backgroundColor: COLORS.SecondaryBackground,
+        borderRadius: 5,
+    },
+    toggleButtonText: {
+        color: COLORS.White,
+        fontWeight: '600',
+    },
+    buttonRow: {
+        flexDirection: 'row',
+        marginBottom: 15,
+    },
+    imageButton: {
+        marginRight: 10,
+        padding: 8,
+        backgroundColor: COLORS.SecondaryBackground,
+        borderRadius: 5,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    gifButton: {
+        marginHorizontal: 10,
+        padding: 8,
+        backgroundColor: COLORS.SecondaryBackground,
+        borderRadius: 5,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    gifButtonText: {
+        color: COLORS.White,
+        fontSize: 16,
+        fontWeight: 'bold',
     },
     modalButtonRow: {
         flexDirection: 'row',
@@ -277,29 +336,5 @@ const styles = StyleSheet.create({
         height: '90%',
         borderWidth: 2,
         borderColor: 'white',
-    },
-    attachImageButton: {
-        backgroundColor: COLORS.Primary,
-        paddingVertical: 8,
-        paddingHorizontal: 15,
-        borderRadius: 5,
-        alignSelf: 'flex-start',
-        marginBottom: 15,
-    },
-    attachImageButtonText: {
-        color: COLORS.White,
-        fontWeight: '600',
-    },
-    toggleButton: {
-        alignSelf: 'flex-end',
-        marginBottom: 10,
-        paddingVertical: 6,
-        paddingHorizontal: 10,
-        backgroundColor: COLORS.SecondaryBackground,
-        borderRadius: 5,
-    },
-    toggleButtonText: {
-        color: COLORS.White,
-        fontWeight: '600',
     },
 });

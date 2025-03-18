@@ -22,6 +22,7 @@ export const FETCH_POST_COMMENTS_QUERY = gql`
             parentCommentId
             upvotes
             hasChildren
+            attachmentUrls
             children {
                 id
                 content
@@ -32,6 +33,7 @@ export const FETCH_POST_COMMENTS_QUERY = gql`
                 parentCommentId
                 upvotes
                 hasChildren
+                attachmentUrls
                 children {
                     id
                     content
@@ -42,6 +44,7 @@ export const FETCH_POST_COMMENTS_QUERY = gql`
                     parentCommentId
                     upvotes
                     hasChildren
+                    attachmentUrls
                     children {
                         id
                         content
@@ -52,6 +55,7 @@ export const FETCH_POST_COMMENTS_QUERY = gql`
                         parentCommentId
                         upvotes
                         hasChildren
+                        attachmentUrls
                         children {
                             id
                             content
@@ -62,6 +66,7 @@ export const FETCH_POST_COMMENTS_QUERY = gql`
                             parentCommentId
                             upvotes
                             hasChildren
+                            attachmentUrls
                             children {
                                 id
                                 content
@@ -72,6 +77,7 @@ export const FETCH_POST_COMMENTS_QUERY = gql`
                                 parentCommentId
                                 upvotes
                                 hasChildren
+                                attachmentUrls
                                 children {
                                     id
                                     content
@@ -82,6 +88,7 @@ export const FETCH_POST_COMMENTS_QUERY = gql`
                                     parentCommentId
                                     upvotes
                                     hasChildren
+                                    attachmentUrls
                                     children {
                                         id
                                         content
@@ -92,6 +99,7 @@ export const FETCH_POST_COMMENTS_QUERY = gql`
                                         parentCommentId
                                         upvotes
                                         hasChildren
+                                        attachmentUrls
                                         children {
                                             id
                                             content
@@ -102,6 +110,7 @@ export const FETCH_POST_COMMENTS_QUERY = gql`
                                             parentCommentId
                                             upvotes
                                             hasChildren
+                                            attachmentUrls
                                             children {
                                                 id
                                                 content
@@ -112,6 +121,7 @@ export const FETCH_POST_COMMENTS_QUERY = gql`
                                                 parentCommentId
                                                 upvotes
                                                 hasChildren
+                                                attachmentUrls
                                                 children {
                                                     id
                                                     content
@@ -122,6 +132,7 @@ export const FETCH_POST_COMMENTS_QUERY = gql`
                                                     parentCommentId
                                                     upvotes
                                                     hasChildren
+                                                    attachmentUrls
                                                 }
                                             }
                                         }

@@ -1,4 +1,10 @@
-import { SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
+import {
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    View,
+    Platform,
+} from 'react-native';
 import React, { useEffect } from 'react';
 import { NavigationProp, useFocusEffect } from '@react-navigation/core';
 import styled from 'styled-components/native';
@@ -9,11 +15,15 @@ import { PrimaryGradientButton } from '../PrimaryGradientButton';
 import { SecondaryButton } from '../SecondaryButton';
 import { Footer } from '../Footer';
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+import { COLORS } from '../constants';
+
+const isWeb = Platform.OS === 'web';
+
 const Tagline = styled.Text`
     font-family: Lato_700Bold;
     font-size: 24px;
     margin-top: 63px;
+    color: ${COLORS.MainText};
 `;
 
 const styles = StyleSheet.create({
@@ -32,12 +42,21 @@ const styles = StyleSheet.create({
     },
     outerContainer: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: COLORS.AppBackground, // changed from '#fff'
     },
-    innerScrollContainer: {
-        width: '100%',
-        flexGrow: 1,
-    },
+    innerScrollContainer: isWeb
+        ? {
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              overflowY: 'auto',
+          }
+        : {
+              width: '100%',
+              flexGrow: 1,
+          },
     footerContainer: {
         flexShrink: 0,
         justifyContent: 'center',

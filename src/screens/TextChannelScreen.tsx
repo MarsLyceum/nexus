@@ -3,11 +3,11 @@ import React, { useState } from 'react';
 import { View, useWindowDimensions } from 'react-native';
 import { NavigationProp } from '@react-navigation/core';
 import { useAppSelector, RootState, UserType } from '../redux';
-import { Header, LargeImageModal } from '../sections';
+import { Header, ImageDetailsModal } from '../sections';
 import { COLORS } from '../constants';
 import { GroupChannel, Attachment } from '../types';
-import { MessageList, ChatInput } from '../small-components';
-import { useFileUpload, useChannelMessages, useSendMessage } from '../hooks';
+import { MessageList, ChatInputContainer } from '../small-components';
+import { useChannelMessages, useSendMessage } from '../hooks';
 
 export type TextChannelScreenProps = {
     channel: GroupChannel;
@@ -21,51 +21,25 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
     const user: UserType = useAppSelector(
         (state: RootState) => state.user.user
     );
-    const [messageText, setMessageText] = useState('');
     const { width } = useWindowDimensions();
     const isLargeScreen = width > 768;
-    const [attachments, setAttachments] = useState<Attachment[]>([]);
 
     // Modal state for image previews
     const [modalVisible, setModalVisible] = useState(false);
     const [modalAttachments, setModalAttachments] = useState<string[]>([]);
     const [modalInitialIndex, setModalInitialIndex] = useState(0);
 
-    // Use our custom hook to fetch messages
-    const { chatMessages, loadingMessages, loadMoreMessages, refreshMessages } =
-        useChannelMessages(channel.id);
+    // Custom hook to fetch messages
+    const {
+        chatMessages,
+        loadingMessages,
+        loadMoreMessages,
+        refreshMessages,
+        addMessage,
+    } = useChannelMessages(channel.id);
 
-    // Use our custom hook to send messages
-    const sendMsg = useSendMessage();
-
-    const sendMessageHandler = async () => {
-        if (!messageText.trim() && attachments.length === 0) return;
-        await sendMsg(
-            user?.id ?? '',
-            channel.id,
-            messageText,
-            attachments,
-            refreshMessages
-        );
-        setMessageText('');
-        setAttachments([]);
-    };
-
-    const { pickFile } = useFileUpload();
-
-    const handleImageUpload = async () => {
-        const file = await pickFile();
-        if (file) {
-            let previewUri = '';
-            previewUri = 'uri' in file ? file.uri : URL.createObjectURL(file);
-            const newAttachment: Attachment = {
-                id: `${Date.now()}-${Math.random()}`,
-                file,
-                previewUri,
-            };
-            setAttachments((prev) => [...prev, newAttachment]);
-        }
-    };
+    // Custom hook to send messages
+    const sendMsg = useSendMessage(addMessage);
 
     // Handler for inline image preview tap
     const handleInlineImagePress = (url: string) => {
@@ -91,6 +65,18 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
         setModalVisible(true);
     };
 
+    // onSend callback for ChatInputContainer
+    const handleSend = async (text: string, attachments: Attachment[]) => {
+        await sendMsg(
+            user?.username ?? '',
+            user?.id ?? '',
+            channel.id,
+            text,
+            attachments,
+            refreshMessages
+        );
+    };
+
     return (
         <View style={{ flex: 1, backgroundColor: COLORS.SecondaryBackground }}>
             <Header
@@ -107,19 +93,14 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
                 onAttachmentPress={handleMessageItemAttachmentPress}
             />
 
-            <ChatInput
-                messageText={messageText}
-                setMessageText={setMessageText}
-                attachments={attachments}
-                setAttachments={setAttachments}
-                handleImageUpload={handleImageUpload}
-                sendMessageHandler={sendMessageHandler}
+            <ChatInputContainer
+                onSend={handleSend}
                 recipientName={`#${channel.name}`}
                 onInlineImagePress={handleInlineImagePress}
                 onAttachmentPreviewPress={handleAttachmentPreviewPress}
             />
 
-            <LargeImageModal
+            <ImageDetailsModal
                 visible={modalVisible}
                 attachments={modalAttachments}
                 initialIndex={modalInitialIndex}

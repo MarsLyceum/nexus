@@ -1,9 +1,11 @@
 // MessageList.tsx
 import React from 'react';
-import { FlatList } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { MessageWithAvatar } from '../types';
 import { MessageItem } from './MessageItem';
-import { SkeletonMessageItem } from './SkeletonMessageItem';
+import { PatchedFlashList } from './PatchedFlashList';
+import { MessageItemSkeleton } from './MessageItemSkeleton';
 
 export type MessageListProps = {
     chatMessages: MessageWithAvatar[];
@@ -22,22 +24,20 @@ export const MessageList: React.FC<MessageListProps> = ({
 }) => {
     if (loadingMessages) {
         return (
-            <FlatList
+            <FlashList
                 data={[0, 1, 2, 3, 4]}
                 keyExtractor={(item) => item.toString()}
-                renderItem={() => <SkeletonMessageItem />}
-                contentContainerStyle={{ paddingBottom: 80 }}
+                renderItem={() => <MessageItemSkeleton width={width} />}
+                style={styles.container}
+                estimatedItemSize={100}
             />
         );
     }
 
     return (
-        <FlatList
+        <PatchedFlashList
             data={chatMessages}
             keyExtractor={(item) => item.id}
-            onEndReached={loadMoreMessages}
-            onEndReachedThreshold={0.1}
-            inverted
             renderItem={({ item }) => (
                 <MessageItem
                     item={item}
@@ -45,6 +45,18 @@ export const MessageList: React.FC<MessageListProps> = ({
                     onAttachmentPress={onAttachmentPress}
                 />
             )}
+            style={styles.container}
+            estimatedItemSize={100}
+            inverted
+            onEndReached={loadMoreMessages}
+            onEndReachedThreshold={0.1}
         />
     );
 };
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        paddingBottom: 80,
+    },
+});

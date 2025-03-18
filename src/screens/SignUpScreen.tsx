@@ -7,6 +7,7 @@ import {
     Pressable,
     StyleSheet,
     GestureResponderEvent,
+    Platform,
 } from 'react-native';
 import { NavigationProp } from '@react-navigation/core';
 import React, { useCallback } from 'react';
@@ -18,7 +19,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import { useApolloClient } from '@apollo/client';
 
 import { REGISTER_USER_MUTATION } from '../queries';
-import { SignUpIllustration, HorizontalLine } from '../images';
+import { HorizontalLine } from '../images';
 import { GoogleLogo, User as UserIcon, Email, Phone, Lock } from '../icons';
 import { User } from '../types';
 import { loginUser, useAppDispatch } from '../redux';
@@ -31,6 +32,10 @@ import {
 } from '../utils';
 import { PrimaryGradientButton } from '../PrimaryGradientButton';
 
+import { COLORS } from '../constants';
+
+const isWeb = Platform.OS === 'web';
+
 const auth0 = new Auth0({
     domain: AUTH0_DOMAIN ?? '',
     clientId: AUTH0_CLIENT_ID ?? '',
@@ -42,13 +47,16 @@ type DecodedToken = JwtPayload & {
 
 type FormValues = {
     email: string;
+    username: string;
     password: string;
     firstName: string;
     lastName: string;
     phoneNumber: string;
 };
-const initialFormValues = {
+
+const initialFormValues: FormValues = {
     email: '',
+    username: '',
     password: '',
     firstName: '',
     lastName: '',
@@ -61,16 +69,15 @@ const styles = StyleSheet.create({
     },
     outerContainer: {
         flex: 1,
-        backgroundColor: '#fff',
-        alignItems: 'center',
-        justifyContent: 'center',
+        backgroundColor: COLORS.AppBackground,
     },
+    // Use contentContainerStyle in the ScrollView to let content expand
+    // Remove fixed centering so the content flows naturally
     container: {
-        flex: 1,
         paddingHorizontal: 20,
-        justifyContent: 'center',
+        backgroundColor: COLORS.PrimaryBackground,
         alignItems: 'center',
-        backgroundColor: '#fff',
+        paddingBottom: 40, // extra bottom padding to ensure scrollability
     },
     image: {
         width: 100,
@@ -80,13 +87,13 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 32,
         fontWeight: 'bold',
-        color: '#333',
-        marginTop: -125,
+        color: COLORS.MainText,
+        marginTop: 20,
         textAlign: 'center',
     },
     subtitle: {
         fontSize: 16,
-        color: '#666',
+        color: COLORS.InactiveText,
         marginBottom: 20,
         textAlign: 'center',
     },
@@ -97,29 +104,17 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     input: {
-        // height: 50,
-        // width: 285,
-        // paddingHorizontal: 20,
-        // fontSize: 16,
-        // backgroundColor: '#f9f9f9',
-
-        // flex: 1,
-        // backgroundColor: '#f9f9f9',
-
-        // old stuff, new stuff
-
-        // borderWidth: 1,
-        // borderRadius: 25,
-        borderColor: '#ddd',
         height: 45,
         flex: 1,
         fontSize: 16,
         marginRight: 5,
-        backgroundColor: '#f9f9f9',
+        backgroundColor: COLORS.TextInput,
+        color: COLORS.White,
+        paddingHorizontal: 10,
     },
     orText: {
         fontSize: 16,
-        color: '#666',
+        color: COLORS.InactiveText,
         marginVertical: 15,
         textAlign: 'center',
         marginLeft: 20,
@@ -137,38 +132,33 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         borderRadius: 25,
-        backgroundColor: '#f9f9f9',
-        marginLeft: 10,
-        marginRight: 10,
+        backgroundColor: COLORS.OffWhite,
+        marginHorizontal: 10,
     },
     button: {
         width: '100%',
         height: 50,
-        backgroundColor: '#ff5a5f',
+        backgroundColor: COLORS.Primary,
         justifyContent: 'center',
         alignItems: 'center',
         borderRadius: 25,
         marginBottom: 15,
     },
     buttonText: {
-        color: '#fff',
+        color: COLORS.White,
         fontSize: 16,
         fontWeight: 'bold',
     },
     loginText: {
         fontSize: 16,
-        color: '#666',
+        color: COLORS.InactiveText,
         marginTop: 30,
         marginBottom: 34,
         textAlign: 'center',
     },
     loginLink: {
-        color: '#ff5a5f',
+        color: COLORS.Link,
         fontWeight: 'bold',
-    },
-    innerScrollContainer: {
-        width: '100%',
-        flexGrow: 1,
     },
     orContainer: {
         flexDirection: 'row',
@@ -183,15 +173,25 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         width: 285,
-        borderColor: '#ddd',
+        borderColor: COLORS.Secondary,
         borderWidth: 1,
         borderRadius: 25,
         paddingHorizontal: 10,
-        backgroundColor: '#f9f9f9',
+        backgroundColor: COLORS.TextInput,
         height: 50,
         flex: 1,
         fontSize: 16,
     },
+    scrollSection: isWeb
+        ? {
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              overflowY: 'auto',
+          }
+        : { flex: 1 },
 });
 
 export function SignUpScreen({
@@ -211,11 +211,13 @@ export function SignUpScreen({
     const apolloClient = useApolloClient();
 
     const validateEmailPassword = useCallback((values: FormValues) => {
-        const errors: FormValues = initialFormValues;
+        const errors: Partial<FormValues> = {};
 
         errors.email = isEmail(values.email)
             ? ''
             : `${values.email} is not a valid email.`;
+        errors.username =
+            values.username.length > 0 ? '' : 'Please provide a username';
         errors.password = validatePassword(values.password);
         errors.firstName =
             values.firstName.length > 0 ? '' : 'Please provide your first name';
@@ -235,7 +237,6 @@ export function SignUpScreen({
                 user_metadata: {},
             });
 
-            // Log the user in
             const credentials = await auth0.auth.passwordRealm({
                 username: values.email,
                 password: values.password,
@@ -244,7 +245,6 @@ export function SignUpScreen({
                 scope: 'openid profile email',
             });
 
-            // Decode the ID token to get user information
             const decodedToken = jwtDecode<DecodedToken>(credentials.idToken);
 
             const auth0Data = {
@@ -256,28 +256,25 @@ export function SignUpScreen({
                 mutation: REGISTER_USER_MUTATION,
                 variables: {
                     email: values.email,
+                    username: values.username,
                     firstName: values.firstName,
                     lastName: values.lastName,
                     phoneNumber: values.phoneNumber,
                 },
             });
 
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             const user: User = {
-                ...result.data,
+                ...result.data.registerUser,
                 token: auth0Data.token,
             };
 
             updateUserData(user);
-
             navigation.navigate('AppDrawer');
         } catch (error) {
             console.error(error);
             if (error instanceof Error) {
-                // eslint-disable-next-line no-alert
                 alert(`Signup failed: ${error.message}`);
             } else {
-                // eslint-disable-next-line no-alert
                 alert('Signup failed: An unknown error occurred');
             }
         }
@@ -285,7 +282,7 @@ export function SignUpScreen({
 
     return (
         <SafeAreaView style={styles.outerContainer}>
-            <ScrollView style={styles.innerScrollContainer}>
+            <ScrollView contentContainerStyle={styles.scrollSection}>
                 <Formik
                     initialValues={initialFormValues}
                     onSubmit={handleSignup}
@@ -301,7 +298,6 @@ export function SignUpScreen({
                         errors,
                     }) => (
                         <View style={styles.container}>
-                            <SignUpIllustration />
                             <Text style={styles.title}>Get Started</Text>
                             <Text style={styles.subtitle}>
                                 by creating a free account.
@@ -312,8 +308,9 @@ export function SignUpScreen({
                                     <UserIcon style={styles.inputIcon} />
                                     <TextInput
                                         placeholder="First Name"
+                                        placeholderTextColor={COLORS.White}
                                         style={styles.input}
-                                        selectionColor="#ddd"
+                                        selectionColor={COLORS.Secondary}
                                         onBlur={handleBlur('firstName')}
                                         onChangeText={handleChange('firstName')}
                                     />
@@ -322,11 +319,13 @@ export function SignUpScreen({
                             <Text style={{ color: 'red' }}>
                                 {errors.firstName}
                             </Text>
+
                             <View style={styles.inputContainer}>
                                 <View style={styles.inputWrapper}>
                                     <UserIcon style={styles.inputIcon} />
                                     <TextInput
                                         placeholder="Last Name"
+                                        placeholderTextColor={COLORS.White}
                                         style={styles.input}
                                         onBlur={handleBlur('lastName')}
                                         onChangeText={handleChange('lastName')}
@@ -336,11 +335,30 @@ export function SignUpScreen({
                             <Text style={{ color: 'red' }}>
                                 {errors.lastName}
                             </Text>
+
+                            {/* Username Field */}
+                            <View style={styles.inputContainer}>
+                                <View style={styles.inputWrapper}>
+                                    <UserIcon style={styles.inputIcon} />
+                                    <TextInput
+                                        placeholder="Username"
+                                        placeholderTextColor={COLORS.White}
+                                        style={styles.input}
+                                        onBlur={handleBlur('username')}
+                                        onChangeText={handleChange('username')}
+                                    />
+                                </View>
+                            </View>
+                            <Text style={{ color: 'red' }}>
+                                {errors.username}
+                            </Text>
+
                             <View style={styles.inputContainer}>
                                 <View style={styles.inputWrapper}>
                                     <Email style={styles.inputIcon} />
                                     <TextInput
                                         placeholder="Enter your email"
+                                        placeholderTextColor={COLORS.White}
                                         style={styles.input}
                                         keyboardType="email-address"
                                         value={values.email}
@@ -350,21 +368,30 @@ export function SignUpScreen({
                                 </View>
                             </View>
                             <Text style={{ color: 'red' }}>{errors.email}</Text>
+
                             <View style={styles.inputContainer}>
                                 <View style={styles.inputWrapper}>
                                     <Phone style={styles.inputIcon} />
                                     <TextInput
                                         placeholder="Phone Number"
+                                        placeholderTextColor={COLORS.White}
                                         style={styles.input}
                                         keyboardType="phone-pad"
+                                        value={values.phoneNumber}
+                                        onBlur={handleBlur('phoneNumber')}
+                                        onChangeText={handleChange(
+                                            'phoneNumber'
+                                        )}
                                     />
                                 </View>
                             </View>
+
                             <View style={styles.inputContainer}>
                                 <View style={styles.inputWrapper}>
                                     <Lock style={styles.inputIcon} />
                                     <TextInput
                                         placeholder="Password"
+                                        placeholderTextColor={COLORS.White}
                                         style={styles.input}
                                         secureTextEntry
                                         onBlur={handleBlur('password')}

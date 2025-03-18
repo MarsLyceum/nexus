@@ -1,4 +1,10 @@
-import React, { useEffect, useContext, useRef, useState } from 'react';
+import React, {
+    useEffect,
+    useContext,
+    useRef,
+    useState,
+    useCallback,
+} from 'react';
 import {
     View,
     ScrollView,
@@ -9,16 +15,24 @@ import {
     Text,
 } from 'react-native';
 import { NavigationProp, RouteProp } from '@react-navigation/native';
-import { useQuery } from '@apollo/client';
+import { useQuery, useApolloClient } from '@apollo/client';
 import { useAppDispatch, loadUser } from '../redux';
-import { FETCH_POST_QUERY, FETCH_USER_QUERY } from '../queries';
+import {
+    FETCH_POST_QUERY,
+    FETCH_USER_QUERY,
+    FETCH_POST_COMMENTS_QUERY,
+} from '../queries';
 import { PostItem, CommentsManager } from '../sections';
 import { COLORS } from '../constants';
 import { CreateContentButton } from '../buttons';
-import { getRelativeTime } from '../utils';
+import { getRelativeTime, isComputer } from '../utils';
 import { Post, PostData } from '../types';
 import { CurrentCommentContext } from '../providers';
-import { SkeletonPostItem, SkeletonComment } from '../small-components';
+import {
+    SkeletonPostItem,
+    SkeletonComment,
+    CommentEditor,
+} from '../small-components';
 
 type RootStackParamList = {
     PostScreen: { id?: number; post?: Post; parentCommentId?: string };
@@ -29,46 +43,6 @@ type PostScreenProps = {
     route: RouteProp<RootStackParamList, 'PostScreen'>;
 };
 
-const BOTTOM_INPUT_HEIGHT = 60;
-const isWeb = Platform.OS === 'web';
-
-const styles = StyleSheet.create({
-    // @ts-expect-error web only types
-    safeContainer: {
-        flex: 1,
-        backgroundColor: COLORS.SecondaryBackground,
-        paddingTop: 15,
-        ...(isWeb && { height: '100vh', display: 'flex' }),
-    },
-    container: { flex: 1 },
-    mainContainer: {
-        flex: 1,
-        position: 'relative',
-        paddingBottom: BOTTOM_INPUT_HEIGHT,
-    },
-    scrollSection: isWeb
-        ? {
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: BOTTOM_INPUT_HEIGHT,
-              overflowY: 'auto',
-          }
-        : { flex: 1 },
-    scrollView: {
-        paddingHorizontal: 15,
-        paddingBottom: 20,
-    },
-    createContentButtonContainer: {
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        height: BOTTOM_INPUT_HEIGHT,
-    },
-});
-
 export const PostScreen: React.FC<PostScreenProps> = ({
     route,
     navigation,
@@ -77,6 +51,9 @@ export const PostScreen: React.FC<PostScreenProps> = ({
     const dispatch = useAppDispatch();
     const [scrollY, setScrollY] = useState(0);
     const scrollViewRef = useRef<ScrollView>(null);
+
+    // NEW: Get the Apollo client instance for refetching queries.
+    const client = useApolloClient();
 
     useEffect(() => {
         dispatch(loadUser());
@@ -117,15 +94,47 @@ export const PostScreen: React.FC<PostScreenProps> = ({
         attachmentUrls: feedPost?.attachmentUrls || [],
     };
 
-    const { setParentUser, setParentContent, setParentDate, setPostId } =
-        useContext(CurrentCommentContext);
+    const {
+        setParentUser,
+        setParentContent,
+        setParentDate,
+        setPostId,
+        setParentAttachmentUrls,
+    } = useContext(CurrentCommentContext);
 
-    useEffect(() => {
+    const setPostContent = useCallback(() => {
         if (postData?.id) setPostId(postData.id);
         if (postData?.user) setParentUser(postData.user);
         if (postData?.content) setParentContent(postData.content);
         if (feedPost?.postedAt) setParentDate(feedPost.postedAt);
-    }, [postData?.id, postData?.user, postData?.content, feedPost?.postedAt]);
+        if (postData?.attachmentUrls) {
+            setParentAttachmentUrls(postData.attachmentUrls);
+        }
+    }, [
+        postData?.id,
+        postData?.user,
+        postData?.content,
+        feedPost?.postedAt,
+        postData?.attachmentUrls,
+        setPostId,
+        setParentUser,
+        setParentContent,
+        setParentDate,
+        setParentAttachmentUrls,
+    ]);
+
+    useEffect(() => {
+        setPostContent();
+    }, [setPostContent]);
+
+    // Update header title: show "Nexus" while loading, then post title once loaded.
+    useEffect(() => {
+        if (loading) {
+            navigation.setOptions({ title: 'Nexus' });
+        } else if (postData.title) {
+            navigation.setOptions({ title: postData.title });
+        }
+    }, [loading, postData.title, navigation]);
 
     // Create a ref for CommentsManager (if needed for additional control)
     const commentsManagerRef = useRef<{ checkScrollPosition: () => void }>(
@@ -143,17 +152,71 @@ export const PostScreen: React.FC<PostScreenProps> = ({
         }
     };
 
+    // Determine if device is computer (desktop) or mobile.
+    const isDesktop = isComputer();
+    const BOTTOM_INPUT_HEIGHT = 60;
+    const isWeb = Platform.OS === 'web';
+
+    // Create dynamic styles based on device type.
+    const computedStyles = StyleSheet.create({
+        // @ts-expect-error web only types
+        safeContainer: {
+            flex: 1,
+            backgroundColor: COLORS.SecondaryBackground,
+            paddingTop: 15,
+            ...(isWeb && { height: '100vh', display: 'flex' }),
+        },
+        container: { flex: 1 },
+        mainContainer: {
+            flex: 1,
+            position: 'relative',
+            ...(isDesktop ? {} : { paddingBottom: BOTTOM_INPUT_HEIGHT }),
+        },
+        scrollSection: isWeb
+            ? isDesktop
+                ? {
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      overflowY: 'auto',
+                  }
+                : {
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: BOTTOM_INPUT_HEIGHT,
+                      overflowY: 'auto',
+                  }
+            : { flex: 1 },
+        scrollView: {
+            paddingHorizontal: 15,
+            paddingBottom: 20,
+        },
+        createContentButtonContainer: isDesktop
+            ? {}
+            : {
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height: BOTTOM_INPUT_HEIGHT,
+              },
+    });
+
     if (loading) {
         return (
             // @ts-expect-error web only types
-            <SafeAreaView style={styles.safeContainer}>
+            <SafeAreaView style={computedStyles.safeContainer}>
                 {/* @ts-expect-error web only types */}
-                <View style={styles.mainContainer}>
+                <View style={computedStyles.mainContainer}>
                     {/* @ts-expect-error web only types */}
                     <ScrollView
                         ref={scrollViewRef}
-                        style={styles.scrollSection}
-                        contentContainerStyle={styles.scrollView}
+                        style={computedStyles.scrollSection}
+                        contentContainerStyle={computedStyles.scrollView}
                         keyboardShouldPersistTaps="handled"
                     >
                         <SkeletonPostItem />
@@ -169,7 +232,7 @@ export const PostScreen: React.FC<PostScreenProps> = ({
     if (error) {
         return (
             // @ts-expect-error web only types
-            <SafeAreaView style={styles.safeContainer}>
+            <SafeAreaView style={computedStyles.safeContainer}>
                 <View
                     style={{
                         flex: 1,
@@ -185,24 +248,24 @@ export const PostScreen: React.FC<PostScreenProps> = ({
 
     const ContainerComponent = isWeb ? View : KeyboardAvoidingView;
     const containerProps = isWeb
-        ? { style: styles.container }
+        ? { style: computedStyles.container }
         : {
-              style: styles.container,
+              style: computedStyles.container,
               behavior: Platform.OS === 'ios' ? 'padding' : undefined,
           };
 
     return (
         // @ts-expect-error web only types
-        <SafeAreaView style={styles.safeContainer}>
+        <SafeAreaView style={computedStyles.safeContainer}>
             {/* @ts-expect-error web only types */}
             <ContainerComponent {...containerProps}>
                 {/* @ts-expect-error web only types */}
-                <View style={styles.mainContainer}>
+                <View style={computedStyles.mainContainer}>
                     {/* @ts-expect-error web only types */}
                     <ScrollView
                         ref={scrollViewRef}
-                        style={styles.scrollSection}
-                        contentContainerStyle={styles.scrollView}
+                        style={computedStyles.scrollSection}
+                        contentContainerStyle={computedStyles.scrollView}
                         keyboardShouldPersistTaps="handled"
                         onScroll={handleScroll}
                         scrollEventThrottle={16}
@@ -225,10 +288,27 @@ export const PostScreen: React.FC<PostScreenProps> = ({
                                     navigation.navigate('AppDrawer');
                                 }
                             }}
-                            fromReddit={Math.random() < 0.2}
                             variant="details"
                             group="My cool group"
                         />
+                        {isDesktop && (
+                            // Show inline CommentEditor on computer
+                            <CommentEditor
+                                postId={postData.id}
+                                // eslint-disable-next-line unicorn/no-null
+                                parentCommentId={parentCommentId ?? null}
+                                onCommentCreated={() => {
+                                    // When a top-level comment is created,
+                                    // refetch the comments so the new comment is shown.
+                                    void client.refetchQueries({
+                                        include: [FETCH_POST_COMMENTS_QUERY],
+                                    });
+                                }}
+                                onCancel={() => {
+                                    // Optional cancel handler
+                                }}
+                            />
+                        )}
                         <CommentsManager
                             // @ts-expect-error ref
                             ref={commentsManagerRef}
@@ -237,14 +317,23 @@ export const PostScreen: React.FC<PostScreenProps> = ({
                             scrollY={scrollY}
                         />
                     </ScrollView>
-                    {/* @ts-expect-error web only types */}
-                    <View style={styles.createContentButtonContainer}>
-                        <CreateContentButton
-                            buttonText="Write a comment..."
-                            // @ts-expect-error navigation
-                            onPress={() => navigation.navigate('CreateComment')}
-                        />
-                    </View>
+                    {!isDesktop && (
+                        // Show CreateContentButton on mobile;
+                        // reset the comment context to top-level before navigating
+                        <View
+                            // @ts-expect-error web only types
+                            style={computedStyles.createContentButtonContainer}
+                        >
+                            <CreateContentButton
+                                buttonText="Write a comment..."
+                                onPress={() => {
+                                    setPostContent();
+                                    // @ts-expect-error navigation
+                                    navigation.navigate('CreateComment');
+                                }}
+                            />
+                        </View>
+                    )}
                 </View>
             </ContainerComponent>
         </SafeAreaView>

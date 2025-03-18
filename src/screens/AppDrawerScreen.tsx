@@ -7,17 +7,17 @@ import {
 import { TouchableOpacity, useWindowDimensions } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
-import { COLORS } from '../constants';
+import { COLORS, SIDEBAR_WIDTH } from '../constants';
 import { useAppSelector, RootState, UserGroupsType } from '../redux';
 import {
-    ServerScreen,
+    GroupScreen,
     SidebarScreen,
     DMListScreen,
     EventsScreen,
     SearchScreen,
+    FriendsScreen,
 } from '.';
-import { SearchBox } from '../sections';
-import { SearchContext, ActiveGroupContext } from '../providers'; // Make sure ActiveGroupContext is exported from your providers
+import { ActiveGroupContext } from '../providers'; // Make sure ActiveGroupContext is exported from your providers
 
 // Define a DrawerParamList type so navigation is properly typed.
 type DrawerParamList = {
@@ -40,9 +40,6 @@ export function AppDrawerScreen() {
     const dimensions = useWindowDimensions();
     const isDesktop = dimensions.width > 768;
 
-    // Use the shared search context
-    const { searchText, setSearchText } = useContext(SearchContext);
-
     // Get the setter for active group from context
     const { setActiveGroup } = useContext(ActiveGroupContext);
 
@@ -53,7 +50,7 @@ export function AppDrawerScreen() {
             }: {
                 navigation: DrawerNavigationProp<DrawerParamList>;
             }) => ({
-                headerShown: true,
+                headerShown: !isDesktop,
                 headerStyle: {
                     backgroundColor: COLORS.AppBackground,
                     elevation: 0, // Remove Android shadow
@@ -77,36 +74,12 @@ export function AppDrawerScreen() {
                         </TouchableOpacity>
                     ),
 
-                headerTitle: () =>
-                    isDesktop ? (
-                        <SearchBox
-                            value={searchText}
-                            onChangeText={setSearchText}
-                            desktop
-                            onSubmitEditing={() =>
-                                navigation.navigate('Search')
-                            }
-                        />
-                    ) : undefined, // Use undefined when not on desktop
-
-                headerRight: () =>
-                    !isDesktop && (
-                        <TouchableOpacity
-                            onPress={() => navigation.navigate('Search')}
-                            style={{ marginRight: 15 }}
-                        >
-                            <FontAwesome
-                                name="search"
-                                size={24}
-                                color="white"
-                            />
-                        </TouchableOpacity>
-                    ),
+                headerTitle: () => undefined,
 
                 // On desktop, the drawer is always open; on mobile, it slides in.
                 drawerType: isDesktop ? 'permanent' : 'slide',
                 drawerStyle: {
-                    width: 170,
+                    width: SIDEBAR_WIDTH,
                     borderRightWidth: 0,
                     borderRightColor: 'transparent',
                     backgroundColor: COLORS.AppBackground,
@@ -115,14 +88,16 @@ export function AppDrawerScreen() {
             })}
             drawerContent={(props) => <SidebarScreen {...props} />}
         >
+            <DrawerNavigator.Screen name="Friends" component={FriendsScreen} />
             <DrawerNavigator.Screen name="Messages" component={DMListScreen} />
             <DrawerNavigator.Screen name="Events" component={EventsScreen} />
+            <DrawerNavigator.Screen name="Search" component={SearchScreen} />
 
             {userGroups.map((group) => (
                 <DrawerNavigator.Screen
                     key={group.id}
                     name={group.name}
-                    component={ServerScreen}
+                    component={GroupScreen}
                     // When this screen is focused, set the active group in context.
                     listeners={{
                         focus: () => {
@@ -136,13 +111,6 @@ export function AppDrawerScreen() {
         The Search screen is hidden from the drawer menu (height: 0)
         but accessible via the header right icon on mobile.
       */}
-            <DrawerNavigator.Screen
-                name="Search"
-                component={SearchScreen}
-                options={{
-                    drawerItemStyle: { height: 0 },
-                }}
-            />
         </DrawerNavigator.Navigator>
     );
 }

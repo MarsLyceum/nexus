@@ -1,34 +1,16 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
-import { NexusTooltip } from '../small-components';
-
-const styles = StyleSheet.create({
-    container: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    actionButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginRight: 20,
-    },
-    countText: {
-        color: '#bbb',
-        marginLeft: 5,
-        fontSize: 13,
-    },
-});
+import { ActionButton } from '../small-components/ActionButton';
+import { COLORS } from '../constants';
 
 type VoteActionsProps = {
     voteCount: number;
     onUpvote: () => void;
     onDownvote: () => void;
-
     // optional props for displayed counts
     commentCount?: number;
     shareCount?: number;
-
     // If 'compact' is true, we skip some fields (like commentCount).
     compact?: boolean;
 };
@@ -43,34 +25,91 @@ export const VoteActions: React.FC<VoteActionsProps> = ({
 }) => (
     <View style={styles.container}>
         {/* Upvote */}
-        <NexusTooltip tooltipText="Up vote">
-            <TouchableOpacity onPress={onUpvote} style={styles.actionButton}>
-                <Icon name="arrow-up" size={14} color="#bbb" />
-                <Text style={styles.countText}>{voteCount}</Text>
-            </TouchableOpacity>
-        </NexusTooltip>
+        <View style={styles.buttonGroup}>
+            <ActionButton
+                onPress={onUpvote}
+                tooltipText="Up vote"
+                transparent
+                style={styles.voteButton}
+            >
+                <Icon name="arrow-up" size={18} color={COLORS.MainText} />
+            </ActionButton>
+            <Text style={styles.countText}>{voteCount}</Text>
+        </View>
 
         {/* Downvote */}
-        <NexusTooltip tooltipText="Down vote">
-            <TouchableOpacity onPress={onDownvote} style={styles.actionButton}>
-                <Icon name="arrow-down" size={14} color="#bbb" />
-            </TouchableOpacity>
-        </NexusTooltip>
+        <ActionButton
+            onPress={onDownvote}
+            tooltipText="Down vote"
+            transparent
+            // @ts-expect-error web only types
+            style={[styles.voteButton, styles.singleButton]}
+        >
+            <Icon name="arrow-down" size={18} color={COLORS.MainText} />
+        </ActionButton>
 
-        {/* Show comment count if not compact */}
+        {/* Comment button */}
         {!compact && commentCount !== undefined && (
-            <View style={styles.actionButton}>
-                <Icon name="comment-alt" size={14} color="#bbb" />
+            <View style={styles.buttonGroup}>
+                <ActionButton
+                    onPress={() => {}}
+                    tooltipText="Comments"
+                    transparent
+                    style={styles.voteButton}
+                >
+                    <Icon
+                        name="comment-alt"
+                        size={18}
+                        color={COLORS.MainText}
+                    />
+                </ActionButton>
                 <Text style={styles.countText}>{commentCount}</Text>
             </View>
         )}
 
-        {/* Show share icon if shareCount is provided (or always if you like) */}
+        {/* Share button */}
         {!compact && shareCount !== undefined && (
-            <View style={styles.actionButton}>
-                <Icon name="share" size={14} color="#bbb" />
+            <View style={styles.buttonGroup}>
+                <ActionButton
+                    onPress={() => {}}
+                    tooltipText="Share"
+                    transparent
+                    style={styles.voteButton}
+                >
+                    <Icon name="share" size={18} color={COLORS.MainText} />
+                </ActionButton>
                 <Text style={styles.countText}>{shareCount}</Text>
             </View>
         )}
     </View>
 );
+
+const styles = StyleSheet.create({
+    container: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    // Container for pairing a button with its count text.
+    buttonGroup: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginRight: 8,
+    },
+    // Vote button style with 15% reduced dimensions.
+    voteButton: {
+        width: 45, // 48 * 0.85 ≈ 41
+        height: 45,
+        borderRadius: 23, // 24 * 0.85 ≈ 20
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    // Optional style to add spacing after single buttons if needed.
+    singleButton: {
+        marginRight: 8,
+    },
+    countText: {
+        color: COLORS.MainText,
+        marginLeft: 4,
+        fontSize: 13,
+    },
+});

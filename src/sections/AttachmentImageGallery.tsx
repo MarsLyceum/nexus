@@ -1,11 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-    View,
-    StyleSheet,
-    TouchableOpacity,
-    LayoutChangeEvent,
-    ScrollView,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { CarouselDots } from './CarouselDots';
 import { ArrowButton } from './ArrowButton';
@@ -15,32 +9,34 @@ import { useMediaTypes } from '../hooks';
 export type AttachmentImageGalleryProps = {
     attachmentUrls: string[];
     onImagePress: (index: number) => void;
+    containerWidth: number;
 };
 
 export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
     attachmentUrls,
     onImagePress,
+    containerWidth,
 }) => {
     const [currentAttachmentIndex, setCurrentAttachmentIndex] = useState(0);
-    const [containerWidth, setContainerWidth] = useState(480); // Default fallback width
-    const [imageAspectRatio, setImageAspectRatio] = useState(1); // Default ratio (square)
+    const [imageAspectRatio, setImageAspectRatio] = useState(1); // Default to square
 
     const scrollViewRef = useRef<ScrollView>(null);
     const isDesktop = containerWidth > 768;
 
-    const handleContainerLayout = (event: LayoutChangeEvent) => {
-        const { width } = event.nativeEvent.layout;
-        setContainerWidth(width);
-    };
+    // Compute target dimensions based on the container's width,
+    // mimicking the ImagePreview component logic.
+    const baseContainerWidth = containerWidth || 360;
+    console.log('baseContainerWidth:', baseContainerWidth);
+    const targetWidth =
+        baseContainerWidth < 360 ? baseContainerWidth * 0.85 : 360;
+    const computedImageHeight = imageAspectRatio
+        ? targetWidth / imageAspectRatio
+        : 150;
 
-    // Use 360 as a fallback width if container width is larger than 360.
-    const imageWidth = containerWidth < 360 ? containerWidth : 360;
-    const computedImageHeight = imageWidth / imageAspectRatio;
-
-    // Get media info (type, width, height, aspectRatio) for each URL.
+    // Retrieve media information for each attachment.
     const mediaInfos = useMediaTypes(attachmentUrls);
 
-    // Update container's aspect ratio based on the current attachment's media info.
+    // Update the aspect ratio based on the current attachment's media info.
     useEffect(() => {
         const currentUrl = attachmentUrls[currentAttachmentIndex];
         const info = mediaInfos[currentUrl];
@@ -49,27 +45,29 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
         }
     }, [attachmentUrls, currentAttachmentIndex, mediaInfos]);
 
+    // Calculate new index based on the scroll offset using targetWidth.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleMomentumScrollEnd = (event: any) => {
         const offsetX = event.nativeEvent.contentOffset.x;
-        const newIndex = Math.round(offsetX / imageWidth);
+        const newIndex = Math.round(offsetX / targetWidth);
         setCurrentAttachmentIndex(newIndex);
     };
 
     const goToIndex = (newIndex: number) => {
         setCurrentAttachmentIndex(newIndex);
         scrollViewRef.current?.scrollTo({
-            x: newIndex * imageWidth,
+            x: newIndex * targetWidth,
             animated: true,
         });
     };
 
     return (
-        <View onLayout={handleContainerLayout}>
+        // Ensure the outer container takes full width.
+        <View style={{ width: '100%' }}>
             <View
                 style={[
                     styles.imageContainer,
-                    { width: imageWidth, height: computedImageHeight },
+                    { width: targetWidth, height: computedImageHeight },
                 ]}
             >
                 <ScrollView
@@ -78,23 +76,23 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
                     showsHorizontalScrollIndicator={false}
                     onMomentumScrollEnd={handleMomentumScrollEnd}
                     contentContainerStyle={{
-                        width: imageWidth * attachmentUrls.length,
+                        width: targetWidth * attachmentUrls.length,
                     }}
                     ref={scrollViewRef}
                 >
                     {attachmentUrls.map((url, index) => {
-                        // Get the media info for this URL.
+                        // Retrieve media info for the image.
                         const info = mediaInfos[url];
-                        // Compute the height for this attachment based on its aspect ratio.
+                        // Compute the height for this image.
                         const attachmentHeight = info
-                            ? imageWidth / info.aspectRatio
+                            ? targetWidth / info.aspectRatio
                             : computedImageHeight;
-                        // Determine if this attachment is a video.
+                        // Check if the media is a video.
                         const isVideo = info && info.type === 'video';
                         return (
                             <TouchableOpacity
                                 key={index}
-                                // Only enable onPress if it's not a video.
+                                // Allow onPress for images (not videos).
                                 onPress={
                                     !isVideo
                                         ? () => onImagePress(index)
@@ -108,7 +106,7 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
                                         style={[
                                             styles.galleryImage,
                                             {
-                                                width: imageWidth,
+                                                width: targetWidth,
                                                 height: attachmentHeight,
                                             },
                                         ]}
@@ -123,7 +121,7 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
                                         style={[
                                             styles.galleryImage,
                                             {
-                                                width: imageWidth,
+                                                width: targetWidth,
                                                 height: attachmentHeight,
                                             },
                                         ]}

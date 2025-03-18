@@ -1,12 +1,14 @@
+import 'react-native-get-random-values';
+
 import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import {
     createStackNavigator,
     TransitionPresets,
 } from '@react-navigation/stack';
-// import EventSource from 'react-native-event-source';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Platform, StatusBar } from 'react-native';
+import ReconnectingWebSocket from 'reconnecting-websocket';
 import { createClient } from 'graphql-ws';
 import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import Toast from 'react-native-toast-message';
@@ -16,10 +18,7 @@ import {
     InMemoryCache,
     ApolloProvider,
     from,
-    ApolloLink,
-    Observable,
     split,
-    gql,
 } from '@apollo/client';
 import { Provider as ReduxProvider } from 'react-redux';
 import { onError, ErrorResponse } from '@apollo/client/link/error';
@@ -36,10 +35,10 @@ import {
     Roboto_700Bold_Italic,
 } from '@expo-google-fonts/roboto';
 import * as SplashScreen from 'expo-splash-screen';
+import { Provider as PortalProvider } from 'react-native-paper';
 
 import { linking } from './linking';
 import { COLORS } from './constants';
-import { setupAxiosQuotas } from './utils/setupAxiosQuotas';
 import { store } from './redux';
 import {
     LoginScreen,
@@ -54,14 +53,13 @@ import {
     EventDetailsScreen,
     AppDrawerScreen,
     CreateCommentScreen,
+    AddFriendsScreen,
 } from './screens';
 import {
     SearchProvider,
     ActiveGroupProvider,
     CurrentCommentProvider,
 } from './providers';
-
-setupAxiosQuotas();
 
 if (__DEV__) {
     loadDevMessages();
@@ -106,19 +104,6 @@ const errorLink = onError((error: ErrorResponse) => {
     if (error) {
         console.log('Apollo Error:', error);
     }
-});
-
-const requestQuota = 20;
-let requestCount = 0;
-const quotaLink = new ApolloLink((operation, forward) => {
-    if (requestCount < requestQuota) {
-        requestCount += 1;
-        return forward(operation);
-    }
-    console.error('Request quota exceeded');
-    return new Observable((observer) => {
-        observer.error(new Error('Request quota exceeded'));
-    });
 });
 
 // const graphqlApiGatewayEndpointHttp =
@@ -174,48 +159,11 @@ const httpLink = from([
     }),
 ]);
 
-// const sseLink = new ApolloLink(
-//     () =>
-//         new Observable((observer) => {
-//             const eventSource: EventSource = new EventSource(
-//                 graphqlApiGatewayEndpointSse,
-//                 { withCredentials: false }
-//             );
-//             eventSource.addEventListener(
-//                 'message',
-//                 (event: { data: string }) => {
-//                     try {
-//                         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-//                         const parsedData = JSON.parse(event.data);
-//                         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-//                         if (parsedData.errors) {
-//                             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-//                             observer.error(parsedData.errors);
-//                         } else {
-//                             observer.next({
-//                                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-//                                 data: { greetings: parsedData.greetings },
-//                             });
-//                         }
-//                     } catch (error) {
-//                         observer.error(error);
-//                     }
-//                 }
-//             );
-//             eventSource.addEventListener('error', (error: unknown) => {
-//                 observer.error(error);
-//                 eventSource.close();
-//             });
-//             return () => {
-//                 eventSource.close();
-//             };
-//         })
-// );
-
 const wsLink = new GraphQLWsLink(
     createClient({
         // url: graphqlApiGatewayEndpointWs,
         url: 'ws://192.168.1.48:4000/graphql', // Ensure this URL matches your WS server endpoint
+        webSocketImpl: ReconnectingWebSocket,
     })
 );
 
@@ -228,28 +176,12 @@ const splitLink = split(
         );
     },
     wsLink,
-    from([quotaLink, httpLink])
+    httpLink
 );
 
 const client = new ApolloClient({
     link: splitLink,
     cache: new InMemoryCache(),
-});
-
-const GREETINGS_SUBSCRIPTION = gql`
-    subscription OnGreeting {
-        greetings
-    }
-`;
-
-client.subscribe({ query: GREETINGS_SUBSCRIPTION }).subscribe({
-    next({ data }) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        console.log('Greeting:', data.greetings);
-    },
-    error(err) {
-        console.error('Subscription error:', err);
-    },
 });
 
 function MainStackScreen() {
@@ -264,6 +196,7 @@ function MainStackScreen() {
             <MainStack.Screen name="AppDrawer" component={AppDrawerScreen} />
             {/* @ts-expect-error navigator */}
             <MainStack.Screen name="Chat" component={ChatScreen} />
+            <MainStack.Screen name="AddFriends" component={AddFriendsScreen} />
             <MainStack.Screen
                 name="ServerMessages"
                 component={ServerMessagesScreen}
@@ -336,39 +269,45 @@ export default function App() {
                                 <CustomScrollbar />
                                 <ApolloProvider client={client}>
                                     <ReduxProvider store={store}>
-                                        <NavigationContainer linking={linking}>
-                                            <RootStack.Navigator
-                                                screenOptions={{
-                                                    headerShown: false,
-                                                    presentation:
-                                                        'transparentModal', // This makes the screens render as modals by default
-                                                }}
+                                        <PortalProvider>
+                                            <NavigationContainer
+                                                linking={linking}
                                             >
-                                                <RootStack.Screen
-                                                    name="Main"
-                                                    component={MainStackScreen}
-                                                />
-                                                <RootStack.Screen
-                                                    name="CreateGroup"
-                                                    // @ts-expect-error navigator
-                                                    component={
-                                                        CreateGroupModalScreen
-                                                    }
-                                                    options={{
+                                                <RootStack.Navigator
+                                                    screenOptions={{
+                                                        headerShown: false,
                                                         presentation:
-                                                            'transparentModal',
-                                                        cardStyle: {
-                                                            backgroundColor:
-                                                                'transparent',
-                                                        },
-                                                        ...Platform.select({
-                                                            ios: TransitionPresets.ModalPresentationIOS,
-                                                        }),
+                                                            'transparentModal', // This makes the screens render as modals by default
                                                     }}
-                                                />
-                                            </RootStack.Navigator>
-                                            <Toast />
-                                        </NavigationContainer>
+                                                >
+                                                    <RootStack.Screen
+                                                        name="Main"
+                                                        component={
+                                                            MainStackScreen
+                                                        }
+                                                    />
+                                                    <RootStack.Screen
+                                                        name="CreateGroup"
+                                                        // @ts-expect-error navigator
+                                                        component={
+                                                            CreateGroupModalScreen
+                                                        }
+                                                        options={{
+                                                            presentation:
+                                                                'transparentModal',
+                                                            cardStyle: {
+                                                                backgroundColor:
+                                                                    'transparent',
+                                                            },
+                                                            ...Platform.select({
+                                                                ios: TransitionPresets.ModalPresentationIOS,
+                                                            }),
+                                                        }}
+                                                    />
+                                                </RootStack.Navigator>
+                                                <Toast />
+                                            </NavigationContainer>
+                                        </PortalProvider>
                                     </ReduxProvider>
                                 </ApolloProvider>
                             </SafeAreaView>

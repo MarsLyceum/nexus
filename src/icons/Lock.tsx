@@ -1,6 +1,7 @@
 import * as React from 'react';
 import Svg, { Path } from 'react-native-svg';
 import { ViewStyle } from 'react-native';
+import { COLORS } from '../constants';
 
 export function Lock({ style }: Readonly<{ style?: ViewStyle | ViewStyle[] }>) {
     return (
@@ -13,7 +14,7 @@ export function Lock({ style }: Readonly<{ style?: ViewStyle | ViewStyle[] }>) {
         >
             <Path
                 d="M19 11H5a2 2 0 00-2 2v7a2 2 0 002 2h14a2 2 0 002-2v-7a2 2 0 00-2-2zM7 11V7a5 5 0 1110 0v4"
-                stroke="#000"
+                stroke={COLORS.White}
                 strokeOpacity={0.3}
                 strokeWidth={2}
                 strokeLinecap="round"

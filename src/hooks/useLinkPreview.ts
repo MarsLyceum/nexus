@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Platform, Image as RNImage } from 'react-native';
+import { decode } from 'html-entities';
 import {
     isImageUrl,
     getDomainFromUrl,
@@ -95,6 +96,51 @@ export function useLinkPreview(url: string) {
                 const ogImageMatch = html.match(
                     /<meta\s+property=["']og:image["']\s+content=["']([^"']+)["']/i
                 );
+
+                let imgMatch;
+                let descriptionFallback;
+
+                // Special handling for Wikipedia pages:
+                if (url.includes('wikipedia.org')) {
+                    // Try to capture the main content block
+                    const contentMatch = html.match(
+                        /<div[^>]+id=["']mw-content-text["'][^>]*>([\S\s]*)<\/div>/i
+                    );
+                    const contentHtml = contentMatch ? contentMatch[1] : html;
+                    imgMatch = contentHtml.match(
+                        /<img[^>]+src=["']([^"']+)["']/i
+                    );
+                    // Use a global regex to get all <p>...</p> matches.
+                    const paragraphRegex = /<p\b[^>]*>([\S\s]*?)<\/p>/gi;
+                    const paragraphs: string[] = [];
+                    let match;
+                    // Extract only the first non-empty paragraph.
+                    while (
+                        // eslint-disable-next-line no-cond-assign
+                        (match = paragraphRegex.exec(contentHtml)) !== null &&
+                        paragraphs.length === 0
+                    ) {
+                        // Remove any HTML tags inside the paragraph and trim whitespace.
+                        const paragraphText = decode(
+                            match[1].replaceAll(/<[^>]+>/g, '').trim()
+                        );
+                        if (paragraphText) {
+                            paragraphs.push(paragraphText);
+                        }
+                    }
+                    // Use the first paragraph as the fallback description.
+                    descriptionFallback = paragraphs[0]
+                        ? `${paragraphs[0]  }...`
+                        : '';
+                } else {
+                    // Default fallback for other pages.
+                    imgMatch = html.match(/<img[^>]+src=["']([^"']+)["']/i);
+                }
+
+                const firstImageUrl = imgMatch
+                    ? new URL(imgMatch[1], url).toString()
+                    : undefined;
+
                 const titleFallbackMatch = html.match(/<title>(.*?)<\/title>/i);
                 setPreviewData({
                     title: ogTitleMatch
@@ -104,8 +150,12 @@ export function useLinkPreview(url: string) {
                           : url,
                     description: ogDescriptionMatch
                         ? ogDescriptionMatch[1]
-                        : '',
-                    images: ogImageMatch ? [ogImageMatch[1]] : [],
+                        : descriptionFallback || '',
+                    images: ogImageMatch
+                        ? [ogImageMatch[1]]
+                        : firstImageUrl
+                          ? [firstImageUrl]
+                          : [],
                     siteName: getDomainFromUrl(url),
                     url,
                 });

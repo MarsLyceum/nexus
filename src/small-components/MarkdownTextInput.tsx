@@ -24,7 +24,6 @@ export const MarkdownTextInput: React.FC<MarkdownTextInputProps> = ({
         overlayStyle={styles.inputTextOverlay}
         inputStyle={[styles.input, style]}
         multiline={false}
-        // Single-line input (default multiline is false)
     />
 );
 
@@ -32,13 +31,13 @@ const styles = StyleSheet.create({
     inputWrapper: {
         height: 40,
         position: 'relative',
-        backgroundColor: COLORS.TextInput, // NEW: Moved background color to the wrapper
+        backgroundColor: COLORS.TextInput,
         flex: 1,
-        borderRadius: 20, // Ensures the background respects the rounded corners
+        borderRadius: 20,
     },
     inputTextOverlay: {
-        position: 'absolute', // Ensure overlay is positioned absolutely
-        top: isWeb ? 5 : -5, // mobile adds some extra padding
+        position: 'absolute',
+        top: isWeb ? 5 : -5,
         left: 0,
         right: 0,
         height: 40,
@@ -51,12 +50,11 @@ const styles = StyleSheet.create({
     },
     input: {
         height: 40,
-        backgroundColor: 'transparent', // Keep transparent so wrapper's background shows
+        backgroundColor: 'transparent',
         borderRadius: 20,
         fontSize: 14,
         textAlignVertical: 'center',
         color: 'transparent',
-        // paddingTop: 10,
         fontFamily: 'Roboto_400Regular',
         // @ts-expect-error web only type
         caretColor: 'white',

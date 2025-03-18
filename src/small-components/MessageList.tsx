@@ -1,10 +1,11 @@
 // MessageList.tsx
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { MessageWithAvatar } from '../types';
 import { MessageItem } from './MessageItem';
 import { PatchedFlashList } from './PatchedFlashList';
+import { MessageItemSkeleton } from './MessageItemSkeleton';
 
 export type MessageListProps = {
     chatMessages: MessageWithAvatar[];
@@ -26,7 +27,7 @@ export const MessageList: React.FC<MessageListProps> = ({
             <FlashList
                 data={[0, 1, 2, 3, 4]}
                 keyExtractor={(item) => item.toString()}
-                renderItem={() => null}
+                renderItem={() => <MessageItemSkeleton width={width} />}
                 style={styles.container}
                 estimatedItemSize={100}
             />

@@ -38,16 +38,15 @@ export const MobileImageRenderer: React.FC<MobileImageRendererProps> = ({
     const offsetY = (screenHeight - imageHeight) / 2;
 
     const handleZoomTap = useCallback(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (e: any) => {
             const { absoluteX, absoluteY } = e;
-            console.log('e:', e);
 
             if (
                 zoomRef.current &&
                 typeof zoomRef.current.getVisibleRect === 'function'
             ) {
                 const rect = zoomRef.current.getVisibleRect();
-                console.log('rect:', rect);
                 // Since the image is full width, horizontal offset is zero.
                 const localX = absoluteX;
                 const localY = absoluteY - offsetY;
@@ -58,12 +57,12 @@ export const MobileImageRenderer: React.FC<MobileImageRendererProps> = ({
                     localY < rect.y ||
                     localY > rect.y + rect.height
                 ) {
-                    console.log('closing modal');
                     e.stopPropagation?.();
                     onClose();
                 }
             } else {
                 // Fallback: use vertical bounds based on computed offset.
+                // eslint-disable-next-line no-lonely-if
                 if (absoluteY < offsetY || absoluteY > offsetY + imageHeight) {
                     e.stopPropagation?.();
                     onClose();

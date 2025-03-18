@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 import { FlashList, FlashListProps } from '@shopify/flash-list';
 
 export function PatchedFlashList<T>(props: FlashListProps<T>) {
+    // eslint-disable-next-line consistent-return
     useEffect(() => {
         if (props.inverted && Platform.OS === 'web') {
             // Use nativeID to find the DOM element.
@@ -20,10 +21,12 @@ export function PatchedFlashList<T>(props: FlashListProps<T>) {
                     });
                     e.preventDefault();
                 };
+                // @ts-expect-error web event
                 node.addEventListener('wheel', wheelHandler, {
                     passive: false,
                 });
                 return () => {
+                    // @ts-expect-error web event
                     node.removeEventListener('wheel', wheelHandler);
                 };
             }

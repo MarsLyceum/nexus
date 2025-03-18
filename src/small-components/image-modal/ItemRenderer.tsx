@@ -23,26 +23,6 @@ export const ItemRenderer: React.FC<ItemRendererProps> = ({
     isComputer,
     onClose,
 }) => {
-    // Always call hooks in the same order.
-    const { width: screenWidth, height: screenHeight } = useWindowDimensions();
-    const imageResData = useImageResolution({ uri: item });
-    // Fallback resolution.
-    const resolution = imageResData.resolution ?? { width: 0, height: 0 };
-
-    // Compute aspect ratio (fallback to 1 if unavailable)
-    const aspectRatio =
-        resolution.width && resolution.height
-            ? resolution.width / resolution.height
-            : 1;
-    const size = useMemo(
-        () =>
-            fitContainer(aspectRatio, {
-                width: screenWidth,
-                height: screenHeight,
-            }),
-        [aspectRatio, screenWidth, screenHeight]
-    );
-
     // Render based on media type.
     if (mediaInfo && mediaInfo.type === 'video') {
         return (
@@ -58,7 +38,8 @@ export const ItemRenderer: React.FC<ItemRendererProps> = ({
                 />
             </View>
         );
-    } if (isComputer) {
+    }
+    if (isComputer) {
         return (
             <View style={{ width: '100%', height: '100%' }}>
                 <ComputerImageRenderer
@@ -69,11 +50,10 @@ export const ItemRenderer: React.FC<ItemRendererProps> = ({
                 />
             </View>
         );
-    } 
-        return (
-            <View style={{ width: '100%', height: '100%' }}>
-                <MobileImageRenderer uri={item} onClose={onClose} />
-            </View>
-        );
-    
+    }
+    return (
+        <View style={{ width: '100%', height: '100%' }}>
+            <MobileImageRenderer uri={item} onClose={onClose} />
+        </View>
+    );
 };

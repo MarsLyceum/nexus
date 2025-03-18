@@ -2,21 +2,22 @@ import React, { useState, useContext } from 'react';
 import {
     View,
     Text,
-    Pressable,
     StyleSheet,
     ScrollView,
     Platform,
     SafeAreaView,
+    LayoutChangeEvent,
 } from 'react-native';
 import { NavigationProp } from '@react-navigation/core';
 import { COLORS } from '../constants';
-import { AttachmentPreviews, Attachment } from '../sections';
-import { MarkdownEditor } from '../small-components/MarkdownEditor';
-import { MarkdownRenderer } from '../small-components/MarkdownRenderer';
-import { RichTextEditor } from '../sections/RichTextEditor';
-import { getRelativeTime } from '../utils';
+import { AttachmentImageGallery, LargeImageModal } from '../sections';
+import {
+    LinkPreview,
+    MarkdownRenderer,
+    CommentEditor,
+} from '../small-components';
+import { getRelativeTime, extractUrls, stripHtml } from '../utils';
 import { CurrentCommentContext } from '../providers';
-import { useCreateComment } from '../hooks';
 import { useAppSelector, RootState, UserType } from '../redux';
 
 type RootStackParamList = {
@@ -30,110 +31,114 @@ type CreateCommentScreenProps = {
 export const CreateCommentScreen: React.FC<CreateCommentScreenProps> = ({
     navigation,
 }) => {
-    const [useMarkdown, setUseMarkdown] = useState(false);
-    const [attachments, setAttachments] = useState<Attachment[]>([]);
-    const [newCommentContent, setNewCommentContent] = useState('');
-    const { parentUser, parentContent, parentDate, parentCommentId, postId } =
-        useContext(CurrentCommentContext);
-    const user: UserType = useAppSelector(
-        (state: RootState) => state.user.user
-    );
+    // Removed local state for editor since we're now using CommentEditor.
+    const {
+        parentUser,
+        parentContent,
+        parentDate,
+        parentCommentId,
+        postId,
+        parentAttachmentUrls,
+    } = useContext(CurrentCommentContext);
 
-    const onRemoveAttachment = (attachmentId: string) => {
-        setAttachments((prev) => prev.filter((att) => att.id !== attachmentId));
+    // Compute parent content details for link preview logic
+    const urlsInParentContent = extractUrls(parentContent);
+    const plainParentContent = stripHtml(parentContent);
+    const isParentContentJustLink =
+        urlsInParentContent.length === 1 &&
+        plainParentContent === urlsInParentContent[0];
+
+    // State to track parent's content container width for LinkPreview
+    const [parentContainerWidth, setParentContainerWidth] = useState(0);
+    const handleParentLayout = (event: LayoutChangeEvent) => {
+        const { width } = event.nativeEvent.layout;
+        setParentContainerWidth(width);
     };
 
-    const { createComment, creatingComment } = useCreateComment(() => {
-        setAttachments([]); // Clear attachments on success
-    });
+    // State for parent's attachment modal
+    const [modalVisible, setModalVisible] = useState(false);
+    const [modalStartIndex, setModalStartIndex] = useState(0);
 
-    const handleCreateComment = async () => {
-        if (!postId || !user?.id || creatingComment) return;
-        await createComment({
-            postedByUserId: user.id,
-            postId,
-            content: newCommentContent,
-            attachments: attachments.map((att) => att.file),
-            parentCommentId,
-            hasChildren: false,
-            upvotes: 1,
-        });
-        navigation.goBack();
+    // Handler for parent's attachment image press
+    const handleParentImagePress = (index: number) => {
+        setModalStartIndex(index);
+        setModalVisible(true);
     };
 
     return (
-        // @ts-expect-error web only types
         <SafeAreaView style={styles.safeContainer}>
-            {/* @ts-expect-error web only types */}
             <ScrollView
                 style={styles.scrollSection}
                 contentContainerStyle={styles.scrollContainerStyle}
             >
-                {/* @ts-expect-error web only types */}
                 <View style={styles.modalContainer}>
-                    {/* @ts-expect-error web only types */}
                     <Text style={styles.userInfo}>
                         {parentUser} • {getRelativeTime(parentDate)}
                     </Text>
-                    {/* @ts-expect-error web only types */}
-                    <View style={styles.parentContentContainer}>
-                        <MarkdownRenderer text={parentContent} preview />
-                    </View>
-                    <Pressable
-                        onPress={() => setUseMarkdown((prev) => !prev)}
-                        // @ts-expect-error web only types
-                        style={styles.toggleButton}
+                    <View
+                        style={styles.parentContentContainer}
+                        onLayout={handleParentLayout}
                     >
-                        {/* @ts-expect-error web only types */}
-                        <Text style={styles.toggleButtonText}>
-                            {useMarkdown
-                                ? 'Switch to Rich Text Editor'
-                                : 'Switch to Markdown Editor'}
-                        </Text>
-                    </Pressable>
+                        <>
+                            {!isParentContentJustLink && (
+                                <MarkdownRenderer
+                                    text={parentContent}
+                                    preview
+                                />
+                            )}
+                            {urlsInParentContent.map((url, index) => (
+                                <LinkPreview
+                                    key={index}
+                                    url={url}
+                                    containerWidth={parentContainerWidth}
+                                />
+                            ))}
+                            {parentAttachmentUrls &&
+                                parentAttachmentUrls.length > 0 && (
+                                    <View
+                                        style={{
+                                            alignSelf: 'flex-start',
+                                            marginBottom: 15,
+                                        }}
+                                    >
+                                        <AttachmentImageGallery
+                                            attachmentUrls={
+                                                parentAttachmentUrls
+                                            }
+                                            onImagePress={
+                                                handleParentImagePress
+                                            }
+                                            containerWidth={
+                                                parentContainerWidth
+                                            }
+                                        />
+                                    </View>
+                                )}
+                        </>
+                    </View>
 
-                    {/* @ts-expect-error web only types */}
-                    <View style={styles.editorContainer}>
-                        {useMarkdown ? (
-                            <MarkdownEditor
-                                placeholder="Write a comment..."
-                                value={newCommentContent}
-                                onChangeText={setNewCommentContent}
-                            />
-                        ) : (
-                            <RichTextEditor
-                                placeholder="Write a comment..."
-                                initialContent={newCommentContent}
-                                onChange={setNewCommentContent}
-                            />
-                        )}
-                    </View>
-                    <AttachmentPreviews
-                        attachments={attachments}
-                        onAttachmentPress={() => {}}
-                        onRemoveAttachment={onRemoveAttachment}
-                        onAttachmentsReorder={setAttachments}
+                    {/*
+                      Replaced direct comment editor logic with the CommentEditor component.
+                      The CommentEditor handles all aspects of the comment creation,
+                      including toggling editors, attachments, and action buttons.
+                    */}
+                    <CommentEditor
+                        postId={postId}
+                        parentCommentId={parentCommentId}
+                        onCancel={() => navigation.goBack()}
+                        onCommentCreated={() => navigation.goBack()}
+                        expandedByDefault
+                        editorBackgroundColor={COLORS.PrimaryBackground}
                     />
-                    {/* @ts-expect-error web only types */}
-                    <View style={styles.modalButtonRow}>
-                        <Pressable
-                            // @ts-expect-error web only types
-                            style={styles.modalButton}
-                            onPress={() => navigation.goBack()}
-                        >
-                            {/* @ts-expect-error web only types */}
-                            <Text style={styles.modalButtonText}>Cancel</Text>
-                        </Pressable>
-                        <Pressable
-                            // @ts-expect-error web only types
-                            style={styles.modalButton}
-                            onPress={handleCreateComment}
-                        >
-                            {/* @ts-expect-error web only types */}
-                            <Text style={styles.modalButtonText}>Comment</Text>
-                        </Pressable>
-                    </View>
                 </View>
+                {parentAttachmentUrls && parentAttachmentUrls.length > 0 && (
+                    <LargeImageModal
+                        visible={modalVisible}
+                        attachments={parentAttachmentUrls}
+                        initialIndex={modalStartIndex}
+                        onClose={() => setModalVisible(false)}
+                    />
+                )}
             </ScrollView>
         </SafeAreaView>
     );
@@ -153,7 +158,6 @@ const styles = StyleSheet.create({
               backgroundColor: COLORS.AppBackground,
           }
         : { flex: 1, backgroundColor: COLORS.AppBackground },
-    // @ts-expect-error web only type
     safeContainer: {
         flex: 1,
         backgroundColor: COLORS.SecondaryBackground,

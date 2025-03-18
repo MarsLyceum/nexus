@@ -267,6 +267,7 @@ export const PostItem: React.FC<PostItemProps> = ({
         <AttachmentImageGallery
             attachmentUrls={attachmentUrls}
             onImagePress={handleImagePress}
+            containerWidth={innerWidth}
         />
     );
 

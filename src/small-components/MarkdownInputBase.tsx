@@ -66,10 +66,30 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
         emojiPickerRef.current?.handleKeyDown(e);
     };
 
+    // Convert height to a number if it's a string ending with "px" on mobile.
+    let parsedHeight: string | number = height;
+    if (
+        typeof height === 'string' &&
+        height.endsWith('px') &&
+        Platform.OS !== 'web'
+    ) {
+        parsedHeight = parseInt(height, 10);
+    }
+
+    // Convert width to a number if it's a string ending with "px" on mobile.
+    let parsedWidth: string | number = width;
+    if (
+        typeof width === 'string' &&
+        width.endsWith('px') &&
+        Platform.OS !== 'web'
+    ) {
+        parsedWidth = parseInt(width, 10);
+    }
+
     // Only add width, height, and backgroundColor if they are provided
     const containerStyle: object = {
-        ...(width ? { width } : {}),
-        ...(height ? { height } : {}),
+        ...(parsedWidth ? { width: parsedWidth } : {}),
+        ...(parsedHeight ? { height: parsedHeight } : {}),
         ...(backgroundColor ? { backgroundColor } : {}), // applied to container
     };
 

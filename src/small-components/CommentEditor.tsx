@@ -32,6 +32,7 @@ type CommentEditorProps = {
      * Editor background color for both Markdown and Rich Text editors
      */
     editorBackgroundColor?: string;
+    expandedByDefault?: boolean;
 };
 
 export const CommentEditor: React.FC<CommentEditorProps> = ({
@@ -40,6 +41,7 @@ export const CommentEditor: React.FC<CommentEditorProps> = ({
     onCancel,
     onCommentCreated,
     editorBackgroundColor = COLORS.PrimaryBackground,
+    expandedByDefault = false,
 }) => {
     // Grab the current user from Redux
     const user: UserType = useAppSelector(
@@ -52,7 +54,7 @@ export const CommentEditor: React.FC<CommentEditorProps> = ({
     const [newCommentContent, setNewCommentContent] = useState('');
     const [updateContent, setUpdateContent] = useState(0);
     // Control whether the editor is expanded
-    const [isExpanded, setIsExpanded] = useState(false);
+    const [isExpanded, setIsExpanded] = useState(expandedByDefault);
     // State to toggle the formatting toolbar in the rich text editor.
     const [showFormattingOptions, setShowFormattingOptions] = useState(false);
     // State for Giphy modal visibility
@@ -170,21 +172,22 @@ export const CommentEditor: React.FC<CommentEditorProps> = ({
                         )}
                     </View>
 
-                    {/* Formatting Options and Attachment Buttons (only in Rich Text mode) */}
-                    {!useMarkdown && (
-                        <View style={styles.formatAndAttachContainer}>
-                            <TouchableOpacity
-                                onPress={handleAttachmentInsert}
-                                style={styles.imageButton}
-                            >
-                                <Icon name="image" size={24} color="white" />
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                onPress={handleGifPress}
-                                style={styles.gifButton}
-                            >
-                                <Text style={styles.gifButtonText}>GIF</Text>
-                            </TouchableOpacity>
+                    {/* Attachment Buttons (Image and GIF) are always visible.
+                        The formatting options button is shown only for Rich Text mode */}
+                    <View style={styles.formatAndAttachContainer}>
+                        <TouchableOpacity
+                            onPress={handleAttachmentInsert}
+                            style={styles.imageButton}
+                        >
+                            <Icon name="image" size={24} color="white" />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            onPress={handleGifPress}
+                            style={styles.gifButton}
+                        >
+                            <Text style={styles.gifButtonText}>GIF</Text>
+                        </TouchableOpacity>
+                        {!useMarkdown && (
                             <Pressable
                                 style={[
                                     styles.formatToggleButton,
@@ -211,8 +214,8 @@ export const CommentEditor: React.FC<CommentEditorProps> = ({
                                     />
                                 </Tooltip>
                             </Pressable>
-                        </View>
-                    )}
+                        )}
+                    </View>
 
                     {/* Attachment previews */}
                     <AttachmentPreviews

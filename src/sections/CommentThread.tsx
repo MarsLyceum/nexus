@@ -190,6 +190,7 @@ const CommentThreadComponent = ({
         setParentContent,
         setParentDate,
         setParentCommentId,
+        setParentAttachmentUrls,
     } = useContext(CurrentCommentContext);
 
     const [containerWidth, setContainerWidth] = useState(0);
@@ -290,6 +291,7 @@ const CommentThreadComponent = ({
                                                 comment.attachmentUrls
                                             }
                                             onImagePress={handleImagePress}
+                                            containerWidth={containerWidth}
                                         />
                                     </View>
                                 )}
@@ -303,6 +305,9 @@ const CommentThreadComponent = ({
                                             // On mobile, navigate to dedicated comment screen
                                             setParentUser(comment.user);
                                             setParentContent(comment.content);
+                                            setParentAttachmentUrls(
+                                                comment.attachmentUrls ?? []
+                                            );
                                             setParentDate(comment.postedAt);
                                             setParentCommentId(comment.id);
                                             navigation.navigate(
@@ -349,6 +354,7 @@ const CommentThreadComponent = ({
                                     editorBackgroundColor={
                                         COLORS.SecondaryBackground
                                     }
+                                    expandedByDefault
                                 />
                             </View>
                         )}

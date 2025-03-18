@@ -22,7 +22,7 @@ export const RichTextEditor: React.FC<{
     onChange,
     onFocus,
     showToolbar = true,
-    height = '80vh',
+    height = '150px',
     width = '100%',
     borderRadius = '20px', // <-- default value
     backgroundColor = COLORS.PrimaryBackground,
@@ -143,6 +143,17 @@ export const RichTextEditor: React.FC<{
             </View>
         );
     }
+
+    // For mobile, convert width and height if provided as "px"
+    let containerWidth: string | number = width;
+    if (typeof width === 'string' && width.endsWith('px')) {
+        containerWidth = parseInt(width, 10);
+    }
+    let containerHeight: string | number = height;
+    if (typeof height === 'string' && height.endsWith('px')) {
+        containerHeight = parseInt(height, 10);
+    }
+
     const webViewComponent = (
         <WebView
             source={{ html: mobileHtml }}
@@ -158,8 +169,14 @@ export const RichTextEditor: React.FC<{
             }}
         />
     );
+
     return (
-        <View style={mobileStyles.outerContainer}>
+        <View
+            style={[
+                mobileStyles.outerContainer,
+                { width: containerWidth, height: containerHeight },
+            ]}
+        >
             <View style={mobileStyles.container}>
                 {onFocus ? (
                     <Pressable onPress={onFocus} style={{ flex: 1 }}>

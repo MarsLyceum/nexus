@@ -1,5 +1,10 @@
-// PostScreen.tsx
-import React, { useEffect, useContext, useRef, useState } from 'react';
+import React, {
+    useEffect,
+    useContext,
+    useRef,
+    useState,
+    useCallback,
+} from 'react';
 import {
     View,
     ScrollView,
@@ -25,8 +30,7 @@ import {
 } from '../queries';
 import { PostItem, CommentsManager } from '../sections';
 import { COLORS } from '../constants';
-// Removed CreateContentButton import since we’ll show the editor inline
-// import { CreateContentButton } from '../buttons';
+import { CreateContentButton } from '../buttons';
 import { getRelativeTime, isComputer } from '../utils';
 import { Post, PostData } from '../types';
 import { CurrentCommentContext } from '../providers';
@@ -45,43 +49,6 @@ type PostScreenProps = {
     navigation: NavigationProp<RootStackParamList, 'PostScreen'>;
     route: RouteProp<RootStackParamList, 'PostScreen'>;
 };
-
-// We no longer need a large bottom input height since the editor is inline
-// const BOTTOM_INPUT_HEIGHT = 60;
-const isWeb = Platform.OS === 'web';
-
-const styles = StyleSheet.create({
-    // @ts-expect-error web only types
-    safeContainer: {
-        flex: 1,
-        backgroundColor: COLORS.SecondaryBackground,
-        paddingTop: 15,
-        ...(isWeb && { height: '100vh', display: 'flex' }),
-    },
-    container: { flex: 1 },
-    mainContainer: {
-        flex: 1,
-        position: 'relative',
-        // Removed the bottom padding approach since editor is inline
-        // paddingBottom: BOTTOM_INPUT_HEIGHT,
-    },
-    // Removed the old scrollSection that offset for a bottom input
-    scrollSection: isWeb
-        ? {
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              overflowY: 'auto',
-          }
-        : { flex: 1 },
-    scrollView: {
-        paddingHorizontal: 15,
-        paddingBottom: 20,
-    },
-    // Removed the old createContentButtonContainer style
-});
 
 export const PostScreen: React.FC<PostScreenProps> = ({
     route,
@@ -134,15 +101,49 @@ export const PostScreen: React.FC<PostScreenProps> = ({
         attachmentUrls: feedPost?.attachmentUrls || [],
     };
 
-    const { setParentUser, setParentContent, setParentDate, setPostId } =
-        useContext(CurrentCommentContext);
+    const {
+        setParentUser,
+        setParentContent,
+        setParentDate,
+        setPostId,
+        setParentAttachmentUrls,
+    } = useContext(CurrentCommentContext);
 
-    useEffect(() => {
+    const setPostContent = useCallback(() => {
         if (postData?.id) setPostId(postData.id);
         if (postData?.user) setParentUser(postData.user);
         if (postData?.content) setParentContent(postData.content);
         if (feedPost?.postedAt) setParentDate(feedPost.postedAt);
-    }, [postData?.id, postData?.user, postData?.content, feedPost?.postedAt]);
+        if (postData?.attachmentUrls) {
+            setParentAttachmentUrls(postData.attachmentUrls);
+        }
+    }, [
+        postData?.id,
+        postData?.user,
+        postData?.content,
+        feedPost?.postedAt,
+        postData?.attachmentUrls,
+        setPostId,
+        setParentUser,
+        setParentContent,
+        setParentDate,
+        setParentAttachmentUrls,
+    ]);
+
+    useEffect(() => {
+        setPostContent();
+    }, [
+        postData?.id,
+        postData?.user,
+        postData?.content,
+        feedPost?.postedAt,
+        postData?.attachmentUrls,
+        setPostId,
+        setParentUser,
+        setParentContent,
+        setParentDate,
+        setParentAttachmentUrls,
+    ]);
 
     // Update header title: show "Nexus" while loading, then post title once loaded.
     useEffect(() => {
@@ -177,17 +178,70 @@ export const PostScreen: React.FC<PostScreenProps> = ({
         }
     };
 
+    // Determine if device is computer (desktop) or mobile.
+    const isDesktop = isComputer();
+    const BOTTOM_INPUT_HEIGHT = 60;
+    const isWeb = Platform.OS === 'web';
+
+    // Create dynamic styles based on device type.
+    const computedStyles = StyleSheet.create({
+        safeContainer: {
+            flex: 1,
+            backgroundColor: COLORS.SecondaryBackground,
+            paddingTop: 15,
+            ...(isWeb && { height: '100vh', display: 'flex' }),
+        },
+        container: { flex: 1 },
+        mainContainer: {
+            flex: 1,
+            position: 'relative',
+            ...(isDesktop ? {} : { paddingBottom: BOTTOM_INPUT_HEIGHT }),
+        },
+        scrollSection: isWeb
+            ? isDesktop
+                ? {
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      overflowY: 'auto',
+                  }
+                : {
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: BOTTOM_INPUT_HEIGHT,
+                      overflowY: 'auto',
+                  }
+            : { flex: 1 },
+        scrollView: {
+            paddingHorizontal: 15,
+            paddingBottom: 20,
+        },
+        createContentButtonContainer: isDesktop
+            ? {}
+            : {
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height: BOTTOM_INPUT_HEIGHT,
+              },
+    });
+
     if (loading) {
         return (
             // @ts-expect-error web only types
-            <SafeAreaView style={styles.safeContainer}>
+            <SafeAreaView style={computedStyles.safeContainer}>
                 {/* @ts-expect-error web only types */}
-                <View style={styles.mainContainer}>
+                <View style={computedStyles.mainContainer}>
                     {/* @ts-expect-error web only types */}
                     <ScrollView
                         ref={scrollViewRef}
-                        style={styles.scrollSection}
-                        contentContainerStyle={styles.scrollView}
+                        style={computedStyles.scrollSection}
+                        contentContainerStyle={computedStyles.scrollView}
                         keyboardShouldPersistTaps="handled"
                     >
                         <SkeletonPostItem />
@@ -203,7 +257,7 @@ export const PostScreen: React.FC<PostScreenProps> = ({
     if (error) {
         return (
             // @ts-expect-error web only types
-            <SafeAreaView style={styles.safeContainer}>
+            <SafeAreaView style={computedStyles.safeContainer}>
                 <View
                     style={{
                         flex: 1,
@@ -219,13 +273,13 @@ export const PostScreen: React.FC<PostScreenProps> = ({
 
     const ContainerComponent = isWeb ? View : KeyboardAvoidingView;
     const containerProps = isWeb
-        ? { style: styles.container }
+        ? { style: computedStyles.container }
         : {
-              style: styles.container,
+              style: computedStyles.container,
               behavior: Platform.OS === 'ios' ? 'padding' : undefined,
           };
 
-    // Reusable function to create a comment
+    // Reusable function to create a comment (used in inline CommentEditor for desktop).
     const handleCreateComment = async (
         content: string,
         attachments: { id: string; file: any }[]
@@ -244,16 +298,16 @@ export const PostScreen: React.FC<PostScreenProps> = ({
 
     return (
         // @ts-expect-error web only types
-        <SafeAreaView style={styles.safeContainer}>
+        <SafeAreaView style={computedStyles.safeContainer}>
             {/* @ts-expect-error web only types */}
             <ContainerComponent {...containerProps}>
                 {/* @ts-expect-error web only types */}
-                <View style={styles.mainContainer}>
+                <View style={computedStyles.mainContainer}>
                     {/* @ts-expect-error web only types */}
                     <ScrollView
                         ref={scrollViewRef}
-                        style={styles.scrollSection}
-                        contentContainerStyle={styles.scrollView}
+                        style={computedStyles.scrollSection}
+                        contentContainerStyle={computedStyles.scrollView}
                         keyboardShouldPersistTaps="handled"
                         onScroll={handleScroll}
                         scrollEventThrottle={16}
@@ -279,24 +333,23 @@ export const PostScreen: React.FC<PostScreenProps> = ({
                             variant="details"
                             group="My cool group"
                         />
-
-                        {/* Place the comment editor directly under the post */}
-                        <CommentEditor
-                            postId={postData.id}
-                            parentCommentId={parentCommentId}
-                            onCommentCreated={() => {
-                                // When a top-level comment is created,
-                                // refetch the comments so the new comment is shown.
-                                void client.refetchQueries({
-                                    include: [FETCH_POST_COMMENTS_QUERY],
-                                });
-                            }}
-                            onCancel={() => {
-                                // Optional cancel handler
-                            }}
-                        />
-
-                        {/* Then render the comments below the editor */}
+                        {isDesktop && (
+                            // Show inline CommentEditor on computer
+                            <CommentEditor
+                                postId={postData.id}
+                                parentCommentId={parentCommentId}
+                                onCommentCreated={() => {
+                                    // When a top-level comment is created,
+                                    // refetch the comments so the new comment is shown.
+                                    void client.refetchQueries({
+                                        include: [FETCH_POST_COMMENTS_QUERY],
+                                    });
+                                }}
+                                onCancel={() => {
+                                    // Optional cancel handler
+                                }}
+                            />
+                        )}
                         <CommentsManager
                             // @ts-expect-error ref
                             ref={commentsManagerRef}
@@ -305,6 +358,22 @@ export const PostScreen: React.FC<PostScreenProps> = ({
                             scrollY={scrollY}
                         />
                     </ScrollView>
+                    {!isDesktop && (
+                        // Show CreateContentButton on mobile;
+                        // reset the comment context to top-level before navigating
+                        <View
+                            style={computedStyles.createContentButtonContainer}
+                        >
+                            <CreateContentButton
+                                buttonText="Write a comment..."
+                                onPress={() => {
+                                    setPostContent();
+                                    // @ts-expect-error navigation
+                                    navigation.navigate('CreateComment');
+                                }}
+                            />
+                        </View>
+                    )}
                 </View>
             </ContainerComponent>
         </SafeAreaView>

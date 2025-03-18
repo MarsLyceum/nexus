@@ -34,6 +34,7 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({
                         width: targetWidth,
                         height: computedHeight,
                         marginBottom: 5,
+                        borderRadius: 8,
                     }}
                     contentFit="contain"
                 />

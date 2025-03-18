@@ -59,6 +59,8 @@ export const CommentEditor: React.FC<CommentEditorProps> = ({
     const [showFormattingOptions, setShowFormattingOptions] = useState(false);
     // State for Giphy modal visibility
     const [showGiphy, setShowGiphy] = useState(false);
+    // State for error messages
+    const [errorMessage, setErrorMessage] = useState('');
 
     // Hook for file upload functionality
     const { pickFile } = useFileUpload();
@@ -69,6 +71,7 @@ export const CommentEditor: React.FC<CommentEditorProps> = ({
         setAttachments([]);
         setNewCommentContent('');
         setIsExpanded(false); // Close the editor
+        setErrorMessage(''); // Clear any existing error
         if (onCommentCreated) onCommentCreated();
     });
 
@@ -80,6 +83,13 @@ export const CommentEditor: React.FC<CommentEditorProps> = ({
     // Attempt to create a comment
     const handleCreateComment = async () => {
         if (!postId || !user?.id || creatingComment) return;
+        // Check if comment text is empty (after trimming) and no attachments are added
+        if (!newCommentContent.trim() && attachments.length === 0) {
+            setErrorMessage('Comment cannot be empty.');
+            return;
+        }
+        // Clear any previous error
+        setErrorMessage('');
         await createComment({
             postedByUserId: user.id,
             postId,
@@ -102,6 +112,7 @@ export const CommentEditor: React.FC<CommentEditorProps> = ({
         setNewCommentContent('');
         setAttachments([]);
         setShowFormattingOptions(false);
+        setErrorMessage(''); // Clear error message on cancel
         if (onCancel) onCancel();
     };
 
@@ -155,7 +166,11 @@ export const CommentEditor: React.FC<CommentEditorProps> = ({
                             <MarkdownEditor
                                 placeholder="Write a comment..."
                                 value={newCommentContent}
-                                onChangeText={setNewCommentContent}
+                                onChangeText={(text) => {
+                                    setNewCommentContent(text);
+                                    // Optionally clear error when user starts typing
+                                    if (errorMessage) setErrorMessage('');
+                                }}
                                 height="150px"
                                 backgroundColor={editorBackgroundColor}
                             />
@@ -163,7 +178,11 @@ export const CommentEditor: React.FC<CommentEditorProps> = ({
                             <RichTextEditor
                                 placeholder="Write a comment..."
                                 initialContent={newCommentContent}
-                                onChange={setNewCommentContent}
+                                onChange={(text) => {
+                                    setNewCommentContent(text);
+                                    // Optionally clear error when user starts typing
+                                    if (errorMessage) setErrorMessage('');
+                                }}
                                 showToolbar={showFormattingOptions}
                                 height="150px"
                                 backgroundColor={editorBackgroundColor}
@@ -225,6 +244,11 @@ export const CommentEditor: React.FC<CommentEditorProps> = ({
                         onAttachmentsReorder={setAttachments}
                     />
 
+                    {/* Display error message if any */}
+                    {errorMessage ? (
+                        <Text style={styles.errorMessage}>{errorMessage}</Text>
+                    ) : null}
+
                     {/* Action buttons */}
                     <View style={styles.buttonRow}>
                         <Pressable
@@ -249,7 +273,10 @@ export const CommentEditor: React.FC<CommentEditorProps> = ({
                         <MarkdownEditor
                             placeholder="Write a comment..."
                             value={newCommentContent}
-                            onChangeText={setNewCommentContent}
+                            onChangeText={(text) => {
+                                setNewCommentContent(text);
+                                if (errorMessage) setErrorMessage('');
+                            }}
                             height="40px"
                             editable
                             onFocus={handleExpand}
@@ -259,7 +286,10 @@ export const CommentEditor: React.FC<CommentEditorProps> = ({
                         <RichTextEditor
                             placeholder="Write a comment..."
                             initialContent={newCommentContent}
-                            onChange={setNewCommentContent}
+                            onChange={(text) => {
+                                setNewCommentContent(text);
+                                if (errorMessage) setErrorMessage('');
+                            }}
                             showToolbar={false}
                             height="40px"
                             onFocus={handleExpand}
@@ -367,5 +397,10 @@ const styles = StyleSheet.create({
     postButtonText: {
         color: COLORS.White,
         fontWeight: '600',
+    },
+    errorMessage: {
+        color: COLORS.Error,
+        marginBottom: 5,
+        textAlign: 'center',
     },
 });

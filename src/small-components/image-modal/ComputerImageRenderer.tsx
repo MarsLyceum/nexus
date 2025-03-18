@@ -33,11 +33,9 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
 
     // Use image resolution to compute the aspect ratio.
     const { isFetching, resolution } = useImageResolution({ uri });
-    const aspectRatio = useMemo(() => {
-        return resolution && resolution.width && resolution.height
+    const aspectRatio = useMemo(() => resolution && resolution.width && resolution.height
             ? resolution.width / resolution.height
-            : 1;
-    }, [resolution]);
+            : 1, [resolution]);
 
     // Compute the visible image size in non-zoomed state.
     const nonZoomedSize = useMemo(
@@ -146,7 +144,7 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
                 </Pressable>
             </View>
         );
-    } else {
+    } 
         // Zoomed state: render the zoomed image inside a ScrollView so vertical scrolling works.
         return (
             <View style={{ flex: 1, cursor: 'zoom-out' }}>
@@ -156,7 +154,7 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
                         width: zoomedContainerWidth,
                         alignSelf: 'center', // centers horizontally
                     }}
-                    showsVerticalScrollIndicator={true}
+                    showsVerticalScrollIndicator
                 >
                     <Pressable
                         onPress={handleImagePress}
@@ -179,5 +177,5 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
                 </ScrollView>
             </View>
         );
-    }
+    
 };

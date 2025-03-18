@@ -9,7 +9,7 @@ export const isMobileBrowser = (): boolean => {
     // When running on the web, check for mobile characteristics.
     // Option 1: Use the user agent to detect mobile devices
     const userAgent = window.navigator.userAgent || '';
-    const isUserAgentMobile = /Mobi|Android/i.test(userAgent);
+    const isUserAgentMobile = /mobi|android/i.test(userAgent);
 
     // Option 2 (optional): Check the screen width as a fallback (you can adjust the breakpoint as needed)
     const isNarrowScreen = window.innerWidth < 768;

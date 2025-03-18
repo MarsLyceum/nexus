@@ -19,7 +19,9 @@ if (typeof File === 'undefined') {
     // Note: This is a basic polyfill and might not support all File functionalities.
     class RNFile extends Blob {
         name: string;
+
         lastModified: number;
+
         constructor(
             blobParts: BlobPart[],
             fileName: string,
@@ -102,7 +104,7 @@ export const GiphyModal: React.FC<GiphyModalProps> = ({
                 const attachment: Attachment = {
                     id: result.id,
                     previewUri: gifUrl,
-                    file: file,
+                    file,
                 };
                 onSelectGif(attachment);
                 onClose();

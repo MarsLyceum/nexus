@@ -73,7 +73,7 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
         height.endsWith('px') &&
         Platform.OS !== 'web'
     ) {
-        parsedHeight = parseInt(height, 10);
+        parsedHeight = Number.parseInt(height, 10);
     }
 
     // Convert width to a number if it's a string ending with "px" on mobile.
@@ -83,7 +83,7 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
         width.endsWith('px') &&
         Platform.OS !== 'web'
     ) {
-        parsedWidth = parseInt(width, 10);
+        parsedWidth = Number.parseInt(width, 10);
     }
 
     // Only add width, height, and backgroundColor if they are provided

@@ -77,7 +77,7 @@ export const ImageDetailsModal: React.FC<ImageDetailsModalProps> = ({
     const renderItem = ({ item }: { item: string }) => {
         const info = mediaInfos[item];
         // Use a unique key based on the item URI and its media type.
-        const key = item + '_' + (info ? info.type : 'unknown');
+        const key = `${item  }_${  info ? info.type : 'unknown'}`;
         return (
             <View key={key} style={{ width: '100%', height: '100%' }}>
                 <ItemRenderer

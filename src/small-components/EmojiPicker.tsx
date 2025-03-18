@@ -93,21 +93,32 @@ const EmojiPickerComponent = (
         }
 
         if (emojiSuggestions.length > 0) {
-            if (key === 'ArrowDown') {
+            switch (key) {
+            case 'ArrowDown': {
                 setActiveEmojiIndex(
                     (prev) => (prev + 1) % emojiSuggestions.length
                 );
                 e.preventDefault && e.preventDefault();
-            } else if (key === 'ArrowUp') {
+            
+            break;
+            }
+            case 'ArrowUp': {
                 setActiveEmojiIndex(
                     (prev) =>
                         (prev - 1 + emojiSuggestions.length) %
                         emojiSuggestions.length
                 );
                 e.preventDefault && e.preventDefault();
-            } else if (key === 'Enter') {
+            
+            break;
+            }
+            case 'Enter': {
                 handleEmojiSelect(emojiSuggestions[activeEmojiIndex]);
                 e.preventDefault && e.preventDefault();
+            
+            break;
+            }
+            // No default
             }
         }
     };

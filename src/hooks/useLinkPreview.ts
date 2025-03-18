@@ -118,7 +118,7 @@ export function useLinkPreview(url: string) {
                     while (
                         // eslint-disable-next-line no-cond-assign
                         (match = paragraphRegex.exec(contentHtml)) !== null &&
-                        paragraphs.length < 1
+                        paragraphs.length === 0
                     ) {
                         // Remove any HTML tags inside the paragraph and trim whitespace.
                         const paragraphText = decode(
@@ -130,7 +130,7 @@ export function useLinkPreview(url: string) {
                     }
                     // Use the first paragraph as the fallback description.
                     descriptionFallback = paragraphs[0]
-                        ? paragraphs[0] + '...'
+                        ? `${paragraphs[0]  }...`
                         : '';
                 } else {
                     // Default fallback for other pages.

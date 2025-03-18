@@ -58,7 +58,7 @@ export const ItemRenderer: React.FC<ItemRendererProps> = ({
                 />
             </View>
         );
-    } else if (isComputer) {
+    } if (isComputer) {
         return (
             <View style={{ width: '100%', height: '100%' }}>
                 <ComputerImageRenderer
@@ -69,11 +69,11 @@ export const ItemRenderer: React.FC<ItemRendererProps> = ({
                 />
             </View>
         );
-    } else {
+    } 
         return (
             <View style={{ width: '100%', height: '100%' }}>
                 <MobileImageRenderer uri={item} onClose={onClose} />
             </View>
         );
-    }
+    
 };

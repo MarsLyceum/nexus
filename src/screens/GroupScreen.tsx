@@ -9,17 +9,7 @@ import {
     Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
-import { COLORS } from '../constants';
-import { ServerMessagesScreen } from './ServerMessagesScreen';
-import { GroupEventsScreen } from './GroupEventsScreen';
-import { Group, GroupChannel } from '../types';
-import { Feed, Chat, Events } from '../icons';
-import { ActiveGroupContext } from '../providers';
-
-// For mobile drag and drop
 import DraggableFlatList from 'react-native-draggable-flatlist';
-
-// For web drag and drop using dnd-kit
 import {
     DndContext,
     closestCenter,
@@ -35,6 +25,16 @@ import {
     useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { COLORS } from '../constants';
+import { ServerMessagesScreen } from './ServerMessagesScreen';
+import { GroupEventsScreen } from './GroupEventsScreen';
+import { Group, GroupChannel } from '../types';
+import { Feed, Chat, Events } from '../icons';
+import { ActiveGroupContext } from '../providers';
+
+// For mobile drag and drop
+
+// For web drag and drop using dnd-kit
 
 const styles = StyleSheet.create({
     largeScreenContainer: {

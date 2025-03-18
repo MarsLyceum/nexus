@@ -101,9 +101,7 @@ export const FriendItem: React.FC<FriendItemProps> = ({
     // For dot color, if relationship is accepted, we use the online status (or default to "online")
     const statusForDot =
         relationshipStatus === 'accepted'
-            ? onlineStatus
-                ? onlineStatus
-                : 'online'
+            ? onlineStatus || 'online'
             : relationshipStatus || 'online';
     const dotColor = getDotColor(statusForDot);
     const avatarUrl = `https://picsum.photos/seed/${friend.username}/40`;

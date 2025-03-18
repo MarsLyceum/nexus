@@ -147,11 +147,11 @@ export const RichTextEditor: React.FC<{
     // For mobile, convert width and height if provided as "px"
     let containerWidth: string | number = width;
     if (typeof width === 'string' && width.endsWith('px')) {
-        containerWidth = parseInt(width, 10);
+        containerWidth = Number.parseInt(width, 10);
     }
     let containerHeight: string | number = height;
     if (typeof height === 'string' && height.endsWith('px')) {
-        containerHeight = parseInt(height, 10);
+        containerHeight = Number.parseInt(height, 10);
     }
 
     const webViewComponent = (

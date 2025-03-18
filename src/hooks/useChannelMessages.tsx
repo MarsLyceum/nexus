@@ -29,11 +29,11 @@ export const useChannelMessages = (channelId: string) => {
                 query: FETCH_USER_QUERY,
                 variables: { userId },
             });
-            const username = fetchUserResult.data.fetchUser.username;
+            const {username} = fetchUserResult.data.fetchUser;
             userCacheRef.current[userId] = username;
             return username;
-        } catch (err) {
-            console.error(`Error fetching user ${userId}:`, err);
+        } catch (error) {
+            console.error(`Error fetching user ${userId}:`, error);
             return 'Unknown User';
         }
     };
@@ -44,7 +44,7 @@ export const useChannelMessages = (channelId: string) => {
             // Merge new message and deduplicate by id.
             const messagesMap = new Map<string, MessageWithAvatar>();
             [newMsg, ...prev].forEach((msg) => messagesMap.set(msg.id, msg));
-            const merged = Array.from(messagesMap.values());
+            const merged = [...messagesMap.values()];
             merged.sort((a, b) => b.postedAt.getTime() - a.postedAt.getTime());
             return merged;
         });
@@ -116,8 +116,8 @@ export const useChannelMessages = (channelId: string) => {
             setLoadingMore(false);
         };
 
-        processMessages().catch((err) => {
-            console.error('Error processing messages:', err);
+        processMessages().catch((error) => {
+            console.error('Error processing messages:', error);
             setLoadingMore(false);
         });
     }, [data, loading, offset, refreshTrigger, apolloClient]);

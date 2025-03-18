@@ -135,8 +135,8 @@ export const CommentsManager = ({
             void buildNormalizedState(updatedComments, client, userCache).then(
                 setNormalizedComments
             );
-        } catch (err) {
-            console.error('Error loading more comments', err);
+        } catch (error_) {
+            console.error('Error loading more comments', error_);
         }
     };
 

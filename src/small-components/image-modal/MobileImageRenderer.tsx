@@ -28,7 +28,7 @@ export const MobileImageRenderer: React.FC<MobileImageRendererProps> = ({
         resolution.height !== 0;
 
     // Compute aspect ratio (fallback to 1 if not ready)
-    const aspectRatio = ready ? resolution!.width / resolution!.height : 1;
+    const aspectRatio = ready ? resolution.width / resolution.height : 1;
 
     // Compute image dimensions: full screen width and height based on aspect ratio.
     const imageWidth = screenWidth;

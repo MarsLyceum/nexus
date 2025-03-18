@@ -22,8 +22,7 @@ export const ConfirmRemoveFriendModal: React.FC<ConfirmationModalProps> = ({
     friend,
     onConfirm,
     onCancel,
-}) => {
-    return (
+}) => (
         <Modal visible={visible} transparent animationType="fade">
             <View style={styles.modalContainer}>
                 <View style={styles.modalContent}>
@@ -62,7 +61,6 @@ export const ConfirmRemoveFriendModal: React.FC<ConfirmationModalProps> = ({
             </View>
         </Modal>
     );
-};
 
 const styles = StyleSheet.create({
     modalContainer: {

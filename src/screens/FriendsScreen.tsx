@@ -83,8 +83,8 @@ export const FriendsScreen: React.FC = () => {
             await removeFriendMutation({
                 variables: { friendId: friendToRemove.connectionId },
             });
-        } catch (err) {
-            console.error('Error removing friend:', err);
+        } catch (error) {
+            console.error('Error removing friend:', error);
         } finally {
             setRemoveFriendModalVisible(false);
             setFriendToRemove(null);
@@ -107,8 +107,8 @@ export const FriendsScreen: React.FC = () => {
             await acceptFriendMutation({
                 variables: { friendId: item.id },
             });
-        } catch (err) {
-            console.error('Error accepting friend request:', err);
+        } catch (error) {
+            console.error('Error accepting friend request:', error);
         }
     };
 
@@ -119,8 +119,8 @@ export const FriendsScreen: React.FC = () => {
             await removeFriendMutation({
                 variables: { friendId: item.id },
             });
-        } catch (err) {
-            console.error('Error rejecting friend request:', err);
+        } catch (error) {
+            console.error('Error rejecting friend request:', error);
         }
     };
 
@@ -170,7 +170,8 @@ export const FriendsScreen: React.FC = () => {
 
     // Filter logic based on the active tab.
     let filteredFriends: FriendItemData[] = [];
-    if (activeTab === 'Online') {
+    switch (activeTab) {
+    case 'Online': {
         filteredFriends = friendsList.filter((item) => {
             const isAccepted =
                 (item.status?.toLowerCase() || '') === 'accepted';
@@ -178,14 +179,24 @@ export const FriendsScreen: React.FC = () => {
                 (item.friend.status?.toLowerCase() || 'online') === 'online';
             return isAccepted && isOnline;
         });
-    } else if (activeTab === 'All') {
+    
+    break;
+    }
+    case 'All': {
         filteredFriends = friendsList.filter(
             (item) => (item.status?.toLowerCase() || '') === 'accepted'
         );
-    } else if (activeTab === 'Pending') {
+    
+    break;
+    }
+    case 'Pending': {
         filteredFriends = friendsList.filter(
             (item) => (item.status?.toLowerCase() || '') === 'pending'
         );
+    
+    break;
+    }
+    // No default
     }
 
     return (
@@ -253,7 +264,7 @@ export const FriendsScreen: React.FC = () => {
             {/* Dropdown for the "more" button */}
             {dropdownVisible && dropdownRawRect && (
                 <Modal
-                    transparent={true}
+                    transparent
                     animationType="none"
                     visible={dropdownVisible}
                     onRequestClose={() => setDropdownVisible(false)}

@@ -24,7 +24,7 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
         height.endsWith('px') &&
         Platform.OS !== 'web'
     ) {
-        parsedHeight = parseInt(height, 10);
+        parsedHeight = Number.parseInt(height, 10);
     }
 
     // Convert width to a number if it is a string ending with "px" on non-web platforms.
@@ -34,7 +34,7 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
         width.endsWith('px') &&
         Platform.OS !== 'web'
     ) {
-        parsedWidth = parseInt(width, 10);
+        parsedWidth = Number.parseInt(width, 10);
     }
 
     const containerStyle: object = {

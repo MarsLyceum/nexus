@@ -195,6 +195,16 @@ export function getRichTextEditorHtml(
       .ql-toolbar button svg.ql-spoiler-icon line {
         stroke: currentColor !important;
       }
+      /* Override spoiler icon line color on hover/active */
+      .ql-toolbar button:hover svg.ql-spoiler-icon line,
+      .ql-toolbar button.ql-active svg.ql-spoiler-icon line {
+        stroke: ${COLORS.Secondary} !important;
+      }
+      /* Force the whole spoiler icon to adopt the secondary color on hover/active */
+      .ql-toolbar button:hover svg.ql-spoiler-icon,
+      .ql-toolbar button.ql-active svg.ql-spoiler-icon {
+        color: ${COLORS.Secondary} !important;
+      }
     </style>
   </head>
   <body>

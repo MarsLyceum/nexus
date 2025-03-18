@@ -11,7 +11,7 @@ import {
 import { Portal } from 'react-native-paper';
 import Svg, { Path } from 'react-native-svg';
 import { COLORS } from '../constants';
-import { isComputer } from './isComputer';
+import { isComputer } from '../utils';
 
 export const Tooltip = ({
     tooltipText,

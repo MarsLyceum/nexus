@@ -1,6 +1,12 @@
-// CommentThread.tsx
-import React, { useState, useContext } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState, useContext, useEffect } from 'react';
+import {
+    View,
+    Text,
+    TouchableOpacity,
+    StyleSheet,
+    LayoutChangeEvent,
+    Platform,
+} from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
@@ -21,6 +27,9 @@ import { useCreateComment } from '../hooks';
 import { useAppSelector, RootState } from '../redux';
 // NEW: Import Apollo Client hook and comments query to allow refetching comments.
 import { FETCH_POST_COMMENTS_QUERY } from '../queries';
+// NEW: Import AttachmentImageGallery and LargeImageModal for rendering attachments in comments
+import { AttachmentImageGallery } from './AttachmentImageGallery';
+import { LargeImageModal } from './LargeImageModal';
 
 const styles = StyleSheet.create({
     commentContainer: {
@@ -122,6 +131,7 @@ export type CommentNode = {
     parentCommentId: string | null;
     postedByUserId: string;
     hasChildren: boolean;
+    attachmentUrls?: string[];
     children: CommentNode[];
 };
 
@@ -169,22 +179,16 @@ const CommentThreadComponent = ({
     onContinueConversation,
     postId,
 }: CommentThreadProps) => {
-    // NEW: Get a reference to the Apollo Client instance for refetching queries.
     const client = useApolloClient();
     const [voteCount, setVoteCount] = useState(comment.upvotes);
     const [collapsed, setCollapsed] = useState(comment.upvotes < -1);
     const navigation = useNavigation();
-    const [showInlineReply, setShowInlineReply] = useState(false); // State for inline reply editor
+    const [showInlineReply, setShowInlineReply] = useState(false);
 
-    // Inline comment creation hook (used for mobile navigation) and current user from Redux.
-    const user = useAppSelector((state: RootState) => state.user.user);
-    const { createComment, creatingComment } = useCreateComment(() => {
-        // This callback is used for the mobile flow (navigating to a dedicated comment screen).
-        // It is not used in the inline comment editor.
-    });
+    // NEW: State for attachment modal in comments
+    const [modalVisible, setModalVisible] = useState(false);
+    const [modalStartIndex, setModalStartIndex] = useState(0);
 
-    const onUpvote = () => setVoteCount((prev) => prev + 1);
-    const onDownvote = () => setVoteCount((prev) => prev - 1);
     const {
         setParentUser,
         setParentContent,
@@ -198,6 +202,14 @@ const CommentThreadComponent = ({
     const plainContent = stripHtml(comment.content);
     const isJustLink =
         urlsInContent.length === 1 && plainContent === urlsInContent[0];
+
+    const onUpvote = () => setVoteCount((prev) => prev + 1);
+    const onDownvote = () => setVoteCount((prev) => prev - 1);
+
+    const handleImagePress = (index: number) => {
+        setModalStartIndex(index);
+        setModalVisible(true);
+    };
 
     return (
         <View
@@ -213,7 +225,7 @@ const CommentThreadComponent = ({
                     styles.singleComment,
                     level === 0 && { paddingLeft: 10 },
                 ]}
-                onLayout={(event) => {
+                onLayout={(event: LayoutChangeEvent) => {
                     const { width } = event.nativeEvent.layout;
                     setContainerWidth(width);
                 }}
@@ -273,6 +285,18 @@ const CommentThreadComponent = ({
                                     ))}
                                 </>
                             )}
+                            {/* Render attachment gallery if present */}
+                            {comment.attachmentUrls &&
+                                comment.attachmentUrls.length > 0 && (
+                                    <View style={{ alignSelf: 'flex-start' }}>
+                                        <AttachmentImageGallery
+                                            attachmentUrls={
+                                                comment.attachmentUrls
+                                            }
+                                            onImagePress={handleImagePress}
+                                        />
+                                    </View>
+                                )}
                             <View style={styles.actionsRow}>
                                 <Tooltip tooltipText="Reply">
                                     <TouchableOpacity
@@ -322,7 +346,7 @@ const CommentThreadComponent = ({
                                     onCommentCreated={() => {
                                         setShowInlineReply(false);
                                         // Refetch comments to show the newly added comment.
-                                        client.refetchQueries({
+                                        void client.refetchQueries({
                                             include: [
                                                 FETCH_POST_COMMENTS_QUERY,
                                             ],
@@ -357,6 +381,16 @@ const CommentThreadComponent = ({
                                         Continue the conversation
                                     </Text>
                                 </TouchableOpacity>
+                            )}
+                        {/* Render LargeImageModal for comment attachments */}
+                        {comment.attachmentUrls &&
+                            comment.attachmentUrls.length > 0 && (
+                                <LargeImageModal
+                                    visible={modalVisible}
+                                    attachments={comment.attachmentUrls || []}
+                                    initialIndex={modalStartIndex}
+                                    onClose={() => setModalVisible(false)}
+                                />
                             )}
                     </>
                 )}

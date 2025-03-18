@@ -287,7 +287,7 @@ export const PostScreen: React.FC<PostScreenProps> = ({
                             onCommentCreated={() => {
                                 // When a top-level comment is created,
                                 // refetch the comments so the new comment is shown.
-                                client.refetchQueries({
+                                void client.refetchQueries({
                                     include: [FETCH_POST_COMMENTS_QUERY],
                                 });
                             }}

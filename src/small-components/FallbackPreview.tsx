@@ -1,17 +1,10 @@
-// components/FallbackPreview.tsx
-
-import React from 'react';
-import {
-    View,
-    TouchableOpacity,
-    Linking,
-    Text,
-    StyleSheet,
-} from 'react-native';
+import React, { useState } from 'react';
+import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { getDomainFromUrl } from '../utils/linkPreviewUtils';
 import { COLORS } from '../constants';
 import { PreviewData } from '../types';
+import { LargeImageModal } from '../sections'; // Import the large image modal
 
 export type FallbackPreviewProps = {
     url: string;
@@ -22,15 +15,25 @@ export const FallbackPreview: React.FC<FallbackPreviewProps> = ({
     url,
     previewData,
 }) => {
-    const previewImage =
-        previewData.images && previewData.images[0]
-            ? previewData.images[0]
-            : previewData.logo;
+    // State to control modal visibility.
+    const [modalVisible, setModalVisible] = useState(false);
+
+    // Determine attachments: use all images if available, or fallback to logo.
+    const attachments =
+        previewData.images && previewData.images.length > 0
+            ? previewData.images
+            : previewData.logo
+              ? [previewData.logo]
+              : [];
+
+    // Use the first image as the preview image.
+    const previewImage = attachments[0];
     const siteToShow = previewData.siteName || getDomainFromUrl(url);
+
     return (
         <View style={styles.linkPreviewContainer}>
             {previewImage ? (
-                <TouchableOpacity onPress={() => Linking.openURL(url)}>
+                <TouchableOpacity onPress={() => setModalVisible(true)}>
                     <ExpoImage
                         source={{ uri: previewImage }}
                         style={styles.linkPreviewImage}
@@ -47,6 +50,12 @@ export const FallbackPreview: React.FC<FallbackPreviewProps> = ({
                 </Text>
             ) : undefined}
             <Text style={styles.linkPreviewSite}>{siteToShow}</Text>
+            <LargeImageModal
+                visible={modalVisible}
+                attachments={attachments}
+                initialIndex={0}
+                onClose={() => setModalVisible(false)}
+            />
         </View>
     );
 };

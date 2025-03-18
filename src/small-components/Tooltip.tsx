@@ -20,11 +20,6 @@ export const Tooltip = ({
     tooltipText: string;
     children?: React.ReactNode;
 }) => {
-    // If not on a computer, return the children without tooltip functionality.
-    if (!isComputer()) {
-        return <>{children ?? <Text>{tooltipText}</Text>}</>;
-    }
-
     // Otherwise, on computer devices, use the tooltip functionality.
     const [open, setOpen] = useState(false);
     const [triggerPos, setTriggerPos] = useState<{
@@ -154,6 +149,11 @@ export const Tooltip = ({
             )}
         </View>
     );
+
+    // If not on a computer, return the children without tooltip functionality.
+    if (!isComputer()) {
+        return <>{children}</>;
+    }
 
     return (
         <View style={styles.tooltipContainer}>

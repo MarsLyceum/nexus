@@ -22,12 +22,15 @@ export const Tooltip = ({
 }) => {
     // Otherwise, on computer devices, use the tooltip functionality.
     const [open, setOpen] = useState(false);
-    const [triggerPos, setTriggerPos] = useState<{
-        x: number;
-        y: number;
-        width: number;
-        height: number;
-    } | null>(null);
+    const [triggerPos, setTriggerPos] = useState<
+        | {
+              x: number;
+              y: number;
+              width: number;
+              height: number;
+          }
+        | undefined
+    >();
 
     // Dimensions for the tooltip bubble.
     const [bubbleWidth, setBubbleWidth] = useState(0);

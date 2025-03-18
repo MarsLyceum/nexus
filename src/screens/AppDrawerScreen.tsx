@@ -17,7 +17,7 @@ import {
     SearchScreen,
     FriendsScreen,
 } from '.';
-import { SearchContext, ActiveGroupContext } from '../providers'; // Make sure ActiveGroupContext is exported from your providers
+import { ActiveGroupContext } from '../providers'; // Make sure ActiveGroupContext is exported from your providers
 
 // Define a DrawerParamList type so navigation is properly typed.
 type DrawerParamList = {
@@ -39,9 +39,6 @@ export function AppDrawerScreen() {
     // Use window dimensions to determine if we're on "desktop" size
     const dimensions = useWindowDimensions();
     const isDesktop = dimensions.width > 768;
-
-    // Use the shared search context
-    const { searchText, setSearchText } = useContext(SearchContext);
 
     // Get the setter for active group from context
     const { setActiveGroup } = useContext(ActiveGroupContext);

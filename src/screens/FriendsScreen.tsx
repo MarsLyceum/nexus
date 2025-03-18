@@ -37,11 +37,12 @@ export const FriendsScreen: React.FC = () => {
     // Tab and dropdown state.
     const [activeTab, setActiveTab] = useState<string>('Online');
     const [dropdownVisible, setDropdownVisible] = useState<boolean>(false);
-    const [dropdownRawRect, setDropdownRawRect] = useState<RawRect | null>(
-        null
-    );
-    const [friendToRemove, setFriendToRemove] =
-        useState<RemoveFriendData | null>(null);
+    const [dropdownRawRect, setDropdownRawRect] = useState<
+        RawRect | undefined
+    >();
+    const [friendToRemove, setFriendToRemove] = useState<
+        RemoveFriendData | undefined
+    >();
     const [removeFriendModalVisible, setRemoveFriendModalVisible] =
         useState<boolean>(false);
 
@@ -72,7 +73,7 @@ export const FriendsScreen: React.FC = () => {
             id: `skeleton-${i}`,
             status: 'accepted',
             friend: { username: 'Loading...', status: 'online' },
-            requestedBy: null,
+            requestedBy: undefined,
         })
     );
 
@@ -87,7 +88,7 @@ export const FriendsScreen: React.FC = () => {
             console.error('Error removing friend:', error);
         } finally {
             setRemoveFriendModalVisible(false);
-            setFriendToRemove(null);
+            setFriendToRemove(undefined);
         }
     };
 
@@ -170,33 +171,35 @@ export const FriendsScreen: React.FC = () => {
 
     // Filter logic based on the active tab.
     let filteredFriends: FriendItemData[] = [];
+    // eslint-disable-next-line default-case
     switch (activeTab) {
-    case 'Online': {
-        filteredFriends = friendsList.filter((item) => {
-            const isAccepted =
-                (item.status?.toLowerCase() || '') === 'accepted';
-            const isOnline =
-                (item.friend.status?.toLowerCase() || 'online') === 'online';
-            return isAccepted && isOnline;
-        });
-    
-    break;
-    }
-    case 'All': {
-        filteredFriends = friendsList.filter(
-            (item) => (item.status?.toLowerCase() || '') === 'accepted'
-        );
-    
-    break;
-    }
-    case 'Pending': {
-        filteredFriends = friendsList.filter(
-            (item) => (item.status?.toLowerCase() || '') === 'pending'
-        );
-    
-    break;
-    }
-    // No default
+        case 'Online': {
+            filteredFriends = friendsList.filter((item) => {
+                const isAccepted =
+                    (item.status?.toLowerCase() || '') === 'accepted';
+                const isOnline =
+                    (item.friend.status?.toLowerCase() || 'online') ===
+                    'online';
+                return isAccepted && isOnline;
+            });
+
+            break;
+        }
+        case 'All': {
+            filteredFriends = friendsList.filter(
+                (item) => (item.status?.toLowerCase() || '') === 'accepted'
+            );
+
+            break;
+        }
+        case 'Pending': {
+            filteredFriends = friendsList.filter(
+                (item) => (item.status?.toLowerCase() || '') === 'pending'
+            );
+
+            break;
+        }
+        // No default
     }
 
     return (
@@ -239,6 +242,7 @@ export const FriendsScreen: React.FC = () => {
                         if (isLargeScreen) {
                             setActiveTab('AddFriends');
                         } else {
+                            // @ts-expect-error navigation
                             navigation.navigate('AddFriends');
                         }
                     }}
@@ -294,7 +298,7 @@ export const FriendsScreen: React.FC = () => {
             {/* Confirm Remove Friend Modal */}
             <ConfirmRemoveFriendModal
                 visible={removeFriendModalVisible}
-                friend={friendToRemove ? friendToRemove.friend : null}
+                friend={friendToRemove?.friend}
                 onConfirm={handleConfirmRemoveFriend}
                 onCancel={() => setRemoveFriendModalVisible(false)}
             />

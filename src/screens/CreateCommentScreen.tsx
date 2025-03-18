@@ -18,7 +18,6 @@ import {
 } from '../small-components';
 import { getRelativeTime, extractUrls, stripHtml } from '../utils';
 import { CurrentCommentContext } from '../providers';
-import { useAppSelector, RootState, UserType } from '../redux';
 
 type RootStackParamList = {
     CreateComment: Record<string, unknown>;
@@ -66,16 +65,21 @@ export const CreateCommentScreen: React.FC<CreateCommentScreenProps> = ({
     };
 
     return (
+        // @ts-expect-error style
         <SafeAreaView style={styles.safeContainer}>
+            {/* @ts-expect-error style */}
             <ScrollView
                 style={styles.scrollSection}
                 contentContainerStyle={styles.scrollContainerStyle}
             >
+                {/* @ts-expect-error style */}
                 <View style={styles.modalContainer}>
+                    {/* @ts-expect-error style */}
                     <Text style={styles.userInfo}>
                         {parentUser} • {getRelativeTime(parentDate)}
                     </Text>
                     <View
+                        // @ts-expect-error style
                         style={styles.parentContentContainer}
                         onLayout={handleParentLayout}
                     >
@@ -116,7 +120,6 @@ export const CreateCommentScreen: React.FC<CreateCommentScreenProps> = ({
                                 )}
                         </>
                     </View>
-
                     {/*
                       Replaced direct comment editor logic with the CommentEditor component.
                       The CommentEditor handles all aspects of the comment creation,
@@ -158,6 +161,7 @@ const styles = StyleSheet.create({
               backgroundColor: COLORS.AppBackground,
           }
         : { flex: 1, backgroundColor: COLORS.AppBackground },
+    // @ts-expect-error web only types
     safeContainer: {
         flex: 1,
         backgroundColor: COLORS.SecondaryBackground,

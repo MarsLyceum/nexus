@@ -16,13 +16,7 @@ import {
 } from 'react-native';
 import { NavigationProp, RouteProp } from '@react-navigation/native';
 import { useQuery, useApolloClient } from '@apollo/client';
-import {
-    useAppDispatch,
-    loadUser,
-    useAppSelector,
-    RootState,
-    UserType,
-} from '../redux';
+import { useAppDispatch, loadUser } from '../redux';
 import {
     FETCH_POST_QUERY,
     FETCH_USER_QUERY,
@@ -39,7 +33,6 @@ import {
     SkeletonComment,
     CommentEditor,
 } from '../small-components';
-import { useCreateComment } from '../hooks';
 
 type RootStackParamList = {
     PostScreen: { id?: number; post?: Post; parentCommentId?: string };
@@ -132,18 +125,7 @@ export const PostScreen: React.FC<PostScreenProps> = ({
 
     useEffect(() => {
         setPostContent();
-    }, [
-        postData?.id,
-        postData?.user,
-        postData?.content,
-        feedPost?.postedAt,
-        postData?.attachmentUrls,
-        setPostId,
-        setParentUser,
-        setParentContent,
-        setParentDate,
-        setParentAttachmentUrls,
-    ]);
+    }, [setPostContent]);
 
     // Update header title: show "Nexus" while loading, then post title once loaded.
     useEffect(() => {
@@ -158,14 +140,6 @@ export const PostScreen: React.FC<PostScreenProps> = ({
     const commentsManagerRef = useRef<{ checkScrollPosition: () => void }>(
         null
     );
-
-    // Pull user info for creating comments
-    const user: UserType = useAppSelector(
-        (state: RootState) => state.user.user
-    );
-    const { createComment, creatingComment } = useCreateComment(() => {
-        // (Optional) do something on success, e.g. refresh or clear attachments
-    });
 
     // onScroll handler: update scrollY state.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -185,6 +159,7 @@ export const PostScreen: React.FC<PostScreenProps> = ({
 
     // Create dynamic styles based on device type.
     const computedStyles = StyleSheet.create({
+        // @ts-expect-error web only types
         safeContainer: {
             flex: 1,
             backgroundColor: COLORS.SecondaryBackground,
@@ -279,23 +254,6 @@ export const PostScreen: React.FC<PostScreenProps> = ({
               behavior: Platform.OS === 'ios' ? 'padding' : undefined,
           };
 
-    // Reusable function to create a comment (used in inline CommentEditor for desktop).
-    const handleCreateComment = async (
-        content: string,
-        attachments: { id: string; file: any }[]
-    ) => {
-        if (!postData.id || !user?.id || creatingComment) return;
-        await createComment({
-            postedByUserId: user.id,
-            postId: postData.id,
-            content,
-            attachments: attachments.map((att) => att.file),
-            parentCommentId,
-            hasChildren: false,
-            upvotes: 1,
-        });
-    };
-
     return (
         // @ts-expect-error web only types
         <SafeAreaView style={computedStyles.safeContainer}>
@@ -337,7 +295,8 @@ export const PostScreen: React.FC<PostScreenProps> = ({
                             // Show inline CommentEditor on computer
                             <CommentEditor
                                 postId={postData.id}
-                                parentCommentId={parentCommentId}
+                                // eslint-disable-next-line unicorn/no-null
+                                parentCommentId={parentCommentId ?? null}
                                 onCommentCreated={() => {
                                     // When a top-level comment is created,
                                     // refetch the comments so the new comment is shown.
@@ -362,6 +321,7 @@ export const PostScreen: React.FC<PostScreenProps> = ({
                         // Show CreateContentButton on mobile;
                         // reset the comment context to top-level before navigating
                         <View
+                            // @ts-expect-error web only types
                             style={computedStyles.createContentButtonContainer}
                         >
                             <CreateContentButton

@@ -8,7 +8,6 @@ import {
     useWindowDimensions,
     Platform,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome5';
 import DraggableFlatList from 'react-native-draggable-flatlist';
 import {
     DndContext,
@@ -89,11 +88,13 @@ const styles = StyleSheet.create({
     },
     channelText: {
         fontSize: 16,
+        fontFamily: 'Roboto_400Regular',
         color: 'gray',
     },
     activeChannelText: {
         color: 'white',
         fontWeight: 'bold',
+        fontFamily: 'Roboto_700Bold',
     },
 });
 
@@ -171,6 +172,7 @@ export function GroupScreen({ navigation }: { navigation: NavProp }) {
                 </View>
                 <View style={styles.chatWrapper}>
                     {activeView === 'messages' ? (
+                        // @ts-expect-error navigation
                         <ServerMessagesScreen navigation={navigation} />
                     ) : (
                         <GroupEventsScreen navigation={navigation} />
@@ -305,6 +307,7 @@ const ChannelList: React.FC<ChannelListProps> = ({
             cursor: 'grab',
         };
         return (
+            // @ts-expect-error view
             <View
                 ref={setNodeRef}
                 style={[

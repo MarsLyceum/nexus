@@ -6,6 +6,7 @@ import {
     StyleSheet,
     FlatList,
     useWindowDimensions,
+    TouchableOpacity,
 } from 'react-native';
 import { NavigationProp, RouteProp } from '@react-navigation/core';
 import { Image as ExpoImage } from 'expo-image';
@@ -21,6 +22,7 @@ export type Message = {
     text: string;
     avatar: string;
     edited: boolean;
+    attachments: Attachment[]; // <-- Added attachments property
 };
 
 type RootStackParamList = {
@@ -95,6 +97,18 @@ const styles = StyleSheet.create({
         color: 'gray',
         marginTop: 2,
     },
+    attachmentsContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        marginTop: 5,
+    },
+    attachmentImage: {
+        width: 100,
+        height: 100,
+        borderRadius: 10,
+        marginTop: 5,
+        marginRight: 5,
+    },
 });
 
 export const ChatScreen: React.FC<ChatScreenProps> = ({
@@ -114,6 +128,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             text: 'Its free on Steam atm if you want to install it ahead of time',
             avatar: 'https://picsum.photos/50?random=1',
             edited: false,
+            attachments: [], // <-- No attachments for this message.
         },
         {
             id: '2',
@@ -122,6 +137,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             text: "Ok cool I'll install it then",
             avatar: 'https://picsum.photos/50?random=2',
             edited: false,
+            attachments: [],
         },
         {
             id: '3',
@@ -130,6 +146,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             text: 'Do you like PoE2 by the way?',
             avatar: 'https://picsum.photos/50?random=1',
             edited: true,
+            attachments: [],
         },
         {
             id: '4',
@@ -138,6 +155,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             text: "He's been really caught up in other things besides games though so I wouldn't hold my breath on him joining, but maybe I can twist his arm lol",
             avatar: 'https://picsum.photos/50?random=1',
             edited: false,
+            attachments: [],
         },
         {
             id: '5',
@@ -146,6 +164,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             text: "Yeah I like PoE2 but it's really difficult and I'm currently stuck on a boss. It would be fun to play it sometime though.",
             avatar: 'https://picsum.photos/50?random=2',
             edited: false,
+            attachments: [],
         },
     ]);
 
@@ -167,15 +186,18 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             text,
             avatar: 'https://picsum.photos/50?random=99',
             edited: false,
+            attachments, // <-- Using the attachments parameter.
         };
         setMessages((prevMessages) => [...prevMessages, newMessage]);
     };
 
     // Handlers for inline image and attachment preview presses.
+    // eslint-disable-next-line unicorn/consistent-function-scoping
     const onInlineImagePress = (url: string) => {
         console.log('Inline image pressed:', url);
     };
 
+    // eslint-disable-next-line unicorn/consistent-function-scoping
     const onAttachmentPreviewPress = (att: Attachment) => {
         console.log('Attachment preview pressed:', att);
     };
@@ -226,6 +248,31 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
                             {item.edited && (
                                 <Text style={styles.editedLabel}>(edited)</Text>
                             )}
+                            {/* Render attachments if present */}
+                            {item.attachments &&
+                                item.attachments.length > 0 && (
+                                    <View style={styles.attachmentsContainer}>
+                                        {item.attachments.map((att, index) => (
+                                            <TouchableOpacity
+                                                key={index}
+                                                onPress={() =>
+                                                    onAttachmentPreviewPress(
+                                                        att
+                                                    )
+                                                }
+                                            >
+                                                <ExpoImage
+                                                    source={{
+                                                        uri: att.previewUri,
+                                                    }}
+                                                    style={
+                                                        styles.attachmentImage
+                                                    }
+                                                />
+                                            </TouchableOpacity>
+                                        ))}
+                                    </View>
+                                )}
                         </View>
                     </View>
                 )}

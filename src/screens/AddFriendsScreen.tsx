@@ -67,7 +67,8 @@ export const AddFriendsScreen = () => {
     const searchResults = searchData ? searchData.searchForUsers : [];
     const friendIds = new Set(
         friendsData
-            ? friendsData.getFriends.map((item: any) => item.friend.id)
+            ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              friendsData.getFriends.map((item: any) => item.friend.id)
             : []
     );
 
@@ -83,6 +84,7 @@ export const AddFriendsScreen = () => {
     };
 
     // Render a single search result item.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const renderFriendItem = ({ item }: { item: any }) => (
         <View style={styles.friendItem}>
             <Image

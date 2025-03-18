@@ -5,7 +5,6 @@ import {
     StyleSheet,
     ScrollView,
     TouchableOpacity,
-    useWindowDimensions,
 } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { useNavigation } from '@react-navigation/native';
@@ -84,8 +83,6 @@ const parseCount = (count: string): number => {
 
 export const SearchScreen = () => {
     const { searchText, setSearchText } = useContext(SearchContext);
-    const { width } = useWindowDimensions();
-    const isDesktop = width > 768;
     const navigation = useNavigation();
 
     const filteredResults = useSearchFilter<SearchResult>(

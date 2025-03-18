@@ -1,11 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-    View,
-    StyleSheet,
-    TouchableOpacity,
-    LayoutChangeEvent,
-    ScrollView,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { CarouselDots } from './CarouselDots';
 import { ArrowButton } from './ArrowButton';
@@ -15,7 +9,7 @@ import { useMediaTypes } from '../hooks';
 export type AttachmentImageGalleryProps = {
     attachmentUrls: string[];
     onImagePress: (index: number) => void;
-    containerWidth?: number;
+    containerWidth: number;
 };
 
 export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({

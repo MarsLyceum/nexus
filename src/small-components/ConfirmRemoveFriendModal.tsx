@@ -12,7 +12,7 @@ import { Friend } from './FriendItem';
 
 type ConfirmationModalProps = {
     visible: boolean;
-    friend: Friend | null;
+    friend?: Friend;
     onConfirm: () => void;
     onCancel: () => void;
 };

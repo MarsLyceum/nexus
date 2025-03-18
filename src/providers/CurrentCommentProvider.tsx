@@ -1,5 +1,4 @@
 import React, { createContext, useState, FC, useMemo } from 'react';
-import { Attachment } from '../types';
 
 export type CurrentCommentContextType = {
     parentUser: string;

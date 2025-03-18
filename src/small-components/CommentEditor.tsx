@@ -19,7 +19,7 @@ import { GiphyModal } from './GiphyModal';
 
 type CommentEditorProps = {
     postId: string;
-    parentCommentId?: string;
+    parentCommentId: string | null;
     /**
      * Called if the user clicks the "Cancel" button
      */
@@ -96,7 +96,7 @@ export const CommentEditor: React.FC<CommentEditorProps> = ({
             content: newCommentContent,
             attachments: attachments.map((att) => att.file),
             // eslint-disable-next-line unicorn/no-null
-            parentCommentId: parentCommentId ?? null,
+            parentCommentId,
             hasChildren: false,
             upvotes: 1,
         });

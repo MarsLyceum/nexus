@@ -101,6 +101,7 @@ export const FriendsScreen: React.FC = () => {
                 return { ...prev, getFriends: updatedFriends };
             },
         });
+        // eslint-disable-next-line consistent-return
         return () => unsubscribe();
     }, [user?.id, subscribeToMore]);
 
@@ -213,9 +214,9 @@ export const FriendsScreen: React.FC = () => {
     switch (activeTab) {
         case 'Online': {
             filteredFriends = friendsList.filter((item) => {
-                const isAccepted = item.status.toLowerCase() === 'accepted';
+                const isAccepted = item.status?.toLowerCase() === 'accepted';
                 // Now, include "online", "online_dnd" and "idle" statuses without fallback defaults.
-                const friendStatus = item.friend.status.toLowerCase();
+                const friendStatus = item.friend.status?.toLowerCase();
                 const isOnline =
                     friendStatus === 'online' ||
                     friendStatus === 'online_dnd' ||
@@ -226,7 +227,7 @@ export const FriendsScreen: React.FC = () => {
         }
         case 'All': {
             filteredFriends = friendsList.filter(
-                (item) => item.status.toLowerCase() === 'accepted'
+                (item) => item.status?.toLowerCase() === 'accepted'
             );
             break;
         }

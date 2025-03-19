@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -20,9 +20,10 @@ import {
     ConfirmRemoveFriendModal,
 } from '../small-components';
 import {
-    GET_FRIENDS_QUERY,
+    GET_FRIENDS,
     REMOVE_FRIEND,
     ACCEPT_FRIEND_REQUEST,
+    FRIEND_STATUS_CHANGED,
 } from '../queries';
 import { COLORS } from '../constants';
 import { useAppSelector, RootState } from '../redux';
@@ -51,21 +52,57 @@ export const FriendsScreen: React.FC = () => {
     const isLargeScreen = windowWidth > 768;
 
     const user = useAppSelector((state: RootState) => state.user.user);
-    const { data } = useQuery(GET_FRIENDS_QUERY, {
+    const { data, subscribeToMore } = useQuery(GET_FRIENDS, {
         variables: { userId: user?.id },
+        skip: !user?.id,
     });
 
     const [removeFriendMutation] = useMutation(REMOVE_FRIEND, {
         refetchQueries: [
-            { query: GET_FRIENDS_QUERY, variables: { userId: user?.id } },
+            { query: GET_FRIENDS, variables: { userId: user?.id } },
         ],
     });
 
     const [acceptFriendMutation] = useMutation(ACCEPT_FRIEND_REQUEST, {
         refetchQueries: [
-            { query: GET_FRIENDS_QUERY, variables: { userId: user?.id } },
+            { query: GET_FRIENDS, variables: { userId: user?.id } },
         ],
     });
+
+    // Subscribe to friend status changes and update the GET_FRIENDS cache.
+    useEffect(() => {
+        if (!user?.id) return;
+        const unsubscribe = subscribeToMore({
+            document: FRIEND_STATUS_CHANGED,
+            variables: { userId: user.id },
+            updateQuery: (prev, { subscriptionData }) => {
+                if (!subscriptionData.data) return prev;
+                const { friendStatusChanged } = subscriptionData.data;
+                console.log(
+                    `Updating friend ${friendStatusChanged.friendUserId} status to ${friendStatusChanged.status}`
+                );
+                const updatedFriends = prev.getFriends.map(
+                    (friendItem: FriendItemData) => {
+                        if (
+                            friendItem.friend.id ===
+                            friendStatusChanged.friendUserId
+                        ) {
+                            return {
+                                ...friendItem,
+                                friend: {
+                                    ...friendItem.friend,
+                                    status: friendStatusChanged.status,
+                                },
+                            };
+                        }
+                        return friendItem;
+                    }
+                );
+                return { ...prev, getFriends: updatedFriends };
+            },
+        });
+        return () => unsubscribe();
+    }, [user?.id, subscribeToMore]);
 
     // Dummy skeleton data for loading.
     const skeletonData: FriendItemData[] = Array.from({ length: 5 }).map(
@@ -128,7 +165,7 @@ export const FriendsScreen: React.FC = () => {
     // Render function for each friend item.
     const renderFriendItem = ({ item }: { item: FriendItemData }) => {
         if ((item.status?.toLowerCase() || '') === 'pending') {
-            // Pass current user id, accept, and reject handlers
+            // Pass current user id, accept, and reject handlers.
             return (
                 <FriendItem
                     item={item}
@@ -171,32 +208,32 @@ export const FriendsScreen: React.FC = () => {
 
     // Filter logic based on the active tab.
     let filteredFriends: FriendItemData[] = [];
+
     // eslint-disable-next-line default-case
     switch (activeTab) {
         case 'Online': {
             filteredFriends = friendsList.filter((item) => {
-                const isAccepted =
-                    (item.status?.toLowerCase() || '') === 'accepted';
+                const isAccepted = item.status.toLowerCase() === 'accepted';
+                // Now, include "online", "online_dnd" and "idle" statuses without fallback defaults.
+                const friendStatus = item.friend.status.toLowerCase();
                 const isOnline =
-                    (item.friend.status?.toLowerCase() || 'online') ===
-                    'online';
+                    friendStatus === 'online' ||
+                    friendStatus === 'online_dnd' ||
+                    friendStatus === 'idle';
                 return isAccepted && isOnline;
             });
-
             break;
         }
         case 'All': {
             filteredFriends = friendsList.filter(
-                (item) => (item.status?.toLowerCase() || '') === 'accepted'
+                (item) => item.status.toLowerCase() === 'accepted'
             );
-
             break;
         }
         case 'Pending': {
             filteredFriends = friendsList.filter(
                 (item) => (item.status?.toLowerCase() || '') === 'pending'
             );
-
             break;
         }
         // No default

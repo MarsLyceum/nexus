@@ -31,4 +31,5 @@ export * from './PatchedFlashList';
 export * from './SkeletonComment';
 export * from './SkeletonMessageItem';
 export * from './SkeletonPostItem';
+export * from './StatusManager';
 export * from './Tooltip';

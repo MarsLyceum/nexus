@@ -9,4 +9,5 @@ export type User = {
     phoneNumber: string;
     token: string;
     groups: [Group] | [];
+    status: 'online' | 'offline' | 'idle' | 'offline_dnd' | 'online_dnd';
 };

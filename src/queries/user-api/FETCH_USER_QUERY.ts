@@ -9,6 +9,7 @@ export const FETCH_USER_QUERY = gql`
             firstName
             lastName
             phoneNumber
+            status
         }
     }
 `;

@@ -18,7 +18,7 @@ import { COLORS } from '../constants';
 import { BackArrow } from '../buttons';
 import {
     SEARCH_FOR_USERS_QUERY,
-    GET_FRIENDS_QUERY,
+    GET_FRIENDS,
     SEND_FRIEND_REQUEST,
 } from '../queries';
 
@@ -49,7 +49,7 @@ export const AddFriendsScreen = () => {
         data: friendsData,
         loading: friendsLoading,
         error: friendsError,
-    } = useQuery(GET_FRIENDS_QUERY, {
+    } = useQuery(GET_FRIENDS, {
         variables: { userId: user?.id },
     });
 
@@ -59,7 +59,7 @@ export const AddFriendsScreen = () => {
         { loading: sendRequestLoading, error: sendRequestError },
     ] = useMutation(SEND_FRIEND_REQUEST, {
         refetchQueries: [
-            { query: GET_FRIENDS_QUERY, variables: { userId: user?.id } },
+            { query: GET_FRIENDS, variables: { userId: user?.id } },
         ],
     });
 

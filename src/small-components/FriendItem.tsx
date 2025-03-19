@@ -6,8 +6,12 @@ import { COLORS } from '../constants';
 import { ActionButton } from './ActionButton';
 
 export type Friend = {
-    username: string;
-    // This field will be used for online status if provided
+    id?: string;
+    email?: string;
+    username?: string;
+    firstName?: string;
+    lastName?: string;
+    phoneNumber?: string;
     status?: string;
 };
 
@@ -23,6 +27,7 @@ export type FriendItemData = {
         firstName: string;
         lastName: string;
         phoneNumber: string;
+        status: string;
     } | null;
 };
 
@@ -37,29 +42,41 @@ type FriendItemProps = {
     onReject?: () => void;
 };
 
-// Returns dot color based on online status (defaults to green for "online")
+// Mapping for displayed statuses
+const displayStatusMap: { [key: string]: string } = {
+    online: 'Online',
+    online_dnd: 'Online (Do Not Disturb)',
+    idle: 'Idle',
+    offline: 'Offline',
+    invisible: 'Invisible',
+    offline_dnd: 'Offline (Do Not Disturb)',
+};
+
+// Returns dot color based on online status using your color palette.
 const getDotColor = (status?: string): string => {
     const currentStatus = status ? status.toLowerCase() : 'online';
     switch (currentStatus) {
         case 'online': {
-            return '#43B581';
-        }
+            return COLORS.Success;
+        } // Green (#31E143)
+        case 'online_dnd': {
+            return COLORS.Error;
+        } // Red (#bb1817)
         case 'idle': {
-            return '#FAA61A';
-        }
-        case 'dnd':
-        case 'do not disturb': {
-            return '#F04747';
-        }
+            return COLORS.Idle;
+        } // Idle (#FAA61A)
+        case 'offline':
+        case 'invisible': {
+            return COLORS.InactiveText;
+        } // Gray (#989898)
+        case 'offline_dnd': {
+            return COLORS.Error;
+        } // Red (#bb1817)
         default: {
-            return '#B9BBBE';
+            return COLORS.InactiveText;
         }
     }
 };
-
-// Helper function to capitalize the first letter
-const capitalize = (s: string): string =>
-    s.charAt(0).toUpperCase() + s.slice(1);
 
 export const FriendItem: React.FC<FriendItemProps> = ({
     item,
@@ -82,19 +99,23 @@ export const FriendItem: React.FC<FriendItemProps> = ({
     const isRequestedByMe = requestedBy?.id === currentUserId;
 
     // Determine displayed status:
-    // - If pending, show outgoing/incoming friend request
-    // - If relationship is accepted, show online status (or default "Online")
-    // - Otherwise, show the relationship status (capitalized) if available
+    // - If pending, show outgoing/incoming friend request.
+    // - If relationship is accepted, display the online status using displayStatusMap.
+    // - Otherwise, show the relationship status (capitalized) if available.
     let displayedStatus = '';
     if (isPending) {
         displayedStatus = isRequestedByMe
             ? 'Outgoing Friend Request'
             : 'Incoming Friend Request';
     } else if (relationshipStatus === 'accepted') {
-        displayedStatus = onlineStatus ? capitalize(onlineStatus) : 'Online';
+        displayedStatus = onlineStatus
+            ? displayStatusMap[onlineStatus] ||
+              onlineStatus.charAt(0).toUpperCase() + onlineStatus.slice(1)
+            : 'Online';
     } else {
         displayedStatus = relationshipStatus
-            ? capitalize(relationshipStatus)
+            ? relationshipStatus.charAt(0).toUpperCase() +
+              relationshipStatus.slice(1)
             : 'Online';
     }
 

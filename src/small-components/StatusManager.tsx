@@ -73,7 +73,9 @@ export const StatusManager: React.FC<{ children: ReactNode }> = ({
                     void setStatus('online');
                     resetIdleTimer();
                 }
-                // No action needed for inactive/background on web.
+                if (nextAppState === 'background') {
+                    void setStatus('offline');
+                }
             }
         );
 

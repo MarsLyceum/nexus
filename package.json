@@ -14,7 +14,7 @@
         "typecheck": "tsc --noEmit"
     },
     "dependencies": {
-        "@shopify/flash-list": "^1.7.5",
+        "@shopify/flash-list": "^1.7.6",
         "react-native-zoom-toolkit": "^4.0.1",
         "uuid": "^11.1.0",
         "react-native-paper": "^5.13.1",

@@ -9,6 +9,7 @@ export const FETCH_USER_BY_EMAIL_QUERY = gql`
             firstName
             lastName
             phoneNumber
+            status
         }
     }
 `;

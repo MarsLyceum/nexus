@@ -1,6 +1,6 @@
 import { gql } from '@apollo/client';
 
-export const GET_FRIENDS_QUERY = gql`
+export const GET_FRIENDS = gql`
     query GetFriends($userId: String!) {
         getFriends(userId: $userId) {
             id
@@ -12,6 +12,7 @@ export const GET_FRIENDS_QUERY = gql`
                 firstName
                 lastName
                 phoneNumber
+                status
             }
             requestedBy {
                 id
@@ -20,6 +21,7 @@ export const GET_FRIENDS_QUERY = gql`
                 firstName
                 lastName
                 phoneNumber
+                status
             }
         }
     }

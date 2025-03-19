@@ -60,6 +60,7 @@ import {
     ActiveGroupProvider,
     CurrentCommentProvider,
 } from './providers';
+import { StatusManager } from './small-components';
 
 if (__DEV__) {
     loadDevMessages();
@@ -273,39 +274,43 @@ export default function App() {
                                             <NavigationContainer
                                                 linking={linking}
                                             >
-                                                <RootStack.Navigator
-                                                    screenOptions={{
-                                                        headerShown: false,
-                                                        presentation:
-                                                            'transparentModal', // This makes the screens render as modals by default
-                                                    }}
-                                                >
-                                                    <RootStack.Screen
-                                                        name="Main"
-                                                        component={
-                                                            MainStackScreen
-                                                        }
-                                                    />
-                                                    <RootStack.Screen
-                                                        name="CreateGroup"
-                                                        // @ts-expect-error navigator
-                                                        component={
-                                                            CreateGroupModalScreen
-                                                        }
-                                                        options={{
+                                                <StatusManager>
+                                                    <RootStack.Navigator
+                                                        screenOptions={{
+                                                            headerShown: false,
                                                             presentation:
-                                                                'transparentModal',
-                                                            cardStyle: {
-                                                                backgroundColor:
-                                                                    'transparent',
-                                                            },
-                                                            ...Platform.select({
-                                                                ios: TransitionPresets.ModalPresentationIOS,
-                                                            }),
+                                                                'transparentModal', // This makes the screens render as modals by default
                                                         }}
-                                                    />
-                                                </RootStack.Navigator>
-                                                <Toast />
+                                                    >
+                                                        <RootStack.Screen
+                                                            name="Main"
+                                                            component={
+                                                                MainStackScreen
+                                                            }
+                                                        />
+                                                        <RootStack.Screen
+                                                            name="CreateGroup"
+                                                            // @ts-expect-error navigator
+                                                            component={
+                                                                CreateGroupModalScreen
+                                                            }
+                                                            options={{
+                                                                presentation:
+                                                                    'transparentModal',
+                                                                cardStyle: {
+                                                                    backgroundColor:
+                                                                        'transparent',
+                                                                },
+                                                                ...Platform.select(
+                                                                    {
+                                                                        ios: TransitionPresets.ModalPresentationIOS,
+                                                                    }
+                                                                ),
+                                                            }}
+                                                        />
+                                                    </RootStack.Navigator>
+                                                    <Toast />
+                                                </StatusManager>
                                             </NavigationContainer>
                                         </PortalProvider>
                                     </ReduxProvider>

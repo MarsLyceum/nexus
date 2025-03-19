@@ -106,14 +106,16 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
 
     useEffect(() => {
         void (async () => {
-            const result = await apolloClient.query<{
-                fetchUserGroups: UserGroupsType;
-            }>({
-                query: FETCH_USER_GROUPS_QUERY,
-                variables: { userId: user?.id },
-            });
-            setUserGroupsInStore(result.data.fetchUserGroups);
-            setLoadingGroups(false);
+            if (user?.id) {
+                const result = await apolloClient.query<{
+                    fetchUserGroups: UserGroupsType;
+                }>({
+                    query: FETCH_USER_GROUPS_QUERY,
+                    variables: { userId: user?.id },
+                });
+                setUserGroupsInStore(result.data.fetchUserGroups);
+                setLoadingGroups(false);
+            }
         })();
     }, [user?.id, apolloClient, setUserGroupsInStore]);
 

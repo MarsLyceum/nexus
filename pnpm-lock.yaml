@@ -77,8 +77,8 @@ importers:
         specifier: ^2.5.1
         version: 2.5.1(react-redux@9.2.0(@types/react@18.3.18)(react@18.3.1)(redux@5.0.1))(react@18.3.1)
       '@shopify/flash-list':
-        specifier: ^1.7.5
-        version: 1.7.5(@babel/runtime@7.26.7)(react-native@0.76.6(@babel/core@7.26.7)(@babel/preset-env@7.24.7(@babel/core@7.26.7))(@react-native-community/cli-server-api@13.6.9(encoding@0.1.13))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)
+        specifier: ^1.7.6
+        version: 1.7.6(@babel/runtime@7.26.7)(react-native@0.76.6(@babel/core@7.26.7)(@babel/preset-env@7.24.7(@babel/core@7.26.7))(@react-native-community/cli-server-api@13.6.9(encoding@0.1.13))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)
       '@supabase/supabase-js':
         specifier: ^2.48.1
         version: 2.48.1
@@ -1850,8 +1850,8 @@ packages:
   '@segment/loosely-validate-event@2.0.0':
     resolution: {integrity: sha512-ZMCSfztDBqwotkl848ODgVcAmN4OItEWDCkshcKz0/W6gGSQayuuCtWV/MlodFivAZD793d6UgANd6wCXUfrIw==}
 
-  '@shopify/flash-list@1.7.5':
-    resolution: {integrity: sha512-TPNCqvDINgd1ko8IvVPJeq+74bz+o5TkxnnBig+GbDAvrOiwLBU+qnmvHWjFsivoATUZVtuUApAKTRk/C26yiw==}
+  '@shopify/flash-list@1.7.6':
+    resolution: {integrity: sha512-0kuuAbWgy4YSlN05mt0ScvxK8uiDixMsICWvDed+LTxvZ5+5iRyt3M8cRLUroB8sfiZlJJZWlxHrx0frBpsYOQ==}
     peerDependencies:
       '@babel/runtime': '*'
       react: '*'
@@ -6599,8 +6599,8 @@ packages:
   reconnecting-websocket@4.4.0:
     resolution: {integrity: sha512-D2E33ceRPga0NvTDhJmphEgJ7FUYF0v4lr1ki0csq06OdlxKfugGzN0dSkxM/NfqCxYELK4KcaTOUOjTV6Dcng==}
 
-  recyclerlistview@4.2.2:
-    resolution: {integrity: sha512-tN6Aeob/mOD75Gco+vtjK4mbCjjsvev5me96TrwInuomYtYhLzUXSHjMOklEf2odK/eaV7uebimpZAe8YN6veg==}
+  recyclerlistview@4.2.3:
+    resolution: {integrity: sha512-STR/wj/FyT8EMsBzzhZ1l2goYirMkIgfV3gYEPxI3Kf3lOnu6f7Dryhyw7/IkQrgX5xtTcDrZMqytvteH9rL3g==}
     peerDependencies:
       react: '>= 15.2.1'
       react-native: '>= 0.30.0'
@@ -10215,12 +10215,12 @@ snapshots:
       component-type: 1.2.2
       join-component: 1.1.0
 
-  '@shopify/flash-list@1.7.5(@babel/runtime@7.26.7)(react-native@0.76.6(@babel/core@7.26.7)(@babel/preset-env@7.24.7(@babel/core@7.26.7))(@react-native-community/cli-server-api@13.6.9(encoding@0.1.13))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)':
+  '@shopify/flash-list@1.7.6(@babel/runtime@7.26.7)(react-native@0.76.6(@babel/core@7.26.7)(@babel/preset-env@7.24.7(@babel/core@7.26.7))(@react-native-community/cli-server-api@13.6.9(encoding@0.1.13))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@babel/runtime': 7.26.7
       react: 18.3.1
       react-native: 0.76.6(@babel/core@7.26.7)(@babel/preset-env@7.24.7(@babel/core@7.26.7))(@react-native-community/cli-server-api@13.6.9(encoding@0.1.13))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1)
-      recyclerlistview: 4.2.2(react-native@0.76.6(@babel/core@7.26.7)(@babel/preset-env@7.24.7(@babel/core@7.26.7))(@react-native-community/cli-server-api@13.6.9(encoding@0.1.13))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)
+      recyclerlistview: 4.2.3(react-native@0.76.6(@babel/core@7.26.7)(@babel/preset-env@7.24.7(@babel/core@7.26.7))(@react-native-community/cli-server-api@13.6.9(encoding@0.1.13))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)
       tslib: 2.8.1
 
   '@sideway/address@4.1.5':
@@ -16208,7 +16208,7 @@ snapshots:
       '@react-navigation/native-stack': 6.11.0(@react-navigation/native@6.1.18(react-native@0.76.6(@babel/core@7.26.7)(@babel/preset-env@7.24.7(@babel/core@7.26.7))(@react-native-community/cli-server-api@13.6.9(encoding@0.1.13))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1))(react@18.3.1))(react-native-safe-area-context@4.12.0(react-native@0.76.6(@babel/core@7.26.7)(@babel/preset-env@7.24.7(@babel/core@7.26.7))(@react-native-community/cli-server-api@13.6.9(encoding@0.1.13))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1))(react@18.3.1))(react-native-screens@4.5.0(react-native@0.76.6(@babel/core@7.26.7)(@babel/preset-env@7.24.7(@babel/core@7.26.7))(@react-native-community/cli-server-api@13.6.9(encoding@0.1.13))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1))(react@18.3.1))(react-native@0.76.6(@babel/core@7.26.7)(@babel/preset-env@7.24.7(@babel/core@7.26.7))(@react-native-community/cli-server-api@13.6.9(encoding@0.1.13))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)
       '@react-navigation/stack': 6.4.1(e62f813498a3c8f5af3d96dc3620528a)
       '@reduxjs/toolkit': 2.5.1(react-redux@9.2.0(@types/react@18.3.18)(react@18.3.1)(redux@5.0.1))(react@18.3.1)
-      '@shopify/flash-list': 1.7.5(@babel/runtime@7.26.7)(react-native@0.76.6(@babel/core@7.26.7)(@babel/preset-env@7.24.7(@babel/core@7.26.7))(@react-native-community/cli-server-api@13.6.9(encoding@0.1.13))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)
+      '@shopify/flash-list': 1.7.6(@babel/runtime@7.26.7)(react-native@0.76.6(@babel/core@7.26.7)(@babel/preset-env@7.24.7(@babel/core@7.26.7))(@react-native-community/cli-server-api@13.6.9(encoding@0.1.13))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)
       '@supabase/supabase-js': 2.48.1
       '@turf/turf': 7.2.0
       '@types/apollo-upload-client': 18.0.0(@types/react@18.3.18)(graphql-ws@5.16.2(graphql@15.10.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(subscriptions-transport-ws@0.11.0(graphql@15.10.1))
@@ -16983,7 +16983,7 @@ snapshots:
 
   reconnecting-websocket@4.4.0: {}
 
-  recyclerlistview@4.2.2(react-native@0.76.6(@babel/core@7.26.7)(@babel/preset-env@7.24.7(@babel/core@7.26.7))(@react-native-community/cli-server-api@13.6.9(encoding@0.1.13))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1))(react@18.3.1):
+  recyclerlistview@4.2.3(react-native@0.76.6(@babel/core@7.26.7)(@babel/preset-env@7.24.7(@babel/core@7.26.7))(@react-native-community/cli-server-api@13.6.9(encoding@0.1.13))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1))(react@18.3.1):
     dependencies:
       lodash.debounce: 4.0.8
       prop-types: 15.8.1

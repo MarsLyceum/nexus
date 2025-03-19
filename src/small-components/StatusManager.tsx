@@ -24,7 +24,7 @@ export const StatusManager: React.FC<{ children: ReactNode }> = ({
                 (status === 'online' || status === 'offline') &&
                 user.status.includes('dnd')
             ) {
-                effectiveStatus = `${status}-dnd`;
+                effectiveStatus = `${status}_dnd`;
             }
             if (currentStatus.current === effectiveStatus) return;
             try {

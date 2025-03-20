@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, ReactNode, useCallback } from 'react';
-import { AppState, AppStateStatus, View } from 'react-native';
+import { AppState, AppStateStatus, View, Platform } from 'react-native';
 import { useMutation } from '@apollo/client';
 import { useAppSelector, UserType, RootState } from '../redux';
 import { UPDATE_USER } from '../queries';
@@ -79,21 +79,27 @@ export const StatusManager: React.FC<{ children: ReactNode }> = ({
             }
         );
 
-        // On page hide/unload, update the status to offline using sendBeacon or synchronous XHR.
+        // On page hide/unload, update the status to offline.
         const handlePageHide = () => {
             void setStatus('offline');
         };
 
-        window.addEventListener('pagehide', handlePageHide);
-        window.addEventListener('beforeunload', handlePageHide);
+        // Only add these listeners on web
+        if (Platform.OS === 'web' && typeof window !== 'undefined') {
+            window.addEventListener('pagehide', handlePageHide);
+            window.addEventListener('beforeunload', handlePageHide);
+        }
 
         return () => {
             if (idleTimeout.current) {
                 clearTimeout(idleTimeout.current);
             }
             subscription.remove();
-            window.removeEventListener('pagehide', handlePageHide);
-            window.removeEventListener('beforeunload', handlePageHide);
+            // Only remove these listeners on web
+            if (Platform.OS === 'web' && typeof window !== 'undefined') {
+                window.removeEventListener('pagehide', handlePageHide);
+                window.removeEventListener('beforeunload', handlePageHide);
+            }
             // On cleanup, attempt to update the status to offline.
             void setStatus('offline');
         };

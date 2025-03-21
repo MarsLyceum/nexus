@@ -36,6 +36,10 @@ export const FallbackPreview: React.FC<FallbackPreviewProps> = ({
     const previewImage = attachments[0];
     const siteToShow = previewData.siteName || getDomainFromUrl(url);
 
+    // Now that the hook handles meta description extraction,
+    // we directly use previewData.description.
+    const descriptionToShow = previewData.description;
+
     return (
         <View style={styles.linkPreviewContainer}>
             {previewImage ? (
@@ -50,9 +54,9 @@ export const FallbackPreview: React.FC<FallbackPreviewProps> = ({
             {previewData.title ? (
                 <Text style={styles.linkPreviewTitle}>{previewData.title}</Text>
             ) : undefined}
-            {previewData.description ? (
+            {descriptionToShow ? (
                 <Text style={styles.linkPreviewDescription}>
-                    {previewData.description}
+                    {descriptionToShow}
                 </Text>
             ) : undefined}
             <TouchableOpacity

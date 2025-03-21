@@ -1,5 +1,3 @@
-// hooks/useLinkPreview.ts
-
 import { useState, useEffect } from 'react';
 import { Platform, Image as RNImage } from 'react-native';
 import { decode } from 'html-entities';
@@ -96,6 +94,10 @@ export function useLinkPreview(url: string) {
                 const ogImageMatch = html.match(
                     /<meta\s+property=["']og:image["']\s+content=["']([^"']+)["']/i
                 );
+                // Added meta description extraction from <meta name="description" ...>
+                const metaDescriptionMatch = html.match(
+                    /<meta\s+name=["']description["']\s+content=["']([^"']+)["']/i
+                );
 
                 let imgMatch;
                 let descriptionFallback;
@@ -130,7 +132,7 @@ export function useLinkPreview(url: string) {
                     }
                     // Use the first paragraph as the fallback description.
                     descriptionFallback = paragraphs[0]
-                        ? `${paragraphs[0]  }...`
+                        ? `${paragraphs[0]}...`
                         : '';
                 } else {
                     // Default fallback for other pages.
@@ -143,14 +145,20 @@ export function useLinkPreview(url: string) {
 
                 const titleFallbackMatch = html.match(/<title>(.*?)<\/title>/i);
                 setPreviewData({
-                    title: ogTitleMatch
-                        ? ogTitleMatch[1]
-                        : titleFallbackMatch
-                          ? titleFallbackMatch[1]
-                          : url,
-                    description: ogDescriptionMatch
-                        ? ogDescriptionMatch[1]
-                        : descriptionFallback || '',
+                    title: decode(
+                        ogTitleMatch
+                            ? ogTitleMatch[1]
+                            : titleFallbackMatch
+                              ? titleFallbackMatch[1]
+                              : url
+                    ),
+                    description: decode(
+                        ogDescriptionMatch
+                            ? ogDescriptionMatch[1]
+                            : metaDescriptionMatch
+                              ? metaDescriptionMatch[1]
+                              : descriptionFallback || ''
+                    ),
                     images: ogImageMatch
                         ? [ogImageMatch[1]]
                         : firstImageUrl

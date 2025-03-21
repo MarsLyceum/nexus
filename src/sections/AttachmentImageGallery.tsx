@@ -26,7 +26,6 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
     // Compute target dimensions based on the container's width,
     // mimicking the ImagePreview component logic.
     const baseContainerWidth = containerWidth || 360;
-    console.log('baseContainerWidth:', baseContainerWidth);
     const targetWidth =
         baseContainerWidth < 360 ? baseContainerWidth * 0.85 : 360;
     const computedImageHeight = imageAspectRatio

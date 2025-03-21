@@ -11,7 +11,7 @@ export * from './CustomPortalModal';
 export * from './DropdownMenu';
 export * from './EmbedPreview';
 export * from './EmojiPicker';
-export * from './FallbackPreview';
+export * from './RegularWebsitePreview';
 export * from './FriendItem';
 export * from './GiphyModal';
 export * from './ImageCountOverlay';

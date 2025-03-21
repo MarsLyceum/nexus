@@ -5,7 +5,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { useLinkPreview } from '../hooks/useLinkPreview';
 import { ImagePreview } from './ImagePreview';
 import { EmbedPreview } from './EmbedPreview';
-import { FallbackPreview } from './FallbackPreview';
+import { RegularWebsitePreview } from './RegularWebsitePreview';
 import { COLORS } from '../constants';
 
 export type LinkPreviewProps = {
@@ -54,7 +54,7 @@ export const LinkPreview: React.FC<LinkPreviewProps> = ({
 
     return (
         <View style={styles.container}>
-            <FallbackPreview url={url} previewData={previewData} />
+            <RegularWebsitePreview url={url} previewData={previewData} />
         </View>
     );
 };

@@ -12,12 +12,12 @@ import { COLORS } from '../constants';
 import { PreviewData } from '../types';
 import { ImageDetailsModal } from '../sections'; // Import the large image modal
 
-export type FallbackPreviewProps = {
+export type RegularWebsitePreviewProps = {
     url: string;
     previewData: PreviewData;
 };
 
-export const FallbackPreview: React.FC<FallbackPreviewProps> = ({
+export const RegularWebsitePreview: React.FC<RegularWebsitePreviewProps> = ({
     url,
     previewData,
 }) => {
@@ -77,11 +77,11 @@ export const FallbackPreview: React.FC<FallbackPreviewProps> = ({
 
 const styles = StyleSheet.create({
     linkPreviewContainer: {
-        borderWidth: 0,
-        borderColor: '#ccc',
+        borderLeftWidth: 5,
+        borderLeftColor: COLORS.AppBackground,
+        backgroundColor: COLORS.TertiaryBackground,
         padding: 10,
         marginVertical: 5,
-        borderRadius: 8,
     },
     linkPreviewImage: {
         width: '100%',

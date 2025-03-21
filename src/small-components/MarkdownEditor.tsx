@@ -1,3 +1,4 @@
+// MarkdownEditor.tsx
 import React from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
 import { COLORS } from '../constants';
@@ -12,6 +13,8 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
     style,
     width = '100%',
     height = '250px',
+    onFocus, // Destructure onFocus from props
+    onBlur, // Destructure onBlur from props
     ...rest
 }) => {
     // State to track focus.
@@ -42,6 +45,22 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
         ...(parsedHeight ? { height: parsedHeight } : {}),
     };
 
+    // Internal focus handler that also calls parent's onFocus if provided.
+    const handleFocus = (e: any) => {
+        setIsFocused(true);
+        if (onFocus) {
+            onFocus(e);
+        }
+    };
+
+    // Internal blur handler that also calls parent's onBlur if provided.
+    const handleBlur = (e: any) => {
+        setIsFocused(false);
+        if (onBlur) {
+            onBlur(e);
+        }
+    };
+
     return (
         <View style={[styles.container, containerStyle]}>
             <MarkdownInputBase
@@ -49,8 +68,8 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
                 onChangeText={onChangeText}
                 placeholder={placeholder}
                 {...rest}
-                onFocus={() => setIsFocused(true)}
-                onBlur={() => setIsFocused(false)}
+                onFocus={handleFocus}
+                onBlur={handleBlur}
                 wrapperStyle={[
                     styles.inputWrapper,
                     isFocused && styles.activeInputWrapper,

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
     View,
     TouchableOpacity,
@@ -39,6 +39,15 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     onAttachmentPreviewPress,
 }) => {
     const [showGiphy, setShowGiphy] = useState(false);
+    const [gifButtonLayout, setGifButtonLayout] = useState<{
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+    } | null>(null);
+
+    // Create a ref for the GIF button.
+    const gifButtonRef = useRef<TouchableOpacity>(null);
 
     // Extract inline image URLs from the message text.
     const inlineImageUrls = extractUrls(messageText).filter((url) =>
@@ -101,7 +110,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 >
                     <Icon name="image" size={24} color="white" />
                 </TouchableOpacity>
-                {/* The MarkdownTextInput now internally integrates the emoji picker */}
                 <MarkdownTextInput
                     value={messageText}
                     onChangeText={setMessageText}
@@ -110,7 +118,19 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                     returnKeyType="send"
                 />
                 <TouchableOpacity
-                    onPress={() => setShowGiphy(true)}
+                    ref={gifButtonRef}
+                    onPress={() => {
+                        if (gifButtonRef.current) {
+                            gifButtonRef.current.measureInWindow(
+                                (x, y, width, height) => {
+                                    setGifButtonLayout({ x, y, width, height });
+                                    setShowGiphy(true);
+                                }
+                            );
+                        } else {
+                            setShowGiphy(true);
+                        }
+                    }}
                     style={styles.gifButton}
                 >
                     <Text style={styles.gifButtonText}>GIF</Text>
@@ -130,8 +150,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 variant="uri"
                 visible={showGiphy}
                 onClose={() => setShowGiphy(false)}
+                anchorPosition={gifButtonLayout || undefined}
                 onSelectGif={(attachment) => {
-                    // @ts-expect-error attachment
                     sendMessageHandler(attachment.file.uri);
                 }}
             />

@@ -1,22 +1,19 @@
+// CreatePostModal.tsx
 import React, { useState } from 'react';
 import {
     View,
     Text,
     TextInput,
-    Pressable,
-    TouchableOpacity,
     StyleSheet,
     SafeAreaView,
     ScrollView,
+    TouchableOpacity,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome5';
 import { Image as ExpoImage } from 'expo-image';
 import { COLORS } from '../constants';
-import { useFileUpload } from '../hooks';
-import { AttachmentPreviews, Attachment, RichTextEditor } from '../sections';
-import { MarkdownEditor } from './MarkdownEditor';
-import { GiphyModal } from './GiphyModal';
+import { Attachment, AttachmentPreviews } from '../sections';
 import { CustomPortalModal } from './CustomPortalModal';
+import { ContentEditor } from './ContentEditor';
 
 type CreatePostModalProps = {
     modalVisible: boolean;
@@ -53,53 +50,15 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
     setAttachments,
     enableImageAttachments = false,
 }) => {
-    const { pickFile } = useFileUpload();
+    // These states are used only when not using the ContentEditor.
     const [previewModalVisible, setPreviewModalVisible] = useState(false);
     const [selectedAttachment, setSelectedAttachment] = useState<
         Attachment | undefined
     >(undefined);
-    const [useMarkdown, setUseMarkdown] = useState(false);
-    const [showGiphy, setShowGiphy] = useState(false);
-
-    const handleAttachmentInsert = async () => {
-        try {
-            const result = await pickFile();
-            if (!result) return;
-            const file = result;
-            let previewUri = '';
-            if (file && 'uri' in file) {
-                previewUri = file.uri;
-            } else if (file) {
-                previewUri = URL.createObjectURL(file);
-            }
-            const newAttachment: Attachment = {
-                id: `${Date.now()}-${Math.random()}`,
-                file,
-                previewUri,
-            };
-            // @ts-expect-error any
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            setAttachments((prev: any) => [...prev, newAttachment]);
-        } catch (error) {
-            console.error('Error in handleAttachmentInsert:', error);
-        }
-    };
-
-    const handleGifPress = () => {
-        setShowGiphy(true);
-    };
 
     const onAttachmentPress = (attachment: Attachment) => {
         setSelectedAttachment(attachment);
         setPreviewModalVisible(true);
-    };
-
-    const onRemoveAttachment = (attachmentId: string) => {
-        // @ts-expect-error any
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        setAttachments((prev: any[]) =>
-            prev.filter((att) => att.id !== attachmentId)
-        );
     };
 
     return (
@@ -125,34 +84,19 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
                         />
                         {/* Second field: Content */}
                         {multilineSecondField ? (
-                            <>
-                                <TouchableOpacity
-                                    onPress={() =>
-                                        setUseMarkdown((prev) => !prev)
-                                    }
-                                    style={styles.toggleButton}
-                                >
-                                    <Text style={styles.toggleButtonText}>
-                                        {useMarkdown
-                                            ? 'Switch to Rich Text Editor'
-                                            : 'Switch to Markdown Editor'}
-                                    </Text>
-                                </TouchableOpacity>
-                                <View style={styles.editorContainer}>
-                                    {useMarkdown ? (
-                                        <MarkdownEditor
-                                            value={secondContentText}
-                                            onChangeText={setSecondContentText}
-                                            placeholder={placeholderText2}
-                                        />
-                                    ) : (
-                                        <RichTextEditor
-                                            initialContent={secondContentText}
-                                            onChange={setSecondContentText}
-                                        />
-                                    )}
-                                </View>
-                            </>
+                            <ContentEditor
+                                value={secondContentText}
+                                onChange={setSecondContentText}
+                                placeholder={placeholderText2}
+                                attachments={attachments}
+                                setAttachments={setAttachments}
+                                onSubmit={handleCreate}
+                                onCancel={() => setModalVisible(false)}
+                                submitButtonText="Create"
+                                editorBackgroundColor={COLORS.PrimaryBackground}
+                                giphyVariant="download"
+                                showFormattingToggle={true}
+                            />
                         ) : (
                             <TextInput
                                 placeholder={placeholderText2}
@@ -167,85 +111,53 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
                             />
                         )}
 
-                        {enableImageAttachments && (
+                        {enableImageAttachments && !multilineSecondField && (
                             <View style={styles.buttonRow}>
-                                <TouchableOpacity
-                                    onPress={handleAttachmentInsert}
-                                    style={styles.imageButton}
-                                >
-                                    <Icon
-                                        name="image"
-                                        size={24}
-                                        color="white"
-                                    />
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    onPress={handleGifPress}
-                                    style={styles.gifButton}
-                                >
-                                    <Text style={styles.gifButtonText}>
-                                        GIF
-                                    </Text>
-                                </TouchableOpacity>
+                                {/* Attachments are handled here only when not using ContentEditor */}
                             </View>
                         )}
 
-                        <AttachmentPreviews
-                            attachments={attachments}
-                            onAttachmentPress={onAttachmentPress}
-                            onRemoveAttachment={onRemoveAttachment}
-                            onAttachmentsReorder={setAttachments}
-                        />
-
-                        <View style={styles.modalButtonRow}>
-                            <Pressable
-                                style={styles.modalButton}
-                                onPress={() => setModalVisible(false)}
-                            >
-                                <Text style={styles.modalButtonText}>
-                                    Cancel
-                                </Text>
-                            </Pressable>
-                            <Pressable
-                                style={styles.modalButton}
-                                onPress={handleCreate}
-                            >
-                                <Text style={styles.modalButtonText}>
-                                    Create
-                                </Text>
-                            </Pressable>
-                        </View>
+                        {/* --- Conditionally render attachment previews only when NOT using ContentEditor --- */}
+                        {!multilineSecondField && (
+                            <>
+                                <AttachmentPreviews
+                                    attachments={attachments}
+                                    onAttachmentPress={onAttachmentPress}
+                                    onRemoveAttachment={(id) =>
+                                        setAttachments((prev: Attachment[]) =>
+                                            prev.filter((att) => att.id !== id)
+                                        )
+                                    }
+                                    onAttachmentsReorder={setAttachments}
+                                />
+                                {previewModalVisible && selectedAttachment && (
+                                    <CustomPortalModal
+                                        visible={previewModalVisible}
+                                        onClose={() =>
+                                            setPreviewModalVisible(false)
+                                        }
+                                    >
+                                        <TouchableOpacity
+                                            style={styles.previewModalOverlay}
+                                            onPress={() =>
+                                                setPreviewModalVisible(false)
+                                            }
+                                        >
+                                            <ExpoImage
+                                                source={{
+                                                    uri: selectedAttachment.previewUri,
+                                                }}
+                                                style={styles.previewModalImage}
+                                                contentFit="contain"
+                                            />
+                                        </TouchableOpacity>
+                                    </CustomPortalModal>
+                                )}
+                            </>
+                        )}
                     </ScrollView>
                 </SafeAreaView>
             </CustomPortalModal>
-
-            {previewModalVisible && selectedAttachment && (
-                <CustomPortalModal
-                    visible={previewModalVisible}
-                    onClose={() => setPreviewModalVisible(false)}
-                >
-                    <TouchableOpacity
-                        style={styles.previewModalOverlay}
-                        onPress={() => setPreviewModalVisible(false)}
-                    >
-                        <ExpoImage
-                            source={{ uri: selectedAttachment.previewUri }}
-                            style={styles.previewModalImage}
-                            contentFit="contain"
-                        />
-                    </TouchableOpacity>
-                </CustomPortalModal>
-            )}
-
-            <GiphyModal
-                variant="download"
-                visible={showGiphy}
-                onClose={() => setShowGiphy(false)}
-                onSelectGif={(attachment) =>
-                    // @ts-expect-error attachment
-                    setAttachments((prev) => [...prev, attachment])
-                }
-            />
         </>
     );
 };
@@ -254,7 +166,6 @@ const styles = StyleSheet.create({
     modalContentContainer: {
         padding: 20,
         flexGrow: 1,
-        overflowY: 'auto',
     },
     modalTitle: {
         fontSize: 18,
@@ -270,60 +181,9 @@ const styles = StyleSheet.create({
         marginBottom: 15,
         color: COLORS.White,
     },
-    editorContainer: {
-        marginBottom: 20,
-    },
-    toggleButton: {
-        alignSelf: 'flex-end',
-        marginBottom: 10,
-        paddingVertical: 6,
-        paddingHorizontal: 10,
-        backgroundColor: COLORS.SecondaryBackground,
-        borderRadius: 5,
-    },
-    toggleButtonText: {
-        color: COLORS.White,
-        fontWeight: '600',
-    },
     buttonRow: {
         flexDirection: 'row',
         marginBottom: 15,
-    },
-    imageButton: {
-        marginRight: 10,
-        padding: 8,
-        backgroundColor: COLORS.SecondaryBackground,
-        borderRadius: 5,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    gifButton: {
-        marginHorizontal: 10,
-        padding: 8,
-        backgroundColor: COLORS.SecondaryBackground,
-        borderRadius: 5,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    gifButtonText: {
-        color: COLORS.White,
-        fontSize: 16,
-        fontWeight: 'bold',
-    },
-    modalButtonRow: {
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
-    },
-    modalButton: {
-        marginLeft: 10,
-        paddingVertical: 8,
-        paddingHorizontal: 15,
-        borderRadius: 5,
-        backgroundColor: COLORS.Primary,
-    },
-    modalButtonText: {
-        color: COLORS.White,
-        fontWeight: '600',
     },
     previewModalOverlay: {
         flex: 1,

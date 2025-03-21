@@ -153,10 +153,21 @@ export function useLinkPreview(url: string) {
                 }
 
                 // Fallback: Open Graph scraping from raw HTML.
-                const fetchUrl =
-                    Platform.OS === 'web'
-                        ? `https://thingproxy.freeboard.io/fetch/${url}`
-                        : url;
+                let fetchUrl = url;
+
+                if (Platform.OS === 'web') {
+                    try {
+                        const parsedUrl = new URL(url, window.location.origin);
+                        // Check if the URL's origin matches the current domain
+                        if (parsedUrl.origin !== window.location.origin) {
+                            fetchUrl = `https://thingproxy.freeboard.io/fetch/${url}`;
+                        }
+                    } catch {
+                        // Fallback: if parsing fails, use the proxy
+                        fetchUrl = `https://thingproxy.freeboard.io/fetch/${url}`;
+                    }
+                }
+
                 const response = await fetch(fetchUrl);
                 const html = await response.text();
 

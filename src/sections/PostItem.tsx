@@ -175,11 +175,17 @@ export const PostItem: React.FC<PostItemProps> = ({
     const [modalVisible, setModalVisible] = useState(false);
     const [modalStartIndex, setModalStartIndex] = useState(0);
 
+    // New state to store the measured container width
+    const [containerWidth, setContainerWidth] = useState<number>(0);
+
     const onUpvote = () => setVoteCount((prev) => prev + 1);
     const onDownvote = () => setVoteCount((prev) => prev - 1);
 
-    const { width: windowWidth } = Dimensions.get('window');
-    const innerWidth = windowWidth - 30; // available width for post content
+    // Compute inner width based on measured container width with a fallback
+    const innerWidth =
+        containerWidth > 0
+            ? containerWidth - 50
+            : Dimensions.get('window').width - 30;
 
     let avatarUri = '';
     let headerElement;
@@ -251,7 +257,6 @@ export const PostItem: React.FC<PostItemProps> = ({
                 if (result.action === Share.sharedAction) {
                     setShareCount((prev) => prev + 1);
                 }
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (error: any) {
                 Alert.alert('Share error', error.message);
             }
@@ -277,7 +282,13 @@ export const PostItem: React.FC<PostItemProps> = ({
         urlsInContent.length === 1 && plainContent === urlsInContent[0];
 
     const contentElement = (
-        <View style={styles.postContainer}>
+        // Added onLayout to measure the container's width
+        <View
+            style={styles.postContainer}
+            onLayout={(event) => {
+                setContainerWidth(event.nativeEvent.layout.width);
+            }}
+        >
             <View style={styles.postRow}>
                 {onBackPress && (
                     <BackArrow onPress={onBackPress} style={styles.backArrow} />

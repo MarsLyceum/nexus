@@ -15,8 +15,6 @@ export const LinkPreviewSkeleton: React.FC<LinkPreviewSkeletonProps> = ({
             containerWidth ? { width: containerWidth } : {},
         ]}
     >
-        {/* Skeleton Image */}
-        <View style={styles.skeletonImage} />
         {/* Skeleton Title */}
         <View style={styles.skeletonTitle} />
         {/* Skeleton Description (two lines) */}

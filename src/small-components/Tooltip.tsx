@@ -1,3 +1,4 @@
+// Tooltip.tsx
 import React, { useState, useRef } from 'react';
 import {
     Text,
@@ -113,9 +114,9 @@ export const Tooltip = ({
         if (arrowLeft > bubbleWidth - 12) arrowLeft = bubbleWidth - 12;
     }
 
-    // Tooltip content: bubble with arrow.
+    // Tooltip content: bubble with arrow. Set pointerEvents="none" so it doesn't intercept touches.
     const tooltipContent = (
-        <View style={styles.bubbleContainer}>
+        <View style={styles.bubbleContainer} pointerEvents="none">
             {/* Render arrow above bubble if tooltip is below the trigger */}
             {!isTooltipAbove && (
                 <View
@@ -127,11 +128,16 @@ export const Tooltip = ({
                             transform: [{ rotate: '180deg' }],
                         },
                     ]}
+                    pointerEvents="none"
                 >
                     <RoundedTriangle color={COLORS.AppBackground} />
                 </View>
             )}
-            <View style={styles.tooltipBubble} onLayout={onBubbleLayout}>
+            <View
+                style={styles.tooltipBubble}
+                onLayout={onBubbleLayout}
+                pointerEvents="none"
+            >
                 <Text style={styles.tooltipText} numberOfLines={1}>
                     {tooltipText}
                 </Text>
@@ -146,6 +152,7 @@ export const Tooltip = ({
                             top: bubbleHeight - 1,
                         },
                     ]}
+                    pointerEvents="none"
                 >
                     <RoundedTriangle color={COLORS.AppBackground} />
                 </View>
@@ -168,13 +175,16 @@ export const Tooltip = ({
             </View>
             {open && triggerPos && (
                 <Portal>
-                    <View
-                        style={[
-                            styles.portalContainer,
-                            { top: computedTop, left: computedLeft },
-                        ]}
-                    >
-                        {tooltipContent}
+                    <View style={styles.fullScreenWrapper} pointerEvents="none">
+                        <View
+                            style={[
+                                styles.portalContainer,
+                                { top: computedTop, left: computedLeft },
+                            ]}
+                            pointerEvents="none"
+                        >
+                            {tooltipContent}
+                        </View>
                     </View>
                 </Portal>
             )}
@@ -197,6 +207,13 @@ export const RoundedTriangle = ({
 const styles = StyleSheet.create({
     tooltipContainer: {
         position: 'relative',
+    },
+    fullScreenWrapper: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
     },
     portalContainer: {
         position: 'absolute',

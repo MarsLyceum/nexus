@@ -1,12 +1,10 @@
-// components/LinkPreview.tsx
-
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { useLinkPreview } from '../hooks/useLinkPreview';
 import { ImagePreview } from './ImagePreview';
 import { EmbedPreview } from './EmbedPreview';
 import { RegularWebsitePreview } from './RegularWebsitePreview';
-import { COLORS } from '../constants';
+import { LinkPreviewSkeleton } from './LinkPreviewSkeleton';
 
 export type LinkPreviewProps = {
     url: string;
@@ -21,11 +19,7 @@ export const LinkPreview: React.FC<LinkPreviewProps> = ({
         useLinkPreview(url);
 
     if (loading) {
-        return (
-            <View style={styles.container}>
-                <Text style={styles.loadingText}>Loading preview...</Text>
-            </View>
-        );
+        return <LinkPreviewSkeleton containerWidth={containerWidth} />;
     }
 
     if (isImage) {
@@ -63,8 +57,5 @@ const styles = StyleSheet.create({
     container: {
         alignSelf: 'flex-start',
         // width is "auto" by default, so this container will only occupy the space it needs.
-    },
-    loadingText: {
-        color: COLORS.White,
     },
 });

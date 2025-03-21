@@ -13,11 +13,7 @@ export function useLinkPreview(url: string) {
     const [loading, setLoading] = useState(true);
     const [isImage, setIsImage] = useState(false);
     const [imageDimensions, setImageDimensions] = useState<
-        | {
-              width: number;
-              height: number;
-          }
-        | undefined
+        { width: number; height: number } | undefined
     >();
 
     useEffect(() => {
@@ -33,7 +29,6 @@ export function useLinkPreview(url: string) {
                     siteName: getDomainFromUrl(url),
                     url,
                 });
-                // Get image dimensions.
                 RNImage.getSize(
                     url,
                     (width, height) => setImageDimensions({ width, height }),
@@ -43,7 +38,7 @@ export function useLinkPreview(url: string) {
                 return;
             }
 
-            // Fetch oEmbed/Open Graph data.
+            // Try oEmbed/Open Graph data.
             try {
                 const oEmbedEndpoint = getOEmbedEndpoint(url);
                 if (oEmbedEndpoint) {
@@ -55,7 +50,7 @@ export function useLinkPreview(url: string) {
                             );
                         }
                         const oEmbedData = await response.json();
-                        setPreviewData({
+                        const data: PreviewData = {
                             title: oEmbedData.title || url,
                             description:
                                 oEmbedData.author_name ||
@@ -70,21 +65,101 @@ export function useLinkPreview(url: string) {
                             ogType: oEmbedData.type || '',
                             logo: '',
                             embedHtml: oEmbedData.html,
-                        });
+                        };
+                        setPreviewData(data);
+                        if (data.images && data.images.length > 0) {
+                            RNImage.getSize(
+                                data.images[0],
+                                (width, height) =>
+                                    setImageDimensions({ width, height }),
+                                (error) =>
+                                    console.error(
+                                        'Failed to get image size',
+                                        error
+                                    )
+                            );
+                        }
                         setLoading(false);
                         return;
                     } catch (error) {
                         console.warn('oEmbed fetch failed:', error);
-                        // Fall through to fallback.
                     }
                 }
-                // Fallback: Open Graph scraping.
+
+                // Reddit JSON Fallback with URL decoding and dimensions.
+                if (url.includes('reddit.com')) {
+                    try {
+                        const redditUrl = url.endsWith('/')
+                            ? `${url}.json`
+                            : `${url}/.json`;
+                        const redditResponse = await fetch(redditUrl);
+                        if (redditResponse.ok) {
+                            const redditData = await redditResponse.json();
+                            // Reddit JSON structure: redditData[0].data.children[0].data
+                            const postData =
+                                redditData[0]?.data?.children[0]?.data;
+                            if (postData) {
+                                let images: string[] = [];
+                                if (
+                                    postData.preview?.images &&
+                                    postData.preview.images.length > 0
+                                ) {
+                                    const imageSource =
+                                        postData.preview.images[0].source;
+                                    if (imageSource && imageSource.url) {
+                                        // Decode the URL to replace HTML entities.
+                                        const decodedUrl = decode(
+                                            imageSource.url
+                                        );
+                                        images = [decodedUrl];
+                                        // Use Reddit-provided dimensions.
+                                        setImageDimensions({
+                                            width: imageSource.width,
+                                            height: imageSource.height,
+                                        });
+                                    }
+                                }
+                                const redditPreview: PreviewData = {
+                                    title: postData.title || url,
+                                    description: postData.selftext || '',
+                                    images,
+                                    siteName: getDomainFromUrl(url),
+                                    url,
+                                };
+                                setPreviewData(redditPreview);
+                                // Fallback: if dimensions weren't set, use RNImage.getSize.
+                                if (images.length > 0 && !imageDimensions) {
+                                    RNImage.getSize(
+                                        images[0],
+                                        (width, height) =>
+                                            setImageDimensions({
+                                                width,
+                                                height,
+                                            }),
+                                        (error) =>
+                                            console.error(
+                                                'Failed to get image size',
+                                                error
+                                            )
+                                    );
+                                }
+                                setLoading(false);
+                                return;
+                            }
+                        }
+                    } catch (error) {
+                        console.warn('Reddit JSON fetch failed:', error);
+                    }
+                }
+
+                // Fallback: Open Graph scraping from raw HTML.
                 const fetchUrl =
                     Platform.OS === 'web'
                         ? `https://thingproxy.freeboard.io/fetch/${url}`
                         : url;
                 const response = await fetch(fetchUrl);
                 const html = await response.text();
+
                 const ogTitleMatch = html.match(
                     /<meta\s+property=["']og:title["']\s+content=["']([^"']+)["']/i
                 );
@@ -94,7 +169,6 @@ export function useLinkPreview(url: string) {
                 const ogImageMatch = html.match(
                     /<meta\s+property=["']og:image["']\s+content=["']([^"']+)["']/i
                 );
-                // Added meta description extraction from <meta name="description" ...>
                 const metaDescriptionMatch = html.match(
                     /<meta\s+name=["']description["']\s+content=["']([^"']+)["']/i
                 );
@@ -102,9 +176,7 @@ export function useLinkPreview(url: string) {
                 let imgMatch;
                 let descriptionFallback;
 
-                // Special handling for Wikipedia pages:
                 if (url.includes('wikipedia.org')) {
-                    // Try to capture the main content block
                     const contentMatch = html.match(
                         /<div[^>]+id=["']mw-content-text["'][^>]*>([\S\s]*)<\/div>/i
                     );
@@ -112,30 +184,24 @@ export function useLinkPreview(url: string) {
                     imgMatch = contentHtml.match(
                         /<img[^>]+src=["']([^"']+)["']/i
                     );
-                    // Use a global regex to get all <p>...</p> matches.
                     const paragraphRegex = /<p\b[^>]*>([\S\s]*?)<\/p>/gi;
                     const paragraphs: string[] = [];
                     let match;
-                    // Extract only the first non-empty paragraph.
                     while (
-                        // eslint-disable-next-line no-cond-assign
                         (match = paragraphRegex.exec(contentHtml)) !== null &&
                         paragraphs.length === 0
                     ) {
-                        // Remove any HTML tags inside the paragraph and trim whitespace.
                         const paragraphText = decode(
-                            match[1].replaceAll(/<[^>]+>/g, '').trim()
+                            match[1].replace(/<[^>]+>/g, '').trim()
                         );
                         if (paragraphText) {
                             paragraphs.push(paragraphText);
                         }
                     }
-                    // Use the first paragraph as the fallback description.
                     descriptionFallback = paragraphs[0]
                         ? `${paragraphs[0]}...`
                         : '';
                 } else {
-                    // Default fallback for other pages.
                     imgMatch = html.match(/<img[^>]+src=["']([^"']+)["']/i);
                 }
 
@@ -144,7 +210,7 @@ export function useLinkPreview(url: string) {
                     : undefined;
 
                 const titleFallbackMatch = html.match(/<title>(.*?)<\/title>/i);
-                setPreviewData({
+                const fallbackPreview: PreviewData = {
                     title: decode(
                         ogTitleMatch
                             ? ogTitleMatch[1]
@@ -166,7 +232,21 @@ export function useLinkPreview(url: string) {
                           : [],
                     siteName: getDomainFromUrl(url),
                     url,
-                });
+                };
+
+                setPreviewData(fallbackPreview);
+                if (
+                    fallbackPreview.images &&
+                    fallbackPreview.images.length > 0
+                ) {
+                    RNImage.getSize(
+                        fallbackPreview.images[0],
+                        (width, height) =>
+                            setImageDimensions({ width, height }),
+                        (error) =>
+                            console.error('Failed to get image size', error)
+                    );
+                }
             } catch (error) {
                 console.error('Manual link preview error:', error);
                 setPreviewData({ title: url, description: '' });

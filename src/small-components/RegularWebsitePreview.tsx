@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     TouchableOpacity,
     Text,
     StyleSheet,
     Linking,
+    Image as RNImage, // Importing React Native Image as RNImage for getSize
 } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { getDomainFromUrl } from '../utils/linkPreviewUtils';
@@ -24,6 +25,12 @@ export const RegularWebsitePreview: React.FC<RegularWebsitePreviewProps> = ({
     // State to control modal visibility.
     const [modalVisible, setModalVisible] = useState(false);
 
+    // State to store the actual image dimensions.
+    const [imageDimensions, setImageDimensions] = useState<{
+        width: number;
+        height: number;
+    } | null>(null);
+
     // Determine attachments: use all images if available, or fallback to logo.
     const attachments =
         previewData.images && previewData.images.length > 0
@@ -40,17 +47,23 @@ export const RegularWebsitePreview: React.FC<RegularWebsitePreviewProps> = ({
     // we directly use previewData.description.
     const descriptionToShow = previewData.description;
 
+    // Use the React Native Image.getSize to determine the image dimensions.
+    useEffect(() => {
+        if (previewImage) {
+            RNImage.getSize(
+                previewImage,
+                (width, height) => {
+                    setImageDimensions({ width, height });
+                },
+                (error) => {
+                    console.error('Failed to get image size: ', error);
+                }
+            );
+        }
+    }, [previewImage]);
+
     return (
         <View style={styles.linkPreviewContainer}>
-            {previewImage ? (
-                <TouchableOpacity onPress={() => setModalVisible(true)}>
-                    <ExpoImage
-                        source={{ uri: previewImage }}
-                        style={styles.linkPreviewImage}
-                        contentFit="contain"
-                    />
-                </TouchableOpacity>
-            ) : undefined}
             {previewData.title ? (
                 <Text style={styles.linkPreviewTitle}>{previewData.title}</Text>
             ) : undefined}
@@ -58,6 +71,27 @@ export const RegularWebsitePreview: React.FC<RegularWebsitePreviewProps> = ({
                 <Text style={styles.linkPreviewDescription}>
                     {descriptionToShow}
                 </Text>
+            ) : undefined}
+            {previewImage ? (
+                <TouchableOpacity
+                    onPress={() => setModalVisible(true)}
+                    style={styles.imageTouchable} // restricts touchable area to image size
+                >
+                    <ExpoImage
+                        source={{ uri: previewImage }}
+                        // Apply dynamic dimensions if available, otherwise fallback to default style.
+                        style={[
+                            styles.linkPreviewImage,
+                            imageDimensions
+                                ? {
+                                      width: imageDimensions.width * 0.5,
+                                      height: imageDimensions.height * 0.5,
+                                  }
+                                : {},
+                        ]}
+                        contentFit="contain"
+                    />
+                </TouchableOpacity>
             ) : undefined}
             <TouchableOpacity
                 onPress={() => Linking.openURL(url)}
@@ -83,10 +117,16 @@ const styles = StyleSheet.create({
         padding: 10,
         marginVertical: 5,
     },
+    // Default style for the image. Dynamic dimensions (if available) will override these.
     linkPreviewImage: {
-        width: '100%',
-        height: 150,
+        // Removed width: '100%' to allow dynamic sizing.
+        height: 150, // fallback height in case dimensions aren't retrieved
+        marginTop: 5,
         marginBottom: 5,
+        borderRadius: 8,
+    },
+    imageTouchable: {
+        alignSelf: 'flex-start', // Prevents the TouchableOpacity from stretching to full container width
     },
     linkPreviewTitle: {
         fontSize: 16,
@@ -99,6 +139,8 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: COLORS.White,
         fontFamily: 'Roboto_400Regular',
+        paddingTop: 5,
+        paddingBottom: 5,
     },
     linkPreviewSite: {
         fontSize: 12,
@@ -106,7 +148,7 @@ const styles = StyleSheet.create({
         fontFamily: 'Roboto_400Regular',
         marginTop: 5,
     },
-    // New style to restrict the clickable area to just the text
+    // This style ensures only the site text is clickable.
     linkPreviewSiteTouchable: {
         alignSelf: 'flex-start',
     },

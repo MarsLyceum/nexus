@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { LinkPreview } from './LinkPreview';
-import { MessageWithAvatar } from '../types';
+import { MessageWithAvatar, PreviewData } from '../types';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { extractUrls, formatDateForChat, isImageExtensionUrl } from '../utils';
 import { useMediaTypes } from '../hooks/useMediaTypes';
@@ -84,10 +84,47 @@ const NativeSizeAttachmentVideo: React.FC<{
     );
 };
 
-const renderMessageContent = (content: string, width: number) => {
+const renderMessageContent = (
+    content: string,
+    width: number,
+    previewData?: PreviewData[]
+) => {
     const trimmedContent = content.trim();
     const urls = extractUrls(trimmedContent);
 
+    // If preview data is provided, use that.
+    if (previewData && previewData.length > 0) {
+        // Special case: if there's exactly one preview and the content exactly matches its URL
+        // and it's an image, then just render that preview.
+        if (
+            previewData.length === 1 &&
+            trimmedContent === previewData[0].url &&
+            isImageExtensionUrl(previewData[0].url)
+        ) {
+            return (
+                <LinkPreview
+                    previewData={previewData[0]}
+                    containerWidth={width - 32}
+                />
+            );
+        }
+
+        // Otherwise, render Markdown followed by all preview data entries.
+        return (
+            <>
+                <MarkdownRenderer text={content} />
+                {previewData.map((pd, index) => (
+                    <LinkPreview
+                        key={index}
+                        previewData={pd}
+                        containerWidth={width - 32}
+                    />
+                ))}
+            </>
+        );
+    }
+
+    // Fallback: no preview data provided so use URL extraction.
     if (
         urls.length === 1 &&
         trimmedContent === urls[0] &&
@@ -110,6 +147,7 @@ const renderMessageContent = (content: string, width: number) => {
             </>
         );
     }
+
     return <MarkdownRenderer text={content} />;
 };
 
@@ -133,7 +171,11 @@ const MessageItemComponent: React.FC<MessageItemProps> = ({
                     </Text>
                 </Text>
                 {item.content
-                    ? renderMessageContent(item.content, width)
+                    ? renderMessageContent(
+                          item.content,
+                          width,
+                          item.previewData
+                      )
                     : undefined}
                 {item.attachmentUrls && item.attachmentUrls.length > 0 && (
                     <View style={styles.messageAttachmentsContainer}>

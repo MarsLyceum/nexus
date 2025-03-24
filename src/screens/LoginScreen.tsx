@@ -10,22 +10,16 @@ import {
 } from 'react-native';
 import React, { useCallback } from 'react';
 import { FontAwesome } from '@expo/vector-icons';
-import { JwtPayload, jwtDecode } from 'jwt-decode';
 import { NavigationProp } from '@react-navigation/core';
 import { Formik, FormikErrors } from 'formik';
 import { isEmail } from 'validator';
-import Auth0 from 'react-native-auth0';
 import { useApolloClient } from '@apollo/client';
 
 import { User } from '../types';
 import { loginUser, useAppDispatch } from '../redux';
-import { FETCH_USER_BY_EMAIL_QUERY } from '../queries';
-import {
-    validatePassword,
-    AUTH0_DOMAIN,
-    AUTH0_CLIENT_ID,
-    AUTH0_AUDIENCE,
-} from '../utils';
+import { LOGIN_USER } from '../queries';
+
+import { validatePassword } from '../utils';
 
 import { Email, Lock, GoogleLogo } from '../icons';
 import { HorizontalLine } from '../images';
@@ -34,15 +28,6 @@ import { PrimaryGradientButton } from '../PrimaryGradientButton';
 import { COLORS } from '../constants';
 
 const isWeb = Platform.OS === 'web';
-
-const auth0 = new Auth0({
-    domain: AUTH0_DOMAIN ?? '',
-    clientId: AUTH0_CLIENT_ID ?? '',
-});
-
-type DecodedToken = JwtPayload & {
-    email: string;
-};
 
 type FormValues = { email: string; password: string };
 const initialFormValues: FormValues = { email: '', password: '' };
@@ -214,42 +199,21 @@ export function LoginScreen({
         return errors;
     }, []);
 
-    const handleAuth0Login = async (email: string, password: string) => {
+    const handleLoginUser = async (email: string, password: string) => {
         try {
-            const credentials = await auth0.auth.passwordRealm({
-                username: email,
-                password,
-                realm: 'Username-Password-Authentication',
-                audience: AUTH0_AUDIENCE,
-                scope: 'openid profile email',
+            const result = await apolloClient.mutate<{ loginUser: User }>({
+                mutation: LOGIN_USER,
+                variables: { email, password },
             });
-
-            // Decode the ID token to get user information
-            const decodedToken = jwtDecode<DecodedToken>(credentials.idToken);
-
-            const auth0Data = {
-                email: decodedToken.email,
-                token: credentials.idToken,
-            };
-
-            // Use the correct field name from the query result
-            const result = await apolloClient.query<{ fetchUserByEmail: User }>(
-                {
-                    query: FETCH_USER_BY_EMAIL_QUERY,
-                    variables: { email },
-                }
-            );
-
-            // Create the user object using the data from the correct field
-            const user: User = {
-                ...result.data.fetchUserByEmail,
-                token: auth0Data.token,
-            };
-            updateUserData(user);
-
-            navigation.navigate('AppDrawer');
+            if (result.data?.loginUser) {
+                const user = result.data.loginUser;
+                updateUserData(user);
+                navigation.navigate('AppDrawer');
+            } else {
+                console.error('Login failed: No user data returned.');
+            }
         } catch (error) {
-            console.error('Auth0 login failed:', error);
+            console.error('GraphQL login failed:', error);
         }
     };
 
@@ -259,7 +223,7 @@ export function LoginScreen({
                 <Formik
                     initialValues={initialFormValues}
                     onSubmit={async (values): Promise<void> => {
-                        await handleAuth0Login(values.email, values.password);
+                        await handleLoginUser(values.email, values.password);
                     }}
                     validate={validateEmailPassword}
                     validateOnChange={false}

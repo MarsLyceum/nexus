@@ -107,17 +107,20 @@ const errorLink = onError((error: ErrorResponse) => {
     }
 });
 
-// const graphqlApiGatewayEndpointHttp =
-//     'https://nexus-web-service-197277044151.us-west1.run.app/graphql';
-// const graphqlApiGatewayEndpointWs =
-//     'wss://nexus-web-service-197277044151.us-west1.run.app/graphql';
-// const graphqlApiGatewayEndpointSse = ''; // SSE turned off
+const isRunningLocally = false;
+
+const graphqlApiGatewayEndpointHttp = isRunningLocally
+    ? 'http://192.168.1.48:4000/graphql'
+    : 'https://nexus-web-service-197277044151.us-west1.run.app/graphql';
+const graphqlApiGatewayEndpointWs = isRunningLocally
+    ? 'ws://192.168.1.48:4000/graphql'
+    : 'wss://nexus-web-service-197277044151.us-west1.run.app/graphql';
 
 const httpLink = from([
     errorLink,
     createUploadLink({
-        // uri: graphqlApiGatewayEndpointHttp,
-        uri: 'http://192.168.1.48:4000/graphql',
+        uri: graphqlApiGatewayEndpointHttp,
+        // uri: 'http://192.168.1.48:4000/graphql',
         // @ts-expect-error boolean
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         isExtractableFile: (value: any) => {
@@ -162,8 +165,8 @@ const httpLink = from([
 
 const wsLink = new GraphQLWsLink(
     createClient({
-        // url: graphqlApiGatewayEndpointWs,
-        url: 'ws://192.168.1.48:4000/graphql', // Ensure this URL matches your WS server endpoint
+        url: graphqlApiGatewayEndpointWs,
+        // url: 'ws://192.168.1.48:4000/graphql', // Ensure this URL matches your WS server endpoint
         webSocketImpl: ReconnectingWebSocket,
     })
 );

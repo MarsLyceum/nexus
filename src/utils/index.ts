@@ -1,4 +1,3 @@
-export * from './config';
 export * from './convertDeltaToMarkdownWithFencesAndFormatting';
 export * from './extractUrls';
 export * from './formatDateForChat';

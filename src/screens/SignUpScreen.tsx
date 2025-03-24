@@ -11,8 +11,6 @@ import {
 } from 'react-native';
 import { NavigationProp } from '@react-navigation/core';
 import React, { useCallback } from 'react';
-import Auth0 from 'react-native-auth0';
-import { JwtPayload, jwtDecode } from 'jwt-decode';
 import { Formik } from 'formik';
 import { isEmail } from 'validator';
 import { FontAwesome } from '@expo/vector-icons';
@@ -24,26 +22,12 @@ import { GoogleLogo, User as UserIcon, Email, Phone, Lock } from '../icons';
 import { User } from '../types';
 import { loginUser, useAppDispatch } from '../redux';
 
-import {
-    validatePassword,
-    AUTH0_DOMAIN,
-    AUTH0_CLIENT_ID,
-    AUTH0_AUDIENCE,
-} from '../utils';
+import { validatePassword } from '../utils';
 import { PrimaryGradientButton } from '../PrimaryGradientButton';
 
 import { COLORS } from '../constants';
 
 const isWeb = Platform.OS === 'web';
-
-const auth0 = new Auth0({
-    domain: AUTH0_DOMAIN ?? '',
-    clientId: AUTH0_CLIENT_ID ?? '',
-});
-
-type DecodedToken = JwtPayload & {
-    email: string;
-};
 
 type FormValues = {
     email: string;
@@ -71,8 +55,6 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: COLORS.AppBackground,
     },
-    // Use contentContainerStyle in the ScrollView to let content expand
-    // Remove fixed centering so the content flows naturally
     container: {
         paddingHorizontal: 20,
         backgroundColor: COLORS.PrimaryBackground,
@@ -230,44 +212,18 @@ export function SignUpScreen({
 
     const handleSignup = async (values: FormValues) => {
         try {
-            await auth0.auth.createUser({
-                email: values.email,
-                password: values.password,
-                connection: 'Username-Password-Authentication',
-                user_metadata: {},
-            });
-
-            const credentials = await auth0.auth.passwordRealm({
-                username: values.email,
-                password: values.password,
-                realm: 'Username-Password-Authentication',
-                audience: AUTH0_AUDIENCE,
-                scope: 'openid profile email',
-            });
-
-            const decodedToken = jwtDecode<DecodedToken>(credentials.idToken);
-
-            const auth0Data = {
-                email: decodedToken.email,
-                token: credentials.idToken,
-            };
-
             const result = await apolloClient.mutate({
                 mutation: REGISTER_USER_MUTATION,
                 variables: {
                     email: values.email,
+                    password: values.password,
                     username: values.username,
                     firstName: values.firstName,
                     lastName: values.lastName,
                     phoneNumber: values.phoneNumber,
                 },
             });
-
-            const user: User = {
-                ...result.data.registerUser,
-                token: auth0Data.token,
-            };
-
+            const user: User = result.data.registerUser;
             updateUserData(user);
             navigation.navigate('AppDrawer');
         } catch (error) {
@@ -336,7 +292,6 @@ export function SignUpScreen({
                                 {errors.lastName}
                             </Text>
 
-                            {/* Username Field */}
                             <View style={styles.inputContainer}>
                                 <View style={styles.inputWrapper}>
                                     <UserIcon style={styles.inputIcon} />

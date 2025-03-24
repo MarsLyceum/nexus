@@ -8,15 +8,36 @@ import {
 } from '../utils/linkPreviewUtils';
 import { PreviewData } from '../types';
 
-export function useLinkPreview(url: string) {
-    const [previewData, setPreviewData] = useState<PreviewData>({});
-    const [loading, setLoading] = useState(true);
-    const [isImage, setIsImage] = useState(false);
+type UseLinkPreviewParams = {
+    url?: string;
+    previewData?: PreviewData;
+};
+
+export function useLinkPreview({
+    url,
+    previewData: initialPreviewData,
+}: UseLinkPreviewParams) {
+    const [previewData, setPreviewData] = useState<PreviewData>(
+        initialPreviewData || {}
+    );
+    const [loading, setLoading] = useState<boolean>(!initialPreviewData);
+    const [isImage, setIsImage] = useState<boolean>(false);
     const [imageDimensions, setImageDimensions] = useState<
         { width: number; height: number } | undefined
-    >();
+    >(undefined);
 
     useEffect(() => {
+        // If preview data was provided, do not fetch anything.
+        if (initialPreviewData) {
+            setPreviewData(initialPreviewData);
+            setLoading(false);
+            return;
+        }
+        if (!url) {
+            setLoading(false);
+            return;
+        }
+
         async function fetchPreview() {
             // Check if the URL is an image.
             const imageResult = await isImageUrl(url);
@@ -86,7 +107,7 @@ export function useLinkPreview(url: string) {
                     }
                 }
 
-                // Reddit JSON Fallback with URL decoding and dimensions.
+                // Reddit JSON Fallback with URL decoding.
                 if (url.includes('reddit.com')) {
                     try {
                         const redditUrl = url.endsWith('/')
@@ -95,7 +116,6 @@ export function useLinkPreview(url: string) {
                         const redditResponse = await fetch(redditUrl);
                         if (redditResponse.ok) {
                             const redditData = await redditResponse.json();
-                            // Reddit JSON structure: redditData[0].data.children[0].data
                             const postData =
                                 redditData[0]?.data?.children[0]?.data;
                             if (postData) {
@@ -107,12 +127,10 @@ export function useLinkPreview(url: string) {
                                     const imageSource =
                                         postData.preview.images[0].source;
                                     if (imageSource && imageSource.url) {
-                                        // Decode the URL to replace HTML entities.
                                         const decodedUrl = decode(
                                             imageSource.url
                                         );
                                         images = [decodedUrl];
-                                        // Use Reddit-provided dimensions.
                                         setImageDimensions({
                                             width: imageSource.width,
                                             height: imageSource.height,
@@ -127,7 +145,6 @@ export function useLinkPreview(url: string) {
                                     url,
                                 };
                                 setPreviewData(redditPreview);
-                                // Fallback: if dimensions weren't set, use RNImage.getSize.
                                 if (images.length > 0 && !imageDimensions) {
                                     RNImage.getSize(
                                         images[0],
@@ -154,20 +171,16 @@ export function useLinkPreview(url: string) {
 
                 // Fallback: Open Graph scraping from raw HTML.
                 let fetchUrl = url;
-
                 if (Platform.OS === 'web') {
                     try {
                         const parsedUrl = new URL(url, window.location.origin);
-                        // Check if the URL's origin matches the current domain
                         if (parsedUrl.origin !== window.location.origin) {
                             fetchUrl = `https://thingproxy.freeboard.io/fetch/${url}`;
                         }
                     } catch {
-                        // Fallback: if parsing fails, use the proxy
                         fetchUrl = `https://thingproxy.freeboard.io/fetch/${url}`;
                     }
                 }
-
                 const response = await fetch(fetchUrl);
                 const html = await response.text();
 
@@ -186,7 +199,6 @@ export function useLinkPreview(url: string) {
 
                 let imgMatch;
                 let descriptionFallback;
-
                 if (url.includes('wikipedia.org')) {
                     const contentMatch = html.match(
                         /<div[^>]+id=["']mw-content-text["'][^>]*>([\S\s]*)<\/div>/i
@@ -215,11 +227,9 @@ export function useLinkPreview(url: string) {
                 } else {
                     imgMatch = html.match(/<img[^>]+src=["']([^"']+)["']/i);
                 }
-
                 const firstImageUrl = imgMatch
                     ? new URL(imgMatch[1], url).toString()
                     : undefined;
-
                 const titleFallbackMatch = html.match(/<title>(.*?)<\/title>/i);
                 const fallbackPreview: PreviewData = {
                     title: decode(
@@ -266,7 +276,7 @@ export function useLinkPreview(url: string) {
             }
         }
         void fetchPreview();
-    }, [url]);
+    }, [url, initialPreviewData]);
 
     return { previewData, loading, isImage, imageDimensions };
 }

@@ -1,5 +1,7 @@
 // utils/linkPreviewUtils.ts
 
+import { Platform } from 'react-native';
+
 export function isImageExtensionUrl(url: string): boolean {
     const regex = /\.(jpeg|jpg|gif|png|webp)(\?.*)?$/i;
     return regex.test(url);
@@ -10,7 +12,11 @@ export async function isImageUrl(url: string): Promise<boolean> {
         return true;
     }
     try {
-        const response = await fetch(url, { method: 'HEAD' });
+        let fetchUrl = url;
+        if (Platform.OS === 'web') {
+            fetchUrl = `https://thingproxy.freeboard.io/fetch/${url}`;
+        }
+        const response = await fetch(fetchUrl, { method: 'HEAD' });
         const contentType = response.headers.get('Content-Type');
         return Boolean(contentType && contentType.startsWith('image/'));
     } catch (error) {

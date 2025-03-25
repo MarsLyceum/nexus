@@ -227,8 +227,16 @@ export const PostItem: React.FC<PostItemProps> = ({
 
     // Prepare Open Graph meta tags for web only.
     const ogDescription = stripHtml(content).slice(0, 160);
-    const ogImage = thumbnail || avatarUri;
-    const ogType = 'article';
+    // Use the first attachment if available,
+    // otherwise use the first URL found in the content,
+    // and fall back to the thumbnail/avatar.
+    const urlsInContent = extractUrls(content);
+    const ogImage =
+        attachmentUrls && attachmentUrls.length > 0
+            ? attachmentUrls[0]
+            : urlsInContent && urlsInContent.length > 0
+              ? urlsInContent[0]
+              : thumbnail || avatarUri;
 
     const onShare = async () => {
         if (Platform.OS === 'web') {
@@ -276,7 +284,6 @@ export const PostItem: React.FC<PostItemProps> = ({
         />
     );
 
-    const urlsInContent = extractUrls(content);
     const plainContent = stripHtml(content);
     const isJustLink =
         urlsInContent.length === 1 && plainContent === urlsInContent[0];
@@ -358,7 +365,7 @@ export const PostItem: React.FC<PostItemProps> = ({
                     <meta property="og:description" content={ogDescription} />
                     <meta property="og:url" content={computedShareUrl} />
                     <meta property="og:image" content={ogImage} />
-                    <meta property="og:type" content={ogType} />
+                    <meta property="og:type" content="article" />
                 </Helmet>
             )}
             {onPress ? (

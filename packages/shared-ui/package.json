@@ -1,0 +1,34 @@
+{
+    "name": "@shared-ui",
+    "version": "1.0.0",
+    "main": "src/index.ts",
+    "types": "src/index.d.ts",
+    "files": [
+        "src"
+    ],
+    "scripts": {
+        "build": "tsc -p tsconfig.json",
+        "clean": "rimraf lib"
+    },
+    "exports": {
+        ".": "./src/index.ts",
+        "./buttons": "./src/buttons/index.ts",
+        "./cards": "./src/cards/index.ts",
+        "./constants": "./src/constants/index.ts",
+        "./hooks": "./src/hooks/index.ts",
+        "./icons": "./src/icons/index.ts",
+        "./images": "./src/images/index.ts",
+        "./providers": "./src/providers/index.ts",
+        "./queries": "./src/queries/index.ts",
+        "./redux": "./src/redux/index.ts",
+        "./sections": "./src/sections/index.ts",
+        "./small-components": "./src/small-components/index.ts",
+        "./styles": "./src/styles/index.ts",
+        "./types": "./src/types/index.ts",
+        "./utils": "./src/utils/index.ts"
+    },
+    "peerDependencies": {
+        "react": "18.3.1",
+        "react-native": "^0.76.6"
+    }
+}

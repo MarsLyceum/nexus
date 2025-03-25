@@ -29,7 +29,11 @@ module.exports = {
     },
     parser: '@typescript-eslint/parser',
     parserOptions: {
-        project: './tsconfig.json',
+        project: [
+            './tsconfig.json',
+            './apps/mobile/tsconfig.json',
+            './packages/shared-ui/tsconfig.json',
+        ],
     },
     settings: {
         react: {

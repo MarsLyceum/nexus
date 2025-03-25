@@ -1,7 +1,6 @@
 {
-    "name": "peeps",
+    "name": "nexus",
     "version": "1.0.1",
-    "main": "index.js",
     "scripts": {
         "start": "npx expo start",
         "export:web": "npx expo export",

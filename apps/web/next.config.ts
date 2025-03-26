@@ -110,6 +110,9 @@ const nextConfig = {
     typescript: {
         ignoreBuildErrors: false,
     },
+    images: {
+        domains: ['picsum.photos'],
+    },
     devIndicators: false,
     // Rerun the script to regenerate this list from NPM
     // Keep transpilePackages if you need (next-transpile-modules should handle these)

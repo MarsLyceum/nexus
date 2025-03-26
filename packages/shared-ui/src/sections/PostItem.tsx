@@ -9,10 +9,11 @@ import {
     Alert,
     Dimensions,
 } from 'react-native';
-import { Image as ExpoImage } from 'expo-image';
+import { SolitoImage } from 'solito/image';
 import { Helmet } from 'react-helmet';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+// Removed: import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Toast from 'react-native-toast-message';
+import Svg, { Path } from 'react-native-svg';
 
 import { VoteActions } from './VoteActions';
 import { BackArrow } from '../buttons';
@@ -25,6 +26,22 @@ import {
     ActionButton,
 } from '../small-components';
 import { stripHtml, extractUrls } from '../utils';
+
+// New inline SVG component replicating the share icon
+export const ShareIconSvg = ({
+    color = COLORS.MainText,
+    size = 18,
+}: {
+    color?: string;
+    size?: number;
+}) => (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <Path
+            fill={color}
+            d="M18,16.08C17.24,16.08 16.56,16.38 16.05,16.84L8.91,12.7C8.96,12.47 9,12.24 9,12C9,11.76 8.96,11.53 8.91,11.3L15.96,7.19C16.5,7.69 17.22,8 18,8C19.66,8 21,6.66 21,5C21,3.34 19.66,2 18,2C16.34,2 15,3.34 15,5C15,5.24 15.04,5.47 15.09,5.7L8.04,9.81C7.5,9.31 6.78,9 6,9C4.34,9 3,10.34 3,12C3,13.66 4.34,15 6,15C6.78,15 7.5,14.69 8.04,14.19L15.16,18.36C15.11,18.57 15.08,18.79 15.08,19C15.08,20.66 16.42,22 18.08,22C19.74,22 21.08,20.66 21.08,19C21.08,17.34 19.74,16 18.08,16Z"
+        />
+    </Svg>
+);
 
 const styles = StyleSheet.create({
     postContainer: {
@@ -137,18 +154,14 @@ export type PostItemProps = {
 function getUserAvatarUri(username: string, thumbnail?: string): string {
     return (
         thumbnail ||
-        `https://picsum.photos/seed/${encodeURIComponent(
-            username.replaceAll(/\W/g, '')
-        )}/48`
+        `https://picsum.photos/seed/${encodeURIComponent(username.replaceAll(/\W/g, ''))}/48`
     );
 }
 
 function getGroupAvatarUri(group: string, thumbnail?: string): string {
     return (
         thumbnail ||
-        `https://picsum.photos/seed/${encodeURIComponent(
-            group.replaceAll(/\W/g, '')
-        )}/48`
+        `https://picsum.photos/seed/${encodeURIComponent(group.replaceAll(/\W/g, ''))}/48`
     );
 }
 
@@ -300,8 +313,11 @@ export const PostItem: React.FC<PostItemProps> = ({
                 {onBackPress && (
                     <BackArrow onPress={onBackPress} style={styles.backArrow} />
                 )}
-                <ExpoImage
-                    source={{ uri: avatarUri }}
+                <SolitoImage
+                    src={avatarUri}
+                    width={36}
+                    height={36}
+                    alt={`${variant === 'feed' ? 'User' : 'Group'} Avatar`}
                     style={
                         variant === 'feed' ? styles.userPic : styles.groupPic
                     }
@@ -343,11 +359,7 @@ export const PostItem: React.FC<PostItemProps> = ({
                         transparent
                         style={styles.shareButton}
                     >
-                        <MaterialCommunityIcons
-                            name="share"
-                            size={18}
-                            color={COLORS.MainText}
-                        />
+                        <ShareIconSvg color={COLORS.MainText} size={18} />
                     </ActionButton>
                     {shareCount > 0 && (
                         <Text style={styles.shareCountText}>{shareCount}</Text>

@@ -7,7 +7,7 @@ import {
     TouchableOpacity,
 } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
-import { useNavigation } from '@react-navigation/native';
+import { useRouter } from 'solito/router';
 
 import { BackArrow } from '@shared-ui/buttons';
 import { COLORS } from '@shared-ui/constants';
@@ -84,7 +84,7 @@ const parseCount = (count: string): number => {
 
 export const SearchScreen = () => {
     const { searchText, setSearchText } = useContext(SearchContext);
-    const navigation = useNavigation();
+    const router = useRouter(); // using solito for universal routing
 
     const filteredResults = useSearchFilter<SearchResult>(
         MOCK_RESULTS,
@@ -96,7 +96,12 @@ export const SearchScreen = () => {
         <View style={styles.container}>
             {/* Header row with back arrow and filter buttons */}
             <View style={styles.headerRow}>
-                <BackArrow onPress={() => navigation.goBack()} />
+                <BackArrow
+                    onPress={() => {
+                        // In production, consider wrapping router.back() with error handling/logging
+                        router.back();
+                    }}
+                />
                 <View style={styles.filterRow}>
                     <TouchableOpacity style={styles.filterButton}>
                         <Text style={styles.filterButtonText}>Relevance</Text>
@@ -149,7 +154,10 @@ export const SearchScreen = () => {
                         commentsCount={parseCount(item.comments)}
                         preview
                         variant="default" // Use default variant: shows group & username with group avatar.
-                        onPress={() => console.log('Tapped:', item.title)}
+                        onPress={() => {
+                            // Consider logging user interaction in production
+                            console.log('Tapped:', item.title);
+                        }}
                         attachmentUrls={item.attachmentUrls || []} // <-- Pass attachments (or an empty array)
                     />
                 ))}

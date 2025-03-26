@@ -2,7 +2,7 @@ const { withExpo } = require('@expo/next-adapter');
 
 const path = require('path');
 const webpack = require('webpack');
-const DirectoryNamedWebpackPlugin = require('directory-named-webpack-plugin');
+// const DirectoryNamedWebpackPlugin = require('directory-named-webpack-plugin');
 
 const polyfillPath = path.resolve(__dirname, 'polyfills/expo-polyfills.ts');
 const ReplaceUseLayoutEffectPlugin = require('./plugins/ReplaceUseLayoutEffectPlugin');
@@ -87,6 +87,7 @@ const TRANSPILED_PACKAGES = [
     'typescript',
     'styled-components/native',
     'formik',
+    'react-virtualized',
 ];
 
 const withTM = require('next-transpile-modules')([
@@ -151,6 +152,8 @@ const nextConfig = {
         config: {
             module: any;
             resolve: {
+                mainFields: string[];
+                modules: any[];
                 fallback: { fs: boolean };
                 plugins: any;
                 fullySpecified: boolean;
@@ -193,6 +196,8 @@ const nextConfig = {
             },
         };
 
+        config.resolve.mainFields = ['module', 'main'];
+
         config.module.rules.push({
             test: /\.js$/,
             parser: {
@@ -212,7 +217,7 @@ const nextConfig = {
         config.resolve.fullySpecified = false;
         config.resolve.extensions.push('.mjs', '.ts', '.tsx');
         config.resolve.plugins = config.resolve.plugins || [];
-        config.resolve.plugins.push(new DirectoryNamedWebpackPlugin());
+        // config.resolve.plugins.push(new DirectoryNamedWebpackPlugin());
         // config.plugins.push(new ReportParseErrorPlugin());
 
         // Insert polyfills in entry
@@ -412,6 +417,27 @@ const nextConfig = {
             'react-native$': 'react-native-web',
             '@expo/vector-icons': 'react-native-vector-icons',
         };
+
+        // const virtualizedListPath = require
+        //     .resolve('react-virtualized/dist/es/List')
+        //     .replace(/\/List\.js$/, '');
+
+        // config.resolve.alias['react-virtualized'] = virtualizedListPath;
+
+        // didn't work
+        // config.resolve.alias['react-virtualized'] = require.resolve(
+        //     'react-virtualized/dist/es/index'
+        // );
+
+        // config.resolve.alias['react-virtualized'] = path.resolve(
+        //     __dirname,
+        //     'node_modules/react-virtualized/dist/es/index.js'
+        // );
+
+        config.resolve.modules = [
+            path.resolve(__dirname, 'node_modules'),
+            'node_modules',
+        ];
 
         // client side stuff
         if (!isServer) {

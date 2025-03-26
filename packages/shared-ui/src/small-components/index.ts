@@ -26,6 +26,7 @@ export * from './MessageItem';
 export * from './MessageItemSkeleton';
 export * from './MessageList';
 export * from './MiniModal';
+export * from './NexusList';
 export * from './NexusVideo';
 export * from './PatchedFlashList';
 export * from './RegularWebsitePreview';

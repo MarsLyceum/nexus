@@ -1,6 +1,5 @@
 // eslint-disable-next-line eslint-comments/disable-enable-pair
 /* eslint-disable max-lines */
-// EventCard.tsx
 import React, { useState } from 'react';
 import {
     View,
@@ -15,11 +14,39 @@ import {
     useWindowDimensions,
 } from 'react-native';
 import * as Calendar from 'expo-calendar';
-import { Image as ExpoImage } from 'expo-image';
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import { SolitoImage } from 'solito/image';
+import Svg, { Path } from 'react-native-svg';
 
 import { COLORS } from '../constants';
 import { BackArrow } from '../buttons';
+
+// Custom SVG Icons (using paths from FontAwesome)
+export const MapMarkerIcon: React.FC<{ size: number; color: string }> = ({
+    size,
+    color,
+}) => (
+    <Svg width={size} height={size} viewBox="0 0 384 512" fill={color}>
+        <Path d="M172.268 501.67C27.347 300.11 0 269.01 0 192 0 85.96 85.96 0 192 0s192 85.96 192 192c0 77.01-27.347 108.11-172.268 309.67-9.535 13.43-30.464 13.43-40 0zM192 272c44.183 0 80-35.817 80-80s-35.817-80-80-80-80 35.817-80 80 35.817 80 80 80z" />
+    </Svg>
+);
+
+export const TimesCircleIcon: React.FC<{ size: number; color: string }> = ({
+    size,
+    color,
+}) => (
+    <Svg width={size} height={size} viewBox="0 0 512 512" fill={color}>
+        <Path d="M256 8C119.033 8 8 119.033 8 256s111.033 248 248 248 248-111.033 248-248S392.967 8 256 8zm121.6 313.6c4.8 4.8 4.8 12.8 0 17.6l-22.4 22.4c-4.8 4.8-12.8 4.8-17.6 0L256 295.3l-81.6 81.6c-4.8 4.8-12.8 4.8-17.6 0l-22.4-22.4c-4.8-4.8-4.8-12.8 0-17.6L215.3 256l-81.6-81.6c-4.8-4.8-4.8-12.8 0-17.6l22.4-22.4c4.8-4.8 12.8-4.8 17.6 0L256 216.7l81.6-81.6c4.8-4.8 12.8-4.8 17.6 0l22.4 22.4c4.8 4.8 4.8 12.8 0 17.6L296.7 256l81.6 81.6z" />
+    </Svg>
+);
+
+export const CheckCircleIcon: React.FC<{ size: number; color: string }> = ({
+    size,
+    color,
+}) => (
+    <Svg width={size} height={size} viewBox="0 0 512 512" fill={color}>
+        <Path d="M256 8C119.033 8 8 119.033 8 256s111.033 248 248 248 248-111.033 248-248S392.967 8 256 8zm-37.3 350.3l-99.6-99.6c-4.7-4.7-4.7-12.3 0-17l22.6-22.6c4.7-4.7 12.3-4.7 17 0L219 286.1l144.3-144.3c4.7-4.7 12.3-4.7 17 0l22.6 22.6c4.7 4.7 4.7 12.3 0 17L235.7 358.3c-4.7 4.7-12.3 4.7-17 0z" />
+    </Svg>
+);
 
 const styles = StyleSheet.create({
     card: {
@@ -28,7 +55,7 @@ const styles = StyleSheet.create({
         padding: 15,
         marginVertical: 10,
         alignSelf: 'center',
-        width: '100%', // Adjust card width so it doesn't span too wide on mobile
+        width: '100%',
     },
     titleRow: {
         flexDirection: 'row',
@@ -200,14 +227,14 @@ export const EventCard: React.FC<EventCardProps> = ({
     onRsvp,
     preview = false,
 }) => {
-    // Local state for RSVP status
     const [joined, setJoined] = useState(false);
-
-    // Get screen dimensions to adjust layout on small screens
     const { width: screenWidth } = useWindowDimensions();
-    const isSmallScreen = screenWidth < 768; // Adjust threshold as needed
+    const isSmallScreen = screenWidth < 768;
 
-    // Toggle RSVP state
+    // Event image dimensions (140×105 on larger screens; full width & 200 height on small screens)
+    const eventImageWidth = isSmallScreen ? screenWidth : 140;
+    const eventImageHeight = isSmallScreen ? 200 : 105;
+
     const handleRsvp = () => {
         setJoined((prev) => !prev);
         if (onRsvp) {
@@ -215,33 +242,23 @@ export const EventCard: React.FC<EventCardProps> = ({
         }
     };
 
-    // Open external map using the provided address
     const handleOpenMap = () => {
         const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
             location
         )}`;
-        // Simply call the function in a block (no void operator)
-        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         onPress && handleOpenMap;
-        // eslint-disable-next-line no-lone-blocks
         {
             handleOpenMap();
         }
-        // Alternatively, just call:
-        // handleOpenMap();
-        // eslint-disable-next-line no-void
         void Linking.openURL(url);
     };
 
-    // Function to add the event to the calendar
     const handleAddEventToCalendar = async () => {
         try {
-            // Parse start and end dates (assuming a 2‑hour event)
             const startDate = new Date(dateTime);
             const endDate = new Date(startDate);
             endDate.setHours(endDate.getHours() + 2);
 
-            // For web/desktop, use a Google Calendar URL as a fallback
             if (Platform.OS === 'web') {
                 const formatDate = (date: Date) =>
                     `${date.toISOString().replaceAll(/[.:-]/g, '').split('Z')[0]}Z`;
@@ -256,9 +273,7 @@ export const EventCard: React.FC<EventCardProps> = ({
                 return;
             }
 
-            // For native mobile platforms, request calendar permissions
             const { status } = await Calendar.requestCalendarPermissionsAsync();
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
             if (status !== 'granted') {
                 Alert.alert(
                     'Permission Denied',
@@ -267,7 +282,6 @@ export const EventCard: React.FC<EventCardProps> = ({
                 return;
             }
 
-            // Get modifiable calendars
             const calendars = await Calendar.getCalendarsAsync(
                 Calendar.EntityTypes.EVENT
             );
@@ -275,20 +289,17 @@ export const EventCard: React.FC<EventCardProps> = ({
                 (cal) => cal.allowsModifications
             );
 
-            // If no modifiable calendar is found, attempt to create one
             if (!defaultCalendar) {
                 let defaultCalendarSource;
-                // eslint-disable-next-line unicorn/prefer-ternary
                 if (Platform.OS === 'ios') {
-                    defaultCalendarSource =
-                        // eslint-disable-next-line unicorn/no-await-expression-member
-                        (await Calendar.getDefaultCalendarAsync()).source;
+                    defaultCalendarSource = (
+                        await Calendar.getDefaultCalendarAsync()
+                    ).source;
                 } else {
-                    // For Android, use a local source
                     defaultCalendarSource = {
                         isLocalAccount: true,
                         name: 'Expo Calendar',
-                        id: '1', // dummy id if needed
+                        id: '1',
                         type: 'local',
                     };
                 }
@@ -302,11 +313,9 @@ export const EventCard: React.FC<EventCardProps> = ({
                     ownerAccount: '',
                     accessLevel: Calendar.CalendarAccessLevel.OWNER,
                 });
-                // Cast to a minimal calendar object with an id.
                 defaultCalendar = { id: newCalendarId } as Calendar.Calendar;
             }
 
-            // Create the event details
             const eventDetails = {
                 title,
                 startDate: startDate.toISOString(),
@@ -327,11 +336,9 @@ export const EventCard: React.FC<EventCardProps> = ({
         }
     };
 
-    // Mock event description for the details view
     const mockDescription =
         "Join us for an immersive event where you'll have the opportunity to connect with industry leaders, participate in engaging workshops, and gain valuable insights into the latest trends. This event promises to be an inspiring experience with interactive sessions, networking opportunities, and much more.";
 
-    // Mock data for hosts and going lists with profile pictures from Lorem Picsum.
     const hosts: Person[] = [
         {
             id: 1,
@@ -368,7 +375,6 @@ export const EventCard: React.FC<EventCardProps> = ({
         },
     ];
 
-    // State for controlling the modal view for full lists
     const [modalVisible, setModalVisible] = useState(false);
     const [modalListType, setModalListType] = useState<
         'hosts' | 'going' | undefined
@@ -379,17 +385,19 @@ export const EventCard: React.FC<EventCardProps> = ({
         setModalVisible(true);
     };
 
-    // Render overlapping (stacked) profile pictures
     const renderStackedProfiles = (people: Person[]) => (
         <View style={styles.stackedProfilesContainer}>
             {people.map((person, index) => (
-                <ExpoImage
+                <SolitoImage
                     key={person.id}
-                    source={{ uri: person.imageUrl }}
-                    style={[
+                    src={person.imageUrl}
+                    alt={`${person.name} profile`}
+                    width={40}
+                    height={40}
+                    style={StyleSheet.flatten([
                         styles.profileImage,
                         { marginLeft: index === 0 ? 0 : -10 },
-                    ]}
+                    ])}
                 />
             ))}
         </View>
@@ -421,12 +429,8 @@ export const EventCard: React.FC<EventCardProps> = ({
                         )}
                         <Text style={styles.title}>{title}</Text>
                     </View>
-                    {/* Date/time area wrapped in a touchable to add to calendar */}
                     <TouchableOpacity
-                        onPress={() => {
-                            // eslint-disable-next-line no-void
-                            void handleAddEventToCalendar();
-                        }}
+                        onPress={() => void handleAddEventToCalendar()}
                     >
                         <Text style={styles.dateTime}>{dateTime}</Text>
                     </TouchableOpacity>
@@ -434,24 +438,20 @@ export const EventCard: React.FC<EventCardProps> = ({
                         <Text style={styles.groupName}>{groupName}</Text>
                     )}
                     <Text style={styles.attendees}>{attendees} going</Text>
-                    {/* Clickable address row */}
                     <TouchableOpacity onPress={handleOpenMap}>
                         <View style={styles.addressRow}>
-                            <FontAwesome
-                                name="map-marker"
+                            <MapMarkerIcon
                                 size={16}
                                 color={COLORS.AccentText}
                             />
                             <Text style={styles.addressText}>{location}</Text>
                         </View>
                     </TouchableOpacity>
-                    {/* Event Description (Details view only) */}
                     {preview === false && (
                         <Text style={styles.description}>
                             {mockDescription}
                         </Text>
                     )}
-                    {/* Stacked profile pictures for Hosts and Going (Details view only) */}
                     {preview === false && (
                         <View style={styles.profilesContainer}>
                             <TouchableOpacity
@@ -481,11 +481,17 @@ export const EventCard: React.FC<EventCardProps> = ({
                         onPress={handleRsvp}
                     >
                         <View style={styles.rsvpButtonContent}>
-                            <FontAwesome
-                                name={joined ? 'times-circle' : 'check-circle'}
-                                size={16}
-                                color={COLORS.White}
-                            />
+                            {joined ? (
+                                <TimesCircleIcon
+                                    size={16}
+                                    color={COLORS.White}
+                                />
+                            ) : (
+                                <CheckCircleIcon
+                                    size={16}
+                                    color={COLORS.White}
+                                />
+                            )}
                             <Text
                                 style={[
                                     styles.rsvpButtonText,
@@ -497,22 +503,26 @@ export const EventCard: React.FC<EventCardProps> = ({
                         </View>
                     </TouchableOpacity>
                 </View>
-                <ExpoImage
-                    source={{ uri: imageUrl }}
-                    style={[
+                <SolitoImage
+                    src={imageUrl}
+                    alt="Event image"
+                    width={eventImageWidth}
+                    height={eventImageHeight}
+                    style={StyleSheet.flatten([
                         styles.eventImage,
-                        isSmallScreen && {
-                            width: '100%',
-                            height: 200,
-                            marginTop: 10,
-                        },
-                    ]}
+                        isSmallScreen
+                            ? {
+                                  width: eventImageWidth,
+                                  height: eventImageHeight,
+                                  marginTop: 10,
+                              }
+                            : {},
+                    ])}
                 />
             </View>
         </View>
     );
 
-    // Create a safely typed list for the modal mapping.
     const modalList: Person[] =
         modalListType === 'hosts'
             ? hosts
@@ -529,7 +539,6 @@ export const EventCard: React.FC<EventCardProps> = ({
             ) : (
                 cardElement
             )}
-            {/* Modal to display the full list of profiles */}
             <Modal
                 visible={modalVisible}
                 transparent
@@ -550,8 +559,11 @@ export const EventCard: React.FC<EventCardProps> = ({
                                     key={person.id}
                                     style={styles.modalItemContainer}
                                 >
-                                    <ExpoImage
-                                        source={{ uri: person.imageUrl }}
+                                    <SolitoImage
+                                        src={person.imageUrl}
+                                        alt={`${person.name} profile`}
+                                        width={40}
+                                        height={40}
                                         style={styles.profilePic}
                                     />
                                     <Text style={styles.modalItemText}>

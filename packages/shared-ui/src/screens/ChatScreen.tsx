@@ -1,20 +1,21 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
     View,
     Text,
     StyleSheet,
-    useWindowDimensions,
     TouchableOpacity,
+    useWindowDimensions,
+    SafeAreaView,
+    Platform,
 } from 'react-native';
 import { SolitoImage } from 'solito/image';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { useRouter } from 'solito/router';
 import { useSearchParams } from 'solito/navigation';
-import { FlashList } from '@shopify/flash-list';
 
 import { COLORS } from '@shared-ui/constants';
 import { Attachment } from '@shared-ui/types';
-import { ChatInputContainer } from '@shared-ui/small-components';
+import { ChatInputContainer, NexusList } from '@shared-ui/small-components';
 
 export type Message = {
     id: string;
@@ -35,20 +36,23 @@ interface ChatScreenProps {
 }
 
 export const ChatScreen: React.FC<ChatScreenProps> = ({ userOverride }) => {
-    // Get router and search params from Solito.
     const router = useRouter();
     const params = useSearchParams<{ name?: string; avatar?: string }>();
 
-    // Use userOverride if provided, otherwise fallback to URL parameters.
     const user = userOverride || {
         name: params?.get('name') || 'Unknown',
         avatar: params?.get('avatar') || '',
     };
 
-    const { width } = useWindowDimensions();
+    const { width, height: windowHeight } = useWindowDimensions();
     const isLargeScreen = width > 768;
 
-    // Local messages state.
+    // Approximate header and input heights.
+    const headerHeight = 70;
+    const inputHeight = 70;
+    // Calculate available height for the messages list.
+    const messagesHeight = windowHeight - (headerHeight + inputHeight);
+
     const [messages, setMessages] = useState<Message[]>([
         {
             id: '1',
@@ -97,9 +101,6 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ userOverride }) => {
         },
     ]);
 
-    const flashListRef = useRef<FlashList<Message>>(null);
-
-    // onSend callback creates a new message.
     const handleSend = (text: string, attachments: Attachment[]) => {
         const newMessage: Message = {
             id: Math.random().toString(),
@@ -128,15 +129,50 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ userOverride }) => {
         console.log('Attachment preview pressed:', att);
     };
 
-    // Scroll to bottom when messages update.
-    useEffect(() => {
-        if (flashListRef.current) {
-            flashListRef.current.scrollToEnd({ animated: true });
-        }
-    }, [messages]);
+    // Unified message renderer for both web and mobile.
+    const renderItem = ({ item, index }: { item: Message; index: number }) => (
+        <View key={item.id} style={styles.messageContainer}>
+            <SolitoImage
+                src={item.avatar}
+                alt="avatar"
+                width={40}
+                height={40}
+                style={styles.messageAvatar}
+                contentFit="cover"
+            />
+            <View style={styles.messageContent}>
+                <Text style={styles.userName}>
+                    {item.user} <Text style={styles.time}>{item.time}</Text>
+                </Text>
+                <Text style={styles.messageText}>{item.text}</Text>
+                {item.edited && (
+                    <Text style={styles.editedLabel}>(edited)</Text>
+                )}
+                {item.attachments && item.attachments.length > 0 && (
+                    <View style={styles.attachmentsContainer}>
+                        {item.attachments.map((att, idx) => (
+                            <TouchableOpacity
+                                key={idx}
+                                onPress={() => onAttachmentPreviewPress(att)}
+                            >
+                                <SolitoImage
+                                    src={att.previewUri}
+                                    alt="attachment"
+                                    width={100}
+                                    height={100}
+                                    style={styles.attachmentImage}
+                                    contentFit="cover"
+                                />
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+                )}
+            </View>
+        </View>
+    );
 
     return (
-        <View style={styles.chatContainer}>
+        <SafeAreaView style={styles.container}>
             {/* Chat Header */}
             <View style={styles.chatHeader}>
                 {!isLargeScreen && (
@@ -158,84 +194,51 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ userOverride }) => {
                 <Text style={styles.chatTitle}>{user.name}</Text>
             </View>
 
-            {/* Chat Messages using FlashList */}
-            <FlashList<Message>
-                ref={flashListRef}
-                data={messages}
-                estimatedItemSize={80}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => (
-                    <View style={styles.messageContainer}>
-                        <SolitoImage
-                            src={item.avatar}
-                            alt="avatar"
-                            width={40}
-                            height={40}
-                            style={styles.messageAvatar}
-                            contentFit="cover"
-                        />
-                        <View style={styles.messageContent}>
-                            <Text style={styles.userName}>
-                                {item.user}{' '}
-                                <Text style={styles.time}>{item.time}</Text>
-                            </Text>
-                            <Text style={styles.messageText}>{item.text}</Text>
-                            {item.edited && (
-                                <Text style={styles.editedLabel}>(edited)</Text>
-                            )}
-                            {item.attachments &&
-                                item.attachments.length > 0 && (
-                                    <View style={styles.attachmentsContainer}>
-                                        {item.attachments.map((att, index) => (
-                                            <TouchableOpacity
-                                                key={index}
-                                                onPress={() =>
-                                                    onAttachmentPreviewPress(
-                                                        att
-                                                    )
-                                                }
-                                            >
-                                                <SolitoImage
-                                                    src={att.previewUri}
-                                                    alt="attachment"
-                                                    width={100}
-                                                    height={100}
-                                                    style={
-                                                        styles.attachmentImage
-                                                    }
-                                                    contentFit="cover"
-                                                />
-                                            </TouchableOpacity>
-                                        ))}
-                                    </View>
-                                )}
-                        </View>
-                    </View>
-                )}
-            />
+            {/* Main Content Area */}
+            <View style={styles.mainContent}>
+                {/* Messages List */}
+                <View
+                    style={[
+                        styles.messagesContainer,
+                        { height: messagesHeight },
+                    ]}
+                >
+                    <NexusList
+                        data={messages}
+                        inverted={false}
+                        estimatedItemSize={80}
+                        keyExtractor={(item) => item.id}
+                        renderItem={renderItem}
+                    />
+                </View>
 
-            {/* Chat Input */}
-            <ChatInputContainer
-                onSend={handleSend}
-                recipientName={user.name}
-                onInlineImagePress={onInlineImagePress}
-                onAttachmentPreviewPress={onAttachmentPreviewPress}
-            />
-        </View>
+                {/* Chat Input */}
+                <View style={styles.inputContainer}>
+                    <ChatInputContainer
+                        onSend={handleSend}
+                        recipientName={user.name}
+                        onInlineImagePress={onInlineImagePress}
+                        onAttachmentPreviewPress={onAttachmentPreviewPress}
+                    />
+                </View>
+            </View>
+        </SafeAreaView>
     );
 };
 
 const styles = StyleSheet.create({
-    chatContainer: {
+    container: {
+        height: '100vh', // Full viewport height
         flex: 1,
         backgroundColor: COLORS.SecondaryBackground,
+        overflow: 'hidden',
     },
     chatHeader: {
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: COLORS.SecondaryBackground,
-        borderColor: COLORS.InactiveText,
         borderBottomWidth: 1,
+        borderColor: COLORS.InactiveText,
         padding: 15,
     },
     headerAvatar: {
@@ -249,6 +252,13 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: 'white',
         marginLeft: 10,
+    },
+    mainContent: {
+        flex: 1,
+        flexDirection: 'column',
+    },
+    messagesContainer: {
+        flex: 1,
     },
     messageContainer: {
         flexDirection: 'row',
@@ -294,5 +304,8 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         marginTop: 5,
         marginRight: 5,
+    },
+    inputContainer: {
+        height: 70, // Fixed height for chat input
     },
 });

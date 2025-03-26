@@ -1,8 +1,4 @@
 const { withExpo } = require('@expo/next-adapter');
-const withTM = require('next-transpile-modules')([
-    'expo-modules-core',
-    'react-native-web',
-]);
 
 const path = require('path');
 const webpack = require('webpack');
@@ -27,7 +23,6 @@ const TRANSPILED_PACKAGES = [
     'expo-image',
     'expo-image-loader',
     'expo-image-picker',
-    'expo-linear-gradient',
     'expo-location',
     'expo-modules-core',
     'expo-splash-screen',
@@ -75,10 +70,6 @@ const TRANSPILED_PACKAGES = [
     '@babel/plugin-transform-flow-strip-types',
     '@expo/next-adapter',
     '@shared-ui',
-    '@shared-ui/node_modules',
-    '@shared-ui/package.json',
-    '@shared-ui/src',
-    '@shared-ui/tsconfig.json',
     '@types/node',
     '@types/prop-types',
     '@types/react',
@@ -94,14 +85,23 @@ const TRANSPILED_PACKAGES = [
     'react-dom',
     'string-replace-loader',
     'typescript',
+    'styled-components/native',
 ];
+
+const withTM = require('next-transpile-modules')([
+    ...TRANSPILED_PACKAGES.filter((name) => name !== '@expo-google-fonts'),
+    'expo-modules-core',
+    'react-native-web',
+    'expo-video',
+    'expo',
+]);
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     reactStrictMode: true,
     experimental: {
         esmExternals: false,
-        forceSwcTransforms: false,
+        forceSwcTransforms: true,
     },
     eslint: {
         ignoreDuringBuilds: false,
@@ -345,6 +345,13 @@ const nextConfig = {
                 },
             ],
         });
+
+        // https://github.com/expo/vector-icons/issues/226#issuecomment-1836167513
+        config.resolve.alias = {
+            ...(config.resolve.alias || {}),
+            'react-native$': 'react-native-web',
+            '@expo/vector-icons': 'react-native-vector-icons',
+        };
 
         // client side stuff
         if (!isServer) {

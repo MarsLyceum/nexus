@@ -7,7 +7,6 @@ import {
     Platform,
     View,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import styled from 'styled-components/native';
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
@@ -60,14 +59,7 @@ export const PrimaryGradientButton: React.FC<PrimaryGradientButtonProps> = ({
 }) => (
     <View style={[styles.shadowContainer, style]}>
         <Pressable onPress={onPress}>
-            <LinearGradient
-                style={styles.gradient}
-                colors={['#A3109E', '#FF3A0F']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-            >
-                <ButtonText>{title}</ButtonText>
-            </LinearGradient>
+            <ButtonText>{title}</ButtonText>
         </Pressable>
     </View>
 );

@@ -26,7 +26,9 @@
     "directory-named-webpack-plugin": "^4.1.0",
     "webpack-sources": "^3.2.3",
     "express": "^4.21.2",
-    "@babel/plugin-transform-modules-commonjs": "^7.26.3"
+    "@babel/plugin-transform-modules-commonjs": "^7.26.3",
+    "react-native-vector-icons": "^10.2.0",
+    "critters": "^0.0.25"
   },
   "devDependencies": {
     "typescript": "^5",

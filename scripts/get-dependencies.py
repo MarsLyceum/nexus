@@ -13,7 +13,6 @@ sections = [
             "expo-modules-core",
             "expo",
             "expo-image",
-            "expo-linear-gradient",
             "expo-video",
             "expo-asset",
             "expo-font",

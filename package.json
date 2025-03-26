@@ -74,7 +74,6 @@
         "expo-file-system": "^18.0.10",
         "expo-image": "^2.0.6",
         "expo-image-picker": "^16.0.6",
-        "expo-linear-gradient": "~14.0.2",
         "expo-location": "~18.0.5",
         "expo-secure-store": "^14.0.1",
         "expo-splash-screen": "^0.29.21",

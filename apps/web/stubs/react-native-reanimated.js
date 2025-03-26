@@ -44,6 +44,9 @@ export function withSpring(value, config, callback) {
 export const Easing = {
     linear: (t) => t,
     ease: (t) => t,
+    // Stub implementation of bezier easing.
+    // Returns a function that simply returns the input value.
+    bezier: (x1, y1, x2, y2) => (t) => t,
     // Extend with additional easing functions if needed.
 };
 

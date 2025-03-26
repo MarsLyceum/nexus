@@ -101,7 +101,7 @@ const withTM = require('next-transpile-modules')([
 const nextConfig = {
     reactStrictMode: true,
     experimental: {
-        esmExternals: false,
+        esmExternals: true,
         forceSwcTransforms: true,
     },
     eslint: {
@@ -111,7 +111,36 @@ const nextConfig = {
         ignoreBuildErrors: false,
     },
     images: {
-        domains: ['picsum.photos'],
+        remotePatterns: [
+            {
+                protocol: 'https',
+                hostname: 'picsum.photos',
+            },
+            {
+                protocol: 'https',
+                hostname: 'media.giphy.com',
+            },
+            {
+                protocol: 'https',
+                hostname: 'media0.giphy.com',
+            },
+            {
+                protocol: 'https',
+                hostname: 'media1.giphy.com',
+            },
+            {
+                protocol: 'https',
+                hostname: 'media2.giphy.com',
+            },
+            {
+                protocol: 'https',
+                hostname: 'media3.giphy.com',
+            },
+            {
+                protocol: 'https',
+                hostname: 'media4.giphy.com',
+            },
+        ],
     },
     devIndicators: false,
     // Rerun the script to regenerate this list from NPM
@@ -208,22 +237,6 @@ const nextConfig = {
             new webpack.DefinePlugin({
                 'process.env.EXPO_OS': JSON.stringify('web'),
             })
-        );
-
-        const secureStoreStub = path.resolve(
-            __dirname,
-            './stubs/expo-secure-store.js'
-        );
-        config.resolve.alias['expo-secure-store'] = secureStoreStub;
-
-        config.plugins.push(
-            new webpack.NormalModuleReplacementPlugin(
-                /expo-secure-store[\\\/]build[\\\/]ExpoSecureStore$/,
-                (resource: { request: any }) => {
-                    // Force the request to our stub file
-                    resource.request = secureStoreStub;
-                }
-            )
         );
 
         config.resolve.alias['expo-image'] = path.resolve(
@@ -400,9 +413,6 @@ const nextConfig = {
             '@expo/vector-icons': 'react-native-vector-icons',
         };
 
-        // config.resolve.alias['react'] = require.resolve('react');
-        // config.resolve.alias['react-dom'] = require.resolve('react-dom');
-
         // client side stuff
         if (!isServer) {
             // on the client side, "fs" should be treated as unavailable.
@@ -413,7 +423,7 @@ const nextConfig = {
 
         // For server builds, alias the browser environment file to our stub
         if (isServer) {
-            // config.plugins.push(new ReplaceUseLayoutEffectPlugin());
+            config.plugins.push(new ReplaceUseLayoutEffectPlugin());
 
             config.resolve.alias[
                 'expo-modules-core/src/environment/browser.web'
@@ -431,7 +441,6 @@ const nextConfig = {
             ] = path.resolve(__dirname, 'stubs/ExponentImagePicker.js');
         }
 
-        // You can remove custom rules for expo-modules-core if next-transpile-modules handles it.
         return config;
     },
 };

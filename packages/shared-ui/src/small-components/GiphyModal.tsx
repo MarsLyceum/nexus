@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     View,
     Text,
@@ -7,16 +7,14 @@ import {
     StyleSheet,
     ScrollView,
     Dimensions,
+    LayoutChangeEvent,
 } from 'react-native';
-import { Image as ExpoImage } from 'expo-image';
+import { SolitoImage } from 'solito/image';
 import { COLORS, GIPHY_API_KEY } from '../constants';
 import { Attachment } from '../types';
 import { MiniModal } from './MiniModal';
 
-// Minimal File polyfill for React Native if not available.
 if (typeof File === 'undefined') {
-    // Create a minimal polyfill for File by extending Blob.
-    // Note: This is a basic polyfill and might not support all File functionalities.
     class RNFile extends Blob {
         name: string;
         lastModified: number;
@@ -30,7 +28,7 @@ if (typeof File === 'undefined') {
             this.lastModified = options?.lastModified || Date.now();
         }
     }
-    // @ts-expect-error file
+    // @ts-expect-error
     global.File = RNFile;
 }
 
@@ -39,7 +37,6 @@ export type GiphyModalProps = {
     onClose: () => void;
     onSelectGif: (attachment: Attachment) => void;
     variant?: 'download' | 'uri';
-    // New prop: anchorPosition to orient the modal relative to the trigger element
     anchorPosition?: { x: number; y: number; width: number; height: number };
 };
 
@@ -52,10 +49,10 @@ export const GiphyModal: React.FC<GiphyModalProps> = ({
 }) => {
     const [giphyQuery, setGiphyQuery] = useState('');
     const [giphyResults, setGiphyResults] = useState<any[]>([]);
+    const [itemWidth, setItemWidth] = useState<number>(0); // Dynamic width for SolitoImage
 
     const windowWidth = Dimensions.get('window').width;
 
-    // Fetch trending GIFs when the overlay is visible and no query is present.
     useEffect(() => {
         const fetchTrending = async () => {
             try {
@@ -68,19 +65,14 @@ export const GiphyModal: React.FC<GiphyModalProps> = ({
                 console.error('Error fetching trending GIFs:', error);
             }
         };
-        if (visible && !giphyQuery) {
-            void fetchTrending();
-        }
+        if (visible && !giphyQuery) void fetchTrending();
     }, [visible, giphyQuery]);
 
-    // Search Giphy using the provided query.
     const searchGiphy = async (query: string) => {
         if (!query) return;
         try {
             const response = await fetch(
-                `https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_API_KEY}&q=${encodeURIComponent(
-                    query
-                )}&limit=20`
+                `https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_API_KEY}&q=${encodeURIComponent(query)}&limit=20`
             );
             const data = await response.json();
             setGiphyResults(data.data);
@@ -89,7 +81,6 @@ export const GiphyModal: React.FC<GiphyModalProps> = ({
         }
     };
 
-    // Handle selection of a GIF result.
     const handleSelectGif = async (result: any) => {
         const gifUrl = result.images.original.url;
         if (variant === 'download') {
@@ -99,31 +90,28 @@ export const GiphyModal: React.FC<GiphyModalProps> = ({
                 const file = new File([blob], `${result.id}.gif`, {
                     type: 'image/gif',
                 });
-                const attachment: Attachment = {
-                    id: result.id,
-                    previewUri: gifUrl,
-                    file,
-                };
-                onSelectGif(attachment);
+                onSelectGif({ id: result.id, previewUri: gifUrl, file });
                 onClose();
             } catch (error) {
                 console.error('Error fetching gif blob:', error);
             }
         } else {
-            // 'uri' mode: create the attachment using the gif URL directly.
-            const attachment: Attachment = {
+            onSelectGif({
                 id: result.id,
                 previewUri: gifUrl,
                 file: { uri: gifUrl, type: 'gif', name: `${result.id}.gif` },
-            };
-            onSelectGif(attachment);
+            });
             onClose();
         }
     };
 
+    const handleItemLayout = (e: LayoutChangeEvent) => {
+        const width = e.nativeEvent.layout.width;
+        setItemWidth(width);
+    };
+
     if (!visible) return null;
 
-    // Container style for Giphy modal. This style is used when no anchorPosition is provided.
     const giphyContainerStyle = {
         width: windowWidth < 768 ? 300 : 400,
         maxHeight: 400,
@@ -158,14 +146,20 @@ export const GiphyModal: React.FC<GiphyModalProps> = ({
                     {giphyResults.map((result) => (
                         <TouchableOpacity
                             key={result.id}
+                            onLayout={handleItemLayout}
                             onPress={() => handleSelectGif(result)}
                             style={styles.giphyResultItem}
                         >
-                            <ExpoImage
-                                contentFit="contain"
-                                source={{ uri: result.images.original.url }}
-                                style={styles.giphyResultImage}
-                            />
+                            {itemWidth > 0 && (
+                                <SolitoImage
+                                    src={result.images.original.url}
+                                    width={itemWidth}
+                                    height={150}
+                                    alt={`GIF ${result.id}`}
+                                    contentFit="cover"
+                                    style={styles.giphyResultImage}
+                                />
+                            )}
                         </TouchableOpacity>
                     ))}
                 </View>
@@ -204,8 +198,6 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     giphyResultImage: {
-        width: '100%',
-        height: 150,
         borderRadius: 6,
     },
 });

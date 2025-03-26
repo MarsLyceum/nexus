@@ -6,13 +6,15 @@ import {
     StyleSheet,
     Text,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome5';
-import { Image as ExpoImage } from 'expo-image';
+import { SolitoImage } from 'solito/image';
+
 import { COLORS } from '../constants';
 import { AttachmentPreviews } from '../sections';
 import { Attachment } from '../types';
 import { MarkdownTextInput } from './MarkdownTextInput';
 import { extractUrls } from '../utils';
+import { Cancel, ImageIcon, PaperPlane } from '../icons';
+
 import { GiphyModal } from './GiphyModal';
 
 export type ChatInputProps = {
@@ -70,9 +72,13 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                             <TouchableOpacity
                                 onPress={() => onInlineImagePress(url)}
                             >
-                                <ExpoImage
-                                    source={{ uri: url }}
+                                <SolitoImage
+                                    src={url}
+                                    alt="Inline image preview"
                                     style={styles.attachmentImage}
+                                    width={80}
+                                    height={80}
+                                    resizeMode="cover"
                                 />
                             </TouchableOpacity>
                             <TouchableOpacity
@@ -83,11 +89,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                                     )
                                 }
                             >
-                                <Icon
-                                    name="times"
-                                    size={18}
-                                    color={COLORS.White}
-                                />
+                                <Cancel size={15} color={COLORS.White} />
                             </TouchableOpacity>
                         </View>
                     ))}
@@ -108,7 +110,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                     onPress={handleImageUpload}
                     style={styles.imageButton}
                 >
-                    <Icon name="image" size={24} color="white" />
+                    <ImageIcon size={24} />
                 </TouchableOpacity>
                 <MarkdownTextInput
                     value={messageText}
@@ -141,7 +143,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                             onPress={() => sendMessageHandler()}
                             style={styles.sendButton}
                         >
-                            <Icon name="paper-plane" size={18} color="white" />
+                            <PaperPlane />
                         </TouchableOpacity>
                     )}
             </View>

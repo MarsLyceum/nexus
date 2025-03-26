@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, TouchableOpacity, StyleSheet, Platform } from 'react-native';
-import { Image as ExpoImage } from 'expo-image';
-import Icon from 'react-native-vector-icons/FontAwesome5';
+import { SolitoImage } from 'solito/image';
 // Mobile drag and drop library
 import DraggableFlatList from 'react-native-draggable-flatlist';
 // For web: using dnd-kit
@@ -21,6 +20,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
+import { Cancel } from '../icons';
 import { Attachment } from '../types';
 import { NexusVideo } from '../small-components';
 import { COLORS } from '../constants';
@@ -122,9 +122,13 @@ export const AttachmentPreviews: React.FC<AttachmentPreviewsProps> = ({
                                 controls={false}
                             />
                         ) : (
-                            <ExpoImage
-                                source={{ uri: item.previewUri }}
+                            <SolitoImage
+                                src={item.previewUri}
                                 style={styles.attachmentImage}
+                                alt="Attachment preview"
+                                width={80}
+                                height={80}
+                                contentFit="cover"
                             />
                         )}
                         {onRemoveAttachment && (
@@ -132,11 +136,7 @@ export const AttachmentPreviews: React.FC<AttachmentPreviewsProps> = ({
                                 style={styles.removeAttachmentButton}
                                 onPress={() => onRemoveAttachment(item.id)}
                             >
-                                <Icon
-                                    name="times"
-                                    size={18}
-                                    color={COLORS.White}
-                                />
+                                <Cancel size={15} color={COLORS.White} />
                             </TouchableOpacity>
                         )}
                     </View>
@@ -205,9 +205,13 @@ const SortableItem: React.FC<SortableItemProps> = ({
                         controls={false}
                     />
                 ) : (
-                    <ExpoImage
-                        source={{ uri: attachment.previewUri }}
+                    <SolitoImage
+                        src={attachment.previewUri}
                         style={styles.attachmentImage}
+                        alt="Attachment preview"
+                        width={80}
+                        height={80}
+                        contentFit="cover"
                     />
                 )}
                 {onRemoveAttachment && (
@@ -215,7 +219,7 @@ const SortableItem: React.FC<SortableItemProps> = ({
                         style={styles.removeAttachmentButton}
                         onPress={() => onRemoveAttachment(attachment.id)}
                     >
-                        <Icon name="times" size={18} color={COLORS.White} />
+                        <Cancel size={15} color={COLORS.White} />
                     </TouchableOpacity>
                 )}
             </View>

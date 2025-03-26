@@ -86,6 +86,7 @@ const TRANSPILED_PACKAGES = [
     'string-replace-loader',
     'typescript',
     'styled-components/native',
+    'formik',
 ];
 
 const withTM = require('next-transpile-modules')([
@@ -109,6 +110,7 @@ const nextConfig = {
     typescript: {
         ignoreBuildErrors: false,
     },
+    devIndicators: false,
     // Rerun the script to regenerate this list from NPM
     // Keep transpilePackages if you need (next-transpile-modules should handle these)
     transpilePackages: TRANSPILED_PACKAGES,

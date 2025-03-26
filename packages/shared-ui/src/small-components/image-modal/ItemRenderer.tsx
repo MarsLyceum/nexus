@@ -2,7 +2,7 @@ import React from 'react';
 import { View } from 'react-native';
 
 import { NexusVideo } from '../NexusVideo';
-import { MobileImageRenderer } from './MobileImageRenderer';
+// import { MobileImageRenderer } from './MobileImageRenderer';
 import { ComputerImageRenderer } from './ComputerImageRenderer';
 
 export type ItemRendererProps = {
@@ -52,7 +52,7 @@ export const ItemRenderer: React.FC<ItemRendererProps> = ({
     }
     return (
         <View style={{ width: '100%', height: '100%' }}>
-            <MobileImageRenderer uri={item} onClose={onClose} />
+            {/* <MobileImageRenderer uri={item} onClose={onClose} /> */}
         </View>
     );
 };

@@ -10,7 +10,7 @@ import {
     Image,
     useWindowDimensions,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/core';
+import { useRouter } from 'solito/router';
 import { useQuery, useMutation } from '@apollo/client';
 
 import { useAppSelector, RootState, UserType } from '@shared-ui/redux';
@@ -26,7 +26,8 @@ export const AddFriendsScreen = () => {
     // State for the text input and the actual search query.
     const [inputText, setInputText] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
-    const navigation = useNavigation();
+    // Replace useNavigation with solito's router.
+    const router = useRouter();
     const { width } = useWindowDimensions();
     const isLargeScreen = width > 768;
 
@@ -67,8 +68,7 @@ export const AddFriendsScreen = () => {
     const searchResults = searchData ? searchData.searchForUsers : [];
     const friendIds = new Set(
         friendsData
-            ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              friendsData.getFriends.map((item: any) => item.friend.id)
+            ? friendsData.getFriends.map((item: any) => item.friend.id)
             : []
     );
 
@@ -84,7 +84,6 @@ export const AddFriendsScreen = () => {
     };
 
     // Render a single search result item.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const renderFriendItem = ({ item }: { item: any }) => (
         <View style={styles.friendItem}>
             <Image
@@ -116,10 +115,9 @@ export const AddFriendsScreen = () => {
 
     return (
         <View style={styles.container}>
+            {/* Header */}
             <View style={styles.searchHeader}>
-                {!isLargeScreen && (
-                    <BackArrow onPress={() => navigation.goBack()} />
-                )}
+                {!isLargeScreen && <BackArrow onPress={() => router.back()} />}
                 <Text style={styles.headerTitle}>Add Friend</Text>
             </View>
             <TextInput

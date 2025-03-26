@@ -2,12 +2,10 @@
 
 // suppress useLayoutEffect (and its warnings) when not running in a browser
 // https://gist.github.com/gaearon/e7d97cdf38a2907924ea12e4ebdf3c85
+if (typeof window === 'undefined') React.useLayoutEffect = () => {};
 
 import 'react-native-get-random-values';
 import React, { useEffect, useState } from 'react';
-
-if (typeof window === 'undefined') React.useLayoutEffect = () => {};
-
 import { AppProps } from 'next/app';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Platform, StatusBar } from 'react-native';

@@ -1,17 +1,17 @@
 import React from 'react';
 import {
-    PressableProps,
     Pressable,
+    PressableProps,
     StyleSheet,
     ViewStyle,
     Platform,
     View,
 } from 'react-native';
 import styled from 'styled-components/native';
+import { COLORS } from '@shared-ui/constants';
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
 const ButtonText = styled.Text`
-    color: white;
+    color: ${COLORS.White};
     font-size: 16px;
     font-weight: bold;
 `;
@@ -43,9 +43,10 @@ const styles = StyleSheet.create({
             },
         }),
     },
-    gradient: {
+    button: {
         width: 280,
         height: 50,
+        backgroundColor: COLORS.Primary,
         justifyContent: 'center',
         alignItems: 'center',
         borderRadius: 25,
@@ -56,9 +57,10 @@ export const PrimaryGradientButton: React.FC<PrimaryGradientButtonProps> = ({
     onPress,
     title,
     style,
+    ...rest
 }) => (
     <View style={[styles.shadowContainer, style]}>
-        <Pressable onPress={onPress}>
+        <Pressable onPress={onPress} style={styles.button} {...rest}>
             <ButtonText>{title}</ButtonText>
         </Pressable>
     </View>

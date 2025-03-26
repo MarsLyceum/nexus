@@ -1,3 +1,4 @@
+import React, { useCallback, useState } from 'react';
 import {
     Text,
     View,
@@ -8,9 +9,7 @@ import {
     StyleSheet,
     Platform,
 } from 'react-native';
-import React, { useCallback } from 'react';
-import { FontAwesome } from '@expo/vector-icons';
-import { Formik, FormikErrors } from 'formik';
+import Svg, { Path } from 'react-native-svg';
 import { isEmail } from 'validator';
 import { useApolloClient } from '@apollo/client';
 
@@ -29,6 +28,26 @@ const isWeb = Platform.OS === 'web';
 
 type FormValues = { email: string; password: string };
 const initialFormValues: FormValues = { email: '', password: '' };
+
+// Custom FacebookIcon using react-native-svg to mimic the original FontAwesome icon
+export function FacebookIcon({
+    size = 24,
+    color = '#4267B2',
+    style,
+}: {
+    size?: number;
+    color?: string;
+    style?: any;
+}): JSX.Element {
+    return (
+        <Svg width={size} height={size} viewBox="0 0 512 512" style={style}>
+            <Path
+                fill={color}
+                d="M504 256C504 119 393 8 256 8S8 119 8 256c0 123.8 90.4 226.7 208 245v-173H147v-72h69V200c0-68.7 41-106.7 104-106.7 30 0 62 5 62 5v68h-35c-34.4 0-45 21.3-45 43v52h76l-12 72h-64v173c117.6-18.3 208-121.2 208-245z"
+            />
+        </Svg>
+    );
+}
 
 const styles = StyleSheet.create({
     topButton: {
@@ -130,18 +149,21 @@ const styles = StyleSheet.create({
         color: COLORS.Link,
         fontWeight: 'bold',
     },
+    // Updated innerScrollContainer to use flex and a minHeight on web
     innerScrollContainer: isWeb
         ? {
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              overflowY: 'auto',
+              flexGrow: 1,
+              minHeight: '100vh',
+              justifyContent: 'center',
+              alignItems: 'center',
+              paddingVertical: 20,
           }
         : {
               width: '100%',
               flexGrow: 1,
+              justifyContent: 'center',
+              alignItems: 'center',
+              paddingVertical: 20,
           },
     orContainer: {
         flexDirection: 'row',
@@ -172,6 +194,12 @@ export function LoginScreen(): JSX.Element {
     const apolloClient = useApolloClient();
     const router = useRouter();
 
+    const [email, setEmail] = useState<string>(initialFormValues.email);
+    const [password, setPassword] = useState<string>(
+        initialFormValues.password
+    );
+    const [errors, setErrors] = useState<Partial<FormValues>>({});
+
     const updateUserData = useCallback(
         (user: User) => {
             dispatch(loginUser(user));
@@ -180,7 +208,7 @@ export function LoginScreen(): JSX.Element {
     );
 
     const validateEmailPassword = useCallback((values: FormValues) => {
-        const errors: FormikErrors<FormValues> = {};
+        const errors: Partial<FormValues> = {};
 
         if (!isEmail(values.email)) {
             errors.email = `${values.email} is not a valid email.`;
@@ -213,100 +241,79 @@ export function LoginScreen(): JSX.Element {
         }
     };
 
+    const handleSubmit = async () => {
+        const currentValues: FormValues = { email, password };
+        const validationErrors = validateEmailPassword(currentValues);
+        setErrors(validationErrors);
+        if (Object.keys(validationErrors).length === 0) {
+            await handleLoginUser(email, password);
+        }
+    };
+
     return (
         <SafeAreaView style={styles.outerContainer}>
             <ScrollView contentContainerStyle={styles.innerScrollContainer}>
-                <Formik
-                    initialValues={initialFormValues}
-                    onSubmit={async (values): Promise<void> => {
-                        await handleLoginUser(values.email, values.password);
-                    }}
-                    validate={validateEmailPassword}
-                    validateOnChange={false}
-                    validateOnBlur={false}
-                >
-                    {({
-                        handleChange,
-                        handleBlur,
-                        handleSubmit,
-                        values,
-                        errors,
-                    }) => (
-                        <View style={styles.container}>
-                            <Text style={styles.title}>Log in</Text>
+                <View style={styles.container}>
+                    <Text style={styles.title}>Log in</Text>
 
-                            <View style={styles.inputContainer}>
-                                <View style={styles.inputWrapper}>
-                                    <Email style={styles.inputIcon} />
-                                    <TextInput
-                                        placeholder="Enter your email"
-                                        style={styles.input}
-                                        keyboardType="email-address"
-                                        value={values.email}
-                                        onBlur={handleBlur('email')}
-                                        onChangeText={handleChange('email')}
-                                    />
-                                </View>
-                            </View>
-                            <Text style={{ color: 'red' }}>{errors.email}</Text>
-                            <View style={styles.inputContainer}>
-                                <View style={styles.inputWrapper}>
-                                    <Lock style={styles.inputIcon} />
-                                    <TextInput
-                                        placeholder="Password"
-                                        style={styles.input}
-                                        secureTextEntry
-                                        value={values.password}
-                                        onBlur={handleBlur('password')}
-                                        onChangeText={handleChange('password')}
-                                    />
-                                </View>
-                            </View>
-                            <Text style={{ color: 'red' }}>
-                                {errors.password}
-                            </Text>
-
-                            <Text style={styles.forgotPasswordText}>
-                                <Pressable
-                                    onPress={() =>
-                                        router.push('/forgot-password')
-                                    }
-                                >
-                                    <Text style={styles.forgotPasswordLink}>
-                                        Forgot password?
-                                    </Text>
-                                </Pressable>
-                            </Text>
-
-                            <View style={styles.orContainer}>
-                                <HorizontalLine />
-                                <Text style={styles.orText}>
-                                    or log in with
-                                </Text>
-                                <HorizontalLine />
-                            </View>
-
-                            <View style={styles.socialContainer}>
-                                <Pressable style={styles.socialButton}>
-                                    <FontAwesome
-                                        name="facebook"
-                                        size={24}
-                                        color="#4267B2"
-                                    />
-                                </Pressable>
-                                <Pressable style={styles.socialButton}>
-                                    <GoogleLogo />
-                                </Pressable>
-                            </View>
-
-                            <PrimaryGradientButton
-                                style={styles.topButton}
-                                title="Login"
-                                onPress={handleSubmit as unknown as () => void}
+                    <View style={styles.inputContainer}>
+                        <View style={styles.inputWrapper}>
+                            <Email style={styles.inputIcon} />
+                            <TextInput
+                                placeholder="Enter your email"
+                                style={styles.input}
+                                keyboardType="email-address"
+                                value={email}
+                                onChangeText={setEmail}
                             />
                         </View>
-                    )}
-                </Formik>
+                    </View>
+                    <Text style={{ color: 'red' }}>{errors.email}</Text>
+                    <View style={styles.inputContainer}>
+                        <View style={styles.inputWrapper}>
+                            <Lock style={styles.inputIcon} />
+                            <TextInput
+                                placeholder="Password"
+                                style={styles.input}
+                                secureTextEntry
+                                value={password}
+                                onChangeText={setPassword}
+                            />
+                        </View>
+                    </View>
+                    <Text style={{ color: 'red' }}>{errors.password}</Text>
+
+                    <Text style={styles.forgotPasswordText}>
+                        <Pressable
+                            onPress={() => router.push('/forgot-password')}
+                        >
+                            <Text style={styles.forgotPasswordLink}>
+                                Forgot password?
+                            </Text>
+                        </Pressable>
+                    </Text>
+
+                    <View style={styles.orContainer}>
+                        <HorizontalLine />
+                        <Text style={styles.orText}>or log in with</Text>
+                        <HorizontalLine />
+                    </View>
+
+                    <View style={styles.socialContainer}>
+                        <Pressable style={styles.socialButton}>
+                            <FacebookIcon size={24} color="#4267B2" />
+                        </Pressable>
+                        <Pressable style={styles.socialButton}>
+                            <GoogleLogo />
+                        </Pressable>
+                    </View>
+
+                    <PrimaryGradientButton
+                        style={styles.topButton}
+                        title="Login"
+                        onPress={handleSubmit}
+                    />
+                </View>
             </ScrollView>
         </SafeAreaView>
     );

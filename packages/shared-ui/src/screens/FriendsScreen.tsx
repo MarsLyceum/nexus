@@ -8,7 +8,7 @@ import {
     StyleSheet,
     Modal,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/core';
+import { useRouter } from 'solito/router';
 import { useQuery, useMutation } from '@apollo/client';
 
 import {
@@ -48,7 +48,8 @@ export const FriendsScreen: React.FC = () => {
     const [removeFriendModalVisible, setRemoveFriendModalVisible] =
         useState<boolean>(false);
 
-    const navigation = useNavigation();
+    // Replace useNavigation() with Solito's router.
+    const router = useRouter();
     const { width: windowWidth } = useWindowDimensions();
     const isLargeScreen = windowWidth > 768;
 
@@ -102,7 +103,6 @@ export const FriendsScreen: React.FC = () => {
                 return { ...prev, getFriends: updatedFriends };
             },
         });
-        // eslint-disable-next-line consistent-return
         return () => unsubscribe();
     }, [user?.id, subscribeToMore]);
 
@@ -141,7 +141,7 @@ export const FriendsScreen: React.FC = () => {
         setDropdownVisible(true);
     };
 
-    // Accept a pending friend request (only relevant if it's incoming).
+    // Accept a pending friend request.
     const handleAcceptFriend = async (item: FriendItemData) => {
         try {
             await acceptFriendMutation({
@@ -152,7 +152,7 @@ export const FriendsScreen: React.FC = () => {
         }
     };
 
-    // Reject a pending friend request (only relevant if it's incoming).
+    // Reject a pending friend request.
     const handleRejectFriend = async (item: FriendItemData) => {
         console.log('Rejected friend request:', item);
         try {
@@ -189,7 +189,7 @@ export const FriendsScreen: React.FC = () => {
         );
     };
 
-    // Skeleton item placeholder (loading state).
+    // Skeleton item placeholder.
     const renderSkeletonItem = () => (
         <View style={styles.skeletonFriendItem}>
             <View style={styles.skeletonAvatarAndDot}>
@@ -210,13 +210,10 @@ export const FriendsScreen: React.FC = () => {
 
     // Filter logic based on the active tab.
     let filteredFriends: FriendItemData[] = [];
-
-    // eslint-disable-next-line default-case
     switch (activeTab) {
         case 'Online': {
             filteredFriends = friendsList.filter((item) => {
                 const isAccepted = item.status?.toLowerCase() === 'accepted';
-                // Now, include "online", "online_dnd" and "idle" statuses without fallback defaults.
                 const friendStatus = item.friend.status?.toLowerCase();
                 const isOnline =
                     friendStatus === 'online' ||
@@ -238,7 +235,6 @@ export const FriendsScreen: React.FC = () => {
             );
             break;
         }
-        // No default
     }
 
     return (
@@ -281,8 +277,8 @@ export const FriendsScreen: React.FC = () => {
                         if (isLargeScreen) {
                             setActiveTab('AddFriends');
                         } else {
-                            // @ts-expect-error navigation
-                            navigation.navigate('AddFriends');
+                            // Use solito's router to navigate
+                            router.push('/add-friends');
                         }
                     }}
                 >

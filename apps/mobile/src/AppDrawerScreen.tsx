@@ -18,7 +18,7 @@ import {
     EventsScreen,
     SearchScreen,
     FriendsScreen,
-} from '.';
+} from '@shared-ui/src/screens';
 
 // Define a DrawerParamList type so navigation is properly typed.
 type DrawerParamList = {

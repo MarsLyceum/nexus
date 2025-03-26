@@ -10,6 +10,8 @@ module.exports = {
     ],
     extends: [
         'eslint:recommended',
+        'next/core-web-vitals',
+        'next/typescript',
         'plugin:react/recommended',
         'plugin:react-hooks/recommended-legacy',
         'airbnb-base',
@@ -32,6 +34,7 @@ module.exports = {
         project: [
             './tsconfig.json',
             './apps/mobile/tsconfig.json',
+            './apps/web/tsconfig.json',
             './packages/shared-ui/tsconfig.json',
         ],
     },

@@ -68,6 +68,10 @@ config.resolver.extraNodeModules = {
         workspaceRoot,
         'packages/shared-ui/src/utils'
     ),
+    '@shared-ui/screens': path.resolve(
+        workspaceRoot,
+        'packages/shared-ui/src/screens'
+    ),
 };
 
 // Include node_modules from both the mobile app and the workspace root.

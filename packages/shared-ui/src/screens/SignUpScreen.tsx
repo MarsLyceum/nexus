@@ -9,7 +9,6 @@ import {
     GestureResponderEvent,
     Platform,
 } from 'react-native';
-import { NavigationProp } from '@react-navigation/core';
 import React, { useCallback } from 'react';
 import { Formik } from 'formik';
 import { isEmail } from 'validator';
@@ -18,18 +17,13 @@ import { useApolloClient } from '@apollo/client';
 
 import { REGISTER_USER_MUTATION } from '@shared-ui/queries';
 import { HorizontalLine } from '@shared-ui/images';
-import {
-    GoogleLogo,
-    User as UserIcon,
-    Email,
-    Phone,
-    Lock,
-} from '@shared-ui/icons';
+import { GoogleLogo, UserIcon, Email, Phone, Lock } from '@shared-ui/icons';
 import { User } from '@shared-ui/types';
 import { loginUser, useAppDispatch } from '@shared-ui/redux';
 import { validatePassword } from '@shared-ui/utils';
 import { PrimaryGradientButton } from '@shared-ui/buttons';
 import { COLORS } from '@shared-ui/constants';
+import { useRouter } from 'solito/router';
 
 const isWeb = Platform.OS === 'web';
 
@@ -180,12 +174,10 @@ const styles = StyleSheet.create({
         : { flex: 1 },
 });
 
-export function SignUpScreen({
-    navigation,
-}: Readonly<{
-    navigation: NavigationProp<Record<string, unknown>>;
-}>) {
+export function SignUpScreen(): JSX.Element {
     const dispatch = useAppDispatch();
+    const router = useRouter();
+    const apolloClient = useApolloClient();
 
     const updateUserData = useCallback(
         (user: User) => {
@@ -193,8 +185,6 @@ export function SignUpScreen({
         },
         [dispatch]
     );
-
-    const apolloClient = useApolloClient();
 
     const validateEmailPassword = useCallback((values: FormValues) => {
         const errors: Partial<FormValues> = {};
@@ -229,7 +219,7 @@ export function SignUpScreen({
             });
             const user: User = result.data.registerUser;
             updateUserData(user);
-            navigation.navigate('AppDrawer');
+            router.push('/app');
         } catch (error) {
             console.error(error);
             if (error instanceof Error) {
@@ -396,7 +386,7 @@ export function SignUpScreen({
                             <Text style={styles.loginText}>
                                 Already a member?{' '}
                                 <Pressable
-                                    onPress={() => navigation.navigate('Login')}
+                                    onPress={() => router.push('/login')}
                                 >
                                     <Text style={styles.loginLink}>Log In</Text>
                                 </Pressable>

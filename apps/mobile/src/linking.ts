@@ -13,10 +13,12 @@ export const linking = {
             Main: {
                 path: '', // omit Main from the URL as well
                 screens: {
-                    AppDrawer: {
-                        path: '', // omit AppDrawer from the URL
+                    app: {
+                        path: 'app', // omit AppDrawer from the URL
                     },
-                    PostScreen: {
+                    login: { path: 'login' },
+                    signup: { path: 'signup' },
+                    post: {
                         path: 'post/:id',
                     },
                 },

@@ -1,0 +1,37 @@
+{
+  "name": "nexus-web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "debug": "node server.js",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "@expo/next-adapter": "^6.0.0",
+    "solito": "^4.4.1",
+    "react-native-web": "^0.19.13",
+    "next": "15.2.4",
+    "@shared-ui": "workspace:*",
+    "file-loader": "^6.2.0",
+    "babel-loader": "^10.0.0",
+    "@babel/plugin-transform-flow-strip-types": "^7.26.5",
+    "next-transpile-modules": "^10.0.1",
+    "null-loader": "^4.0.1",
+    "string-replace-loader": "^3.1.0",
+    "directory-named-webpack-plugin": "^4.1.0",
+    "webpack-sources": "^3.2.3",
+    "express": "^4.21.2",
+    "@babel/plugin-transform-modules-commonjs": "^7.26.3"
+  },
+  "devDependencies": {
+    "typescript": "^5",
+    "@types/node": "^20",
+    "@types/react": "18.3.1",
+    "@types/react-dom": "18.3.1"
+  }
+}

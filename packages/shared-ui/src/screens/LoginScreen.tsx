@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import React, { useCallback } from 'react';
 import { FontAwesome } from '@expo/vector-icons';
-import { NavigationProp } from '@react-navigation/core';
 import { Formik, FormikErrors } from 'formik';
 import { isEmail } from 'validator';
 import { useApolloClient } from '@apollo/client';
@@ -24,6 +23,7 @@ import { PrimaryGradientButton } from '@shared-ui/buttons';
 import { User } from '@shared-ui/types';
 
 import { COLORS } from '@shared-ui/constants';
+import { useRouter } from 'solito/router';
 
 const isWeb = Platform.OS === 'web';
 
@@ -167,13 +167,10 @@ const styles = StyleSheet.create({
     },
 });
 
-export function LoginScreen({
-    navigation,
-}: Readonly<{
-    navigation: NavigationProp<Record<string, unknown>>;
-}>) {
+export function LoginScreen(): JSX.Element {
     const dispatch = useAppDispatch();
     const apolloClient = useApolloClient();
+    const router = useRouter();
 
     const updateUserData = useCallback(
         (user: User) => {
@@ -206,7 +203,8 @@ export function LoginScreen({
             if (result.data?.loginUser) {
                 const user = result.data.loginUser;
                 updateUserData(user);
-                navigation.navigate('AppDrawer');
+                // Navigate to AppDrawer screen
+                router.push('/app');
             } else {
                 console.error('Login failed: No user data returned.');
             }
@@ -270,7 +268,9 @@ export function LoginScreen({
 
                             <Text style={styles.forgotPasswordText}>
                                 <Pressable
-                                    onPress={() => navigation.navigate('Login')}
+                                    onPress={() =>
+                                        router.push('/forgot-password')
+                                    }
                                 >
                                     <Text style={styles.forgotPasswordLink}>
                                         Forgot password?

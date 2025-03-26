@@ -1,3 +1,4 @@
+// @shared-ui/screens/WelcomeScreen.tsx
 import {
     SafeAreaView,
     ScrollView,
@@ -6,7 +7,6 @@ import {
     Platform,
 } from 'react-native';
 import React, { useEffect } from 'react';
-import { NavigationProp, useFocusEffect } from '@react-navigation/core';
 import styled from 'styled-components/native';
 
 import {
@@ -17,8 +17,9 @@ import {
 } from '@shared-ui/redux';
 import { PeepsLogo } from '@shared-ui/images/PeepsLogo';
 import { PrimaryGradientButton, SecondaryButton } from '@shared-ui/buttons';
-import { Footer } from '@shared-ui';
+import { Footer } from '../';
 import { COLORS } from '@shared-ui/constants';
+import { useRouter } from 'solito/router';
 
 const isWeb = Platform.OS === 'web';
 
@@ -45,16 +46,14 @@ const styles = StyleSheet.create({
     },
     outerContainer: {
         flex: 1,
-        backgroundColor: COLORS.AppBackground, // changed from '#fff'
+        backgroundColor: COLORS.AppBackground,
+        // For web, ensure the container fills the viewport.
+        ...(isWeb && { position: 'relative', minHeight: '100vh' }),
     },
     innerScrollContainer: isWeb
         ? {
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              overflowY: 'auto',
+              // Remove absolute positioning for web to allow natural flow
+              flexGrow: 1,
           }
         : {
               width: '100%',
@@ -67,24 +66,21 @@ const styles = StyleSheet.create({
     },
 });
 
-export function WelcomeScreen({
-    navigation,
-}: Readonly<{
-    navigation: NavigationProp<Record<string, unknown>>;
-}>) {
+export function WelcomeScreen(): JSX.Element {
     const dispatch = useAppDispatch();
     const user = useAppSelector((state: RootState) => state.user.user);
+    const router = useRouter();
 
     useEffect(() => {
         dispatch(loadUser());
     }, [dispatch]);
 
-    useFocusEffect(() => {
+    useEffect(() => {
         if (user) {
             // If user is loaded, navigate to the matching screen
-            navigation.navigate('AppDrawer');
+            router.push('/app');
         }
-    });
+    }, [user, router]);
 
     return (
         <SafeAreaView style={styles.outerContainer}>
@@ -98,12 +94,12 @@ export function WelcomeScreen({
                     <PrimaryGradientButton
                         style={styles.topButton}
                         title="Create an account"
-                        onPress={() => navigation.navigate('SignUp')}
+                        onPress={() => router.push('/signup')}
                     />
                     <SecondaryButton
                         style={styles.bottomButton}
                         title="Log in"
-                        onPress={() => navigation.navigate('Login')}
+                        onPress={() => router.push('/login')}
                     />
                 </View>
                 <View style={styles.footerContainer}>

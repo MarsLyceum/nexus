@@ -1,5 +1,4 @@
 export * from './AddFriendsScreen';
-export * from './AppDrawerScreen';
 export * from './ChatScreen';
 export * from './CreateCommentScreen';
 export * from './CreateGroupModalScreen';

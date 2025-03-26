@@ -45,7 +45,6 @@ import {
     CurrentCommentProvider,
 } from '@shared-ui/providers';
 import { StatusManager } from '@shared-ui/small-components';
-
 import {
     LoginScreen,
     SignUpScreen,
@@ -57,10 +56,10 @@ import {
     PostScreen,
     GroupEventsScreen,
     EventDetailsScreen,
-    AppDrawerScreen,
     CreateCommentScreen,
     AddFriendsScreen,
-} from './screens';
+} from '@shared-ui/screens';
+import { AppDrawerScreen } from './AppDrawerScreen';
 import { linking } from './linking';
 
 if (__DEV__) {
@@ -192,38 +191,38 @@ const client = new ApolloClient({
 function MainStackScreen() {
     return (
         <MainStack.Navigator
-            initialRouteName="Welcome"
+            initialRouteName="welcome"
             screenOptions={{ headerShown: false }}
         >
-            <MainStack.Screen name="Welcome" component={WelcomeScreen} />
-            <MainStack.Screen name="Login" component={LoginScreen} />
-            <MainStack.Screen name="SignUp" component={SignUpScreen} />
-            <MainStack.Screen name="AppDrawer" component={AppDrawerScreen} />
+            <MainStack.Screen name="welcome" component={WelcomeScreen} />
+            <MainStack.Screen name="login" component={LoginScreen} />
+            <MainStack.Screen name="signup" component={SignUpScreen} />
+            <MainStack.Screen name="app" component={AppDrawerScreen} />
             {/* @ts-expect-error navigator */}
-            <MainStack.Screen name="Chat" component={ChatScreen} />
-            <MainStack.Screen name="AddFriends" component={AddFriendsScreen} />
+            <MainStack.Screen name="chat" component={ChatScreen} />
+            <MainStack.Screen name="addfriends" component={AddFriendsScreen} />
             <MainStack.Screen
-                name="ServerMessages"
+                name="servermessages"
                 component={ServerMessagesScreen}
             />
             <MainStack.Screen
-                name="FeedChannel"
+                name="feedchannel"
                 // @ts-expect-error navigator
                 component={FeedChannelScreen}
             />
             {/* @ts-expect-error navigator */}
-            <MainStack.Screen name="PostScreen" component={PostScreen} />
+            <MainStack.Screen name="post" component={PostScreen} />
             <MainStack.Screen
-                name="GroupEvents"
+                name="groupevents"
                 component={GroupEventsScreen}
             />
             <MainStack.Screen
-                name="EventDetails"
+                name="eventdetails"
                 // @ts-expect-error navigator
                 component={EventDetailsScreen}
             />
             <MainStack.Screen
-                name="CreateComment"
+                name="createcomment"
                 component={CreateCommentScreen}
             />
         </MainStack.Navigator>

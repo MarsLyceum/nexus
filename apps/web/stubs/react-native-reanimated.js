@@ -15,9 +15,17 @@ export function useAnimatedStyle(callback, deps) {
     return {};
 }
 
-// A hook that returns a shared value object.
+// A hook that returns a shared value object with getter and setter.
 export function useSharedValue(initialValue) {
-    return { value: initialValue };
+    return {
+        value: initialValue,
+        get() {
+            return this.value;
+        },
+        set(newValue) {
+            this.value = newValue;
+        },
+    };
 }
 
 // A hook for handling gestures, returns a no-op handler.

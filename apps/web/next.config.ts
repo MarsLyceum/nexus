@@ -81,8 +81,8 @@ const TRANSPILED_PACKAGES = [
     'next',
     'next-transpile-modules',
     'null-loader',
-    'react',
-    'react-dom',
+    // 'react',
+    // 'react-dom',
     'string-replace-loader',
     'typescript',
     'styled-components/native',
@@ -242,6 +242,20 @@ const nextConfig = {
                 loader: 'babel-loader',
                 options: {
                     presets: [require.resolve('@babel/preset-typescript')],
+                    plugins: [
+                        [
+                            '@babel/plugin-transform-class-properties',
+                            { loose: true },
+                        ],
+                        [
+                            '@babel/plugin-transform-private-methods',
+                            { loose: true },
+                        ],
+                        [
+                            '@babel/plugin-transform-private-property-in-object',
+                            { loose: true },
+                        ],
+                    ],
                 },
             },
         });
@@ -257,6 +271,14 @@ const nextConfig = {
                     plugins: [
                         [
                             '@babel/plugin-transform-class-properties',
+                            { loose: true },
+                        ],
+                        [
+                            '@babel/plugin-transform-private-methods',
+                            { loose: true },
+                        ],
+                        [
+                            '@babel/plugin-transform-private-property-in-object',
                             { loose: true },
                         ],
                     ],
@@ -293,6 +315,14 @@ const nextConfig = {
                             '@babel/plugin-transform-class-properties',
                             { loose: true },
                         ],
+                        [
+                            '@babel/plugin-transform-private-methods',
+                            { loose: true },
+                        ],
+                        [
+                            '@babel/plugin-transform-private-property-in-object',
+                            { loose: true },
+                        ],
                     ],
                 },
             },
@@ -322,6 +352,18 @@ const nextConfig = {
                     plugins: [
                         // This plugin will transform ES modules to CommonJS, removing import.meta
                         ['@babel/plugin-transform-modules-commonjs', {}],
+                        [
+                            '@babel/plugin-transform-class-properties',
+                            { loose: true },
+                        ],
+                        [
+                            '@babel/plugin-transform-private-methods',
+                            { loose: true },
+                        ],
+                        [
+                            '@babel/plugin-transform-private-property-in-object',
+                            { loose: true },
+                        ],
                     ],
                     sourceType: 'unambiguous',
                 },
@@ -353,6 +395,9 @@ const nextConfig = {
             '@expo/vector-icons': 'react-native-vector-icons',
         };
 
+        // config.resolve.alias['react'] = require.resolve('react');
+        // config.resolve.alias['react-dom'] = require.resolve('react-dom');
+
         // client side stuff
         if (!isServer) {
             // on the client side, "fs" should be treated as unavailable.
@@ -363,7 +408,7 @@ const nextConfig = {
 
         // For server builds, alias the browser environment file to our stub
         if (isServer) {
-            config.plugins.push(new ReplaceUseLayoutEffectPlugin());
+            // config.plugins.push(new ReplaceUseLayoutEffectPlugin());
 
             config.resolve.alias[
                 'expo-modules-core/src/environment/browser.web'

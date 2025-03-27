@@ -1,16 +1,12 @@
 // apps/web/pages/_app.tsx
 
 import '../../polyfills/expo-polyfills.js';
-
 import 'react-native-get-random-values';
-import React, { useEffect, useState } from 'react';
-
-// Only override useLayoutEffect on the server.
-if (typeof window === 'undefined') React.useLayoutEffect = () => {};
+import React, { useEffect } from 'react';
 
 import { AppProps } from 'next/app';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { Platform, StatusBar, View, Text } from 'react-native';
+import { Platform, StatusBar } from 'react-native';
 import {
     ApolloClient,
     InMemoryCache,
@@ -49,29 +45,29 @@ import {
 } from '@expo-google-fonts/roboto';
 import { useFonts } from 'expo-font';
 
-// CustomScrollbar component injects custom CSS on web.
+// CustomScrollbar injects CSS for web only.
 const CustomScrollbar = () => {
     if (Platform.OS !== 'web') return null;
     return (
         <style>{`
-      /* Chrome, Safari and Opera */
-      ::-webkit-scrollbar {
-        width: 10px;
-        height: 10px;
-      }
-      ::-webkit-scrollbar-track {
-        background: ${COLORS.PrimaryBackground};
-      }
-      ::-webkit-scrollbar-thumb {
-        background-color: ${COLORS.TextInput};
-        border-radius: 999px;
-      }
-      /* Firefox */
-      * {
-        scrollbar-width: thin;
-        scrollbar-color: ${COLORS.TextInput} ${COLORS.PrimaryBackground};
-      }
-    `}</style>
+            /* Chrome, Safari and Opera */
+            ::-webkit-scrollbar {
+                width: 10px;
+                height: 10px;
+            }
+            ::-webkit-scrollbar-track {
+                background: ${COLORS.PrimaryBackground};
+            }
+            ::-webkit-scrollbar-thumb {
+                background-color: ${COLORS.TextInput};
+                border-radius: 999px;
+            }
+            /* Firefox */
+            * {
+                scrollbar-width: thin;
+                scrollbar-color: ${COLORS.TextInput} ${COLORS.PrimaryBackground};
+            }
+        `}</style>
     );
 };
 
@@ -94,7 +90,6 @@ const httpLink = from([
     errorLink,
     createUploadLink({
         uri: graphqlApiGatewayEndpointHttp,
-        // Determine if value is an extractable file.
         // @ts-expect-error upload
         isExtractableFile: (value: any) => {
             if (value === undefined || value === null) return false;
@@ -156,53 +151,41 @@ const client = new ApolloClient({
 // Determine if we're on the server.
 const isServer = typeof window === 'undefined';
 
-export default function App({ Component, pageProps }: AppProps) {
-    // On the server, mark the app as ready to allow SSR to output basic UI.
-    // On the client, start with false until fonts are loaded.
-    const [appIsReady, setAppIsReady] = useState(isServer ? true : false);
-    const [fontsLoaded] = useFonts({
-        Lato_400Regular,
-        Lato_700Bold,
-        Roboto_400Regular,
-        Roboto_400Regular_Italic,
-        Roboto_500Medium,
-        Roboto_500Medium_Italic,
-        Roboto_700Bold,
-        Roboto_700Bold_Italic,
-    });
+export default function App({ Component, pageProps }: AppProps): JSX.Element {
+    // Use fonts only on the client.
+    // Even if fonts are not yet loaded, we don't render a fallback that differs from the server.
+    const [fontsLoaded] = !isServer
+        ? useFonts({
+              Lato_400Regular,
+              Lato_700Bold,
+              Roboto_400Regular,
+              Roboto_400Regular_Italic,
+              Roboto_500Medium,
+              Roboto_500Medium_Italic,
+              Roboto_700Bold,
+              Roboto_700Bold_Italic,
+          })
+        : [true];
 
-    // Client-only effect for hiding splash screen and updating readiness.
+    // On the client, hide splash screen when fonts are loaded.
     useEffect(() => {
-        if (fontsLoaded) {
+        if (!isServer && fontsLoaded) {
             SplashScreen.hideAsync();
-            setAppIsReady(true);
+            // We already render the full UI, so no need to change appIsReady.
         }
     }, [fontsLoaded]);
 
-    // If not ready (only on client), render a fallback UI.
-    if (!appIsReady) {
-        return (
-            <SafeAreaProvider>
-                <SafeAreaView
-                    style={{
-                        flex: 1,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        backgroundColor: COLORS.AppBackground,
-                    }}
-                    edges={['top', 'left', 'right', 'bottom']}
-                >
-                    <Text style={{ color: COLORS.White }}>Loading...</Text>
-                </SafeAreaView>
-            </SafeAreaProvider>
-        );
-    }
-
+    // Render the full UI immediately.
     return (
         <ActiveGroupProvider>
             <SearchProvider>
                 <CurrentCommentProvider>
-                    <SafeAreaProvider>
+                    <SafeAreaProvider
+                        initialMetrics={{
+                            insets: { top: 0, left: 0, bottom: 0, right: 0 },
+                            frame: { x: 0, y: 0, width: 375, height: 812 },
+                        }}
+                    >
                         <StatusBar
                             barStyle="light-content"
                             backgroundColor={COLORS.AppBackground}

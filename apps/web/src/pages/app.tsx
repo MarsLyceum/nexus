@@ -1,4 +1,4 @@
-// apps/web/pages/app-drawer.tsx
+// apps/web/pages/app.tsx;
 import React, { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { AppScreenServer } from '../page-components/app/app.server';

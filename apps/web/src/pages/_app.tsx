@@ -1,6 +1,7 @@
 // apps/web/pages/_app.tsx
 
 import '../../polyfills/expo-polyfills.js';
+
 import 'react-native-get-random-values';
 import React, { useEffect } from 'react';
 

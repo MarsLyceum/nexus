@@ -3,12 +3,12 @@ import React, { useState } from 'react';
 import { View, useWindowDimensions } from 'react-native';
 import { NavigationProp } from '@react-navigation/core';
 
-import { useAppSelector, RootState, UserType } from '@shared-ui/redux';
-import { Header, ImageDetailsModal } from '@shared-ui/sections';
-import { COLORS } from '@shared-ui/constants';
-import { GroupChannel, Attachment } from '@shared-ui/types';
-import { MessageList, ChatInputContainer } from '@shared-ui/small-components';
-import { useChannelMessages, useSendMessage } from '@shared-ui/hooks';
+import { useAppSelector, RootState, UserType } from '../redux';
+import { Header, ImageDetailsModal } from '../sections';
+import { COLORS } from '../constants';
+import { GroupChannel, Attachment } from '../types';
+import { MessageList, ChatInputContainer } from '../small-components';
+import { useChannelMessages, useSendMessage } from '../hooks';
 
 export type TextChannelScreenProps = {
     channel: GroupChannel;
@@ -79,20 +79,28 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
     };
 
     return (
-        <View style={{ flex: 1, backgroundColor: COLORS.SecondaryBackground }}>
+        <View
+            style={{
+                flex: 1,
+                flexBasis: 0,
+                backgroundColor: COLORS.SecondaryBackground,
+            }}
+        >
             <Header
                 isLargeScreen={isLargeScreen}
                 headerText={channel.name}
                 navigation={navigation}
             />
 
-            <MessageList
-                chatMessages={chatMessages}
-                loadingMessages={loadingMessages}
-                width={width}
-                loadMoreMessages={loadMoreMessages}
-                onAttachmentPress={handleMessageItemAttachmentPress}
-            />
+            <View style={{ flex: 1 }}>
+                <MessageList
+                    chatMessages={chatMessages}
+                    loadingMessages={loadingMessages}
+                    width={width}
+                    loadMoreMessages={loadMoreMessages}
+                    onAttachmentPress={handleMessageItemAttachmentPress}
+                />
+            </View>
 
             <ChatInputContainer
                 onSend={handleSend}

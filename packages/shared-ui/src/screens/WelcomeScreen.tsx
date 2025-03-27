@@ -8,18 +8,13 @@ import {
 } from 'react-native';
 import React, { useEffect } from 'react';
 import styled from 'styled-components/native';
-
-import {
-    RootState,
-    useAppSelector,
-    useAppDispatch,
-    loadUser,
-} from '@shared-ui/redux';
-import { PeepsLogo } from '@shared-ui/images/PeepsLogo';
-import { PrimaryGradientButton, SecondaryButton } from '@shared-ui/buttons';
-import { Footer } from '../';
-import { COLORS } from '@shared-ui/constants';
 import { useRouter } from 'solito/router';
+
+import { RootState, useAppSelector, useAppDispatch, loadUser } from '../redux';
+import { PeepsLogo } from '../images/PeepsLogo';
+import { PrimaryGradientButton, SecondaryButton } from '../buttons';
+import { Footer } from '..';
+import { COLORS } from '../constants';
 
 const isWeb = Platform.OS === 'web';
 

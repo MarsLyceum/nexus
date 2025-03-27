@@ -78,7 +78,7 @@ const errorLink = onError((error: ErrorResponse) => {
     }
 });
 
-const isRunningLocally = false;
+const isRunningLocally = true;
 const graphqlApiGatewayEndpointHttp = isRunningLocally
     ? 'http://localhost:4000/graphql'
     : 'https://nexus-web-service-197277044151.us-west1.run.app/graphql';

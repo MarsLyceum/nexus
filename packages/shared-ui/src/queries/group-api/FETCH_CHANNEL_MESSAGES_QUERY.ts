@@ -14,18 +14,6 @@ export const FETCH_CHANNEL_MESSAGES_QUERY = gql`
             channelId
             postedByUserId
             attachmentUrls
-            previewData {
-                id
-                title
-                description
-                images
-                siteName
-                url
-                locale
-                ogType
-                logo
-                embedHtml
-            }
         }
     }
 `;

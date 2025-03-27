@@ -106,6 +106,7 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
 
     useEffect(() => {
         void (async () => {
+            console.log('user?.id:', user?.id);
             if (user?.id) {
                 const result = await apolloClient.query<{
                     fetchUserGroups: UserGroupsType;
@@ -113,6 +114,7 @@ export const SidebarScreen = ({ navigation }: DrawerContentComponentProps) => {
                     query: FETCH_USER_GROUPS_QUERY,
                     variables: { userId: user?.id },
                 });
+                console.log('groups:', result);
                 setUserGroupsInStore(result.data.fetchUserGroups);
                 setLoadingGroups(false);
             }

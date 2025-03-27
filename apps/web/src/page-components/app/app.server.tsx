@@ -1,7 +1,8 @@
 // apps/web/pages/AppDrawerScreen.server.tsx
 import React from 'react';
-import { BaseAppScreen } from './base-app';
 import { FriendsScreen } from '@shared-ui/src/screens';
+
+import { BaseAppScreen } from './base-app';
 
 // In the server version, we supply defaults.
 export const AppScreenServer: React.FC = () => {

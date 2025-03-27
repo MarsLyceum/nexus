@@ -44,6 +44,7 @@ module.exports = {
         },
     },
     rules: {
+        'import/no-default-export': 'off',
         'unicorn/no-useless-undefined': 'off',
         '@typescript-eslint/no-unsafe-argument': 'off',
         '@typescript-eslint/no-unsafe-return': 'off',

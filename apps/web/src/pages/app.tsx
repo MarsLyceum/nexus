@@ -1,6 +1,8 @@
 // apps/web/pages/app.tsx;
 import React, { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
+import { useAppDispatch, loadUser } from '@shared-ui/redux';
+
 import { AppScreenServer } from '../page-components/app/app.server';
 
 // Dynamically import the client version (using the named export).
@@ -14,6 +16,12 @@ const AppScreenClient = dynamic(
 
 export default function AppDrawerScreenPage(): JSX.Element {
     const [mounted, setMounted] = useState(false);
+
+    const dispatch = useAppDispatch();
+
+    useEffect(() => {
+        dispatch(loadUser());
+    }, [dispatch]);
 
     useEffect(() => {
         // When the component mounts, set mounted to true so that the client version is rendered.

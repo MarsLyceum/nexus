@@ -18,15 +18,15 @@ import {
     DropdownMenu,
     RawRect,
     ConfirmRemoveFriendModal,
-} from '@shared-ui/small-components';
+} from '../small-components';
 import {
     GET_FRIENDS,
     REMOVE_FRIEND,
     ACCEPT_FRIEND_REQUEST,
     FRIEND_STATUS_CHANGED,
-} from '@shared-ui/queries';
-import { COLORS } from '@shared-ui/constants';
-import { useAppSelector, RootState } from '@shared-ui/redux';
+} from '../queries';
+import { COLORS } from '../constants';
+import { useAppSelector, RootState } from '../redux';
 
 import { AddFriendsScreen } from './AddFriendsScreen';
 
@@ -54,6 +54,7 @@ export const FriendsScreen: React.FC = () => {
     const isLargeScreen = windowWidth > 768;
 
     const user = useAppSelector((state: RootState) => state.user.user);
+
     const { data, subscribeToMore } = useQuery(GET_FRIENDS, {
         variables: { userId: user?.id },
         skip: !user?.id,
@@ -210,6 +211,7 @@ export const FriendsScreen: React.FC = () => {
 
     // Filter logic based on the active tab.
     let filteredFriends: FriendItemData[] = [];
+    // eslint-disable-next-line default-case
     switch (activeTab) {
         case 'Online': {
             filteredFriends = friendsList.filter((item) => {

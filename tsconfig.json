@@ -5,14 +5,13 @@
         "target": "es2015",
         "module": "ESNext",
         "strict": true,
-        "allowSyntheticDefaultImports": true,
         "esModuleInterop": true,
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
+        "allowSyntheticDefaultImports": true,
         "typeRoots": ["node_modules/@types", "./typings"],
         "paths": {
-            // Allow importing from shared packages by name.
-            "@shared-ui/*": ["./packages/shared-ui/src/*"]
+            "@shared-ui/*": ["./packages/shared-ui/*"]
         }
     },
     "include": ["src/**/*", "typings/**/*"]

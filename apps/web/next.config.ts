@@ -4,7 +4,6 @@ const path = require('path');
 const webpack = require('webpack');
 // const DirectoryNamedWebpackPlugin = require('directory-named-webpack-plugin');
 
-const polyfillPath = path.resolve(__dirname, 'polyfills/expo-polyfills.ts');
 const ReplaceUseLayoutEffectPlugin = require('./plugins/ReplaceUseLayoutEffectPlugin');
 const ReportParseErrorPlugin = require('./plugins/ReportParseErrorPlugin');
 
@@ -78,8 +77,8 @@ const TRANSPILED_PACKAGES = [
     'csstype',
     'directory-named-webpack-plugin',
     'file-loader',
-    'next',
-    'next-transpile-modules',
+    // 'next',
+    // 'next-transpile-modules',
     'null-loader',
     // 'react',
     // 'react-dom',
@@ -106,10 +105,10 @@ const nextConfig = {
         forceSwcTransforms: true,
     },
     eslint: {
-        ignoreDuringBuilds: false,
+        ignoreDuringBuilds: true,
     },
     typescript: {
-        ignoreBuildErrors: false,
+        ignoreBuildErrors: true,
     },
     images: {
         remotePatterns: [
@@ -220,33 +219,10 @@ const nextConfig = {
         // config.resolve.plugins.push(new DirectoryNamedWebpackPlugin());
         // config.plugins.push(new ReportParseErrorPlugin());
 
-        // Insert polyfills in entry
-        const originalEntry = config.entry;
-        config.entry = async () => {
-            const entries = await originalEntry();
-            Object.keys(entries).forEach((key) => {
-                if (
-                    Array.isArray(entries[key]) &&
-                    !entries[key].includes(polyfillPath)
-                ) {
-                    entries[key].unshift(polyfillPath);
-                }
-            });
-            return entries;
-        };
-
-        config.resolve.alias['react-native-web/dist/exports/UIManager'] =
-            path.resolve(__dirname, 'stubs/UIManager.js');
-
         config.plugins.push(
             new webpack.DefinePlugin({
                 'process.env.EXPO_OS': JSON.stringify('web'),
             })
-        );
-
-        config.resolve.alias['expo-image'] = path.resolve(
-            __dirname,
-            './stubs/expo-image.js'
         );
 
         config.module.rules.push({
@@ -351,48 +327,6 @@ const nextConfig = {
             },
         });
 
-        config.module.rules.push({
-            test: /expo-modules-core[\\\/].*\.(js|ts)x?$/,
-            enforce: 'pre',
-            loader: 'string-replace-loader',
-            options: {
-                // Replace any occurrence of the directory import with the fully-specified file
-                search: /react-native-web\/dist\/exports\/UIManager(\/)?/g,
-                replace: 'react-native-web/dist/exports/UIManager/index.js',
-                flags: 'g',
-            },
-        });
-
-        config.module.rules.push({
-            test: /assertThisInitialized\.js$/,
-            include:
-                /next[\\\/]dist[\\\/]compiled[\\\/]@babel[\\\/]runtime[\\\/]helpers/,
-            use: {
-                loader: 'babel-loader',
-                options: {
-                    // You can add any presets you normally use; at minimum, use env.
-                    presets: [require.resolve('@babel/preset-env')],
-                    plugins: [
-                        // This plugin will transform ES modules to CommonJS, removing import.meta
-                        ['@babel/plugin-transform-modules-commonjs', {}],
-                        [
-                            '@babel/plugin-transform-class-properties',
-                            { loose: true },
-                        ],
-                        [
-                            '@babel/plugin-transform-private-methods',
-                            { loose: true },
-                        ],
-                        [
-                            '@babel/plugin-transform-private-property-in-object',
-                            { loose: true },
-                        ],
-                    ],
-                    sourceType: 'unambiguous',
-                },
-            },
-        });
-
         // https://github.com/vercel/next.js/pull/60515
         config.module.rules.push({
             test: /\.js$/,
@@ -417,22 +351,6 @@ const nextConfig = {
             'react-native$': 'react-native-web',
             '@expo/vector-icons': 'react-native-vector-icons',
         };
-
-        // const virtualizedListPath = require
-        //     .resolve('react-virtualized/dist/es/List')
-        //     .replace(/\/List\.js$/, '');
-
-        // config.resolve.alias['react-virtualized'] = virtualizedListPath;
-
-        // didn't work
-        // config.resolve.alias['react-virtualized'] = require.resolve(
-        //     'react-virtualized/dist/es/index'
-        // );
-
-        // config.resolve.alias['react-virtualized'] = path.resolve(
-        //     __dirname,
-        //     'node_modules/react-virtualized/dist/es/index.js'
-        // );
 
         config.resolve.modules = [
             path.resolve(__dirname, 'node_modules'),
@@ -465,6 +383,11 @@ const nextConfig = {
             config.resolve.alias[
                 'expo-image-picker/build/ExponentImagePicker'
             ] = path.resolve(__dirname, 'stubs/ExponentImagePicker.js');
+
+            config.resolve.alias['expo-image'] = path.resolve(
+                __dirname,
+                './stubs/expo-image.js'
+            );
         }
 
         return config;

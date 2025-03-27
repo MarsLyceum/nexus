@@ -1,16 +1,16 @@
 // apps/web/pages/_app.tsx
 
-// suppress useLayoutEffect (and its warnings) when not running in a browser
-// https://gist.github.com/gaearon/e7d97cdf38a2907924ea12e4ebdf3c85
+import '../../polyfills/expo-polyfills.js';
 
 import 'react-native-get-random-values';
 import React, { useEffect, useState } from 'react';
 
+// Only override useLayoutEffect on the server.
 if (typeof window === 'undefined') React.useLayoutEffect = () => {};
 
 import { AppProps } from 'next/app';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { Platform, StatusBar } from 'react-native';
+import { Platform, StatusBar, View, Text } from 'react-native';
 import {
     ApolloClient,
     InMemoryCache,
@@ -153,8 +153,13 @@ const client = new ApolloClient({
     cache: new InMemoryCache(),
 });
 
+// Determine if we're on the server.
+const isServer = typeof window === 'undefined';
+
 export default function App({ Component, pageProps }: AppProps) {
-    const [appIsReady, setAppIsReady] = useState(false);
+    // On the server, mark the app as ready to allow SSR to output basic UI.
+    // On the client, start with false until fonts are loaded.
+    const [appIsReady, setAppIsReady] = useState(isServer ? true : false);
     const [fontsLoaded] = useFonts({
         Lato_400Regular,
         Lato_700Bold,
@@ -166,6 +171,7 @@ export default function App({ Component, pageProps }: AppProps) {
         Roboto_700Bold_Italic,
     });
 
+    // Client-only effect for hiding splash screen and updating readiness.
     useEffect(() => {
         if (fontsLoaded) {
             SplashScreen.hideAsync();
@@ -173,7 +179,24 @@ export default function App({ Component, pageProps }: AppProps) {
         }
     }, [fontsLoaded]);
 
-    if (!appIsReady) return null;
+    // If not ready (only on client), render a fallback UI.
+    if (!appIsReady) {
+        return (
+            <SafeAreaProvider>
+                <SafeAreaView
+                    style={{
+                        flex: 1,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: COLORS.AppBackground,
+                    }}
+                    edges={['top', 'left', 'right', 'bottom']}
+                >
+                    <Text style={{ color: COLORS.White }}>Loading...</Text>
+                </SafeAreaView>
+            </SafeAreaProvider>
+        );
+    }
 
     return (
         <ActiveGroupProvider>

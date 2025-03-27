@@ -9,15 +9,15 @@
         },
         "incremental": true,
         "isolatedModules": true,
-        "jsx": "preserve",
-        "allowSyntheticDefaultImports": true,
-        "esModuleInterop": true
+        "jsx": "preserve"
     },
     "include": [
         "next-env.d.ts",
         "**/*.ts",
         "**/*.tsx",
-        "stubs/expo-secure-store.js"
+        "stubs/expo-secure-store.js",
+        "polyfills/expo-polyfills.cts",
+        "polyfills/expo-polyfills.js"
     ],
     "exclude": ["node_modules"]
 }

@@ -25,10 +25,10 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-import { COLORS } from '@shared-ui/constants';
-import { Group, GroupChannel } from '@shared-ui/types';
-import { Feed, Chat, Events } from '@shared-ui/icons';
-import { ActiveGroupContext } from '@shared-ui/providers';
+import { COLORS } from '../constants';
+import { Group, GroupChannel } from '../types';
+import { Feed, Chat, Events } from '../icons';
+import { ActiveGroupContext } from '../providers';
 
 import { ServerMessagesScreen } from './ServerMessagesScreen';
 import { GroupEventsScreen } from './GroupEventsScreen';

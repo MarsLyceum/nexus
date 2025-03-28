@@ -5,12 +5,12 @@ import {
     TouchableOpacity,
     StyleSheet,
     useWindowDimensions,
+    FlatList,
 } from 'react-native';
 import { SolitoImage } from 'solito/image';
-import { useRouter } from 'solito/router';
-import { FlashList } from '@shopify/flash-list';
+import { useRouter } from 'solito/navigation';
 
-import { COLORS } from '@shared-ui/constants';
+import { COLORS } from '../constants';
 import { ChatScreen } from './ChatScreen';
 
 const users = [
@@ -87,9 +87,8 @@ export const DMListScreen: React.FC = () => {
                     <Text style={styles.dmTitle}>Messages</Text>
                 </View>
 
-                <FlashList
+                <FlatList
                     data={users}
-                    estimatedItemSize={60}
                     keyExtractor={(item) => item.id}
                     renderItem={({ item }) => (
                         <TouchableOpacity

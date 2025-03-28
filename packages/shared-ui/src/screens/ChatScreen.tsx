@@ -9,8 +9,7 @@ import {
 } from 'react-native';
 import { SolitoImage } from 'solito/image';
 import Icon from 'react-native-vector-icons/FontAwesome5';
-import { useRouter } from 'solito/router';
-import { useSearchParams } from 'solito/navigation';
+import { useSearchParams, useRouter } from 'solito/navigation';
 
 import { COLORS } from '../constants';
 import { Attachment } from '../types';

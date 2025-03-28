@@ -2,9 +2,9 @@
 import React from 'react';
 import { View, FlatList, StyleSheet } from 'react-native';
 
-import { EventCard } from '@shared-ui/cards';
-import { COLORS } from '@shared-ui/constants';
-import { Event } from '@shared-ui/types';
+import { EventCard } from '../cards';
+import { COLORS } from '../constants';
+import { Event } from '../types';
 
 const styles = StyleSheet.create({
     container: {

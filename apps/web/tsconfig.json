@@ -9,15 +9,20 @@
         },
         "incremental": true,
         "isolatedModules": true,
-        "jsx": "preserve"
+        "jsx": "preserve",
+        "plugins": [
+            {
+                "name": "next"
+            }
+        ]
     },
     "include": [
-        "next-env.d.ts",
         "**/*.ts",
         "**/*.tsx",
+        "next-env.d.ts",
+        "polyfills/expo-polyfills.js",
         "stubs/expo-secure-store.js",
-        "polyfills/expo-polyfills.cts",
-        "polyfills/expo-polyfills.js"
+        ".next/types/**/*.ts"
     ],
     "exclude": ["node_modules"]
 }

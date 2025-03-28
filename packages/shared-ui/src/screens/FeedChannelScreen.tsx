@@ -8,7 +8,7 @@ import {
     Platform,
     View,
 } from 'react-native';
-import { useRouter } from 'solito/router';
+import { useRouter } from 'solito/navigation';
 import { createParam } from 'solito';
 import { Header, PostItem } from '../sections';
 import { COLORS } from '../constants';

@@ -8,7 +8,7 @@ import {
     StyleSheet,
     Modal,
 } from 'react-native';
-import { useRouter } from 'solito/router';
+import { useRouter } from 'solito/navigation';
 import { useQuery, useMutation } from '@apollo/client';
 
 import {
@@ -348,6 +348,7 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: COLORS.SecondaryBackground,
         position: 'relative',
+        height: '100%',
     },
     header: {
         flexDirection: 'row',

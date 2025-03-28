@@ -1,5 +1,6 @@
 export * from './convertDeltaToMarkdownWithFencesAndFormatting';
 export * from './createApolloClient';
+export * from './detectEnvironment';
 export * from './extractUrls';
 export * from './formatDateForChat';
 export * from './getRelativeTime';

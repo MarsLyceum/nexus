@@ -13,7 +13,7 @@ import {
     KeyboardAvoidingView,
     Platform,
 } from 'react-native';
-import { useRouter } from 'next/router';
+import { useRouter } from 'solito/router';
 import { useApolloClient } from '@apollo/client';
 import type { GetServerSideProps } from 'next';
 

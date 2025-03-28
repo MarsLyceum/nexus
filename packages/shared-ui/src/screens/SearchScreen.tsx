@@ -7,13 +7,13 @@ import {
     TouchableOpacity,
 } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
-import { useRouter } from 'solito/router';
+import { useRouter } from 'solito/navigation';
 
-import { BackArrow } from '@shared-ui/buttons';
-import { COLORS } from '@shared-ui/constants';
-import { SearchBox, PostItem } from '@shared-ui/sections';
-import { useSearchFilter } from '@shared-ui/hooks';
-import { SearchContext } from '@shared-ui/providers';
+import { BackArrow } from '../buttons';
+import { COLORS } from '../constants';
+import { SearchBox, PostItem } from '../sections';
+import { useSearchFilter } from '../hooks';
+import { SearchContext } from '../providers';
 
 type SearchResult = {
     id: string;

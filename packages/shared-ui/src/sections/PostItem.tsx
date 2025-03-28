@@ -11,7 +11,6 @@ import {
 } from 'react-native';
 import { SolitoImage } from 'solito/image';
 import { Helmet } from 'react-helmet';
-// Removed: import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Toast from 'react-native-toast-message';
 import Svg, { Path } from 'react-native-svg';
 

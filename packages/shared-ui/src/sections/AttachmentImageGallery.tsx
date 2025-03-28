@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import { Image as ExpoImage } from 'expo-image';
+import { SolitoImage } from 'solito/image';
 import { CarouselDots } from './CarouselDots';
 import { ArrowButton } from './ArrowButton';
 import { ImageCountOverlay, NexusVideo } from '../small-components';
@@ -115,8 +115,11 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
                                         contentFit="contain"
                                     />
                                 ) : (
-                                    <ExpoImage
-                                        source={{ uri: url }}
+                                    <SolitoImage
+                                        src={url}
+                                        width={targetWidth}
+                                        height={attachmentHeight}
+                                        alt=""
                                         style={[
                                             styles.galleryImage,
                                             {
@@ -124,6 +127,7 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
                                                 height: attachmentHeight,
                                             },
                                         ]}
+                                        contentFit="contain"
                                     />
                                 )}
                             </TouchableOpacity>

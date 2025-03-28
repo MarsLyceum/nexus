@@ -1,5 +1,3 @@
-// pages/post/[postId].tsx
-
 import React, {
     useEffect,
     useContext,
@@ -132,7 +130,7 @@ export const PostPage: React.FC<PostPageProps> = ({
             flex: 1,
             backgroundColor: COLORS.SecondaryBackground,
             paddingTop: 15,
-            ...(isWeb && { height: '100vh', display: 'flex' }),
+            ...(isWeb && { minHeight: '100vh', display: 'flex' }), // Added minHeight for web
         },
         container: { flex: 1 },
         mainContainer: {
@@ -194,7 +192,7 @@ export const PostPage: React.FC<PostPageProps> = ({
                         onScroll={handleScroll}
                         scrollEventThrottle={16}
                     >
-                        {/* <PostItem
+                        <PostItem
                             id={postData.id}
                             username={postData.user}
                             time={postData.time}
@@ -225,7 +223,7 @@ export const PostPage: React.FC<PostPageProps> = ({
                                     // Optional cancel handler.
                                 }}
                             />
-                        )} */}
+                        )}
                         <CommentsManager
                             postId={postData.id}
                             parentCommentId={parentCommentId}

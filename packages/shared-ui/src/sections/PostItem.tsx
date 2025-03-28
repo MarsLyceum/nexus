@@ -10,7 +10,7 @@ import {
     Dimensions,
 } from 'react-native';
 import { SolitoImage } from 'solito/image';
-import { Helmet } from 'react-helmet';
+import Head from 'next/head';
 import Toast from 'react-native-toast-message';
 import Svg, { Path } from 'react-native-svg';
 
@@ -153,14 +153,18 @@ export type PostItemProps = {
 function getUserAvatarUri(username: string, thumbnail?: string): string {
     return (
         thumbnail ||
-        `https://picsum.photos/seed/${encodeURIComponent(username.replaceAll(/\W/g, ''))}/48`
+        `https://picsum.photos/seed/${encodeURIComponent(
+            username.replaceAll(/\W/g, '')
+        )}/48`
     );
 }
 
 function getGroupAvatarUri(group: string, thumbnail?: string): string {
     return (
         thumbnail ||
-        `https://picsum.photos/seed/${encodeURIComponent(group.replaceAll(/\W/g, ''))}/48`
+        `https://picsum.photos/seed/${encodeURIComponent(
+            group.replaceAll(/\W/g, '')
+        )}/48`
     );
 }
 
@@ -237,11 +241,8 @@ export const PostItem: React.FC<PostItemProps> = ({
             ? `${window.location.origin}/post/${id}`
             : `nexus://post/${id}`);
 
-    // Prepare Open Graph meta tags for web only.
+    // Prepare Open Graph meta tags (for web only)
     const ogDescription = stripHtml(content).slice(0, 160);
-    // Use the first attachment if available,
-    // otherwise use the first URL found in the content,
-    // and fall back to the thumbnail/avatar.
     const urlsInContent = extractUrls(content);
     const ogImage =
         attachmentUrls && attachmentUrls.length > 0
@@ -371,13 +372,13 @@ export const PostItem: React.FC<PostItemProps> = ({
     return (
         <>
             {Platform.OS === 'web' && (
-                <Helmet>
+                <Head>
                     <meta property="og:title" content={title} />
                     <meta property="og:description" content={ogDescription} />
                     <meta property="og:url" content={computedShareUrl} />
                     <meta property="og:image" content={ogImage} />
                     <meta property="og:type" content="article" />
-                </Helmet>
+                </Head>
             )}
             {onPress ? (
                 <TouchableOpacity onPress={onPress}>

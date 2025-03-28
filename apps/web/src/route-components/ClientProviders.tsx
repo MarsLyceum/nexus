@@ -1,5 +1,7 @@
 'use client';
 
+import '../../polyfills/expo-polyfills.js';
+
 import React, { useEffect } from 'react';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar, Platform } from 'react-native';

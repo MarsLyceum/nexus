@@ -5,13 +5,13 @@ import {
     Text,
     StyleSheet,
     Linking,
-    Image as RNImage, // Importing React Native Image as RNImage for getSize
+    Image as RNImage, // for getSize
 } from 'react-native';
-import { Image as ExpoImage } from 'expo-image';
+import { SolitoImage } from 'solito/image';
 import { getDomainFromUrl } from '../utils/linkPreviewUtils';
 import { COLORS } from '../constants';
 import { PreviewData } from '../types';
-import { ImageDetailsModal } from '../sections'; // Import the large image modal
+import { ImageDetailsModal } from '../sections'; // Large image modal
 
 export type RegularWebsitePreviewProps = {
     url: string;
@@ -43,56 +43,53 @@ export const RegularWebsitePreview: React.FC<RegularWebsitePreviewProps> = ({
     const previewImage = attachments[0];
     const siteToShow = previewData.siteName || getDomainFromUrl(url);
 
-    // Now that the hook handles meta description extraction,
-    // we directly use previewData.description.
+    // Use previewData.description directly.
     const descriptionToShow = previewData.description;
 
-    // Use the React Native Image.getSize to determine the image dimensions.
+    // Use RNImage.getSize to determine image dimensions.
     useEffect(() => {
         if (previewImage) {
             RNImage.getSize(
                 previewImage,
-                (width, height) => {
-                    setImageDimensions({ width, height });
-                },
-                (error) => {
-                    console.error('Failed to get image size: ', error);
-                }
+                (width, height) => setImageDimensions({ width, height }),
+                (error) => console.error('Failed to get image size: ', error)
             );
         }
     }, [previewImage]);
+
+    // Calculate dynamic dimensions (50% of native size), with fallbacks.
+    const computedWidth = imageDimensions ? imageDimensions.width * 0.5 : 200;
+    const computedHeight = imageDimensions ? imageDimensions.height * 0.5 : 150;
 
     return (
         <View style={styles.linkPreviewContainer}>
             {previewData.title ? (
                 <Text style={styles.linkPreviewTitle}>{previewData.title}</Text>
-            ) : undefined}
+            ) : null}
             {descriptionToShow ? (
                 <Text style={styles.linkPreviewDescription}>
                     {descriptionToShow}
                 </Text>
-            ) : undefined}
+            ) : null}
             {previewImage ? (
                 <TouchableOpacity
                     onPress={() => setModalVisible(true)}
                     style={styles.imageTouchable} // restricts touchable area to image size
                 >
-                    <ExpoImage
-                        source={{ uri: previewImage }}
-                        // Apply dynamic dimensions if available, otherwise fallback to default style.
-                        style={[
-                            styles.linkPreviewImage,
-                            imageDimensions
-                                ? {
-                                      width: imageDimensions.width * 0.5,
-                                      height: imageDimensions.height * 0.5,
-                                  }
-                                : {},
-                        ]}
+                    <SolitoImage
+                        src={previewImage}
+                        style={{
+                            ...styles.linkPreviewImage,
+                            width: computedWidth,
+                            height: computedHeight,
+                        }}
                         contentFit="contain"
+                        width={computedWidth}
+                        height={computedHeight}
+                        alt="Website preview image"
                     />
                 </TouchableOpacity>
-            ) : undefined}
+            ) : null}
             <TouchableOpacity
                 onPress={() => Linking.openURL(url)}
                 style={styles.linkPreviewSiteTouchable}
@@ -117,16 +114,15 @@ const styles = StyleSheet.create({
         padding: 10,
         marginVertical: 5,
     },
-    // Default style for the image. Dynamic dimensions (if available) will override these.
+    // Default style for the image; dynamic dimensions will override these.
     linkPreviewImage: {
-        // Removed width: '100%' to allow dynamic sizing.
-        height: 150, // fallback height in case dimensions aren't retrieved
+        height: 150, // fallback height
         marginTop: 5,
         marginBottom: 5,
         borderRadius: 8,
     },
     imageTouchable: {
-        alignSelf: 'flex-start', // Prevents the TouchableOpacity from stretching to full container width
+        alignSelf: 'flex-start', // prevents stretching to full container width
     },
     linkPreviewTitle: {
         fontSize: 16,
@@ -148,7 +144,6 @@ const styles = StyleSheet.create({
         fontFamily: 'Roboto_400Regular',
         marginTop: 5,
     },
-    // This style ensures only the site text is clickable.
     linkPreviewSiteTouchable: {
         alignSelf: 'flex-start',
     },

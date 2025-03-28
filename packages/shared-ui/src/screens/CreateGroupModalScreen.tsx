@@ -8,15 +8,15 @@ import {
     StyleSheet,
     Alert,
 } from 'react-native';
-import { Image as ExpoImage } from 'expo-image';
+import { SolitoImage } from 'solito/image';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { useMutation } from '@apollo/client';
 
-import { COLORS } from '@shared-ui/constants';
-import { CREATE_GROUP_MUTATION } from '@shared-ui/queries';
-import { useAppSelector, RootState, UserType } from '@shared-ui/redux';
-import { useFileUpload } from '@shared-ui/hooks/useFileUpload';
+import { COLORS } from '../constants';
+import { CREATE_GROUP_MUTATION } from '../queries';
+import { useAppSelector, RootState, UserType } from '../redux';
+import { useFileUpload } from '../hooks';
 
 type RootStackParamList = {
     CreateGroup: undefined;
@@ -99,9 +99,13 @@ export const CreateGroupModalScreen: React.FC<Props> = ({ navigation }) => {
 
                 <View style={styles.groupAvatarContainer}>
                     {fileData ? (
-                        <ExpoImage
-                            source={{ uri: fileData }}
+                        <SolitoImage
+                            src={fileData}
                             style={styles.groupAvatar}
+                            alt="avatar"
+                            width={80}
+                            height={80}
+                            contentFit="cover" // Retained as requested
                         />
                     ) : (
                         <View style={styles.placeholderAvatar}>

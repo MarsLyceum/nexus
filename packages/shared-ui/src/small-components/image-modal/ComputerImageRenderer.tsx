@@ -6,7 +6,7 @@ import React, {
     useMemo,
 } from 'react';
 import { View, ScrollView, Pressable } from 'react-native';
-import { Image as ExpoImage } from 'expo-image';
+import { SolitoImage } from 'solito/image';
 import { useImageResolution, fitContainer } from 'react-native-zoom-toolkit';
 
 export type ComputerImageRendererProps = {
@@ -24,7 +24,7 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
 }) => {
     const [zoomed, setZoomed] = useState(false);
 
-    // Use image resolution to compute the aspect ratio.
+    // Compute the aspect ratio using image resolution.
     const { resolution } = useImageResolution({ uri });
     const aspectRatio = useMemo(
         () =>
@@ -34,7 +34,7 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
         [resolution]
     );
 
-    // Compute the visible image size in non-zoomed state.
+    // Compute the non-zoomed (visible) image size.
     const nonZoomedSize = useMemo(
         () =>
             fitContainer(aspectRatio, {
@@ -59,7 +59,7 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
     const zoomedOffsetX = (zoomedContainerWidth - zoomedSize.width) / 2;
     const zoomedOffsetY = (zoomedContainerHeight - zoomedSize.height) / 2;
 
-    // We'll measure the rendered visible image area using onLayout.
+    // Measure the visible image area using onLayout.
     const [visibleRect, setVisibleRect] = useState<
         | {
               left: number;
@@ -87,7 +87,7 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
         }
     }, []);
 
-    // Attach a document-level mousedown listener that dismisses the modal if the click occurs outside the visible image area.
+    // Attach a document-level mousedown listener to dismiss the modal if clicking outside.
     useEffect(() => {
         if (!visibleRect) return;
         const handleDocumentClick = (event: MouseEvent) => {
@@ -102,21 +102,19 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
             }
         };
         document.addEventListener('mousedown', handleDocumentClick);
-        // eslint-disable-next-line consistent-return
         return () => {
             document.removeEventListener('mousedown', handleDocumentClick);
         };
     }, [visibleRect, onClose]);
 
-    // Handler for toggling zoom when clicking the image.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // Toggle zoom state on image press.
     const handleImagePress = useCallback((e: any) => {
         e.stopPropagation();
         setZoomed((prev) => !prev);
     }, []);
 
     if (!zoomed) {
-        // Non-zoomed state: render the image in a container that centers it.
+        // Non-zoomed state: render image centered with a "zoom-in" cursor.
         return (
             <View
                 style={{
@@ -125,34 +123,33 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
                     alignItems: 'center',
                 }}
             >
-                {/* Only the visible image area has the zoom-in cursor and toggles zoom */}
                 <Pressable
                     onPress={handleImagePress}
-                    // @ts-expect-error web only types
                     style={{
                         width: nonZoomedSize.width,
                         height: nonZoomedSize.height,
                         cursor: 'zoom-in',
                     }}
-                    // @ts-expect-error ref
                     ref={imageWrapperRef}
                     onLayout={handleLayout}
                 >
-                    <ExpoImage
-                        source={{ uri }}
+                    <SolitoImage
+                        src={uri}
                         style={{ width: '100%', height: '100%' }}
                         contentFit="contain"
+                        width={nonZoomedSize.width}
+                        height={nonZoomedSize.height}
+                        alt="Computer image preview"
                     />
                 </Pressable>
             </View>
         );
     }
-    // Zoomed state: render the zoomed image inside a ScrollView so vertical scrolling works.
+
+    // Zoomed state: render image inside a ScrollView (vertical scrolling enabled).
     return (
-        // @ts-expect-error web only types
         <View style={{ flex: 1, cursor: 'zoom-out' }}>
             <ScrollView
-                // @ts-expect-error web only types
                 style={{ flex: 1, cursor: 'zoom-out' }}
                 contentContainerStyle={{
                     width: zoomedContainerWidth,
@@ -162,10 +159,8 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
             >
                 <Pressable
                     onPress={handleImagePress}
-                    // @ts-expect-error ref
                     ref={imageWrapperRef}
                     onLayout={handleLayout}
-                    // @ts-expect-error web only types
                     style={{
                         width: zoomedSize.width,
                         height: zoomedSize.height,
@@ -174,10 +169,13 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
                         cursor: 'zoom-out',
                     }}
                 >
-                    <ExpoImage
-                        source={{ uri }}
+                    <SolitoImage
+                        src={uri}
                         style={{ width: '100%', height: '100%' }}
                         contentFit="contain"
+                        width={zoomedSize.width}
+                        height={zoomedSize.height}
+                        alt="Computer image preview zoomed"
                     />
                 </Pressable>
             </ScrollView>

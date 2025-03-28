@@ -6,7 +6,7 @@ import {
     StyleSheet,
     LayoutChangeEvent,
 } from 'react-native';
-import { Image as ExpoImage } from 'expo-image';
+import { SolitoImage } from 'solito/image';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { useApolloClient } from '@apollo/client';
@@ -237,14 +237,15 @@ const CommentThreadComponent = ({
                         color={COLORS.InactiveText}
                         style={styles.collapseIcon}
                     />
-                    <ExpoImage
-                        source={{
-                            uri: `https://picsum.photos/seed/${comment.user.replaceAll(
-                                /[^\dA-Za-z]/g,
-                                ''
-                            )}/48`,
-                        }}
+                    <SolitoImage
+                        src={`https://picsum.photos/seed/${comment.user.replaceAll(
+                            /[^\dA-Za-z]/g,
+                            ''
+                        )}/48`}
+                        alt="user picture"
                         style={styles.commentUserPic}
+                        width={28}
+                        height={28}
                     />
                     <Text style={styles.commentUser}>{comment.user}</Text>
                     {opUser && opUser === comment.user && (

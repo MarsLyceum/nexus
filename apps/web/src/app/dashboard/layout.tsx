@@ -1,86 +1,31 @@
-'use client';
-
-import '../../../polyfills/expo-polyfills';
+// app/dashboard/layout.tsx
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { AnimatePresence, motion } from 'framer-motion';
-import { usePathname } from 'next/navigation';
-import { useRouter } from 'solito/navigation';
-import { SidebarScreen } from '@shared-ui/screens';
-import { COLORS, SIDEBAR_WIDTH } from '@shared-ui/constants';
+import { createApolloClient } from '@shared-ui/utils';
+import { FETCH_USER_GROUPS_QUERY } from '@shared-ui/queries';
+import type { UserGroupsType } from '@shared-ui/redux';
 
-export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({
+import { DashboardLayoutClient } from './DashboardLayoutClient';
+
+export default async function DashboardLayout({
     children,
-}) => {
-    // usePathname generates a unique key for AnimatePresence so it can animate page changes.
-    const pathname = usePathname();
-    const router = useRouter();
-    // Derive current route segment (for example, "friends" from "/dashboard/friends")
-    const currentRoute = pathname.split('/')[2]?.toLowerCase() || 'friends';
+}: {
+    children: React.ReactNode;
+}) {
+    // Create Apollo Client and fetch groups on the server.
+    const client = createApolloClient();
 
-    const dummyNavigation = {
-        navigate: (routeName: string) => {
-            router.push(`/dashboard/${routeName.toLowerCase()}`);
-        },
-        toggleDrawer: () => {},
-        dispatch: () => {},
-        reset: () => {},
-        goBack: () => {},
-        isFocused: () => true,
-        addListener: () => () => {},
-        removeListener: () => {},
-    };
+    // Replace with your actual logic for retrieving the user id.
+    const userId = '40ff5be6-d2bb-4fe1-98ae-6cfb01fe5a6c';
 
-    console.log('remounting dashboard layout');
+    const response = await client.query<{ fetchUserGroups: UserGroupsType }>({
+        query: FETCH_USER_GROUPS_QUERY,
+        variables: { userId },
+    });
+    const groups = response.data.fetchUserGroups;
 
     return (
-        <View style={styles.container}>
-            {/* Sidebar area stays persistent */}
-            <View style={styles.sidebar}>
-                {/* Pass the current route as a prop */}
-                <SidebarScreen
-                    navigation={dummyNavigation}
-                    currentRoute={currentRoute}
-                />
-            </View>
-
-            {/* Main content area: dynamic routes animate on change */}
-            <View style={styles.mainContent}>
-                <AnimatePresence exitBeforeEnter>
-                    <motion.div
-                        key={pathname}
-                        initial={{ opacity: 0, x: 50 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -50 }}
-                        transition={{ duration: 0.3 }}
-                        style={{ width: '100%', height: '100%' }}
-                    >
-                        {children}
-                    </motion.div>
-                </AnimatePresence>
-            </View>
-        </View>
+        <DashboardLayoutClient groups={groups}>
+            {children}
+        </DashboardLayoutClient>
     );
-};
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        minHeight: '100vh', // Fills the viewport height
-        flexDirection: 'row',
-        backgroundColor: COLORS.AppBackground,
-    },
-    sidebar: {
-        width: SIDEBAR_WIDTH,
-        backgroundColor: COLORS.AppBackground,
-        paddingTop: 20,
-        paddingHorizontal: 10,
-    },
-    mainContent: {
-        flex: 1,
-        backgroundColor: COLORS.PrimaryBackground,
-        minHeight: '100vh', // Fills the viewport height
-    },
-});
-
-export default DashboardLayout;
+}

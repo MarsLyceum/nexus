@@ -6,7 +6,7 @@ import {
     StyleSheet,
     Image as RNImage,
 } from 'react-native';
-import { Image as ExpoImage } from 'expo-image';
+import { SolitoImage } from 'solito/image';
 import { LinkPreview } from './LinkPreview';
 import { MessageWithAvatar, PreviewData } from '../types';
 import { MarkdownRenderer } from './MarkdownRenderer';
@@ -20,7 +20,7 @@ export type MessageItemProps = {
     onAttachmentPress: (attachments: string[], index: number) => void;
 };
 
-// This component renders an image attachment at 30% of its native size.
+// This component renders an image attachment at 50% of its native size.
 const NativeSizeAttachmentImage: React.FC<{ uri: string }> = ({ uri }) => {
     const [dimensions, setDimensions] = React.useState<
         { width: number; height: number } | undefined
@@ -40,26 +40,30 @@ const NativeSizeAttachmentImage: React.FC<{ uri: string }> = ({ uri }) => {
     }, [uri]);
 
     if (!dimensions) {
-        return undefined;
+        return null;
     }
 
+    const scaledWidth = dimensions.width * 0.5;
+    const scaledHeight = dimensions.height * 0.5;
+
     return (
-        <ExpoImage
-            source={{ uri }}
-            style={[
-                styles.messageAttachmentImage,
-                {
-                    width: dimensions.width * 0.5,
-                    height: dimensions.height * 0.5,
-                },
-            ]}
+        <SolitoImage
+            src={uri}
+            style={{
+                ...styles.messageAttachmentImage,
+                width: scaledWidth,
+                height: scaledHeight,
+            }}
             contentFit="contain"
+            width={scaledWidth}
+            height={scaledHeight}
+            alt="Message attachment image"
         />
     );
 };
 
 // This component renders a video attachment using NexusVideo.
-// It uses the native width and height from the media info and scales them by 30%.
+// It uses the native width and height from the media info and scales them by 50%.
 const NativeSizeAttachmentVideo: React.FC<{
     uri: string;
     nativeWidth: number;
@@ -94,8 +98,6 @@ const renderMessageContent = (
 
     // If preview data is provided, use that.
     if (previewData && previewData.length > 0) {
-        // Special case: if there's exactly one preview and the content exactly matches its URL
-        // and it's an image, then just render that preview.
         if (
             previewData.length === 1 &&
             trimmedContent === previewData[0].url &&
@@ -109,7 +111,6 @@ const renderMessageContent = (
             );
         }
 
-        // Otherwise, render Markdown followed by all preview data entries.
         return (
             <>
                 <MarkdownRenderer text={content} />
@@ -124,7 +125,6 @@ const renderMessageContent = (
         );
     }
 
-    // Fallback: no preview data provided so use URL extraction.
     if (
         urls.length === 1 &&
         trimmedContent === urls[0] &&
@@ -156,13 +156,17 @@ const MessageItemComponent: React.FC<MessageItemProps> = ({
     width,
     onAttachmentPress,
 }) => {
-    // useMediaTypes now returns an object mapping each URL to a MediaInfo object,
-    // which includes the media type, native width, native height, and aspect ratio.
     const mediaInfos = useMediaTypes(item.attachmentUrls || []);
 
     return (
         <View style={styles.messageContainer}>
-            <ExpoImage source={{ uri: item.avatar }} style={styles.avatar} />
+            <SolitoImage
+                src={item.avatar}
+                style={styles.avatar}
+                width={40}
+                height={40}
+                alt="User avatar"
+            />
             <View style={styles.messageContent}>
                 <Text style={styles.userName}>
                     {item.username}{' '}
@@ -176,7 +180,7 @@ const MessageItemComponent: React.FC<MessageItemProps> = ({
                           width,
                           item.previewData
                       )
-                    : undefined}
+                    : null}
                 {item.attachmentUrls && item.attachmentUrls.length > 0 && (
                     <View style={styles.messageAttachmentsContainer}>
                         {item.attachmentUrls.map((url, index) => {
@@ -198,10 +202,9 @@ const MessageItemComponent: React.FC<MessageItemProps> = ({
                                             nativeHeight={info.height}
                                             aspectRatio={info.aspectRatio}
                                         />
-                                    ) : undefined}
-                                    {info && info.type === 'image' ? (
+                                    ) : info && info.type === 'image' ? (
                                         <NativeSizeAttachmentImage uri={url} />
-                                    ) : undefined}
+                                    ) : null}
                                 </TouchableOpacity>
                             );
                         })}

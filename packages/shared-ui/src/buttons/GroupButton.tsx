@@ -1,12 +1,6 @@
 import React from 'react';
-import {
-    TouchableOpacity,
-    StyleSheet,
-    View,
-    ImageSourcePropType,
-    Text,
-} from 'react-native';
-import { Image as ExpoImage } from 'expo-image';
+import { TouchableOpacity, StyleSheet, View, Text } from 'react-native';
+import { SolitoImage } from 'solito/image';
 import { COLORS } from '../constants';
 
 const styles = StyleSheet.create({
@@ -47,16 +41,19 @@ export const GroupButton = ({
     groupName,
 }: {
     onPress: () => unknown;
-    imageSource: ImageSourcePropType;
+    imageSource: string;
     groupName: string;
 }) => (
     <TouchableOpacity style={styles.container} onPress={onPress}>
         <View style={styles.buttonContainer}>
             <View style={styles.button}>
-                <ExpoImage
-                    source={imageSource}
-                    style={styles.image}
+                <SolitoImage
+                    src={imageSource}
+                    width={45}
+                    height={45}
                     contentFit="cover" // Ensures the image fills the entire rectangle
+                    style={styles.image}
+                    alt="Group Image"
                 />
             </View>
         </View>

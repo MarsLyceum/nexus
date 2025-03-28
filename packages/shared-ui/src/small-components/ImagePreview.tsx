@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { StyleSheet, Pressable } from 'react-native';
-import { Image as ExpoImage } from 'expo-image';
+import { SolitoImage } from 'solito/image';
 import { ImageDetailsModal } from '../sections';
 
 export type ImagePreviewProps = {
@@ -28,8 +28,8 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({
                 onPress={() => setModalVisible(true)}
                 style={styles.linkPreviewContainer}
             >
-                <ExpoImage
-                    source={{ uri: url }}
+                <SolitoImage
+                    src={url}
                     style={{
                         width: targetWidth,
                         height: computedHeight,
@@ -37,6 +37,9 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({
                         borderRadius: 8,
                     }}
                     contentFit="contain"
+                    width={targetWidth}
+                    height={computedHeight}
+                    alt="Image preview"
                 />
             </Pressable>
             <ImageDetailsModal

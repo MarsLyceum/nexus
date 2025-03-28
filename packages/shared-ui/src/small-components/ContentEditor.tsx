@@ -8,7 +8,9 @@ import {
     StyleSheet,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
-import { MarkdownEditor } from '../small-components/MarkdownEditor';
+import { SolitoImage } from 'solito/image';
+
+import { MarkdownEditor } from './MarkdownEditor';
 import { RichTextEditor, AttachmentPreviews, Attachment } from '../sections';
 import { useFileUpload } from '../hooks';
 import { GiphyModal } from './GiphyModal';
@@ -18,7 +20,6 @@ import { FormattingOptions } from '../icons/FormattingOptions';
 
 // --- New imports for preview modal ---
 import { CustomPortalModal } from './CustomPortalModal';
-import { Image as ExpoImage } from 'expo-image';
 
 export type ContentEditorProps = {
     value: string;
@@ -70,6 +71,12 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
     const [previewModalVisible, setPreviewModalVisible] = useState(false);
     const [selectedAttachment, setSelectedAttachment] =
         useState<Attachment | null>(null);
+
+    // New state to hold the parent's dimensions
+    const [previewParentSize, setPreviewParentSize] = useState({
+        width: 0,
+        height: 0,
+    });
 
     const handleAttachmentInsert = async () => {
         try {
@@ -226,7 +233,7 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
                     setShowGiphy(false);
                 }}
             />
-            {/* --- New: Render the attachment preview modal --- */}
+            {/* --- New: Render the attachment preview modal with dynamic sizing based on the parent container --- */}
             {previewModalVisible && selectedAttachment && (
                 <CustomPortalModal
                     visible={previewModalVisible}
@@ -235,10 +242,17 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
                     <TouchableOpacity
                         style={styles.previewModalOverlay}
                         onPress={() => setPreviewModalVisible(false)}
+                        onLayout={(e) => {
+                            const { width, height } = e.nativeEvent.layout;
+                            setPreviewParentSize({ width, height });
+                        }}
                     >
-                        <ExpoImage
-                            source={{ uri: selectedAttachment.previewUri }}
+                        <SolitoImage
+                            src={selectedAttachment.previewUri}
                             style={styles.previewModalImage}
+                            width={previewParentSize.width * 0.9}
+                            height={previewParentSize.height * 0.9}
+                            alt="attachment"
                             contentFit="contain"
                         />
                     </TouchableOpacity>
@@ -378,8 +392,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     previewModalImage: {
-        width: '90%',
-        height: '90%',
         borderWidth: 2,
         borderColor: 'white',
     },

@@ -80,19 +80,20 @@ const SkeletonGroupButton = () => (
     </View>
 );
 
-// Props include a currentRoute property from the parent.
+// Extend the props to accept an optional groups list.
 type SidebarScreenProps = DrawerContentComponentProps & {
     currentRoute: string;
+    groups?: UserGroupsType;
 };
 
 // eslint-disable-next-line react/display-name
 export const SidebarScreen = React.memo(
-    ({ navigation, currentRoute }: SidebarScreenProps) => {
+    ({ navigation, currentRoute, groups }: SidebarScreenProps) => {
         const router = useRouter();
         const [selectedButton, setSelectedButton] =
             useState<string>(currentRoute);
 
-        // Whenever currentRoute changes, update the selected button.
+        // Update the selected button when currentRoute changes.
         useEffect(() => {
             setSelectedButton(currentRoute);
         }, [currentRoute]);
@@ -100,35 +101,42 @@ export const SidebarScreen = React.memo(
         const user: UserType = useAppSelector(
             (state: RootState) => state.user.user
         );
-        const userGroups: UserGroupsType = useAppSelector(
-            (state: RootState) => state.userGroups.userGroups
+
+        // State for groups: use passed prop if available, else default to an empty array.
+        const [localGroups, setLocalGroups] = useState<UserGroupsType>(
+            groups || []
         );
-        const [loadingGroups, setLoadingGroups] = useState<boolean>(true);
+        // Only show loading if groups prop is not passed.
+        const [loadingGroups, setLoadingGroups] = useState<boolean>(!groups);
 
         const dispatch = useAppDispatch();
         const apolloClient = useApolloClient();
 
-        const setUserGroupsInStore = useCallback(
-            (groups: UserGroupsType) => {
-                dispatch(retrieveUserGroups(groups));
-            },
-            [dispatch]
-        );
+        // If groups prop is provided, update localGroups when it changes.
+        useEffect(() => {
+            if (groups) {
+                setLocalGroups(groups);
+                setLoadingGroups(false);
+            }
+        }, [groups]);
 
+        // Only fetch groups if not provided via props.
         useEffect(() => {
             void (async () => {
-                if (user?.id) {
+                if (!groups && user?.id) {
                     const result = await apolloClient.query<{
                         fetchUserGroups: UserGroupsType;
                     }>({
                         query: FETCH_USER_GROUPS_QUERY,
                         variables: { userId: user.id },
                     });
-                    setUserGroupsInStore(result.data.fetchUserGroups);
+                    // Optionally update redux store if needed.
+                    dispatch(retrieveUserGroups(result.data.fetchUserGroups));
+                    setLocalGroups(result.data.fetchUserGroups);
                     setLoadingGroups(false);
                 }
             })();
-        }, [user?.id, apolloClient, setUserGroupsInStore]);
+        }, [groups, user?.id, apolloClient, dispatch]);
 
         // Create dedicated refs for the static buttons.
         const staticButtonRefs = {
@@ -149,9 +157,8 @@ export const SidebarScreen = React.memo(
         const highlightTop = useRef(new Animated.Value(0)).current;
         const highlightHeight = useRef(new Animated.Value(40)).current;
 
-        // This effect measures the currently selected button.
+        // Measure the currently selected button.
         useLayoutEffect(() => {
-            // First check in static button refs.
             let buttonRef: React.RefObject<View> | null = null;
             if (
                 staticButtonRefs[
@@ -163,7 +170,6 @@ export const SidebarScreen = React.memo(
                         selectedButton as keyof typeof staticButtonRefs
                     ];
             } else if (dynamicButtonRefs.current[selectedButton]) {
-                // Otherwise, check dynamic refs.
                 buttonRef = {
                     current: dynamicButtonRefs.current[selectedButton],
                 };
@@ -273,19 +279,19 @@ export const SidebarScreen = React.memo(
                                   <SkeletonGroupButton />
                               </View>
                           ))
-                        : userGroups.map((group) => {
+                        : localGroups.map((group) => {
                               const key = group.name.toLowerCase();
                               return (
                                   <View
                                       key={group.id}
                                       style={styles.buttonContainer}
-                                      // Set a callback ref to store the dynamic button reference.
+                                      // Store the dynamic button ref.
                                       ref={(ref) => {
                                           dynamicButtonRefs.current[key] = ref;
                                       }}
                                   >
                                       <GroupButton
-                                          imageSource={{ uri: group.avatarUrl }}
+                                          imageSource={group.avatarUrl ?? ''}
                                           onPress={() =>
                                               handlePress(group.name)
                                           }

@@ -9,7 +9,7 @@ import {
     ScrollView,
     TouchableOpacity,
 } from 'react-native';
-import { Image as ExpoImage } from 'expo-image';
+import { SolitoImage } from 'solito/image';
 import { COLORS } from '../constants';
 import { Attachment, AttachmentPreviews } from '../sections';
 import { CustomPortalModal } from './CustomPortalModal';
@@ -55,6 +55,12 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
     const [selectedAttachment, setSelectedAttachment] = useState<
         Attachment | undefined
     >(undefined);
+
+    // New state to hold the parent container's dimensions for the preview image.
+    const [previewParentSize, setPreviewParentSize] = useState({
+        width: 0,
+        height: 0,
+    });
 
     const onAttachmentPress = (attachment: Attachment) => {
         setSelectedAttachment(attachment);
@@ -142,13 +148,30 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
                                             onPress={() =>
                                                 setPreviewModalVisible(false)
                                             }
+                                            onLayout={(e) => {
+                                                const { width, height } =
+                                                    e.nativeEvent.layout;
+                                                setPreviewParentSize({
+                                                    width,
+                                                    height,
+                                                });
+                                            }}
                                         >
-                                            <ExpoImage
-                                                source={{
-                                                    uri: selectedAttachment.previewUri,
-                                                }}
+                                            <SolitoImage
+                                                src={
+                                                    selectedAttachment.previewUri
+                                                }
                                                 style={styles.previewModalImage}
+                                                width={
+                                                    previewParentSize.width *
+                                                    0.9
+                                                }
+                                                height={
+                                                    previewParentSize.height *
+                                                    0.9
+                                                }
                                                 contentFit="contain"
+                                                alt="Post Attachment preview"
                                             />
                                         </TouchableOpacity>
                                     </CustomPortalModal>
@@ -192,8 +215,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     previewModalImage: {
-        width: '90%',
-        height: '90%',
         borderWidth: 2,
         borderColor: 'white',
     },

@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { View, Text, StyleSheet, View as RNView } from 'react-native';
-import { Image as ExpoImage } from 'expo-image';
+import { SolitoImage } from 'solito/image';
 import { More, CheckMark, Cancel } from '../icons';
 import { COLORS } from '../constants';
 import { ActionButton } from './ActionButton';
@@ -58,20 +58,20 @@ const getDotColor = (status?: string): string => {
     switch (currentStatus) {
         case 'online': {
             return COLORS.Success;
-        } // Green (#31E143)
+        }
         case 'online_dnd': {
             return COLORS.Error;
-        } // Red (#bb1817)
+        }
         case 'idle': {
             return COLORS.Idle;
-        } // Idle (#FAA61A)
+        }
         case 'offline':
         case 'invisible': {
             return COLORS.InactiveText;
-        } // Gray (#989898)
+        }
         case 'offline_dnd': {
             return COLORS.Error;
-        } // Red (#bb1817)
+        }
         default: {
             return COLORS.InactiveText;
         }
@@ -99,9 +99,6 @@ export const FriendItem: React.FC<FriendItemProps> = ({
     const isRequestedByMe = requestedBy?.id === currentUserId;
 
     // Determine displayed status:
-    // - If pending, show outgoing/incoming friend request.
-    // - If relationship is accepted, display the online status using displayStatusMap.
-    // - Otherwise, show the relationship status (capitalized) if available.
     let displayedStatus = '';
     if (isPending) {
         displayedStatus = isRequestedByMe
@@ -131,7 +128,13 @@ export const FriendItem: React.FC<FriendItemProps> = ({
         <View style={styles.friendItem}>
             {/* Avatar + (optional) Status Dot */}
             <View style={styles.avatarAndDot}>
-                <ExpoImage source={{ uri: avatarUrl }} style={styles.avatar} />
+                <SolitoImage
+                    src={avatarUrl}
+                    style={styles.avatar}
+                    width={32}
+                    height={32}
+                    alt="Friend avatar"
+                />
                 {relationshipStatus === 'accepted' && (
                     <View
                         style={[

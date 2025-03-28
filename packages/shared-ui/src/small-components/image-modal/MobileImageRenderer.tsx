@@ -1,6 +1,6 @@
 import React, { useRef, useCallback } from 'react';
 import { View, useWindowDimensions } from 'react-native';
-import { Image as ExpoImage } from 'expo-image';
+import { SolitoImage } from 'solito/image';
 import {
     ResumableZoom,
     type ResumableZoomType,
@@ -38,7 +38,6 @@ export const MobileImageRenderer: React.FC<MobileImageRendererProps> = ({
     const offsetY = (screenHeight - imageHeight) / 2;
 
     const handleZoomTap = useCallback(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (e: any) => {
             const { absoluteX, absoluteY } = e;
 
@@ -61,8 +60,6 @@ export const MobileImageRenderer: React.FC<MobileImageRendererProps> = ({
                     onClose();
                 }
             } else {
-                // Fallback: use vertical bounds based on computed offset.
-                // eslint-disable-next-line no-lonely-if
                 if (absoluteY < offsetY || absoluteY > offsetY + imageHeight) {
                     e.stopPropagation?.();
                     onClose();
@@ -97,10 +94,13 @@ export const MobileImageRenderer: React.FC<MobileImageRendererProps> = ({
                     }}
                     tapsEnabled
                 >
-                    <ExpoImage
-                        source={{ uri }}
+                    <SolitoImage
+                        src={uri}
                         style={{ width: imageWidth, height: imageHeight }}
                         contentFit="contain"
+                        width={imageWidth}
+                        height={imageHeight}
+                        alt="Mobile image preview"
                     />
                 </ResumableZoom>
             ) : (

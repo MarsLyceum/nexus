@@ -1,3 +1,5 @@
+// pages/post/[postId].tsx
+
 import React, {
     useEffect,
     useContext,
@@ -12,10 +14,10 @@ import {
     SafeAreaView,
     KeyboardAvoidingView,
     Platform,
-    Text,
 } from 'react-native';
-import { useRouter, useSearchParams } from 'solito/router';
-import { useQuery, useApolloClient } from '@apollo/client';
+import { useRouter } from 'next/router';
+import { useApolloClient } from '@apollo/client';
+import type { GetServerSideProps } from 'next';
 
 import { useAppDispatch, loadUser } from '@shared-ui/redux';
 import {
@@ -34,64 +36,50 @@ import {
     SkeletonComment,
     CommentEditor,
 } from '@shared-ui/small-components';
+import { createApolloClient } from '@shared-ui/utils';
 
-export const PostScreen: React.FC = () => {
-    // Use solito router hooks for navigation
-    const { push, back } = useRouter();
-    // Get route/query params via solito's search params hook.
-    // Note: If "post" is provided, it might be a JSON string—so we parse it.
-    const params = useSearchParams<{
-        id?: string;
-        post?: string;
-        parentCommentId?: string;
-    }>();
-    const { id, post, parentCommentId } = params;
-    const parsedPost: Post | undefined = post ? JSON.parse(post) : undefined;
+interface PostPageProps {
+    post: Post;
+    user: {
+        username: string;
+        [key: string]: any;
+    } | null;
+    parentCommentId: string | null;
+    initialApolloState: any;
+}
 
+export const PostPage: React.FC<PostPageProps> = ({
+    post,
+    user,
+    parentCommentId,
+}) => {
+    const router = useRouter();
     const dispatch = useAppDispatch();
     const [scrollY, setScrollY] = useState(0);
     const scrollViewRef = useRef<ScrollView>(null);
-
-    // Get the Apollo client instance for refetching queries.
     const client = useApolloClient();
 
+    // Dispatch action to load the user into Redux
     useEffect(() => {
         dispatch(loadUser());
     }, [dispatch]);
 
-    // Fetch post if not passed via search params.
-    const { data, loading, error } = useQuery(FETCH_POST_QUERY, {
-        variables: { postId: parsedPost ? parsedPost.id : id },
-        skip: !!parsedPost,
-    });
-
-    const feedPost: Post | undefined = parsedPost || data?.fetchPost;
-    const computedUserId =
-        feedPost?.postedByUserId ||
-        feedPost?.user ||
-        data?.fetchPost?.postedByUserId ||
-        data?.fetchPost?.user ||
-        '';
-
-    const { data: userData } = useQuery(FETCH_USER_QUERY, {
-        variables: { userId: computedUserId },
-        skip: computedUserId === '',
-    });
-
-    const rawTime = feedPost?.postedAt || feedPost?.time || '';
+    // Compute username from server-fetched user data.
+    const computedUserId = post?.postedByUserId || post?.user || '';
+    const resolvedUsername = user?.username || 'Username';
+    const rawTime = post?.postedAt || post?.time || '';
     const formattedTime = rawTime ? getRelativeTime(rawTime) : 'Unknown time';
-    const resolvedUsername = userData?.fetchUser?.username || 'Username';
 
     const postData: PostData = {
-        id: feedPost?.id ?? '',
+        id: post?.id ?? '',
         user: resolvedUsername,
         time: formattedTime,
-        title: feedPost?.title ?? '',
-        flair: feedPost?.flair || '',
-        upvotes: feedPost?.upvotes ?? 0,
-        commentsCount: feedPost?.commentsCount ?? 0,
-        content: feedPost?.content ?? '',
-        attachmentUrls: feedPost?.attachmentUrls || [],
+        title: post?.title ?? '',
+        flair: post?.flair || '',
+        upvotes: post?.upvotes ?? 0,
+        commentsCount: post?.commentsCount ?? 0,
+        content: post?.content ?? '',
+        attachmentUrls: post?.attachmentUrls || [],
     };
 
     const {
@@ -106,7 +94,7 @@ export const PostScreen: React.FC = () => {
         if (postData?.id) setPostId(postData.id);
         if (postData?.user) setParentUser(postData.user);
         if (postData?.content) setParentContent(postData.content);
-        if (feedPost?.postedAt) setParentDate(feedPost.postedAt);
+        if (post?.postedAt) setParentDate(post.postedAt);
         if (postData?.attachmentUrls) {
             setParentAttachmentUrls(postData.attachmentUrls);
         }
@@ -114,7 +102,7 @@ export const PostScreen: React.FC = () => {
         postData?.id,
         postData?.user,
         postData?.content,
-        feedPost?.postedAt,
+        post?.postedAt,
         postData?.attachmentUrls,
         setPostId,
         setParentUser,
@@ -127,31 +115,18 @@ export const PostScreen: React.FC = () => {
         setPostContent();
     }, [setPostContent]);
 
-    // Instead of dynamically setting the header title with navigation.setOptions,
-    // consider using static header configurations or expo-router's Head component.
-    // For now, we omit dynamic title changes.
-
-    // Create a ref for CommentsManager (if needed for additional control)
-    const commentsManagerRef = useRef<{ checkScrollPosition: () => void }>(
-        null
-    );
-
-    // onScroll handler: update scrollY state.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // onScroll handler updates scrollY state.
     const handleScroll = (event: any) => {
         const currentY = event.nativeEvent.contentOffset.y;
         setScrollY(currentY);
-        if (commentsManagerRef.current) {
-            commentsManagerRef.current.checkScrollPosition();
-        }
     };
 
-    // Determine if device is computer (desktop) or mobile.
+    // Determine if device is desktop vs mobile.
     const isDesktop = isComputer();
     const BOTTOM_INPUT_HEIGHT = 60;
     const isWeb = Platform.OS === 'web';
 
-    // Create dynamic styles based on device type.
+    // Dynamic styles based on platform and device type.
     const computedStyles = StyleSheet.create({
         safeContainer: {
             flex: 1,
@@ -199,42 +174,6 @@ export const PostScreen: React.FC = () => {
               },
     });
 
-    if (loading) {
-        return (
-            <SafeAreaView style={computedStyles.safeContainer}>
-                <View style={computedStyles.mainContainer}>
-                    <ScrollView
-                        ref={scrollViewRef}
-                        style={computedStyles.scrollSection}
-                        contentContainerStyle={computedStyles.scrollView}
-                        keyboardShouldPersistTaps="handled"
-                    >
-                        <SkeletonPostItem />
-                        <SkeletonComment />
-                        <SkeletonComment />
-                        <SkeletonComment />
-                    </ScrollView>
-                </View>
-            </SafeAreaView>
-        );
-    }
-
-    if (error) {
-        return (
-            <SafeAreaView style={computedStyles.safeContainer}>
-                <View
-                    style={{
-                        flex: 1,
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                    }}
-                >
-                    <Text>Error loading post: {error.message}</Text>
-                </View>
-            </SafeAreaView>
-        );
-    }
-
     const ContainerComponent = isWeb ? View : KeyboardAvoidingView;
     const containerProps = isWeb
         ? { style: computedStyles.container }
@@ -255,7 +194,7 @@ export const PostScreen: React.FC = () => {
                         onScroll={handleScroll}
                         scrollEventThrottle={16}
                     >
-                        <PostItem
+                        {/* <PostItem
                             id={postData.id}
                             username={postData.user}
                             time={postData.time}
@@ -266,39 +205,34 @@ export const PostScreen: React.FC = () => {
                             flair={postData.flair}
                             attachmentUrls={postData.attachmentUrls}
                             onBackPress={() => {
-                                // Use solito's back() method to navigate back
-                                back();
+                                router.back();
                             }}
                             variant="details"
                             group="My cool group"
                         />
                         {isDesktop && (
-                            // Show inline CommentEditor on computer
                             <CommentEditor
                                 postId={postData.id}
                                 // eslint-disable-next-line unicorn/no-null
                                 parentCommentId={parentCommentId ?? null}
                                 onCommentCreated={() => {
-                                    // When a top-level comment is created,
-                                    // refetch the comments so the new comment is shown.
+                                    // For production, consider showing a loading state while refetching.
                                     void client.refetchQueries({
                                         include: [FETCH_POST_COMMENTS_QUERY],
                                     });
                                 }}
                                 onCancel={() => {
-                                    // Optional cancel handler
+                                    // Optional cancel handler.
                                 }}
                             />
-                        )}
+                        )} */}
                         <CommentsManager
-                            ref={commentsManagerRef}
                             postId={postData.id}
                             parentCommentId={parentCommentId}
                             scrollY={scrollY}
                         />
                     </ScrollView>
                     {!isDesktop && (
-                        // Show CreateContentButton on mobile; reset the comment context to top-level before navigating
                         <View
                             style={computedStyles.createContentButtonContainer}
                         >
@@ -306,7 +240,7 @@ export const PostScreen: React.FC = () => {
                                 buttonText="Write a comment..."
                                 onPress={() => {
                                     setPostContent();
-                                    push('/create-comment');
+                                    void router.push('/create-comment');
                                 }}
                             />
                         </View>
@@ -315,4 +249,58 @@ export const PostScreen: React.FC = () => {
             </ContainerComponent>
         </SafeAreaView>
     );
+};
+
+export default PostPage;
+
+export const getServerSideProps: GetServerSideProps = async (context) => {
+    // Extract route params and query string values.
+    const { postId } = context.params as { postId: string };
+    const { post: postString, parentCommentId } = context.query;
+    let parsedPost: Post | null = null;
+
+    // If a "post" JSON string is passed in the query, try to parse it.
+    if (postString) {
+        try {
+            parsedPost = JSON.parse(postString as string);
+        } catch (e) {
+            console.error('Failed to parse post from query:', e);
+        }
+    }
+
+    const client = createApolloClient();
+
+    let postData;
+
+    // If the post was not provided via query params, fetch it from your GraphQL API.
+    if (!parsedPost) {
+        const { data } = await client.query({
+            query: FETCH_POST_QUERY,
+            variables: { postId },
+        });
+        postData = data?.fetchPost;
+    } else {
+        postData = parsedPost;
+    }
+
+    // Compute the user ID to fetch the user.
+    const computedUserId = postData?.postedByUserId || postData?.user || '';
+    let userData = null;
+    if (computedUserId) {
+        const { data } = await client.query({
+            query: FETCH_USER_QUERY,
+            variables: { userId: computedUserId },
+        });
+        userData = data?.fetchUser;
+    }
+
+    // For production consider error handling here if queries fail.
+    return {
+        props: {
+            initialApolloState: client.cache.extract(),
+            post: postData,
+            user: userData,
+            parentCommentId: parentCommentId || null,
+        },
+    };
 };

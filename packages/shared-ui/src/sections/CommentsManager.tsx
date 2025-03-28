@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, ActivityIndicator, Text, StyleSheet } from 'react-native';
 import { useApolloClient, useQuery, ApolloClient } from '@apollo/client';
-import { useNavigation } from '@react-navigation/core';
 import { FlashList } from '@shopify/flash-list';
+import { useRouter } from 'solito/router';
 import { FETCH_POST_COMMENTS_QUERY, FETCH_USER_QUERY } from '../queries';
 import { CommentThread, CommentNode } from './CommentThread';
 
@@ -83,7 +83,8 @@ export const CommentsManager = ({
 }: CommentsManagerProps) => {
     const client = useApolloClient();
     const userCache = useRef<{ [userId: string]: string }>({});
-    const navigation = useNavigation();
+    // Replace react-navigation's useNavigation with Solito's useRouter
+    const { push } = useRouter();
 
     // Local state to store the flat list of comments and control pagination
     const [allComments, setAllComments] = useState<CommentNode[]>([]);
@@ -170,11 +171,8 @@ export const CommentsManager = ({
                     comment={item}
                     level={0}
                     onContinueConversation={(childCommentId: string) => {
-                        // @ts-expect-error navigation
-                        navigation.push('PostScreen', {
-                            id: postId,
-                            parentCommentId: childCommentId,
-                        });
+                        // Navigate using Solito's push with a URL path following the pattern /post/:postId/comment/:parentCommentId
+                        push(`/post/${postId}/comment/${childCommentId}`);
                     }}
                 />
             )}

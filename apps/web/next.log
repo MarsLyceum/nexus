@@ -1,0 +1,31 @@
+
+> nexus-web@0.1.0 dev C:\Users\david\src\nexus\apps\web
+> next dev
+
+   ▲ Next.js 15.2.4
+   - Local:        http://localhost:3000
+   - Network:      http://25.0.101.102:3000
+   - Experiments (use with caution):
+     ✓ forceSwcTransforms
+
+ ✓ Starting...
+ ✓ Ready in 4.3s
+ ○ Compiling /app ...
+ ✓ Compiled /app in 52.7s (5661 modules)
+Expo polyfills injected: {
+  EventEmitter: [Function: EventEmitter],
+  NativeModule: [Function: NativeModule],
+  SharedObject: [Function: SharedObject],
+  SharedRef: [Function: SharedRef],
+  modules: {},
+  uuidv4: [Function: uuidv4],
+  uuidv5: [Function: generateUUID] {
+    DNS: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+    URL: '6ba7b811-9dad-11d1-80b4-00c04fd430c8'
+  },
+  getViewConfig: [Function: getViewConfig],
+  reloadAppAsync: [Function: reloadAppAsync]
+} EventEmitter [Function: EventEmitter]
+"shadow*" style props are deprecated. Use "boxShadow".
+props.pointerEvents is deprecated. Use style.pointerEvents
+ GET /app 200 in 57499ms

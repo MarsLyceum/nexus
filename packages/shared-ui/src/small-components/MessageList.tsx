@@ -1,12 +1,10 @@
 // MessageList.tsx
 import React from 'react';
 import { StyleSheet, FlatList } from 'react-native';
-import { FlashList } from '@shopify/flash-list';
 import { MessageWithAvatar } from '../types';
-import { MessageItem } from './MessageItem';
-import { PatchedFlashList } from './PatchedFlashList';
+import { FlashListCompat } from './FlashListCompat';
 import { MessageItemSkeleton } from './MessageItemSkeleton';
-import { NexusList } from './NexusList';
+import { MessageItem } from './MessageItem';
 
 export type MessageListProps = {
     chatMessages: MessageWithAvatar[];

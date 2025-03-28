@@ -8,19 +8,7 @@ import React, { useEffect } from 'react';
 import { AppProps } from 'next/app';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Platform, StatusBar } from 'react-native';
-import {
-    ApolloClient,
-    InMemoryCache,
-    ApolloProvider,
-    from,
-    split,
-} from '@apollo/client';
-import { onError, ErrorResponse } from '@apollo/client/link/error';
-import createUploadLink from 'apollo-upload-client/createUploadLink.mjs';
-import { createClient } from 'graphql-ws';
-import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
-import ReconnectingWebSocket from 'reconnecting-websocket';
-import { getMainDefinition } from '@apollo/client/utilities';
+import { ApolloProvider } from '@apollo/client';
 import Toast from 'react-native-toast-message';
 import * as SplashScreen from 'expo-splash-screen';
 import { Provider as PortalProvider } from 'react-native-paper';
@@ -34,6 +22,7 @@ import {
 } from '@shared-ui/providers';
 import { StatusManager } from '@shared-ui/small-components';
 import { COLORS } from '@shared-ui/constants';
+import { createApolloClient } from '@shared-ui/utils';
 
 import { Lato_400Regular, Lato_700Bold } from '@expo-google-fonts/lato';
 import {
@@ -72,82 +61,7 @@ const CustomScrollbar = () => {
     );
 };
 
-// Setup Apollo Client links.
-const errorLink = onError((error: ErrorResponse) => {
-    if (error) {
-        console.error('Apollo Error:', error);
-    }
-});
-
-const isRunningLocally = true;
-const graphqlApiGatewayEndpointHttp = isRunningLocally
-    ? 'http://localhost:4000/graphql'
-    : 'https://nexus-web-service-197277044151.us-west1.run.app/graphql';
-const graphqlApiGatewayEndpointWs = isRunningLocally
-    ? 'ws://localhost:4000/graphql'
-    : 'wss://nexus-web-service-197277044151.us-west1.run.app/graphql';
-
-const httpLink = from([
-    errorLink,
-    createUploadLink({
-        uri: graphqlApiGatewayEndpointHttp,
-        // @ts-expect-error upload
-        isExtractableFile: (value: any) => {
-            if (value === undefined || value === null) return false;
-            if (typeof File !== 'undefined' && value instanceof File)
-                return true;
-            if (typeof Blob !== 'undefined' && value instanceof Blob)
-                return true;
-            if (
-                typeof value === 'object' &&
-                typeof value.uri === 'string' &&
-                typeof value.name === 'string' &&
-                typeof value.type === 'string'
-            ) {
-                if (
-                    Platform.OS === 'web' &&
-                    typeof value.createReadStream !== 'function'
-                ) {
-                    Object.defineProperty(value, 'createReadStream', {
-                        value: () => {
-                            throw new Error(
-                                'createReadStream is not supported on web'
-                            );
-                        },
-                        writable: false,
-                        enumerable: false,
-                    });
-                }
-                return true;
-            }
-            return false;
-        },
-    }),
-]);
-
-const wsLink = new GraphQLWsLink(
-    createClient({
-        url: graphqlApiGatewayEndpointWs,
-        webSocketImpl: ReconnectingWebSocket,
-    })
-);
-
-const splitLink = split(
-    ({ query }) => {
-        const definition = getMainDefinition(query);
-        return (
-            definition.kind === 'OperationDefinition' &&
-            definition.operation === 'subscription'
-        );
-    },
-    wsLink,
-    httpLink
-);
-
-const client = new ApolloClient({
-    link: splitLink,
-    cache: new InMemoryCache(),
-});
+const client = createApolloClient();
 
 // Determine if we're on the server.
 const isServer = typeof window === 'undefined';
@@ -156,7 +70,10 @@ export default function App({ Component, pageProps }: AppProps): JSX.Element {
     // Use fonts only on the client.
     // Even if fonts are not yet loaded, we don't render a fallback that differs from the server.
     const [fontsLoaded] = !isServer
-        ? useFonts({
+        ? // we are technically not violating the rules of hooks because
+          // isServer never changes when the file is running
+          // eslint-disable-next-line react-hooks/rules-of-hooks
+          useFonts({
               Lato_400Regular,
               Lato_700Bold,
               Roboto_400Regular,

@@ -8,37 +8,21 @@ import {
     Platform,
     View,
 } from 'react-native';
-import { NavigationProp, RouteProp } from '@react-navigation/core';
+import { useRouter } from 'solito/router';
+import { createParam } from 'solito';
+import { Header, PostItem } from '../sections';
+import { COLORS } from '../constants';
+import { CreateContentButton } from '../buttons';
+import { useAppSelector, RootState, UserType } from '../redux';
+import { FeedPost, Attachment, GroupChannel } from '../types';
+import { useFeedPosts, useCreatePost } from '../hooks';
+import { CreatePostModal } from '../small-components';
 
-import { Header, PostItem, Attachment } from '@shared-ui/sections';
-import { COLORS } from '@shared-ui/constants';
-import { CreateContentButton } from '@shared-ui/buttons';
-import { useAppSelector, RootState, UserType } from '@shared-ui/redux';
-import { FeedPost } from '@shared-ui/types';
-import { useFeedPosts, useCreatePost } from '@shared-ui/hooks';
-import { CreatePostModal } from '@shared-ui/small-components';
-
-type RootStackParamList = {
-    FeedChannelScreen: {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        channel: any; // Replace 'any' with your GroupChannel type if available
-    };
-    PostScreen: {
-        id: string;
-    };
-};
-
-interface FeedChannelScreenProps {
-    navigation: NavigationProp<RootStackParamList, 'FeedChannelScreen'>;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    channel?: any;
-    route?: RouteProp<RootStackParamList, 'FeedChannelScreen'>;
-}
+// Create a hook to read our screen parameters.
+const { useParam } = createParam<{ channelId: string }>();
 
 const BOTTOM_INPUT_HEIGHT = 60;
-/** -----------------------------
- * Styles
- ----------------------------- */
+
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -96,9 +80,6 @@ const styles = StyleSheet.create({
     },
 });
 
-/** -----------------------------
- * SkeletonPostItem Component
- ----------------------------- */
 const SkeletonPostItem: React.FC = () => (
     <View style={styles.skeletonContainer}>
         <View style={styles.skeletonHeader}>
@@ -112,21 +93,24 @@ const SkeletonPostItem: React.FC = () => (
     </View>
 );
 
-/** -----------------------------
- * FeedChannelScreen Component
- ----------------------------- */
+interface FeedChannelScreenProps {
+    channel?: GroupChannel;
+}
+
 export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
-    navigation,
     channel: channelProp,
-    route,
 }) => {
-    const channel = channelProp || route?.params?.channel;
+    // Get the channel from URL params if not provided as a prop.
+    const [channelFromParam] = useParam('channelId');
+    const channel = channelProp || channelFromParam;
+
     const user: UserType = useAppSelector(
         (state: RootState) => state.user.user
     );
     const { width } = useWindowDimensions();
+    const { push } = useRouter(); // Use router push for navigation
 
-    // Use custom hook to fetch feed posts
+    // Fetch feed posts using a custom hook
     const { feedPosts, loadingFeed } = useFeedPosts(channel?.id);
 
     // Local UI state for creating a post
@@ -135,7 +119,7 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
     const [newPostContent, setNewPostContent] = useState('');
     const [postAttachments, setPostAttachments] = useState<Attachment[]>([]);
 
-    // Use custom hook for creating a post
+    // Hook for creating a post
     const { createPost, creatingPost } = useCreatePost(channel?.id, () => {
         setModalVisible(false);
         setNewPostTitle('');
@@ -154,7 +138,7 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
         });
     };
 
-    // Determine if we're on desktop (web) by checking platform and width
+    // Determine if we're on desktop (web)
     const isDesktop = Platform.OS === 'web' && width > 768;
 
     return (
@@ -164,13 +148,12 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
             <Header
                 isLargeScreen={width > 768}
                 headerText={channel?.name ?? ''}
-                navigation={navigation}
             />
 
             {loadingFeed ? (
                 <FlatList
                     style={{ flex: 1 }}
-                    data={[0, 1, 2, 3, 4]} // 5 skeleton items
+                    data={[0, 1, 2, 3, 4]} // Render 5 skeleton items while loading
                     keyExtractor={(item) => item.toString()}
                     renderItem={() => <SkeletonPostItem />}
                     contentContainerStyle={[styles.feedList]}
@@ -192,11 +175,8 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
                             content={item.content}
                             preview
                             variant="feed"
-                            onPress={() =>
-                                navigation.navigate('PostScreen', {
-                                    id: item.id,
-                                })
-                            }
+                            // Navigate using the push function from useRouter
+                            onPress={() => push(`/post/${item.id}`)}
                             attachmentUrls={item.attachmentUrls}
                         />
                     )}

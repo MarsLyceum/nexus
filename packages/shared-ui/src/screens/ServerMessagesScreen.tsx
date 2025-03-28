@@ -1,20 +1,11 @@
 // ServerMessagesScreen.tsx
 import React, { useContext } from 'react';
 import { View, StyleSheet, Text } from 'react-native';
-import { NavigationProp } from '@react-navigation/core';
 
-import { ActiveGroupContext } from '@shared-ui/providers';
+import { ActiveGroupContext } from '../providers';
 
 import { FeedChannelScreen } from './FeedChannelScreen';
 import { TextChannelScreen } from './TextChannelScreen';
-
-type RootStackParamList = {
-    ServerMessages: undefined;
-};
-
-type ServerMessagesScreenProps = {
-    navigation: NavigationProp<RootStackParamList, 'ServerMessages'>;
-};
 
 const styles = StyleSheet.create({
     chatContainer: {
@@ -22,9 +13,7 @@ const styles = StyleSheet.create({
     },
 });
 
-export const ServerMessagesScreen: React.FC<ServerMessagesScreenProps> = ({
-    navigation,
-}) => {
+export const ServerMessagesScreen: React.FC = () => {
     // Retrieve the activeChannel from context
     const { activeChannel } = useContext(ActiveGroupContext);
 
@@ -44,17 +33,9 @@ export const ServerMessagesScreen: React.FC<ServerMessagesScreenProps> = ({
     return (
         <View style={styles.chatContainer}>
             {isFeedChannel ? (
-                <FeedChannelScreen
-                    channel={activeChannel}
-                    // @ts-expect-error: Adjust navigation typing as needed.
-                    navigation={navigation}
-                />
+                <FeedChannelScreen channel={activeChannel} />
             ) : (
-                <TextChannelScreen
-                    channel={activeChannel}
-                    // @ts-expect-error: Adjust navigation typing as needed.
-                    navigation={navigation}
-                />
+                <TextChannelScreen channel={activeChannel} />
             )}
         </View>
     );

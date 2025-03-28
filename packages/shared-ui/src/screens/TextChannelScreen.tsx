@@ -1,7 +1,6 @@
 // TextChannelScreen.tsx
 import React, { useState } from 'react';
 import { View, useWindowDimensions } from 'react-native';
-import { NavigationProp } from '@react-navigation/core';
 
 import { useAppSelector, RootState, UserType } from '../redux';
 import { Header, ImageDetailsModal } from '../sections';
@@ -12,12 +11,10 @@ import { useChannelMessages, useSendMessage } from '../hooks';
 
 export type TextChannelScreenProps = {
     channel: GroupChannel;
-    navigation: NavigationProp<Record<string, unknown>>;
 };
 
 export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
     channel,
-    navigation,
 }) => {
     const user: UserType = useAppSelector(
         (state: RootState) => state.user.user
@@ -86,11 +83,7 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
                 backgroundColor: COLORS.SecondaryBackground,
             }}
         >
-            <Header
-                isLargeScreen={isLargeScreen}
-                headerText={channel.name}
-                navigation={navigation}
-            />
+            <Header isLargeScreen={isLargeScreen} headerText={channel.name} />
 
             <View style={{ flex: 1 }}>
                 <MessageList

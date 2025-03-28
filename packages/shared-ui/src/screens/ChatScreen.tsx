@@ -6,16 +6,15 @@ import {
     TouchableOpacity,
     useWindowDimensions,
     SafeAreaView,
-    Platform,
 } from 'react-native';
 import { SolitoImage } from 'solito/image';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { useRouter } from 'solito/router';
 import { useSearchParams } from 'solito/navigation';
 
-import { COLORS } from '@shared-ui/constants';
-import { Attachment } from '@shared-ui/types';
-import { ChatInputContainer, NexusList } from '@shared-ui/small-components';
+import { COLORS } from '../constants';
+import { Attachment } from '../types';
+import { ChatInputContainer, NexusList } from '../small-components';
 
 export type Message = {
     id: string;

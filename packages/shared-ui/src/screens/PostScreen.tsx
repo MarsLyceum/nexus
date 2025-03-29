@@ -14,9 +14,12 @@ import {
     Platform,
     Text,
 } from 'react-native';
-import { useRouter, useSearchParams } from 'solito/navigation';
+// Import useRoute from React Navigation to get route params
+import { useRoute } from '@react-navigation/native';
+// Import our custom navigation hook for consistent navigation across environments
 import { useQuery, useApolloClient } from '@apollo/client';
 
+import { useNexusRouter } from '../hooks';
 import { useAppDispatch, loadUser } from '../redux';
 import {
     FETCH_POST_QUERY,
@@ -36,16 +39,17 @@ import {
 } from '../small-components';
 
 export const PostScreen: React.FC = () => {
-    // Use solito router hooks for navigation
-    const { push, back } = useRouter();
-    // Get route/query params via solito's search params hook.
+    // Use our custom NexusRouter hook for navigation
+    const { push, goBack } = useNexusRouter();
+
+    // Get route params via React Navigation's route.params.
     // Note: If "post" is provided, it might be a JSON string—so we parse it.
-    const params = useSearchParams<{
+    const route = useRoute();
+    const { id, post, parentCommentId } = route.params as {
         id?: string;
         post?: string;
         parentCommentId?: string;
-    }>();
-    const { id, post, parentCommentId } = params;
+    };
     const parsedPost: Post | undefined = post ? JSON.parse(post) : undefined;
 
     const dispatch = useAppDispatch();
@@ -59,7 +63,7 @@ export const PostScreen: React.FC = () => {
         dispatch(loadUser());
     }, [dispatch]);
 
-    // Fetch post if not passed via search params.
+    // Fetch post if not passed via route params.
     const { data, loading, error } = useQuery(FETCH_POST_QUERY, {
         variables: { postId: parsedPost ? parsedPost.id : id },
         skip: !!parsedPost,
@@ -126,10 +130,6 @@ export const PostScreen: React.FC = () => {
     useEffect(() => {
         setPostContent();
     }, [setPostContent]);
-
-    // Instead of dynamically setting the header title with navigation.setOptions,
-    // consider using static header configurations or expo-router's Head component.
-    // For now, we omit dynamic title changes.
 
     // Create a ref for CommentsManager (if needed for additional control)
     const commentsManagerRef = useRef<{ checkScrollPosition: () => void }>(
@@ -266,8 +266,8 @@ export const PostScreen: React.FC = () => {
                             flair={postData.flair}
                             attachmentUrls={postData.attachmentUrls}
                             onBackPress={() => {
-                                // Use solito's back() method to navigate back
-                                back();
+                                // Use our custom goBack() method for navigation
+                                goBack();
                             }}
                             variant="details"
                             group="My cool group"

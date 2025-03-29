@@ -12,14 +12,14 @@ export type Environment =
  *
  * Returns the current environment as one of:
  * - "nextjs-server": when running on a Next.js server (Node.js with Next.js env vars)
- * - "nextjs-client": when running in a browser with Next.js (__NEXT_DATA__ present)
+ * - "nextjs-client": when running in a browser with Next.js artifacts present
  * - "react-native-web": when running in a browser using React Native Web without Next.js
  * - "react-native-mobile": when running in a React Native mobile environment
  *
  * Throws an error if the environment cannot be determined.
  */
 export function detectEnvironment(): Environment {
-    // Detect React Native mobile environment
+    // 1. React Native mobile detection
     if (
         typeof navigator !== 'undefined' &&
         navigator.product === 'ReactNative'
@@ -27,25 +27,29 @@ export function detectEnvironment(): Environment {
         return 'react-native-mobile';
     }
 
-    // Check if we're running on the server (Node.js)
+    // 2. Server-side detection
     if (typeof window === 'undefined') {
-        // If Next.js–specific env variables are present, assume Next.js server
         if (process.env.NEXT_PHASE || process.env.NEXT_RUNTIME) {
             return 'nextjs-server';
         }
-        // Otherwise, throw or handle the unknown server environment accordingly
         throw new Error(
             'Unable to detect environment: Unknown server-side context.'
         );
     }
 
-    // At this point, we're in a browser environment (client-side)
-    if (typeof window !== 'undefined' && typeof document !== 'undefined') {
-        // If __NEXT_DATA__ exists, it's a Next.js client environment
-        if ((window as any).__NEXT_DATA__) {
+    // 3. Browser/Client-side detection
+    if (typeof document !== 'undefined') {
+        // Check for Next.js–specific script tags in the DOM
+        if (
+            document.querySelector('script[src*="/_next/static/"]') ||
+            // eslint-disable-next-line no-underscore-dangle
+            // @ts-expect-error next variable
+            // eslint-disable-next-line no-underscore-dangle, unicorn/no-typeof-undefined
+            typeof window.__next_f !== 'undefined'
+        ) {
             return 'nextjs-client';
         }
-        // Otherwise, assume a plain React Native Web environment
+        // If not Next.js, assume React Native Web environment
         return 'react-native-web';
     }
 

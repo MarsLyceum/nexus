@@ -1,8 +1,8 @@
 // Header.tsx
 import React from 'react';
 import { StyleSheet, View, Text } from 'react-native';
-import { useRouter } from 'solito/navigation';
 
+import { useNexusRouter } from '../hooks';
 import { BackArrow } from '../buttons';
 
 const styles = StyleSheet.create({
@@ -27,10 +27,10 @@ export const Header = ({
     isLargeScreen: boolean;
     headerText: string;
 }) => {
-    const { back } = useRouter();
+    const { goBack } = useNexusRouter();
     return (
         <View style={styles.header}>
-            {!isLargeScreen && <BackArrow onPress={back} />}
+            {!isLargeScreen && <BackArrow onPress={goBack} />}
             <Text style={styles.channelName}>{headerText}</Text>
         </View>
     );

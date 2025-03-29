@@ -10,9 +10,9 @@ import {
     Image,
     useWindowDimensions,
 } from 'react-native';
-import { useRouter } from 'solito/navigation';
 import { useQuery, useMutation } from '@apollo/client';
 
+import { useNexusRouter } from '../hooks';
 import { useAppSelector, RootState, UserType } from '../redux';
 import { COLORS } from '../constants';
 import { BackArrow } from '../buttons';
@@ -27,7 +27,7 @@ export const AddFriendsScreen = () => {
     const [inputText, setInputText] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
     // Replace useNavigation with solito's router.
-    const router = useRouter();
+    const router = useNexusRouter();
     const { width } = useWindowDimensions();
     const isLargeScreen = width > 768;
 

@@ -2,8 +2,8 @@ import React, { useRef, useState, useEffect, useLayoutEffect } from 'react';
 import { View, Animated, StyleSheet, ScrollView } from 'react-native';
 import { DrawerContentComponentProps } from '@react-navigation/drawer';
 import { useApolloClient } from '@apollo/client';
-import { useRouter } from 'solito/navigation';
 
+import { useNexusRouter } from '../hooks';
 import {
     retrieveUserGroups,
     useAppDispatch,
@@ -83,7 +83,7 @@ type SidebarScreenProps = DrawerContentComponentProps & {
 // eslint-disable-next-line react/display-name
 export const SidebarScreen = React.memo(
     ({ navigation, currentRoute, groups }: SidebarScreenProps) => {
-        const router = useRouter();
+        const router = useNexusRouter();
         const [selectedButton, setSelectedButton] =
             useState<string>(currentRoute);
 

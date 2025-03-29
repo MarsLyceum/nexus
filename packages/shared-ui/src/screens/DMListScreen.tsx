@@ -8,8 +8,8 @@ import {
     FlatList,
 } from 'react-native';
 import { SolitoImage } from 'solito/image';
-import { useRouter } from 'solito/navigation';
 
+import { useNexusRouter } from '../hooks';
 import { COLORS } from '../constants';
 import { ChatScreen } from './ChatScreen';
 
@@ -49,7 +49,7 @@ export const DMListScreen: React.FC = () => {
     const [selectedUser, setSelectedUser] = useState<
         (typeof users)[0] | undefined
     >(isLargeScreen ? users[0] : undefined);
-    const router = useRouter();
+    const router = useNexusRouter();
 
     // When switching to large screens, ensure we have a selected user.
     useEffect(() => {

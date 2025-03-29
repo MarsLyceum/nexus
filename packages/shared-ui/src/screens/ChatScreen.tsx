@@ -9,8 +9,9 @@ import {
 } from 'react-native';
 import { SolitoImage } from 'solito/image';
 import Icon from 'react-native-vector-icons/FontAwesome5';
-import { useSearchParams, useRouter } from 'solito/navigation';
+import { useSearchParams } from 'solito/navigation';
 
+import { useNexusRouter } from '../hooks';
 import { COLORS } from '../constants';
 import { Attachment } from '../types';
 import { ChatInputContainer, NexusList } from '../small-components';
@@ -34,7 +35,7 @@ interface ChatScreenProps {
 }
 
 export const ChatScreen: React.FC<ChatScreenProps> = ({ userOverride }) => {
-    const router = useRouter();
+    const router = useNexusRouter();
     const params = useSearchParams<{ name?: string; avatar?: string }>();
 
     const user = userOverride || {

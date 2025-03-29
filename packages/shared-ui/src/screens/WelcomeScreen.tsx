@@ -8,8 +8,8 @@ import {
 } from 'react-native';
 import React, { useEffect } from 'react';
 import styled from 'styled-components/native';
-import { useRouter } from 'solito/navigation';
 
+import { useNexusRouter } from '../hooks';
 import { RootState, useAppSelector, useAppDispatch, loadUser } from '../redux';
 import { PeepsLogo } from '../images/PeepsLogo';
 import { PrimaryGradientButton, SecondaryButton } from '../buttons';
@@ -64,7 +64,7 @@ const styles = StyleSheet.create({
 export function WelcomeScreen(): JSX.Element {
     const dispatch = useAppDispatch();
     const user = useAppSelector((state: RootState) => state.user.user);
-    const router = useRouter();
+    const router = useNexusRouter();
 
     useEffect(() => {
         dispatch(loadUser());

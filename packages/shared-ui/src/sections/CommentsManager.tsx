@@ -1,8 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, ActivityIndicator, Text, StyleSheet } from 'react-native';
+import {
+    View,
+    ActivityIndicator,
+    Text,
+    StyleSheet,
+    FlatList,
+} from 'react-native';
 import { useApolloClient, useQuery, ApolloClient } from '@apollo/client';
-import { FlashList } from '@shopify/flash-list';
-import { useRouter } from 'solito/navigation';
+
+import { useNexusRouter } from '../hooks';
 import { FETCH_POST_COMMENTS_QUERY, FETCH_USER_QUERY } from '../queries';
 import { CommentThread, CommentNode } from './CommentThread';
 
@@ -84,7 +90,7 @@ export const CommentsManager = ({
     const client = useApolloClient();
     const userCache = useRef<{ [userId: string]: string }>({});
     // Replace react-navigation's useNavigation with Solito's useRouter
-    const { push } = useRouter();
+    const { push } = useNexusRouter();
 
     // Local state to store the flat list of comments and control pagination
     const [allComments, setAllComments] = useState<CommentNode[]>([]);
@@ -163,7 +169,7 @@ export const CommentsManager = ({
     }
 
     return (
-        <FlashList
+        <FlatList
             data={commentTree}
             renderItem={({ item }) => (
                 <CommentThread
@@ -177,7 +183,6 @@ export const CommentsManager = ({
                 />
             )}
             keyExtractor={(item) => item.id}
-            estimatedItemSize={100}
             onEndReached={loadMore}
         />
     );

@@ -14,16 +14,16 @@ import { Formik } from 'formik';
 import { isEmail } from 'validator';
 import { FontAwesome } from '@expo/vector-icons';
 import { useApolloClient } from '@apollo/client';
-import { useRouter } from 'solito/navigation';
 
+import { useNexusRouter } from '../hooks';
 import { REGISTER_USER_MUTATION } from '../queries';
 import { HorizontalLine } from '../images';
 import { GoogleLogo, UserIcon, Email, Phone, Lock } from '../icons';
 import { User } from '../types';
-import { loginUser, useAppDispatch } from '@shared-ui/redux';
-import { validatePassword } from '@shared-ui/utils';
-import { PrimaryGradientButton } from '@shared-ui/buttons';
-import { COLORS } from '@shared-ui/constants';
+import { loginUser, useAppDispatch } from '../redux';
+import { validatePassword } from '../utils';
+import { PrimaryGradientButton } from '../buttons';
+import { COLORS } from '../constants';
 
 const isWeb = Platform.OS === 'web';
 
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
 
 export function SignUpScreen(): JSX.Element {
     const dispatch = useAppDispatch();
-    const router = useRouter();
+    const router = useNexusRouter();
     const apolloClient = useApolloClient();
 
     const updateUserData = useCallback(

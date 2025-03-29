@@ -12,8 +12,8 @@ import {
 import Svg, { Path } from 'react-native-svg';
 import { isEmail } from 'validator';
 import { useApolloClient } from '@apollo/client';
-import { useRouter } from 'solito/navigation';
 
+import { useNexusRouter } from '../hooks';
 import { loginUser, useAppDispatch } from '../redux';
 import { LOGIN_USER } from '../queries';
 import { validatePassword } from '../utils';
@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
 export function LoginScreen(): JSX.Element {
     const dispatch = useAppDispatch();
     const apolloClient = useApolloClient();
-    const router = useRouter();
+    const router = useNexusRouter();
 
     const [email, setEmail] = useState<string>(initialFormValues.email);
     const [password, setPassword] = useState<string>(

@@ -8,9 +8,9 @@ import {
     StyleSheet,
     Modal,
 } from 'react-native';
-import { useRouter } from 'solito/navigation';
 import { useQuery, useMutation } from '@apollo/client';
 
+import { useNexusRouter } from '../hooks';
 import {
     FriendItem,
     Friend,
@@ -49,7 +49,7 @@ export const FriendsScreen: React.FC = () => {
         useState<boolean>(false);
 
     // Replace useNavigation() with Solito's router.
-    const router = useRouter();
+    const router = useNexusRouter();
     const { width: windowWidth } = useWindowDimensions();
     const isLargeScreen = windowWidth > 768;
 

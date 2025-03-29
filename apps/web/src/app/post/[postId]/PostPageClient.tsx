@@ -17,7 +17,7 @@ import {
     KeyboardAvoidingView,
     Platform,
 } from 'react-native';
-import { useRouter } from 'solito/navigation';
+import { useNexusRouter } from '@shared-ui/hooks';
 import { useApolloClient } from '@apollo/client';
 import { useAppDispatch, loadUser } from '@shared-ui/redux';
 import { FETCH_POST_COMMENTS_QUERY } from '@shared-ui/queries';
@@ -40,7 +40,7 @@ export function PostPageClient({
     user,
     parentCommentId,
 }: PostPageProps): JSX.Element {
-    const router = useRouter();
+    const router = useNexusRouter();
     const dispatch = useAppDispatch();
     const [scrollY, setScrollY] = useState(0);
     const scrollViewRef = useRef<ScrollView>(null);

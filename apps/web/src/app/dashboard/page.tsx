@@ -1,14 +1,15 @@
 'use client';
 
+import '../../../polyfills/expo-polyfills.js';
 import React, { useEffect, useContext } from 'react';
 import { View, Text } from 'react-native';
-import { useRouter } from 'solito/navigation';
+import { useNexusRouter } from '@shared-ui/hooks';
 import { ActiveGroupContext } from '@shared-ui/providers';
 
 export const dynamic = 'force-dynamic'; // Forces server-side rendering
 
 export const DashboardIndexPage: React.FC = () => {
-    const router = useRouter();
+    const router = useNexusRouter();
     // Get active group from context (if any)
     const { activeGroup } = useContext(ActiveGroupContext);
 

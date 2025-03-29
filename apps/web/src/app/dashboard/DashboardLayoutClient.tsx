@@ -7,7 +7,7 @@ import React, { useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { AnimatePresence, motion } from 'framer-motion';
 import { usePathname } from 'next/navigation';
-import { useRouter } from 'solito/navigation';
+import { useNexusRouter } from '@shared-ui/hooks';
 import { SidebarScreen } from '@shared-ui/screens';
 import { COLORS, SIDEBAR_WIDTH } from '@shared-ui/constants';
 import {
@@ -27,7 +27,7 @@ export function DashboardLayoutClient({
 }: DashboardLayoutClientProps) {
     // usePathname generates a unique key for AnimatePresence so it can animate page changes.
     const pathname = usePathname();
-    const router = useRouter();
+    const router = useNexusRouter();
     const dispatch = useAppDispatch();
 
     useEffect(() => {

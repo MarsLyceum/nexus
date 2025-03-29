@@ -7,12 +7,11 @@ import {
     TouchableOpacity,
 } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
-import { useRouter } from 'solito/navigation';
 
 import { BackArrow } from '../buttons';
 import { COLORS } from '../constants';
 import { SearchBox, PostItem } from '../sections';
-import { useSearchFilter } from '../hooks';
+import { useSearchFilter, useNexusRouter } from '../hooks';
 import { SearchContext } from '../providers';
 
 type SearchResult = {
@@ -84,7 +83,7 @@ const parseCount = (count: string): number => {
 
 export const SearchScreen = () => {
     const { searchText, setSearchText } = useContext(SearchContext);
-    const router = useRouter(); // using solito for universal routing
+    const router = useNexusRouter(); // using solito for universal routing
 
     const filteredResults = useSearchFilter<SearchResult>(
         MOCK_RESULTS,

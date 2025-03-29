@@ -8,14 +8,14 @@ import {
     Platform,
     View,
 } from 'react-native';
-import { useRouter } from 'solito/navigation';
 import { createParam } from 'solito';
+
 import { Header, PostItem } from '../sections';
 import { COLORS } from '../constants';
 import { CreateContentButton } from '../buttons';
 import { useAppSelector, RootState, UserType } from '../redux';
 import { FeedPost, Attachment, GroupChannel } from '../types';
-import { useFeedPosts, useCreatePost } from '../hooks';
+import { useFeedPosts, useCreatePost, useNexusRouter } from '../hooks';
 import { CreatePostModal } from '../small-components';
 
 // Create a hook to read our screen parameters.
@@ -108,7 +108,7 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
         (state: RootState) => state.user.user
     );
     const { width } = useWindowDimensions();
-    const { push } = useRouter(); // Use router push for navigation
+    const { push } = useNexusRouter(); // Use router push for navigation
 
     // Fetch feed posts using a custom hook
     const { feedPosts, loadingFeed } = useFeedPosts(channel?.id);

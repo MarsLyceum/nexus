@@ -14,26 +14,26 @@ import {
     Platform,
     Text,
 } from 'react-native';
-import { useRouter, useSearchParams } from 'solito/router';
+import { useRouter, useSearchParams } from 'solito/navigation';
 import { useQuery, useApolloClient } from '@apollo/client';
 
-import { useAppDispatch, loadUser } from '@shared-ui/redux';
+import { useAppDispatch, loadUser } from '../redux';
 import {
     FETCH_POST_QUERY,
     FETCH_USER_QUERY,
     FETCH_POST_COMMENTS_QUERY,
-} from '@shared-ui/queries';
-import { PostItem, CommentsManager } from '@shared-ui/sections';
-import { COLORS } from '@shared-ui/constants';
-import { CreateContentButton } from '@shared-ui/buttons';
-import { getRelativeTime, isComputer } from '@shared-ui/utils';
-import { Post, PostData } from '@shared-ui/types';
-import { CurrentCommentContext } from '@shared-ui/providers';
+} from '../queries';
+import { PostItem, CommentsManager } from '../sections';
+import { COLORS } from '../constants';
+import { CreateContentButton } from '../buttons';
+import { getRelativeTime, isComputer } from '../utils';
+import { Post, PostData } from '../types';
+import { CurrentCommentContext } from '../providers';
 import {
     SkeletonPostItem,
     SkeletonComment,
     CommentEditor,
-} from '@shared-ui/small-components';
+} from '../small-components';
 
 export const PostScreen: React.FC = () => {
     // Use solito router hooks for navigation

@@ -1,3 +1,7 @@
+// app/post/[postId]/PostPageClient.tsx
+
+'use client';
+
 import React, {
     useEffect,
     useContext,
@@ -13,44 +17,29 @@ import {
     KeyboardAvoidingView,
     Platform,
 } from 'react-native';
-import { useRouter } from 'solito/router';
+import { useRouter } from 'solito/navigation';
 import { useApolloClient } from '@apollo/client';
-import type { GetServerSideProps } from 'next';
-
 import { useAppDispatch, loadUser } from '@shared-ui/redux';
-import {
-    FETCH_POST_QUERY,
-    FETCH_USER_QUERY,
-    FETCH_POST_COMMENTS_QUERY,
-} from '@shared-ui/queries';
+import { FETCH_POST_COMMENTS_QUERY } from '@shared-ui/queries';
 import { PostItem, CommentsManager } from '@shared-ui/sections';
 import { COLORS } from '@shared-ui/constants';
 import { CreateContentButton } from '@shared-ui/buttons';
 import { getRelativeTime, isComputer } from '@shared-ui/utils';
-import { Post, PostData } from '@shared-ui/types';
+import type { Post, PostData } from '@shared-ui/types';
 import { CurrentCommentContext } from '@shared-ui/providers';
-import {
-    SkeletonPostItem,
-    SkeletonComment,
-    CommentEditor,
-} from '@shared-ui/small-components';
-import { createApolloClient } from '@shared-ui/utils';
+import { CommentEditor } from '@shared-ui/small-components';
 
-interface PostPageProps {
+type PostPageProps = {
     post: Post;
-    user: {
-        username: string;
-        [key: string]: any;
-    } | null;
+    user: { username: string; [key: string]: any } | null;
     parentCommentId: string | null;
-    initialApolloState: any;
-}
+};
 
-export const PostPage: React.FC<PostPageProps> = ({
+export function PostPageClient({
     post,
     user,
     parentCommentId,
-}) => {
+}: PostPageProps): JSX.Element {
     const router = useRouter();
     const dispatch = useAppDispatch();
     const [scrollY, setScrollY] = useState(0);
@@ -62,8 +51,6 @@ export const PostPage: React.FC<PostPageProps> = ({
         dispatch(loadUser());
     }, [dispatch]);
 
-    // Compute username from server-fetched user data.
-    const computedUserId = post?.postedByUserId || post?.user || '';
     const resolvedUsername = user?.username || 'Username';
     const rawTime = post?.postedAt || post?.time || '';
     const formattedTime = rawTime ? getRelativeTime(rawTime) : 'Unknown time';
@@ -119,18 +106,16 @@ export const PostPage: React.FC<PostPageProps> = ({
         setScrollY(currentY);
     };
 
-    // Determine if device is desktop vs mobile.
     const isDesktop = isComputer();
     const BOTTOM_INPUT_HEIGHT = 60;
     const isWeb = Platform.OS === 'web';
 
-    // Dynamic styles based on platform and device type.
     const computedStyles = StyleSheet.create({
         safeContainer: {
             flex: 1,
             backgroundColor: COLORS.SecondaryBackground,
             paddingTop: 15,
-            ...(isWeb && { minHeight: '100vh', display: 'flex' }), // Added minHeight for web
+            ...(isWeb && { minHeight: '100vh', display: 'flex' }),
         },
         container: { flex: 1 },
         mainContainer: {
@@ -211,7 +196,6 @@ export const PostPage: React.FC<PostPageProps> = ({
                         {isDesktop && (
                             <CommentEditor
                                 postId={postData.id}
-                                // eslint-disable-next-line unicorn/no-null
                                 parentCommentId={parentCommentId ?? null}
                                 onCommentCreated={() => {
                                     // For production, consider showing a loading state while refetching.
@@ -247,58 +231,4 @@ export const PostPage: React.FC<PostPageProps> = ({
             </ContainerComponent>
         </SafeAreaView>
     );
-};
-
-export default PostPage;
-
-export const getServerSideProps: GetServerSideProps = async (context) => {
-    // Extract route params and query string values.
-    const { postId } = context.params as { postId: string };
-    const { post: postString, parentCommentId } = context.query;
-    let parsedPost: Post | null = null;
-
-    // If a "post" JSON string is passed in the query, try to parse it.
-    if (postString) {
-        try {
-            parsedPost = JSON.parse(postString as string);
-        } catch (e) {
-            console.error('Failed to parse post from query:', e);
-        }
-    }
-
-    const client = createApolloClient();
-
-    let postData;
-
-    // If the post was not provided via query params, fetch it from your GraphQL API.
-    if (!parsedPost) {
-        const { data } = await client.query({
-            query: FETCH_POST_QUERY,
-            variables: { postId },
-        });
-        postData = data?.fetchPost;
-    } else {
-        postData = parsedPost;
-    }
-
-    // Compute the user ID to fetch the user.
-    const computedUserId = postData?.postedByUserId || postData?.user || '';
-    let userData = null;
-    if (computedUserId) {
-        const { data } = await client.query({
-            query: FETCH_USER_QUERY,
-            variables: { userId: computedUserId },
-        });
-        userData = data?.fetchUser;
-    }
-
-    // For production consider error handling here if queries fail.
-    return {
-        props: {
-            initialApolloState: client.cache.extract(),
-            post: postData,
-            user: userData,
-            parentCommentId: parentCommentId || null,
-        },
-    };
-};
+}

@@ -1,15 +1,20 @@
 // app/dashboard/DashboardLayoutClient.tsx
+
 'use client';
 
 import '../../../polyfills/expo-polyfills';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { AnimatePresence, motion } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 import { useRouter } from 'solito/navigation';
 import { SidebarScreen } from '@shared-ui/screens';
 import { COLORS, SIDEBAR_WIDTH } from '@shared-ui/constants';
-import type { UserGroupsType } from '@shared-ui/redux';
+import {
+    UserGroupsType,
+    retrieveUserGroups,
+    useAppDispatch,
+} from '@shared-ui/redux';
 
 type DashboardLayoutClientProps = {
     children: React.ReactNode;
@@ -23,8 +28,13 @@ export function DashboardLayoutClient({
     // usePathname generates a unique key for AnimatePresence so it can animate page changes.
     const pathname = usePathname();
     const router = useRouter();
+    const dispatch = useAppDispatch();
+
+    useEffect(() => {
+        dispatch(retrieveUserGroups(groups));
+    }, [groups, dispatch]);
     // Derive current route segment (for example, "friends" from "/dashboard/friends")
-    const currentRoute = pathname.split('/')[2]?.toLowerCase() || 'friends';
+    const currentRoute = pathname?.split('/')[2]?.toLowerCase() || 'friends';
 
     const dummyNavigation = {
         navigate: (routeName: string) => {

@@ -10,7 +10,6 @@ import {
     Dimensions,
 } from 'react-native';
 import { SolitoImage } from 'solito/image';
-import Head from 'next/head';
 import Toast from 'react-native-toast-message';
 import Svg, { Path } from 'react-native-svg';
 
@@ -241,15 +240,7 @@ export const PostItem: React.FC<PostItemProps> = ({
             ? `${window.location.origin}/post/${id}`
             : `nexus://post/${id}`);
 
-    // Prepare Open Graph meta tags (for web only)
-    const ogDescription = stripHtml(content).slice(0, 160);
     const urlsInContent = extractUrls(content);
-    const ogImage =
-        attachmentUrls && attachmentUrls.length > 0
-            ? attachmentUrls[0]
-            : urlsInContent && urlsInContent.length > 0
-              ? urlsInContent[0]
-              : thumbnail || avatarUri;
 
     const onShare = async () => {
         if (Platform.OS === 'web') {
@@ -371,15 +362,6 @@ export const PostItem: React.FC<PostItemProps> = ({
 
     return (
         <>
-            {Platform.OS === 'web' && (
-                <Head>
-                    <meta property="og:title" content={title} />
-                    <meta property="og:description" content={ogDescription} />
-                    <meta property="og:url" content={computedShareUrl} />
-                    <meta property="og:image" content={ogImage} />
-                    <meta property="og:type" content="article" />
-                </Head>
-            )}
             {onPress ? (
                 <TouchableOpacity onPress={onPress}>
                     {contentElement}

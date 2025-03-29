@@ -1,7 +1,7 @@
 // Header.tsx
 import React from 'react';
 import { StyleSheet, View, Text } from 'react-native';
-import { useRouter } from 'solito/router';
+import { useRouter } from 'solito/navigation';
 
 import { BackArrow } from '../buttons';
 

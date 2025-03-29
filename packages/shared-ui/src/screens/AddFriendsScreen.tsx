@@ -10,17 +10,17 @@ import {
     Image,
     useWindowDimensions,
 } from 'react-native';
-import { useRouter } from 'solito/router';
+import { useRouter } from 'solito/navigation';
 import { useQuery, useMutation } from '@apollo/client';
 
-import { useAppSelector, RootState, UserType } from '@shared-ui/redux';
-import { COLORS } from '@shared-ui/constants';
-import { BackArrow } from '@shared-ui/buttons';
+import { useAppSelector, RootState, UserType } from '../redux';
+import { COLORS } from '../constants';
+import { BackArrow } from '../buttons';
 import {
     SEARCH_FOR_USERS_QUERY,
     GET_FRIENDS,
     SEND_FRIEND_REQUEST,
-} from '@shared-ui/queries';
+} from '../queries';
 
 export const AddFriendsScreen = () => {
     // State for the text input and the actual search query.

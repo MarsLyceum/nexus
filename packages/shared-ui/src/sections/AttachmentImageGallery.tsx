@@ -1,5 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import {
+    View,
+    StyleSheet,
+    TouchableOpacity,
+    ScrollView,
+    useWindowDimensions,
+} from 'react-native';
 import { SolitoImage } from 'solito/image';
 import { CarouselDots } from './CarouselDots';
 import { ArrowButton } from './ArrowButton';
@@ -17,22 +23,26 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
     onImagePress,
     containerWidth,
 }) => {
+    // Use useWindowDimensions to get a safe default if containerWidth is invalid.
+    const { width: windowWidth } = useWindowDimensions();
+    const initialWidth =
+        containerWidth > 0 ? containerWidth : windowWidth || 360;
+    const [clientWidth, setClientWidth] = useState<number>(initialWidth);
     const [currentAttachmentIndex, setCurrentAttachmentIndex] = useState(0);
     const [imageAspectRatio, setImageAspectRatio] = useState(1); // Default to square
 
     const scrollViewRef = useRef<ScrollView>(null);
-    const isDesktop = containerWidth > 768;
+    const isDesktop = clientWidth > 768;
 
-    // Compute target dimensions based on the container's width,
-    // mimicking the ImagePreview component logic.
-    const baseContainerWidth = containerWidth || 360;
+    // Compute dimensions based on clientWidth.
+    const baseContainerWidth = clientWidth || 360;
     const targetWidth =
         baseContainerWidth < 360 ? baseContainerWidth * 0.85 : 360;
     const computedImageHeight = imageAspectRatio
         ? targetWidth / imageAspectRatio
         : 150;
 
-    // Retrieve media information for each attachment.
+    // Retrieve media info for each attachment.
     const mediaInfos = useMediaTypes(attachmentUrls);
 
     // Update the aspect ratio based on the current attachment's media info.
@@ -61,8 +71,16 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
     };
 
     return (
-        // Ensure the outer container takes full width.
-        <View style={{ width: '100%' }}>
+        // Outer container uses onLayout to update clientWidth.
+        <View
+            style={{ width: '100%' }}
+            onLayout={(e) => {
+                const layoutWidth = e.nativeEvent.layout.width;
+                if (layoutWidth && layoutWidth !== clientWidth) {
+                    setClientWidth(layoutWidth);
+                }
+            }}
+        >
             <View
                 style={[
                     styles.imageContainer,
@@ -86,12 +104,12 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
                         const attachmentHeight = info
                             ? targetWidth / info.aspectRatio
                             : computedImageHeight;
+
                         // Check if the media is a video.
                         const isVideo = info && info.type === 'video';
                         return (
                             <TouchableOpacity
                                 key={index}
-                                // Allow onPress for images (not videos).
                                 onPress={
                                     !isVideo
                                         ? () => onImagePress(index)
@@ -120,13 +138,11 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
                                         width={targetWidth}
                                         height={attachmentHeight}
                                         alt=""
-                                        style={[
-                                            styles.galleryImage,
-                                            {
-                                                width: targetWidth,
-                                                height: attachmentHeight,
-                                            },
-                                        ]}
+                                        style={{
+                                            ...styles.galleryImage,
+                                            width: targetWidth,
+                                            height: attachmentHeight,
+                                        }}
                                         contentFit="contain"
                                     />
                                 )}

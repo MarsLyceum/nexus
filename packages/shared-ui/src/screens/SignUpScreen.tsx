@@ -14,16 +14,16 @@ import { Formik } from 'formik';
 import { isEmail } from 'validator';
 import { FontAwesome } from '@expo/vector-icons';
 import { useApolloClient } from '@apollo/client';
+import { useRouter } from 'solito/navigation';
 
-import { REGISTER_USER_MUTATION } from '@shared-ui/queries';
-import { HorizontalLine } from '@shared-ui/images';
-import { GoogleLogo, UserIcon, Email, Phone, Lock } from '@shared-ui/icons';
-import { User } from '@shared-ui/types';
+import { REGISTER_USER_MUTATION } from '../queries';
+import { HorizontalLine } from '../images';
+import { GoogleLogo, UserIcon, Email, Phone, Lock } from '../icons';
+import { User } from '../types';
 import { loginUser, useAppDispatch } from '@shared-ui/redux';
 import { validatePassword } from '@shared-ui/utils';
 import { PrimaryGradientButton } from '@shared-ui/buttons';
 import { COLORS } from '@shared-ui/constants';
-import { useRouter } from 'solito/router';
 
 const isWeb = Platform.OS === 'web';
 

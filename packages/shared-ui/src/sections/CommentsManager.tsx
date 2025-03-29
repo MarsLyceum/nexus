@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, ActivityIndicator, Text, StyleSheet } from 'react-native';
 import { useApolloClient, useQuery, ApolloClient } from '@apollo/client';
 import { FlashList } from '@shopify/flash-list';
-import { useRouter } from 'solito/router';
+import { useRouter } from 'solito/navigation';
 import { FETCH_POST_COMMENTS_QUERY, FETCH_USER_QUERY } from '../queries';
 import { CommentThread, CommentNode } from './CommentThread';
 

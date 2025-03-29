@@ -1,4 +1,6 @@
 // app/dashboard/layout.tsx
+
+import '../../../polyfills/expo-polyfills.js';
 import React from 'react';
 import { createApolloClient } from '@shared-ui/utils';
 import { FETCH_USER_GROUPS_QUERY } from '@shared-ui/queries';

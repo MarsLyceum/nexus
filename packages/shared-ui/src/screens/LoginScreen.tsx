@@ -12,17 +12,16 @@ import {
 import Svg, { Path } from 'react-native-svg';
 import { isEmail } from 'validator';
 import { useApolloClient } from '@apollo/client';
+import { useRouter } from 'solito/navigation';
 
-import { loginUser, useAppDispatch } from '@shared-ui/redux';
-import { LOGIN_USER } from '@shared-ui/queries';
-import { validatePassword } from '@shared-ui/utils';
-import { Email, Lock, GoogleLogo } from '@shared-ui/icons';
-import { HorizontalLine } from '@shared-ui/images';
-import { PrimaryGradientButton } from '@shared-ui/buttons';
-import { User } from '@shared-ui/types';
-
-import { COLORS } from '@shared-ui/constants';
-import { useRouter } from 'solito/router';
+import { loginUser, useAppDispatch } from '../redux';
+import { LOGIN_USER } from '../queries';
+import { validatePassword } from '../utils';
+import { Email, Lock, GoogleLogo } from '../icons';
+import { HorizontalLine } from '../images';
+import { PrimaryGradientButton } from '../buttons';
+import { User } from '../types';
+import { COLORS } from '../constants';
 
 const isWeb = Platform.OS === 'web';
 

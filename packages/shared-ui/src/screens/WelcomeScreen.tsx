@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import React, { useEffect } from 'react';
 import styled from 'styled-components/native';
-import { useRouter } from 'solito/router';
+import { useRouter } from 'solito/navigation';
 
 import { RootState, useAppSelector, useAppDispatch, loadUser } from '../redux';
 import { PeepsLogo } from '../images/PeepsLogo';

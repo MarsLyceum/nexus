@@ -1,10 +1,4 @@
-import React, {
-    useRef,
-    useState,
-    useEffect,
-    useLayoutEffect,
-    useCallback,
-} from 'react';
+import React, { useRef, useState, useEffect, useLayoutEffect } from 'react';
 import { View, Animated, StyleSheet, ScrollView } from 'react-native';
 import { DrawerContentComponentProps } from '@react-navigation/drawer';
 import { useApolloClient } from '@apollo/client';

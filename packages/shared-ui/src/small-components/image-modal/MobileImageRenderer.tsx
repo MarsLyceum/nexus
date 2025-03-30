@@ -1,11 +1,12 @@
 import React, { useRef, useCallback } from 'react';
 import { View, useWindowDimensions } from 'react-native';
-import { SolitoImage } from 'solito/image';
 import {
     ResumableZoom,
     type ResumableZoomType,
     useImageResolution,
 } from 'react-native-zoom-toolkit';
+
+import { NexusImage } from '../NexusImage';
 
 export type MobileImageRendererProps = {
     uri: string;
@@ -94,8 +95,8 @@ export const MobileImageRenderer: React.FC<MobileImageRendererProps> = ({
                     }}
                     tapsEnabled
                 >
-                    <SolitoImage
-                        src={uri}
+                    <NexusImage
+                        source={uri}
                         style={{ width: imageWidth, height: imageHeight }}
                         contentFit="contain"
                         width={imageWidth}

@@ -6,7 +6,8 @@ import {
     StyleSheet,
     Image as RNImage,
 } from 'react-native';
-import { SolitoImage } from 'solito/image';
+
+import { NexusImage } from './NexusImage';
 import { LinkPreview } from './LinkPreview';
 import { MessageWithAvatar, PreviewData } from '../types';
 import { MarkdownRenderer } from './MarkdownRenderer';
@@ -47,8 +48,8 @@ const NativeSizeAttachmentImage: React.FC<{ uri: string }> = ({ uri }) => {
     const scaledHeight = dimensions.height * 0.5;
 
     return (
-        <SolitoImage
-            src={uri}
+        <NexusImage
+            source={uri}
             style={{
                 ...styles.messageAttachmentImage,
                 width: scaledWidth,
@@ -160,8 +161,8 @@ const MessageItemComponent: React.FC<MessageItemProps> = ({
 
     return (
         <View style={styles.messageContainer}>
-            <SolitoImage
-                src={item.avatar}
+            <NexusImage
+                source={item.avatar}
                 style={styles.avatar}
                 width={40}
                 height={40}

@@ -219,7 +219,7 @@ export function SignUpScreen(): JSX.Element {
             });
             const user: User = result.data.registerUser;
             updateUserData(user);
-            router.push('/app');
+            router.push('/dashboard');
         } catch (error) {
             console.error(error);
             if (error instanceof Error) {

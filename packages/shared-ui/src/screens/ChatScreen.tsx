@@ -7,14 +7,13 @@ import {
     useWindowDimensions,
     SafeAreaView,
 } from 'react-native';
-import { SolitoImage } from 'solito/image';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { useSearchParams } from 'solito/navigation';
 
 import { useNexusRouter } from '../hooks';
 import { COLORS } from '../constants';
 import { Attachment } from '../types';
-import { ChatInputContainer, NexusList } from '../small-components';
+import { ChatInputContainer, NexusList, NexusImage } from '../small-components';
 
 export type Message = {
     id: string;
@@ -131,8 +130,8 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ userOverride }) => {
     // Unified message renderer for both web and mobile.
     const renderItem = ({ item, index }: { item: Message; index: number }) => (
         <View key={item.id} style={styles.messageContainer}>
-            <SolitoImage
-                src={item.avatar}
+            <NexusImage
+                source={item.avatar}
                 alt="avatar"
                 width={40}
                 height={40}
@@ -154,8 +153,8 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ userOverride }) => {
                                 key={idx}
                                 onPress={() => onAttachmentPreviewPress(att)}
                             >
-                                <SolitoImage
-                                    src={att.previewUri}
+                                <NexusImage
+                                    source={att.previewUri}
                                     alt="attachment"
                                     width={100}
                                     height={100}
@@ -182,8 +181,8 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ userOverride }) => {
                         onPress={() => router.back()}
                     />
                 )}
-                <SolitoImage
-                    src={user.avatar || '/default-avatar.png'}
+                <NexusImage
+                    source={user.avatar || '/default-avatar.png'}
                     alt="avatar"
                     width={40}
                     height={40}

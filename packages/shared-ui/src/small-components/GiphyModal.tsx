@@ -9,7 +9,8 @@ import {
     Dimensions,
     LayoutChangeEvent,
 } from 'react-native';
-import { SolitoImage } from 'solito/image';
+
+import { NexusImage } from './NexusImage';
 import { COLORS, GIPHY_API_KEY } from '../constants';
 import { Attachment } from '../types';
 import { MiniModal } from './MiniModal';
@@ -151,8 +152,8 @@ export const GiphyModal: React.FC<GiphyModalProps> = ({
                             style={styles.giphyResultItem}
                         >
                             {itemWidth > 0 && (
-                                <SolitoImage
-                                    src={result.images.original.url}
+                                <NexusImage
+                                    source={result.images.original.url}
                                     width={itemWidth}
                                     height={150}
                                     alt={`GIF ${result.id}`}

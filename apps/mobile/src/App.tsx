@@ -197,10 +197,10 @@ function MainStackScreen() {
             <MainStack.Screen name="welcome" component={WelcomeScreen} />
             <MainStack.Screen name="login" component={LoginScreen} />
             <MainStack.Screen name="signup" component={SignUpScreen} />
-            <MainStack.Screen name="app" component={AppDrawerScreen} />
+            <MainStack.Screen name="dashboard" component={AppDrawerScreen} />
             {/* @ts-expect-error navigator */}
             <MainStack.Screen name="chat" component={ChatScreen} />
-            <MainStack.Screen name="addfriends" component={AddFriendsScreen} />
+            <MainStack.Screen name="add-friends" component={AddFriendsScreen} />
             <MainStack.Screen
                 name="servermessages"
                 component={ServerMessagesScreen}

@@ -73,7 +73,7 @@ export function WelcomeScreen(): JSX.Element {
     useEffect(() => {
         if (user) {
             // If user is loaded, navigate to the matching screen
-            router.push('/app');
+            router.push('/dashboard');
         }
     }, [user, router]);
 

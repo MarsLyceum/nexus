@@ -14,9 +14,9 @@ import {
     useWindowDimensions,
 } from 'react-native';
 import * as Calendar from 'expo-calendar';
-import { SolitoImage } from 'solito/image';
 import Svg, { Path } from 'react-native-svg';
 
+import { NexusImage } from '../small-components';
 import { COLORS } from '../constants';
 import { BackArrow } from '../buttons';
 
@@ -388,9 +388,9 @@ export const EventCard: React.FC<EventCardProps> = ({
     const renderStackedProfiles = (people: Person[]) => (
         <View style={styles.stackedProfilesContainer}>
             {people.map((person, index) => (
-                <SolitoImage
+                <NexusImage
                     key={person.id}
-                    src={person.imageUrl}
+                    source={person.imageUrl}
                     alt={`${person.name} profile`}
                     width={40}
                     height={40}
@@ -503,8 +503,8 @@ export const EventCard: React.FC<EventCardProps> = ({
                         </View>
                     </TouchableOpacity>
                 </View>
-                <SolitoImage
-                    src={imageUrl}
+                <NexusImage
+                    source={imageUrl}
                     alt="Event image"
                     width={eventImageWidth}
                     height={eventImageHeight}
@@ -559,8 +559,8 @@ export const EventCard: React.FC<EventCardProps> = ({
                                     key={person.id}
                                     style={styles.modalItemContainer}
                                 >
-                                    <SolitoImage
-                                        src={person.imageUrl}
+                                    <NexusImage
+                                        source={person.imageUrl}
                                         alt={`${person.name} profile`}
                                         width={40}
                                         height={40}

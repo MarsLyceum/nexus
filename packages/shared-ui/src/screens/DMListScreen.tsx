@@ -7,8 +7,8 @@ import {
     useWindowDimensions,
     FlatList,
 } from 'react-native';
-import { SolitoImage } from 'solito/image';
 
+import { NexusImage } from '../small-components';
 import { useNexusRouter } from '../hooks';
 import { COLORS } from '../constants';
 import { ChatScreen } from './ChatScreen';
@@ -67,14 +67,10 @@ export const DMListScreen: React.FC = () => {
         if (isLargeScreen) {
             setSelectedUser(user);
         } else {
-            // On small screens, navigate to ChatScreen using solito.
-            router.push({
-                pathname: '/chat',
-                query: {
-                    id: user.id,
-                    name: user.name,
-                    avatar: user.avatar,
-                },
+            router.push('/chat', {
+                id: user.id,
+                name: user.name,
+                avatar: user.avatar,
             });
         }
     };
@@ -99,8 +95,8 @@ export const DMListScreen: React.FC = () => {
                             ]}
                             onPress={() => handleUserPress(item)}
                         >
-                            <SolitoImage
-                                src={item.avatar || '/default-avatar.png'}
+                            <NexusImage
+                                source={item.avatar || '/default-avatar.png'}
                                 alt="avatar"
                                 width={40}
                                 height={40}

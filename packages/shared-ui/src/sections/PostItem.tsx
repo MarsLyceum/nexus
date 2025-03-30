@@ -9,7 +9,6 @@ import {
     Alert,
     Dimensions,
 } from 'react-native';
-import { SolitoImage } from 'solito/image';
 import Toast from 'react-native-toast-message';
 import Svg, { Path } from 'react-native-svg';
 
@@ -22,6 +21,7 @@ import {
     LinkPreview,
     MarkdownRenderer,
     ActionButton,
+    NexusImage,
 } from '../small-components';
 import { stripHtml, extractUrls } from '../utils';
 
@@ -304,8 +304,8 @@ export const PostItem: React.FC<PostItemProps> = ({
                 {onBackPress && (
                     <BackArrow onPress={onBackPress} style={styles.backArrow} />
                 )}
-                <SolitoImage
-                    src={avatarUri}
+                <NexusImage
+                    source={avatarUri}
                     width={36}
                     height={36}
                     alt={`${variant === 'feed' ? 'User' : 'Group'} Avatar`}

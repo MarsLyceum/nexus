@@ -6,8 +6,9 @@ import React, {
     useMemo,
 } from 'react';
 import { View, ScrollView, Pressable } from 'react-native';
-import { SolitoImage } from 'solito/image';
 import { useImageResolution, fitContainer } from 'react-native-zoom-toolkit';
+
+import { NexusImage } from '../NexusImage';
 
 export type ComputerImageRendererProps = {
     uri: string;
@@ -133,8 +134,8 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
                     ref={imageWrapperRef}
                     onLayout={handleLayout}
                 >
-                    <SolitoImage
-                        src={uri}
+                    <NexusImage
+                        source={uri}
                         style={{ width: '100%', height: '100%' }}
                         contentFit="contain"
                         width={nonZoomedSize.width}
@@ -169,8 +170,8 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
                         cursor: 'zoom-out',
                     }}
                 >
-                    <SolitoImage
-                        src={uri}
+                    <NexusImage
+                        source={uri}
                         style={{ width: '100%', height: '100%' }}
                         contentFit="contain"
                         width={zoomedSize.width}

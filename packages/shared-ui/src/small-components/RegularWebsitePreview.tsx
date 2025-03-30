@@ -7,7 +7,8 @@ import {
     Linking,
     Image as RNImage, // for getSize
 } from 'react-native';
-import { SolitoImage } from 'solito/image';
+
+import { NexusImage } from './NexusImage';
 import { getDomainFromUrl } from '../utils/linkPreviewUtils';
 import { COLORS } from '../constants';
 import { PreviewData } from '../types';
@@ -76,8 +77,8 @@ export const RegularWebsitePreview: React.FC<RegularWebsitePreviewProps> = ({
                     onPress={() => setModalVisible(true)}
                     style={styles.imageTouchable} // restricts touchable area to image size
                 >
-                    <SolitoImage
-                        src={previewImage}
+                    <NexusImage
+                        source={previewImage}
                         style={{
                             ...styles.linkPreviewImage,
                             width: computedWidth,

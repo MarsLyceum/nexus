@@ -8,8 +8,8 @@ import {
     StyleSheet,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
-import { SolitoImage } from 'solito/image';
 
+import { NexusImage } from './NexusImage';
 import { MarkdownEditor } from './MarkdownEditor';
 import { RichTextEditor, AttachmentPreviews, Attachment } from '../sections';
 import { useFileUpload } from '../hooks';
@@ -247,8 +247,8 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
                             setPreviewParentSize({ width, height });
                         }}
                     >
-                        <SolitoImage
-                            src={selectedAttachment.previewUri}
+                        <NexusImage
+                            source={selectedAttachment.previewUri}
                             style={styles.previewModalImage}
                             width={previewParentSize.width * 0.9}
                             height={previewParentSize.height * 0.9}

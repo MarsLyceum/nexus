@@ -9,7 +9,8 @@ import {
     ScrollView,
     TouchableOpacity,
 } from 'react-native';
-import { SolitoImage } from 'solito/image';
+
+import { NexusImage } from './NexusImage';
 import { COLORS } from '../constants';
 import { Attachment, AttachmentPreviews } from '../sections';
 import { CustomPortalModal } from './CustomPortalModal';
@@ -157,8 +158,8 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
                                                 });
                                             }}
                                         >
-                                            <SolitoImage
-                                                src={
+                                            <NexusImage
+                                                source={
                                                     selectedAttachment.previewUri
                                                 }
                                                 style={styles.previewModalImage}

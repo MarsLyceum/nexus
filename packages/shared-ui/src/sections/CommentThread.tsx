@@ -6,7 +6,6 @@ import {
     StyleSheet,
     LayoutChangeEvent,
 } from 'react-native';
-import { SolitoImage } from 'solito/image';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { useApolloClient } from '@apollo/client';
@@ -19,6 +18,7 @@ import {
     LinkPreview,
     CommentEditor,
     ActionButton,
+    NexusImage,
 } from '../small-components';
 import { stripHtml, extractUrls, getRelativeTime, isComputer } from '../utils';
 // NEW: Import Apollo Client hook and comments query to allow refetching comments.
@@ -237,8 +237,8 @@ const CommentThreadComponent = ({
                         color={COLORS.InactiveText}
                         style={styles.collapseIcon}
                     />
-                    <SolitoImage
-                        src={`https://picsum.photos/seed/${comment.user.replaceAll(
+                    <NexusImage
+                        source={`https://picsum.photos/seed/${comment.user.replaceAll(
                             /[^\dA-Za-z]/g,
                             ''
                         )}/48`}

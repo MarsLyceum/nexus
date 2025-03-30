@@ -13,8 +13,15 @@ export const linking = {
             Main: {
                 path: '', // omit Main from the URL as well
                 screens: {
-                    app: {
-                        path: 'app', // omit AppDrawer from the URL
+                    dashboard: {
+                        path: 'dashboard', // omit AppDrawer from the URL
+                        screens: {
+                            events: 'events',
+                            friends: 'friends',
+                            messages: 'messages',
+                            search: 'search',
+                            group: ':groupName',
+                        },
                     },
                     login: { path: 'login' },
                     signup: { path: 'signup' },

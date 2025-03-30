@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, Pressable } from 'react-native';
-import { SolitoImage } from 'solito/image';
+
+import { NexusImage } from './NexusImage';
 import { ImageDetailsModal } from '../sections';
 
 export type ImagePreviewProps = {
@@ -28,8 +29,8 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({
                 onPress={() => setModalVisible(true)}
                 style={styles.linkPreviewContainer}
             >
-                <SolitoImage
-                    src={url}
+                <NexusImage
+                    source={url}
                     style={{
                         width: targetWidth,
                         height: computedHeight,

@@ -6,8 +6,8 @@ import {
     StyleSheet,
     Text,
 } from 'react-native';
-import { SolitoImage } from 'solito/image';
 
+import { NexusImage } from './NexusImage';
 import { COLORS } from '../constants';
 import { AttachmentPreviews } from '../sections';
 import { Attachment } from '../types';
@@ -72,8 +72,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                             <TouchableOpacity
                                 onPress={() => onInlineImagePress(url)}
                             >
-                                <SolitoImage
-                                    src={url}
+                                <NexusImage
+                                    source={url}
                                     alt="Inline image preview"
                                     style={styles.attachmentImage}
                                     width={80}

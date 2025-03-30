@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, TouchableOpacity, StyleSheet, Platform } from 'react-native';
-import { SolitoImage } from 'solito/image';
 // Mobile drag and drop library
 import DraggableFlatList from 'react-native-draggable-flatlist';
 // For web: using dnd-kit
@@ -22,7 +21,7 @@ import { CSS } from '@dnd-kit/utilities';
 
 import { Cancel } from '../icons';
 import { Attachment } from '../types';
-import { NexusVideo } from '../small-components';
+import { NexusVideo, NexusImage } from '../small-components';
 import { COLORS } from '../constants';
 
 type AttachmentPreviewsProps = {
@@ -122,8 +121,8 @@ export const AttachmentPreviews: React.FC<AttachmentPreviewsProps> = ({
                                 controls={false}
                             />
                         ) : (
-                            <SolitoImage
-                                src={item.previewUri}
+                            <NexusImage
+                                source={item.previewUri}
                                 style={styles.attachmentImage}
                                 alt="Attachment preview"
                                 width={80}
@@ -205,8 +204,8 @@ const SortableItem: React.FC<SortableItemProps> = ({
                         controls={false}
                     />
                 ) : (
-                    <SolitoImage
-                        src={attachment.previewUri}
+                    <NexusImage
+                        source={attachment.previewUri}
                         style={styles.attachmentImage}
                         alt="Attachment preview"
                         width={80}

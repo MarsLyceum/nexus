@@ -1,6 +1,7 @@
 import React from 'react';
 import { TouchableOpacity, StyleSheet, View, Text } from 'react-native';
-import { SolitoImage } from 'solito/image';
+
+import { NexusImage } from '../small-components';
 import { COLORS } from '../constants';
 
 const styles = StyleSheet.create({
@@ -47,8 +48,8 @@ export const GroupButton = ({
     <TouchableOpacity style={styles.container} onPress={onPress}>
         <View style={styles.buttonContainer}>
             <View style={styles.button}>
-                <SolitoImage
-                    src={imageSource}
+                <NexusImage
+                    source={imageSource}
                     width={45}
                     height={45}
                     contentFit="cover" // Ensures the image fills the entire rectangle

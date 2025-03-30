@@ -8,11 +8,11 @@ import {
     StyleSheet,
     Alert,
 } from 'react-native';
-import { SolitoImage } from 'solito/image';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { useMutation } from '@apollo/client';
 
+import { NexusImage } from '../small-components';
 import { COLORS } from '../constants';
 import { CREATE_GROUP_MUTATION } from '../queries';
 import { useAppSelector, RootState, UserType } from '../redux';
@@ -99,8 +99,8 @@ export const CreateGroupModalScreen: React.FC<Props> = ({ navigation }) => {
 
                 <View style={styles.groupAvatarContainer}>
                     {fileData ? (
-                        <SolitoImage
-                            src={fileData}
+                        <NexusImage
+                            source={fileData}
                             style={styles.groupAvatar}
                             alt="avatar"
                             width={80}

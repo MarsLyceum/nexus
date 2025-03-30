@@ -6,10 +6,10 @@ import {
     ScrollView,
     useWindowDimensions,
 } from 'react-native';
-import { SolitoImage } from 'solito/image';
+
 import { CarouselDots } from './CarouselDots';
 import { ArrowButton } from './ArrowButton';
-import { ImageCountOverlay, NexusVideo } from '../small-components';
+import { ImageCountOverlay, NexusVideo, NexusImage } from '../small-components';
 import { useMediaTypes } from '../hooks';
 
 export type AttachmentImageGalleryProps = {
@@ -133,8 +133,8 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
                                         contentFit="contain"
                                     />
                                 ) : (
-                                    <SolitoImage
-                                        src={url}
+                                    <NexusImage
+                                        source={url}
                                         width={targetWidth}
                                         height={attachmentHeight}
                                         alt=""

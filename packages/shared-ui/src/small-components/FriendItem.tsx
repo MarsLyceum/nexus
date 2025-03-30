@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { View, Text, StyleSheet, View as RNView } from 'react-native';
-import { SolitoImage } from 'solito/image';
+
+import { NexusImage } from './NexusImage';
 import { More, CheckMark, Cancel } from '../icons';
 import { COLORS } from '../constants';
 import { ActionButton } from './ActionButton';
@@ -128,8 +129,8 @@ export const FriendItem: React.FC<FriendItemProps> = ({
         <View style={styles.friendItem}>
             {/* Avatar + (optional) Status Dot */}
             <View style={styles.avatarAndDot}>
-                <SolitoImage
-                    src={avatarUrl}
+                <NexusImage
+                    source={avatarUrl}
                     style={styles.avatar}
                     width={32}
                     height={32}

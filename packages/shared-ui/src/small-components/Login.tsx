@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useAppDispatch, loadUser } from '@shared-ui/redux';
+import { useAppDispatch, loadUser } from '../redux';
 
 export const Login: React.FC<{ children: React.ReactNode }> = ({
     children,

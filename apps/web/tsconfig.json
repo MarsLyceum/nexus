@@ -22,7 +22,8 @@
         "next-env.d.ts",
         "polyfills/expo-polyfills.js",
         "stubs/expo-secure-store.js",
-        ".next/types/**/*.ts"
+        ".next/types/**/*.ts",
+        "../../packages/shared-ui/src/small-components/Login.tsx"
     ],
     "exclude": ["node_modules"]
 }

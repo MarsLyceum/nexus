@@ -16,7 +16,7 @@ import {
     SearchProvider,
     CurrentCommentProvider,
 } from '@shared-ui/providers';
-import { StatusManager } from '@shared-ui/small-components';
+import { StatusManager, Login } from '@shared-ui/small-components';
 import { COLORS } from '@shared-ui/constants';
 import { createApolloClient } from '@shared-ui/utils';
 import { useFonts } from 'expo-font';
@@ -29,8 +29,6 @@ import {
     Roboto_700Bold,
     Roboto_700Bold_Italic,
 } from '@expo-google-fonts/roboto';
-
-import { Login } from './Login';
 
 // Create your Apollo client.
 const client = createApolloClient();

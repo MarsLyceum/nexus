@@ -38,6 +38,7 @@ const styles = StyleSheet.create({
         flex: 1,
         flexDirection: 'row',
         backgroundColor: COLORS.PrimaryBackground,
+        height: '100%',
     },
     sidebarContainer: {
         backgroundColor: COLORS.PrimaryBackground,

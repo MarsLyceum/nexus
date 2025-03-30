@@ -5,7 +5,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { User } from '../../types';
 import type { AppThunk } from '../store';
 
-import { setItem, getItem, deleteItem } from './storageUtil';
+import { setItem, getItem, deleteItem } from '../../utils/storageUtil';
 
 const USER_KEY = 'user';
 

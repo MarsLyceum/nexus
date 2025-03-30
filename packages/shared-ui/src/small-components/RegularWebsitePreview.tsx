@@ -88,6 +88,7 @@ export const RegularWebsitePreview: React.FC<RegularWebsitePreviewProps> = ({
                         width={computedWidth}
                         height={computedHeight}
                         alt="Website preview image"
+                        unoptimized
                     />
                 </TouchableOpacity>
             ) : null}

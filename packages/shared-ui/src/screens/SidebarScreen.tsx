@@ -17,7 +17,39 @@ import { Friends, Chat, Events, Search, Add } from '../icons';
 import { FETCH_USER_GROUPS_QUERY } from '../queries';
 import { COLORS, SIDEBAR_WIDTH } from '../constants';
 
-import { detectEnvironment, Environment } from '../utils';
+import { detectEnvironment, Environment, getItem, setItem } from '../utils';
+
+// Helper function to merge groups from cache and fetched data.
+// It preserves object identity if the new data is shallowly equal to the cached version.
+const mergeGroups = (
+    cached: UserGroupsType,
+    fetched: UserGroupsType
+): UserGroupsType => {
+    // Create a map for quick lookup by id from the cached groups.
+    const cachedMap = new Map<string, (typeof fetched)[number]>();
+    cached.forEach((group) => {
+        cachedMap.set(group.id, group);
+    });
+
+    return fetched.map((newGroup) => {
+        const cachedGroup = cachedMap.get(newGroup.id);
+        if (cachedGroup) {
+            // Perform a shallow comparison. If nothing changed, return the cached object.
+            let changed = false;
+            for (const key in newGroup) {
+                if (
+                    newGroup[key as keyof typeof newGroup] !==
+                    cachedGroup[key as keyof typeof cachedGroup]
+                ) {
+                    changed = true;
+                    break;
+                }
+            }
+            return changed ? newGroup : cachedGroup;
+        }
+        return newGroup;
+    });
+};
 
 const BUTTON_MARGIN_TOP = 32;
 const CONTENT_PADDING_LEFT = 10;
@@ -103,7 +135,8 @@ export const SidebarScreen = ({
         (state: RootState) => state.user.user
     );
 
-    // Manage groups: if not passed via props, fetch them.
+    // Manage groups: if not passed via props, we use local state.
+    // This state is initially empty but will be populated from cache immediately.
     const [localGroups, setLocalGroups] = useState<UserGroupsType>(
         groups || []
     );
@@ -112,7 +145,7 @@ export const SidebarScreen = ({
     const dispatch = useAppDispatch();
     const apolloClient = useApolloClient();
 
-    // Update local groups when groups prop changes.
+    // If groups prop changes, update the local state.
     useEffect(() => {
         if (groups) {
             setLocalGroups(groups);
@@ -120,22 +153,49 @@ export const SidebarScreen = ({
         }
     }, [groups]);
 
-    // Only fetch groups if not provided via props.
+    // Load from cache first and then fetch new groups.
     useEffect(() => {
-        void (async () => {
-            if (!groups && user?.id) {
-                const result = await apolloClient.query<{
-                    fetchUserGroups: UserGroupsType;
-                }>({
-                    query: FETCH_USER_GROUPS_QUERY,
-                    variables: { userId: user.id },
-                });
-                // Optionally update redux store if needed.
-                dispatch(retrieveUserGroups(result.data.fetchUserGroups));
-                setLocalGroups(result.data.fetchUserGroups);
-                setLoadingGroups(false);
-            }
-        })();
+        if (!groups && user?.id) {
+            void (async () => {
+                // 1. Load cached groups so UI can render instantly.
+                try {
+                    const cachedGroupsStr = await getItem('userGroups');
+                    if (cachedGroupsStr) {
+                        const cachedGroups = JSON.parse(
+                            cachedGroupsStr
+                        ) as UserGroupsType;
+                        setLocalGroups(cachedGroups);
+                        dispatch(retrieveUserGroups(cachedGroups));
+                        setLoadingGroups(false);
+                    }
+                } catch (error) {
+                    console.error('Error loading cached groups', error);
+                }
+
+                // 2. Fetch fresh groups from API.
+                try {
+                    const result = await apolloClient.query<{
+                        fetchUserGroups: UserGroupsType;
+                    }>({
+                        query: FETCH_USER_GROUPS_QUERY,
+                        variables: { userId: user.id },
+                    });
+                    // 3. Merge fetched groups with cached ones to preserve object references where possible.
+                    setLocalGroups((prevGroups) =>
+                        mergeGroups(prevGroups, result.data.fetchUserGroups)
+                    );
+                    dispatch(retrieveUserGroups(result.data.fetchUserGroups));
+                    setLoadingGroups(false);
+                    // 4. Update the cache with the new data.
+                    await setItem(
+                        'userGroups',
+                        JSON.stringify(result.data.fetchUserGroups)
+                    );
+                } catch (error) {
+                    console.error('Error fetching groups from API', error);
+                }
+            })();
+        }
     }, [groups, user?.id, apolloClient, dispatch]);
 
     // Create dedicated refs for the static buttons.

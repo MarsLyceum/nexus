@@ -17,6 +17,7 @@ export type NexusImageProps = {
     width?: number | string;
     height?: number | string;
     contentFit?: ImageContentFit; // e.g., 'contain', 'cover', etc.
+    unoptimized?: boolean;
     // Allow any additional props
     [key: string]: any;
 };
@@ -58,6 +59,7 @@ export const NexusImage = (props: NexusImageProps) => {
         width,
         height,
         contentFit,
+        unoptimized,
         ...rest
     } = props;
     const env: Environment = detectEnvironment();
@@ -129,6 +131,7 @@ export const NexusImage = (props: NexusImageProps) => {
                     width={containerWidth}
                     height={containerHeight}
                     style={{ objectFit: contentFit ?? 'contain' }} // Apply contentFit as objectFit
+                    unoptimized
                     {...rest}
                 />
             </div>

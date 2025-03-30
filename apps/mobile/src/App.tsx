@@ -44,7 +44,7 @@ import {
     ActiveGroupProvider,
     CurrentCommentProvider,
 } from '@shared-ui/providers';
-import { StatusManager } from '@shared-ui/small-components';
+import { StatusManager, Login } from '@shared-ui/small-components';
 import {
     LoginScreen,
     SignUpScreen,
@@ -278,41 +278,44 @@ export default function App() {
                                                 linking={linking}
                                             >
                                                 <StatusManager>
-                                                    <RootStack.Navigator
-                                                        screenOptions={{
-                                                            headerShown: false,
-                                                            presentation:
-                                                                'transparentModal', // This makes the screens render as modals by default
-                                                        }}
-                                                    >
-                                                        <RootStack.Screen
-                                                            name="Main"
-                                                            component={
-                                                                MainStackScreen
-                                                            }
-                                                        />
-                                                        <RootStack.Screen
-                                                            name="CreateGroup"
-                                                            // @ts-expect-error navigator
-                                                            component={
-                                                                CreateGroupModalScreen
-                                                            }
-                                                            options={{
+                                                    <Login>
+                                                        <RootStack.Navigator
+                                                            screenOptions={{
+                                                                headerShown:
+                                                                    false,
                                                                 presentation:
-                                                                    'transparentModal',
-                                                                cardStyle: {
-                                                                    backgroundColor:
-                                                                        'transparent',
-                                                                },
-                                                                ...Platform.select(
-                                                                    {
-                                                                        ios: TransitionPresets.ModalPresentationIOS,
-                                                                    }
-                                                                ),
+                                                                    'transparentModal', // This makes the screens render as modals by default
                                                             }}
-                                                        />
-                                                    </RootStack.Navigator>
-                                                    <Toast />
+                                                        >
+                                                            <RootStack.Screen
+                                                                name="Main"
+                                                                component={
+                                                                    MainStackScreen
+                                                                }
+                                                            />
+                                                            <RootStack.Screen
+                                                                name="CreateGroup"
+                                                                // @ts-expect-error navigator
+                                                                component={
+                                                                    CreateGroupModalScreen
+                                                                }
+                                                                options={{
+                                                                    presentation:
+                                                                        'transparentModal',
+                                                                    cardStyle: {
+                                                                        backgroundColor:
+                                                                            'transparent',
+                                                                    },
+                                                                    ...Platform.select(
+                                                                        {
+                                                                            ios: TransitionPresets.ModalPresentationIOS,
+                                                                        }
+                                                                    ),
+                                                                }}
+                                                            />
+                                                        </RootStack.Navigator>
+                                                        <Toast />
+                                                    </Login>
                                                 </StatusManager>
                                             </NavigationContainer>
                                         </PortalProvider>

@@ -4,7 +4,7 @@ import { Group } from '../../types';
 import type { AppThunk } from '../store';
 
 // Import caching utilities.
-import { setItem, getItem } from '../../utils/storageUtil';
+import { setItem, getItem } from './storageUtil';
 
 const USER_GROUPS_KEY = 'userGroups';
 

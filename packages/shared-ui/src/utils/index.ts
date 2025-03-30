@@ -8,6 +8,6 @@ export * from './getSafeWindow';
 export * from './isComputer';
 export * from './isMobileBrowser';
 export * from './linkPreviewUtils';
-export * from './storageUtil';
+export * from '../redux/slices/storageUtil';
 export * from './stripHtml';
 export * from './validatePassword';

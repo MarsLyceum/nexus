@@ -8,24 +8,29 @@ import {
     Platform,
     View,
 } from 'react-native';
-import { createParam } from 'solito';
 
 import { Header, PostItem } from '../sections';
 import { COLORS } from '../constants';
 import { CreateContentButton } from '../buttons';
 import { useAppSelector, RootState, UserType } from '../redux';
 import { FeedPost, Attachment, GroupChannel } from '../types';
-import { useFeedPosts, useCreatePost, useNexusRouter } from '../hooks';
+import {
+    useFeedPosts,
+    useCreatePost,
+    useNexusRouter,
+    createNexusParam,
+} from '../hooks';
 import { CreatePostModal } from '../small-components';
 
 // Create a hook to read our screen parameters.
-const { useParam } = createParam<{ channelId: string }>();
+const { useParam } = createNexusParam<{ channelId: string }>();
 
 const BOTTOM_INPUT_HEIGHT = 60;
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        flexBasis: 0,
         backgroundColor: COLORS.SecondaryBackground,
     },
     feedList: {
@@ -152,7 +157,7 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
 
             {loadingFeed ? (
                 <FlatList
-                    style={{ flex: 1 }}
+                    style={{ flex: 1, flexBasis: 0 }}
                     data={[0, 1, 2, 3, 4]} // Render 5 skeleton items while loading
                     keyExtractor={(item) => item.toString()}
                     renderItem={() => <SkeletonPostItem />}
@@ -160,7 +165,7 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
                 />
             ) : (
                 <FlatList
-                    style={{ flex: 1 }}
+                    style={{ flex: 1, flexBasis: 0 }}
                     data={feedPosts}
                     keyExtractor={(item: FeedPost) => item.id}
                     renderItem={({ item }: { item: FeedPost }) => (

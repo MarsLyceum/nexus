@@ -174,7 +174,10 @@ export function useLinkPreview({
                 if (Platform.OS === 'web') {
                     try {
                         const parsedUrl = new URL(url, window.location.origin);
-                        if (parsedUrl.origin !== window.location.origin) {
+                        if (
+                            parsedUrl.origin !== window.location.origin &&
+                            parsedUrl.hostname !== window.location.hostname
+                        ) {
                             fetchUrl = `https://thingproxy.freeboard.io/fetch/${url}`;
                         }
                     } catch {

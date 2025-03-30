@@ -89,24 +89,26 @@ export function AppDrawerScreen() {
             })}
             drawerContent={(props) => <SidebarScreen {...props} />}
         >
-            <DrawerNavigator.Screen name="Friends" component={FriendsScreen} />
-            <DrawerNavigator.Screen name="Messages" component={DMListScreen} />
-            <DrawerNavigator.Screen name="Events" component={EventsScreen} />
-            <DrawerNavigator.Screen name="Search" component={SearchScreen} />
+            <DrawerNavigator.Screen name="friends" component={FriendsScreen} />
+            <DrawerNavigator.Screen name="messages" component={DMListScreen} />
+            <DrawerNavigator.Screen name="events" component={EventsScreen} />
+            <DrawerNavigator.Screen name="search" component={SearchScreen} />
 
-            {userGroups.map((group) => (
-                <DrawerNavigator.Screen
-                    key={group.id}
-                    name={group.name}
-                    component={GroupScreen}
-                    // When this screen is focused, set the active group in context.
-                    listeners={{
-                        focus: () => {
-                            setActiveGroup(group);
-                        },
-                    }}
-                />
-            ))}
+            {userGroups.map(
+                (group: { id: React.Key | null | undefined; name: string }) => (
+                    <DrawerNavigator.Screen
+                        key={group.id}
+                        name={group.name.toLowerCase()}
+                        component={GroupScreen}
+                        // When this screen is focused, set the active group in context.
+                        listeners={{
+                            focus: () => {
+                                setActiveGroup(group);
+                            },
+                        }}
+                    />
+                )
+            )}
 
             {/*
         The Search screen is hidden from the drawer menu (height: 0)

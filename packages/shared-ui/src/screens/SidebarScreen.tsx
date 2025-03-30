@@ -74,238 +74,242 @@ const SkeletonGroupButton = () => (
     </View>
 );
 
-// Extend the props to accept an optional groups list.
+// Extend the props so that currentRoute is optional.
 type SidebarScreenProps = DrawerContentComponentProps & {
-    currentRoute: string;
+    currentRoute?: string;
     groups?: UserGroupsType;
 };
 
-// eslint-disable-next-line react/display-name
-export const SidebarScreen = React.memo(
-    ({ navigation, currentRoute, groups }: SidebarScreenProps) => {
-        const router = useNexusRouter();
-        const [selectedButton, setSelectedButton] =
-            useState<string>(currentRoute);
+export const SidebarScreen = ({
+    navigation,
+    currentRoute,
+    groups,
+    state,
+}: SidebarScreenProps) => {
+    // If currentRoute is not provided, initialize from navigation state.
+    const initialRoute =
+        currentRoute ??
+        (state?.routeNames ? state.routeNames[state.index] : 'friends');
+    const [selectedButton, setSelectedButton] = useState<string>(initialRoute);
 
-        // Update the selected button when currentRoute changes.
-        useEffect(() => {
-            setSelectedButton(currentRoute);
-        }, [currentRoute]);
+    // Update the selected button when currentRoute changes (if provided)
+    useEffect(() => {
+        if (currentRoute) {
+            setSelectedButton(currentRoute.toLowerCase());
+        }
+    }, [currentRoute]);
 
-        const user: UserType = useAppSelector(
-            (state: RootState) => state.user.user
-        );
+    const user: UserType = useAppSelector(
+        (state: RootState) => state.user.user
+    );
 
-        // State for groups: use passed prop if available, else default to an empty array.
-        const [localGroups, setLocalGroups] = useState<UserGroupsType>(
-            groups || []
-        );
-        // Only show loading if groups prop is not passed.
-        const [loadingGroups, setLoadingGroups] = useState<boolean>(!groups);
+    // Manage groups: if not passed via props, fetch them.
+    const [localGroups, setLocalGroups] = useState<UserGroupsType>(
+        groups || []
+    );
+    const [loadingGroups, setLoadingGroups] = useState<boolean>(!groups);
 
-        const dispatch = useAppDispatch();
-        const apolloClient = useApolloClient();
+    const dispatch = useAppDispatch();
+    const apolloClient = useApolloClient();
 
-        // If groups prop is provided, update localGroups when it changes.
-        useEffect(() => {
-            if (groups) {
-                setLocalGroups(groups);
+    // Update local groups when groups prop changes.
+    useEffect(() => {
+        if (groups) {
+            setLocalGroups(groups);
+            setLoadingGroups(false);
+        }
+    }, [groups]);
+
+    // Only fetch groups if not provided via props.
+    useEffect(() => {
+        void (async () => {
+            if (!groups && user?.id) {
+                const result = await apolloClient.query<{
+                    fetchUserGroups: UserGroupsType;
+                }>({
+                    query: FETCH_USER_GROUPS_QUERY,
+                    variables: { userId: user.id },
+                });
+                // Optionally update redux store if needed.
+                dispatch(retrieveUserGroups(result.data.fetchUserGroups));
+                setLocalGroups(result.data.fetchUserGroups);
                 setLoadingGroups(false);
             }
-        }, [groups]);
+        })();
+    }, [groups, user?.id, apolloClient, dispatch]);
 
-        // Only fetch groups if not provided via props.
-        useEffect(() => {
-            void (async () => {
-                if (!groups && user?.id) {
-                    const result = await apolloClient.query<{
-                        fetchUserGroups: UserGroupsType;
-                    }>({
-                        query: FETCH_USER_GROUPS_QUERY,
-                        variables: { userId: user.id },
-                    });
-                    // Optionally update redux store if needed.
-                    dispatch(retrieveUserGroups(result.data.fetchUserGroups));
-                    setLocalGroups(result.data.fetchUserGroups);
-                    setLoadingGroups(false);
-                }
-            })();
-        }, [groups, user?.id, apolloClient, dispatch]);
+    // Create dedicated refs for the static buttons.
+    const staticButtonRefs = {
+        friends: useRef<View>(null),
+        messages: useRef<View>(null),
+        events: useRef<View>(null),
+        search: useRef<View>(null),
+        creategroup: useRef<View>(null),
+    };
 
-        // Create dedicated refs for the static buttons.
-        const staticButtonRefs = {
-            friends: useRef<View>(null),
-            messages: useRef<View>(null),
-            events: useRef<View>(null),
-            search: useRef<View>(null),
-            creategroup: useRef<View>(null),
-        };
+    // Create a dictionary for dynamic group button refs.
+    const dynamicButtonRefs = useRef<{ [key: string]: View | null }>({});
 
-        // Create a dictionary for dynamic group button refs.
-        const dynamicButtonRefs = useRef<{ [key: string]: View | null }>({});
+    // Container ref for measuring.
+    const sidebarButtonsContainerRef = useRef<View>(null);
 
-        // Container ref for measuring.
-        const sidebarButtonsContainerRef = useRef<View>(null);
+    // Initialize animated values.
+    const highlightTop = useRef(new Animated.Value(0)).current;
+    const highlightHeight = useRef(new Animated.Value(40)).current;
 
-        // Initialize animated values.
-        const highlightTop = useRef(new Animated.Value(0)).current;
-        const highlightHeight = useRef(new Animated.Value(40)).current;
-
-        // Measure the currently selected button.
-        useLayoutEffect(() => {
-            let buttonRef: React.RefObject<View> | null = null;
-            if (
+    // Measure the currently selected button.
+    useLayoutEffect(() => {
+        let buttonRef: React.RefObject<View> | null = null;
+        if (staticButtonRefs[selectedButton as keyof typeof staticButtonRefs]) {
+            buttonRef =
                 staticButtonRefs[
                     selectedButton as keyof typeof staticButtonRefs
-                ]
-            ) {
-                buttonRef =
-                    staticButtonRefs[
-                        selectedButton as keyof typeof staticButtonRefs
-                    ];
-            } else if (dynamicButtonRefs.current[selectedButton]) {
-                buttonRef = {
-                    current: dynamicButtonRefs.current[selectedButton],
-                };
-            }
+                ];
+        } else if (dynamicButtonRefs.current[selectedButton]) {
+            buttonRef = { current: dynamicButtonRefs.current[selectedButton] };
+        }
 
-            if (
-                buttonRef &&
-                buttonRef.current &&
-                sidebarButtonsContainerRef.current
-            ) {
-                buttonRef.current.measureLayout(
-                    sidebarButtonsContainerRef.current,
-                    (x, y, width, height) => {
-                        Animated.spring(highlightTop, {
-                            toValue: y,
-                            useNativeDriver: false,
-                        }).start();
-                        Animated.spring(highlightHeight, {
-                            toValue: height,
-                            useNativeDriver: false,
-                        }).start();
-                    },
-                    (error) => {
-                        console.warn('measureLayout error:', error);
-                    }
-                );
-            }
-        }, [selectedButton, highlightTop, highlightHeight]);
+        if (
+            buttonRef &&
+            buttonRef.current &&
+            sidebarButtonsContainerRef.current
+        ) {
+            buttonRef.current.measureLayout(
+                sidebarButtonsContainerRef.current,
+                (x, y, width, height) => {
+                    Animated.spring(highlightTop, {
+                        toValue: y,
+                        useNativeDriver: false,
+                    }).start();
+                    Animated.spring(highlightHeight, {
+                        toValue: height,
+                        useNativeDriver: false,
+                    }).start();
+                },
+                (error) => {
+                    console.warn('measureLayout error:', error);
+                }
+            );
+        }
+    }, [selectedButton, highlightTop, highlightHeight]);
 
-        // Navigation helper.
-        const handlePress = (routeName: string) => {
-            const normalizedRoute = routeName.toLowerCase();
-            const env: Environment = detectEnvironment();
-            if (env === 'nextjs-client' || env === 'nextjs-server') {
-                router.push(`/dashboard/${normalizedRoute}`);
-            } else {
-                navigation.navigate(routeName);
-            }
-        };
+    const router = useNexusRouter();
 
-        return (
-            <ScrollView
-                style={styles.sidebarContainer}
-                contentContainerStyle={{
-                    paddingTop: BUTTON_MARGIN_TOP,
-                    paddingLeft: CONTENT_PADDING_LEFT,
-                }}
+    // Navigation helper.
+    const handlePress = (routeName: string) => {
+        const normalizedRoute = routeName.toLowerCase();
+        // Update the local selected route if currentRoute prop is not provided.
+        if (!currentRoute) {
+            setSelectedButton(normalizedRoute);
+        }
+        const env: Environment = detectEnvironment();
+        if (env === 'nextjs-client' || env === 'nextjs-server') {
+            router.push(`/dashboard/${normalizedRoute}`);
+        } else {
+            // Use normalizedRoute so it matches the DrawerNavigator screen names.
+            navigation.navigate(normalizedRoute);
+        }
+    };
+
+    return (
+        <ScrollView
+            style={styles.sidebarContainer}
+            contentContainerStyle={{
+                paddingTop: BUTTON_MARGIN_TOP,
+                paddingLeft: CONTENT_PADDING_LEFT,
+            }}
+        >
+            <View
+                style={styles.sidebarButtonsContainer}
+                ref={sidebarButtonsContainerRef}
             >
+                <Animated.View
+                    pointerEvents="none"
+                    style={[
+                        styles.highlight,
+                        { top: highlightTop, height: highlightHeight },
+                    ]}
+                />
                 <View
-                    style={styles.sidebarButtonsContainer}
-                    ref={sidebarButtonsContainerRef}
+                    ref={staticButtonRefs.friends}
+                    style={styles.buttonContainer}
                 >
-                    <Animated.View
-                        pointerEvents="none"
-                        style={[
-                            styles.highlight,
-                            { top: highlightTop, height: highlightHeight },
-                        ]}
+                    <SidebarButton
+                        onPress={() => handlePress('Friends')}
+                        icon={<Friends />}
+                        text="Friends"
                     />
-                    <View
-                        ref={staticButtonRefs.friends}
-                        style={styles.buttonContainer}
-                    >
-                        <SidebarButton
-                            onPress={() => handlePress('Friends')}
-                            icon={<Friends />}
-                            text="Friends"
-                        />
-                    </View>
-                    <View
-                        ref={staticButtonRefs.messages}
-                        style={styles.buttonContainer}
-                    >
-                        <SidebarButton
-                            onPress={() => handlePress('Messages')}
-                            icon={<Chat />}
-                            text="Messages"
-                        />
-                    </View>
-                    <View
-                        ref={staticButtonRefs.events}
-                        style={styles.buttonContainer}
-                    >
-                        <SidebarButton
-                            onPress={() => handlePress('Events')}
-                            icon={<Events />}
-                            text="Events"
-                        />
-                    </View>
-                    <View
-                        ref={staticButtonRefs.search}
-                        style={styles.buttonContainer}
-                    >
-                        <SidebarButton
-                            onPress={() => handlePress('Search')}
-                            icon={<Search />}
-                            text="Search"
-                        />
-                    </View>
-                    {/* Render dynamic group buttons */}
-                    {loadingGroups
-                        ? [0, 1, 2].map((placeholder) => (
-                              <View
-                                  style={styles.buttonContainer}
-                                  key={`skeleton-${placeholder}`}
-                              >
-                                  <SkeletonGroupButton />
-                              </View>
-                          ))
-                        : localGroups.map((group) => {
-                              const key = group.name.toLowerCase();
-                              return (
-                                  <View
-                                      key={group.id}
-                                      style={styles.buttonContainer}
-                                      // Store the dynamic button ref.
-                                      ref={(ref) => {
-                                          dynamicButtonRefs.current[key] = ref;
-                                      }}
-                                  >
-                                      <GroupButton
-                                          imageSource={group.avatarUrl ?? ''}
-                                          onPress={() =>
-                                              handlePress(group.name)
-                                          }
-                                          groupName={group.name}
-                                      />
-                                  </View>
-                              );
-                          })}
-                    <View
-                        ref={staticButtonRefs.creategroup}
-                        style={styles.buttonContainer}
-                    >
-                        <SidebarButton
-                            onPress={() => handlePress('CreateGroup')}
-                            icon={<Add />}
-                            text="Create Group"
-                        />
-                    </View>
                 </View>
-            </ScrollView>
-        );
-    }
-);
+                <View
+                    ref={staticButtonRefs.messages}
+                    style={styles.buttonContainer}
+                >
+                    <SidebarButton
+                        onPress={() => handlePress('Messages')}
+                        icon={<Chat />}
+                        text="Messages"
+                    />
+                </View>
+                <View
+                    ref={staticButtonRefs.events}
+                    style={styles.buttonContainer}
+                >
+                    <SidebarButton
+                        onPress={() => handlePress('Events')}
+                        icon={<Events />}
+                        text="Events"
+                    />
+                </View>
+                <View
+                    ref={staticButtonRefs.search}
+                    style={styles.buttonContainer}
+                >
+                    <SidebarButton
+                        onPress={() => handlePress('Search')}
+                        icon={<Search />}
+                        text="Search"
+                    />
+                </View>
+                {/* Render dynamic group buttons */}
+                {loadingGroups
+                    ? [0, 1, 2].map((placeholder) => (
+                          <View
+                              style={styles.buttonContainer}
+                              key={`skeleton-${placeholder}`}
+                          >
+                              <SkeletonGroupButton />
+                          </View>
+                      ))
+                    : localGroups.map((group) => {
+                          const key = group.name.toLowerCase();
+                          return (
+                              <View
+                                  key={group.id}
+                                  style={styles.buttonContainer}
+                                  // Store the dynamic button ref.
+                                  ref={(ref) => {
+                                      dynamicButtonRefs.current[key] = ref;
+                                  }}
+                              >
+                                  <GroupButton
+                                      imageSource={group.avatarUrl ?? ''}
+                                      onPress={() => handlePress(group.name)}
+                                      groupName={group.name}
+                                  />
+                              </View>
+                          );
+                      })}
+                <View
+                    ref={staticButtonRefs.creategroup}
+                    style={styles.buttonContainer}
+                >
+                    <SidebarButton
+                        onPress={() => handlePress('CreateGroup')}
+                        icon={<Add />}
+                        text="Create Group"
+                    />
+                </View>
+            </View>
+        </ScrollView>
+    );
+};

@@ -12,12 +12,13 @@ import {
 } from 'react-native';
 import { NavigationProp, RouteProp } from '@react-navigation/native';
 
-import { EventCard } from '@shared-ui/cards';
-import { CreateContentButton } from '@shared-ui/buttons';
-import { COLORS } from '@shared-ui/constants';
-import { CommentThread, CommentNode, Attachment } from '@shared-ui/sections';
-import { useAppSelector, RootState, UserType } from '@shared-ui/redux';
-import { CreateEventCommentModal } from '@shared-ui/small-components';
+import { EventCard } from '../cards';
+import { CreateContentButton } from '../buttons';
+import { COLORS } from '../constants';
+import { Attachment } from '../types';
+import { CommentThread, CommentNode } from '../sections';
+import { useAppSelector, RootState, UserType } from '../redux';
+import { CreateEventCommentModal } from '../small-components';
 
 type EventDetails = {
     id: string;

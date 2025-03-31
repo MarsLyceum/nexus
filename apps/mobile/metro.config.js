@@ -72,10 +72,6 @@ config.resolver.extraNodeModules = {
         workspaceRoot,
         'packages/shared-ui/src/screens'
     ),
-    'react-native-reanimated': path.resolve(
-        __dirname,
-        'node_modules/react-native-reanimated'
-    ),
 };
 
 // Include node_modules from both the mobile app and the workspace root.

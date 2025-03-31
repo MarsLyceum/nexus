@@ -10,15 +10,15 @@ import {
 } from 'react-native';
 import { NavigationProp } from '@react-navigation/core';
 
-import { COLORS } from '@shared-ui/constants';
-import { AttachmentImageGallery, ImageDetailsModal } from '@shared-ui/sections';
+import { COLORS } from '../constants';
+import { AttachmentImageGallery, ImageDetailsModal } from '../sections';
 import {
     LinkPreview,
     MarkdownRenderer,
     CommentEditor,
-} from '@shared-ui/small-components';
-import { getRelativeTime, extractUrls, stripHtml } from '@shared-ui/utils';
-import { CurrentCommentContext } from '@shared-ui/providers';
+} from '../small-components';
+import { getRelativeTime, extractUrls, stripHtml } from '../utils';
+import { CurrentCommentContext } from '../providers';
 
 type RootStackParamList = {
     CreateComment: Record<string, unknown>;

@@ -10,7 +10,7 @@ import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { COLORS, SIDEBAR_WIDTH } from '@shared-ui/constants';
 import { useAppSelector, RootState, UserGroupsType } from '@shared-ui/redux';
 import { ActiveGroupContext } from '@shared-ui/providers';
-
+import { Group } from '@shared-ui/types';
 import {
     GroupScreen,
     SidebarScreen,
@@ -18,7 +18,7 @@ import {
     EventsScreen,
     SearchScreen,
     FriendsScreen,
-} from '@shared-ui/src/screens';
+} from '@shared-ui/screens';
 
 // Define a DrawerParamList type so navigation is properly typed.
 type DrawerParamList = {
@@ -94,21 +94,19 @@ export function AppDrawerScreen() {
             <DrawerNavigator.Screen name="events" component={EventsScreen} />
             <DrawerNavigator.Screen name="search" component={SearchScreen} />
 
-            {userGroups.map(
-                (group: { id: React.Key | null | undefined; name: string }) => (
-                    <DrawerNavigator.Screen
-                        key={group.id}
-                        name={group.name.toLowerCase()}
-                        component={GroupScreen}
-                        // When this screen is focused, set the active group in context.
-                        listeners={{
-                            focus: () => {
-                                setActiveGroup(group);
-                            },
-                        }}
-                    />
-                )
-            )}
+            {userGroups.map((group: Group) => (
+                <DrawerNavigator.Screen
+                    key={group.id}
+                    name={group.name.toLowerCase()}
+                    component={GroupScreen}
+                    // When this screen is focused, set the active group in context.
+                    listeners={{
+                        focus: () => {
+                            setActiveGroup(group);
+                        },
+                    }}
+                />
+            ))}
 
             {/*
         The Search screen is hidden from the drawer menu (height: 0)

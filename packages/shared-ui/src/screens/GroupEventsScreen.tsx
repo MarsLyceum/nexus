@@ -13,11 +13,11 @@ import {
 } from 'react-native';
 import { NavigationProp } from '@react-navigation/core';
 
-import { EventCard } from '@shared-ui/cards';
-import { Header } from '@shared-ui/sections';
-import { COLORS } from '@shared-ui/constants';
-import { useAppSelector, RootState, UserType } from '@shared-ui/redux';
-import { Event } from '@shared-ui/types';
+import { EventCard } from '../cards';
+import { Header } from '../sections';
+import { COLORS } from '../constants';
+import { useAppSelector, RootState, UserType } from '../redux';
+import { Event } from '../types';
 
 const initialEvents: Event[] = [
     {

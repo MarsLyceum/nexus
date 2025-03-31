@@ -27,5 +27,5 @@
         "./types": "./src/types/index.ts",
         "./utils": "./src/utils/index.ts"
     },
-    "peerDependencies": {}
+    "dependencies": {}
 }

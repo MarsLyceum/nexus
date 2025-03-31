@@ -1,7 +1,6 @@
 {
     "name": "nexus",
     "version": "1.0.1",
-    "main": "./apps/mobile/index.js",
     "scripts": {
         "start": "npx expo start",
         "export:web": "npx expo export",
@@ -71,7 +70,7 @@
         "eslint-plugin-react-native": "^4.1.0",
         "eslint-plugin-unicorn": "^51.0.1",
         "events": "^3.3.0",
-        "expo": "^52.0.28",
+        "expo": "^52.0.42",
         "expo-auth-session": "~6.0.2",
         "expo-calendar": "^14.0.6",
         "expo-constants": "~17.0.5",
@@ -103,7 +102,7 @@
         "react": "18.3.1",
         "react-dom": "18.3.1",
         "react-helmet": "^6.1.0",
-        "react-native": "^0.77.2",
+        "react-native": "^0.76.8",
         "react-native-cli": "^2.0.1",
         "react-native-config": "^1.5.3",
         "react-native-draggable-flatlist": "^4.0.1",
@@ -112,8 +111,6 @@
         "react-native-geolocation-service": "^5.3.1",
         "react-native-get-random-values": "^1.11.0",
         "react-native-gifted-chat": "^2.6.5",
-        "react-native-http": "^0.0.3",
-        "react-native-https": "^1.0.0",
         "react-native-markdown-display": "^7.0.2",
         "react-native-paper": "^5.13.1",
         "react-native-reanimated": "^3.17.1",
@@ -173,8 +170,8 @@
         },
         "overrides": {
             "@types/react": "18.3.18",
-            "react-native-reanimated": "^3.17.1",
-            "react-native": "0.77.2"
+            "react-native-reanimated": "3.16.7",
+            "react-native": "0.76.8"
         }
     }
 }

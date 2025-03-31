@@ -50,7 +50,15 @@
     "jsEngine": "hermes",
     "plugins": [
       "expo-font",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "kotlinVersion": "2.0.0"
+          }
+        }
+      ]
     ],
     "owner": "suerg"
   }

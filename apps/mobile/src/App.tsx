@@ -200,7 +200,6 @@ function MainStackScreen() {
             <MainStack.Screen name="login" component={LoginScreen} />
             <MainStack.Screen name="signup" component={SignUpScreen} />
             <MainStack.Screen name="dashboard" component={AppDrawerScreen} />
-            {/* @ts-expect-error navigator */}
             <MainStack.Screen name="chat" component={ChatScreen} />
             <MainStack.Screen name="add-friends" component={AddFriendsScreen} />
             <MainStack.Screen
@@ -209,10 +208,8 @@ function MainStackScreen() {
             />
             <MainStack.Screen
                 name="feedchannel"
-                // @ts-expect-error navigator
                 component={FeedChannelScreen}
             />
-            {/* @ts-expect-error navigator */}
             <MainStack.Screen name="post" component={PostScreen} />
             <MainStack.Screen
                 name="groupevents"

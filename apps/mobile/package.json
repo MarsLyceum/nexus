@@ -4,17 +4,17 @@
     "private": true,
     "main": "index.js",
     "scripts": {
-        "start": "expo start",
-        "android": "expo start --android",
-        "ios": "expo start --ios",
-        "web": "expo start --web",
-        "build": "expo build"
+        "expo-install": "npx expo install --pnpm",
+        "start": "npx expo start",
+        "export:web": "npx expo export",
+        "export:android": "eas build --platform android",
+        "export:ios": "eas build --platform ios",
+        "android": "npx expo start --android",
+        "ios": "npx expo start --ios",
+        "web": "npx expo start --web",
+        "lint": "npx eslint .",
+        "typecheck": "tsc --noEmit",
+        "deploy": "pnpm run export:web && firebase deploy"
     },
-    "dependencies": {
-        "expo": "^52.0.28",
-        "react": "18.3.1",
-        "react-native": "^0.76.6",
-        "@shared-ui": "workspace:*",
-        "solito": "^4.4.1"
-    }
+    "dependencies": {}
 }

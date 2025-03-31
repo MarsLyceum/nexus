@@ -1,6 +1,7 @@
 {
     "name": "nexus",
     "version": "1.0.1",
+    "main": "./apps/mobile/index.js",
     "scripts": {
         "start": "npx expo start",
         "export:web": "npx expo export",
@@ -96,14 +97,13 @@
         "metro-react-native-babel-preset": "^0.77.0",
         "next": "^15.2.4",
         "pako": "^2.1.0",
-        "peeps": "file:",
         "prettier": "3.2.5",
         "quill-better-table": "^1.2.10",
         "quill-delta-to-markdown": "^0.6.0",
         "react": "18.3.1",
         "react-dom": "18.3.1",
         "react-helmet": "^6.1.0",
-        "react-native": "^0.76.6",
+        "react-native": "^0.77.2",
         "react-native-cli": "^2.0.1",
         "react-native-config": "^1.5.3",
         "react-native-draggable-flatlist": "^4.0.1",
@@ -148,7 +148,8 @@
         "react-window": "^1.8.11",
         "@types/react-window": "^1.8.8",
         "react-virtuoso": "^4.12.5",
-        "framer-motion": "^12.6.2"
+        "framer-motion": "^12.6.2",
+        "setimmediate": "^1.0.5"
     },
     "devDependencies": {
         "@babel/core": "^7.26.7",
@@ -171,7 +172,9 @@
             "expo-image": "patches/expo-image.patch"
         },
         "overrides": {
-            "@types/react": "18.3.18"
+            "@types/react": "18.3.18",
+            "react-native-reanimated": "^3.17.1",
+            "react-native": "0.77.2"
         }
     }
 }

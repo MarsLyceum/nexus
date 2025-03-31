@@ -4,7 +4,7 @@
     "slug": "nexus",
     "version": "1.0.2",
     "orientation": "portrait",
-    "icon": "../../assets/icon.png",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "scheme": "nexus",
@@ -14,7 +14,7 @@
       "web"
     ],
     "splash": {
-      "image": "../../assets/splash.png",
+      "image": "./assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#1F1524"
     },
@@ -30,8 +30,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "../../assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1F1524"
       },
       "package": "com.marslyceum.nexus",
       "permissions": [
@@ -40,13 +40,14 @@
       ]
     },
     "web": {
-      "favicon": "../../assets/favicon.png"
+      "favicon": "./assets/favicon.png"
     },
     "extra": {
       "eas": {
         "projectId": "46cea6b7-6a97-4f60-bad0-c74ac8cf7d38"
       }
     },
+    "jsEngine": "hermes",
     "plugins": [
       "expo-font",
       "expo-secure-store"

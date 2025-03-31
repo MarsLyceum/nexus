@@ -1,3 +1,5 @@
+// eslint-disable-next-line eslint-comments/disable-enable-pair
+/* eslint-disable import/first */
 import 'react-native-get-random-values';
 
 import React, { useEffect, useState } from 'react';

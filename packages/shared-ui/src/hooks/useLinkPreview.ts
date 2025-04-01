@@ -8,6 +8,8 @@ import {
 } from '../utils/linkPreviewUtils';
 import { PreviewData } from '../types';
 
+import { useDerivedValue } from 'react-native-reanimated';
+
 type UseLinkPreviewParams = {
     url?: string;
     previewData?: PreviewData;
@@ -250,9 +252,9 @@ export function useLinkPreview({
                               : descriptionFallback || ''
                     ),
                     images: ogImageMatch
-                        ? [ogImageMatch[1]]
+                        ? [decode(ogImageMatch[1])]
                         : firstImageUrl
-                          ? [firstImageUrl]
+                          ? [decode(firstImageUrl)]
                           : [],
                     siteName: getDomainFromUrl(url),
                     url,

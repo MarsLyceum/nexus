@@ -1,12 +1,5 @@
 'use strict';
-
-// This is a stub for react-native-reanimated for environments (like SSR)
-// where native modules and animations are not available.
-// All implementations here are no-ops or simplified versions to mimic the API.
-
-//
-// --- Helper Types and Functions from react-native-reanimated ---
-//
+import { useEffect, useRef } from 'react';
 
 /** Stub error class for reanimated errors. */
 export class ReanimatedError extends Error {
@@ -291,6 +284,84 @@ export function useAnimatedRef() {
 // Stub for measuring layouts.
 export function measure() {
     return { x: 0, y: 0, width: 0, height: 0 };
+}
+
+//
+// --- Additional SSR Derived Value Implementation ---
+//
+
+// Helper: Immediately run the updater and return its value.
+function initialUpdaterRun(updater) {
+    return updater();
+}
+
+// Helper: Wraps a value in a mutable object.
+function makeMutable(value) {
+    return {
+        value,
+        get() {
+            return this.value;
+        },
+        set(newValue) {
+            this.value = newValue;
+        },
+    };
+}
+
+// Helper: In SSR, simply run the mapper once and return a dummy ID.
+function startMapper(fun, inputs, sharedValues) {
+    fun();
+    return 0;
+}
+
+// Helper: No-op for SSR.
+function stopMapper(mapperId) {
+    // no-op
+}
+
+// Helper: For SSR, assume a web environment.
+function shouldBeUseWeb() {
+    return true;
+}
+
+/**
+ * Lets you create new shared values based on existing ones while keeping them
+ * reactive.
+ *
+ * @param updater - A function called whenever at least one of the shared values
+ *   or state used in the function body changes.
+ * @param dependencies - An optional array of dependencies.
+ * @returns A new readonly shared value based on a value returned from the updater function.
+ */
+export function useDerivedValue(updater, dependencies) {
+    const initRef = useRef(null);
+    let inputs = Object.values(updater.__closure || {});
+    if (shouldBeUseWeb()) {
+        if (!inputs.length && dependencies && dependencies.length) {
+            // let web work without a Babel/SWC plugin
+            inputs = dependencies;
+        }
+    }
+    if (dependencies === undefined) {
+        dependencies = [...inputs, updater.__workletHash];
+    } else {
+        dependencies.push(updater.__workletHash);
+    }
+    if (initRef.current === null) {
+        initRef.current = makeMutable(initialUpdaterRun(updater));
+    }
+    const sharedValue = initRef.current;
+    useEffect(() => {
+        const fun = () => {
+            'worklet';
+            sharedValue.value = updater();
+        };
+        const mapperId = startMapper(fun, inputs, [sharedValue]);
+        return () => {
+            stopMapper(mapperId);
+        };
+    }, dependencies);
+    return sharedValue;
 }
 
 //

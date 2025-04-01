@@ -109,12 +109,12 @@ const errorLink = onError((error: ErrorResponse) => {
     }
 });
 
-const isRunningLocally = true;
+const useLocalServer = true;
 
-const graphqlApiGatewayEndpointHttp = isRunningLocally
+const graphqlApiGatewayEndpointHttp = useLocalServer
     ? 'http://192.168.1.48:4000/graphql'
     : 'https://nexus-web-service-197277044151.us-west1.run.app/graphql';
-const graphqlApiGatewayEndpointWs = isRunningLocally
+const graphqlApiGatewayEndpointWs = useLocalServer
     ? 'ws://192.168.1.48:4000/graphql'
     : 'wss://nexus-web-service-197277044151.us-west1.run.app/graphql';
 

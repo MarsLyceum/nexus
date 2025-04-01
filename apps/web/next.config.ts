@@ -18,7 +18,7 @@ const TRANSPILED_PACKAGES = [
     'expo-calendar',
     'expo-constants',
     'expo-file-system',
-    'expo-font',
+    // 'expo-font',
     'expo-image',
     'expo-image-loader',
     'expo-image-picker',
@@ -84,7 +84,7 @@ const TRANSPILED_PACKAGES = [
     // 'react-dom',
     // 'string-replace-loader',
     // 'typescript',
-    'styled-components/native',
+    // 'styled-components/native',
     'formik',
     'react-virtualized',
 ];

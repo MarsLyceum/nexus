@@ -9,15 +9,31 @@ import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { createClient } from 'graphql-ws';
 import createUploadLink from 'apollo-upload-client/createUploadLink.mjs';
 
-const isRunningLocally = true;
+import { getSafeWindow } from './getSafeWindow';
 
-const graphqlApiGatewayEndpointHttp = isRunningLocally
-    ? 'http://localhost:4000/graphql'
-    : 'https://nexus-web-service-197277044151.us-west1.run.app/graphql';
+// Detect if the code is running in a Cloud Run container by checking for the K_SERVICE env variable.
+const isCloudRun =
+    typeof process !== 'undefined' && process.env.K_SERVICE !== undefined;
 
-const graphqlApiGatewayEndpointWs = isRunningLocally
-    ? 'ws://localhost:4000/graphql'
-    : 'wss://nexus-web-service-197277044151.us-west1.run.app/graphql';
+// Detect if running on the frontend domain dev.my-nexus.net.
+const isDevDomain =
+    getSafeWindow() &&
+    getSafeWindow()?.location.hostname === 'dev.my-nexus.net';
+
+// Use local server only if NOT running in Cloud Run or on the dev.my-nexus.net domain.
+const onRemoteServer = isCloudRun || isDevDomain;
+const useLocalServer = true;
+
+// Set endpoints based on whether we are using the local server or the Cloud Run server.
+const graphqlApiGatewayEndpointHttp =
+    !onRemoteServer && useLocalServer
+        ? 'http://localhost:4000/graphql'
+        : 'https://nexus-web-service-197277044151.us-west1.run.app/graphql';
+
+const graphqlApiGatewayEndpointWs =
+    !onRemoteServer && useLocalServer
+        ? 'ws://localhost:4000/graphql'
+        : 'wss://nexus-web-service-197277044151.us-west1.run.app/graphql';
 
 // Create a common error link.
 const errorLink = onError((error) => {
@@ -65,19 +81,18 @@ const httpLink = from([
 ]);
 
 // Create a WebSocket link for subscriptions (client-only).
-const wsLink =
-    typeof window !== 'undefined'
-        ? new GraphQLWsLink(
-              createClient({
-                  url: graphqlApiGatewayEndpointWs,
-                  webSocketImpl: ReconnectingWebSocket,
-              })
-          )
-        : undefined;
+const wsLink = getSafeWindow()
+    ? new GraphQLWsLink(
+          createClient({
+              url: graphqlApiGatewayEndpointWs,
+              webSocketImpl: ReconnectingWebSocket,
+          })
+      )
+    : undefined;
 
 // Use split to direct subscriptions to wsLink and other operations to httpLink.
 const link =
-    typeof window === 'undefined' || !wsLink
+    !getSafeWindow() || !wsLink
         ? httpLink
         : split(
               ({ query }) => {
@@ -93,7 +108,7 @@ const link =
 
 export const createApolloClient = () =>
     new ApolloClient({
-        ssrMode: typeof window === 'undefined',
+        ssrMode: !getSafeWindow(),
         link,
         cache: new InMemoryCache(),
     });

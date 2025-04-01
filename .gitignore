@@ -1,5 +1,10 @@
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
+# Service Account Key
+service-account-keys
+hephaestus-418809-*.json
+terraform/hephaestus-418809-*.json*
+
 # Firebase
 .firebase
 

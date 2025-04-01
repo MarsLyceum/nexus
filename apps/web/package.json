@@ -6,10 +6,13 @@
     "debug": "node server.js",
     "dev": "next dev",
     "build": "cross-env NODE_ENV=production next build",
+    "deploy": "python deploy.py",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "run-docker-container": "docker run -it --rm -p 8080:8080 gcr.io/hephaestus-418809/next-server:latest"
   },
   "dependencies": {
+    "cross-env": "^7.0.3",
     "react-native": "0.76.6",
     "react": "18.3.1",
     "react-dom": "18.3.1",

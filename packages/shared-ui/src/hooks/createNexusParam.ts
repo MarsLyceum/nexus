@@ -5,7 +5,7 @@ import { useSearchParams, useRouter as useNextRouter } from 'next/navigation';
 // React Navigation hooks (for native)
 import { useRoute, useNavigation } from '@react-navigation/native';
 
-import { detectEnvironment, Environment } from '../utils';
+import { detectEnvironment, Environment, getSafeWindow } from '../utils';
 
 // Helper to build a URL with query parameters (used in Next.js)
 function buildUrlWithParams(
@@ -67,7 +67,7 @@ export function createNexusParam<T extends Record<string, any>>() {
                     // Merge current and new parameters
                     const mergedParams = { ...paramsObj, ...newParams };
                     // Use the current path as base.
-                    const basePath = window.location.pathname;
+                    const basePath = getSafeWindow()?.location.pathname ?? '';
                     const newUrl = buildUrlWithParams(basePath, mergedParams);
                     // Replace the URL without adding a new history entry.
                     nextRouter.replace(newUrl);

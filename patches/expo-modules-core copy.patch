@@ -1,3 +1,16 @@
+diff --git a/package.json b/package.json
+index 106186aa35f9f96f79ffaa3b091c677d1ceb3236..5ddf0bde96a9d2650d800b31fbc3ea841612ec58 100644
+--- a/package.json
++++ b/package.json
+@@ -2,7 +2,7 @@
+   "name": "expo-modules-core",
+   "version": "2.2.0",
+   "description": "The core of Expo Modules architecture",
+-  "main": "src/index.ts",
++  "main": "src/index",
+   "types": "build/index.d.ts",
+   "sideEffects": [
+     "*.fx.ts"
 diff --git a/src/environment/browser.web.ts b/src/environment/browser.web.ts
 index 18c84942309f62192c87b2ef9a587ffa0a3e79b9..eb7545f1e256b3882913314a97d847c403e88a4e 100644
 --- a/src/environment/browser.web.ts

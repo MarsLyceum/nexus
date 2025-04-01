@@ -109,7 +109,7 @@ const errorLink = onError((error: ErrorResponse) => {
     }
 });
 
-const isRunningLocally = false;
+const isRunningLocally = true;
 
 const graphqlApiGatewayEndpointHttp = isRunningLocally
     ? 'http://192.168.1.48:4000/graphql'

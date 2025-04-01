@@ -22,9 +22,10 @@ type PageProps = {
 // Use generateMetadata to set dynamic meta tags for this page.
 export async function generateMetadata({ params }: PageProps) {
     const { postId } = params;
+    const paramHeaders = await headers();
 
     // Get the host from the request headers.
-    const host = headers().get('host') || 'localhost:3000';
+    const host = paramHeaders.get('host') || 'localhost:3000';
     const protocol = process.env.NODE_ENV === 'development' ? 'http' : 'https';
     const origin = `${protocol}://${host}`;
 

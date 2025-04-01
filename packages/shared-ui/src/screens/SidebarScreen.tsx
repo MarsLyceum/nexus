@@ -2,10 +2,12 @@ import React, { useRef, useState, useEffect, useLayoutEffect } from 'react';
 import { View, Animated, StyleSheet, ScrollView } from 'react-native';
 import { DrawerContentComponentProps } from '@react-navigation/drawer';
 import { useApolloClient } from '@apollo/client';
+import isEqual from 'lodash.isequal';
 
 import { useNexusRouter } from '../hooks';
 import {
     retrieveUserGroups,
+    setUserGroups,
     useAppDispatch,
     useAppSelector,
     RootState,
@@ -16,11 +18,10 @@ import { GroupButton, SidebarButton } from '../buttons';
 import { Friends, Chat, Events, Search, Add } from '../icons';
 import { FETCH_USER_GROUPS_QUERY } from '../queries';
 import { COLORS, SIDEBAR_WIDTH } from '../constants';
-
 import { detectEnvironment, Environment, getItem, setItem } from '../utils';
 
-// Helper function to merge groups from cache and fetched data.
-// It preserves object identity if the new data is shallowly equal to the cached version.
+// Enhanced helper function to merge groups from cache and fetched data.
+// It uses lodash.isequal for deep comparison and preserves object identity when possible.
 const mergeGroups = (
     cached: UserGroupsType,
     fetched: UserGroupsType
@@ -34,21 +35,30 @@ const mergeGroups = (
     return fetched.map((newGroup) => {
         const cachedGroup = cachedMap.get(newGroup.id);
         if (cachedGroup) {
-            // Perform a shallow comparison. If nothing changed, return the cached object.
             let changed = false;
-            for (const key in newGroup) {
+            Object.keys(newGroup).forEach((key) => {
                 if (
-                    newGroup[key as keyof typeof newGroup] !==
-                    cachedGroup[key as keyof typeof cachedGroup]
+                    !isEqual(
+                        newGroup[key as keyof typeof newGroup],
+                        cachedGroup[key as keyof typeof cachedGroup]
+                    )
                 ) {
                     changed = true;
-                    break;
                 }
-            }
+            });
             return changed ? newGroup : cachedGroup;
         }
         return newGroup;
     });
+};
+
+// Helper to force image refresh by appending a timestamp query parameter.
+// If the URL already has query parameters, we append with '&', otherwise with '?'.
+const forceRefreshUrl = (url: string): string => {
+    if (!url) return url;
+    return url.includes('?')
+        ? `${url}&t=${new Date().getTime()}`
+        : `${url}?t=${new Date().getTime()}`;
 };
 
 const BUTTON_MARGIN_TOP = 32;
@@ -155,8 +165,8 @@ export const SidebarScreen = ({
 
     // Load from cache first and then fetch new groups.
     useEffect(() => {
-        if (!groups && user?.id) {
-            void (async () => {
+        if (user?.id) {
+            (async () => {
                 // 1. Load cached groups so UI can render instantly.
                 try {
                     const cachedGroupsStr = await getItem('userGroups');
@@ -165,7 +175,7 @@ export const SidebarScreen = ({
                             cachedGroupsStr
                         ) as UserGroupsType;
                         setLocalGroups(cachedGroups);
-                        dispatch(retrieveUserGroups(cachedGroups));
+                        dispatch(setUserGroups(cachedGroups));
                         setLoadingGroups(false);
                     }
                 } catch (error) {
@@ -180,17 +190,19 @@ export const SidebarScreen = ({
                         query: FETCH_USER_GROUPS_QUERY,
                         variables: { userId: user.id },
                     });
-                    // 3. Merge fetched groups with cached ones to preserve object references where possible.
-                    setLocalGroups((prevGroups) =>
-                        mergeGroups(prevGroups, result.data.fetchUserGroups)
-                    );
-                    dispatch(retrieveUserGroups(result.data.fetchUserGroups));
+                    const freshGroups = result.data.fetchUserGroups;
+                    // 3. Merge fetched groups with cached ones to preserve object references.
+                    setLocalGroups((prevGroups) => {
+                        const mergedGroups = mergeGroups(
+                            prevGroups,
+                            freshGroups
+                        );
+                        // Consolidate updating both Redux state and local storage.
+                        dispatch(setUserGroups(mergedGroups));
+                        setItem('userGroups', JSON.stringify(mergedGroups));
+                        return mergedGroups;
+                    });
                     setLoadingGroups(false);
-                    // 4. Update the cache with the new data.
-                    await setItem(
-                        'userGroups',
-                        JSON.stringify(result.data.fetchUserGroups)
-                    );
                 } catch (error) {
                     console.error('Error fetching groups from API', error);
                 }
@@ -352,7 +364,9 @@ export const SidebarScreen = ({
                                   }}
                               >
                                   <GroupButton
-                                      imageSource={group.avatarUrl ?? ''}
+                                      imageSource={forceRefreshUrl(
+                                          group.avatarUrl ?? ''
+                                      )}
                                       onPress={() => handlePress(group.name)}
                                       groupName={group.name}
                                   />

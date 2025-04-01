@@ -1,7 +1,7 @@
 // NexusImage.tsx
 import React, { useLayoutEffect, useRef, useState } from 'react';
-// Next.js Image import – only used in Next environments.
-import NextImage from 'next/image';
+// Next.js Image import – no longer used in Next environments.
+// import NextImage from 'next/image';
 // Expo Image import – used for React Native.
 import { Image as ExpoImage, ImageContentFit } from 'expo-image';
 
@@ -46,9 +46,9 @@ const useContainerDimensions = (ref: React.RefObject<HTMLDivElement>) => {
  * - In React Native (mobile or web via Expo), it renders ExpoImage with the same API as Expo.
  *   It now explicitly applies the width and height props to the style and passes the `contentFit` prop.
  * - In Next.js, if the width or height props (or corresponding style values) are given as percentages,
- *   it wraps NextImage in a container, measures its dimensions, and passes the computed numeric width/height.
+ *   it wraps a standard img tag in a container, measures its dimensions, and passes the computed numeric width/height.
  * - Otherwise, if the dimensions are static (numeric or pixel strings), it extracts the numeric values
- *   and passes them directly to NextImage.
+ *   and passes them directly to the standard img tag.
  * - It now supports a `contentFit` prop to control the image's object-fit style.
  */
 export const NexusImage = (props: NexusImageProps) => {
@@ -84,7 +84,7 @@ export const NexusImage = (props: NexusImageProps) => {
         );
     }
 
-    // --- Next.js: use Next Image ---
+    // --- Next.js: use standard img tag instead of Next Image ---
     // Determine if width or height is dynamic (i.e. percentage-based)
     const isDynamicWidth = typeof width === 'string' && width.endsWith('%');
     const isDynamicHeight = typeof height === 'string' && height.endsWith('%');
@@ -125,24 +125,28 @@ export const NexusImage = (props: NexusImageProps) => {
         const src = typeof source === 'string' ? source : source.uri;
         return (
             <div ref={containerRef} style={containerStyle}>
-                <NextImage
+                <img
                     src={src}
                     alt={alt}
                     width={containerWidth}
                     height={containerHeight}
-                    style={{ objectFit: contentFit ?? 'contain' }} // Apply contentFit as objectFit
-                    unoptimized
+                    style={{
+                        objectFit: contentFit ?? 'contain',
+                        width: '100%',
+                        height: '100%',
+                    }}
                     {...rest}
                 />
             </div>
         );
     }
+
     // For static dimensions, extract numeric width/height.
     const numericWidth = getNumericSize(width, style.width) || 300; // Fallback width.
     const numericHeight = getNumericSize(height, style.height) || 200; // Fallback height.
     const src = typeof source === 'string' ? source : source.uri;
     return (
-        <NextImage
+        <img
             src={src}
             alt={alt}
             width={numericWidth}

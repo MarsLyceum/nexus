@@ -8,8 +8,6 @@ import {
 } from '../utils/linkPreviewUtils';
 import { PreviewData } from '../types';
 
-import { useDerivedValue } from 'react-native-reanimated';
-
 type UseLinkPreviewParams = {
     url?: string;
     previewData?: PreviewData;

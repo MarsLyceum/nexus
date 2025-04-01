@@ -49,8 +49,6 @@ export function DashboardLayoutClient({
         removeListener: () => {},
     };
 
-    console.log('remounting dashboard layout');
-
     return (
         <View style={styles.container}>
             {/* Sidebar area stays persistent */}

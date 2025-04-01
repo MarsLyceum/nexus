@@ -59,8 +59,16 @@ export const RegularWebsitePreview: React.FC<RegularWebsitePreviewProps> = ({
     }, [previewImage]);
 
     // Calculate dynamic dimensions (50% of native size), with fallbacks.
-    const computedWidth = imageDimensions ? imageDimensions.width * 0.5 : 200;
-    const computedHeight = imageDimensions ? imageDimensions.height * 0.5 : 150;
+    const computedWidth = imageDimensions
+        ? imageDimensions.width > 450
+            ? imageDimensions.width * 0.35
+            : imageDimensions.width * 0.5
+        : 200;
+    const computedHeight = imageDimensions
+        ? imageDimensions.height > 450
+            ? imageDimensions.height * 0.35
+            : imageDimensions.height * 0.5
+        : 150;
 
     return (
         <View style={styles.linkPreviewContainer}>

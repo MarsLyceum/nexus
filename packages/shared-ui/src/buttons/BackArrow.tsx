@@ -1,7 +1,7 @@
 // BackArrow.tsx
 import React from 'react';
 import { TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome5';
+import { BackArrowIcon } from '../icons';
 
 type BackArrowProps = {
     onPress: () => void;
@@ -16,6 +16,6 @@ const styles = StyleSheet.create({
 
 export const BackArrow: React.FC<BackArrowProps> = ({ onPress, style }) => (
     <TouchableOpacity onPress={onPress} style={[styles.backButton, style]}>
-        <Icon name="arrow-left" size={24} color="white" />
+        <BackArrowIcon />
     </TouchableOpacity>
 );

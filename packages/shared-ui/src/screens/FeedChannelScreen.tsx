@@ -21,6 +21,7 @@ import {
     createNexusParam,
 } from '../hooks';
 import { CreatePostModal } from '../small-components';
+import { detectEnvironment } from '../utils';
 
 // Create a hook to read our screen parameters.
 const { useParam } = createNexusParam<{ channelId: string }>();
@@ -181,7 +182,16 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
                             preview
                             variant="feed"
                             // Navigate using the push function from useRouter
-                            onPress={() => push(`/post/${item.id}`)}
+                            onPress={() => {
+                                if (
+                                    detectEnvironment() === 'nextjs-client' ||
+                                    detectEnvironment() === 'nextjs-server'
+                                ) {
+                                    push(`/post/${item.id}`);
+                                } else {
+                                    push('post', { id: item.id });
+                                }
+                            }}
                             attachmentUrls={item.attachmentUrls}
                         />
                     )}

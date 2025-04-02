@@ -1,5 +1,6 @@
 export * from './Add';
 export * from './ArrowLeft';
+export * from './BackArrowIcon';
 export * from './Cancel';
 export * from './Chat';
 export * from './CheckMark';

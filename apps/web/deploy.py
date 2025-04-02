@@ -16,6 +16,10 @@ def main():
     region = "us-west1"
     service_name = "next-server"
 
+    env_file = find_env_file()
+    print(color_text(f"Using .env file: {env_file}", OKGREEN))
+    env_vars = load_env_variables(env_file)
+
     # Locate the GCP service account key
     key_file = find_key_file(
         "../../service-account-keys", "hephaestus-418809-*.json"
@@ -46,7 +50,7 @@ def main():
         project_id=project_id,
         region=region,
         service_name=service_name,
-        env_vars={},
+        env_vars=env_vars,
         force_recreate=True,
     )
 

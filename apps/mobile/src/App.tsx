@@ -61,6 +61,7 @@ import {
     CreateCommentScreen,
     AddFriendsScreen,
 } from '@shared-ui/screens';
+import { createApolloClient } from '@shared-ui/utils';
 import { AppDrawerScreen } from './AppDrawerScreen';
 import { linking } from './linking';
 
@@ -103,92 +104,7 @@ const CustomScrollbar = () => {
 const MainStack = createStackNavigator();
 const RootStack = createStackNavigator();
 
-const errorLink = onError((error: ErrorResponse) => {
-    if (error) {
-        console.log('Apollo Error:', error);
-    }
-});
-
-const useLocalServer = true;
-
-const graphqlApiGatewayEndpointHttp = useLocalServer
-    ? 'http://192.168.1.48:4000/graphql'
-    : 'https://nexus-web-service-197277044151.us-west1.run.app/graphql';
-const graphqlApiGatewayEndpointWs = useLocalServer
-    ? 'ws://192.168.1.48:4000/graphql'
-    : 'wss://nexus-web-service-197277044151.us-west1.run.app/graphql';
-
-const httpLink = from([
-    errorLink,
-    createUploadLink({
-        uri: graphqlApiGatewayEndpointHttp,
-        // uri: 'http://192.168.1.48:4000/graphql',
-        // @ts-expect-error boolean
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        isExtractableFile: (value: any) => {
-            if (value === undefined || value === null) return false;
-            // On web: if value is a native File or Blob, it’s fine.
-            if (typeof File !== 'undefined' && value instanceof File)
-                return true;
-            if (typeof Blob !== 'undefined' && value instanceof Blob)
-                return true;
-            // For our custom file object, check that it has uri, name, and type.
-            if (
-                typeof value === 'object' &&
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                typeof value.uri === 'string' &&
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                typeof value.name === 'string' &&
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                typeof value.type === 'string'
-            ) {
-                // On web, if the file object doesn’t have a createReadStream, add a dummy.
-                if (
-                    Platform.OS === 'web' &&
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                    typeof value.createReadStream !== 'function'
-                ) {
-                    Object.defineProperty(value, 'createReadStream', {
-                        value: () => {
-                            throw new Error(
-                                'createReadStream is not supported on web'
-                            );
-                        },
-                        writable: false,
-                        enumerable: false,
-                    });
-                }
-                return true;
-            }
-            return false;
-        },
-    }),
-]);
-
-const wsLink = new GraphQLWsLink(
-    createClient({
-        url: graphqlApiGatewayEndpointWs,
-        // url: 'ws://192.168.1.48:4000/graphql', // Ensure this URL matches your WS server endpoint
-        webSocketImpl: ReconnectingWebSocket,
-    })
-);
-
-const splitLink = split(
-    ({ query }) => {
-        const definition = getMainDefinition(query);
-        return (
-            definition.kind === 'OperationDefinition' &&
-            definition.operation === 'subscription'
-        );
-    },
-    wsLink,
-    httpLink
-);
-
-const client = new ApolloClient({
-    link: splitLink,
-    cache: new InMemoryCache(),
-});
+const client = createApolloClient();
 
 function MainStackScreen() {
     return (

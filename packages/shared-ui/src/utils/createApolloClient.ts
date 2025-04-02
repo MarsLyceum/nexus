@@ -1,4 +1,4 @@
-// lib/apolloClient.ts
+// utils/apolloClient.ts
 
 import { ApolloClient, InMemoryCache, from, split } from '@apollo/client';
 import { onError } from '@apollo/client/link/error';
@@ -46,6 +46,7 @@ const httpLink = from([
     errorLink,
     createUploadLink({
         uri: graphqlApiGatewayEndpointHttp,
+        credentials: 'include', // Ensures cookies are sent with requests
         // This function tells apollo-upload-client which values represent files.
         // @ts-expect-error file
         isExtractableFile: (value: any) => {

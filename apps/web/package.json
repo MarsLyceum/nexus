@@ -12,6 +12,8 @@
     "run-docker-container": "docker run -it --rm -p 8080:8080 gcr.io/hephaestus-418809/next-server:latest"
   },
   "dependencies": {
+    "@types/jsonwebtoken": "^9.0.9",
+    "jsonwebtoken": "^9.0.2",
     "cross-env": "^7.0.3",
     "react-native": "0.76.6",
     "react": "18.3.1",

@@ -7,6 +7,9 @@ import { ClientProviders } from '../route-components/ClientProviders';
 export const metadata = {
     title: 'Nexus',
     description: '',
+    icons: {
+        icon: '/favicon.png',
+    },
 };
 
 export default function RootLayout({

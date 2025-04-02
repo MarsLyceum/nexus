@@ -8,6 +8,8 @@ import type { UserGroupsType } from '@shared-ui/redux';
 
 import { DashboardLayoutClient } from './DashboardLayoutClient';
 
+export const revalidate = 0;
+
 export default async function DashboardLayout({
     children,
 }: {

@@ -156,7 +156,7 @@ export const SidebarScreen = ({
 
     // Load from cache first and then fetch new groups.
     useEffect(() => {
-        if (user?.id) {
+        if (!groups && user?.id) {
             void (async () => {
                 // 1. Load cached groups so UI can render instantly.
                 try {

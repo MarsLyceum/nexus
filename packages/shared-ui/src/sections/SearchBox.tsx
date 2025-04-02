@@ -1,8 +1,8 @@
 // SearchBox.tsx
 import React from 'react';
 import { View, TextInput, StyleSheet } from 'react-native';
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { COLORS } from '../constants';
+import { Search } from '../icons';
 
 interface SearchBoxProps {
     value: string;
@@ -20,7 +20,7 @@ export const SearchBox: React.FC<SearchBoxProps> = ({
     onSubmitEditing,
 }) => (
     <View style={[styles.container, desktop && styles.desktopContainer]}>
-        <FontAwesome name="search" size={18} color="#999" style={styles.icon} />
+        <Search style={styles.icon} />
         <TextInput
             style={styles.input}
             placeholder={placeholder}

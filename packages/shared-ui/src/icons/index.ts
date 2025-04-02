@@ -4,6 +4,7 @@ export * from './BackArrowIcon';
 export * from './Cancel';
 export * from './Chat';
 export * from './CheckMark';
+export * from './ChevronDown';
 export * from './Circle';
 export * from './Comment';
 export * from './CreateGroup';

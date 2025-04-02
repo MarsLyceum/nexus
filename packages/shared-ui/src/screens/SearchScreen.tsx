@@ -13,6 +13,7 @@ import { COLORS } from '../constants';
 import { SearchBox, PostItem } from '../sections';
 import { useSearchFilter, useNexusRouter } from '../hooks';
 import { SearchContext } from '../providers';
+import { ChevronDown } from '../icons';
 
 type SearchResult = {
     id: string;
@@ -98,38 +99,23 @@ export const SearchScreen = () => {
                 <BackArrow
                     onPress={() => {
                         // In production, consider wrapping router.back() with error handling/logging
-                        router.back();
+                        router.goBack();
                     }}
                 />
                 <View style={styles.filterRow}>
                     <TouchableOpacity style={styles.filterButton}>
                         <Text style={styles.filterButtonText}>Relevance</Text>
-                        <FontAwesome
-                            name="caret-down"
-                            size={14}
-                            color={COLORS.InactiveText}
-                            style={styles.filterIcon}
-                        />
+                        <ChevronDown style={styles.filterIcon} />
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.filterButton}>
                         <Text style={styles.filterButtonText}>All time</Text>
-                        <FontAwesome
-                            name="caret-down"
-                            size={14}
-                            color={COLORS.InactiveText}
-                            style={styles.filterIcon}
-                        />
+                        <ChevronDown style={styles.filterIcon} />
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.filterButton}>
                         <Text style={styles.filterButtonText}>
                             Safe Search Off
                         </Text>
-                        <FontAwesome
-                            name="caret-down"
-                            size={14}
-                            color={COLORS.InactiveText}
-                            style={styles.filterIcon}
-                        />
+                        <ChevronDown style={styles.filterIcon} />
                     </TouchableOpacity>
                 </View>
             </View>

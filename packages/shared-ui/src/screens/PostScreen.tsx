@@ -1,10 +1,4 @@
-import React, {
-    useEffect,
-    useContext,
-    useRef,
-    useState,
-    useCallback,
-} from 'react';
+import React, { useEffect, useContext, useCallback } from 'react';
 import {
     View,
     ScrollView,
@@ -14,12 +8,8 @@ import {
     Platform,
     Text,
 } from 'react-native';
-// Import useRoute from React Navigation to get route params
-import { useRoute } from '@react-navigation/native';
-// Import our custom navigation hook for consistent navigation across environments
-import { useQuery, useApolloClient } from '@apollo/client';
-
-import { useNexusRouter } from '../hooks';
+import { useApolloClient, useQuery } from '@apollo/client';
+import { useNexusRouter, createNexusParam } from '../hooks';
 import { useAppDispatch, loadUser } from '../redux';
 import {
     FETCH_POST_QUERY,
@@ -30,7 +20,7 @@ import { PostItem, CommentsManager } from '../sections';
 import { COLORS } from '../constants';
 import { CreateContentButton } from '../buttons';
 import { getRelativeTime, isComputer } from '../utils';
-import { Post, PostData } from '../types';
+import type { Post, PostData, User } from '../types';
 import { CurrentCommentContext } from '../providers';
 import {
     SkeletonPostItem,
@@ -38,36 +28,48 @@ import {
     CommentEditor,
 } from '../small-components';
 
-export const PostScreen: React.FC = () => {
-    // Use our custom NexusRouter hook for navigation
+type PostScreenProps = {
+    id?: string;
+    post?: Post;
+    user?: User;
+    parentCommentId?: string;
+};
+
+// Replace react navigation params with createNexusParam hook
+const { useParams } = createNexusParam<{
+    id?: string;
+    post?: Post;
+    user?: User;
+    parentCommentId?: string;
+}>();
+
+export const PostScreen: React.FC<PostScreenProps> = (props) => {
+    // Use our custom router
     const { push, goBack } = useNexusRouter();
 
-    // Get route params via React Navigation's route.params.
-    // Note: If "post" is provided, it might be a JSON string—so we parse it.
-    const route = useRoute();
-    const { id, post, parentCommentId } = route.params as {
-        id?: string;
-        post?: string;
-        parentCommentId?: string;
-    };
-    const parsedPost: Post | undefined = post ? JSON.parse(post) : undefined;
+    const { params } = useParams();
+
+    // Use props if provided, else fallback to nexus params
+    const id = props.id || params.id;
+    const postObj: Post | undefined = props.post || params.post;
+    const userProp = props.user || params.user;
+    const parentCommentId = props.parentCommentId || params.parentCommentId;
 
     const dispatch = useAppDispatch();
-
-    // Get the Apollo client instance for refetching queries.
     const client = useApolloClient();
 
+    // Dispatch action to load the user into Redux
     useEffect(() => {
         dispatch(loadUser());
     }, [dispatch]);
 
-    // Fetch post if not passed via route params.
+    // Fetch the post if it was not passed in via props.
     const { data, loading, error } = useQuery(FETCH_POST_QUERY, {
-        variables: { postId: parsedPost ? parsedPost.id : id },
-        skip: !!parsedPost,
+        variables: { postId: postObj ? postObj.id : id },
+        skip: !!postObj,
     });
 
-    const feedPost: Post | undefined = parsedPost || data?.fetchPost;
+    const feedPost: Post | undefined = postObj || data?.fetchPost;
     const computedUserId =
         feedPost?.postedByUserId ||
         feedPost?.user ||
@@ -75,6 +77,7 @@ export const PostScreen: React.FC = () => {
         data?.fetchPost?.user ||
         '';
 
+    // Fetch the user details if needed.
     const { data: userData } = useQuery(FETCH_USER_QUERY, {
         variables: { userId: computedUserId },
         skip: computedUserId === '',
@@ -82,7 +85,8 @@ export const PostScreen: React.FC = () => {
 
     const rawTime = feedPost?.postedAt || feedPost?.time || '';
     const formattedTime = rawTime ? getRelativeTime(rawTime) : 'Unknown time';
-    const resolvedUsername = userData?.fetchUser?.username || 'Username';
+    const resolvedUsername =
+        userProp?.username || userData?.fetchUser?.username || 'Username';
 
     const postData: PostData = {
         id: feedPost?.id ?? '',
@@ -140,7 +144,7 @@ export const PostScreen: React.FC = () => {
             flex: 1,
             backgroundColor: COLORS.SecondaryBackground,
             paddingTop: 15,
-            ...(isWeb && { height: '100vh', display: 'flex' }),
+            ...(isWeb && { minHeight: '100vh', display: 'flex' }),
         },
         container: { flex: 1 },
         mainContainer: {
@@ -246,7 +250,6 @@ export const PostScreen: React.FC = () => {
                             flair={postData.flair}
                             attachmentUrls={postData.attachmentUrls}
                             onBackPress={() => {
-                                // Use our custom goBack() method for navigation
                                 goBack();
                             }}
                             variant="details"
@@ -256,17 +259,15 @@ export const PostScreen: React.FC = () => {
                             // Show inline CommentEditor on computer
                             <CommentEditor
                                 postId={postData.id}
-                                // eslint-disable-next-line unicorn/no-null
                                 parentCommentId={parentCommentId ?? null}
                                 onCommentCreated={() => {
-                                    // When a top-level comment is created,
-                                    // refetch the comments so the new comment is shown.
+                                    // When a top-level comment is created, refetch comments.
                                     void client.refetchQueries({
                                         include: [FETCH_POST_COMMENTS_QUERY],
                                     });
                                 }}
                                 onCancel={() => {
-                                    // Optional cancel handler
+                                    // Optional cancel handler.
                                 }}
                             />
                         )}
@@ -276,7 +277,7 @@ export const PostScreen: React.FC = () => {
                         />
                     </ScrollView>
                     {!isDesktop && (
-                        // Show CreateContentButton on mobile; reset the comment context to top-level before navigating
+                        // Show CreateContentButton on mobile; reset comment context before navigating.
                         <View
                             style={computedStyles.createContentButtonContainer}
                         >

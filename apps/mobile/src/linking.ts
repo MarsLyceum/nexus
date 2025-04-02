@@ -82,7 +82,7 @@ export const linking = {
         const activeRoute = getActiveRoute(state);
 
         // Only override for PostScreen
-        if (activeRoute?.name === 'PostScreen' && activeRoute.params?.id) {
+        if (activeRoute?.name === 'post' && activeRoute.params?.id) {
             const { id, parentCommentId } = activeRoute.params;
             // Note: Since your linking config already supplies "post/",
             // we only append the extra segments.
@@ -113,7 +113,7 @@ export const linking = {
                         state: {
                             routes: [
                                 {
-                                    name: 'PostScreen',
+                                    name: 'post',
                                     params: { id, parentCommentId },
                                 },
                             ],
@@ -134,7 +134,7 @@ export const linking = {
                         state: {
                             routes: [
                                 {
-                                    name: 'PostScreen',
+                                    name: 'post',
                                     params: { id },
                                 },
                             ],

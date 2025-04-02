@@ -1,4 +1,4 @@
-import React, { useEffect, useContext, useCallback } from 'react';
+import React, { useEffect, useContext, useCallback, useMemo } from 'react';
 import {
     View,
     ScrollView,
@@ -88,17 +88,21 @@ export const PostScreen: React.FC<PostScreenProps> = (props) => {
     const resolvedUsername =
         userProp?.username || userData?.fetchUser?.username || 'Username';
 
-    const postData: PostData = {
-        id: feedPost?.id ?? '',
-        user: resolvedUsername,
-        time: formattedTime,
-        title: feedPost?.title ?? '',
-        flair: feedPost?.flair || '',
-        upvotes: feedPost?.upvotes ?? 0,
-        commentsCount: feedPost?.commentsCount ?? 0,
-        content: feedPost?.content ?? '',
-        attachmentUrls: feedPost?.attachmentUrls || [],
-    };
+    // Memoize postData to prevent unnecessary re-creations that could trigger an update loop.
+    const postData: PostData = useMemo(
+        () => ({
+            id: feedPost?.id ?? '',
+            user: resolvedUsername,
+            time: formattedTime,
+            title: feedPost?.title ?? '',
+            flair: feedPost?.flair || '',
+            upvotes: feedPost?.upvotes ?? 0,
+            commentsCount: feedPost?.commentsCount ?? 0,
+            content: feedPost?.content ?? '',
+            attachmentUrls: feedPost?.attachmentUrls || [],
+        }),
+        [feedPost, resolvedUsername, formattedTime]
+    );
 
     const {
         setParentUser,
@@ -108,6 +112,7 @@ export const PostScreen: React.FC<PostScreenProps> = (props) => {
         setParentAttachmentUrls,
     } = useContext(CurrentCommentContext);
 
+    // Wrap the update logic in a useCallback so that it only runs when dependencies change.
     const setPostContent = useCallback(() => {
         if (postData?.id) setPostId(postData.id);
         if (postData?.user) setParentUser(postData.user);

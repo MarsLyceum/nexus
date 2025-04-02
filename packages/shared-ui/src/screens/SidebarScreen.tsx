@@ -189,7 +189,9 @@ export const SidebarScreen = ({
                             freshGroups
                         );
                         // Consolidate updating both Redux state and local storage.
-                        dispatch(setUserGroups(mergedGroups));
+                        setTimeout(() => {
+                            dispatch(setUserGroups(mergedGroups));
+                        }, 0);
                         void setItem(
                             'userGroups',
                             JSON.stringify(mergedGroups)

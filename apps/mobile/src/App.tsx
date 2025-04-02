@@ -274,7 +274,7 @@ export default function App() {
                                     <ReduxProvider store={store}>
                                         <PortalProvider>
                                             <NavigationContainer
-                                                linking={linking}
+                                            // linking={linking}
                                             >
                                                 <StatusManager>
                                                     <Login>

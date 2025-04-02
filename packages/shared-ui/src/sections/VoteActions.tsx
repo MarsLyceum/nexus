@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
+import { UpArrow, DownArrow, Comment, Share } from '../icons';
 import { ActionButton } from '../small-components/ActionButton';
 import { COLORS } from '../constants';
 
@@ -32,7 +33,7 @@ export const VoteActions: React.FC<VoteActionsProps> = ({
                 transparent
                 style={styles.voteButton}
             >
-                <Icon name="arrow-up" size={18} color={COLORS.MainText} />
+                <UpArrow />
             </ActionButton>
             <Text style={styles.countText}>{voteCount}</Text>
         </View>
@@ -45,7 +46,7 @@ export const VoteActions: React.FC<VoteActionsProps> = ({
             // @ts-expect-error web only types
             style={[styles.voteButton, styles.singleButton]}
         >
-            <Icon name="arrow-down" size={18} color={COLORS.MainText} />
+            <DownArrow />
         </ActionButton>
 
         {/* Comment button */}
@@ -57,11 +58,7 @@ export const VoteActions: React.FC<VoteActionsProps> = ({
                     transparent
                     style={styles.voteButton}
                 >
-                    <Icon
-                        name="comment-alt"
-                        size={18}
-                        color={COLORS.MainText}
-                    />
+                    <Comment />
                 </ActionButton>
                 <Text style={styles.countText}>{commentCount}</Text>
             </View>
@@ -76,7 +73,7 @@ export const VoteActions: React.FC<VoteActionsProps> = ({
                     transparent
                     style={styles.voteButton}
                 >
-                    <Icon name="share" size={18} color={COLORS.MainText} />
+                    <Share />
                 </ActionButton>
                 <Text style={styles.countText}>{shareCount}</Text>
             </View>

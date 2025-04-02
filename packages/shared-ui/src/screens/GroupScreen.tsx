@@ -1,5 +1,4 @@
 import React, { useState, useContext, useEffect } from 'react';
-import { NavigationProp } from '@react-navigation/native';
 import {
     View,
     Text,
@@ -29,8 +28,9 @@ import { COLORS } from '../constants';
 import { Group, GroupChannel } from '../types';
 import { Feed, Chat, Events } from '../icons';
 import { ActiveGroupContext } from '../providers';
+import { useNexusRouter } from '../hooks';
 
-import { ServerMessagesScreen } from './ServerMessagesScreen';
+import { GroupChannelScreen } from './GroupChannelScreen';
 import { GroupEventsScreen } from './GroupEventsScreen';
 
 const styles = StyleSheet.create({
@@ -97,17 +97,10 @@ const styles = StyleSheet.create({
     },
 });
 
-type RootStackParamList = {
-    ServerMessages: undefined;
-    GroupEvents: { group: Group };
-};
-
-type NavProp = NavigationProp<RootStackParamList>;
 type ActiveView = 'messages' | 'events';
 
 type ChannelListProps = {
     group: Group;
-    navigation: NavProp;
     activeChannel: GroupChannel | undefined;
     setActiveChannel: (channel: GroupChannel | undefined) => void;
     isLargeScreen: boolean;
@@ -115,12 +108,13 @@ type ChannelListProps = {
     setActiveView: (view: ActiveView) => void;
 };
 
-export function GroupScreen({ navigation }: { navigation: NavProp }) {
+export function GroupScreen() {
     const { activeGroup, activeChannel, setActiveChannel } =
         useContext(ActiveGroupContext);
     const { width } = useWindowDimensions();
     const isLargeScreen = width > 768;
     const [activeView, setActiveView] = useState<ActiveView>('messages');
+    const router = useNexusRouter();
 
     // When an active group becomes available and no active channel is set, use the first channel.
     useEffect(() => {
@@ -161,7 +155,6 @@ export function GroupScreen({ navigation }: { navigation: NavProp }) {
                 <View style={[styles.sidebarContainer, { width: 250 }]}>
                     <ChannelList
                         group={activeGroup}
-                        navigation={navigation}
                         isLargeScreen={isLargeScreen}
                         activeChannel={activeChannel}
                         setActiveChannel={setActiveChannel}
@@ -171,10 +164,9 @@ export function GroupScreen({ navigation }: { navigation: NavProp }) {
                 </View>
                 <View style={styles.chatWrapper}>
                     {activeView === 'messages' ? (
-                        // @ts-expect-error navigation
-                        <ServerMessagesScreen navigation={navigation} />
+                        <GroupChannelScreen />
                     ) : (
-                        <GroupEventsScreen navigation={navigation} />
+                        <GroupEventsScreen />
                     )}
                 </View>
             </View>
@@ -184,7 +176,6 @@ export function GroupScreen({ navigation }: { navigation: NavProp }) {
     return (
         <ChannelList
             group={activeGroup}
-            navigation={navigation}
             activeChannel={activeChannel}
             setActiveChannel={setActiveChannel}
             isLargeScreen={isLargeScreen}
@@ -196,13 +187,15 @@ export function GroupScreen({ navigation }: { navigation: NavProp }) {
 
 const ChannelList: React.FC<ChannelListProps> = ({
     group,
-    navigation,
     activeChannel,
     setActiveChannel,
     isLargeScreen,
     activeView,
     setActiveView,
 }) => {
+    // Get the router for navigation
+    const router = useNexusRouter();
+
     // Mock data for member and online counts.
     const mockMemberCount = 123;
     const mockOnlineCount = 45;
@@ -250,7 +243,7 @@ const ChannelList: React.FC<ChannelListProps> = ({
                     if (isLargeScreen) {
                         setActiveView('messages');
                     } else {
-                        navigation.navigate('ServerMessages');
+                        router.push('/group-channel');
                     }
                 }}
                 style={isActive ? styles.activeChannelItemWrapper : undefined}
@@ -306,7 +299,6 @@ const ChannelList: React.FC<ChannelListProps> = ({
             cursor: 'grab',
         };
         return (
-            // @ts-expect-error view
             <View
                 ref={setNodeRef}
                 style={[
@@ -383,9 +375,7 @@ const ChannelList: React.FC<ChannelListProps> = ({
                                             if (isLargeScreen) {
                                                 setActiveView('messages');
                                             } else {
-                                                navigation.navigate(
-                                                    'ServerMessages'
-                                                );
+                                                router.push('/group-channel');
                                             }
                                         }}
                                     />
@@ -420,7 +410,7 @@ const ChannelList: React.FC<ChannelListProps> = ({
                                 setActiveChannel(undefined);
                                 setActiveView('events');
                             } else {
-                                navigation.navigate('GroupEvents', { group });
+                                router.push('/GroupEvents', { group });
                             }
                         }}
                     >

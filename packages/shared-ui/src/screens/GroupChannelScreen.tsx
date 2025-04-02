@@ -13,7 +13,7 @@ const styles = StyleSheet.create({
     },
 });
 
-export const ServerMessagesScreen: React.FC = () => {
+export const GroupChannelScreen: React.FC = () => {
     // Retrieve the activeChannel from context
     const { activeChannel } = useContext(ActiveGroupContext);
 

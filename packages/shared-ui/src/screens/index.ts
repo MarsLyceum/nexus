@@ -12,7 +12,7 @@ export * from './GroupScreen';
 export * from './LoginScreen';
 export * from './PostScreen';
 export * from './SearchScreen';
-export * from './ServerMessagesScreen';
+export * from './GroupChannelScreen';
 export * from './SidebarScreen';
 export * from './SignUpScreen';
 export * from './TextChannelScreen';

@@ -52,7 +52,7 @@ import {
     SignUpScreen,
     WelcomeScreen,
     ChatScreen,
-    ServerMessagesScreen,
+    GroupChannelScreen,
     CreateGroupModalScreen,
     FeedChannelScreen,
     PostScreen,
@@ -203,8 +203,8 @@ function MainStackScreen() {
             <MainStack.Screen name="chat" component={ChatScreen} />
             <MainStack.Screen name="add-friends" component={AddFriendsScreen} />
             <MainStack.Screen
-                name="servermessages"
-                component={ServerMessagesScreen}
+                name="group-channel"
+                component={GroupChannelScreen}
             />
             <MainStack.Screen
                 name="feedchannel"

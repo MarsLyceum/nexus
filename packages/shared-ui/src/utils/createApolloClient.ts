@@ -18,6 +18,7 @@ const isCloudRun =
 // Detect if running on the frontend domain dev.my-nexus.net.
 const isDevDomain =
     getSafeWindow() &&
+    getSafeWindow()?.location &&
     getSafeWindow()?.location.hostname === 'dev.my-nexus.net';
 
 // Use local server only if NOT running in Cloud Run or on the dev.my-nexus.net domain.

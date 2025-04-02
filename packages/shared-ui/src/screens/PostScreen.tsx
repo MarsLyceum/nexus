@@ -10,7 +10,13 @@ import {
 } from 'react-native';
 import { useApolloClient, useQuery } from '@apollo/client';
 import { useNexusRouter, createNexusParam } from '../hooks';
-import { useAppDispatch, loadUser } from '../redux';
+import {
+    useAppDispatch,
+    loadUser,
+    useAppSelector,
+    RootState,
+    UserType,
+} from '../redux';
 import {
     FETCH_POST_QUERY,
     FETCH_USER_QUERY,
@@ -57,11 +63,16 @@ export const PostScreen: React.FC<PostScreenProps> = (props) => {
 
     const dispatch = useAppDispatch();
     const client = useApolloClient();
+    const user: UserType = useAppSelector(
+        (state: RootState) => state.user.user
+    );
 
     // Dispatch action to load the user into Redux
     useEffect(() => {
-        dispatch(loadUser());
-    }, [dispatch]);
+        if (!user) {
+            dispatch(loadUser());
+        }
+    }, [dispatch, user]);
 
     // Fetch the post if it was not passed in via props.
     const { data, loading, error } = useQuery(FETCH_POST_QUERY, {
@@ -123,7 +134,7 @@ export const PostScreen: React.FC<PostScreenProps> = (props) => {
         }
     }, [
         postData?.id,
-        postData?.user,
+        JSON.stringify(postData?.user),
         postData?.content,
         feedPost?.postedAt,
         postData?.attachmentUrls,

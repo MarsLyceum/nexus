@@ -101,7 +101,7 @@ export const PostScreen: React.FC<PostScreenProps> = (props) => {
             content: feedPost?.content ?? '',
             attachmentUrls: feedPost?.attachmentUrls || [],
         }),
-        [feedPost, resolvedUsername, formattedTime]
+        [JSON.stringify(feedPost), resolvedUsername, formattedTime]
     );
 
     const {

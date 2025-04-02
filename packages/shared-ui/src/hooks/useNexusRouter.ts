@@ -58,7 +58,17 @@ export function useNexusRouter(): NexusRouter {
             replace: (path: string, params?: Record<string, any>) => {
                 router.replace(buildUrlWithParams(path, params));
             },
-            goBack: router.back,
+            goBack: () => {
+                // If browser history length is greater than one, go back; otherwise, go to home.
+                if (
+                    typeof window !== 'undefined' &&
+                    window.history.length > 1
+                ) {
+                    router.back();
+                } else {
+                    router.push('/');
+                }
+            },
         };
     }
 
@@ -77,6 +87,7 @@ export function useNexusRouter(): NexusRouter {
                 if (typeof (navigation as any).push === 'function') {
                     (navigation as any).push(normalizedPath, params);
                 } else {
+                    // @ts-expect-error navigation
                     navigation.navigate(normalizedPath, params);
                 }
             },
@@ -87,10 +98,19 @@ export function useNexusRouter(): NexusRouter {
                         StackActions.replace(normalizedPath, params)
                     );
                 } else {
+                    // @ts-expect-error navigation
                     navigation.navigate(normalizedPath, params);
                 }
             },
-            goBack: () => navigation.goBack(),
+            goBack: () => {
+                // If navigation can go back, do so; otherwise, navigate to home.
+                if (navigation.canGoBack && navigation.canGoBack()) {
+                    navigation.goBack();
+                } else {
+                    // @ts-expect-error navigation
+                    navigation.navigate('welcome');
+                }
+            },
         };
     }
 

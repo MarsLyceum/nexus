@@ -6,6 +6,7 @@ import {
     Linking,
     View,
     TouchableOpacity,
+    Platform, // <-- Import Platform
 } from 'react-native';
 import MarkdownIt from 'markdown-it';
 import RenderHTML, {
@@ -45,6 +46,7 @@ const styles = StyleSheet.create({
         color: COLORS.Link,
         textDecorationLine: 'underline',
         fontSize: 16,
+        fontFamily: 'Roboto_400Regular', // <-- Added fontFamily for both web and mobile
     },
     heading1: {
         fontSize: 32,
@@ -133,6 +135,27 @@ const InlineLink: React.FC<{ tnode: any }> = ({ tnode }) => {
     }
     const content =
         tnode.domNode?.textContent || extractTextFromTnode(tnode) || '';
+
+    // For web, render an anchor (<a>) with a web-specific style mapping.
+    if (Platform.OS === 'web') {
+        const webStyle = {
+            color: styles.linkText.color,
+            textDecoration: styles.linkText.textDecorationLine, // CSS property for text decoration
+            fontSize: styles.linkText.fontSize,
+            fontFamily: styles.linkText.fontFamily, // <-- Ensuring same font family
+        };
+        return (
+            <a
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={webStyle}
+            >
+                {content}
+            </a>
+        );
+    }
+    // For native environments, render as a Text element with onPress.
     return (
         <Text
             onPress={() => {

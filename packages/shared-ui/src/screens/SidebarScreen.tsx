@@ -272,7 +272,7 @@ export const SidebarScreen = ({
         }
         const env: Environment = detectEnvironment();
         if (env === 'nextjs-client' || env === 'nextjs-server') {
-            router.push(`/dashboard/${normalizedRoute}`);
+            router.push(`/${normalizedRoute}`);
         } else {
             // Use normalizedRoute so it matches the DrawerNavigator screen names.
             navigation.navigate(normalizedRoute);

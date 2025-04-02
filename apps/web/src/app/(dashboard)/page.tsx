@@ -17,10 +17,10 @@ export const DashboardIndexPage: React.FC = () => {
         // If an active group exists, navigate to that group's page.
         if (activeGroup) {
             // Assuming group names are URL-safe; otherwise, use a slug.
-            router.replace(`/dashboard/${activeGroup.name.toLowerCase()}`);
+            router.replace(`/${activeGroup.name.toLowerCase()}`);
         } else {
             // If no active group, navigate to a default screen (e.g., Friends)
-            router.replace('/dashboard/friends');
+            router.replace('/friends');
         }
     }, [activeGroup, router]);
 

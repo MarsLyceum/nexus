@@ -44,7 +44,7 @@ export const GroupPage: React.FC<GroupPageProps> = ({ params }) => {
     const dummyNavigation = {
         navigate: (route: string, params?: any) => {
             // For simplicity, use window.location.href. In production, you might use next/router.
-            router.push(`/dashboard/${route.toLowerCase()}`);
+            router.push(`/${route.toLowerCase()}`);
         },
         goBack: () => router.goBack(),
         dispatch: () => {},

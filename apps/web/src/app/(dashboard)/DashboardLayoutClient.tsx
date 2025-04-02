@@ -1,4 +1,4 @@
-// app/dashboard/DashboardLayoutClient.tsx
+// app/(dashboard)/DashboardLayoutClient.tsx
 
 'use client';
 
@@ -33,12 +33,12 @@ export function DashboardLayoutClient({
     useEffect(() => {
         dispatch(retrieveUserGroups(groups));
     }, [groups, dispatch]);
-    // Derive current route segment (for example, "friends" from "/dashboard/friends")
-    const currentRoute = pathname?.split('/')[2]?.toLowerCase() || 'friends';
+    // Derive current route segment (for example, "friends" from "/friends")
+    const currentRoute = pathname?.split('/')[1]?.toLowerCase() || 'friends';
 
     const dummyNavigation = {
         navigate: (routeName: string) => {
-            router.push(`/dashboard/${routeName.toLowerCase()}`);
+            router.push(`/${routeName.toLowerCase()}`);
         },
         toggleDrawer: () => {},
         dispatch: () => {},

@@ -14,7 +14,7 @@ export const linking = {
                 path: '', // omit Main from the URL as well
                 screens: {
                     dashboard: {
-                        path: 'dashboard', // omit AppDrawer from the URL
+                        path: '', // omit AppDrawer from the URL
                         screens: {
                             events: 'events',
                             friends: 'friends',

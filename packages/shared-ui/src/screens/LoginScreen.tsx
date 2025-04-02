@@ -231,7 +231,7 @@ export function LoginScreen(): JSX.Element {
                 const user = result.data.loginUser;
                 updateUserData(user);
                 // Navigate to AppDrawer screen
-                router.push('/dashboard');
+                router.push('/');
             } else {
                 console.error('Login failed: No user data returned.');
             }

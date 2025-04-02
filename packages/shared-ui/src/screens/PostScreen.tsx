@@ -53,8 +53,6 @@ export const PostScreen: React.FC = () => {
     const parsedPost: Post | undefined = post ? JSON.parse(post) : undefined;
 
     const dispatch = useAppDispatch();
-    const [scrollY, setScrollY] = useState(0);
-    const scrollViewRef = useRef<ScrollView>(null);
 
     // Get the Apollo client instance for refetching queries.
     const client = useApolloClient();
@@ -131,21 +129,6 @@ export const PostScreen: React.FC = () => {
         setPostContent();
     }, [setPostContent]);
 
-    // Create a ref for CommentsManager (if needed for additional control)
-    const commentsManagerRef = useRef<{ checkScrollPosition: () => void }>(
-        null
-    );
-
-    // onScroll handler: update scrollY state.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const handleScroll = (event: any) => {
-        const currentY = event.nativeEvent.contentOffset.y;
-        setScrollY(currentY);
-        if (commentsManagerRef.current) {
-            commentsManagerRef.current.checkScrollPosition();
-        }
-    };
-
     // Determine if device is computer (desktop) or mobile.
     const isDesktop = isComputer();
     const BOTTOM_INPUT_HEIGHT = 60;
@@ -204,7 +187,6 @@ export const PostScreen: React.FC = () => {
             <SafeAreaView style={computedStyles.safeContainer}>
                 <View style={computedStyles.mainContainer}>
                     <ScrollView
-                        ref={scrollViewRef}
                         style={computedStyles.scrollSection}
                         contentContainerStyle={computedStyles.scrollView}
                         keyboardShouldPersistTaps="handled"
@@ -248,11 +230,9 @@ export const PostScreen: React.FC = () => {
             <ContainerComponent {...containerProps}>
                 <View style={computedStyles.mainContainer}>
                     <ScrollView
-                        ref={scrollViewRef}
                         style={computedStyles.scrollSection}
                         contentContainerStyle={computedStyles.scrollView}
                         keyboardShouldPersistTaps="handled"
-                        onScroll={handleScroll}
                         scrollEventThrottle={16}
                     >
                         <PostItem
@@ -291,10 +271,8 @@ export const PostScreen: React.FC = () => {
                             />
                         )}
                         <CommentsManager
-                            ref={commentsManagerRef}
                             postId={postData.id}
                             parentCommentId={parentCommentId}
-                            scrollY={scrollY}
                         />
                     </ScrollView>
                     {!isDesktop && (

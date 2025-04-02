@@ -1,8 +1,64 @@
-import React from 'react';
-import { TouchableOpacity, StyleSheet, View, Text } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { TouchableOpacity, StyleSheet, View, Text, Image } from 'react-native';
 
 import { NexusImage } from '../small-components';
 import { COLORS } from '../constants';
+
+export const GroupButton = ({
+    onPress,
+    imageSource,
+    groupName,
+}: {
+    onPress: () => unknown;
+    imageSource: string;
+    groupName: string;
+}) => {
+    const [validAvatar, setValidAvatar] = useState<boolean>(false);
+
+    // Check if the avatar URL is valid before rendering.
+    useEffect(() => {
+        if (imageSource) {
+            Image.getSize(
+                imageSource,
+                () => {
+                    setValidAvatar(true);
+                },
+                (error) => {
+                    console.warn(
+                        'Avatar image failed to load, skipping expired image:',
+                        error
+                    );
+                    setValidAvatar(false);
+                }
+            );
+        } else {
+            setValidAvatar(false);
+        }
+    }, [imageSource]);
+
+    return (
+        <TouchableOpacity style={styles.container} onPress={onPress}>
+            <View style={styles.buttonContainer}>
+                <View style={styles.button}>
+                    {validAvatar && (
+                        <NexusImage
+                            source={imageSource}
+                            width={45}
+                            height={45}
+                            contentFit="cover" // Ensures the image fills the entire rectangle
+                            style={styles.image}
+                            alt="Group Image"
+                            onError={() => {
+                                setValidAvatar(false);
+                            }}
+                        />
+                    )}
+                </View>
+            </View>
+            <Text style={styles.text}>{groupName}</Text>
+        </TouchableOpacity>
+    );
+};
 
 const styles = StyleSheet.create({
     container: {
@@ -35,29 +91,3 @@ const styles = StyleSheet.create({
         fontWeight: 'semibold',
     },
 });
-
-export const GroupButton = ({
-    onPress,
-    imageSource,
-    groupName,
-}: {
-    onPress: () => unknown;
-    imageSource: string;
-    groupName: string;
-}) => (
-    <TouchableOpacity style={styles.container} onPress={onPress}>
-        <View style={styles.buttonContainer}>
-            <View style={styles.button}>
-                <NexusImage
-                    source={imageSource}
-                    width={45}
-                    height={45}
-                    contentFit="cover" // Ensures the image fills the entire rectangle
-                    style={styles.image}
-                    alt="Group Image"
-                />
-            </View>
-        </View>
-        <Text style={styles.text}>{groupName}</Text>
-    </TouchableOpacity>
-);

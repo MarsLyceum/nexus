@@ -52,15 +52,6 @@ const mergeGroups = (
     });
 };
 
-// Helper to force image refresh by appending a timestamp query parameter.
-// If the URL already has query parameters, we append with '&', otherwise with '?'.
-const forceRefreshUrl = (url: string): string => {
-    if (!url) return url;
-    return url.includes('?')
-        ? `${url}&t=${new Date().getTime()}`
-        : `${url}?t=${new Date().getTime()}`;
-};
-
 const BUTTON_MARGIN_TOP = 32;
 const CONTENT_PADDING_LEFT = 10;
 
@@ -166,7 +157,7 @@ export const SidebarScreen = ({
     // Load from cache first and then fetch new groups.
     useEffect(() => {
         if (user?.id) {
-            (async () => {
+            void (async () => {
                 // 1. Load cached groups so UI can render instantly.
                 try {
                     const cachedGroupsStr = await getItem('userGroups');
@@ -199,7 +190,10 @@ export const SidebarScreen = ({
                         );
                         // Consolidate updating both Redux state and local storage.
                         dispatch(setUserGroups(mergedGroups));
-                        setItem('userGroups', JSON.stringify(mergedGroups));
+                        void setItem(
+                            'userGroups',
+                            JSON.stringify(mergedGroups)
+                        );
                         return mergedGroups;
                     });
                     setLoadingGroups(false);
@@ -364,9 +358,7 @@ export const SidebarScreen = ({
                                   }}
                               >
                                   <GroupButton
-                                      imageSource={forceRefreshUrl(
-                                          group.avatarUrl ?? ''
-                                      )}
+                                      imageSource={group.avatarUrl ?? ''}
                                       onPress={() => handlePress(group.name)}
                                       groupName={group.name}
                                   />

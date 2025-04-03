@@ -2,7 +2,7 @@ import React, { useRef } from 'react';
 import { View, Text, StyleSheet, View as RNView } from 'react-native';
 
 import { NexusImage } from './NexusImage';
-import { More, CheckMark, Cancel } from '../icons';
+import { MoreVertical, CheckMark, Cancel } from '../icons';
 import { COLORS } from '../constants';
 import { ActionButton } from './ActionButton';
 import { getOnlineStatusDotColor } from '../utils';
@@ -172,7 +172,7 @@ export const FriendItem: React.FC<FriendItemProps> = ({
                             }}
                             tooltipText="More"
                         >
-                            <More />
+                            <MoreVertical />
                         </ActionButton>
                     </View>
                 </View>

@@ -1,9 +1,10 @@
 import React from 'react';
 import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 import { MiniModal } from './MiniModal';
 import { COLORS } from '../constants';
-import Svg, { Path } from 'react-native-svg';
 import { Tooltip } from './Tooltip';
+import { Edit, MoreHorizontal } from '../icons';
 
 export type MessageOptionsModalProps = {
     visible: boolean;
@@ -83,7 +84,7 @@ export const MessageOptionsModal: React.FC<MessageOptionsModalProps> = ({
                         pointerEvents="auto"
                         onPress={onEdit}
                     >
-                        <PencilIcon />
+                        <Edit />
                     </TouchableOpacity>
                 </Tooltip>
 
@@ -103,7 +104,7 @@ export const MessageOptionsModal: React.FC<MessageOptionsModalProps> = ({
                         pointerEvents="auto"
                         onPress={onMore}
                     >
-                        <EllipsisIcon />
+                        <MoreHorizontal />
                     </TouchableOpacity>
                 </Tooltip>
             </View>
@@ -111,33 +112,11 @@ export const MessageOptionsModal: React.FC<MessageOptionsModalProps> = ({
     </MiniModal>
 );
 
-const PencilIcon: React.FC = () => {
-    return (
-        <Svg width={20} height={20} viewBox="0 0 512 512" fill="none">
-            <Path
-                d="M290.74 93.24l128 128L166.44 473.54 38.51 345.61 290.74 93.24m-45.25-45.25l-247 247a24 24 0 0 0-7 17v99a24 24 0 0 0 24 24h99a24 24 0 0 0 17-7l247-247z"
-                fill="#fff"
-            />
-        </Svg>
-    );
-};
-
 const ArrowIcon: React.FC = () => {
     return (
         <Svg width={20} height={20} viewBox="0 0 512 512" fill="none">
             <Path
                 d="M256 64l-96 96h64v96h64v-96h64l-96-96zM96 256v128c0 17.7 14.3 32 32 32h256c17.7 0 32-14.3 32-32V256h-64v128H160V256H96z"
-                fill="#fff"
-            />
-        </Svg>
-    );
-};
-
-const EllipsisIcon: React.FC = () => {
-    return (
-        <Svg width={20} height={20} viewBox="0 0 100 25" fill="none">
-            <Path
-                d="M12.5 12.5C12.5 15.538 9.538 18.5 6.5 18.5S.5 15.538.5 12.5 3.462 6.5 6.5 6.5s6 2.962 6 6zM36.5 12.5c0 3.038-2.962 6-6 6s-6-2.962-6-6 2.962-6 6-6 6 2.962 6 6zm24 0c0 3.038-2.962 6-6 6s-6-2.962-6-6 2.962-6 6-6 6 2.962 6 6z"
                 fill="#fff"
             />
         </Svg>

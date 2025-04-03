@@ -3,7 +3,7 @@ import Svg, { Path } from 'react-native-svg';
 import { ViewStyle } from 'react-native';
 import { COLORS } from '../constants';
 
-export const More = ({
+export const MoreVertical = ({
     style,
     color = COLORS.White,
     size = 18,

@@ -1,3 +1,4 @@
+// MarkdownInputBase.tsx
 import React, { useRef } from 'react';
 import {
     ScrollView,
@@ -25,6 +26,8 @@ export interface MarkdownInputBaseProps extends TextInputProps {
     height?: string;
     // New prop for background color
     backgroundColor?: string;
+    // Add onKeyDown so that we can capture key events on web
+    onKeyDown?: (e: any) => void;
 }
 
 export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
@@ -38,6 +41,7 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
     width,
     height,
     backgroundColor,
+    onKeyDown, // Destructure onKeyDown here
     ...rest
 }) => {
     const overlayScrollRef = useRef<ScrollView>(null);
@@ -137,11 +141,23 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
                 onScroll={
                     multiline ? handleVerticalScroll : handleHorizontalScroll
                 }
-                // Use our internal key press handler
                 {...(Platform.OS === 'web'
-                    ? { onKeyPress: handleKeyPressInternal }
-                    : { onKeyPress: handleKeyPressInternal })}
-                // @ts-expect-error web only type
+                    ? {
+                          onKeyDown: (e: any) => {
+                              if (onKeyDown) {
+                                  onKeyDown(e);
+                              }
+                              handleKeyPressInternal(e);
+                          },
+                      }
+                    : {
+                          onKeyPress: (e: any) => {
+                              if (onKeyDown) {
+                                  onKeyDown(e);
+                              }
+                              handleKeyPressInternal(e);
+                          },
+                      })}
                 scrollEventThrottle={16}
                 {...rest}
             />

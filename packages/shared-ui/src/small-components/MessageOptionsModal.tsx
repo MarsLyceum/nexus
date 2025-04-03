@@ -117,7 +117,7 @@ const ArrowIcon: React.FC = () => {
         <Svg width={20} height={20} viewBox="0 0 512 512" fill="none">
             <Path
                 d="M256 64l-96 96h64v96h64v-96h64l-96-96zM96 256v128c0 17.7 14.3 32 32 32h256c17.7 0 32-14.3 32-32V256h-64v128H160V256H96z"
-                fill="#fff"
+                fill={COLORS.White} // Updated to use palette
             />
         </Svg>
     );
@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         paddingVertical: 6,
         paddingHorizontal: 8,
-        shadowColor: '#000',
+        shadowColor: COLORS.InactiveText,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.3,
         shadowRadius: 4,
@@ -149,6 +149,6 @@ const styles = StyleSheet.create({
     },
     emoji: {
         fontSize: 18,
-        color: '#fff',
+        color: COLORS.White,
     },
 });

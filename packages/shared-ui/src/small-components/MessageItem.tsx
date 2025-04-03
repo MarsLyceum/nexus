@@ -6,7 +6,7 @@ import {
     StyleSheet,
     Image as RNImage,
     findNodeHandle,
-    Dimensions, // Added Dimensions for screen bounds
+    Dimensions,
 } from 'react-native';
 import { NexusImage } from './NexusImage';
 import { LinkPreview } from './LinkPreview';
@@ -21,12 +21,16 @@ import { useMediaTypes } from '../hooks/useMediaTypes';
 import { NexusVideo } from '.';
 import { MessageOptionsModal } from './MessageOptionsModal';
 import { COLORS } from '../constants';
+// Import the MarkdownEditor component
+import { MarkdownEditor } from './MarkdownEditor';
 
 export type MessageItemProps = {
     item: MessageWithAvatar | DirectMessageWithAvatar;
     width: number;
     onAttachmentPress: (attachments: string[], index: number) => void;
     scrollContainerRef: React.RefObject<any>;
+    // Optional: Add a callback for saving an edited message to the server
+    // onUpdateMessage?: (messageId: string, newContent: string) => void;
 };
 
 const getMessageDate = (
@@ -162,6 +166,7 @@ const MessageItemComponent: React.FC<MessageItemProps> = ({
     width,
     onAttachmentPress,
     scrollContainerRef,
+    // onUpdateMessage,
 }) => {
     const mediaInfos = useMediaTypes(item.attachmentUrls || []);
     const messageDate = getMessageDate(item);
@@ -176,6 +181,13 @@ const MessageItemComponent: React.FC<MessageItemProps> = ({
     } | null>(null);
     const [isHovered, setIsHovered] = useState(false);
     const [isScrolling, setIsScrolling] = useState(false);
+
+    // Local states for editing:
+    const [isEditing, setIsEditing] = useState(false);
+    const [editedContent, setEditedContent] = useState(item.content ?? '');
+
+    // Compute the links from the edited content
+    const editedUrls = extractUrls(editedContent);
 
     const containerRef = useRef<View>(null);
     const lastMousePositionRef = useRef<{ x: number; y: number }>({
@@ -300,12 +312,40 @@ const MessageItemComponent: React.FC<MessageItemProps> = ({
         };
     }, [scrollContainerRef]);
 
+    // Keyboard event handler for the MarkdownEditor:
+    const handleKeyDown = (e: any) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSaveEdit();
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            handleCancelEdit();
+        }
+    };
+
     const handleEdit = () => {
-        console.log('Edit action triggered for message:', item);
+        // Close the options modal first
+        setOptionsModalVisible(false);
+        // Enter "edit" mode
+        setIsEditing(true);
     };
 
     const handleMore = () => {
         console.log('More action triggered for message:', item);
+    };
+
+    const handleSaveEdit = () => {
+        // If you have a backend function, call it here:
+        // onUpdateMessage?.(item.id, editedContent);
+
+        console.log('Saving edited message:', editedContent);
+        item.content = editedContent;
+        setIsEditing(false);
+    };
+
+    const handleCancelEdit = () => {
+        setEditedContent(item.content ?? '');
+        setIsEditing(false);
     };
 
     return (
@@ -329,45 +369,107 @@ const MessageItemComponent: React.FC<MessageItemProps> = ({
                         {formatDateForChat(messageDate)}
                     </Text>
                 </Text>
-                {item.content
-                    ? renderMessageContent(
-                          item.content,
-                          width,
-                          item.previewData
-                      )
-                    : null}
-                {item.attachmentUrls && item.attachmentUrls.length > 0 && (
-                    <View style={styles.messageAttachmentsContainer}>
-                        {item.attachmentUrls.map((url, index) => {
-                            const info = mediaInfos[url];
-                            return (
-                                <TouchableOpacity
-                                    key={index}
-                                    onPress={() =>
-                                        onAttachmentPress(
-                                            item.attachmentUrls ?? [],
-                                            index
-                                        )
-                                    }
-                                >
-                                    {info && info.type === 'video' ? (
-                                        <NativeSizeAttachmentVideo
-                                            uri={url}
-                                            nativeWidth={info.width}
-                                            nativeHeight={info.height}
-                                            aspectRatio={info.aspectRatio}
-                                        />
-                                    ) : info && info.type === 'image' ? (
-                                        <NativeSizeAttachmentImage uri={url} />
-                                    ) : null}
-                                </TouchableOpacity>
-                            );
-                        })}
+
+                {isEditing ? (
+                    <View style={styles.editContainer}>
+                        {/* "Editing" label */}
+                        <View style={styles.editingLabelContainer}>
+                            <Text style={styles.editingLabelText}>Editing</Text>
+                        </View>
+                        <MarkdownEditor
+                            value={editedContent}
+                            onChangeText={setEditedContent}
+                            placeholder="Edit your message..."
+                            width="100%"
+                            height="150px"
+                            onKeyDown={handleKeyDown}
+                        />
+                        {/* Instruction text with clickable "escape" and "enter" */}
+                        <Text style={styles.instructionText}>
+                            escape to{' '}
+                            <Text
+                                style={styles.clickableText}
+                                onPress={handleCancelEdit}
+                            >
+                                cancel
+                            </Text>{' '}
+                            • shift + enter for multiple lines • enter to{' '}
+                            <Text
+                                style={styles.clickableText}
+                                onPress={handleSaveEdit}
+                            >
+                                save
+                            </Text>
+                        </Text>
+                        {/* Render link previews below the editor if a link is present */}
+                        {editedUrls.length > 0 && (
+                            <View style={styles.linkPreviewContainer}>
+                                {editedUrls.map((url, index) => (
+                                    <LinkPreview
+                                        key={index}
+                                        url={url}
+                                        containerWidth={width - 32}
+                                    />
+                                ))}
+                            </View>
+                        )}
                     </View>
+                ) : (
+                    <>
+                        {item.content
+                            ? renderMessageContent(
+                                  item.content,
+                                  width,
+                                  item.previewData
+                              )
+                            : null}
+                        {item.attachmentUrls &&
+                            item.attachmentUrls.length > 0 && (
+                                <View
+                                    style={styles.messageAttachmentsContainer}
+                                >
+                                    {item.attachmentUrls.map((url, index) => {
+                                        const info = mediaInfos[url];
+                                        return (
+                                            <TouchableOpacity
+                                                key={index}
+                                                onPress={() =>
+                                                    onAttachmentPress(
+                                                        item.attachmentUrls ??
+                                                            [],
+                                                        index
+                                                    )
+                                                }
+                                            >
+                                                {info &&
+                                                info.type === 'video' ? (
+                                                    <NativeSizeAttachmentVideo
+                                                        uri={url}
+                                                        nativeWidth={info.width}
+                                                        nativeHeight={
+                                                            info.height
+                                                        }
+                                                        aspectRatio={
+                                                            info.aspectRatio
+                                                        }
+                                                    />
+                                                ) : info &&
+                                                  info.type === 'image' ? (
+                                                    <NativeSizeAttachmentImage
+                                                        uri={url}
+                                                    />
+                                                ) : null}
+                                            </TouchableOpacity>
+                                        );
+                                    })}
+                                </View>
+                            )}
+                    </>
                 )}
             </View>
 
-            {optionsModalVisible && anchorPosition && (
+            {/* Only show the options modal if not editing */}
+            {!isEditing && optionsModalVisible && anchorPosition && (
                 <MessageOptionsModal
                     visible={optionsModalVisible}
                     onClose={() => setOptionsModalVisible(false)}
@@ -410,20 +512,12 @@ const styles = StyleSheet.create({
     userName: {
         fontSize: 14,
         fontWeight: 'bold',
-        color: 'white',
+        color: COLORS.White,
         fontFamily: 'Roboto_700Bold',
     },
     time: {
         fontSize: 12,
-        color: 'gray',
-        fontFamily: 'Roboto_400Regular',
-    },
-    messageText: {
-        fontSize: 14,
-        color: 'white',
-        marginTop: 2,
-        flexWrap: 'wrap',
-        flexShrink: 1,
+        color: COLORS.InactiveText,
         fontFamily: 'Roboto_400Regular',
     },
     messageAttachmentsContainer: {
@@ -435,5 +529,38 @@ const styles = StyleSheet.create({
         marginRight: 5,
         marginTop: 5,
         borderRadius: 8,
+    },
+    // --- Edit mode styles ---
+    editContainer: {
+        marginTop: 5,
+        position: 'relative',
+        borderColor: COLORS.SecondaryBackground,
+        borderWidth: 1,
+        borderRadius: 4,
+        padding: 8,
+        backgroundColor: COLORS.TertiaryBackground,
+    },
+    editingLabelContainer: {
+        position: 'absolute',
+        top: 5,
+        right: 10,
+    },
+    editingLabelText: {
+        color: COLORS.InactiveText,
+        fontSize: 12,
+        fontStyle: 'italic',
+    },
+    instructionText: {
+        marginTop: 4,
+        fontSize: 12,
+        color: COLORS.InactiveText,
+        fontStyle: 'italic',
+    },
+    clickableText: {
+        textDecorationLine: 'underline',
+        color: COLORS.Link,
+    },
+    linkPreviewContainer: {
+        marginTop: 10,
     },
 });

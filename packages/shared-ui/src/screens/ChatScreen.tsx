@@ -1,109 +1,224 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
     StyleSheet,
-    TouchableOpacity,
     useWindowDimensions,
     SafeAreaView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { useSearchParams } from 'solito/navigation';
+import { useQuery, useApolloClient } from '@apollo/client';
 
 import { useNexusRouter } from '../hooks';
 import { COLORS } from '../constants';
-import { Attachment } from '../types';
-import { ChatInputContainer, NexusList, NexusImage } from '../small-components';
+import {
+    ChatInputContainer,
+    NexusList,
+    NexusImage,
+    MessageItem,
+} from '../small-components';
+import { useAppSelector, RootState, UserType } from '../redux';
+import { FETCH_USER_QUERY } from '../queries';
+import { Attachment, MessageWithAvatar } from '../types';
+import { getOnlineStatusDotColor } from '../utils';
 
+// Updated Message type based on the GraphQL response, now including optional attachments.
 export type Message = {
     id: string;
-    user: string;
-    time: string;
-    text: string;
-    avatar: string;
+    content: string;
+    senderUserId: string;
+    createdAt: string;
     edited: boolean;
-    attachments: Attachment[];
+    attachments?: Attachment[];
+};
+
+// Conversation type coming from the GraphQL query.
+export type Conversation = {
+    id: string;
+    type: string;
+    participantsUserIds: string[];
+    messages: Message[];
+    channelId: string;
 };
 
 interface ChatScreenProps {
-    userOverride?: {
-        id?: string;
-        name: string;
-        avatar: string;
-    };
+    conversation?: Conversation;
 }
 
-export const ChatScreen: React.FC<ChatScreenProps> = ({ userOverride }) => {
+export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
     const router = useNexusRouter();
     const params = useSearchParams<{ name?: string; avatar?: string }>();
-
-    const user = userOverride || {
-        name: params?.get('name') || 'Unknown',
-        avatar: params?.get('avatar') || '',
-    };
-
+    const activeUser: UserType = useAppSelector(
+        (state: RootState) => state.user.user
+    );
+    const client = useApolloClient();
     const { width, height: windowHeight } = useWindowDimensions();
     const isLargeScreen = width > 768;
 
-    // Approximate header and input heights.
+    // Determine if the conversation is one-to-one.
+    const isOneToOne =
+        conversation &&
+        activeUser &&
+        conversation.participantsUserIds.length === 2;
+
+    // For one-to-one chats, determine the other participant's id.
+    const otherUserId = isOneToOne
+        ? conversation.participantsUserIds.find((id) => id !== activeUser.id) ||
+          null
+        : null;
+
+    // For one-to-one, use FETCH_USER_QUERY.
+    const { data: fetchedUserData, loading: fetchedUserLoading } = useQuery(
+        FETCH_USER_QUERY,
+        {
+            variables: { userId: otherUserId },
+            skip: !otherUserId,
+        }
+    );
+
+    // For group conversations, fetch user info for all participants (excluding active user).
+    const [groupUsers, setGroupUsers] = useState<UserType[]>([]);
+    useEffect(() => {
+        if (
+            conversation &&
+            activeUser &&
+            conversation.participantsUserIds.length !== 2
+        ) {
+            const groupUserIds = conversation.participantsUserIds.filter(
+                (id) => id !== activeUser.id
+            );
+            Promise.all(
+                groupUserIds.map((id) =>
+                    client.query({
+                        query: FETCH_USER_QUERY,
+                        variables: { userId: id },
+                    })
+                )
+            )
+                .then((results) => {
+                    const usersData = results.map((res) => res.data.fetchUser);
+                    setGroupUsers(usersData);
+                })
+                .catch((err) =>
+                    console.error('Error fetching group users', err)
+                );
+        }
+    }, [conversation, activeUser, client]);
+
+    // Derive header information.
+    let headerName: string;
+    let headerContent: React.ReactNode;
+    if (conversation && activeUser) {
+        if (isOneToOne) {
+            // For one-to-one, show the other user's username and online status dot.
+            const friendUsername =
+                !fetchedUserLoading &&
+                fetchedUserData &&
+                fetchedUserData.fetchUser
+                    ? fetchedUserData.fetchUser.username
+                    : otherUserId || 'Chat';
+            const friendStatus =
+                !fetchedUserLoading &&
+                fetchedUserData &&
+                fetchedUserData.fetchUser
+                    ? fetchedUserData.fetchUser.status
+                    : 'offline';
+            headerName = friendUsername;
+            headerContent = (
+                <View style={styles.avatarAndDot}>
+                    <NexusImage
+                        source={`https://picsum.photos/seed/${friendUsername || 'default'}/40`}
+                        alt="avatar"
+                        width={40}
+                        height={40}
+                        style={styles.headerAvatar}
+                        contentFit="cover"
+                    />
+                    <View
+                        style={[
+                            styles.statusDot,
+                            {
+                                backgroundColor:
+                                    getOnlineStatusDotColor(friendStatus),
+                            },
+                        ]}
+                    />
+                </View>
+            );
+        } else {
+            // For group conversations, list all participants' usernames (excluding active user).
+            headerName =
+                groupUsers.map((user) => user.username).join(', ') ||
+                'Group Chat';
+            headerContent = (
+                <View style={styles.avatarGroup}>
+                    {groupUsers.slice(0, 3).map((user, index) => (
+                        <NexusImage
+                            key={user.id}
+                            source={`https://picsum.photos/seed/${user.username || 'default'}/40`}
+                            alt="avatar"
+                            width={40}
+                            height={40}
+                            style={[
+                                styles.groupAvatar,
+                                { marginLeft: index === 0 ? 0 : -10 },
+                            ]}
+                            contentFit="cover"
+                        />
+                    ))}
+                </View>
+            );
+        }
+    } else {
+        headerName = params?.get('name') || 'Unknown';
+        headerContent = (
+            <NexusImage
+                source={
+                    params?.get('avatar') ??
+                    `https://picsum.photos/seed/${params?.get('name') || 'default'}/40`
+                }
+                alt="avatar"
+                width={40}
+                height={40}
+                style={styles.headerAvatar}
+                contentFit="cover"
+            />
+        );
+    }
+
     const headerHeight = 70;
     const inputHeight = 70;
-    // Calculate available height for the messages list.
     const messagesHeight = windowHeight - (headerHeight + inputHeight);
 
-    const [messages, setMessages] = useState<Message[]>([
-        {
-            id: '1',
-            user: 'CaptCrunch',
-            time: '01/22/2025 7:12 AM',
-            text: 'Its free on Steam atm if you want to install it ahead of time',
-            avatar: 'https://picsum.photos/50?random=1',
-            edited: false,
-            attachments: [],
-        },
-        {
-            id: '2',
-            user: 'Milheht',
-            time: '01/22/2025 7:12 AM',
-            text: "Ok cool I'll install it then",
-            avatar: 'https://picsum.photos/50?random=2',
-            edited: false,
-            attachments: [],
-        },
-        {
-            id: '3',
-            user: 'CaptCrunch',
-            time: '01/25/2025 11:32 PM',
-            text: 'Do you like PoE2 by the way?',
-            avatar: 'https://picsum.photos/50?random=1',
-            edited: true,
-            attachments: [],
-        },
-        {
-            id: '4',
-            user: 'CaptCrunch',
-            time: '01/25/2025 11:35 PM',
-            text: "He's been really caught up in other things besides games though so I wouldn't hold my breath on him joining, but maybe I can twist his arm lol",
-            avatar: 'https://picsum.photos/50?random=1',
-            edited: false,
-            attachments: [],
-        },
-        {
-            id: '5',
-            user: 'Milheht',
-            time: '01/26/2025 7:31 AM',
-            text: "Yeah I like PoE2 but it's really difficult and I'm currently stuck on a boss. It would be fun to play it sometime though.",
-            avatar: 'https://picsum.photos/50?random=2',
-            edited: false,
-            attachments: [],
-        },
-    ]);
+    // Initialize messages state from conversation if available.
+    const initialMessages: Message[] = conversation
+        ? conversation.messages
+        : [];
+    const [messages, setMessages] = useState<Message[]>(initialMessages);
+    useEffect(() => {
+        if (conversation) {
+            setMessages(conversation.messages);
+        }
+    }, [conversation]);
 
+    // Callback to handle inline image press.
+    const onInlineImagePress = (url: string) => {
+        console.log('Inline image pressed:', url);
+    };
+
+    // Callback to handle attachment preview press.
+    const onAttachmentPreviewPress = (att: Attachment) => {
+        console.log('Attachment preview pressed:', att);
+    };
+
+    // Updated handleSend now accepts attachments.
     const handleSend = (text: string, attachments: Attachment[]) => {
         const newMessage: Message = {
             id: Math.random().toString(),
-            user: 'You',
-            time: new Date().toLocaleString('en-US', {
+            content: text,
+            senderUserId: activeUser?.id ?? '',
+            createdAt: new Date().toLocaleString('en-US', {
                 month: '2-digit',
                 day: '2-digit',
                 year: 'numeric',
@@ -111,63 +226,62 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ userOverride }) => {
                 minute: '2-digit',
                 hour12: true,
             }),
-            text,
-            avatar: 'https://picsum.photos/50?random=99',
             edited: false,
             attachments,
         };
         setMessages((prevMessages) => [...prevMessages, newMessage]);
     };
 
-    const onInlineImagePress = (url: string) => {
-        console.log('Inline image pressed:', url);
+    // Helper function to compute sender's username.
+    const getSenderName = (message: Message): string => {
+        if (conversation && activeUser) {
+            if (conversation.participantsUserIds.length === 2) {
+                return message.senderUserId === activeUser.id
+                    ? activeUser.username
+                    : fetchedUserData?.fetchUser?.username ||
+                          message.senderUserId;
+            }
+            if (message.senderUserId === activeUser.id) {
+                return activeUser.username;
+            }
+            const senderInfo = groupUsers.find(
+                (u) => u.id === message.senderUserId
+            );
+            return senderInfo ? senderInfo.username : message.senderUserId;
+        }
+        return message.senderUserId;
     };
 
-    const onAttachmentPreviewPress = (att: Attachment) => {
-        console.log('Attachment preview pressed:', att);
+    // Transform Message to MessageWithAvatar for MessageItem.
+    const transformMessage = (msg: Message): MessageWithAvatar => ({
+        id: msg.id,
+        avatar: `https://picsum.photos/seed/${getSenderName(msg) || 'default'}/40`,
+        username: getSenderName(msg),
+        postedAt: new Date(msg.createdAt),
+        content: msg.content,
+        attachmentUrls: msg.attachments
+            ? msg.attachments.map((att) => att.previewUri)
+            : [],
+        previewData: [], // You can add preview data if available.
+        edited: msg.edited,
+    });
+
+    // Callback for when an attachment is pressed.
+    const handleAttachmentPress = (attachmentUrls: string[], index: number) => {
+        console.log('Attachment pressed:', attachmentUrls, index);
     };
 
-    // Unified message renderer for both web and mobile.
-    const renderItem = ({ item, index }: { item: Message; index: number }) => (
-        <View key={item.id} style={styles.messageContainer}>
-            <NexusImage
-                source={item.avatar}
-                alt="avatar"
-                width={40}
-                height={40}
-                style={styles.messageAvatar}
-                contentFit="cover"
+    // Render each message using the MessageItem component.
+    const renderItem = ({ item }: { item: Message }) => {
+        const transformedMessage = transformMessage(item);
+        return (
+            <MessageItem
+                item={transformedMessage}
+                width={width}
+                onAttachmentPress={handleAttachmentPress}
             />
-            <View style={styles.messageContent}>
-                <Text style={styles.userName}>
-                    {item.user} <Text style={styles.time}>{item.time}</Text>
-                </Text>
-                <Text style={styles.messageText}>{item.text}</Text>
-                {item.edited && (
-                    <Text style={styles.editedLabel}>(edited)</Text>
-                )}
-                {item.attachments && item.attachments.length > 0 && (
-                    <View style={styles.attachmentsContainer}>
-                        {item.attachments.map((att, idx) => (
-                            <TouchableOpacity
-                                key={idx}
-                                onPress={() => onAttachmentPreviewPress(att)}
-                            >
-                                <NexusImage
-                                    source={att.previewUri}
-                                    alt="attachment"
-                                    width={100}
-                                    height={100}
-                                    style={styles.attachmentImage}
-                                    contentFit="cover"
-                                />
-                            </TouchableOpacity>
-                        ))}
-                    </View>
-                )}
-            </View>
-        </View>
-    );
+        );
+    };
 
     return (
         <SafeAreaView style={styles.container}>
@@ -181,20 +295,12 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ userOverride }) => {
                         onPress={() => router.back()}
                     />
                 )}
-                <NexusImage
-                    source={user.avatar || '/default-avatar.png'}
-                    alt="avatar"
-                    width={40}
-                    height={40}
-                    style={styles.headerAvatar}
-                    contentFit="cover"
-                />
-                <Text style={styles.chatTitle}>{user.name}</Text>
+                {headerContent}
+                <Text style={styles.chatTitle}>{headerName}</Text>
             </View>
 
             {/* Main Content Area */}
             <View style={styles.mainContent}>
-                {/* Messages List */}
                 <View
                     style={[
                         styles.messagesContainer,
@@ -209,12 +315,10 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ userOverride }) => {
                         renderItem={renderItem}
                     />
                 </View>
-
-                {/* Chat Input */}
                 <View style={styles.inputContainer}>
                     <ChatInputContainer
                         onSend={handleSend}
-                        recipientName={user.name}
+                        recipientName={headerName}
                         onInlineImagePress={onInlineImagePress}
                         onAttachmentPreviewPress={onAttachmentPreviewPress}
                     />
@@ -226,7 +330,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ userOverride }) => {
 
 const styles = StyleSheet.create({
     container: {
-        height: '100vh', // Full viewport height
+        height: '100vh',
         flex: 1,
         backgroundColor: COLORS.SecondaryBackground,
         overflow: 'hidden',
@@ -243,12 +347,36 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 20,
-        marginLeft: 10,
+    },
+    avatarAndDot: {
+        position: 'relative',
+        marginRight: 10,
+    },
+    statusDot: {
+        position: 'absolute',
+        bottom: 0,
+        right: 5,
+        width: 15,
+        height: 15,
+        borderRadius: 7,
+        borderWidth: 2,
+        borderColor: COLORS.SecondaryBackground,
+    },
+    avatarGroup: {
+        flexDirection: 'row',
+        marginRight: 10,
+    },
+    groupAvatar: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: COLORS.SecondaryBackground,
     },
     chatTitle: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: 'white',
+        color: COLORS.White,
         marginLeft: 10,
     },
     mainContent: {
@@ -258,52 +386,7 @@ const styles = StyleSheet.create({
     messagesContainer: {
         flex: 1,
     },
-    messageContainer: {
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        padding: 15,
-    },
-    messageAvatar: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        marginRight: 10,
-    },
-    messageContent: {
-        flex: 1,
-    },
-    userName: {
-        fontSize: 14,
-        fontWeight: 'bold',
-        color: 'white',
-    },
-    time: {
-        fontSize: 12,
-        color: 'gray',
-    },
-    messageText: {
-        fontSize: 14,
-        color: 'white',
-        marginTop: 2,
-    },
-    editedLabel: {
-        fontSize: 12,
-        color: 'gray',
-        marginTop: 2,
-    },
-    attachmentsContainer: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        marginTop: 5,
-    },
-    attachmentImage: {
-        width: 100,
-        height: 100,
-        borderRadius: 10,
-        marginTop: 5,
-        marginRight: 5,
-    },
     inputContainer: {
-        height: 70, // Fixed height for chat input
+        height: 70,
     },
 });

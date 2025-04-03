@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Group } from '../../types';
 import type { AppThunk } from '../store';
-import { setItem, getItem } from './storageUtil';
+import { setItem, getItem } from '../../utils';
 
 const USER_GROUPS_KEY = 'userGroups';
 

@@ -5,6 +5,7 @@ import { NexusImage } from './NexusImage';
 import { More, CheckMark, Cancel } from '../icons';
 import { COLORS } from '../constants';
 import { ActionButton } from './ActionButton';
+import { getOnlineStatusDotColor } from '../utils';
 
 export type Friend = {
     id?: string;
@@ -53,32 +54,6 @@ const displayStatusMap: { [key: string]: string } = {
     offline_dnd: 'Offline (Do Not Disturb)',
 };
 
-// Returns dot color based on online status using your color palette.
-const getDotColor = (status?: string): string => {
-    const currentStatus = status ? status.toLowerCase() : 'online';
-    switch (currentStatus) {
-        case 'online': {
-            return COLORS.Success;
-        }
-        case 'online_dnd': {
-            return COLORS.Error;
-        }
-        case 'idle': {
-            return COLORS.Idle;
-        }
-        case 'offline':
-        case 'invisible': {
-            return COLORS.InactiveText;
-        }
-        case 'offline_dnd': {
-            return COLORS.Error;
-        }
-        default: {
-            return COLORS.InactiveText;
-        }
-    }
-};
-
 export const FriendItem: React.FC<FriendItemProps> = ({
     item,
     currentUserId,
@@ -122,7 +97,7 @@ export const FriendItem: React.FC<FriendItemProps> = ({
         relationshipStatus === 'accepted'
             ? onlineStatus || 'online'
             : relationshipStatus || 'online';
-    const dotColor = getDotColor(statusForDot);
+    const dotColor = getOnlineStatusDotColor(statusForDot);
     const avatarUrl = `https://picsum.photos/seed/${friend.username}/40`;
 
     return (

@@ -1,5 +1,4 @@
-// MessageList.tsx
-import React from 'react';
+import React, { useRef } from 'react';
 import { StyleSheet, FlatList } from 'react-native';
 import { MessageWithAvatar } from '../types';
 import { MessageItemSkeleton } from './MessageItemSkeleton';
@@ -20,9 +19,13 @@ export const MessageList: React.FC<MessageListProps> = ({
     loadMoreMessages,
     onAttachmentPress,
 }) => {
+    // Create a ref for the FlatList scroll container.
+    const flatListRef = useRef<FlatList>(null);
+
     if (loadingMessages) {
         return (
             <FlatList
+                ref={flatListRef}
                 data={[0, 1, 2, 3, 4]}
                 keyExtractor={(item) => item.toString()}
                 renderItem={() => <MessageItemSkeleton width={width} />}
@@ -33,6 +36,7 @@ export const MessageList: React.FC<MessageListProps> = ({
 
     return (
         <FlatList
+            ref={flatListRef}
             data={chatMessages}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
@@ -40,6 +44,7 @@ export const MessageList: React.FC<MessageListProps> = ({
                     item={item}
                     width={width}
                     onAttachmentPress={onAttachmentPress}
+                    scrollContainerRef={flatListRef} // Pass the scroll container ref
                 />
             )}
             style={styles.container}

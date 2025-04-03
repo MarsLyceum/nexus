@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
     View,
     Text,
@@ -54,6 +54,9 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
     const client = useApolloClient();
     const { width, height: windowHeight } = useWindowDimensions();
     const isLargeScreen = width > 768;
+
+    // Create a ref for the FlatList scroll container.
+    const flatListRef = useRef<FlatList>(null);
 
     // Determine if the conversation is one-to-one.
     const isOneToOne =
@@ -273,8 +276,6 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
         // Optimistically update the UI.
         setMessages((prevMessages) => [newMessage, ...prevMessages]);
 
-        // Call the mutation to send the message.
-        // For production, consider adding more robust error handling and updating the Apollo cache.
         sendMessage({
             variables: {
                 conversationId: conversation?.id,
@@ -290,7 +291,6 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
             },
         }).catch((err) => {
             console.error('Error sending message:', err);
-            // Optionally remove the optimistic message or inform the user.
         });
     };
 
@@ -339,6 +339,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
                 item={transformedMessage}
                 width={width}
                 onAttachmentPress={handleAttachmentPress}
+                scrollContainerRef={flatListRef} // Pass the FlatList ref to each MessageItem.
             />
         );
     };
@@ -372,12 +373,12 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
                     ]}
                 >
                     {messagesLoading && messages.length === 0 ? (
-                        // Render skeleton placeholders when loading messages.
                         Array.from({ length: 5 }).map((_, index) => (
                             <SkeletonMessageItem key={index} />
                         ))
                     ) : (
                         <FlatList
+                            ref={flatListRef}
                             data={messages}
                             inverted
                             keyExtractor={(item) => item.id}
@@ -463,7 +464,6 @@ const styles = StyleSheet.create({
     inputContainer: {
         height: 70,
     },
-    // Skeleton styles for messages.
     skeletonContainer: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -493,7 +493,6 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.InactiveText,
         borderRadius: 5,
     },
-    // Skeleton styles for header placeholders.
     skeletonHeaderAvatar: {
         width: 40,
         height: 40,

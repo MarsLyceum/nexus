@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
     View,
     Text,
     TouchableOpacity,
     StyleSheet,
     Image as RNImage,
+    findNodeHandle,
+    Dimensions, // Added Dimensions for screen bounds
 } from 'react-native';
-
 import { NexusImage } from './NexusImage';
 import { LinkPreview } from './LinkPreview';
 import {
@@ -18,27 +19,28 @@ import { MarkdownRenderer } from './MarkdownRenderer';
 import { extractUrls, formatDateForChat, isImageExtensionUrl } from '../utils';
 import { useMediaTypes } from '../hooks/useMediaTypes';
 import { NexusVideo } from '.';
+import { MessageOptionsModal } from './MessageOptionsModal';
+import { COLORS } from '../constants';
 
 export type MessageItemProps = {
     item: MessageWithAvatar | DirectMessageWithAvatar;
     width: number;
     onAttachmentPress: (attachments: string[], index: number) => void;
+    scrollContainerRef: React.RefObject<any>;
 };
 
-// Helper to get a Date from the message (text channel messages use postedAt and direct messages use createdAt)
 const getMessageDate = (
     item: MessageWithAvatar | DirectMessageWithAvatar
 ): Date => {
     return item.postedAt ? item.postedAt : new Date(item.createdAt);
 };
 
-// This component renders an image attachment at 50% of its native size.
 const NativeSizeAttachmentImage: React.FC<{ uri: string }> = ({ uri }) => {
-    const [dimensions, setDimensions] = React.useState<
-        { width: number; height: number } | undefined
-    >(undefined);
-
-    React.useEffect(() => {
+    const [dimensions, setDimensions] = useState<{
+        width: number;
+        height: number;
+    }>();
+    useEffect(() => {
         RNImage.getSize(
             uri,
             (width, height) => setDimensions({ width, height }),
@@ -51,10 +53,7 @@ const NativeSizeAttachmentImage: React.FC<{ uri: string }> = ({ uri }) => {
         );
     }, [uri]);
 
-    if (!dimensions) {
-        return null;
-    }
-
+    if (!dimensions) return null;
     const scaledWidth = dimensions.width * 0.5;
     const scaledHeight = dimensions.height * 0.5;
 
@@ -74,8 +73,6 @@ const NativeSizeAttachmentImage: React.FC<{ uri: string }> = ({ uri }) => {
     );
 };
 
-// This component renders a video attachment using NexusVideo.
-// It uses the native width and height from the media info and scales them by 50%.
 const NativeSizeAttachmentVideo: React.FC<{
     uri: string;
     nativeWidth: number;
@@ -84,7 +81,6 @@ const NativeSizeAttachmentVideo: React.FC<{
 }> = ({ uri, nativeWidth, nativeHeight }) => {
     const scaledWidth = nativeWidth * 0.5;
     const scaledHeight = nativeHeight * 0.5;
-
     return (
         <NexusVideo
             source={{ uri }}
@@ -108,7 +104,6 @@ const renderMessageContent = (
     const trimmedContent = content.trim();
     const urls = extractUrls(trimmedContent);
 
-    // If preview data is provided, use that.
     if (previewData && previewData.length > 0) {
         if (
             previewData.length === 1 &&
@@ -122,7 +117,6 @@ const renderMessageContent = (
                 />
             );
         }
-
         return (
             <>
                 <MarkdownRenderer text={content} />
@@ -167,13 +161,160 @@ const MessageItemComponent: React.FC<MessageItemProps> = ({
     item,
     width,
     onAttachmentPress,
+    scrollContainerRef,
 }) => {
     const mediaInfos = useMediaTypes(item.attachmentUrls || []);
-    // Use the helper to get a consistent date object.
     const messageDate = getMessageDate(item);
 
+    const [optionsModalVisible, setOptionsModalVisible] = useState(false);
+    const [modalHovered, setModalHovered] = useState(false);
+    const [anchorPosition, setAnchorPosition] = useState<{
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+    } | null>(null);
+    const [isHovered, setIsHovered] = useState(false);
+    const [isScrolling, setIsScrolling] = useState(false);
+
+    const containerRef = useRef<View>(null);
+    const lastMousePositionRef = useRef<{ x: number; y: number }>({
+        x: 0,
+        y: 0,
+    });
+    const scrollTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Updated showModal: clamp the anchorPosition to visible screen area.
+    const showModal = () => {
+        if (containerRef.current) {
+            containerRef.current.measureInWindow(
+                (x, y, containerWidth, containerHeight) => {
+                    const { width: screenWidth, height: screenHeight } =
+                        Dimensions.get('window');
+                    const margin = 10;
+                    // Compute the effective anchor: top-right of the message,
+                    // but clamped so it doesn't exceed the screen bounds.
+                    const effectiveX = Math.min(
+                        x + containerWidth - margin,
+                        screenWidth - margin
+                    );
+                    const effectiveY = y < margin ? margin : y;
+                    setAnchorPosition({
+                        x: effectiveX,
+                        y: effectiveY,
+                        width: 0,
+                        height: 0,
+                    });
+                    setOptionsModalVisible(true);
+                }
+            );
+        }
+    };
+
+    const handleMouseEnter = () => {
+        setIsHovered(true);
+        if (!isScrolling) {
+            showModal();
+        }
+    };
+
+    const handleMouseLeave = () => {
+        setIsHovered(false);
+        if (!modalHovered) {
+            setOptionsModalVisible(false);
+        }
+    };
+
+    useEffect(() => {
+        const handleDocumentMouseMove = (e: MouseEvent) => {
+            lastMousePositionRef.current = { x: e.clientX, y: e.clientY };
+            if (containerRef.current) {
+                const messageRect = (
+                    containerRef.current as unknown as Element
+                ).getBoundingClientRect();
+                const { clientX, clientY } = e;
+                const isOverMessage =
+                    clientX >= messageRect.left &&
+                    clientX <= messageRect.right &&
+                    clientY >= messageRect.top &&
+                    clientY <= messageRect.bottom;
+                if (!isOverMessage) {
+                    setOptionsModalVisible(false);
+                }
+            }
+        };
+        document.addEventListener('mousemove', handleDocumentMouseMove, {
+            passive: true,
+        });
+        return () => {
+            document.removeEventListener('mousemove', handleDocumentMouseMove);
+        };
+    }, []);
+
+    useEffect(() => {
+        const scrollContainerComponent = scrollContainerRef.current;
+        if (!scrollContainerComponent) return;
+
+        const scrollContainer = scrollContainerComponent.getScrollableNode
+            ? scrollContainerComponent.getScrollableNode()
+            : findNodeHandle(scrollContainerComponent);
+        if (
+            !scrollContainer ||
+            typeof scrollContainer.addEventListener !== 'function'
+        )
+            return;
+
+        const handleScroll = () => {
+            setIsScrolling(true);
+            setOptionsModalVisible(false);
+            if (scrollTimerRef.current) {
+                clearTimeout(scrollTimerRef.current);
+            }
+            scrollTimerRef.current = setTimeout(() => {
+                setIsScrolling(false);
+                if (containerRef.current) {
+                    const rect = (
+                        containerRef.current as unknown as Element
+                    ).getBoundingClientRect();
+                    const { x, y } = lastMousePositionRef.current;
+                    const isOverMessage =
+                        x >= rect.left &&
+                        x <= rect.right &&
+                        y >= rect.top &&
+                        y <= rect.bottom;
+                    if (isOverMessage) {
+                        showModal();
+                    }
+                }
+            }, 1000);
+        };
+
+        scrollContainer.addEventListener('scroll', handleScroll, {
+            passive: true,
+        });
+        return () => {
+            scrollContainer.removeEventListener('scroll', handleScroll);
+            if (scrollTimerRef.current) {
+                clearTimeout(scrollTimerRef.current);
+            }
+        };
+    }, [scrollContainerRef]);
+
+    const handleEdit = () => {
+        console.log('Edit action triggered for message:', item);
+    };
+
+    const handleMore = () => {
+        console.log('More action triggered for message:', item);
+    };
+
     return (
-        <View style={styles.messageContainer}>
+        <View
+            ref={containerRef}
+            style={[styles.messageContainer, isHovered && styles.hovered]}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+        >
             <NexusImage
                 source={item.avatar}
                 style={styles.avatar}
@@ -225,6 +366,21 @@ const MessageItemComponent: React.FC<MessageItemProps> = ({
                     </View>
                 )}
             </View>
+
+            {optionsModalVisible && anchorPosition && (
+                <MessageOptionsModal
+                    visible={optionsModalVisible}
+                    onClose={() => setOptionsModalVisible(false)}
+                    anchorPosition={anchorPosition}
+                    onEdit={handleEdit}
+                    onMore={handleMore}
+                    onMouseEnterModal={() => setModalHovered(true)}
+                    onMouseLeaveModal={() => {
+                        setModalHovered(false);
+                        setOptionsModalVisible(false);
+                    }}
+                />
+            )}
         </View>
     );
 };
@@ -237,6 +393,9 @@ const styles = StyleSheet.create({
         alignItems: 'flex-start',
         padding: 15,
         width: '100%',
+    },
+    hovered: {
+        backgroundColor: COLORS.TertiaryBackground,
     },
     avatar: {
         width: 40,

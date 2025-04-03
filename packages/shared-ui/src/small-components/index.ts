@@ -27,6 +27,7 @@ export * from './MarkdownTextInput';
 export * from './MessageItem';
 export * from './MessageItemSkeleton';
 export * from './MessageList';
+export * from './MessageOptionsModal';
 export * from './MiniModal';
 export * from './NexusImage';
 export * from './NexusList';

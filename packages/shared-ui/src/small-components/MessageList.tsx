@@ -2,7 +2,6 @@
 import React from 'react';
 import { StyleSheet, FlatList } from 'react-native';
 import { MessageWithAvatar } from '../types';
-import { FlashListCompat } from './FlashListCompat';
 import { MessageItemSkeleton } from './MessageItemSkeleton';
 import { MessageItem } from './MessageItem';
 

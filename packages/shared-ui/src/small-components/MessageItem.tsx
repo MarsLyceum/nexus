@@ -9,16 +9,27 @@ import {
 
 import { NexusImage } from './NexusImage';
 import { LinkPreview } from './LinkPreview';
-import { MessageWithAvatar, PreviewData } from '../types';
+import {
+    MessageWithAvatar,
+    DirectMessageWithAvatar,
+    PreviewData,
+} from '../types';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { extractUrls, formatDateForChat, isImageExtensionUrl } from '../utils';
 import { useMediaTypes } from '../hooks/useMediaTypes';
 import { NexusVideo } from '.';
 
 export type MessageItemProps = {
-    item: MessageWithAvatar;
+    item: MessageWithAvatar | DirectMessageWithAvatar;
     width: number;
     onAttachmentPress: (attachments: string[], index: number) => void;
+};
+
+// Helper to get a Date from the message (text channel messages use postedAt and direct messages use createdAt)
+const getMessageDate = (
+    item: MessageWithAvatar | DirectMessageWithAvatar
+): Date => {
+    return item.postedAt ? item.postedAt : new Date(item.createdAt);
 };
 
 // This component renders an image attachment at 50% of its native size.
@@ -158,6 +169,8 @@ const MessageItemComponent: React.FC<MessageItemProps> = ({
     onAttachmentPress,
 }) => {
     const mediaInfos = useMediaTypes(item.attachmentUrls || []);
+    // Use the helper to get a consistent date object.
+    const messageDate = getMessageDate(item);
 
     return (
         <View style={styles.messageContainer}>
@@ -172,7 +185,7 @@ const MessageItemComponent: React.FC<MessageItemProps> = ({
                 <Text style={styles.userName}>
                     {item.username}{' '}
                     <Text style={styles.time}>
-                        {formatDateForChat(item.postedAt)}
+                        {formatDateForChat(messageDate)}
                     </Text>
                 </Text>
                 {item.content

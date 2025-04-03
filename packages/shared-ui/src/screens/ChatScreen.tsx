@@ -1,50 +1,49 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
     Text,
     StyleSheet,
     useWindowDimensions,
     SafeAreaView,
+    FlatList,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { useSearchParams } from 'solito/navigation';
-import { useQuery, useApolloClient } from '@apollo/client';
+import { useQuery, useApolloClient, useMutation } from '@apollo/client';
+import { v4 as uuidv4 } from 'uuid';
 
 import { useNexusRouter } from '../hooks';
 import { COLORS } from '../constants';
 import {
     ChatInputContainer,
-    NexusList,
     NexusImage,
     MessageItem,
 } from '../small-components';
 import { useAppSelector, RootState, UserType } from '../redux';
-import { FETCH_USER_QUERY } from '../queries';
-import { Attachment, MessageWithAvatar } from '../types';
+import {
+    FETCH_USER_QUERY,
+    SEND_MESSAGE,
+    GET_CONVERSATION_MESSAGES,
+} from '../queries';
+import { Message, Conversation, DirectMessageWithAvatar } from '../types';
 import { getOnlineStatusDotColor } from '../utils';
-
-// Updated Message type based on the GraphQL response, now including optional attachments.
-export type Message = {
-    id: string;
-    content: string;
-    senderUserId: string;
-    createdAt: string;
-    edited: boolean;
-    attachments?: Attachment[];
-};
-
-// Conversation type coming from the GraphQL query.
-export type Conversation = {
-    id: string;
-    type: string;
-    participantsUserIds: string[];
-    messages: Message[];
-    channelId: string;
-};
 
 interface ChatScreenProps {
     conversation?: Conversation;
 }
+
+// Skeleton screen component to show loading placeholders.
+const SkeletonMessageItem: React.FC = () => {
+    return (
+        <View style={styles.skeletonContainer}>
+            <View style={styles.skeletonAvatar} />
+            <View style={styles.skeletonContent}>
+                <View style={styles.skeletonLineShort} />
+                <View style={styles.skeletonLineLong} />
+            </View>
+        </View>
+    );
+};
 
 export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
     const router = useNexusRouter();
@@ -107,45 +106,42 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
     }, [conversation, activeUser, client]);
 
     // Derive header information.
-    let headerName: string;
+    let headerName: string | React.ReactNode;
     let headerContent: React.ReactNode;
     if (conversation && activeUser) {
         if (isOneToOne) {
-            // For one-to-one, show the other user's username and online status dot.
-            const friendUsername =
-                !fetchedUserLoading &&
-                fetchedUserData &&
-                fetchedUserData.fetchUser
-                    ? fetchedUserData.fetchUser.username
-                    : otherUserId || 'Chat';
-            const friendStatus =
-                !fetchedUserLoading &&
-                fetchedUserData &&
-                fetchedUserData.fetchUser
-                    ? fetchedUserData.fetchUser.status
-                    : 'offline';
-            headerName = friendUsername;
-            headerContent = (
-                <View style={styles.avatarAndDot}>
-                    <NexusImage
-                        source={`https://picsum.photos/seed/${friendUsername || 'default'}/40`}
-                        alt="avatar"
-                        width={40}
-                        height={40}
-                        style={styles.headerAvatar}
-                        contentFit="cover"
-                    />
-                    <View
-                        style={[
-                            styles.statusDot,
-                            {
-                                backgroundColor:
-                                    getOnlineStatusDotColor(friendStatus),
-                            },
-                        ]}
-                    />
-                </View>
-            );
+            if (fetchedUserLoading) {
+                // Render skeleton placeholders for both avatar and username.
+                headerName = <View style={styles.skeletonHeaderText} />;
+                headerContent = <View style={styles.skeletonHeaderAvatar} />;
+            } else {
+                // For one-to-one, show the other user's username and online status dot.
+                const friendUsername = fetchedUserData?.fetchUser?.username;
+                const friendStatus =
+                    fetchedUserData?.fetchUser?.status || 'offline';
+                headerName = friendUsername;
+                headerContent = (
+                    <View style={styles.avatarAndDot}>
+                        <NexusImage
+                            source={`https://picsum.photos/seed/${friendUsername || 'default'}/40`}
+                            alt="avatar"
+                            width={40}
+                            height={40}
+                            style={styles.headerAvatar}
+                            contentFit="cover"
+                        />
+                        <View
+                            style={[
+                                styles.statusDot,
+                                {
+                                    backgroundColor:
+                                        getOnlineStatusDotColor(friendStatus),
+                                },
+                            ]}
+                        />
+                    </View>
+                );
+            }
         } else {
             // For group conversations, list all participants' usernames (excluding active user).
             headerName =
@@ -191,16 +187,58 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
     const inputHeight = 70;
     const messagesHeight = windowHeight - (headerHeight + inputHeight);
 
-    // Initialize messages state from conversation if available.
-    const initialMessages: Message[] = conversation
-        ? conversation.messages
-        : [];
-    const [messages, setMessages] = useState<Message[]>(initialMessages);
+    // Use GET_CONVERSATION_MESSAGES to fetch messages.
+    const LIMIT = 20;
+    const {
+        data,
+        loading: messagesLoading,
+        fetchMore,
+    } = useQuery(GET_CONVERSATION_MESSAGES, {
+        variables: {
+            conversationId: conversation?.id || '',
+            offset: 0,
+            limit: LIMIT,
+        },
+        skip: !conversation?.id,
+        fetchPolicy: 'network-only',
+    });
+
+    // Initialize messages state from query data.
+    const [messages, setMessages] = useState<Message[]>([]);
     useEffect(() => {
-        if (conversation) {
-            setMessages(conversation.messages);
+        if (data && data.getConversationMessages) {
+            setMessages(data.getConversationMessages);
         }
-    }, [conversation]);
+    }, [data]);
+
+    // Mutation hook for sending messages.
+    const [sendMessage] = useMutation(SEND_MESSAGE);
+
+    // Callback to load more messages when scrolling.
+    const handleLoadMore = useCallback(() => {
+        if (fetchMore && !messagesLoading && conversation?.id) {
+            fetchMore({
+                variables: {
+                    conversationId: conversation.id,
+                    offset: messages.length,
+                    limit: LIMIT,
+                },
+            })
+                .then((fetchMoreResult) => {
+                    const newMessages =
+                        fetchMoreResult.data.getConversationMessages;
+                    if (newMessages.length > 0) {
+                        setMessages((prevMessages) => [
+                            ...prevMessages,
+                            ...newMessages,
+                        ]);
+                    }
+                })
+                .catch((err) => {
+                    console.error('Error loading more messages:', err);
+                });
+        }
+    }, [fetchMore, messages.length, messagesLoading, conversation]);
 
     // Callback to handle inline image press.
     const onInlineImagePress = (url: string) => {
@@ -208,14 +246,16 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
     };
 
     // Callback to handle attachment preview press.
-    const onAttachmentPreviewPress = (att: Attachment) => {
-        console.log('Attachment preview pressed:', att);
+    const onAttachmentPreviewPress = (url: string) => {
+        console.log('Attachment preview pressed:', url);
     };
 
-    // Updated handleSend now accepts attachments.
-    const handleSend = (text: string, attachments: Attachment[]) => {
+    // Updated handleSend now uses the SEND_MESSAGE mutation.
+    const handleSend = (text: string, attachmentUrls: string[]) => {
+        // Generate a temporary id for optimistic UI.
+        const tempId = uuidv4();
         const newMessage: Message = {
-            id: Math.random().toString(),
+            id: tempId,
             content: text,
             senderUserId: activeUser?.id ?? '',
             createdAt: new Date().toLocaleString('en-US', {
@@ -227,9 +267,31 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
                 hour12: true,
             }),
             edited: false,
-            attachments,
+            attachmentUrls,
         };
-        setMessages((prevMessages) => [...prevMessages, newMessage]);
+
+        // Optimistically update the UI.
+        setMessages((prevMessages) => [newMessage, ...prevMessages]);
+
+        // Call the mutation to send the message.
+        // For production, consider adding more robust error handling and updating the Apollo cache.
+        sendMessage({
+            variables: {
+                conversationId: conversation?.id,
+                id: tempId,
+                content: text,
+                senderUserId: activeUser?.id,
+            },
+            optimisticResponse: {
+                sendMessage: {
+                    id: tempId,
+                    __typename: 'Message',
+                },
+            },
+        }).catch((err) => {
+            console.error('Error sending message:', err);
+            // Optionally remove the optimistic message or inform the user.
+        });
     };
 
     // Helper function to compute sender's username.
@@ -252,18 +314,16 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
         return message.senderUserId;
     };
 
-    // Transform Message to MessageWithAvatar for MessageItem.
-    const transformMessage = (msg: Message): MessageWithAvatar => ({
+    // Transform a Message into a type accepted by MessageItem.
+    const transformMessage = (msg: Message): DirectMessageWithAvatar => ({
         id: msg.id,
         avatar: `https://picsum.photos/seed/${getSenderName(msg) || 'default'}/40`,
         username: getSenderName(msg),
-        postedAt: new Date(msg.createdAt),
         content: msg.content,
-        attachmentUrls: msg.attachments
-            ? msg.attachments.map((att) => att.previewUri)
-            : [],
-        previewData: [], // You can add preview data if available.
+        attachmentUrls: msg.attachmentUrls ?? [],
         edited: msg.edited,
+        senderUserId: msg.senderUserId,
+        createdAt: msg.createdAt,
     });
 
     // Callback for when an attachment is pressed.
@@ -296,7 +356,11 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
                     />
                 )}
                 {headerContent}
-                <Text style={styles.chatTitle}>{headerName}</Text>
+                {typeof headerName === 'string' ? (
+                    <Text style={styles.chatTitle}>{headerName}</Text>
+                ) : (
+                    headerName
+                )}
             </View>
 
             {/* Main Content Area */}
@@ -307,18 +371,28 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
                         { height: messagesHeight },
                     ]}
                 >
-                    <NexusList
-                        data={messages}
-                        inverted={false}
-                        estimatedItemSize={80}
-                        keyExtractor={(item) => item.id}
-                        renderItem={renderItem}
-                    />
+                    {messagesLoading && messages.length === 0 ? (
+                        // Render skeleton placeholders when loading messages.
+                        Array.from({ length: 5 }).map((_, index) => (
+                            <SkeletonMessageItem key={index} />
+                        ))
+                    ) : (
+                        <FlatList
+                            data={messages}
+                            inverted
+                            keyExtractor={(item) => item.id}
+                            renderItem={renderItem}
+                            onEndReached={handleLoadMore}
+                            onEndReachedThreshold={0.1}
+                        />
+                    )}
                 </View>
                 <View style={styles.inputContainer}>
                     <ChatInputContainer
                         onSend={handleSend}
-                        recipientName={headerName}
+                        recipientName={
+                            typeof headerName === 'string' ? headerName : 'Chat'
+                        }
                         onInlineImagePress={onInlineImagePress}
                         onAttachmentPreviewPress={onAttachmentPreviewPress}
                     />
@@ -388,5 +462,49 @@ const styles = StyleSheet.create({
     },
     inputContainer: {
         height: 70,
+    },
+    // Skeleton styles for messages.
+    skeletonContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginVertical: 10,
+        paddingHorizontal: 15,
+    },
+    skeletonAvatar: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: COLORS.InactiveText,
+    },
+    skeletonContent: {
+        flex: 1,
+        marginLeft: 10,
+    },
+    skeletonLineShort: {
+        width: '30%',
+        height: 10,
+        backgroundColor: COLORS.InactiveText,
+        marginBottom: 6,
+        borderRadius: 5,
+    },
+    skeletonLineLong: {
+        width: '80%',
+        height: 10,
+        backgroundColor: COLORS.InactiveText,
+        borderRadius: 5,
+    },
+    // Skeleton styles for header placeholders.
+    skeletonHeaderAvatar: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: COLORS.InactiveText,
+    },
+    skeletonHeaderText: {
+        width: 100,
+        height: 20,
+        backgroundColor: COLORS.InactiveText,
+        borderRadius: 4,
+        marginLeft: 10,
     },
 });

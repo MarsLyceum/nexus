@@ -1,4 +1,5 @@
 export * from './Attachment';
+export * from './DirectMessages';
 export * from './Event';
 export * from './FeedPost';
 export * from './Group';

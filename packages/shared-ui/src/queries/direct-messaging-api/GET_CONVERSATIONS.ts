@@ -6,13 +6,6 @@ export const GET_CONVERSATIONS = gql`
             id
             type
             participantsUserIds
-            messages {
-                id
-                content
-                senderUserId
-                createdAt
-                edited
-            }
             channelId
         }
     }

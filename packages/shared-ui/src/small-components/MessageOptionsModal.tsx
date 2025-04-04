@@ -43,7 +43,6 @@ export const MessageOptionsModal: React.FC<MessageOptionsModalProps> = ({
                     <TouchableOpacity
                         style={styles.iconWrapper}
                         pointerEvents="auto"
-                        onPress={onEdit}
                     >
                         <Text style={styles.emoji}>👍</Text>
                     </TouchableOpacity>
@@ -53,7 +52,6 @@ export const MessageOptionsModal: React.FC<MessageOptionsModalProps> = ({
                     <TouchableOpacity
                         style={styles.iconWrapper}
                         pointerEvents="auto"
-                        onPress={onEdit}
                     >
                         <Text style={styles.emoji}>💯</Text>
                     </TouchableOpacity>
@@ -63,7 +61,6 @@ export const MessageOptionsModal: React.FC<MessageOptionsModalProps> = ({
                     <TouchableOpacity
                         style={styles.iconWrapper}
                         pointerEvents="auto"
-                        onPress={onEdit}
                     >
                         <Text style={styles.emoji}>😆</Text>
                     </TouchableOpacity>
@@ -73,7 +70,6 @@ export const MessageOptionsModal: React.FC<MessageOptionsModalProps> = ({
                     <TouchableOpacity
                         style={styles.iconWrapper}
                         pointerEvents="auto"
-                        onPress={onEdit}
                     >
                         <Text style={styles.emoji}>😐</Text>
                     </TouchableOpacity>
@@ -93,7 +89,6 @@ export const MessageOptionsModal: React.FC<MessageOptionsModalProps> = ({
                     <TouchableOpacity
                         style={styles.iconWrapper}
                         pointerEvents="auto"
-                        onPress={onMore}
                     >
                         <ArrowIcon />
                     </TouchableOpacity>

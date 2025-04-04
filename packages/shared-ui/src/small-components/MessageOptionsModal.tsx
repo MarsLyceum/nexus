@@ -31,6 +31,7 @@ export const MessageOptionsModal: React.FC<MessageOptionsModalProps> = ({
         anchorPosition={anchorPosition}
         containerStyle={styles.modalContainer}
         closeOnOutsideClick={false}
+        useRightAnchorAlignment
     >
         <View
             style={styles.outerContainer}

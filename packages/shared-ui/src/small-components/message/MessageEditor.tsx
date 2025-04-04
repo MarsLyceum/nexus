@@ -209,7 +209,7 @@ const styles = StyleSheet.create({
         fontStyle: 'italic',
     },
     clickableText: {
-        color: COLORS.AccentText,
+        color: COLORS.Tertiary,
     },
     linkPreviewContainer: {
         marginTop: 10,

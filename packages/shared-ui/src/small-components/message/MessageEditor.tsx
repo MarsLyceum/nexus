@@ -87,6 +87,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({
         setEditorHeight(height);
     };
 
+    // Existing key handler if the MarkdownEditor is focused.
     const handleKeyDown = (e: any) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -96,6 +97,24 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({
             onCancel();
         }
     };
+
+    // Global key event listener to capture key events even when the editor isn't focused.
+    useEffect(() => {
+        const handleGlobalKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                onSave();
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                onCancel();
+            }
+        };
+
+        window.addEventListener('keydown', handleGlobalKeyDown);
+        return () => {
+            window.removeEventListener('keydown', handleGlobalKeyDown);
+        };
+    }, [onSave, onCancel]);
 
     return (
         <View style={styles.editContainer}>
@@ -123,7 +142,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({
                 placeholder="Edit your message..."
                 width="100%"
                 height={editorHeight}
-                onKeyDown={handleKeyDown}
+                onKeyDown={handleKeyDown} // This remains for when the editor is focused.
             />
             <Text style={styles.instructionText}>
                 escape to{' '}

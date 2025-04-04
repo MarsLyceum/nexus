@@ -407,6 +407,7 @@ const styles = StyleSheet.create({
     container: {
         height: '100vh',
         flex: 1,
+        flexBasis: 0,
         backgroundColor: COLORS.SecondaryBackground,
         overflow: 'hidden',
     },

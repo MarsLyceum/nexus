@@ -21,7 +21,7 @@ import { HorizontalLine } from '../images';
 import { GoogleLogo, UserIcon, Email, Phone, Lock } from '../icons';
 import { User } from '../types';
 import { loginUser, useAppDispatch } from '../redux';
-import { validatePassword, detectEnvironment } from '../utils';
+import { validatePassword } from '../utils';
 import { PrimaryGradientButton } from '../buttons';
 import { COLORS } from '../constants';
 
@@ -219,15 +219,7 @@ export function SignUpScreen(): JSX.Element {
             });
             const user: User = result.data.registerUser;
             updateUserData(user);
-            const environment = detectEnvironment();
-            if (
-                environment === 'react-native-mobile' ||
-                environment === 'react-native-web'
-            ) {
-                router.push('dashboard');
-            } else {
-                router.push('/');
-            }
+            router.push('/');
         } catch (error) {
             console.error(error);
             if (error instanceof Error) {

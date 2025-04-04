@@ -9,7 +9,6 @@ import {
 import React, { useEffect } from 'react';
 import styled from 'styled-components/native';
 
-import { detectEnvironment } from '../utils';
 import { useNexusRouter } from '../hooks';
 import { RootState, useAppSelector, useAppDispatch, loadUser } from '../redux';
 import { PeepsLogo } from '../images/PeepsLogo';
@@ -74,15 +73,7 @@ export function WelcomeScreen(): JSX.Element {
     useEffect(() => {
         if (user) {
             // If user is loaded, navigate to the matching screen
-            const environment = detectEnvironment();
-            if (
-                environment === 'react-native-mobile' ||
-                environment === 'react-native-web'
-            ) {
-                router.push('dashboard');
-            } else {
-                router.push('/');
-            }
+            router.push('/');
         }
     }, [user, router]);
 

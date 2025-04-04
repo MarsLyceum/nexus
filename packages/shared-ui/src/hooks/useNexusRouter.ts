@@ -77,9 +77,19 @@ export function useNexusRouter(): NexusRouter {
         environment === 'react-native-mobile'
     ) {
         const navigation = useNavigation();
+
+        // Define default root route for empty navigation.
+        const DEFAULT_ROOT_ROUTE = 'dashboard';
+
         // Helper to normalize path by removing a leading '/' if present.
-        const normalizePath = (path: string) =>
-            path.startsWith('/') ? path.slice(1) : path;
+        // Additionally, if the resulting path is empty, return the default root route.
+        const normalizePath = (path: string) => {
+            let normalized = path.startsWith('/') ? path.slice(1) : path;
+            if (normalized === '') {
+                normalized = DEFAULT_ROOT_ROUTE;
+            }
+            return normalized;
+        };
 
         return {
             push: (path: string, params?: Record<string, any>) => {

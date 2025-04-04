@@ -17,7 +17,8 @@ export type MessageContentProps = {
     width: number;
     onAttachmentPress: (attachments: string[], index: number) => void;
     // New props for selective rendering
-    renderContent?: boolean;
+    renderMessage?: boolean;
+    renderLinkPreview?: boolean;
     renderAttachments?: boolean;
     contentOverride?: string | null; // For live preview during editing
 };
@@ -26,7 +27,8 @@ export const MessageContent: React.FC<MessageContentProps> = ({
     message,
     width,
     onAttachmentPress,
-    renderContent = true,
+    renderMessage = true,
+    renderLinkPreview = true,
     renderAttachments = true,
     contentOverride = null,
 }) => {
@@ -36,8 +38,13 @@ export const MessageContent: React.FC<MessageContentProps> = ({
     const effectiveContent =
         contentOverride !== null ? contentOverride : message.content;
 
-    // Helper to render the message text, markdown, and any link previews.
-    const renderMessageContent = (
+    // Helper to render the message text (Markdown)
+    const renderMessageText = (content: string) => (
+        <MarkdownRenderer text={content} />
+    );
+
+    // Helper to render link previews based on content URLs or previewData
+    const renderLinkPreviews = (
         content: string,
         messageWidth: number,
         previewData?: PreviewData[]
@@ -60,7 +67,6 @@ export const MessageContent: React.FC<MessageContentProps> = ({
             }
             return (
                 <>
-                    <MarkdownRenderer text={content} />
                     {previewData.map((pd, index) => (
                         <LinkPreview
                             key={index}
@@ -85,7 +91,6 @@ export const MessageContent: React.FC<MessageContentProps> = ({
         if (urls.length > 0) {
             return (
                 <>
-                    <MarkdownRenderer text={content} />
                     {urls.map((url, index) => (
                         <LinkPreview
                             key={index}
@@ -97,15 +102,20 @@ export const MessageContent: React.FC<MessageContentProps> = ({
             );
         }
 
-        return <MarkdownRenderer text={content} />;
+        return null;
     };
 
     return (
         <View style={styles.messageContent}>
-            {/* Only render content if requested and content exists */}
-            {renderContent && effectiveContent
-                ? renderMessageContent(effectiveContent, width)
-                : null}
+            {effectiveContent && (
+                <>
+                    {/* Render message text if enabled */}
+                    {renderMessage && renderMessageText(effectiveContent)}
+                    {/* Render link previews if enabled */}
+                    {renderLinkPreview &&
+                        renderLinkPreviews(effectiveContent, width)}
+                </>
+            )}
 
             {/* Only render attachments if requested and attachments exist */}
             {renderAttachments &&

@@ -1,5 +1,5 @@
 // AppDrawerScreen.tsx
-import React, { useContext } from 'react';
+import React, { useContext, useEffect } from 'react';
 import {
     createDrawerNavigator,
     DrawerNavigationProp,
@@ -8,7 +8,12 @@ import { TouchableOpacity, useWindowDimensions } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
 import { COLORS, SIDEBAR_WIDTH } from '@shared-ui/constants';
-import { useAppSelector, RootState, UserGroupsType } from '@shared-ui/redux';
+import {
+    useAppSelector,
+    RootState,
+    UserGroupsType,
+    UserType,
+} from '@shared-ui/redux';
 import { ActiveGroupContext } from '@shared-ui/providers';
 import { Group } from '@shared-ui/types';
 import {
@@ -19,6 +24,7 @@ import {
     SearchScreen,
     FriendsScreen,
 } from '@shared-ui/screens';
+import { useNexusRouter } from '@shared-ui/hooks';
 
 // Define a DrawerParamList type so navigation is properly typed.
 type DrawerParamList = {
@@ -33,9 +39,20 @@ type DrawerParamList = {
 const DrawerNavigator = createDrawerNavigator<DrawerParamList>();
 
 export function AppDrawerScreen() {
+    const router = useNexusRouter();
+
     const userGroups: UserGroupsType = useAppSelector(
         (state: RootState) => state.userGroups.userGroups
     );
+    const user: UserType = useAppSelector(
+        (state: RootState) => state.user.user
+    );
+
+    useEffect(() => {
+        if (!user) {
+            router.push('login');
+        }
+    }, [user, router]);
 
     // Use window dimensions to determine if we're on "desktop" size
     const dimensions = useWindowDimensions();

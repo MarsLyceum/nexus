@@ -16,7 +16,7 @@ import { useApolloClient } from '@apollo/client';
 import { useNexusRouter } from '../hooks';
 import { loginUser, useAppDispatch } from '../redux';
 import { LOGIN_USER } from '../queries';
-import { validatePassword } from '../utils';
+import { validatePassword, detectEnvironment } from '../utils';
 import { Email, Lock, GoogleLogo } from '../icons';
 import { HorizontalLine } from '../images';
 import { PrimaryGradientButton } from '../buttons';

@@ -176,8 +176,9 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                         message={message}
                         width={width}
                         onAttachmentPress={onAttachmentPress}
-                        renderContent={true}
-                        renderAttachments={true}
+                        renderMessage
+                        renderLinkPreview
+                        renderAttachments
                     />
                 </View>
 
@@ -205,7 +206,8 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                             message={message}
                             width={width}
                             onAttachmentPress={onAttachmentPress}
-                            renderContent={true}
+                            renderMessage={false}
+                            renderLinkPreview
                             renderAttachments={false}
                             contentOverride={editedContent}
                         />
@@ -218,8 +220,9 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                                 message={message}
                                 width={width}
                                 onAttachmentPress={onAttachmentPress}
-                                renderContent={false}
-                                renderAttachments={true}
+                                renderMessage={false}
+                                renderLinkPreview={false}
+                                renderAttachments
                             />
                         </View>
                     )}

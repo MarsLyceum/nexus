@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import { NexusImage } from './NexusImage';
 import { COLORS } from '../constants';
 import { MessageContent, MessageEditor } from './message';
@@ -8,24 +8,23 @@ import { formatDateForChat } from '../utils';
 import type { MessageWithAvatar, DirectMessageWithAvatar } from '../types';
 
 export type MessageItemProps = {
-    item: MessageWithAvatar | DirectMessageWithAvatar;
+    message: MessageWithAvatar | DirectMessageWithAvatar;
     width: number;
     onAttachmentPress: (attachments: string[], index: number) => void;
     scrollContainerRef: React.RefObject<any>;
 };
 
 const getMessageDate = (
-    item: MessageWithAvatar | DirectMessageWithAvatar
-): Date => item.postedAt ?? new Date(item.createdAt);
+    message: MessageWithAvatar | DirectMessageWithAvatar
+): Date => message.postedAt ?? new Date(message.createdAt);
 
 export const MessageItem: React.FC<MessageItemProps> = ({
-    item,
+    message,
     width,
     onAttachmentPress,
     scrollContainerRef,
 }) => {
     const [optionsModalVisible, setOptionsModalVisible] = useState(false);
-    // New state to hold the measured anchor position
     const [anchorPosition, setAnchorPosition] = useState<{
         x: number;
         y: number;
@@ -36,9 +35,9 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     const [isHovered, setIsHovered] = useState(false);
     const [isScrolling, setIsScrolling] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
-    const [editedContent, setEditedContent] = useState(item.content ?? '');
+    const [editedContent, setEditedContent] = useState(message.content ?? '');
     const containerRef = useRef<View>(null);
-    const messageDate = getMessageDate(item);
+    const messageDate = getMessageDate(message);
 
     // Measure the container and set the anchor based on its top-right edge.
     const showModal = () => {
@@ -126,19 +125,23 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     };
 
     const handleMore = () => {
-        console.log('More action triggered for message:', item);
+        console.log('More action triggered for message:', message);
     };
 
     const handleSaveEdit = () => {
         console.log('Saving edited message:', editedContent);
-        item.content = editedContent;
+        message.content = editedContent;
         setIsEditing(false);
     };
 
     const handleCancelEdit = () => {
-        setEditedContent(item.content ?? '');
+        setEditedContent(message.content ?? '');
         setIsEditing(false);
     };
+
+    // Check if we have attachments
+    const hasAttachments =
+        message.attachmentUrls && message.attachmentUrls.length > 0;
 
     return (
         <View
@@ -148,7 +151,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
             onMouseLeave={handleMouseLeave}
         >
             <NexusImage
-                source={item.avatar}
+                source={message.avatar}
                 style={styles.avatar}
                 width={40}
                 height={40}
@@ -156,28 +159,74 @@ export const MessageItem: React.FC<MessageItemProps> = ({
             />
             <View style={styles.innerContainer}>
                 <Text style={styles.userName}>
-                    {item.username}{' '}
+                    {message.username}{' '}
                     <Text style={styles.time}>
                         {formatDateForChat(messageDate)}
                     </Text>
                 </Text>
-                {isEditing ? (
+
+                {/* Content view section - always mounted, visibility controlled by style */}
+                <View
+                    style={[
+                        styles.viewContainer,
+                        isEditing ? styles.hidden : styles.visible,
+                    ]}
+                >
+                    <MessageContent
+                        message={message}
+                        width={width}
+                        onAttachmentPress={onAttachmentPress}
+                        renderContent={true}
+                        renderAttachments={true}
+                    />
+                </View>
+
+                {/* Edit section - always mounted, visibility controlled by style */}
+                <View
+                    style={[
+                        styles.editContainer,
+                        isEditing ? styles.visible : styles.hidden,
+                    ]}
+                >
+                    {/* Text editor */}
                     <MessageEditor
                         initialContent={editedContent}
                         width={width}
                         onChange={setEditedContent}
                         onSave={handleSaveEdit}
                         onCancel={handleCancelEdit}
-                    />
-                ) : (
-                    <MessageContent
-                        item={item}
-                        width={width}
+                        message={message}
                         onAttachmentPress={onAttachmentPress}
                     />
-                )}
+
+                    {/* Link previews with live updates */}
+                    <View style={styles.linkPreviewsWhileEditing}>
+                        <MessageContent
+                            message={message}
+                            width={width}
+                            onAttachmentPress={onAttachmentPress}
+                            renderContent={true}
+                            renderAttachments={false}
+                            contentOverride={editedContent}
+                        />
+                    </View>
+
+                    {/* Attachments section */}
+                    {hasAttachments && (
+                        <View style={styles.attachmentsWhileEditing}>
+                            <MessageContent
+                                message={message}
+                                width={width}
+                                onAttachmentPress={onAttachmentPress}
+                                renderContent={false}
+                                renderAttachments={true}
+                            />
+                        </View>
+                    )}
+                </View>
             </View>
-            {/* Render the options modal and pass the measured anchorPosition and opt-in flag */}
+
+            {/* Options modal */}
             {!isEditing && optionsModalVisible && anchorPosition && (
                 <View style={styles.optionsModalContainer}>
                     <MessageOptionsModal
@@ -204,7 +253,7 @@ const styles = StyleSheet.create({
         alignItems: 'flex-start',
         padding: 15,
         width: '100%',
-        position: 'relative', // Ensures that absolute children are positioned relative to this container
+        position: 'relative',
         overflow: 'visible',
     },
     hovered: {
@@ -231,9 +280,28 @@ const styles = StyleSheet.create({
         color: COLORS.InactiveText,
         fontFamily: 'Roboto_400Regular',
     },
+    viewContainer: {
+        // Container for normal viewing mode
+    },
+    editContainer: {
+        // Container for edit mode components
+    },
+    linkPreviewsWhileEditing: {
+        marginTop: 10,
+    },
+    attachmentsWhileEditing: {
+        marginTop: 10,
+    },
     optionsModalContainer: {
         position: 'absolute',
-        // No fixed top/right here – the MiniModal will use the anchorPosition we passed.
         zIndex: 100,
+    },
+    visible: {
+        display: 'flex',
+        opacity: 1,
+    },
+    hidden: {
+        display: 'none',
+        opacity: 0,
     },
 });

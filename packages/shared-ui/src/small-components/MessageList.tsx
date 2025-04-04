@@ -41,7 +41,7 @@ export const MessageList: React.FC<MessageListProps> = ({
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
                 <MessageItem
-                    item={item}
+                    message={item}
                     width={width}
                     onAttachmentPress={onAttachmentPress}
                     scrollContainerRef={flatListRef} // Pass the scroll container ref

@@ -13,22 +13,33 @@ import type {
 } from '../../types';
 
 export type MessageContentProps = {
-    item: MessageWithAvatar | DirectMessageWithAvatar;
+    message: MessageWithAvatar | DirectMessageWithAvatar;
     width: number;
     onAttachmentPress: (attachments: string[], index: number) => void;
+    // New props for selective rendering
+    renderContent?: boolean;
+    renderAttachments?: boolean;
+    contentOverride?: string | null; // For live preview during editing
 };
 
 export const MessageContent: React.FC<MessageContentProps> = ({
-    item,
+    message,
     width,
     onAttachmentPress,
+    renderContent = true,
+    renderAttachments = true,
+    contentOverride = null,
 }) => {
-    const mediaInfos = useMediaTypes(item.attachmentUrls || []);
+    const mediaInfos = useMediaTypes(message.attachmentUrls || []);
+
+    // Use override content if provided, otherwise use message content
+    const effectiveContent =
+        contentOverride !== null ? contentOverride : message.content;
 
     // Helper to render the message text, markdown, and any link previews.
     const renderMessageContent = (
         content: string,
-        width: number,
+        messageWidth: number,
         previewData?: PreviewData[]
     ) => {
         const trimmedContent = content.trim();
@@ -43,7 +54,7 @@ export const MessageContent: React.FC<MessageContentProps> = ({
                 return (
                     <LinkPreview
                         previewData={previewData[0]}
-                        containerWidth={width - 32}
+                        containerWidth={messageWidth - 32}
                     />
                 );
             }
@@ -54,7 +65,7 @@ export const MessageContent: React.FC<MessageContentProps> = ({
                         <LinkPreview
                             key={index}
                             previewData={pd}
-                            containerWidth={width - 32}
+                            containerWidth={messageWidth - 32}
                         />
                     ))}
                 </>
@@ -66,7 +77,9 @@ export const MessageContent: React.FC<MessageContentProps> = ({
             trimmedContent === urls[0] &&
             isImageExtensionUrl(urls[0])
         ) {
-            return <LinkPreview url={urls[0]} containerWidth={width - 32} />;
+            return (
+                <LinkPreview url={urls[0]} containerWidth={messageWidth - 32} />
+            );
         }
 
         if (urls.length > 0) {
@@ -77,7 +90,7 @@ export const MessageContent: React.FC<MessageContentProps> = ({
                         <LinkPreview
                             key={index}
                             url={url}
-                            containerWidth={width - 32}
+                            containerWidth={messageWidth - 32}
                         />
                     ))}
                 </>
@@ -89,57 +102,62 @@ export const MessageContent: React.FC<MessageContentProps> = ({
 
     return (
         <View style={styles.messageContent}>
-            {item.content
-                ? renderMessageContent(item.content, width, item.previewData)
+            {/* Only render content if requested and content exists */}
+            {renderContent && effectiveContent
+                ? renderMessageContent(effectiveContent, width)
                 : null}
-            {item.attachmentUrls && item.attachmentUrls.length > 0 && (
-                <View style={styles.messageAttachmentsContainer}>
-                    {item.attachmentUrls.map((url, index) => {
-                        const info = mediaInfos[url];
-                        return (
-                            <TouchableOpacity
-                                key={index}
-                                onPress={() =>
-                                    onAttachmentPress(
-                                        item.attachmentUrls ?? [],
-                                        index
-                                    )
-                                }
-                            >
-                                {info && info.type === 'video' ? (
-                                    <NexusVideo
-                                        source={{ uri: url }}
-                                        style={[
-                                            styles.messageAttachmentImage,
-                                            {
+
+            {/* Only render attachments if requested and attachments exist */}
+            {renderAttachments &&
+                message.attachmentUrls &&
+                message.attachmentUrls.length > 0 && (
+                    <View style={styles.messageAttachmentsContainer}>
+                        {message.attachmentUrls.map((url, index) => {
+                            const info = mediaInfos[url];
+                            return (
+                                <TouchableOpacity
+                                    key={index}
+                                    onPress={() =>
+                                        onAttachmentPress(
+                                            message.attachmentUrls ?? [],
+                                            index
+                                        )
+                                    }
+                                >
+                                    {info && info.type === 'video' ? (
+                                        <NexusVideo
+                                            source={{ uri: url }}
+                                            style={[
+                                                styles.messageAttachmentImage,
+                                                {
+                                                    width: info.width * 0.5,
+                                                    height: info.height * 0.5,
+                                                },
+                                            ]}
+                                            muted={false}
+                                            repeat
+                                            paused
+                                            contentFit="contain"
+                                        />
+                                    ) : info && info.type === 'image' ? (
+                                        <NexusImage
+                                            source={url}
+                                            style={{
+                                                ...styles.messageAttachmentImage,
                                                 width: info.width * 0.5,
                                                 height: info.height * 0.5,
-                                            },
-                                        ]}
-                                        muted={false}
-                                        repeat
-                                        paused
-                                        contentFit="contain"
-                                    />
-                                ) : info && info.type === 'image' ? (
-                                    <NexusImage
-                                        source={url}
-                                        style={{
-                                            ...styles.messageAttachmentImage,
-                                            width: info.width * 0.5,
-                                            height: info.height * 0.5,
-                                        }}
-                                        contentFit="contain"
-                                        width={info.width * 0.5}
-                                        height={info.height * 0.5}
-                                        alt="Message attachment image"
-                                    />
-                                ) : null}
-                            </TouchableOpacity>
-                        );
-                    })}
-                </View>
-            )}
+                                            }}
+                                            contentFit="contain"
+                                            width={info.width * 0.5}
+                                            height={info.height * 0.5}
+                                            alt="Message attachment image"
+                                        />
+                                    ) : null}
+                                </TouchableOpacity>
+                            );
+                        })}
+                    </View>
+                )}
         </View>
     );
 };

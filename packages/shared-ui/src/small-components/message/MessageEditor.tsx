@@ -9,9 +9,9 @@ import {
 } from 'react-native';
 import { MarkdownEditor } from '../MarkdownEditor';
 import { MarkdownRenderer } from '../MarkdownRenderer';
-import { LinkPreview } from '../LinkPreview';
 import { extractUrls } from '../../utils';
 import { COLORS } from '../../constants';
+import type { MessageWithAvatar, DirectMessageWithAvatar } from '../../types';
 
 export type MessageEditorProps = {
     initialContent: string;
@@ -19,6 +19,8 @@ export type MessageEditorProps = {
     onChange: (newContent: string) => void;
     onSave: () => void;
     onCancel: () => void;
+    message: MessageWithAvatar | DirectMessageWithAvatar;
+    onAttachmentPress: (attachments: string[], index: number) => void;
 };
 
 export const MessageEditor: React.FC<MessageEditorProps> = ({
@@ -27,6 +29,8 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({
     onChange,
     onSave,
     onCancel,
+    message,
+    onAttachmentPress,
 }) => {
     const [editedContent, setEditedContent] = useState(initialContent);
     const [editorHeight, setEditorHeight] = useState<number>(60);
@@ -35,9 +39,9 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({
         null
     );
 
-    const editedUrls = extractUrls(editedContent);
     const isOnlyUrl =
-        editedUrls.length === 1 && editedContent.trim() === editedUrls[0];
+        extractUrls(editedContent).length === 1 &&
+        editedContent.trim() === extractUrls(editedContent)[0];
 
     // Estimate height using measured text metrics and style-based padding.
     const estimateHeightForUrl = (
@@ -48,6 +52,10 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({
         horizontalPadding: number,
         verticalPadding: number
     ): number => {
+        if (!text.trim()) {
+            return 60;
+        }
+
         const effectiveWidth = containerWidth - horizontalPadding;
         const charsPerLine = Math.floor(effectiveWidth / avgCharWidth) || 1;
         const lines = Math.ceil(text.length / charsPerLine);
@@ -56,6 +64,13 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({
 
     // For URL-only messages, update the editor height based on measured text style.
     useEffect(() => {
+        // For empty content, always use default height
+        if (!editedContent.trim()) {
+            setEditorHeight(60);
+            return;
+        }
+
+        // For URL content with measurements
         if (isOnlyUrl && avgCharWidth && measuredLineHeight) {
             const flattened: StyleProp<TextStyle> =
                 RNStyleSheet.flatten(styles.urlText) || {};
@@ -77,14 +92,14 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({
                 horizontalPadding,
                 verticalPadding
             );
-            setEditorHeight(estimatedHeight);
+            setEditorHeight(Math.max(60, estimatedHeight));
         }
     }, [editedContent, isOnlyUrl, width, avgCharWidth, measuredLineHeight]);
 
     // For non-URL messages, use a hidden MarkdownRenderer to update height.
     const handleNonUrlLayout = (e: any) => {
         const { height } = e.nativeEvent.layout;
-        setEditorHeight(height);
+        setEditorHeight(Math.max(60, height));
     };
 
     // Existing key handler if the MarkdownEditor is focused.
@@ -139,9 +154,9 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({
                     setEditedContent(text);
                     onChange(text);
                 }}
-                placeholder="Edit your message..."
+                placeholder=""
                 width="100%"
-                height={editorHeight}
+                height={`${Math.max(60, editorHeight)}px`}
                 onKeyDown={handleKeyDown} // This remains for when the editor is focused.
             />
             <Text style={styles.instructionText}>
@@ -154,17 +169,9 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({
                     save
                 </Text>
             </Text>
-            {editedUrls.length > 0 && (
-                <View style={styles.linkPreviewContainer}>
-                    {editedUrls.map((url, index) => (
-                        <LinkPreview
-                            key={index}
-                            url={url}
-                            containerWidth={width - 32}
-                        />
-                    ))}
-                </View>
-            )}
+
+            {/* No link previews here anymore - they will be rendered by MessageItem */}
+
             {/* Hidden measurement element for URL-only messages */}
             {isOnlyUrl &&
                 avgCharWidth === null &&
@@ -210,9 +217,6 @@ const styles = StyleSheet.create({
     },
     clickableText: {
         color: COLORS.Tertiary,
-    },
-    linkPreviewContainer: {
-        marginTop: 10,
     },
     urlText: {
         fontSize: 14,

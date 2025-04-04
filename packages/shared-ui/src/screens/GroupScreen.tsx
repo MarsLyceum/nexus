@@ -114,7 +114,6 @@ export function GroupScreen() {
     const { width } = useWindowDimensions();
     const isLargeScreen = width > 768;
     const [activeView, setActiveView] = useState<ActiveView>('messages');
-    const router = useNexusRouter();
 
     // When an active group becomes available and no active channel is set, use the first channel.
     useEffect(() => {

@@ -336,7 +336,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
         const transformedMessage = transformMessage(item);
         return (
             <MessageItem
-                item={transformedMessage}
+                message={transformedMessage}
                 width={width}
                 onAttachmentPress={handleAttachmentPress}
                 scrollContainerRef={flatListRef} // Pass the FlatList ref to each MessageItem.

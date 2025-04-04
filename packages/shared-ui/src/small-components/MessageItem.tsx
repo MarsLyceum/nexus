@@ -304,6 +304,7 @@ const MessageItemComponent: React.FC<MessageItemProps> = ({
         scrollContainer.addEventListener('scroll', handleScroll, {
             passive: true,
         });
+        // eslint-disable-next-line consistent-return
         return () => {
             scrollContainer.removeEventListener('scroll', handleScroll);
             if (scrollTimerRef.current) {
@@ -372,16 +373,12 @@ const MessageItemComponent: React.FC<MessageItemProps> = ({
 
                 {isEditing ? (
                     <View style={styles.editContainer}>
-                        {/* "Editing" label */}
-                        <View style={styles.editingLabelContainer}>
-                            <Text style={styles.editingLabelText}>Editing</Text>
-                        </View>
                         <MarkdownEditor
                             value={editedContent}
                             onChangeText={setEditedContent}
                             placeholder="Edit your message..."
                             width="100%"
-                            height="150px"
+                            height="60px"
                             onKeyDown={handleKeyDown}
                         />
                         {/* Instruction text with clickable "escape" and "enter" */}

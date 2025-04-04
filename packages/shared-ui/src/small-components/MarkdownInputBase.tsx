@@ -1,5 +1,5 @@
 // MarkdownInputBase.tsx
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import {
     ScrollView,
     View,
@@ -47,10 +47,11 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
     const overlayScrollRef = useRef<ScrollView>(null);
     // <-- Create a ref for the EmojiPicker
     const emojiPickerRef = useRef<EmojiPickerHandle>(null);
+    // <-- Add a ref for the TextInput
+    const textInputRef = useRef<TextInput>(null);
 
     // Scroll syncing functions remain unchanged
     const handleVerticalScroll = (
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         e: NativeSyntheticEvent<TextInputScrollEventData> & { nativeEvent: any }
     ) => {
         const offsetY =
@@ -59,7 +60,6 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
     };
 
     const handleHorizontalScroll = (
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         e: NativeSyntheticEvent<TextInputScrollEventData> & { nativeEvent: any }
     ) => {
         const offsetX =
@@ -68,7 +68,6 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
     };
 
     // Delegate key events to the EmojiPicker
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleKeyPressInternal = (e: any) => {
         emojiPickerRef.current?.handleKeyDown(e);
     };
@@ -119,6 +118,24 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
         inputStyle,
     ];
 
+    // For web: Attach native keydown listener to capture keys like "Escape"
+    // eslint-disable-next-line consistent-return
+    useEffect(() => {
+        if (Platform.OS === 'web' && textInputRef.current) {
+            const node = textInputRef.current as any;
+            const handleNativeKeyDown = (e: KeyboardEvent) => {
+                if (onKeyDown) {
+                    onKeyDown(e);
+                }
+                handleKeyPressInternal(e);
+            };
+            node.addEventListener('keydown', handleNativeKeyDown);
+            return () => {
+                node.removeEventListener('keydown', handleNativeKeyDown);
+            };
+        }
+    }, [onKeyDown]);
+
     return (
         <View style={[styles.inputWrapper, containerStyle, wrapperStyle]}>
             <MarkdownOverlay
@@ -130,6 +147,7 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
                 inputStyle={[{ width: '100%', height: '100%' }, inputStyle]}
             />
             <TextInput
+                ref={textInputRef}
                 style={inputCombinedStyle}
                 value={value}
                 onChangeText={onChangeText}
@@ -138,26 +156,21 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
                 multiline={multiline}
                 scrollEnabled
                 textAlignVertical="top"
+                tabIndex={Platform.OS === 'web' ? 0 : undefined}
                 onScroll={
                     multiline ? handleVerticalScroll : handleHorizontalScroll
                 }
-                {...(Platform.OS === 'web'
+                // For non-web platforms, attach onKeyPress normally
+                {...(Platform.OS !== 'web'
                     ? {
-                          onKeyDown: (e: any) => {
-                              if (onKeyDown) {
-                                  onKeyDown(e);
-                              }
-                              handleKeyPressInternal(e);
-                          },
-                      }
-                    : {
                           onKeyPress: (e: any) => {
                               if (onKeyDown) {
                                   onKeyDown(e);
                               }
                               handleKeyPressInternal(e);
                           },
-                      })}
+                      }
+                    : {})}
                 scrollEventThrottle={16}
                 {...rest}
             />

@@ -32,12 +32,10 @@ export const MessageOptionsModal: React.FC<MessageOptionsModalProps> = ({
         containerStyle={styles.modalContainer}
         closeOnOutsideClick={false}
         useRightAnchorAlignment
+        onMouseEnter={onMouseEnterModal}
+        onMouseLeave={onMouseLeaveModal}
     >
-        <View
-            style={styles.outerContainer}
-            onMouseEnter={onMouseEnterModal}
-            onMouseLeave={onMouseLeaveModal}
-        >
+        <View style={styles.outerContainer}>
             <View style={styles.iconsRow}>
                 <Tooltip tooltipText="Like">
                     <TouchableOpacity

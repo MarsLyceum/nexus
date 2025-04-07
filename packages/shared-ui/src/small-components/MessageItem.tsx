@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { NexusImage } from './NexusImage';
 import { COLORS } from '../constants';
@@ -43,6 +43,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     );
     const containerRef = useRef<View>(null);
     const messageDate = getMessageDate(currentMessage);
+    const hideModalTimeoutRef = useRef<NodeJS.Timeout | undefined>();
 
     // Measure the container and set the anchor based on its top-right edge.
     const showModal = () => {
@@ -64,13 +65,21 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     };
 
     const handleMouseEnter = () => {
+        if (hideModalTimeoutRef.current) {
+            clearTimeout(hideModalTimeoutRef.current);
+            hideModalTimeoutRef.current = undefined;
+        }
         setIsHovered(true);
         if (!isScrolling) showModal();
     };
 
     const handleMouseLeave = () => {
         setIsHovered(false);
-        if (!modalHovered) setOptionsModalVisible(false);
+        hideModalTimeoutRef.current = setTimeout(() => {
+            if (!modalHovered) {
+                setOptionsModalVisible(false);
+            }
+        }, 300);
     };
 
     useEffect(() => {

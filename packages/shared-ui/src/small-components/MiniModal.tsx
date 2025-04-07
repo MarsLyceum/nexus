@@ -18,6 +18,8 @@ export type MiniModalProps = {
      * If false or not provided, the modal will use the old logic (used for GIF modal).
      */
     useRightAnchorAlignment?: boolean;
+    onMouseEnter: (() => void) | undefined;
+    onMouseLeave: (() => void) | undefined;
 };
 
 export const MiniModal: React.FC<MiniModalProps> = ({
@@ -28,6 +30,8 @@ export const MiniModal: React.FC<MiniModalProps> = ({
     children,
     closeOnOutsideClick = true,
     useRightAnchorAlignment = false,
+    onMouseEnter,
+    onMouseLeave,
 }) => {
     const modalRef = useRef<View>(null);
 
@@ -247,6 +251,8 @@ export const MiniModal: React.FC<MiniModalProps> = ({
             <View
                 ref={modalRef}
                 style={[computedContainerStyle, { pointerEvents: 'auto' }]}
+                onMouseEnter={onMouseEnter}
+                onMouseLeave={onMouseLeave}
             >
                 {children}
             </View>

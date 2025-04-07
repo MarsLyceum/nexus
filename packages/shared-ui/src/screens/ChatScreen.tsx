@@ -23,9 +23,15 @@ import { useAppSelector, RootState, UserType } from '../redux';
 import {
     FETCH_USER_QUERY,
     SEND_MESSAGE,
+    UPDATE_MESSAGE,
     GET_CONVERSATION_MESSAGES,
 } from '../queries';
-import { Message, Conversation, DirectMessageWithAvatar } from '../types';
+import {
+    Message,
+    Conversation,
+    DirectMessageWithAvatar,
+    MessageWithAvatar,
+} from '../types';
 import { getOnlineStatusDotColor } from '../utils';
 
 interface ChatScreenProps {
@@ -203,7 +209,6 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
             limit: LIMIT,
         },
         skip: !conversation?.id,
-        fetchPolicy: 'network-only',
     });
 
     // Initialize messages state from query data.
@@ -216,6 +221,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
 
     // Mutation hook for sending messages.
     const [sendMessage] = useMutation(SEND_MESSAGE);
+    const [updateMessage] = useMutation(UPDATE_MESSAGE);
 
     // Callback to load more messages when scrolling.
     const handleLoadMore = useCallback(() => {
@@ -331,6 +337,29 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
         console.log('Attachment pressed:', attachmentUrls, index);
     };
 
+    const handleSaveEdit = useCallback(
+        (message: DirectMessageWithAvatar | MessageWithAvatar) => {
+            updateMessage({
+                variables: {
+                    conversationId: conversation?.id,
+                    id: message.id,
+                    content: message.content,
+                    senderUserId: activeUser?.id,
+                },
+                optimisticResponse: {
+                    updateMessage: {
+                        id: message.id,
+                        content: message.content,
+                        __typename: 'Message',
+                    },
+                },
+            }).catch((error) => {
+                console.error('Error updating message:', error);
+            });
+        },
+        [activeUser?.id, conversation?.id, updateMessage]
+    );
+
     // Render each message using the MessageItem component.
     const renderItem = ({ item }: { item: Message }) => {
         const transformedMessage = transformMessage(item);
@@ -340,6 +369,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
                 width={width}
                 onAttachmentPress={handleAttachmentPress}
                 scrollContainerRef={flatListRef} // Pass the FlatList ref to each MessageItem.
+                onSaveEdit={handleSaveEdit}
             />
         );
     };

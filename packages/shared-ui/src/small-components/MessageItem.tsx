@@ -12,6 +12,7 @@ export type MessageItemProps = {
     width: number;
     onAttachmentPress: (attachments: string[], index: number) => void;
     scrollContainerRef: React.RefObject<any>;
+    onSaveEdit: (message: MessageWithAvatar | DirectMessageWithAvatar) => void;
 };
 
 const getMessageDate = (
@@ -23,7 +24,9 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     width,
     onAttachmentPress,
     scrollContainerRef,
+    onSaveEdit,
 }) => {
+    const [currentMessage, setCurrentMessage] = useState(message);
     const [optionsModalVisible, setOptionsModalVisible] = useState(false);
     const [anchorPosition, setAnchorPosition] = useState<{
         x: number;
@@ -35,9 +38,11 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     const [isHovered, setIsHovered] = useState(false);
     const [isScrolling, setIsScrolling] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
-    const [editedContent, setEditedContent] = useState(message.content ?? '');
+    const [editedContent, setEditedContent] = useState(
+        currentMessage.content ?? ''
+    );
     const containerRef = useRef<View>(null);
-    const messageDate = getMessageDate(message);
+    const messageDate = getMessageDate(currentMessage);
 
     // Measure the container and set the anchor based on its top-right edge.
     const showModal = () => {
@@ -129,19 +134,24 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     };
 
     const handleSaveEdit = () => {
-        console.log('Saving edited message:', editedContent);
-        message.content = editedContent;
+        setCurrentMessage((prevMessage) => ({
+            ...prevMessage,
+            content: editedContent,
+            edited: true,
+        }));
+        onSaveEdit(currentMessage);
         setIsEditing(false);
     };
 
     const handleCancelEdit = () => {
-        setEditedContent(message.content ?? '');
+        setEditedContent(currentMessage.content ?? '');
         setIsEditing(false);
     };
 
     // Check if we have attachments
     const hasAttachments =
-        message.attachmentUrls && message.attachmentUrls.length > 0;
+        currentMessage.attachmentUrls &&
+        currentMessage.attachmentUrls.length > 0;
 
     return (
         <View
@@ -151,7 +161,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
             onMouseLeave={handleMouseLeave}
         >
             <NexusImage
-                source={message.avatar}
+                source={currentMessage.avatar}
                 style={styles.avatar}
                 width={40}
                 height={40}
@@ -159,7 +169,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
             />
             <View style={styles.innerContainer}>
                 <Text style={styles.userName}>
-                    {message.username}{' '}
+                    {currentMessage.username}{' '}
                     <Text style={styles.time}>
                         {formatDateForChat(messageDate)}
                     </Text>
@@ -173,7 +183,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                     ]}
                 >
                     <MessageContent
-                        message={message}
+                        message={currentMessage}
                         width={width}
                         onAttachmentPress={onAttachmentPress}
                         renderMessage
@@ -196,14 +206,14 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                         onChange={setEditedContent}
                         onSave={handleSaveEdit}
                         onCancel={handleCancelEdit}
-                        message={message}
+                        message={currentMessage}
                         onAttachmentPress={onAttachmentPress}
                     />
 
                     {/* Link previews with live updates */}
                     <View style={styles.linkPreviewsWhileEditing}>
                         <MessageContent
-                            message={message}
+                            message={currentMessage}
                             width={width}
                             onAttachmentPress={onAttachmentPress}
                             renderMessage={false}
@@ -217,7 +227,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                     {hasAttachments && (
                         <View style={styles.attachmentsWhileEditing}>
                             <MessageContent
-                                message={message}
+                                message={currentMessage}
                                 width={width}
                                 onAttachmentPress={onAttachmentPress}
                                 renderMessage={false}

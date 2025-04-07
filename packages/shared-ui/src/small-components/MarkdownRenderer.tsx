@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
     editedTag: {
         fontSize: 12,
         color: COLORS.InactiveText, // e.g., "#989898"
-        fontStyle: 'italic',
+        fontFamily: 'Roboto_400Regular',
     },
 });
 

@@ -6,7 +6,7 @@ import {
     Linking,
     View,
     TouchableOpacity,
-    Platform, // <-- Import Platform
+    Platform,
 } from 'react-native';
 import MarkdownIt from 'markdown-it';
 import RenderHTML, {
@@ -19,8 +19,8 @@ import { COLORS } from '../constants';
 // Styles
 // ---------------------
 const styles = StyleSheet.create({
+    // Use white for paragraph text as desired.
     document: {
-        color: 'white',
         fontSize: 16,
         lineHeight: 22,
         fontFamily: 'Roboto_400Regular',
@@ -46,7 +46,7 @@ const styles = StyleSheet.create({
         color: COLORS.Link,
         textDecorationLine: 'underline',
         fontSize: 16,
-        fontFamily: 'Roboto_400Regular', // <-- Added fontFamily for both web and mobile
+        fontFamily: 'Roboto_400Regular',
     },
     heading1: {
         fontSize: 32,
@@ -58,36 +58,35 @@ const styles = StyleSheet.create({
         lineHeight: 40,
     },
     ellipsisText: {
-        color: 'white',
+        color: COLORS.White,
         fontSize: 18,
     },
-    // New style for emoji-only content
     emojiLarge: {
         fontSize: 64,
         textAlign: 'left',
         fontFamily: 'Roboto_400Regular',
     },
+    // The edited tag should be smaller and styled (using a lighter gray per your palette).
+    editedTag: {
+        fontSize: 12,
+        color: COLORS.InactiveText, // e.g., "#989898"
+        fontStyle: 'italic',
+    },
 });
 
 // ---------------------
-// Helper function to extract text recursively from tnode children
+// Helpers
 // ---------------------
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const extractTextFromTnode = (tnode: any): string => {
-    if (tnode.data) {
-        return tnode.data;
-    }
+    if (tnode.data) return tnode.data;
     if (tnode.children && Array.isArray(tnode.children)) {
         return tnode.children
-            .map((element: unknown) => extractTextFromTnode(element))
+            .map((el: unknown) => extractTextFromTnode(el))
             .join('');
     }
     return '';
 };
 
-// ---------------------
-// Helper function to check if text is only emojis (and whitespace)
-// ---------------------
 const isOnlyEmojis = (text: string): boolean => {
     const emojiRegex =
         /^(?:\s*(?:\p{Emoji_Presentation}|\p{Emoji}\uFE0F)\s*)+$/u;
@@ -95,7 +94,7 @@ const isOnlyEmojis = (text: string): boolean => {
 };
 
 // ---------------------
-// Inline Spoiler Component (toggles between whited out and revealed text)
+// Inline Spoiler Component
 // ---------------------
 const InlineSpoiler: React.FC<{ children: React.ReactNode }> = ({
     children,
@@ -104,7 +103,6 @@ const InlineSpoiler: React.FC<{ children: React.ReactNode }> = ({
     return (
         <Text
             onPress={() => setRevealed((prev) => !prev)}
-            // Allow text selection only when the spoiler is revealed.
             selectable={revealed}
             style={[
                 styles.spoilerText,
@@ -112,8 +110,6 @@ const InlineSpoiler: React.FC<{ children: React.ReactNode }> = ({
                     backgroundColor: revealed
                         ? COLORS.AppBackground
                         : COLORS.White,
-                    // When hidden: white text on a white background ("whited out").
-                    // When revealed: white text on the app background.
                     color: COLORS.White,
                     alignSelf: 'flex-start',
                 },
@@ -127,7 +123,6 @@ const InlineSpoiler: React.FC<{ children: React.ReactNode }> = ({
 // ---------------------
 // Custom Inline Link Component
 // ---------------------
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const InlineLink: React.FC<{ tnode: any }> = ({ tnode }) => {
     let href = tnode.attributes?.href || '';
     if (!/^https?:\/\//.test(href)) {
@@ -135,14 +130,12 @@ const InlineLink: React.FC<{ tnode: any }> = ({ tnode }) => {
     }
     const content =
         tnode.domNode?.textContent || extractTextFromTnode(tnode) || '';
-
-    // For web, render an anchor (<a>) with a web-specific style mapping.
     if (Platform.OS === 'web') {
         const webStyle = {
             color: styles.linkText.color,
-            textDecoration: styles.linkText.textDecorationLine, // CSS property for text decoration
+            textDecoration: styles.linkText.textDecorationLine,
             fontSize: styles.linkText.fontSize,
-            fontFamily: styles.linkText.fontFamily, // <-- Ensuring same font family
+            fontFamily: styles.linkText.fontFamily,
         };
         return (
             <a
@@ -155,13 +148,10 @@ const InlineLink: React.FC<{ tnode: any }> = ({ tnode }) => {
             </a>
         );
     }
-    // For native environments, render as a Text element with onPress.
     return (
         <Text
             onPress={() => {
-                if (href) {
-                    void Linking.openURL(href);
-                }
+                if (href) void Linking.openURL(href);
             }}
             selectable
             style={[styles.linkText, { alignSelf: 'flex-start' }]}
@@ -172,10 +162,19 @@ const InlineLink: React.FC<{ tnode: any }> = ({ tnode }) => {
 };
 
 // ---------------------
-// Markdown-It Plugin for Discord-Style Inline Spoilers (using ||spoiler||)
+// Markdown-It Setup
 // ---------------------
+const mdInstance = new MarkdownIt({
+    breaks: true, // Convert single newlines to <br>
+    linkify: true,
+    typographer: true,
+    html: true,
+});
+
+// (Keep paragraph tags intact so content is rendered as blocks.)
+
+// Spoiler plugins
 function inlineSpoilerPlugin(md: MarkdownIt) {
-    // eslint-disable-next-line unicorn/consistent-function-scoping, @typescript-eslint/no-explicit-any
     function tokenize(state: any, silent: boolean) {
         const startPos = state.pos;
         if (state.src.slice(startPos, startPos + 2) !== '||') return false;
@@ -185,19 +184,12 @@ function inlineSpoilerPlugin(md: MarkdownIt) {
             const token = state.push('spoiler', 'spoiler', 0);
             token.content = state.src.slice(startPos + 2, end);
         }
-        // eslint-disable-next-line no-param-reassign
         state.pos = end + 2;
         return true;
     }
-    // Register before the "text" rule so inline spoilers are caught even mid-string.
     md.inline.ruler.before('text', 'spoiler', tokenize);
 }
-
-// ---------------------
-// Markdown-It Plugin for Reddit-Style Inline Spoilers (using >!spoiler!<)
-// ---------------------
 function redditSpoilerPlugin(md: MarkdownIt) {
-    // eslint-disable-next-line unicorn/consistent-function-scoping, @typescript-eslint/no-explicit-any
     function tokenize(state: any, silent: boolean) {
         const { pos } = state;
         if (state.src.slice(pos, pos + 2) !== '>!') return false;
@@ -207,51 +199,36 @@ function redditSpoilerPlugin(md: MarkdownIt) {
             const token = state.push('spoiler', 'spoiler', 0);
             token.content = state.src.slice(pos + 2, end);
         }
-        // eslint-disable-next-line no-param-reassign
         state.pos = end + 2;
         return true;
     }
     md.inline.ruler.before('text', 'redditSpoiler', tokenize);
 }
-
-// ---------------------
-// Postprocessor to handle spoilers embedded within larger text tokens
-// ---------------------
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function spoilerPostProcessor(state: any) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     state.tokens.forEach((token: any) => {
         if (token.type === 'inline' && token.children) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const newChildren: any[] = [];
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             token.children.forEach((child: any) => {
-                // Only process text tokens that include our spoiler delimiters.
                 if (child.type === 'text' && child.content.includes('||')) {
                     const text = child.content;
                     let lastIndex = 0;
                     const regex = /\|\|(.+?)\|\|/g;
                     let match;
-                    // eslint-disable-next-line no-cond-assign
                     while ((match = regex.exec(text)) !== null) {
-                        // Push any text before the spoiler as a text token.
                         if (match.index > lastIndex) {
                             const t = new state.Token('text', '', 0);
                             t.content = text.slice(lastIndex, match.index);
                             newChildren.push(t);
                         }
-                        // Create a spoiler token for the matched content.
                         const spoilerToken = new state.Token(
                             'spoiler',
                             'spoiler',
                             0
                         );
-                        // eslint-disable-next-line prefer-destructuring
                         spoilerToken.content = match[1];
                         newChildren.push(spoilerToken);
                         lastIndex = regex.lastIndex;
                     }
-                    // If there's text after the last spoiler, add it as well.
                     if (lastIndex < text.length) {
                         const t = new state.Token('text', '', 0);
                         t.content = text.slice(lastIndex);
@@ -261,32 +238,16 @@ function spoilerPostProcessor(state: any) {
                     newChildren.push(child);
                 }
             });
-            // eslint-disable-next-line no-param-reassign
             token.children = newChildren;
         }
     });
 }
-
-// ---------------------
-// Custom Renderer for Spoiler Tokens in Markdown-It
-// ---------------------
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function spoilerRenderer(tokens: any, idx: number) {
-    return `<spoiler>${tokens[idx].content}</spoiler>`;
+    return `<span class="spoiler">${tokens[idx].content}</span>`;
 }
-
-// ---------------------
-// Create Markdown-It Instance with Plugins and Linkify enabled
-// ---------------------
-const mdInstance = new MarkdownIt({
-    typographer: true,
-    html: true,
-    linkify: true,
-});
 mdInstance.use(inlineSpoilerPlugin);
 mdInstance.use(redditSpoilerPlugin);
 mdInstance.renderer.rules.spoiler = spoilerRenderer;
-// Register the postprocessor to catch inline spoilers embedded in larger text.
 mdInstance.core.ruler.after(
     'inline',
     'spoiler_postprocessor',
@@ -294,34 +255,31 @@ mdInstance.core.ruler.after(
 );
 
 // ---------------------
-// Custom Renderers for react-native-render-html
+// Custom <span> Renderer
 // ---------------------
-const customRenderers = {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    spoiler: ({ tnode }: any) => {
-        const content =
-            tnode.domNode?.textContent || extractTextFromTnode(tnode) || '';
+const customSpanRenderer = ({ tnode }: any) => {
+    if (!tnode) return null;
+    const className = tnode.attributes?.class || '';
+    const content =
+        tnode.domNode?.textContent || extractTextFromTnode(tnode) || '';
+    const classes = className.split(' ').map((cls: string) => cls.trim());
+    if (classes.includes('spoiler')) {
         return <InlineSpoiler>{content}</InlineSpoiler>;
-    },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    a: ({ tnode }: any) => <InlineLink tnode={tnode} />,
+    }
+    if (classes.includes('edited')) {
+        return <Text style={styles.editedTag}>{content}</Text>;
+    }
+    // Fallback: return a default Text element with inherited style.
+    return <Text>{content}</Text>;
 };
 
-// ---------------------
-// Custom Element Models for react-native-render-html
-// ---------------------
+const customRenderers = {
+    a: ({ tnode }: any) => <InlineLink tnode={tnode} />,
+    span: customSpanRenderer,
+};
+
 const customHTMLElementModels = {
     ...defaultHTMLElementModels,
-    spoiler: {
-        ...defaultHTMLElementModels.span,
-        contentModel: HTMLContentModel.textual,
-        isTranslatableTextual: () => true,
-    },
-    a: {
-        ...defaultHTMLElementModels.a,
-        contentModel: HTMLContentModel.textual,
-        isTranslatableTextual: () => true,
-    },
 };
 
 // ---------------------
@@ -331,36 +289,59 @@ const PREVIEW_MAX_HEIGHT = 200;
 const ELLIPSIS_HEIGHT = 30;
 
 // ---------------------
-// Main MarkdownRenderer Component with Preview Prop (boolean)
+// Main MarkdownRenderer Component
 // ---------------------
 export const MarkdownRenderer: React.FC<{
     text: string;
     preview?: boolean;
-}> = ({ text, preview }) => {
+    isEdited?: boolean;
+}> = ({ text, preview, isEdited }) => {
     const contentWidth = Dimensions.get('window').width;
-
     const [contentHeight, setContentHeight] = React.useState(0);
     const [expanded, setExpanded] = React.useState(false);
-    const htmlContent = useMemo(
-        () => `<div>${mdInstance.render(text)}</div>`,
-        [text]
-    );
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // Convert Markdown to HTML.
+    // If isEdited is true, insert the edited tag inline at the end of the last paragraph.
+    const finalHtmlContent = useMemo(() => {
+        let rendered = mdInstance.render(text).trim();
+        if (isEdited) {
+            if (rendered.includes('</p>')) {
+                // Replace the last occurrence of </p> with the edited tag before it.
+                rendered = rendered.replace(
+                    /<\/p>(?!.*<\/p>)/,
+                    ' <span class="edited">(edited)</span></p>'
+                );
+            } else {
+                rendered += ' <span class="edited">(edited)</span>';
+            }
+        }
+        return `<div>${rendered}</div>`;
+    }, [text, isEdited]);
+
+    const htmlContent = useMemo(() => finalHtmlContent, [finalHtmlContent]);
+
     const handleOnLayout = useCallback((event: any) => {
         setContentHeight(event.nativeEvent.layout.height);
     }, []);
 
-    const baseStyle = useMemo(() => ({ marginTop: 0, paddingTop: 0 }), []);
+    // Define tagsStyles to include paragraph styling.
     const tagsStyles = useMemo(
         () => ({
             div: styles.document,
+            p: {
+                color: COLORS.White, // Ensure paragraphs render with white text
+                fontSize: 16,
+                lineHeight: 22,
+                fontFamily: 'Roboto_400Regular',
+                marginVertical: 4,
+            },
             code: styles.code_inline,
             blockquote: styles.blockquote,
             h1: styles.heading1,
         }),
         []
     );
+    const baseStyle = useMemo(() => ({ marginTop: 0, paddingTop: 0 }), []);
     const defaultTextProps = useMemo(() => ({ selectable: true }), []);
 
     const fullContent = (
@@ -369,7 +350,6 @@ export const MarkdownRenderer: React.FC<{
                 contentWidth={contentWidth}
                 source={{ html: htmlContent }}
                 renderers={customRenderers}
-                // @ts-expect-error render html
                 customHTMLElementModels={customHTMLElementModels}
                 baseStyle={baseStyle}
                 tagsStyles={tagsStyles}
@@ -391,7 +371,6 @@ export const MarkdownRenderer: React.FC<{
     }
 
     const isTruncated = contentHeight > PREVIEW_MAX_HEIGHT;
-
     if (!isTruncated) {
         return <View>{fullContent}</View>;
     }
@@ -408,15 +387,9 @@ export const MarkdownRenderer: React.FC<{
                     contentWidth={contentWidth}
                     source={{ html: htmlContent }}
                     renderers={customRenderers}
-                    // @ts-expect-error render html
                     customHTMLElementModels={customHTMLElementModels}
                     baseStyle={{ marginTop: 0, paddingTop: 0 }}
-                    tagsStyles={{
-                        div: styles.document,
-                        code: styles.code_inline,
-                        blockquote: styles.blockquote,
-                        h1: styles.heading1,
-                    }}
+                    tagsStyles={tagsStyles}
                     defaultTextProps={{ selectable: true }}
                 />
             </View>

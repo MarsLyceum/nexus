@@ -189,11 +189,11 @@ export default function App() {
                                 <ApolloProvider client={client}>
                                     <ReduxProvider store={store}>
                                         <PortalProvider>
-                                            <NavigationContainer
-                                                linking={linking}
-                                            >
-                                                <StatusManager>
-                                                    <Login>
+                                            <Login>
+                                                <NavigationContainer
+                                                    linking={linking}
+                                                >
+                                                    <StatusManager>
                                                         <RootStack.Navigator
                                                             screenOptions={{
                                                                 headerShown:
@@ -230,9 +230,9 @@ export default function App() {
                                                             />
                                                         </RootStack.Navigator>
                                                         <Toast />
-                                                    </Login>
-                                                </StatusManager>
-                                            </NavigationContainer>
+                                                    </StatusManager>
+                                                </NavigationContainer>
+                                            </Login>
                                         </PortalProvider>
                                     </ReduxProvider>
                                 </ApolloProvider>

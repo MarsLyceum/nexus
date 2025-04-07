@@ -7,13 +7,9 @@ import {
 import { TouchableOpacity, useWindowDimensions } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
-import { COLORS, SIDEBAR_WIDTH } from '@shared-ui/constants';
-import {
-    useAppSelector,
-    RootState,
-    UserGroupsType,
-    UserType,
-} from '@shared-ui/redux';
+import { getItem } from '@shared-ui/utils';
+import { COLORS, SIDEBAR_WIDTH, USER_KEY } from '@shared-ui/constants';
+import { useAppSelector, RootState, UserGroupsType } from '@shared-ui/redux';
 import { ActiveGroupContext } from '@shared-ui/providers';
 import { Group } from '@shared-ui/types';
 import {
@@ -44,15 +40,15 @@ export function AppDrawerScreen() {
     const userGroups: UserGroupsType = useAppSelector(
         (state: RootState) => state.userGroups.userGroups
     );
-    const user: UserType = useAppSelector(
-        (state: RootState) => state.user.user
-    );
 
     useEffect(() => {
-        if (!user) {
-            router.push('login');
-        }
-    }, [user, router]);
+        void (async () => {
+            const userItem = await getItem(USER_KEY);
+            if (!userItem) {
+                router.push('login');
+            }
+        })();
+    }, [router]);
 
     // Use window dimensions to determine if we're on "desktop" size
     const dimensions = useWindowDimensions();

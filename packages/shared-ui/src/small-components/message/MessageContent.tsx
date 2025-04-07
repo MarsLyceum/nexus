@@ -12,6 +12,9 @@ import type {
     PreviewData,
 } from '../../types';
 
+// New: We'll use your color palette.
+import { COLORS } from '../../constants';
+
 export type MessageContentProps = {
     message: MessageWithAvatar | DirectMessageWithAvatar;
     width: number;
@@ -38,9 +41,15 @@ export const MessageContent: React.FC<MessageContentProps> = ({
     const effectiveContent =
         contentOverride !== null ? contentOverride : message.content;
 
-    // Helper to render the message text (Markdown)
-    const renderMessageText = (content: string) => (
-        <MarkdownRenderer text={content} />
+    // Determine if the effective content is just a link.
+    const trimmedContent = effectiveContent.trim();
+    const urls = extractUrls(trimmedContent);
+    const isJustLink = urls.length === 1 && trimmedContent === urls[0];
+
+    // Helper to render the message text using MarkdownRenderer.
+    // Updated to pass the isEdited prop.
+    const renderMessageText = (content: string, isEdited: boolean) => (
+        <MarkdownRenderer text={content} isEdited={isEdited} />
     );
 
     // Helper to render link previews based on content URLs or previewData
@@ -109,8 +118,11 @@ export const MessageContent: React.FC<MessageContentProps> = ({
         <View style={styles.messageContent}>
             {effectiveContent && (
                 <>
-                    {/* Render message text if enabled */}
-                    {renderMessage && renderMessageText(effectiveContent)}
+                    {/* Render message text if enabled and content is not just a link */}
+                    {renderMessage &&
+                        !isJustLink &&
+                        renderMessageText(effectiveContent, message.edited)}
+
                     {/* Render link previews if enabled */}
                     {renderLinkPreview &&
                         renderLinkPreviews(effectiveContent, width)}

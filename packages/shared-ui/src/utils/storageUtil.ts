@@ -4,7 +4,7 @@
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export const setItem = async (key: string, value: string) => {
+export const setItem = async (key: string, value: string): Promise<void> => {
     if (Platform.OS === 'web') {
         await AsyncStorage.setItem(key, value);
     } else {
@@ -13,7 +13,7 @@ export const setItem = async (key: string, value: string) => {
     }
 };
 
-export const getItem = (key: string) => {
+export const getItem = (key: string): Promise<string> => {
     if (Platform.OS === 'web') {
         return AsyncStorage.getItem(key);
     }
@@ -21,7 +21,7 @@ export const getItem = (key: string) => {
     return SecureStore.getItemAsync(key);
 };
 
-export const deleteItem = (key: string) => {
+export const deleteItem = (key: string): Promise<void> => {
     if (Platform.OS === 'web') {
         return AsyncStorage.removeItem(key);
     }

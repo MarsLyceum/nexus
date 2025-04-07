@@ -6,8 +6,7 @@ import { User } from '../../types';
 import type { AppThunk } from '../store';
 
 import { setItem, getItem, deleteItem } from '../../utils';
-
-const USER_KEY = 'user';
+import { USER_KEY } from '../../constants';
 
 export type UserType = User | undefined;
 type UserState = { user: UserType };

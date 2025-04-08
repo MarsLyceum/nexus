@@ -4,10 +4,10 @@ import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { MiniModal } from './MiniModal';
 import { Tooltip } from './Tooltip';
-import { Edit } from '../icons'; // Keep your existing Edit icon import
+import { Edit, Delete } from '../icons'; // Keep your existing Edit icon import
 import { COLORS } from '../constants';
 
-/* Inline definitions for missing icons using TS. 
+/* Inline definitions for missing icons using TS.
    These are placeholder paths—replace them with
    the correct coordinates for your actual SVGs. */
 
@@ -78,13 +78,6 @@ export const CopyLinkIcon: React.FC = () => (
             d="M3.9 12c0-1.16.94-2.1 2.1-2.1h4V8H6c-2.16 0-3.9 1.74-3.9 3.9v0c0 2.16 1.74 3.9 3.9 3.9h4v-1.9H6c-1.16 0-2.1-.94-2.1-2.1zm8.1 0v0c0-1.16.94-2.1 2.1-2.1h4V8h-4c-2.16 0-3.9 1.74-3.9 3.9v0c0 2.16 1.74 3.9 3.9 3.9h4v-1.9h-4c-1.16 0-2.1-.94-2.1-2.1z"
             fill={COLORS.White}
         />
-    </Svg>
-);
-
-// Example: Delete
-export const DeleteIcon: React.FC = () => (
-    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-        <Path d="M9 3V4H4v2h16V4h-5V3H9zm1 14h2V9h-2v8z" fill={COLORS.Error} />
     </Svg>
 );
 
@@ -230,7 +223,7 @@ export function MoreOptionsMenu({
                         style={styles.menuItemDelete}
                         onPress={onDeleteMessage}
                     >
-                        <DeleteIcon />
+                        <Delete />
                         <Text style={[styles.menuItemText, styles.deleteText]}>
                             Delete Message
                         </Text>

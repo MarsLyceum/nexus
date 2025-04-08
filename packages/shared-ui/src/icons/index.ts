@@ -8,6 +8,7 @@ export * from './ChevronDown';
 export * from './Circle';
 export * from './Comment';
 export * from './CreateGroup';
+export * from './Delete';
 export * from './DownArrow';
 export * from './Edit';
 export * from './Email';

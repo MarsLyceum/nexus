@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { NexusImage } from './NexusImage';
 import { COLORS } from '../constants';
@@ -7,6 +7,7 @@ import { MessageOptionsModal } from './MessageOptionsModal';
 import { formatDateForChat } from '../utils';
 import type { MessageWithAvatar, DirectMessageWithAvatar } from '../types';
 import { MoreOptionsMenu } from './MoreOptionsMenu';
+import { DeleteMessageConfirmationModal } from './DeleteMessageConfirmationModal';
 
 export type MessageItemProps = {
     message: MessageWithAvatar | DirectMessageWithAvatar;
@@ -14,6 +15,9 @@ export type MessageItemProps = {
     onAttachmentPress: (attachments: string[], index: number) => void;
     scrollContainerRef: React.RefObject<any>;
     onSaveEdit: (message: MessageWithAvatar | DirectMessageWithAvatar) => void;
+    onDeleteMessage: (
+        message: DirectMessageWithAvatar | MessageWithAvatar
+    ) => void;
 };
 
 const getMessageDate = (
@@ -26,6 +30,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     onAttachmentPress,
     scrollContainerRef,
     onSaveEdit,
+    onDeleteMessage,
 }) => {
     const [currentMessage, setCurrentMessage] = useState(message);
     const [optionsModalVisible, setOptionsModalVisible] = useState(false);
@@ -55,6 +60,13 @@ export const MessageItem: React.FC<MessageItemProps> = ({
           }
         | undefined
     >();
+    const [showDeleteConfirmationModal, setShowDeleteConfirmationModal] =
+        useState(false);
+
+    const handleDeleteMessage = useCallback(() => {
+        onDeleteMessage(currentMessage);
+        setShowDeleteConfirmationModal(false);
+    }, [currentMessage, onDeleteMessage]);
 
     // Measure the container and set the anchor based on its top-right edge.
     const showModal = () => {
@@ -302,8 +314,19 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                 onPinMessage={() => {}}
                 onMarkUnread={() => {}}
                 onCopyMessageLink={() => {}}
-                onDeleteMessage={() => {}}
+                onDeleteMessage={() => setShowDeleteConfirmationModal(true)}
             />
+
+            {showDeleteConfirmationModal && (
+                <DeleteMessageConfirmationModal
+                    visible={showDeleteConfirmationModal}
+                    onClose={() => setShowDeleteConfirmationModal(false)}
+                    onConfirmDelete={handleDeleteMessage}
+                    message={currentMessage}
+                    width={width}
+                    onAttachmentPress={onAttachmentPress}
+                />
+            )}
         </View>
     );
 };

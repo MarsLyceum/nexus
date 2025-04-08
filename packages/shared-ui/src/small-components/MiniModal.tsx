@@ -12,6 +12,7 @@ export type MiniModalProps = {
     children: React.ReactNode;
     /** When true, clicks outside the modal will close it (default: true) */
     closeOnOutsideClick?: boolean;
+    centered?: boolean;
     /**
      * If true, the modal’s right edge will be aligned with the anchor’s right edge
      * and its top will match the anchor’s top (the new behavior for the message options modal).
@@ -32,6 +33,7 @@ export const MiniModal: React.FC<MiniModalProps> = ({
     useRightAnchorAlignment = false,
     onMouseEnter,
     onMouseLeave,
+    centered,
 }) => {
     const modalRef = useRef<View>(null);
     const [measuredHeight, setMeasuredHeight] = useState<number | undefined>();
@@ -63,7 +65,35 @@ export const MiniModal: React.FC<MiniModalProps> = ({
     if (!visible) return null;
 
     let computedContainerStyle;
-    if (anchorPosition) {
+
+    if (centered) {
+        // Skip anchor logic and simply center the modal.
+        // Use your measured dimensions or fallback widths/heights.
+        const desiredWidth =
+            (flattenedContainerStyle &&
+                (flattenedContainerStyle as any).width) ||
+            420;
+        const desiredHeight =
+            (flattenedContainerStyle &&
+                (flattenedContainerStyle as any).height) ||
+            200;
+        const modalWidth =
+            measuredWidth !== undefined ? measuredWidth : desiredWidth;
+        const modalHeight =
+            measuredHeight !== undefined ? measuredHeight : desiredHeight;
+
+        computedContainerStyle = {
+            ...flattenedContainerStyle,
+            position: 'absolute',
+            left: '50%',
+            top: '50%',
+            // For a perfect center, shift by half the modal's width & height:
+            transform: [
+                { translateX: -modalWidth / 2 },
+                { translateY: -modalHeight / 2 },
+            ],
+        };
+    } else if (anchorPosition) {
         if (useRightAnchorAlignment) {
             // New logic: align the modal’s right edge with the anchor’s right edge,
             // and set its top to the anchor’s top.
@@ -73,12 +103,15 @@ export const MiniModal: React.FC<MiniModalProps> = ({
                 (flattenedContainerStyle &&
                     (flattenedContainerStyle as any).width) ||
                 260;
+
+            const modalWidth =
+                measuredWidth !== undefined ? measuredWidth : desiredWidth;
             // Compute the left coordinate so that left + desiredWidth equals anchorPosition.x
-            let computedLeft = anchorPosition.x - desiredWidth;
+            let computedLeft = anchorPosition.x - modalWidth;
             // Clamp computedLeft so that the modal doesn't go off-screen.
             computedLeft = Math.max(
                 0,
-                Math.min(computedLeft, screenWidth - desiredWidth)
+                Math.min(computedLeft, screenWidth - modalWidth)
             );
             const computedTop = anchorPosition.y;
             computedContainerStyle = {

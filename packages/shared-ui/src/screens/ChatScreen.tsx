@@ -25,6 +25,7 @@ import {
     SEND_MESSAGE,
     UPDATE_MESSAGE,
     GET_CONVERSATION_MESSAGES,
+    DELETE_MESSAGE,
 } from '../queries';
 import {
     Message,
@@ -222,6 +223,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
     // Mutation hook for sending messages.
     const [sendMessage] = useMutation(SEND_MESSAGE);
     const [updateMessage] = useMutation(UPDATE_MESSAGE);
+    const [deleteMessage] = useMutation(DELETE_MESSAGE);
 
     // Callback to load more messages when scrolling.
     const handleLoadMore = useCallback(() => {
@@ -360,6 +362,27 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
         [activeUser?.id, conversation?.id, updateMessage]
     );
 
+    const handleDeleteMessage = useCallback(
+        (message: DirectMessageWithAvatar | MessageWithAvatar) => {
+            // Optimistically update the UI by removing the message from the local state.
+            setMessages((prevMessages) =>
+                prevMessages.filter((msg) => msg.id !== message.id)
+            );
+
+            deleteMessage({
+                variables: {
+                    messageId: message.id,
+                },
+                optimisticResponse: {
+                    updateMessage: true,
+                },
+            }).catch((error) => {
+                console.error('Error deleting message:', error);
+            });
+        },
+        [deleteMessage]
+    );
+
     // Render each message using the MessageItem component.
     const renderItem = ({ item }: { item: Message }) => {
         const transformedMessage = transformMessage(item);
@@ -370,6 +393,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
                 onAttachmentPress={handleAttachmentPress}
                 scrollContainerRef={flatListRef} // Pass the FlatList ref to each MessageItem.
                 onSaveEdit={handleSaveEdit}
+                onDeleteMessage={handleDeleteMessage}
             />
         );
     };

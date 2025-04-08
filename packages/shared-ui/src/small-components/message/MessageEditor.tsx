@@ -187,7 +187,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({
                             },
                         ]}
                         onLayout={(e) => {
-                            const layout = e.nativeEvent.layout;
+                            const {layout} = e.nativeEvent;
                             setAvgCharWidth(layout.width);
                             setMeasuredLineHeight(layout.height);
                         }}

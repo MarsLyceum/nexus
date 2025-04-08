@@ -262,11 +262,11 @@ const customSpanRenderer = ({ tnode }: any) => {
     const className = tnode.attributes?.class || '';
     const content =
         tnode.domNode?.textContent || extractTextFromTnode(tnode) || '';
-    const classes = className.split(' ').map((cls: string) => cls.trim());
-    if (classes.includes('spoiler')) {
+    const classes = new Set(className.split(' ').map((cls: string) => cls.trim()));
+    if (classes.has('spoiler')) {
         return <InlineSpoiler>{content}</InlineSpoiler>;
     }
-    if (classes.includes('edited')) {
+    if (classes.has('edited')) {
         return <Text style={styles.editedTag}>{content}</Text>;
     }
     // Fallback: return a default Text element with inherited style.

@@ -102,7 +102,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
                                 submitButtonText="Create"
                                 editorBackgroundColor={COLORS.PrimaryBackground}
                                 giphyVariant="download"
-                                showFormattingToggle={true}
+                                showFormattingToggle
                             />
                         ) : (
                             <TextInput

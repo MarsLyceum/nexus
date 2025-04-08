@@ -60,12 +60,10 @@ export const MobileImageRenderer: React.FC<MobileImageRendererProps> = ({
                     e.stopPropagation?.();
                     onClose();
                 }
-            } else {
-                if (absoluteY < offsetY || absoluteY > offsetY + imageHeight) {
+            } else if (absoluteY < offsetY || absoluteY > offsetY + imageHeight) {
                     e.stopPropagation?.();
                     onClose();
                 }
-            }
         },
         [onClose, offsetY, imageHeight]
     );

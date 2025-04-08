@@ -67,12 +67,10 @@ export function FlashListCompat<T>(props: FlashListProps<T>) {
             setScrollOffset(offset);
 
             // Compute total content height.
-            const totalHeight = data.reduce((sum, _, index) => {
-                return (
+            const totalHeight = data.reduce((sum, _, index) => (
                     sum +
                     (measuredHeights.current.get(index) || estimatedItemSize)
-                );
-            }, 0);
+                ), 0);
 
             // Check infinite scroll condition.
             if (onEndReached) {
@@ -103,7 +101,7 @@ export function FlashListCompat<T>(props: FlashListProps<T>) {
     };
 
     // Compute cumulative offsets for each item.
-    const offsets = new Array(data.length);
+    const offsets = Array.from({length: data.length});
     let totalContentHeight = 0;
     for (let i = 0; i < data.length; i++) {
         offsets[i] = totalContentHeight;
@@ -144,7 +142,7 @@ export function FlashListCompat<T>(props: FlashListProps<T>) {
 
     // Each rendered item is measured on layout.
     const onItemLayout = (index: number) => (event: LayoutChangeEvent) => {
-        const height = event.nativeEvent.layout.height;
+        const {height} = event.nativeEvent.layout;
         if (measuredHeights.current.get(index) !== height) {
             measuredHeights.current.set(index, height);
             // Force a re-render by updating scrollOffset with the same value.

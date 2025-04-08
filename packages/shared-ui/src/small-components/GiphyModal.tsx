@@ -18,7 +18,9 @@ import { MiniModal } from './MiniModal';
 if (typeof File === 'undefined') {
     class RNFile extends Blob {
         name: string;
+
         lastModified: number;
+
         constructor(
             blobParts: BlobPart[],
             fileName: string,
@@ -107,7 +109,7 @@ export const GiphyModal: React.FC<GiphyModalProps> = ({
     };
 
     const handleItemLayout = (e: LayoutChangeEvent) => {
-        const width = e.nativeEvent.layout.width;
+        const {width} = e.nativeEvent.layout;
         setItemWidth(width);
     };
 

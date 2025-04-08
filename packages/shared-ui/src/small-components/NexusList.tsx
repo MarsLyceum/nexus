@@ -35,8 +35,8 @@ const MeasuredView = forwardRef<
         const node = innerRef.current;
         if (node) {
             // Find all images and videos within this node.
-            const images = Array.from(node.querySelectorAll('img'));
-            const videos = Array.from(node.querySelectorAll('video'));
+            const images = [...node.querySelectorAll('img')];
+            const videos = [...node.querySelectorAll('video')];
             // Attach load event listener to images.
             images.forEach((img) => {
                 img.addEventListener('load', measure);
@@ -163,8 +163,8 @@ export const NexusList = <T extends unknown>(
                 )}
             </AutoSizer>
         );
-    } else {
+    } 
         // On mobile, simply pass all props to FlashList.
         return <FlashList {...props} />;
-    }
+    
 };

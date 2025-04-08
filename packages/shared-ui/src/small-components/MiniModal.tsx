@@ -176,7 +176,8 @@ export const MiniModal: React.FC<MiniModalProps> = ({
                     curr.ratio > prev.ratio ? curr : prev
                 );
 
-                if (best.direction === 'above') {
+                switch (best.direction) {
+                case 'above': {
                     computedTop = verticalMargin;
                     computedLeft = Math.min(
                         Math.max(
@@ -187,7 +188,10 @@ export const MiniModal: React.FC<MiniModalProps> = ({
                         ),
                         screenWidth - modalWidth - horizontalMargin
                     );
-                } else if (best.direction === 'below') {
+                
+                break;
+                }
+                case 'below': {
                     computedTop = screenHeight - modalHeight - verticalMargin;
                     computedLeft = Math.min(
                         Math.max(
@@ -198,7 +202,10 @@ export const MiniModal: React.FC<MiniModalProps> = ({
                         ),
                         screenWidth - modalWidth - horizontalMargin
                     );
-                } else if (best.direction === 'right') {
+                
+                break;
+                }
+                case 'right': {
                     computedLeft = screenWidth - modalWidth - horizontalMargin;
                     computedTop = Math.min(
                         Math.max(
@@ -209,7 +216,10 @@ export const MiniModal: React.FC<MiniModalProps> = ({
                         ),
                         screenHeight - modalHeight - verticalMargin
                     );
-                } else if (best.direction === 'left') {
+                
+                break;
+                }
+                case 'left': {
                     computedLeft = horizontalMargin;
                     computedTop = Math.min(
                         Math.max(
@@ -220,6 +230,10 @@ export const MiniModal: React.FC<MiniModalProps> = ({
                         ),
                         screenHeight - modalHeight - verticalMargin
                     );
+                
+                break;
+                }
+                // No default
                 }
             } else {
                 computedLeft =

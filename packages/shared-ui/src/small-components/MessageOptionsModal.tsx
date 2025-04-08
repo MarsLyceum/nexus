@@ -141,8 +141,7 @@ export const MessageOptionsModal: React.FC<MessageOptionsModalProps> = ({
     );
 };
 
-const ArrowIcon: React.FC = () => {
-    return (
+const ArrowIcon: React.FC = () => (
         <Svg width={20} height={20} viewBox="0 0 512 512" fill="none">
             <Path
                 d="M256 64l-96 96h64v96h64v-96h64l-96-96zM96 256v128c0 17.7 14.3 32 32 32h256c17.7 0 32-14.3 32-32V256h-64v128H160V256H96z"
@@ -150,7 +149,6 @@ const ArrowIcon: React.FC = () => {
             />
         </Svg>
     );
-};
 
 const styles = StyleSheet.create({
     modalContainer: {

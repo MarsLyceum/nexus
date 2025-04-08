@@ -291,18 +291,14 @@ export const EventCard: React.FC<EventCardProps> = ({
 
             if (!defaultCalendar) {
                 let defaultCalendarSource;
-                if (Platform.OS === 'ios') {
-                    defaultCalendarSource = (
+                defaultCalendarSource = Platform.OS === 'ios' ? (
                         await Calendar.getDefaultCalendarAsync()
-                    ).source;
-                } else {
-                    defaultCalendarSource = {
+                    ).source : {
                         isLocalAccount: true,
                         name: 'Expo Calendar',
                         id: '1',
                         type: 'local',
                     };
-                }
                 const newCalendarId = await Calendar.createCalendarAsync({
                     title: 'Expo Calendar',
                     color: '#2196F3',

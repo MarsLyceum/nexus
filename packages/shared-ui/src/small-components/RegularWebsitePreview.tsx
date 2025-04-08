@@ -53,7 +53,7 @@ export const RegularWebsitePreview: React.FC<RegularWebsitePreviewProps> = ({
             RNImage.getSize(
                 previewImage,
                 (width, height) => setImageDimensions({ width, height }),
-                (error) => console.error('Failed to get image size: ', error)
+                (error) => console.error('Failed to get image size:', error)
             );
         }
     }, [previewImage]);

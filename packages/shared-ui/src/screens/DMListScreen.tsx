@@ -132,8 +132,8 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
                     const usersData = results.map((res) => res.data.fetchUser);
                     setGroupUsers(usersData);
                 }
-            } catch (err) {
-                console.error('Error fetching group users:', err);
+            } catch (error) {
+                console.error('Error fetching group users:', error);
             }
         };
         fetchGroupUsers();

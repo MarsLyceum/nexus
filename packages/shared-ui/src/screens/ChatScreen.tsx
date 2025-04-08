@@ -40,8 +40,7 @@ interface ChatScreenProps {
 }
 
 // Skeleton screen component to show loading placeholders.
-const SkeletonMessageItem: React.FC = () => {
-    return (
+const SkeletonMessageItem: React.FC = () => (
         <View style={styles.skeletonContainer}>
             <View style={styles.skeletonAvatar} />
             <View style={styles.skeletonContent}>
@@ -50,7 +49,6 @@ const SkeletonMessageItem: React.FC = () => {
             </View>
         </View>
     );
-};
 
 export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
     const router = useNexusRouter();
@@ -109,8 +107,8 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
                     const usersData = results.map((res) => res.data.fetchUser);
                     setGroupUsers(usersData);
                 })
-                .catch((err) =>
-                    console.error('Error fetching group users', err)
+                .catch((error) =>
+                    console.error('Error fetching group users', error)
                 );
         }
     }, [conversation, activeUser, client]);
@@ -245,8 +243,8 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
                         ]);
                     }
                 })
-                .catch((err) => {
-                    console.error('Error loading more messages:', err);
+                .catch((error) => {
+                    console.error('Error loading more messages:', error);
                 });
         }
     }, [fetchMore, messages.length, messagesLoading, conversation]);
@@ -297,8 +295,8 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
                     __typename: 'Message',
                 },
             },
-        }).catch((err) => {
-            console.error('Error sending message:', err);
+        }).catch((error) => {
+            console.error('Error sending message:', error);
         });
     };
 

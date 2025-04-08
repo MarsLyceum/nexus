@@ -218,7 +218,7 @@ export function useLinkPreview({
                         paragraphs.length === 0
                     ) {
                         const paragraphText = decode(
-                            match[1].replace(/<[^>]+>/g, '').trim()
+                            match[1].replaceAll(/<[^>]+>/g, '').trim()
                         );
                         if (paragraphText) {
                             paragraphs.push(paragraphText);

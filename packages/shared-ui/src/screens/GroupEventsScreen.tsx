@@ -11,8 +11,8 @@ import {
     Button,
     useWindowDimensions,
 } from 'react-native';
-import { NavigationProp } from '@react-navigation/core';
 
+import { useNexusRouter } from '../hooks';
 import { EventCard } from '../cards';
 import { Header } from '../sections';
 import { COLORS } from '../constants';
@@ -46,11 +46,8 @@ const initialEvents: Event[] = [
     },
 ];
 
-export const GroupEventsScreen = ({
-    navigation,
-}: {
-    navigation: NavigationProp<Record<string, unknown>>;
-}) => {
+export const GroupEventsScreen = () => {
+    const router = useNexusRouter();
     // State management for events and modal visibility
     const [events, setEvents] = useState(initialEvents);
     const [modalVisible, setModalVisible] = useState(false);
@@ -96,11 +93,7 @@ export const GroupEventsScreen = ({
 
     return (
         <View style={styles.container}>
-            <Header
-                isLargeScreen={width > 768}
-                headerText="Events"
-                navigation={navigation}
-            />
+            <Header isLargeScreen={width > 768} headerText="Events" />
 
             <FlatList
                 data={events}
@@ -110,9 +103,7 @@ export const GroupEventsScreen = ({
                         hideGroupName
                         {...item}
                         onPress={() =>
-                            navigation.navigate('EventDetails', {
-                                event: item,
-                            })
+                            router.push('/event-details', { event: item })
                         }
                         preview
                     />

@@ -6,10 +6,10 @@ import {
     StyleSheet,
     LayoutChangeEvent,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { useApolloClient } from '@apollo/client';
 
+import { useNexusRouter } from '../hooks';
 import { VoteActions } from './VoteActions';
 import { COLORS } from '../constants';
 import { CurrentCommentContext } from '../providers';
@@ -178,8 +178,8 @@ const CommentThreadComponent = ({
     const client = useApolloClient();
     const [voteCount, setVoteCount] = useState(comment.upvotes);
     const [collapsed, setCollapsed] = useState(comment.upvotes < -1);
-    const navigation = useNavigation();
     const [showInlineReply, setShowInlineReply] = useState(false);
+    const router = useNexusRouter();
 
     // NEW: State for attachment modal in comments
     const [modalVisible, setModalVisible] = useState(false);
@@ -311,10 +311,7 @@ const CommentThreadComponent = ({
                                             );
                                             setParentDate(comment.postedAt);
                                             setParentCommentId(comment.id);
-                                            navigation.navigate(
-                                                // @ts-expect-error navigation
-                                                'CreateComment'
-                                            );
+                                            router.push('create-comment');
                                         }
                                     }}
                                     tooltipText="Reply"

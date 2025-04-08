@@ -18,13 +18,13 @@ import {
     useFeedPosts,
     useCreatePost,
     useNexusRouter,
-    createNexusParam,
+    // createNexusParam,
 } from '../hooks';
 import { CreatePostModal } from '../small-components';
 import { detectEnvironment } from '../utils';
 
 // Create a hook to read our screen parameters.
-const { useParam } = createNexusParam<{ channelId: string }>();
+// const { useParam } = createNexusParam<{ channelId: string }>();
 
 const BOTTOM_INPUT_HEIGHT = 60;
 
@@ -107,8 +107,8 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
     channel: channelProp,
 }) => {
     // Get the channel from URL params if not provided as a prop.
-    const [channelFromParam] = useParam('channelId');
-    const channel = channelProp || channelFromParam;
+    // const [channelFromParam] = useParam('channelId');
+    const channel = channelProp;
 
     const user: UserType = useAppSelector(
         (state: RootState) => state.user.user

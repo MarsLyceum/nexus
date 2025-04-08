@@ -45,6 +45,8 @@ export const MessageList: React.FC<MessageListProps> = ({
                     width={width}
                     onAttachmentPress={onAttachmentPress}
                     scrollContainerRef={flatListRef} // Pass the scroll container ref
+                    onSaveEdit={() => {}}
+                    onDeleteMessage={() => {}}
                 />
             )}
             style={styles.container}

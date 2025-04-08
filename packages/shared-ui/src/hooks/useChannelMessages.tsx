@@ -29,7 +29,7 @@ export const useChannelMessages = (channelId: string) => {
                 query: FETCH_USER_QUERY,
                 variables: { userId },
             });
-            const {username} = fetchUserResult.data.fetchUser;
+            const { username } = fetchUserResult.data.fetchUser;
             userCacheRef.current[userId] = username;
             return username;
         } catch (error) {
@@ -68,6 +68,8 @@ export const useChannelMessages = (channelId: string) => {
         }
 
         const processMessages = async () => {
+            // TODO: fix this by splitting up messages and posts in the backend
+            // @ts-expect-error message
             const newMessages: MessageWithAvatar[] = await Promise.all(
                 messagesArray.map(async (msg: GroupChannelMessage) => {
                     const username = await fetchUsername(msg.postedByUserId);

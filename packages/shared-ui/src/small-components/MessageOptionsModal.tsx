@@ -71,37 +71,25 @@ export const MessageOptionsModal: React.FC<MessageOptionsModalProps> = ({
             <View style={styles.outerContainer}>
                 <View style={styles.iconsRow}>
                     <Tooltip tooltipText="Like">
-                        <TouchableOpacity
-                            style={styles.iconWrapper}
-                            pointerEvents="auto"
-                        >
+                        <TouchableOpacity style={styles.iconWrapper}>
                             <Text style={styles.emoji}>👍</Text>
                         </TouchableOpacity>
                     </Tooltip>
 
                     <Tooltip tooltipText="100">
-                        <TouchableOpacity
-                            style={styles.iconWrapper}
-                            pointerEvents="auto"
-                        >
+                        <TouchableOpacity style={styles.iconWrapper}>
                             <Text style={styles.emoji}>💯</Text>
                         </TouchableOpacity>
                     </Tooltip>
 
                     <Tooltip tooltipText="Laugh">
-                        <TouchableOpacity
-                            style={styles.iconWrapper}
-                            pointerEvents="auto"
-                        >
+                        <TouchableOpacity style={styles.iconWrapper}>
                             <Text style={styles.emoji}>😆</Text>
                         </TouchableOpacity>
                     </Tooltip>
 
                     <Tooltip tooltipText="Neutral">
-                        <TouchableOpacity
-                            style={styles.iconWrapper}
-                            pointerEvents="auto"
-                        >
+                        <TouchableOpacity style={styles.iconWrapper}>
                             <Text style={styles.emoji}>😐</Text>
                         </TouchableOpacity>
                     </Tooltip>
@@ -109,7 +97,6 @@ export const MessageOptionsModal: React.FC<MessageOptionsModalProps> = ({
                     <Tooltip tooltipText="Edit">
                         <TouchableOpacity
                             style={styles.iconWrapper}
-                            pointerEvents="auto"
                             onPress={onEdit}
                         >
                             <Edit />
@@ -117,10 +104,7 @@ export const MessageOptionsModal: React.FC<MessageOptionsModalProps> = ({
                     </Tooltip>
 
                     <Tooltip tooltipText="Share">
-                        <TouchableOpacity
-                            style={styles.iconWrapper}
-                            pointerEvents="auto"
-                        >
+                        <TouchableOpacity style={styles.iconWrapper}>
                             <ArrowIcon />
                         </TouchableOpacity>
                     </Tooltip>
@@ -128,7 +112,6 @@ export const MessageOptionsModal: React.FC<MessageOptionsModalProps> = ({
                     <Tooltip tooltipText="More">
                         <TouchableOpacity
                             style={styles.iconWrapper}
-                            pointerEvents="auto"
                             onPress={handleMorePress}
                             ref={moreButtonRef}
                         >
@@ -142,13 +125,13 @@ export const MessageOptionsModal: React.FC<MessageOptionsModalProps> = ({
 };
 
 const ArrowIcon: React.FC = () => (
-        <Svg width={20} height={20} viewBox="0 0 512 512" fill="none">
-            <Path
-                d="M256 64l-96 96h64v96h64v-96h64l-96-96zM96 256v128c0 17.7 14.3 32 32 32h256c17.7 0 32-14.3 32-32V256h-64v128H160V256H96z"
-                fill={COLORS.White} // Updated to use palette
-            />
-        </Svg>
-    );
+    <Svg width={20} height={20} viewBox="0 0 512 512" fill="none">
+        <Path
+            d="M256 64l-96 96h64v96h64v-96h64l-96-96zM96 256v128c0 17.7 14.3 32 32 32h256c17.7 0 32-14.3 32-32V256h-64v128H160V256H96z"
+            fill={COLORS.White} // Updated to use palette
+        />
+    </Svg>
+);
 
 const styles = StyleSheet.create({
     modalContainer: {

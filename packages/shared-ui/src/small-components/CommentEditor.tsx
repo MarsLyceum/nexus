@@ -4,7 +4,7 @@ import { View, StyleSheet } from 'react-native';
 import { useAppSelector, RootState, UserType } from '../redux';
 import { COLORS } from '../constants';
 import { ContentEditor } from './ContentEditor';
-import { Attachment } from '../sections';
+import { Attachment } from '../types';
 import { useCreateComment } from '../hooks';
 
 export type CommentEditorProps = {
@@ -92,6 +92,7 @@ export const CommentEditor: React.FC<CommentEditorProps> = ({
                 editorBackgroundColor={editorBackgroundColor}
                 giphyVariant="uri"
                 onGifSelect={(attachment) => {
+                    // @ts-expect-error file
                     setNewCommentContent(attachment.file.uri);
                     setUpdateContent((prev) => prev + 1);
                 }}

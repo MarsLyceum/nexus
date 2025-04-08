@@ -120,12 +120,12 @@ function MainStackScreen() {
                 component={GroupEventsScreen}
             />
             <MainStack.Screen
-                name="eventdetails"
+                name="event-details"
                 // @ts-expect-error navigator
                 component={EventDetailsScreen}
             />
             <MainStack.Screen
-                name="createcomment"
+                name="create-comment"
                 component={CreateCommentScreen}
             />
         </MainStack.Navigator>

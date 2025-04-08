@@ -39,6 +39,7 @@ const styles = StyleSheet.create({
         paddingVertical: 20,
         width: '100%',
     },
+    // @ts-expect-error web only types
     outerContainer: {
         flex: 1,
         backgroundColor: COLORS.AppBackground,
@@ -78,25 +79,31 @@ export function WelcomeScreen(): JSX.Element {
     }, [user, router]);
 
     return (
+        // @ts-expect-error web only types
         <SafeAreaView style={styles.outerContainer}>
             <ScrollView
                 showsHorizontalScrollIndicator={false}
+                // @ts-expect-error web only types
                 contentContainerStyle={styles.innerScrollContainer}
             >
+                {/* @ts-expect-error web only types */}
                 <View style={styles.centeredContainer}>
                     <PeepsLogo />
                     <Tagline>Where friends and communities thrive</Tagline>
                     <PrimaryGradientButton
+                        // @ts-expect-error web only types
                         style={styles.topButton}
                         title="Create an account"
                         onPress={() => router.push('/signup')}
                     />
                     <SecondaryButton
+                        // @ts-expect-error web only
                         style={styles.bottomButton}
                         title="Log in"
                         onPress={() => router.push('/login')}
                     />
                 </View>
+                {/* @ts-expect-error web only */}
                 <View style={styles.footerContainer}>
                     <Footer />
                 </View>

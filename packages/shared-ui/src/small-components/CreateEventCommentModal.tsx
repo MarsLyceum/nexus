@@ -9,7 +9,8 @@ import {
     StyleSheet,
 } from 'react-native';
 import { COLORS } from '../constants';
-import { AttachmentPreviews, Attachment } from '../sections';
+import { AttachmentPreviews } from '../sections';
+import { Attachment } from '../types';
 
 type CreateEventCommentModalProps = {
     modalVisible: boolean;

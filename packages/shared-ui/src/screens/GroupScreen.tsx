@@ -298,6 +298,7 @@ const ChannelList: React.FC<ChannelListProps> = ({
             cursor: 'grab',
         };
         return (
+            // @ts-expect-error web only styles
             <View
                 ref={setNodeRef}
                 style={[

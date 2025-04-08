@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { MiniModal } from './MiniModal';
@@ -11,7 +11,12 @@ export type MessageOptionsModalProps = {
     onClose: () => void;
     anchorPosition?: { x: number; y: number; width: number; height: number };
     onEdit: () => void;
-    onMore: () => void;
+    onMore: (anchor: {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+    }) => void;
     onMouseEnterModal?: () => void;
     onMouseLeaveModal?: () => void;
 };
@@ -24,87 +29,117 @@ export const MessageOptionsModal: React.FC<MessageOptionsModalProps> = ({
     onMore,
     onMouseEnterModal,
     onMouseLeaveModal,
-}) => (
-    <MiniModal
-        visible={visible}
-        onClose={onClose}
-        anchorPosition={anchorPosition}
-        containerStyle={styles.modalContainer}
-        closeOnOutsideClick={false}
-        useRightAnchorAlignment
-        onMouseEnter={onMouseEnterModal}
-        onMouseLeave={onMouseLeaveModal}
-    >
-        <View style={styles.outerContainer}>
-            <View style={styles.iconsRow}>
-                <Tooltip tooltipText="Like">
-                    <TouchableOpacity
-                        style={styles.iconWrapper}
-                        pointerEvents="auto"
-                    >
-                        <Text style={styles.emoji}>👍</Text>
-                    </TouchableOpacity>
-                </Tooltip>
+}) => {
+    const moreButtonRef = useRef<View>(null);
 
-                <Tooltip tooltipText="100">
-                    <TouchableOpacity
-                        style={styles.iconWrapper}
-                        pointerEvents="auto"
-                    >
-                        <Text style={styles.emoji}>💯</Text>
-                    </TouchableOpacity>
-                </Tooltip>
+    const handleMorePress = () => {
+        if (moreButtonRef.current) {
+            if (moreButtonRef.current.measureInWindow) {
+                moreButtonRef.current.measureInWindow((x, y, width, height) => {
+                    onMore({ x, y, width, height });
+                });
+            } else if (
+                (moreButtonRef.current as unknown as Element)
+                    .getBoundingClientRect
+            ) {
+                const rect = (
+                    moreButtonRef.current as unknown as Element
+                ).getBoundingClientRect();
+                onMore({
+                    x: rect.x,
+                    y: rect.y,
+                    width: rect.width,
+                    height: rect.height,
+                });
+            }
+        } else {
+            onMore({ x: 0, y: 0, width: 0, height: 0 });
+        }
+    };
 
-                <Tooltip tooltipText="Laugh">
-                    <TouchableOpacity
-                        style={styles.iconWrapper}
-                        pointerEvents="auto"
-                    >
-                        <Text style={styles.emoji}>😆</Text>
-                    </TouchableOpacity>
-                </Tooltip>
+    return (
+        <MiniModal
+            visible={visible}
+            onClose={onClose}
+            anchorPosition={anchorPosition}
+            containerStyle={styles.modalContainer}
+            closeOnOutsideClick={false}
+            useRightAnchorAlignment
+            onMouseEnter={onMouseEnterModal}
+            onMouseLeave={onMouseLeaveModal}
+        >
+            <View style={styles.outerContainer}>
+                <View style={styles.iconsRow}>
+                    <Tooltip tooltipText="Like">
+                        <TouchableOpacity
+                            style={styles.iconWrapper}
+                            pointerEvents="auto"
+                        >
+                            <Text style={styles.emoji}>👍</Text>
+                        </TouchableOpacity>
+                    </Tooltip>
 
-                <Tooltip tooltipText="Neutral">
-                    <TouchableOpacity
-                        style={styles.iconWrapper}
-                        pointerEvents="auto"
-                    >
-                        <Text style={styles.emoji}>😐</Text>
-                    </TouchableOpacity>
-                </Tooltip>
+                    <Tooltip tooltipText="100">
+                        <TouchableOpacity
+                            style={styles.iconWrapper}
+                            pointerEvents="auto"
+                        >
+                            <Text style={styles.emoji}>💯</Text>
+                        </TouchableOpacity>
+                    </Tooltip>
 
-                <Tooltip tooltipText="Edit">
-                    <TouchableOpacity
-                        style={styles.iconWrapper}
-                        pointerEvents="auto"
-                        onPress={onEdit}
-                    >
-                        <Edit />
-                    </TouchableOpacity>
-                </Tooltip>
+                    <Tooltip tooltipText="Laugh">
+                        <TouchableOpacity
+                            style={styles.iconWrapper}
+                            pointerEvents="auto"
+                        >
+                            <Text style={styles.emoji}>😆</Text>
+                        </TouchableOpacity>
+                    </Tooltip>
 
-                <Tooltip tooltipText="Share">
-                    <TouchableOpacity
-                        style={styles.iconWrapper}
-                        pointerEvents="auto"
-                    >
-                        <ArrowIcon />
-                    </TouchableOpacity>
-                </Tooltip>
+                    <Tooltip tooltipText="Neutral">
+                        <TouchableOpacity
+                            style={styles.iconWrapper}
+                            pointerEvents="auto"
+                        >
+                            <Text style={styles.emoji}>😐</Text>
+                        </TouchableOpacity>
+                    </Tooltip>
 
-                <Tooltip tooltipText="More">
-                    <TouchableOpacity
-                        style={styles.iconWrapper}
-                        pointerEvents="auto"
-                        onPress={onMore}
-                    >
-                        <MoreHorizontal />
-                    </TouchableOpacity>
-                </Tooltip>
+                    <Tooltip tooltipText="Edit">
+                        <TouchableOpacity
+                            style={styles.iconWrapper}
+                            pointerEvents="auto"
+                            onPress={onEdit}
+                        >
+                            <Edit />
+                        </TouchableOpacity>
+                    </Tooltip>
+
+                    <Tooltip tooltipText="Share">
+                        <TouchableOpacity
+                            style={styles.iconWrapper}
+                            pointerEvents="auto"
+                        >
+                            <ArrowIcon />
+                        </TouchableOpacity>
+                    </Tooltip>
+
+                    <Tooltip tooltipText="More">
+                        <TouchableOpacity
+                            style={styles.iconWrapper}
+                            pointerEvents="auto"
+                            onPress={handleMorePress}
+                            ref={moreButtonRef}
+                        >
+                            <MoreHorizontal />
+                        </TouchableOpacity>
+                    </Tooltip>
+                </View>
             </View>
-        </View>
-    </MiniModal>
-);
+        </MiniModal>
+    );
+};
 
 const ArrowIcon: React.FC = () => {
     return (

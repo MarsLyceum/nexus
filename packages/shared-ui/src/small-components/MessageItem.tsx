@@ -6,6 +6,7 @@ import { MessageContent, MessageEditor } from './message';
 import { MessageOptionsModal } from './MessageOptionsModal';
 import { formatDateForChat } from '../utils';
 import type { MessageWithAvatar, DirectMessageWithAvatar } from '../types';
+import { MoreOptionsMenu } from './MoreOptionsMenu';
 
 export type MessageItemProps = {
     message: MessageWithAvatar | DirectMessageWithAvatar;
@@ -44,6 +45,16 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     const containerRef = useRef<View>(null);
     const messageDate = getMessageDate(currentMessage);
     const hideModalTimeoutRef = useRef<NodeJS.Timeout | undefined>();
+    const [showMoreOptions, setShowMoreOptions] = useState(false);
+    const [moreButtonAnchor, setMoreButtonAnchor] = useState<
+        | {
+              x: number;
+              y: number;
+              width: number;
+              height: number;
+          }
+        | undefined
+    >();
 
     // Measure the container and set the anchor based on its top-right edge.
     const showModal = () => {
@@ -138,9 +149,19 @@ export const MessageItem: React.FC<MessageItemProps> = ({
         setIsEditing(true);
     };
 
-    const handleMore = () => {
-        console.log('More action triggered for message:', message);
+    const handleMore = (anchor: {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+    }) => {
+        setMoreButtonAnchor(anchor);
+        setShowMoreOptions(true);
     };
+
+    function handleCloseMoreOptions() {
+        setShowMoreOptions(false);
+    }
 
     const handleSaveEdit = () => {
         setCurrentMessage((prevMessage) => ({
@@ -265,6 +286,24 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                     />
                 </View>
             )}
+
+            <MoreOptionsMenu
+                anchorPosition={moreButtonAnchor}
+                visible={showMoreOptions}
+                onClose={handleCloseMoreOptions}
+                onEdit={handleEdit}
+                onReply={() => {}}
+                onForward={() => {}}
+                onCreateThread={() => {}}
+                onAddReaction={() => {}}
+                onCopyText={() => {}}
+                onPinMessage={() => {}}
+                onOpenApps={() => {}}
+                onMarkUnread={() => {}}
+                onCopyMessageLink={() => {}}
+                onSpeakMessage={() => {}}
+                onDeleteMessage={() => {}}
+            />
         </View>
     );
 };

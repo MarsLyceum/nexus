@@ -1,5 +1,5 @@
 // DeleteMessageModal.tsx
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { MiniModal } from './MiniModal'; // Import your existing MiniModal
 import { COLORS } from '../constants';
@@ -21,26 +21,22 @@ export type DeleteMessageModalProps = {
     onConfirmDelete: () => void;
     /** The message data, including avatar, username, content, etc. */
     message: MessageWithAvatar | DirectMessageWithAvatar;
-    /** The width for rendering attachments/link previews. */
-    width: number;
     /** Attachment press handler if your message includes attachments. */
     onAttachmentPress: (attachments: string[], index: number) => void;
 };
 
 export const DeleteMessageConfirmationModal: React.FC<
     DeleteMessageModalProps
-> = ({
-    visible,
-    onClose,
-    onConfirmDelete,
-    message,
-    width,
-    onAttachmentPress,
-}) => {
+> = ({ visible, onClose, onConfirmDelete, message, onAttachmentPress }) => {
+    const [modalWidth, setModalWidth] = useState<number>(420);
+
     // Format date/time similarly to your MessageItem logic
+    // @ts-expect-error messag
     const messageDate = message.postedAt
-        ? new Date(message.postedAt)
-        : new Date(message.createdAt);
+        ? // @ts-expect-error messag
+          new Date(message.postedAt)
+        : // @ts-expect-error messag
+          new Date(message.createdAt);
     const formattedTime = formatDateForChat(messageDate);
 
     return (
@@ -81,10 +77,16 @@ export const DeleteMessageConfirmationModal: React.FC<
                         </View>
                     </View>
 
-                    <View style={styles.messageContentContainer}>
+                    <View
+                        style={styles.messageContentContainer}
+                        onLayout={(e) => {
+                            const measuredWidth = e.nativeEvent.layout.width;
+                            setModalWidth(measuredWidth);
+                        }}
+                    >
                         <MessageContent
                             message={message}
-                            width={width}
+                            width={modalWidth}
                             onAttachmentPress={onAttachmentPress}
                             renderMessage
                             renderLinkPreview

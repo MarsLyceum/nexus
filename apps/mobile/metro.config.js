@@ -71,7 +71,7 @@ config.resolver.extraNodeModules = {
     ),
     'shared-ui/screens': path.resolve(
         workspaceRoot,
-        'packages/shared-ui/src/screens'
+        'packages/shared-ui/screens'
     ),
 };
 

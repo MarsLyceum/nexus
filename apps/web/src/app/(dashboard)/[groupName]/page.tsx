@@ -2,7 +2,7 @@
 
 import React, { useEffect, useContext } from 'react';
 import { View, Text } from 'react-native';
-import { GroupScreen } from 'shared-ui/src/screens';
+import { GroupScreen } from 'shared-ui/screens';
 import { useAppSelector, RootState } from 'shared-ui/redux';
 import { ActiveGroupContext } from 'shared-ui/providers';
 

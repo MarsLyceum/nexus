@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
     modalContainer: {
         width: 420,
         maxWidth: 480,
-        backgroundColor: COLORS.TertiaryBackground,
+        backgroundColor: COLORS.PrimaryBackground,
         borderRadius: 8,
         paddingHorizontal: 16,
         paddingVertical: 12,

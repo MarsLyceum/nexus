@@ -304,9 +304,13 @@ export const MiniModal: React.FC<MiniModalProps> = ({
 
     return (
         <Portal>
+            {centered && <View style={styles.modalOverlay} />}
             <View
                 ref={modalRef}
-                style={[computedContainerStyle, { pointerEvents: 'auto' }]}
+                style={[
+                    computedContainerStyle,
+                    { pointerEvents: 'auto', zIndex: 100 },
+                ]}
                 onMouseEnter={onMouseEnter}
                 onMouseLeave={onMouseLeave}
                 onLayout={(e) => {
@@ -336,5 +340,14 @@ const styles = StyleSheet.create({
         shadowRadius: 4,
         elevation: 5,
         transform: [{ translateX: -175 }],
+    },
+    modalOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.7)', // Adjust opacity as needed
+        zIndex: 50,
     },
 });

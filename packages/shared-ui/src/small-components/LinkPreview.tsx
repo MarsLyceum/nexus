@@ -5,22 +5,18 @@ import { ImagePreview } from './ImagePreview';
 import { EmbedPreview } from './EmbedPreview';
 import { RegularWebsitePreview } from './RegularWebsitePreview';
 import { LinkPreviewSkeleton } from './LinkPreviewSkeleton';
-import { PreviewData } from '../types';
 
 export type LinkPreviewProps = {
     url?: string;
-    previewData?: PreviewData;
     containerWidth?: number;
 };
 
 export const LinkPreview: React.FC<LinkPreviewProps> = ({
     url,
-    previewData: previewDataProp,
     containerWidth,
 }) => {
     const { previewData, loading, isImage, imageDimensions } = useLinkPreview({
         url,
-        previewData: previewDataProp,
     });
 
     if (loading) {

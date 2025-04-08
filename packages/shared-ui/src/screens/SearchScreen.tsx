@@ -6,7 +6,6 @@ import {
     ScrollView,
     TouchableOpacity,
 } from 'react-native';
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
 import { BackArrow } from '../buttons';
 import { COLORS } from '../constants';

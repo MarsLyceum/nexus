@@ -42,6 +42,7 @@ module.exports = {
         },
     },
     rules: {
+        'import/no-cycle': 'error',
         'import/no-default-export': 'off',
         'unicorn/no-useless-undefined': 'off',
         '@typescript-eslint/no-unsafe-argument': 'off',

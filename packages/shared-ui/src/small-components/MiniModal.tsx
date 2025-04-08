@@ -57,12 +57,13 @@ export const MiniModal: React.FC<MiniModalProps> = ({
         document.addEventListener('mousedown', handleOutsideClick, {
             passive: true,
         });
+        // eslint-disable-next-line consistent-return
         return () => {
             document.removeEventListener('mousedown', handleOutsideClick);
         };
     }, [visible, closeOnOutsideClick, onClose]);
 
-    if (!visible) return null;
+    if (!visible) return undefined;
 
     let computedContainerStyle;
 
@@ -71,10 +72,12 @@ export const MiniModal: React.FC<MiniModalProps> = ({
         // Use your measured dimensions or fallback widths/heights.
         const desiredWidth =
             (flattenedContainerStyle &&
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 (flattenedContainerStyle as any).width) ||
             420;
         const desiredHeight =
             (flattenedContainerStyle &&
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 (flattenedContainerStyle as any).height) ||
             200;
         const modalWidth =
@@ -101,6 +104,7 @@ export const MiniModal: React.FC<MiniModalProps> = ({
             // Use the width from containerStyle if available; fallback to 260.
             const desiredWidth =
                 (flattenedContainerStyle &&
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     (flattenedContainerStyle as any).width) ||
                 260;
 
@@ -126,10 +130,12 @@ export const MiniModal: React.FC<MiniModalProps> = ({
                 Dimensions.get('window');
             const desiredWidth =
                 (flattenedContainerStyle &&
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     (flattenedContainerStyle as any).width) ||
                 350;
             const desiredHeight =
                 (flattenedContainerStyle &&
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     (flattenedContainerStyle as any).maxHeight) ||
                 250;
 
@@ -172,68 +178,72 @@ export const MiniModal: React.FC<MiniModalProps> = ({
                     { direction: 'right', ratio: ratioRight },
                     { direction: 'left', ratio: ratioLeft },
                 ];
+                // eslint-disable-next-line unicorn/no-array-reduce
                 const best = ratios.reduce((prev, curr) =>
                     curr.ratio > prev.ratio ? curr : prev
                 );
 
+                // eslint-disable-next-line default-case
                 switch (best.direction) {
-                case 'above': {
-                    computedTop = verticalMargin;
-                    computedLeft = Math.min(
-                        Math.max(
-                            anchorPosition.x +
-                                anchorPosition.width / 2 -
-                                modalWidth / 2,
-                            horizontalMargin
-                        ),
-                        screenWidth - modalWidth - horizontalMargin
-                    );
-                
-                break;
-                }
-                case 'below': {
-                    computedTop = screenHeight - modalHeight - verticalMargin;
-                    computedLeft = Math.min(
-                        Math.max(
-                            anchorPosition.x +
-                                anchorPosition.width / 2 -
-                                modalWidth / 2,
-                            horizontalMargin
-                        ),
-                        screenWidth - modalWidth - horizontalMargin
-                    );
-                
-                break;
-                }
-                case 'right': {
-                    computedLeft = screenWidth - modalWidth - horizontalMargin;
-                    computedTop = Math.min(
-                        Math.max(
-                            anchorPosition.y +
-                                anchorPosition.height / 2 -
-                                modalHeight / 2,
-                            verticalMargin
-                        ),
-                        screenHeight - modalHeight - verticalMargin
-                    );
-                
-                break;
-                }
-                case 'left': {
-                    computedLeft = horizontalMargin;
-                    computedTop = Math.min(
-                        Math.max(
-                            anchorPosition.y +
-                                anchorPosition.height / 2 -
-                                modalHeight / 2,
-                            verticalMargin
-                        ),
-                        screenHeight - modalHeight - verticalMargin
-                    );
-                
-                break;
-                }
-                // No default
+                    case 'above': {
+                        computedTop = verticalMargin;
+                        computedLeft = Math.min(
+                            Math.max(
+                                anchorPosition.x +
+                                    anchorPosition.width / 2 -
+                                    modalWidth / 2,
+                                horizontalMargin
+                            ),
+                            screenWidth - modalWidth - horizontalMargin
+                        );
+
+                        break;
+                    }
+                    case 'below': {
+                        computedTop =
+                            screenHeight - modalHeight - verticalMargin;
+                        computedLeft = Math.min(
+                            Math.max(
+                                anchorPosition.x +
+                                    anchorPosition.width / 2 -
+                                    modalWidth / 2,
+                                horizontalMargin
+                            ),
+                            screenWidth - modalWidth - horizontalMargin
+                        );
+
+                        break;
+                    }
+                    case 'right': {
+                        computedLeft =
+                            screenWidth - modalWidth - horizontalMargin;
+                        computedTop = Math.min(
+                            Math.max(
+                                anchorPosition.y +
+                                    anchorPosition.height / 2 -
+                                    modalHeight / 2,
+                                verticalMargin
+                            ),
+                            screenHeight - modalHeight - verticalMargin
+                        );
+
+                        break;
+                    }
+                    case 'left': {
+                        computedLeft = horizontalMargin;
+                        computedTop = Math.min(
+                            Math.max(
+                                anchorPosition.y +
+                                    anchorPosition.height / 2 -
+                                    modalHeight / 2,
+                                verticalMargin
+                            ),
+                            screenHeight - modalHeight - verticalMargin
+                        );
+
+                        break;
+                    }
+                    // No default
                 }
             } else {
                 computedLeft =
@@ -325,6 +335,7 @@ export const MiniModal: React.FC<MiniModalProps> = ({
                     computedContainerStyle,
                     { pointerEvents: 'auto', zIndex: 100 },
                 ]}
+                // @ts-expect-error mouse enter
                 onMouseEnter={onMouseEnter}
                 onMouseLeave={onMouseLeave}
                 onLayout={(e) => {

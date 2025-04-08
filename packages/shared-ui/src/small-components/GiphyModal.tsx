@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -31,7 +31,7 @@ if (typeof File === 'undefined') {
             this.lastModified = options?.lastModified || Date.now();
         }
     }
-    // @ts-expect-error
+    // @ts-expect-error file
     global.File = RNFile;
 }
 
@@ -51,6 +51,7 @@ export const GiphyModal: React.FC<GiphyModalProps> = ({
     anchorPosition,
 }) => {
     const [giphyQuery, setGiphyQuery] = useState('');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [giphyResults, setGiphyResults] = useState<any[]>([]);
     const [itemWidth, setItemWidth] = useState<number>(0); // Dynamic width for SolitoImage
 
@@ -84,6 +85,7 @@ export const GiphyModal: React.FC<GiphyModalProps> = ({
         }
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleSelectGif = async (result: any) => {
         const gifUrl = result.images.original.url;
         if (variant === 'download') {
@@ -109,11 +111,11 @@ export const GiphyModal: React.FC<GiphyModalProps> = ({
     };
 
     const handleItemLayout = (e: LayoutChangeEvent) => {
-        const {width} = e.nativeEvent.layout;
+        const { width } = e.nativeEvent.layout;
         setItemWidth(width);
     };
 
-    if (!visible) return null;
+    if (!visible) return undefined;
 
     const giphyContainerStyle = {
         width: windowWidth < 768 ? 300 : 400,

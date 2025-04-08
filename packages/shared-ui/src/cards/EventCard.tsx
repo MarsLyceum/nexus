@@ -246,7 +246,9 @@ export const EventCard: React.FC<EventCardProps> = ({
         const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
             location
         )}`;
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         onPress && handleOpenMap;
+        // eslint-disable-next-line no-lone-blocks
         {
             handleOpenMap();
         }
@@ -274,6 +276,7 @@ export const EventCard: React.FC<EventCardProps> = ({
             }
 
             const { status } = await Calendar.requestCalendarPermissionsAsync();
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
             if (status !== 'granted') {
                 Alert.alert(
                     'Permission Denied',
@@ -290,15 +293,16 @@ export const EventCard: React.FC<EventCardProps> = ({
             );
 
             if (!defaultCalendar) {
-                let defaultCalendarSource;
-                defaultCalendarSource = Platform.OS === 'ios' ? (
-                        await Calendar.getDefaultCalendarAsync()
-                    ).source : {
-                        isLocalAccount: true,
-                        name: 'Expo Calendar',
-                        id: '1',
-                        type: 'local',
-                    };
+                const defaultCalendarSource =
+                    Platform.OS === 'ios'
+                        ? // eslint-disable-next-line unicorn/no-await-expression-member
+                          (await Calendar.getDefaultCalendarAsync()).source
+                        : {
+                              isLocalAccount: true,
+                              name: 'Expo Calendar',
+                              id: '1',
+                              type: 'local',
+                          };
                 const newCalendarId = await Calendar.createCalendarAsync({
                     title: 'Expo Calendar',
                     color: '#2196F3',

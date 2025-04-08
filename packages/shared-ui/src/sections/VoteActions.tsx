@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome5';
 import { UpArrow, DownArrow, Comment, Share } from '../icons';
 import { ActionButton } from '../small-components/ActionButton';
 import { COLORS } from '../constants';

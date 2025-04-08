@@ -1,3 +1,4 @@
+// eslint-disable-next-line import/export
 export * from './image-modal';
 export * from './ActionButton';
 export * from './ChatInput';
@@ -11,7 +12,6 @@ export * from './CustomPortalModal';
 export * from './DropdownMenu';
 export * from './EmbedPreview';
 export * from './EmojiPicker';
-export * from './FlashListCompat';
 export * from './FriendItem';
 export * from './GiphyModal';
 export * from './ImageCountOverlay';
@@ -30,7 +30,6 @@ export * from './MessageList';
 export * from './MessageOptionsModal';
 export * from './MiniModal';
 export * from './NexusImage';
-export * from './NexusList';
 export * from './NexusVideo';
 export * from './PatchedFlashList';
 export * from './RegularWebsitePreview';

@@ -156,6 +156,7 @@ export const PostScreen: React.FC<PostScreenProps> = (props) => {
 
     // Create dynamic styles based on device type.
     const computedStyles = StyleSheet.create({
+        // @ts-expect-error web only
         safeContainer: {
             flex: 1,
             backgroundColor: COLORS.SecondaryBackground,
@@ -204,8 +205,11 @@ export const PostScreen: React.FC<PostScreenProps> = (props) => {
 
     if (loading) {
         return (
+            // @ts-expect-error web only
             <SafeAreaView style={computedStyles.safeContainer}>
+                {/* @ts-expect-error web only */}
                 <View style={computedStyles.mainContainer}>
+                    {/* @ts-expect-error web only */}
                     <ScrollView
                         style={computedStyles.scrollSection}
                         contentContainerStyle={computedStyles.scrollView}
@@ -223,6 +227,7 @@ export const PostScreen: React.FC<PostScreenProps> = (props) => {
 
     if (error) {
         return (
+            // @ts-expect-error web only
             <SafeAreaView style={computedStyles.safeContainer}>
                 <View
                     style={{
@@ -246,9 +251,13 @@ export const PostScreen: React.FC<PostScreenProps> = (props) => {
           };
 
     return (
+        // @ts-expect-error web only
         <SafeAreaView style={computedStyles.safeContainer}>
+            {/* @ts-expect-error web only */}
             <ContainerComponent {...containerProps}>
+                {/* @ts-expect-error web only */}
                 <View style={computedStyles.mainContainer}>
+                    {/* @ts-expect-error web only */}
                     <ScrollView
                         style={computedStyles.scrollSection}
                         contentContainerStyle={computedStyles.scrollView}
@@ -275,6 +284,7 @@ export const PostScreen: React.FC<PostScreenProps> = (props) => {
                             // Show inline CommentEditor on computer
                             <CommentEditor
                                 postId={postData.id}
+                                // eslint-disable-next-line unicorn/no-null
                                 parentCommentId={parentCommentId ?? null}
                                 onCommentCreated={() => {
                                     // When a top-level comment is created, refetch comments.
@@ -295,6 +305,7 @@ export const PostScreen: React.FC<PostScreenProps> = (props) => {
                     {!isDesktop && (
                         // Show CreateContentButton on mobile; reset comment context before navigating.
                         <View
+                            // @ts-expect-error web only
                             style={computedStyles.createContentButtonContainer}
                         >
                             <CreateContentButton

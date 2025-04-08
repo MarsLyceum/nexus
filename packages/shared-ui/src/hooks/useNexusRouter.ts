@@ -1,3 +1,4 @@
+// eslint-disable-next-line eslint-comments/disable-enable-pair
 /* eslint-disable react-hooks/rules-of-hooks */
 import { redirect, useRouter as useNextRouter } from 'next/navigation';
 import { useNavigation, StackActions } from '@react-navigation/native';
@@ -5,7 +6,9 @@ import { detectEnvironment, Environment } from '../utils';
 
 // Define the type for our custom router API using types (not interfaces)
 export type NexusRouter = {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     push: (path: string, params?: Record<string, any>) => void;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     replace: (path: string, params?: Record<string, any>) => void;
     goBack: () => void;
 };
@@ -13,6 +16,7 @@ export type NexusRouter = {
 // Helper to build a URL with query parameters for Next.js.
 function buildUrlWithParams(
     path: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     params?: Record<string, any>
 ): string {
     if (params && Object.keys(params).length > 0) {
@@ -37,9 +41,11 @@ export function useNexusRouter(): NexusRouter {
     if (environment === 'nextjs-server') {
         // Server-side: use redirect for both push and replace.
         return {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             push: (path: string, params?: Record<string, any>) => {
                 redirect(buildUrlWithParams(path, params));
             },
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             replace: (path: string, params?: Record<string, any>) => {
                 redirect(buildUrlWithParams(path, params));
             },
@@ -52,9 +58,11 @@ export function useNexusRouter(): NexusRouter {
     if (environment === 'nextjs-client') {
         const router = useNextRouter();
         return {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             push: (path: string, params?: Record<string, any>) => {
                 router.push(buildUrlWithParams(path, params));
             },
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             replace: (path: string, params?: Record<string, any>) => {
                 router.replace(buildUrlWithParams(path, params));
             },
@@ -92,15 +100,19 @@ export function useNexusRouter(): NexusRouter {
         };
 
         return {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             push: (path: string, params?: Record<string, any>) => {
                 const normalizedPath = normalizePath(path);
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 if (typeof (navigation as any).push === 'function') {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     (navigation as any).push(normalizedPath, params);
                 } else {
                     // @ts-expect-error navigation
                     navigation.navigate(normalizedPath, params);
                 }
             },
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             replace: (path: string, params?: Record<string, any>) => {
                 const normalizedPath = normalizePath(path);
                 if (navigation.dispatch) {

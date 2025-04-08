@@ -11,7 +11,6 @@ import { MarkdownEditor } from '../MarkdownEditor';
 import { MarkdownRenderer } from '../MarkdownRenderer';
 import { extractUrls } from '../../utils';
 import { COLORS } from '../../constants';
-import type { MessageWithAvatar, DirectMessageWithAvatar } from '../../types';
 
 export type MessageEditorProps = {
     initialContent: string;
@@ -19,8 +18,6 @@ export type MessageEditorProps = {
     onChange: (newContent: string) => void;
     onSave: () => void;
     onCancel: () => void;
-    message: MessageWithAvatar | DirectMessageWithAvatar;
-    onAttachmentPress: (attachments: string[], index: number) => void;
 };
 
 export const MessageEditor: React.FC<MessageEditorProps> = ({
@@ -29,15 +26,13 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({
     onChange,
     onSave,
     onCancel,
-    message,
-    onAttachmentPress,
 }) => {
     const [editedContent, setEditedContent] = useState(initialContent);
     const [editorHeight, setEditorHeight] = useState<number>(60);
-    const [avgCharWidth, setAvgCharWidth] = useState<number | null>(null);
-    const [measuredLineHeight, setMeasuredLineHeight] = useState<number | null>(
-        null
-    );
+    const [avgCharWidth, setAvgCharWidth] = useState<number | undefined>();
+    const [measuredLineHeight, setMeasuredLineHeight] = useState<
+        number | undefined
+    >();
 
     const isOnlyUrl =
         extractUrls(editedContent).length === 1 &&
@@ -47,7 +42,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({
     const estimateHeightForUrl = (
         text: string,
         containerWidth: number,
-        avgCharWidth: number,
+        avgCharWidthInner: number,
         lineHeight: number,
         horizontalPadding: number,
         verticalPadding: number
@@ -57,7 +52,8 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({
         }
 
         const effectiveWidth = containerWidth - horizontalPadding;
-        const charsPerLine = Math.floor(effectiveWidth / avgCharWidth) || 1;
+        const charsPerLine =
+            Math.floor(effectiveWidth / avgCharWidthInner) || 1;
         const lines = Math.ceil(text.length / charsPerLine);
         return lines * lineHeight + verticalPadding;
     };
@@ -89,20 +85,22 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({
                 width,
                 avgCharWidth,
                 measuredLineHeight,
-                horizontalPadding,
-                verticalPadding
+                horizontalPadding as number,
+                verticalPadding as number
             );
             setEditorHeight(Math.max(60, estimatedHeight));
         }
     }, [editedContent, isOnlyUrl, width, avgCharWidth, measuredLineHeight]);
 
     // For non-URL messages, use a hidden MarkdownRenderer to update height.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleNonUrlLayout = (e: any) => {
         const { height } = e.nativeEvent.layout;
         setEditorHeight(Math.max(60, height));
     };
 
     // Existing key handler if the MarkdownEditor is focused.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleKeyDown = (e: any) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -187,7 +185,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({
                             },
                         ]}
                         onLayout={(e) => {
-                            const {layout} = e.nativeEvent;
+                            const { layout } = e.nativeEvent;
                             setAvgCharWidth(layout.width);
                             setMeasuredLineHeight(layout.height);
                         }}

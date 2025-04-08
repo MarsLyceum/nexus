@@ -40,18 +40,18 @@ export function useLinkPreview({
 
         async function fetchPreview() {
             // Check if the URL is an image.
-            const imageResult = await isImageUrl(url);
+            const imageResult = await isImageUrl(url ?? '');
             if (imageResult) {
                 setIsImage(true);
                 setPreviewData({
                     title: url,
                     description: '',
-                    images: [url],
-                    siteName: getDomainFromUrl(url),
+                    images: [url ?? ''],
+                    siteName: getDomainFromUrl(url ?? ''),
                     url,
                 });
-                RNImage.getSize(
-                    url,
+                void RNImage.getSize(
+                    url ?? '',
                     (width, height) => setImageDimensions({ width, height }),
                     (error) => console.error('Failed to get image size', error)
                 );
@@ -61,7 +61,7 @@ export function useLinkPreview({
 
             // Try oEmbed/Open Graph data.
             try {
-                const oEmbedEndpoint = getOEmbedEndpoint(url);
+                const oEmbedEndpoint = getOEmbedEndpoint(url ?? '');
                 if (oEmbedEndpoint) {
                     try {
                         const response = await fetch(oEmbedEndpoint);
@@ -80,7 +80,7 @@ export function useLinkPreview({
                             images: oEmbedData.thumbnail_url
                                 ? [oEmbedData.thumbnail_url]
                                 : [],
-                            siteName: getDomainFromUrl(url),
+                            siteName: getDomainFromUrl(url ?? ''),
                             url,
                             locale: oEmbedData.locale || '',
                             ogType: oEmbedData.type || '',
@@ -108,7 +108,7 @@ export function useLinkPreview({
                 }
 
                 // Reddit JSON Fallback with URL decoding.
-                if (url.includes('reddit.com')) {
+                if (url?.includes('reddit.com')) {
                     try {
                         const redditUrl = url.endsWith('/')
                             ? `${url}.json`
@@ -173,7 +173,10 @@ export function useLinkPreview({
                 let fetchUrl = url;
                 if (Platform.OS === 'web') {
                     try {
-                        const parsedUrl = new URL(url, window.location.origin);
+                        const parsedUrl = new URL(
+                            url ?? '',
+                            window.location.origin
+                        );
                         if (
                             parsedUrl.origin !== window.location.origin &&
                             parsedUrl.hostname !== window.location.hostname
@@ -184,7 +187,7 @@ export function useLinkPreview({
                         fetchUrl = `https://thingproxy.freeboard.io/fetch/${url}`;
                     }
                 }
-                const response = await fetch(fetchUrl);
+                const response = await fetch(fetchUrl ?? '');
                 const html = await response.text();
 
                 const ogTitleMatch = html.match(
@@ -202,7 +205,7 @@ export function useLinkPreview({
 
                 let imgMatch;
                 let descriptionFallback;
-                if (url.includes('wikipedia.org')) {
+                if (url?.includes('wikipedia.org')) {
                     const contentMatch = html.match(
                         /<div[^>]+id=["']mw-content-text["'][^>]*>([\S\s]*)<\/div>/i
                     );
@@ -214,6 +217,7 @@ export function useLinkPreview({
                     const paragraphs: string[] = [];
                     let match;
                     while (
+                        // eslint-disable-next-line no-cond-assign
                         (match = paragraphRegex.exec(contentHtml)) !== null &&
                         paragraphs.length === 0
                     ) {
@@ -254,7 +258,7 @@ export function useLinkPreview({
                         : firstImageUrl
                           ? [decode(firstImageUrl)]
                           : [],
-                    siteName: getDomainFromUrl(url),
+                    siteName: getDomainFromUrl(url ?? ''),
                     url,
                 };
 

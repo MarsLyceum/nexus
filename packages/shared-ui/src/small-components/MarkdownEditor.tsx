@@ -46,6 +46,7 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
     };
 
     // Internal focus handler that also calls parent's onFocus if provided.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleFocus = (e: any) => {
         setIsFocused(true);
         if (onFocus) {
@@ -54,6 +55,7 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
     };
 
     // Internal blur handler that also calls parent's onBlur if provided.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleBlur = (e: any) => {
         setIsFocused(false);
         if (onBlur) {

@@ -9,10 +9,7 @@ import {
     Platform,
 } from 'react-native';
 import MarkdownIt from 'markdown-it';
-import RenderHTML, {
-    defaultHTMLElementModels,
-    HTMLContentModel,
-} from 'react-native-render-html';
+import RenderHTML, { defaultHTMLElementModels } from 'react-native-render-html';
 import { COLORS } from '../constants';
 
 // ---------------------
@@ -77,6 +74,7 @@ const styles = StyleSheet.create({
 // ---------------------
 // Helpers
 // ---------------------
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const extractTextFromTnode = (tnode: any): string => {
     if (tnode.data) return tnode.data;
     if (tnode.children && Array.isArray(tnode.children)) {
@@ -123,6 +121,7 @@ const InlineSpoiler: React.FC<{ children: React.ReactNode }> = ({
 // ---------------------
 // Custom Inline Link Component
 // ---------------------
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const InlineLink: React.FC<{ tnode: any }> = ({ tnode }) => {
     let href = tnode.attributes?.href || '';
     if (!/^https?:\/\//.test(href)) {
@@ -175,6 +174,7 @@ const mdInstance = new MarkdownIt({
 
 // Spoiler plugins
 function inlineSpoilerPlugin(md: MarkdownIt) {
+    // eslint-disable-next-line unicorn/consistent-function-scoping, @typescript-eslint/no-explicit-any
     function tokenize(state: any, silent: boolean) {
         const startPos = state.pos;
         if (state.src.slice(startPos, startPos + 2) !== '||') return false;
@@ -184,12 +184,14 @@ function inlineSpoilerPlugin(md: MarkdownIt) {
             const token = state.push('spoiler', 'spoiler', 0);
             token.content = state.src.slice(startPos + 2, end);
         }
+        // eslint-disable-next-line no-param-reassign
         state.pos = end + 2;
         return true;
     }
     md.inline.ruler.before('text', 'spoiler', tokenize);
 }
 function redditSpoilerPlugin(md: MarkdownIt) {
+    // eslint-disable-next-line unicorn/consistent-function-scoping, @typescript-eslint/no-explicit-any
     function tokenize(state: any, silent: boolean) {
         const { pos } = state;
         if (state.src.slice(pos, pos + 2) !== '>!') return false;
@@ -199,21 +201,27 @@ function redditSpoilerPlugin(md: MarkdownIt) {
             const token = state.push('spoiler', 'spoiler', 0);
             token.content = state.src.slice(pos + 2, end);
         }
+        // eslint-disable-next-line no-param-reassign
         state.pos = end + 2;
         return true;
     }
     md.inline.ruler.before('text', 'redditSpoiler', tokenize);
 }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function spoilerPostProcessor(state: any) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     state.tokens.forEach((token: any) => {
         if (token.type === 'inline' && token.children) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const newChildren: any[] = [];
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             token.children.forEach((child: any) => {
                 if (child.type === 'text' && child.content.includes('||')) {
                     const text = child.content;
                     let lastIndex = 0;
                     const regex = /\|\|(.+?)\|\|/g;
                     let match;
+                    // eslint-disable-next-line no-cond-assign
                     while ((match = regex.exec(text)) !== null) {
                         if (match.index > lastIndex) {
                             const t = new state.Token('text', '', 0);
@@ -225,6 +233,7 @@ function spoilerPostProcessor(state: any) {
                             'spoiler',
                             0
                         );
+                        // eslint-disable-next-line prefer-destructuring
                         spoilerToken.content = match[1];
                         newChildren.push(spoilerToken);
                         lastIndex = regex.lastIndex;
@@ -238,10 +247,12 @@ function spoilerPostProcessor(state: any) {
                     newChildren.push(child);
                 }
             });
+            // eslint-disable-next-line no-param-reassign
             token.children = newChildren;
         }
     });
 }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function spoilerRenderer(tokens: any, idx: number) {
     return `<span class="spoiler">${tokens[idx].content}</span>`;
 }
@@ -257,12 +268,15 @@ mdInstance.core.ruler.after(
 // ---------------------
 // Custom <span> Renderer
 // ---------------------
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const customSpanRenderer = ({ tnode }: any) => {
-    if (!tnode) return null;
+    if (!tnode) return undefined;
     const className = tnode.attributes?.class || '';
     const content =
         tnode.domNode?.textContent || extractTextFromTnode(tnode) || '';
-    const classes = new Set(className.split(' ').map((cls: string) => cls.trim()));
+    const classes = new Set(
+        className.split(' ').map((cls: string) => cls.trim())
+    );
     if (classes.has('spoiler')) {
         return <InlineSpoiler>{content}</InlineSpoiler>;
     }
@@ -274,6 +288,7 @@ const customSpanRenderer = ({ tnode }: any) => {
 };
 
 const customRenderers = {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     a: ({ tnode }: any) => <InlineLink tnode={tnode} />,
     span: customSpanRenderer,
 };
@@ -320,6 +335,7 @@ export const MarkdownRenderer: React.FC<{
 
     const htmlContent = useMemo(() => finalHtmlContent, [finalHtmlContent]);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleOnLayout = useCallback((event: any) => {
         setContentHeight(event.nativeEvent.layout.height);
     }, []);

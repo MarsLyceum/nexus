@@ -49,6 +49,7 @@ const httpLink = from([
         credentials: 'include', // Ensures cookies are sent with requests
         // This function tells apollo-upload-client which values represent files.
         // @ts-expect-error file
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         isExtractableFile: (value: any) => {
             if (value === undefined || value === null) return false;
             if (typeof File !== 'undefined' && value instanceof File)

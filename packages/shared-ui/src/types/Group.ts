@@ -1,15 +1,3 @@
-export type PreviewData = {
-    title?: string;
-    description?: string;
-    images?: string[];
-    siteName?: string;
-    url?: string;
-    locale?: string;
-    ogType?: string;
-    logo?: string;
-    embedHtml?: string;
-};
-
 // Discriminated union for messages
 export type BaseGroupChannelMessage = {
     id: string;
@@ -21,7 +9,6 @@ export type BaseGroupChannelMessage = {
     channelId: string;
     postedByUserId: string;
     attachmentUrls?: string[];
-    previewData?: PreviewData[];
 };
 
 export type GroupChannelRegularMessage = BaseGroupChannelMessage & {

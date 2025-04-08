@@ -27,10 +27,13 @@ export const RegularWebsitePreview: React.FC<RegularWebsitePreviewProps> = ({
     const [modalVisible, setModalVisible] = useState(false);
 
     // State to store the actual image dimensions.
-    const [imageDimensions, setImageDimensions] = useState<{
-        width: number;
-        height: number;
-    } | null>(null);
+    const [imageDimensions, setImageDimensions] = useState<
+        | {
+              width: number;
+              height: number;
+          }
+        | undefined
+    >();
 
     // Determine attachments: use all images if available, or fallback to logo.
     const attachments =
@@ -74,12 +77,12 @@ export const RegularWebsitePreview: React.FC<RegularWebsitePreviewProps> = ({
         <View style={styles.linkPreviewContainer}>
             {previewData.title ? (
                 <Text style={styles.linkPreviewTitle}>{previewData.title}</Text>
-            ) : null}
+            ) : undefined}
             {descriptionToShow ? (
                 <Text style={styles.linkPreviewDescription}>
                     {descriptionToShow}
                 </Text>
-            ) : null}
+            ) : undefined}
             {previewImage ? (
                 <TouchableOpacity
                     onPress={() => setModalVisible(true)}
@@ -99,7 +102,7 @@ export const RegularWebsitePreview: React.FC<RegularWebsitePreviewProps> = ({
                         unoptimized
                     />
                 </TouchableOpacity>
-            ) : null}
+            ) : undefined}
             <TouchableOpacity
                 onPress={() => Linking.openURL(url)}
                 style={styles.linkPreviewSiteTouchable}

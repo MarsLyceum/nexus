@@ -41,15 +41,18 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     onAttachmentPreviewPress,
 }) => {
     const [showGiphy, setShowGiphy] = useState(false);
-    const [gifButtonLayout, setGifButtonLayout] = useState<{
-        x: number;
-        y: number;
-        width: number;
-        height: number;
-    } | null>(null);
+    const [gifButtonLayout, setGifButtonLayout] = useState<
+        | {
+              x: number;
+              y: number;
+              width: number;
+              height: number;
+          }
+        | undefined
+    >();
 
     // Create a ref for the GIF button.
-    const gifButtonRef = useRef<TouchableOpacity>(null);
+    const gifButtonRef = useRef<View>(null);
 
     // Extract inline image URLs from the message text.
     const inlineImageUrls = extractUrls(messageText).filter((url) =>
@@ -124,7 +127,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                     onPress={() => {
                         if (gifButtonRef.current) {
                             gifButtonRef.current.measureInWindow(
-                                (x, y, width, height) => {
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                (x: any, y: any, width: any, height: any) => {
                                     setGifButtonLayout({ x, y, width, height });
                                     setShowGiphy(true);
                                 }
@@ -154,6 +158,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 onClose={() => setShowGiphy(false)}
                 anchorPosition={gifButtonLayout || undefined}
                 onSelectGif={(attachment) => {
+                    // @ts-expect-error attachment
                     sendMessageHandler(attachment.file.uri);
                 }}
             />

@@ -1,4 +1,8 @@
 // eslint-disable-next-line eslint-comments/disable-enable-pair
+/* eslint-disable @typescript-eslint/no-var-requires */
+// eslint-disable-next-line eslint-comments/disable-enable-pair
+/* eslint-disable unicorn/prefer-module */
+// eslint-disable-next-line eslint-comments/disable-enable-pair
 /* eslint-disable global-require */
 
 import { Platform } from 'react-native';
@@ -13,7 +17,7 @@ export const setItem = async (key: string, value: string): Promise<void> => {
     }
 };
 
-export const getItem = (key: string): Promise<string> => {
+export const getItem = (key: string): Promise<string | null> => {
     if (Platform.OS === 'web') {
         return AsyncStorage.getItem(key);
     }

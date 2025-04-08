@@ -16,21 +16,7 @@ import { ChatScreen } from './ChatScreen';
 import { GET_CONVERSATIONS, FETCH_USER_QUERY } from '../queries';
 import { useAppSelector, RootState, UserType } from '../redux';
 import { getOnlineStatusDotColor } from '../utils';
-
-// Conversation type from your GraphQL query.
-type Conversation = {
-    id: string;
-    type: string;
-    participantsUserIds: string[];
-    messages: {
-        id: string;
-        content: string;
-        senderUserId: string;
-        createdAt: string;
-        edited: boolean;
-    }[];
-    channelId: string;
-};
+import { Conversation } from '../types';
 
 interface ConversationItemProps {
     conversation: Conversation;
@@ -58,13 +44,15 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
     onPress,
 }) => {
     const client = useApolloClient();
+    const [groupUsers, setGroupUsers] = useState<UserType[]>([]);
     const otherParticipantIds = conversation.participantsUserIds.filter(
-        (id) => id !== activeUser.id
+        (id) => id !== activeUser?.id
     );
 
     // --- ONE-TO-ONE CONVERSATION ---
     if (otherParticipantIds.length === 1) {
         const friendId = otherParticipantIds[0];
+        // eslint-disable-next-line react-hooks/rules-of-hooks
         const { data, loading } = useQuery(FETCH_USER_QUERY, {
             variables: { userId: friendId },
         });
@@ -115,7 +103,7 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
 
     // --- GROUP CONVERSATION ---
     // For group conversations, fetch info for all participants (excluding the active user).
-    const [groupUsers, setGroupUsers] = useState<UserType[]>([]);
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     useEffect(() => {
         let isMounted = true;
         const fetchGroupUsers = async () => {
@@ -136,13 +124,13 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
                 console.error('Error fetching group users:', error);
             }
         };
-        fetchGroupUsers();
+        void fetchGroupUsers();
         return () => {
             isMounted = false;
         };
     }, [otherParticipantIds, client]);
 
-    const groupUsernames = groupUsers.map((u) => u.username).join(', ');
+    const groupUsernames = groupUsers.map((u) => u?.username).join(', ');
     const totalMembers = conversation.participantsUserIds.length;
 
     return (
@@ -155,15 +143,17 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
         >
             <View style={styles.avatarGroup}>
                 {groupUsers.slice(0, 3).map((user, index) => {
-                    const avatarUrl = `https://picsum.photos/seed/${user.username}/40`;
+                    const avatarUrl = `https://picsum.photos/seed/${user?.username}/40`;
                     return (
                         <NexusImage
-                            key={user.id}
+                            key={user?.id}
                             source={avatarUrl}
                             alt="avatar"
                             width={40}
                             height={40}
+                            // @ts-expect-error web only
                             style={[
+                                // @ts-expect-error web only
                                 styles.groupAvatar,
                                 { marginLeft: index === 0 ? 0 : -10 },
                             ]}

@@ -12,7 +12,8 @@ import {
 
 import { NexusImage } from './NexusImage';
 import { COLORS } from '../constants';
-import { Attachment, AttachmentPreviews } from '../sections';
+import { AttachmentPreviews } from '../sections';
+import { Attachment } from '../types';
 import { CustomPortalModal } from './CustomPortalModal';
 import { ContentEditor } from './ContentEditor';
 
@@ -131,6 +132,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
                                     attachments={attachments}
                                     onAttachmentPress={onAttachmentPress}
                                     onRemoveAttachment={(id) =>
+                                        // @ts-expect-error attachment
                                         setAttachments((prev: Attachment[]) =>
                                             prev.filter((att) => att.id !== id)
                                         )

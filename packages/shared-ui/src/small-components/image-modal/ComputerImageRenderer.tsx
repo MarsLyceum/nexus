@@ -103,12 +103,14 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
             }
         };
         document.addEventListener('mousedown', handleDocumentClick);
+        // eslint-disable-next-line consistent-return
         return () => {
             document.removeEventListener('mousedown', handleDocumentClick);
         };
     }, [visibleRect, onClose]);
 
     // Toggle zoom state on image press.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleImagePress = useCallback((e: any) => {
         e.stopPropagation();
         setZoomed((prev) => !prev);
@@ -126,11 +128,13 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
             >
                 <Pressable
                     onPress={handleImagePress}
+                    // @ts-expect-error styles
                     style={{
                         width: nonZoomedSize.width,
                         height: nonZoomedSize.height,
                         cursor: 'zoom-in',
                     }}
+                    // @ts-expect-error ref
                     ref={imageWrapperRef}
                     onLayout={handleLayout}
                 >
@@ -149,8 +153,10 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
 
     // Zoomed state: render image inside a ScrollView (vertical scrolling enabled).
     return (
+        // @ts-expect-error styles
         <View style={{ flex: 1, cursor: 'zoom-out' }}>
             <ScrollView
+                // @ts-expect-error styles
                 style={{ flex: 1, cursor: 'zoom-out' }}
                 contentContainerStyle={{
                     width: zoomedContainerWidth,
@@ -160,8 +166,10 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
             >
                 <Pressable
                     onPress={handleImagePress}
+                    // @ts-expect-error ref
                     ref={imageWrapperRef}
                     onLayout={handleLayout}
+                    // @ts-expect-error styles
                     style={{
                         width: zoomedSize.width,
                         height: zoomedSize.height,

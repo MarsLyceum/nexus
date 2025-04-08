@@ -39,6 +39,7 @@ export const MobileImageRenderer: React.FC<MobileImageRendererProps> = ({
     const offsetY = (screenHeight - imageHeight) / 2;
 
     const handleZoomTap = useCallback(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (e: any) => {
             const { absoluteX, absoluteY } = e;
 
@@ -60,10 +61,13 @@ export const MobileImageRenderer: React.FC<MobileImageRendererProps> = ({
                     e.stopPropagation?.();
                     onClose();
                 }
-            } else if (absoluteY < offsetY || absoluteY > offsetY + imageHeight) {
-                    e.stopPropagation?.();
-                    onClose();
-                }
+            } else if (
+                absoluteY < offsetY ||
+                absoluteY > offsetY + imageHeight
+            ) {
+                e.stopPropagation?.();
+                onClose();
+            }
         },
         [onClose, offsetY, imageHeight]
     );

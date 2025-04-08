@@ -19,6 +19,7 @@ export type NexusImageProps = {
     contentFit?: ImageContentFit; // e.g., 'contain', 'cover', etc.
     unoptimized?: boolean;
     // Allow any additional props
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     [key: string]: any;
 };
 
@@ -64,6 +65,10 @@ export const NexusImage = (props: NexusImageProps) => {
     } = props;
     const env: Environment = detectEnvironment();
 
+    const containerRef = useRef<HTMLDivElement>(null);
+    const { width: containerWidth, height: containerHeight } =
+        useContainerDimensions(containerRef);
+
     // --- React Native: use Expo Image ---
     if (env === 'react-native-mobile' || env === 'react-native-web') {
         // Expo Image requires the source to be an object with a `uri` property.
@@ -76,6 +81,7 @@ export const NexusImage = (props: NexusImageProps) => {
         return (
             <ExpoImage
                 source={expoSource}
+                // @ts-expect-error style
                 style={expoStyle}
                 accessibilityLabel={alt}
                 contentFit={contentFit} // Pass contentFit directly
@@ -92,7 +98,9 @@ export const NexusImage = (props: NexusImageProps) => {
     // Helper function to extract numeric size from a prop or style (if provided as a pixel string).
     const getNumericSize = (
         propSize: number | string | undefined,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         styleSize: any
+        // eslint-disable-next-line unicorn/consistent-function-scoping
     ): number | undefined => {
         if (typeof propSize === 'number') return propSize;
         if (typeof propSize === 'string' && propSize.endsWith('px'))
@@ -112,10 +120,6 @@ export const NexusImage = (props: NexusImageProps) => {
             height: height || style.height || '100%',
             ...style,
         };
-
-        const containerRef = useRef<HTMLDivElement>(null);
-        const { width: containerWidth, height: containerHeight } =
-            useContainerDimensions(containerRef);
 
         // Until the container dimensions are measured, render an empty container.
         if (!containerWidth || !containerHeight) {

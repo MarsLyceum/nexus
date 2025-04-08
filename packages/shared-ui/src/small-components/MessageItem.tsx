@@ -13,6 +13,7 @@ export type MessageItemProps = {
     message: MessageWithAvatar | DirectMessageWithAvatar;
     width: number;
     onAttachmentPress: (attachments: string[], index: number) => void;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     scrollContainerRef: React.RefObject<any>;
     onSaveEdit: (message: MessageWithAvatar | DirectMessageWithAvatar) => void;
     onDeleteMessage: (
@@ -35,12 +36,15 @@ export const MessageItem: React.FC<MessageItemProps> = ({
 }) => {
     const [currentMessage, setCurrentMessage] = useState(message);
     const [optionsModalVisible, setOptionsModalVisible] = useState(false);
-    const [anchorPosition, setAnchorPosition] = useState<{
-        x: number;
-        y: number;
-        width: number;
-        height: number;
-    } | null>(null);
+    const [anchorPosition, setAnchorPosition] = useState<
+        | {
+              x: number;
+              y: number;
+              width: number;
+              height: number;
+          }
+        | undefined
+    >(undefined);
     const [modalHovered, setModalHovered] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
     const [isScrolling, setIsScrolling] = useState(false);
@@ -152,6 +156,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
         scrollContainer.addEventListener('scroll', handleScroll, {
             passive: true,
         });
+        // eslint-disable-next-line consistent-return
         return () => {
             scrollContainer.removeEventListener('scroll', handleScroll);
         };
@@ -200,6 +205,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
         <View
             ref={containerRef}
             style={[styles.messageContainer, isHovered && styles.hovered]}
+            // @ts-expect-error mouse
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
         >
@@ -249,8 +255,6 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                         onChange={setEditedContent}
                         onSave={handleSaveEdit}
                         onCancel={handleCancelEdit}
-                        message={currentMessage}
-                        onAttachmentPress={onAttachmentPress}
                     />
 
                     {/* Link previews with live updates */}
@@ -324,7 +328,6 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                     onClose={() => setShowDeleteConfirmationModal(false)}
                     onConfirmDelete={handleDeleteMessage}
                     message={currentMessage}
-                    width={width}
                     onAttachmentPress={onAttachmentPress}
                 />
             )}

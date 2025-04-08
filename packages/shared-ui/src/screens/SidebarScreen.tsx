@@ -6,7 +6,6 @@ import isEqual from 'lodash.isequal';
 
 import { useNexusRouter } from '../hooks';
 import {
-    retrieveUserGroups,
     setUserGroups,
     useAppDispatch,
     useAppSelector,
@@ -133,7 +132,7 @@ export const SidebarScreen = ({
     }, [currentRoute]);
 
     const user: UserType = useAppSelector(
-        (state: RootState) => state.user.user
+        (stateInner: RootState) => stateInner.user.user
     );
 
     // Manage groups: if not passed via props, we use local state.
@@ -227,6 +226,7 @@ export const SidebarScreen = ({
 
     // Measure the currently selected button.
     useLayoutEffect(() => {
+        // eslint-disable-next-line unicorn/no-null
         let buttonRef: React.RefObject<View> | null = null;
         if (staticButtonRefs[selectedButton as keyof typeof staticButtonRefs]) {
             buttonRef =
@@ -254,12 +254,13 @@ export const SidebarScreen = ({
                         useNativeDriver: false,
                     }).start();
                 },
-                (error) => {
-                    console.warn('measureLayout error:', error);
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                () => {
+                    console.warn('measureLayout error');
                 }
             );
         }
-    }, [selectedButton, highlightTop, highlightHeight]);
+    }, [selectedButton, highlightTop, highlightHeight, staticButtonRefs]);
 
     const router = useNexusRouter();
 

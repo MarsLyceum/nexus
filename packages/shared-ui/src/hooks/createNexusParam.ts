@@ -10,6 +10,7 @@ import { detectEnvironment, Environment, getSafeWindow } from '../utils';
 // Helper to build a URL with query parameters (used in Next.js)
 function buildUrlWithParams(
     path: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     params?: Record<string, any>
 ): string {
     if (params && Object.keys(params).length > 0) {
@@ -34,6 +35,7 @@ function buildUrlWithParams(
  * - In React Native (mobile or web), it uses React Navigation’s useRoute (to read params)
  *   and uses setParams (if available) or falls back to a navigation replace via useNavigation.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function createNexusParam<T extends Record<string, any>>() {
     /**
      * useParams
@@ -51,7 +53,9 @@ export function createNexusParam<T extends Record<string, any>>() {
         if (environment === 'nextjs-client') {
             // --- NEXT.JS CLIENT ---
             // Read query parameters via useSearchParams.
+            // eslint-disable-next-line react-hooks/rules-of-hooks
             const searchParams = useSearchParams();
+            // eslint-disable-next-line react-hooks/rules-of-hooks
             const nextRouter = useNextRouter();
 
             // Convert URLSearchParams to a plain object.
@@ -62,6 +66,7 @@ export function createNexusParam<T extends Record<string, any>>() {
             currentParams = paramsObj as unknown as T;
 
             // When updating, merge new params with current ones and update the URL.
+            // eslint-disable-next-line react-hooks/rules-of-hooks
             setParams = useCallback(
                 (newParams: Partial<T>) => {
                     // Merge current and new parameters
@@ -80,16 +85,21 @@ export function createNexusParam<T extends Record<string, any>>() {
         ) {
             // --- REACT NATIVE ---
             // Read the current parameters using React Navigation's useRoute.
+            // eslint-disable-next-line react-hooks/rules-of-hooks
             const route = useRoute();
+            // eslint-disable-next-line react-hooks/rules-of-hooks
             const navigation = useNavigation();
             currentParams = (route.params || {}) as T;
 
             // Update parameters by merging with the current ones.
             // Use navigation.setParams if available.
+            // eslint-disable-next-line react-hooks/rules-of-hooks
             setParams = useCallback(
                 (newParams: Partial<T>) => {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     if (typeof (navigation as any).setParams === 'function') {
                         // Merge the new params with the current ones.
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         (navigation as any).setParams({
                             ...currentParams,
                             ...newParams,
@@ -98,6 +108,7 @@ export function createNexusParam<T extends Record<string, any>>() {
                         // Fallback: if setParams is not available, we can navigate (or replace)
                         // using the route's name and new parameters.
                         // (Assumes that the route name is set correctly in your navigator.)
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         (navigation as any).replace(route.name, {
                             ...currentParams,
                             ...newParams,
@@ -133,6 +144,7 @@ export function createNexusParam<T extends Record<string, any>>() {
         const value = params[key];
         const setValue = useCallback(
             (newValue: T[K]) => {
+                // @ts-expect-error type
                 setParams({ [key]: newValue } as Partial<T>);
             },
             [key, setParams]

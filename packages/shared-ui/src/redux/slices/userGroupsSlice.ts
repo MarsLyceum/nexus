@@ -1,3 +1,5 @@
+// eslint-disable-next-line eslint-comments/disable-enable-pair
+/* eslint-disable no-param-reassign */
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Group } from '../../types';
 import type { AppThunk } from '../store';
@@ -36,6 +38,7 @@ export const retrieveUserGroups =
         }
     };
 
+// eslint-disable-next-line unicorn/consistent-function-scoping
 export const loadUserGroups = (): AppThunk => async (dispatch) => {
     try {
         const storedGroups = await getItem(USER_GROUPS_KEY);

@@ -27,6 +27,7 @@ export interface MarkdownInputBaseProps extends TextInputProps {
     // New prop for background color
     backgroundColor?: string;
     // Add onKeyDown so that we can capture key events on web
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onKeyDown?: (e: any) => void;
 }
 
@@ -52,6 +53,7 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
 
     // Scroll syncing functions remain unchanged
     const handleVerticalScroll = (
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         e: NativeSyntheticEvent<TextInputScrollEventData> & { nativeEvent: any }
     ) => {
         const offsetY =
@@ -60,6 +62,7 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
     };
 
     const handleHorizontalScroll = (
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         e: NativeSyntheticEvent<TextInputScrollEventData> & { nativeEvent: any }
     ) => {
         const offsetX =
@@ -68,6 +71,7 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
     };
 
     // Delegate key events to the EmojiPicker
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleKeyPressInternal = (e: any) => {
         emojiPickerRef.current?.handleKeyDown(e);
     };
@@ -122,6 +126,7 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
     // eslint-disable-next-line consistent-return
     useEffect(() => {
         if (Platform.OS === 'web' && textInputRef.current) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const node = textInputRef.current as any;
             const handleNativeKeyDown = (e: KeyboardEvent) => {
                 if (onKeyDown) {
@@ -163,6 +168,7 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
                 // For non-web platforms, attach onKeyPress normally
                 {...(Platform.OS !== 'web'
                     ? {
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
                           onKeyPress: (e: any) => {
                               if (onKeyDown) {
                                   onKeyDown(e);
@@ -171,6 +177,7 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
                           },
                       }
                     : {})}
+                // @ts-expect-error scroll
                 scrollEventThrottle={16}
                 {...rest}
             />

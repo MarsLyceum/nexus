@@ -6,14 +6,7 @@ import { MarkdownRenderer } from '../MarkdownRenderer';
 import { extractUrls, isImageExtensionUrl } from '../../utils';
 import { useMediaTypes } from '../../hooks';
 import { NexusVideo } from '../NexusVideo';
-import type {
-    MessageWithAvatar,
-    DirectMessageWithAvatar,
-    PreviewData,
-} from '../../types';
-
-// New: We'll use your color palette.
-import { COLORS } from '../../constants';
+import type { MessageWithAvatar, DirectMessageWithAvatar } from '../../types';
 
 export type MessageContentProps = {
     message: MessageWithAvatar | DirectMessageWithAvatar;
@@ -33,7 +26,7 @@ export const MessageContent: React.FC<MessageContentProps> = ({
     renderMessage = true,
     renderLinkPreview = true,
     renderAttachments = true,
-    contentOverride = null,
+    contentOverride = undefined,
 }) => {
     const mediaInfos = useMediaTypes(message.attachmentUrls || []);
 
@@ -42,8 +35,8 @@ export const MessageContent: React.FC<MessageContentProps> = ({
         contentOverride !== null ? contentOverride : message.content;
 
     // Determine if the effective content is just a link.
-    const trimmedContent = effectiveContent.trim();
-    const urls = extractUrls(trimmedContent);
+    const trimmedContent = effectiveContent?.trim();
+    const urls = extractUrls(trimmedContent ?? '');
     const isJustLink = urls.length === 1 && trimmedContent === urls[0];
 
     // Helper to render the message text using MarkdownRenderer.
@@ -53,54 +46,27 @@ export const MessageContent: React.FC<MessageContentProps> = ({
     );
 
     // Helper to render link previews based on content URLs or previewData
-    const renderLinkPreviews = (
-        content: string,
-        messageWidth: number,
-        previewData?: PreviewData[]
-    ) => {
-        const trimmedContent = content.trim();
-        const urls = extractUrls(trimmedContent);
-
-        if (previewData && previewData.length > 0) {
-            if (
-                previewData.length === 1 &&
-                trimmedContent === previewData[0].url &&
-                isImageExtensionUrl(previewData[0].url)
-            ) {
-                return (
-                    <LinkPreview
-                        previewData={previewData[0]}
-                        containerWidth={messageWidth - 32}
-                    />
-                );
-            }
-            return (
-                <>
-                    {previewData.map((pd, index) => (
-                        <LinkPreview
-                            key={index}
-                            previewData={pd}
-                            containerWidth={messageWidth - 32}
-                        />
-                    ))}
-                </>
-            );
-        }
+    const renderLinkPreviews = (content: string, messageWidth: number) => {
+        const trimmedContentInner = content.trim();
+        const urlsInner = extractUrls(trimmedContentInner);
 
         if (
-            urls.length === 1 &&
-            trimmedContent === urls[0] &&
-            isImageExtensionUrl(urls[0])
+            urlsInner.length === 1 &&
+            trimmedContentInner === urlsInner[0] &&
+            isImageExtensionUrl(urlsInner[0])
         ) {
             return (
-                <LinkPreview url={urls[0]} containerWidth={messageWidth - 32} />
+                <LinkPreview
+                    url={urlsInner[0]}
+                    containerWidth={messageWidth - 32}
+                />
             );
         }
 
-        if (urls.length > 0) {
+        if (urlsInner.length > 0) {
             return (
                 <>
-                    {urls.map((url, index) => (
+                    {urlsInner.map((url, index) => (
                         <LinkPreview
                             key={index}
                             url={url}
@@ -111,7 +77,7 @@ export const MessageContent: React.FC<MessageContentProps> = ({
             );
         }
 
-        return null;
+        return undefined;
     };
 
     return (
@@ -174,7 +140,7 @@ export const MessageContent: React.FC<MessageContentProps> = ({
                                             height={info.height * 0.5}
                                             alt="Message attachment image"
                                         />
-                                    ) : null}
+                                    ) : undefined}
                                 </TouchableOpacity>
                             );
                         })}

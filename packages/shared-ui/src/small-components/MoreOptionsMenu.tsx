@@ -3,7 +3,6 @@ import React from 'react';
 import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { MiniModal } from './MiniModal';
-import { Tooltip } from './Tooltip';
 import { Edit, Delete } from '../icons'; // Keep your existing Edit icon import
 import { COLORS } from '../constants';
 

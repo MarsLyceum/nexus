@@ -104,6 +104,7 @@ export const FriendsScreen: React.FC = () => {
                 return { ...prev, getFriends: updatedFriends };
             },
         });
+        // eslint-disable-next-line consistent-return
         return () => unsubscribe();
     }, [user?.id, subscribeToMore]);
 

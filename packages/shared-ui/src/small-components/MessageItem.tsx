@@ -270,22 +270,24 @@ export const MessageItem: React.FC<MessageItemProps> = ({
             </View>
 
             {/* Options modal */}
-            {!isEditing && optionsModalVisible && anchorPosition && (
-                <View style={styles.optionsModalContainer}>
-                    <MessageOptionsModal
-                        visible={optionsModalVisible}
-                        onClose={() => setOptionsModalVisible(false)}
-                        anchorPosition={anchorPosition}
-                        onEdit={handleEdit}
-                        onMore={handleMore}
-                        onMouseEnterModal={() => setModalHovered(true)}
-                        onMouseLeaveModal={() => {
-                            setModalHovered(false);
-                            setOptionsModalVisible(false);
-                        }}
-                    />
-                </View>
-            )}
+            {!isEditing &&
+                (optionsModalVisible || showMoreOptions) &&
+                anchorPosition && (
+                    <View style={styles.optionsModalContainer}>
+                        <MessageOptionsModal
+                            visible
+                            onClose={() => setOptionsModalVisible(false)}
+                            anchorPosition={anchorPosition}
+                            onEdit={handleEdit}
+                            onMore={handleMore}
+                            onMouseEnterModal={() => setModalHovered(true)}
+                            onMouseLeaveModal={() => {
+                                setModalHovered(false);
+                                setOptionsModalVisible(false);
+                            }}
+                        />
+                    </View>
+                )}
 
             <MoreOptionsMenu
                 anchorPosition={moreButtonAnchor}
@@ -298,10 +300,8 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                 onAddReaction={() => {}}
                 onCopyText={() => {}}
                 onPinMessage={() => {}}
-                onOpenApps={() => {}}
                 onMarkUnread={() => {}}
                 onCopyMessageLink={() => {}}
-                onSpeakMessage={() => {}}
                 onDeleteMessage={() => {}}
             />
         </View>

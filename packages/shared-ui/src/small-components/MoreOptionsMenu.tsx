@@ -61,16 +61,6 @@ export const PinMessageIcon: React.FC = () => (
     </Svg>
 );
 
-// Example: Apps
-export const AppsIcon: React.FC = () => (
-    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-        <Path
-            d="M4 4h6v6H4V4zm0 10h6v6H4v-6zm10-10h6v6h-6V4zm0 10h6v6h-6v-6z"
-            fill={COLORS.White}
-        />
-    </Svg>
-);
-
 // Example: Mark Unread
 export const MarkUnreadIcon: React.FC = () => (
     <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
@@ -86,16 +76,6 @@ export const CopyLinkIcon: React.FC = () => (
     <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
         <Path
             d="M3.9 12c0-1.16.94-2.1 2.1-2.1h4V8H6c-2.16 0-3.9 1.74-3.9 3.9v0c0 2.16 1.74 3.9 3.9 3.9h4v-1.9H6c-1.16 0-2.1-.94-2.1-2.1zm8.1 0v0c0-1.16.94-2.1 2.1-2.1h4V8h-4c-2.16 0-3.9 1.74-3.9 3.9v0c0 2.16 1.74 3.9 3.9 3.9h4v-1.9h-4c-1.16 0-2.1-.94-2.1-2.1z"
-            fill={COLORS.White}
-        />
-    </Svg>
-);
-
-// Example: Speak Message
-export const SpeakMessageIcon: React.FC = () => (
-    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-        <Path
-            d="M9 9h6v6H9V9zm9.07-3.93l1.41 1.41C18.55 7.42 18 9.16 18 11s.55 3.58 1.48 4.52l-1.41 1.41C17.24 15.57 16 13.42 16 11c0-2.42 1.24-4.57 3.07-5.93zM4.93 6.48l1.41-1.41C7.45 6.42 8 8.16 8 10s-.55 3.58-1.48 4.52l-1.41-1.41C5.76 12.57 6 11.42 6 10c0-1.42-.24-2.57-.48-3.52z"
             fill={COLORS.White}
         />
     </Svg>
@@ -120,10 +100,8 @@ export type MoreOptionsMenuProps = {
     onAddReaction: () => void;
     onCopyText: () => void;
     onPinMessage: () => void;
-    onOpenApps: () => void;
     onMarkUnread: () => void;
     onCopyMessageLink: () => void;
-    onSpeakMessage: () => void;
     onDeleteMessage: () => void;
 };
 
@@ -138,10 +116,8 @@ export function MoreOptionsMenu({
     onAddReaction,
     onCopyText,
     onPinMessage,
-    onOpenApps,
     onMarkUnread,
     onCopyMessageLink,
-    onSpeakMessage,
     onDeleteMessage,
 }: MoreOptionsMenuProps) {
     return (
@@ -224,17 +200,6 @@ export function MoreOptionsMenu({
                     </TouchableOpacity>
                 </Tooltip>
 
-                {/* Apps */}
-                <Tooltip tooltipText="Apps">
-                    <TouchableOpacity
-                        style={styles.menuItem}
-                        onPress={onOpenApps}
-                    >
-                        <AppsIcon />
-                        <Text style={styles.menuItemText}>Apps</Text>
-                    </TouchableOpacity>
-                </Tooltip>
-
                 {/* Mark Unread */}
                 <Tooltip tooltipText="Mark Unread">
                     <TouchableOpacity
@@ -256,17 +221,6 @@ export function MoreOptionsMenu({
                         <Text style={styles.menuItemText}>
                             Copy Message Link
                         </Text>
-                    </TouchableOpacity>
-                </Tooltip>
-
-                {/* Speak Message */}
-                <Tooltip tooltipText="Speak Message">
-                    <TouchableOpacity
-                        style={styles.menuItem}
-                        onPress={onSpeakMessage}
-                    >
-                        <SpeakMessageIcon />
-                        <Text style={styles.menuItemText}>Speak Message</Text>
                     </TouchableOpacity>
                 </Tooltip>
 

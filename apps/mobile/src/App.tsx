@@ -10,22 +10,10 @@ import {
 } from '@react-navigation/stack';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Platform, StatusBar } from 'react-native';
-import ReconnectingWebSocket from 'reconnecting-websocket';
-import { createClient } from 'graphql-ws';
-import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import Toast from 'react-native-toast-message';
-import createUploadLink from 'apollo-upload-client/createUploadLink.mjs';
-import {
-    ApolloClient,
-    InMemoryCache,
-    ApolloProvider,
-    from,
-    split,
-} from '@apollo/client';
+import { ApolloProvider } from '@apollo/client';
 import { Provider as ReduxProvider } from 'react-redux';
-import { onError, ErrorResponse } from '@apollo/client/link/error';
 import { loadErrorMessages, loadDevMessages } from '@apollo/client/dev';
-import { getMainDefinition } from '@apollo/client/utilities';
 import { Lato_400Regular, Lato_700Bold } from '@expo-google-fonts/lato';
 import {
     useFonts,

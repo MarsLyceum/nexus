@@ -5,7 +5,7 @@ import { PostScreen } from 'shared-ui/screens/PostScreen'; // adjust the import 
 import type { Post, User } from 'shared-ui/types';
 
 type PostPageProps = {
-    post: Post;
+    post?: Post;
     user?: User;
     parentCommentId: string | null;
 };

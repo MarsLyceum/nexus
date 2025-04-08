@@ -36,12 +36,12 @@ export async function generateMetadata({ params }: PageProps) {
         variables: { postId },
     });
 
-    const post: Post | null = data?.fetchPost || null;
+    const post: Post | undefined = data?.fetchPost || undefined;
 
     // Compute metadata values, stripping HTML tags if needed.
     const title = post?.title || 'Post';
     const description = post?.content
-        ? post.content.replace(/<[^>]+>/g, '').slice(0, 160)
+        ? post.content.replaceAll(/<[^>]+>/g, '').slice(0, 160)
         : '';
     const url = `${origin}/post/${postId}`;
     const image =
@@ -66,17 +66,17 @@ export default async function PostPage({ params, searchParams }: PageProps) {
     const { postId } = params;
     const { post: postString, parentCommentId } = searchParams;
 
-    let parsedPost: Post | null = null;
+    let parsedPost: Post | undefined;
     if (postString) {
         try {
             parsedPost = JSON.parse(postString as string);
-        } catch (e) {
-            console.error('Failed to parse post from query:', e);
+        } catch (error) {
+            console.error('Failed to parse post from query:', error);
         }
     }
 
     const client = createApolloClient();
-    let postData: Post | undefined = undefined;
+    let postData: Post | undefined;
 
     if (!parsedPost) {
         const { data } = await client.query({
@@ -103,6 +103,7 @@ export default async function PostPage({ params, searchParams }: PageProps) {
         <PostPageClient
             post={postData}
             user={userData}
+            // eslint-disable-next-line unicorn/no-null
             parentCommentId={parentCommentId ? String(parentCommentId) : null}
         />
     );

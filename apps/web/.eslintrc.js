@@ -2,8 +2,7 @@
 module.exports = {
     // If you had any configuration here, it would be merged
     extends: [
-        '../../.eslintrc.base.js', // path adjusted relative to your web project
-        'plugin:next/recommended',
+        '../../.eslintrc.js', // path adjusted relative to your web project
         'next/core-web-vitals',
         'next/typescript',
     ],
@@ -11,6 +10,7 @@ module.exports = {
     rules: {
         // Example: disable a rule that Next.js needs off
         'react/react-in-jsx-scope': 'off',
+        'import/no-default-export': 'off',
     },
     env: {
         browser: true,

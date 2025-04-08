@@ -5,7 +5,6 @@ import { View, Text } from 'react-native';
 import { GroupScreen } from 'shared-ui/src/screens';
 import { useAppSelector, RootState } from 'shared-ui/redux';
 import { ActiveGroupContext } from 'shared-ui/providers';
-import { useNexusRouter } from 'shared-ui/hooks';
 
 type GroupPageProps = {
     params: { groupName: string };
@@ -16,7 +15,6 @@ export const GroupPage: React.FC<GroupPageProps> = ({ params }) => {
     const userGroups = useAppSelector(
         (state: RootState) => state.userGroups.userGroups
     );
-    const router = useNexusRouter();
     const { setActiveGroup } = useContext(ActiveGroupContext);
 
     // Find the group matching the URL parameter (case insensitive)
@@ -40,22 +38,7 @@ export const GroupPage: React.FC<GroupPageProps> = ({ params }) => {
         );
     }
 
-    // Provide a dummy navigation object for GroupScreen
-    const dummyNavigation = {
-        navigate: (route: string, params?: any) => {
-            // For simplicity, use window.location.href. In production, you might use next/router.
-            router.push(`/${route.toLowerCase()}`);
-        },
-        goBack: () => router.goBack(),
-        dispatch: () => {},
-        reset: () => {},
-        isFocused: () => true,
-        addListener: () => () => {},
-        removeListener: () => {},
-        toggleDrawer: () => {},
-    };
-
-    return <GroupScreen navigation={dummyNavigation} />;
+    return <GroupScreen />;
 };
 
 export default GroupPage;

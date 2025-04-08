@@ -34,7 +34,7 @@ import {
 const client = createApolloClient();
 
 const CustomScrollbar = () => {
-    if (Platform.OS !== 'web') return null;
+    if (Platform.OS !== 'web') return undefined;
     return (
         <style>{`
             /* Chrome, Safari and Opera */
@@ -73,7 +73,7 @@ export function ClientProviders({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         if (fontsLoaded) {
-            SplashScreen.hideAsync();
+            void SplashScreen.hideAsync();
         }
     }, [fontsLoaded]);
 

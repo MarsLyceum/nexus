@@ -45,16 +45,20 @@ export function DashboardLayoutClient({
         reset: () => {},
         goBack: () => {},
         isFocused: () => true,
+        // eslint-disable-next-line unicorn/consistent-function-scoping
         addListener: () => () => {},
         removeListener: () => {},
     };
 
     return (
+        // @ts-expect-error web only types
         <View style={styles.container}>
             {/* Sidebar area stays persistent */}
+            {/* @ts-expect-error web only types */}
             <View style={styles.sidebar}>
                 {/* Pass the current route and fetched groups to the SidebarScreen */}
                 <SidebarScreen
+                    // @ts-expect-error navigation
                     navigation={dummyNavigation}
                     currentRoute={currentRoute}
                     groups={groups}
@@ -62,8 +66,9 @@ export function DashboardLayoutClient({
             </View>
 
             {/* Main content area: dynamic routes animate on change */}
+            {/* @ts-expect-error web only types */}
             <View style={styles.mainContent}>
-                <AnimatePresence exitBeforeEnter>
+                <AnimatePresence>
                     <motion.div
                         key={pathname}
                         initial={{ opacity: 0, x: 50 }}
@@ -83,6 +88,7 @@ export function DashboardLayoutClient({
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        // @ts-expect-error web only types
         minHeight: '100vh', // Fills the viewport height
         flexDirection: 'row',
         backgroundColor: COLORS.AppBackground,
@@ -96,6 +102,7 @@ const styles = StyleSheet.create({
     mainContent: {
         flex: 1,
         backgroundColor: COLORS.PrimaryBackground,
+        // @ts-expect-error web only types
         minHeight: '100vh', // Fills the viewport height
     },
 });

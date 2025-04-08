@@ -20,18 +20,21 @@ def main():
     print(color_text(f"Using .env file: {env_file}", OKGREEN))
     env_vars = load_env_variables(env_file)
 
-    # Locate the GCP service account key
-    key_file = find_key_file(
-        "../../service-account-keys", "hephaestus-418809-*.json"
-    )
-    print(color_text(f"Using key file: {key_file}", OKGREEN))
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = key_file
+    if not os.getenv("GCP_SERVICE_ACCOUNT"):
+        # Locate the GCP service account key
+        key_file = find_key_file(
+            "../../service-account-keys", "hephaestus-418809-*.json"
+        )
+        print(color_text(f"Using key file: {key_file}", OKGREEN))
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = key_file
 
-    # Authenticate with gcloud
-    print(
-        color_text("Authenticating gcloud with a service account...", OKCYAN)
-    )
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = key_file
+        # Authenticate with gcloud
+        print(
+            color_text(
+                "Authenticating gcloud with a service account...", OKCYAN
+            )
+        )
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = key_file
 
     # Build and push Docker image
     print(color_text("Building Docker image...", OKCYAN))
@@ -43,6 +46,10 @@ def main():
     )
     print(color_text("Pushing Docker image...", OKCYAN))
     run_command(f"docker push gcr.io/{project_id}/{service_name}:latest")
+
+    jwt_secret = os.getenv("JWT_SECRET")
+    if jwt_secret:
+        env_vars["JWT_SECRET"] = jwt_secret
 
     # Deploy to Cloud Run without Cloud SQL
     print(color_text("Deploying to Cloud Run...", OKCYAN))

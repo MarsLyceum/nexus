@@ -6,10 +6,10 @@ import { cookies } from 'next/headers';
 import jwt from 'jsonwebtoken';
 import { redirect } from 'next/navigation';
 
-import { createApolloClient } from '@shared-ui/utils';
-import { FETCH_USER_GROUPS_QUERY } from '@shared-ui/queries';
-import type { UserGroupsType } from '@shared-ui/redux';
-import type { User } from '@shared-ui/types';
+import { createApolloClient } from 'shared-ui/utils';
+import { FETCH_USER_GROUPS_QUERY } from 'shared-ui/queries';
+import type { UserGroupsType } from 'shared-ui/redux';
+import type { User } from 'shared-ui/types';
 
 import { JWT_SECRET } from '../../../config';
 

@@ -9,6 +9,7 @@
     "deploy": "python deploy.py",
     "start": "next start",
     "lint": "next lint",
+    "typecheck": "tsc --noEmit",
     "run-docker-container": "docker run -it --rm -p 8080:8080 gcr.io/hephaestus-418809/next-server:latest"
   },
   "dependencies": {
@@ -22,7 +23,7 @@
     "solito": "^4.4.1",
     "react-native-web": "^0.19.13",
     "next": "15.2.4",
-    "@shared-ui": "workspace:*",
+    "shared-ui": "workspace:*",
     "file-loader": "^6.2.0",
     "babel-loader": "^10.0.0",
     "@babel/plugin-transform-flow-strip-types": "^7.26.5",

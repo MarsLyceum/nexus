@@ -44,7 +44,7 @@ jobs:
               run: pnpm install
 
             - name: Run lint
-              run: pnpm lint
+              run: pnpm run lerna:lint
 
     typecheck:
         runs-on: ubuntu-latest
@@ -81,7 +81,7 @@ jobs:
               run: pnpm install
 
             - name: Run type check
-              run: pnpm typecheck
+              run: pnpm run lerna:typecheck
 
     build:
         runs-on: ubuntu-latest
@@ -118,4 +118,4 @@ jobs:
               run: pnpm install
 
             - name: Run build
-              run: pnpm export:web
+              run: pnpm run lerna:build

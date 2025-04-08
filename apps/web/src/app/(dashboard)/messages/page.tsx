@@ -2,7 +2,7 @@
 
 import '../../../../polyfills/expo-polyfills.js';
 import React from 'react';
-import { DMListScreen } from '@shared-ui/src/screens';
+import { DMListScreen } from 'shared-ui/src/screens';
 
 export const MessagesPage: React.FC = () => <DMListScreen />;
 

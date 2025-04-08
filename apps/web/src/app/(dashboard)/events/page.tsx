@@ -2,7 +2,7 @@
 
 import '../../../../polyfills/expo-polyfills.js';
 import React from 'react';
-import { EventsScreen } from '@shared-ui/src/screens';
+import { EventsScreen } from 'shared-ui/src/screens';
 
 export const EventsPage: React.FC = () => <EventsScreen />;
 

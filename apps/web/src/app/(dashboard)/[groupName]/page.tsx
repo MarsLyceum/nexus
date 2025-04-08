@@ -2,10 +2,10 @@
 
 import React, { useEffect, useContext } from 'react';
 import { View, Text } from 'react-native';
-import { GroupScreen } from '@shared-ui/src/screens';
-import { useAppSelector, RootState } from '@shared-ui/redux';
-import { ActiveGroupContext } from '@shared-ui/providers';
-import { useNexusRouter } from '@shared-ui/hooks';
+import { GroupScreen } from 'shared-ui/src/screens';
+import { useAppSelector, RootState } from 'shared-ui/redux';
+import { ActiveGroupContext } from 'shared-ui/providers';
+import { useNexusRouter } from 'shared-ui/hooks';
 
 type GroupPageProps = {
     params: { groupName: string };

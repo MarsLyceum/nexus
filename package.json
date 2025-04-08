@@ -2,17 +2,9 @@
     "name": "nexus",
     "version": "1.0.1",
     "scripts": {
-        "start": "npx expo start",
-        "export:web": "npx expo export",
-        "export:android": "eas build --platform android",
-        "export:ios": "eas build --platform ios",
-        "android": "npx expo start --android",
-        "ios": "npx expo start --ios",
-        "web": "npx expo start --web",
-        "lint": "npx eslint .",
-        "typecheck": "tsc --noEmit",
-        "deploy": "pnpm run export:web && firebase deploy",
-        "postinstall": "node post-install-scripts/fix-patch-paths.js"
+        "lerna:lint": "npx lerna run lint",
+        "lerna:typecheck": "npx lerna run typecheck",
+        "lerna:build": "npx lerna run build"
     },
     "dependencies": {
         "@apollo/client": "^3.12.8",
@@ -159,7 +151,8 @@
         "jest": "^29.7.0",
         "prettier": "^3.2.5",
         "styled-components": "^6.1.14",
-        "typescript": "~5.3.3"
+        "typescript": "~5.3.3",
+        "lerna": "^8.2.1"
     },
     "private": true,
     "pnpm": {

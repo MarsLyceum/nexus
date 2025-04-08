@@ -3,7 +3,7 @@
     "compilerOptions": {
         "outDir": "build",
         "paths": {
-            "@shared-ui/*": ["../../packages/shared-ui/src/*"]
+            "shared-ui/*": ["../../packages/shared-ui/src/*"]
         }
     },
     "include": ["src/**/*"]

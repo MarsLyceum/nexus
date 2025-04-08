@@ -3,8 +3,8 @@
 import '../../../polyfills/expo-polyfills.js';
 import React, { useEffect, useContext } from 'react';
 import { View, Text } from 'react-native';
-import { useNexusRouter } from '@shared-ui/hooks';
-import { ActiveGroupContext } from '@shared-ui/providers';
+import { useNexusRouter } from 'shared-ui/hooks';
+import { ActiveGroupContext } from 'shared-ui/providers';
 
 export const dynamic = 'force-dynamic'; // Forces server-side rendering
 

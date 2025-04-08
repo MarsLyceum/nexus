@@ -12,64 +12,64 @@ config.watchFolders = [workspaceRoot];
 
 // Explicitly map the shared-ui package and its subpaths.
 config.resolver.extraNodeModules = {
-    '@shared-ui': path.resolve(workspaceRoot, 'packages/shared-ui/src'),
-    '@shared-ui/buttons': path.resolve(
+    'shared-ui': path.resolve(workspaceRoot, 'packages/shared-ui/src'),
+    'shared-ui/buttons': path.resolve(
         workspaceRoot,
         'packages/shared-ui/src/buttons'
     ),
-    '@shared-ui/cards': path.resolve(
+    'shared-ui/cards': path.resolve(
         workspaceRoot,
         'packages/shared-ui/src/cards'
     ),
-    '@shared-ui/constants': path.resolve(
+    'shared-ui/constants': path.resolve(
         workspaceRoot,
         'packages/shared-ui/src/constants'
     ),
-    '@shared-ui/hooks': path.resolve(
+    'shared-ui/hooks': path.resolve(
         workspaceRoot,
         'packages/shared-ui/src/hooks'
     ),
-    '@shared-ui/icons': path.resolve(
+    'shared-ui/icons': path.resolve(
         workspaceRoot,
         'packages/shared-ui/src/icons'
     ),
-    '@shared-ui/images': path.resolve(
+    'shared-ui/images': path.resolve(
         workspaceRoot,
         'packages/shared-ui/src/images'
     ),
-    '@shared-ui/providers': path.resolve(
+    'shared-ui/providers': path.resolve(
         workspaceRoot,
         'packages/shared-ui/src/providers'
     ),
-    '@shared-ui/queries': path.resolve(
+    'shared-ui/queries': path.resolve(
         workspaceRoot,
         'packages/shared-ui/src/queries'
     ),
-    '@shared-ui/redux': path.resolve(
+    'shared-ui/redux': path.resolve(
         workspaceRoot,
         'packages/shared-ui/src/redux'
     ),
-    '@shared-ui/sections': path.resolve(
+    'shared-ui/sections': path.resolve(
         workspaceRoot,
         'packages/shared-ui/src/sections'
     ),
-    '@shared-ui/small-components': path.resolve(
+    'shared-ui/small-components': path.resolve(
         workspaceRoot,
         'packages/shared-ui/src/small-components'
     ),
-    '@shared-ui/styles': path.resolve(
+    'shared-ui/styles': path.resolve(
         workspaceRoot,
         'packages/shared-ui/src/styles'
     ),
-    '@shared-ui/types': path.resolve(
+    'shared-ui/types': path.resolve(
         workspaceRoot,
         'packages/shared-ui/src/types'
     ),
-    '@shared-ui/utils': path.resolve(
+    'shared-ui/utils': path.resolve(
         workspaceRoot,
         'packages/shared-ui/src/utils'
     ),
-    '@shared-ui/screens': path.resolve(
+    'shared-ui/screens': path.resolve(
         workspaceRoot,
         'packages/shared-ui/src/screens'
     ),

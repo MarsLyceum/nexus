@@ -7,14 +7,14 @@ import React, { useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { AnimatePresence, motion } from 'framer-motion';
 import { usePathname } from 'next/navigation';
-import { useNexusRouter } from '@shared-ui/hooks';
-import { SidebarScreen } from '@shared-ui/screens';
-import { COLORS, SIDEBAR_WIDTH } from '@shared-ui/constants';
+import { useNexusRouter } from 'shared-ui/hooks';
+import { SidebarScreen } from 'shared-ui/screens';
+import { COLORS, SIDEBAR_WIDTH } from 'shared-ui/constants';
 import {
     UserGroupsType,
     retrieveUserGroups,
     useAppDispatch,
-} from '@shared-ui/redux';
+} from 'shared-ui/redux';
 
 type DashboardLayoutClientProps = {
     children: React.ReactNode;

@@ -10,15 +10,15 @@ import Toast from 'react-native-toast-message';
 import * as SplashScreen from 'expo-splash-screen';
 import { Provider as PortalProvider } from 'react-native-paper';
 import { Provider as ReduxProvider } from 'react-redux';
-import { store } from '@shared-ui/redux';
+import { store } from 'shared-ui/redux';
 import {
     ActiveGroupProvider,
     SearchProvider,
     CurrentCommentProvider,
-} from '@shared-ui/providers';
-import { StatusManager, Login } from '@shared-ui/small-components';
-import { COLORS } from '@shared-ui/constants';
-import { createApolloClient } from '@shared-ui/utils';
+} from 'shared-ui/providers';
+import { StatusManager, Login } from 'shared-ui/small-components';
+import { COLORS } from 'shared-ui/constants';
+import { createApolloClient } from 'shared-ui/utils';
 import { useFonts } from 'expo-font';
 import { Lato_400Regular, Lato_700Bold } from '@expo-google-fonts/lato';
 import {

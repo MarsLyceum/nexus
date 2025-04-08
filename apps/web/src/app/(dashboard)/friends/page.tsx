@@ -4,7 +4,7 @@
 
 import '../../../../polyfills/expo-polyfills.js';
 import React from 'react';
-import { FriendsScreen } from '@shared-ui/screens';
+import { FriendsScreen } from 'shared-ui/screens';
 
 export const FriendsPage: React.FC = () => <FriendsScreen />;
 

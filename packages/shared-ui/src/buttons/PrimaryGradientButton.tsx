@@ -8,7 +8,7 @@ import {
     View,
 } from 'react-native';
 import styled from 'styled-components/native';
-import { COLORS } from '@shared-ui/constants';
+import { COLORS } from 'shared-ui/constants';
 
 const ButtonText = styled.Text`
     color: ${COLORS.White};

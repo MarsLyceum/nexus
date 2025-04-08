@@ -1,4 +1,4 @@
-// @shared-ui/screens/WelcomeScreen.tsx
+// shared-ui/screens/WelcomeScreen.tsx
 import {
     SafeAreaView,
     ScrollView,

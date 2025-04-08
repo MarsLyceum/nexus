@@ -68,7 +68,7 @@ const TRANSPILED_PACKAGES = [
     // Extra packages (all children not assigned to a section)
     // '@babel/plugin-transform-flow-strip-types',
     // '@expo/next-adapter',
-    '@shared-ui',
+    'shared-ui',
     // '@types/node',
     // '@types/prop-types',
     // '@types/react',

@@ -3,9 +3,9 @@
 import dynamic from 'next/dynamic';
 import '../../../../polyfills/expo-polyfills.js';
 import React from 'react';
-import { createApolloClient } from '@shared-ui/utils';
-import { FETCH_POST_QUERY, FETCH_USER_QUERY } from '@shared-ui/queries';
-import type { Post } from '@shared-ui/types';
+import { createApolloClient } from 'shared-ui/utils';
+import { FETCH_POST_QUERY, FETCH_USER_QUERY } from 'shared-ui/queries';
+import type { Post } from 'shared-ui/types';
 import { headers } from 'next/headers';
 
 // Dynamically import the client component with SSR enabled

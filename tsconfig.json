@@ -11,7 +11,7 @@
         "allowSyntheticDefaultImports": true,
         "typeRoots": ["node_modules/@types", "./typings"],
         "paths": {
-            "@shared-ui/*": ["./packages/shared-ui/*"]
+            "shared-ui/*": ["./packages/shared-ui/*"]
         }
     },
     "include": ["src/**/*", "typings/**/*"]

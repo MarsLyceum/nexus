@@ -7,11 +7,11 @@ import {
 import { TouchableOpacity, useWindowDimensions } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
-import { getItem } from '@shared-ui/utils';
-import { COLORS, SIDEBAR_WIDTH, USER_KEY } from '@shared-ui/constants';
-import { useAppSelector, RootState, UserGroupsType } from '@shared-ui/redux';
-import { ActiveGroupContext } from '@shared-ui/providers';
-import { Group } from '@shared-ui/types';
+import { getItem } from 'shared-ui/utils';
+import { COLORS, SIDEBAR_WIDTH, USER_KEY } from 'shared-ui/constants';
+import { useAppSelector, RootState, UserGroupsType } from 'shared-ui/redux';
+import { ActiveGroupContext } from 'shared-ui/providers';
+import { Group } from 'shared-ui/types';
 import {
     GroupScreen,
     SidebarScreen,
@@ -19,8 +19,8 @@ import {
     EventsScreen,
     SearchScreen,
     FriendsScreen,
-} from '@shared-ui/screens';
-import { useNexusRouter } from '@shared-ui/hooks';
+} from 'shared-ui/screens';
+import { useNexusRouter } from 'shared-ui/hooks';
 
 // Define a DrawerParamList type so navigation is properly typed.
 type DrawerParamList = {

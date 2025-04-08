@@ -12,9 +12,9 @@
         "android": "npx expo start --android",
         "ios": "npx expo start --ios",
         "web": "npx expo start --web",
+        "build": "pnpm run export:web",
         "lint": "npx eslint .",
         "typecheck": "tsc --noEmit",
-        "deploy": "pnpm run export:web && firebase deploy",
         "run:android": "npx expo run:android"
     },
     "dependencies": {

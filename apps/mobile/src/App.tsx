@@ -39,14 +39,14 @@ import {
 import * as SplashScreen from 'expo-splash-screen';
 import { Provider as PortalProvider } from 'react-native-paper';
 
-import { COLORS } from '@shared-ui/constants';
-import { store } from '@shared-ui/redux';
+import { COLORS } from 'shared-ui/constants';
+import { store } from 'shared-ui/redux';
 import {
     SearchProvider,
     ActiveGroupProvider,
     CurrentCommentProvider,
-} from '@shared-ui/providers';
-import { StatusManager, Login } from '@shared-ui/small-components';
+} from 'shared-ui/providers';
+import { StatusManager, Login } from 'shared-ui/small-components';
 import {
     LoginScreen,
     SignUpScreen,
@@ -60,8 +60,8 @@ import {
     EventDetailsScreen,
     CreateCommentScreen,
     AddFriendsScreen,
-} from '@shared-ui/screens';
-import { createApolloClient } from '@shared-ui/utils';
+} from 'shared-ui/screens';
+import { createApolloClient } from 'shared-ui/utils';
 import { AppDrawerScreen } from './AppDrawerScreen';
 import { linking } from './linking';
 

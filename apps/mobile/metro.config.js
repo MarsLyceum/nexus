@@ -1,5 +1,6 @@
 const { getDefaultConfig } = require('expo/metro-config');
 const path = require('path');
+const exclusionList = require('metro-config/src/defaults/exclusionList');
 
 const projectRoot = __dirname;
 const workspaceRoot = path.resolve(projectRoot, '../../');
@@ -82,5 +83,7 @@ config.resolver.nodeModulesPaths = [
 
 // Ensure Metro resolves the proper fields for React Native.
 config.resolver.resolverMainFields = ['react-native', 'browser', 'main'];
+
+config.resolver.blacklistRE = exclusionList([/apps\/web\/.*/]);
 
 module.exports = config;

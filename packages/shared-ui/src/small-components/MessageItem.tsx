@@ -22,6 +22,7 @@ export type MessageItemProps = {
 
 const getMessageDate = (
     message: MessageWithAvatar | DirectMessageWithAvatar
+    // @ts-expect-error message
 ): Date => message.postedAt ?? new Date(message.createdAt);
 
 export const MessageItem: React.FC<MessageItemProps> = ({

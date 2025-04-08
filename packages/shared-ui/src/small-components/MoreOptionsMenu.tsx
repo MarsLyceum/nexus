@@ -124,111 +124,83 @@ export function MoreOptionsMenu({
         >
             <View style={styles.menuContainer}>
                 {/* Add Reaction */}
-                <Tooltip tooltipText="Add Reaction">
-                    <TouchableOpacity
-                        style={styles.menuItem}
-                        onPress={onAddReaction}
-                    >
-                        <Text style={styles.menuItemText}>Add Reaction</Text>
-                    </TouchableOpacity>
-                </Tooltip>
+                <TouchableOpacity
+                    style={styles.menuItem}
+                    onPress={onAddReaction}
+                >
+                    <Text style={styles.menuItemText}>Add Reaction</Text>
+                </TouchableOpacity>
 
                 {/* Edit Message */}
-                <Tooltip tooltipText="Edit Message">
-                    <TouchableOpacity style={styles.menuItem} onPress={onEdit}>
-                        <Edit />
-                        <Text style={styles.menuItemText}>Edit Message</Text>
-                    </TouchableOpacity>
-                </Tooltip>
+                <TouchableOpacity style={styles.menuItem} onPress={onEdit}>
+                    <Edit />
+                    <Text style={styles.menuItemText}>Edit Message</Text>
+                </TouchableOpacity>
 
                 {/* Reply */}
-                <Tooltip tooltipText="Reply">
-                    <TouchableOpacity style={styles.menuItem} onPress={onReply}>
-                        <ReplyIcon />
-                        <Text style={styles.menuItemText}>Reply</Text>
-                    </TouchableOpacity>
-                </Tooltip>
+                <TouchableOpacity style={styles.menuItem} onPress={onReply}>
+                    <ReplyIcon />
+                    <Text style={styles.menuItemText}>Reply</Text>
+                </TouchableOpacity>
 
                 {/* Forward */}
-                <Tooltip tooltipText="Forward">
-                    <TouchableOpacity
-                        style={styles.menuItem}
-                        onPress={onForward}
-                    >
-                        <ForwardIcon />
-                        <Text style={styles.menuItemText}>Forward</Text>
-                    </TouchableOpacity>
-                </Tooltip>
+                <TouchableOpacity style={styles.menuItem} onPress={onForward}>
+                    <ForwardIcon />
+                    <Text style={styles.menuItemText}>Forward</Text>
+                </TouchableOpacity>
 
                 {/* Create Thread */}
-                <Tooltip tooltipText="Create Thread">
-                    <TouchableOpacity
-                        style={styles.menuItem}
-                        onPress={onCreateThread}
-                    >
-                        <ThreadIcon />
-                        <Text style={styles.menuItemText}>Create Thread</Text>
-                    </TouchableOpacity>
-                </Tooltip>
+                <TouchableOpacity
+                    style={styles.menuItem}
+                    onPress={onCreateThread}
+                >
+                    <ThreadIcon />
+                    <Text style={styles.menuItemText}>Create Thread</Text>
+                </TouchableOpacity>
 
                 {/* Copy Text */}
-                <Tooltip tooltipText="Copy Text">
-                    <TouchableOpacity
-                        style={styles.menuItem}
-                        onPress={onCopyText}
-                    >
-                        <CopyTextIcon />
-                        <Text style={styles.menuItemText}>Copy Text</Text>
-                    </TouchableOpacity>
-                </Tooltip>
+                <TouchableOpacity style={styles.menuItem} onPress={onCopyText}>
+                    <CopyTextIcon />
+                    <Text style={styles.menuItemText}>Copy Text</Text>
+                </TouchableOpacity>
 
                 {/* Pin Message */}
-                <Tooltip tooltipText="Pin Message">
-                    <TouchableOpacity
-                        style={styles.menuItem}
-                        onPress={onPinMessage}
-                    >
-                        <PinMessageIcon />
-                        <Text style={styles.menuItemText}>Pin Message</Text>
-                    </TouchableOpacity>
-                </Tooltip>
+                <TouchableOpacity
+                    style={styles.menuItem}
+                    onPress={onPinMessage}
+                >
+                    <PinMessageIcon />
+                    <Text style={styles.menuItemText}>Pin Message</Text>
+                </TouchableOpacity>
 
                 {/* Mark Unread */}
-                <Tooltip tooltipText="Mark Unread">
-                    <TouchableOpacity
-                        style={styles.menuItem}
-                        onPress={onMarkUnread}
-                    >
-                        <MarkUnreadIcon />
-                        <Text style={styles.menuItemText}>Mark Unread</Text>
-                    </TouchableOpacity>
-                </Tooltip>
+                <TouchableOpacity
+                    style={styles.menuItem}
+                    onPress={onMarkUnread}
+                >
+                    <MarkUnreadIcon />
+                    <Text style={styles.menuItemText}>Mark Unread</Text>
+                </TouchableOpacity>
 
                 {/* Copy Message Link */}
-                <Tooltip tooltipText="Copy Message Link">
-                    <TouchableOpacity
-                        style={styles.menuItem}
-                        onPress={onCopyMessageLink}
-                    >
-                        <CopyLinkIcon />
-                        <Text style={styles.menuItemText}>
-                            Copy Message Link
-                        </Text>
-                    </TouchableOpacity>
-                </Tooltip>
+                <TouchableOpacity
+                    style={styles.menuItem}
+                    onPress={onCopyMessageLink}
+                >
+                    <CopyLinkIcon />
+                    <Text style={styles.menuItemText}>Copy Message Link</Text>
+                </TouchableOpacity>
 
                 {/* Delete Message */}
-                <Tooltip tooltipText="Delete Message">
-                    <TouchableOpacity
-                        style={styles.menuItemDelete}
-                        onPress={onDeleteMessage}
-                    >
-                        <Delete />
-                        <Text style={[styles.menuItemText, styles.deleteText]}>
-                            Delete Message
-                        </Text>
-                    </TouchableOpacity>
-                </Tooltip>
+                <TouchableOpacity
+                    style={styles.menuItemDelete}
+                    onPress={onDeleteMessage}
+                >
+                    <Delete />
+                    <Text style={[styles.menuItemText, styles.deleteText]}>
+                        Delete Message
+                    </Text>
+                </TouchableOpacity>
             </View>
         </MiniModal>
     );

@@ -11,14 +11,17 @@ from gcp_microservice_management import (
 )
 
 
-def main():
+def main() -> None:
     project_id = "hephaestus-418809"
     region = "us-west1"
     service_name = "next-server"
 
+    env_vars: dict[str, str | None] = {}
+
     env_file = find_env_file()
-    print(color_text(f"Using .env file: {env_file}", OKGREEN))
-    env_vars = load_env_variables(env_file)
+    if env_file is not None:
+        print(color_text(f"Using .env file: {env_file}", OKGREEN))
+        env_vars = load_env_variables(env_file)
 
     if not os.getenv("GCP_SERVICE_ACCOUNT"):
         # Locate the GCP service account key

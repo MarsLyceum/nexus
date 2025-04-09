@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from gcp_microservice_management import (
     find_env_file,
     load_env_variables,
@@ -9,6 +10,10 @@ from gcp_microservice_management import (
     OKCYAN,
     OKGREEN,
 )
+
+script_dir = Path(__file__).resolve().parent
+dockerfile_path = script_dir / "Dockerfile"
+build_context = script_dir
 
 
 def main() -> None:
@@ -44,7 +49,7 @@ def main() -> None:
     env = os.environ.copy()
     env["DOCKER_BUILDKIT"] = "1"
     run_command(
-        f"docker build -f {os.getcwd()}/Dockerfile -t gcr.io/{project_id}/{service_name}:latest --progress=plain ../..",
+        f"docker build -f {dockerfile_path} -t gcr.io/{project_id}/{service_name}:latest --progress=plain {build_context}",
         env=env,
     )
     print(color_text("Pushing Docker image...", OKCYAN))

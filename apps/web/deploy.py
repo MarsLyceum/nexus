@@ -13,7 +13,8 @@ from gcp_microservice_management import (
 
 script_dir = Path(__file__).resolve().parent
 dockerfile_path = script_dir / "Dockerfile"
-build_context = script_dir
+repo_root = script_dir.parent.parent  # …/nexus
+build_context = repo_root
 
 
 def main() -> None:

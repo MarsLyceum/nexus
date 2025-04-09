@@ -2,10 +2,11 @@ import React, { useRef } from 'react';
 import { View, Text, StyleSheet, View as RNView } from 'react-native';
 
 import { NexusImage } from './NexusImage';
-import { MoreVertical, CheckMark, Cancel } from '../icons';
+import { MoreVertical, CheckMark, Cancel, Chat } from '../icons';
 import { COLORS } from '../constants';
 import { ActionButton } from './ActionButton';
 import { getOnlineStatusDotColor } from '../utils';
+import { useNexusRouter } from '../hooks';
 
 export type Friend = {
     id?: string;
@@ -62,6 +63,8 @@ export const FriendItem: React.FC<FriendItemProps> = ({
     onReject,
 }) => {
     const moreButtonContainerRef = useRef<RNView>(null);
+    const router = useNexusRouter();
+
     const { friend, status: relationshipStatusRaw, requestedBy } = item;
     const relationshipStatus = relationshipStatusRaw
         ? relationshipStatusRaw.toLowerCase()
@@ -146,6 +149,18 @@ export const FriendItem: React.FC<FriendItemProps> = ({
             ) : (
                 // For accepted friends or outgoing requests
                 <View style={styles.friendAction}>
+                    <View style={styles.messageButton}>
+                        <ActionButton
+                            tooltipText="Message"
+                            onPress={() =>
+                                router.push('/messages', {
+                                    friendId: friend.id,
+                                })
+                            }
+                        >
+                            <Chat />
+                        </ActionButton>
+                    </View>
                     <View ref={moreButtonContainerRef}>
                         <ActionButton
                             onPress={() => {
@@ -225,8 +240,13 @@ const styles = StyleSheet.create({
         fontSize: 12,
     },
     friendAction: {
+        display: 'flex',
+        flexDirection: 'row',
         marginLeft: 8,
         position: 'relative',
+    },
+    messageButton: {
+        paddingRight: 8,
     },
     pendingActions: {
         flexDirection: 'row',

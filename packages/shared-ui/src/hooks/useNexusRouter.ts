@@ -103,8 +103,9 @@ export function useNexusRouter(): NexusRouter {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             push: (path: string, params?: Record<string, any>) => {
                 const normalizedPath = normalizePath(path);
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                if (typeof (navigation as any).push === 'function') {
+                const state = navigation.getState();
+                // Check for a stack navigator by inspecting the state type.
+                if (state?.type === 'stack') {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     (navigation as any).push(normalizedPath, params);
                 } else {

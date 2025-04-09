@@ -37,6 +37,7 @@ import {
     GET_CONVERSATION_MESSAGES,
     DELETE_MESSAGE,
     DM_ADDED,
+    GET_CONVERSATIONS,
 } from '../queries';
 import {
     Message,
@@ -74,6 +75,9 @@ const SkeletonMessageItem: React.FC = () => (
 export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
     const router = useNexusRouter();
     const { params } = useParams();
+    const [conversationState, setConversationState] = useState<
+        Conversation | undefined
+    >(conversation);
     const {
         modalVisible,
         modalAttachments,
@@ -92,20 +96,39 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
     const [inputContainerHeight, setInputContainerHeight] =
         useState<number>(70);
 
+    const { conversationId: conversationIdParam } = params;
+
     // Create a ref for the FlatList scroll container.
     const flatListRef = useRef<FlatList>(null);
 
     // Determine if the conversation is one-to-one.
     const isOneToOne =
-        conversation &&
+        conversationState &&
         activeUser &&
-        conversation.participantsUserIds.length === 2;
+        conversationState.participantsUserIds.length === 2;
 
     // For one-to-one chats, determine the other participant's id.
     const otherUserId = isOneToOne
-        ? conversation.participantsUserIds.find((id) => id !== activeUser.id) ||
-          undefined
+        ? conversationState.participantsUserIds.find(
+              (id) => id !== activeUser.id
+          ) || undefined
         : undefined;
+
+    const { data: getConversationsData, loading: getConversationsLoading } =
+        useQuery(GET_CONVERSATIONS, {
+            variables: { userId: activeUser?.id },
+            skip: Boolean(conversation),
+        });
+
+    useEffect(() => {
+        if (getConversationsData) {
+            setConversationState(
+                getConversationsData.getConversations.find(
+                    (c: Conversation) => c.id === conversationIdParam
+                )
+            );
+        }
+    }, [getConversationsData, conversationIdParam]);
 
     // For one-to-one, use FETCH_USER_QUERY.
     const { data: fetchedUserData, loading: fetchedUserLoading } = useQuery(
@@ -120,11 +143,11 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
     const [groupUsers, setGroupUsers] = useState<UserType[]>([]);
     useEffect(() => {
         if (
-            conversation &&
+            conversationState &&
             activeUser &&
-            conversation.participantsUserIds.length !== 2
+            conversationState.participantsUserIds.length !== 2
         ) {
-            const groupUserIds = conversation.participantsUserIds.filter(
+            const groupUserIds = conversationState.participantsUserIds.filter(
                 (id) => id !== activeUser.id
             );
             Promise.all(
@@ -144,14 +167,14 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
                     console.error('Error fetching group users', error)
                 );
         }
-    }, [conversation, activeUser, client]);
+    }, [conversationState, activeUser, client]);
 
     // Derive header information.
     let headerName: string | React.ReactNode;
     let headerContent: React.ReactNode;
-    if (conversation && activeUser) {
+    if (conversationState && activeUser) {
         if (isOneToOne) {
-            if (fetchedUserLoading) {
+            if (getConversationsLoading || fetchedUserLoading) {
                 // Render skeleton placeholders for both avatar and username.
                 // @ts-expect-error web only types
                 headerName = <View style={styles.skeletonHeaderText} />;
@@ -212,22 +235,6 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
                 </View>
             );
         }
-    } else {
-        headerName = params?.get('name') || 'Unknown';
-        headerContent = (
-            <NexusImage
-                source={
-                    params?.get('avatar') ??
-                    `https://picsum.photos/seed/${params?.get('name') || 'default'}/40`
-                }
-                alt="avatar"
-                width={40}
-                height={40}
-                // @ts-expect-error web only types
-                style={styles.headerAvatar}
-                contentFit="cover"
-            />
-        );
     }
 
     const headerHeight = 70;
@@ -241,15 +248,15 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
         fetchMore,
     } = useQuery(GET_CONVERSATION_MESSAGES, {
         variables: {
-            conversationId: conversation?.id || '',
+            conversationId: conversationState?.id || '',
             offset: 0,
             limit: LIMIT,
         },
-        skip: !conversation?.id,
+        skip: !conversationState?.id,
     });
 
     useSubscription(DM_ADDED, {
-        variables: { conversationId: conversation?.id || '' },
+        variables: { conversationId: conversationState?.id || '' },
         onSubscriptionData: ({ subscriptionData }) => {
             const newMsg: Message | undefined = subscriptionData.data?.dmAdded;
             if (newMsg) {
@@ -283,10 +290,10 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
 
     // Callback to load more messages when scrolling.
     const handleLoadMore = useCallback(() => {
-        if (fetchMore && !messagesLoading && conversation?.id) {
+        if (fetchMore && !messagesLoading && conversationState?.id) {
             fetchMore({
                 variables: {
-                    conversationId: conversation.id,
+                    conversationId: conversationState.id,
                     offset: messages.length,
                     limit: LIMIT,
                 },
@@ -306,7 +313,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
                     console.error('Error loading more messages:', error);
                 });
         }
-    }, [fetchMore, messages.length, messagesLoading, conversation]);
+    }, [fetchMore, messages.length, messagesLoading, conversationState]);
 
     // Updated handleSend now uses the SEND_MESSAGE mutation.
     const handleSend = (text: string, attachments: Attachment[]) => {
@@ -338,7 +345,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
 
         sendMessage({
             variables: {
-                conversationId: conversation?.id,
+                conversationId: conversationState?.id,
                 id: tempId,
                 content: text,
                 senderUserId: activeUser?.id,
@@ -357,8 +364,8 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
 
     // Helper function to compute sender's username.
     const getSenderName = (message: Message): string => {
-        if (conversation && activeUser) {
-            if (conversation.participantsUserIds.length === 2) {
+        if (conversationState && activeUser) {
+            if (conversationState.participantsUserIds.length === 2) {
                 return message.senderUserId === activeUser.id
                     ? activeUser.username
                     : fetchedUserData?.fetchUser?.username;
@@ -390,7 +397,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
         (message: DirectMessageWithAvatar | MessageWithAvatar) => {
             updateMessage({
                 variables: {
-                    conversationId: conversation?.id,
+                    conversationId: conversationState?.id,
                     id: message.id,
                     content: message.content,
                     senderUserId: activeUser?.id,
@@ -406,7 +413,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
                 console.error('Error updating message:', error);
             });
         },
-        [activeUser?.id, conversation?.id, updateMessage]
+        [activeUser?.id, conversationState?.id, updateMessage]
     );
 
     const handleDeleteMessage = useCallback(

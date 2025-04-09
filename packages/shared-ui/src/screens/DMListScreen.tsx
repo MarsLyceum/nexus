@@ -10,10 +10,14 @@ import {
 import { useQuery, useApolloClient } from '@apollo/client';
 
 import { NexusImage } from '../small-components';
-import { useNexusRouter } from '../hooks';
+import { useNexusRouter, createNexusParam } from '../hooks';
 import { COLORS } from '../constants';
 import { ChatScreen } from './ChatScreen';
-import { GET_CONVERSATIONS, FETCH_USER_QUERY } from '../queries';
+import {
+    GET_CONVERSATIONS,
+    FETCH_USER_QUERY,
+    CREATE_CONVERSATION,
+} from '../queries';
 import { useAppSelector, RootState, UserType } from '../redux';
 import { getOnlineStatusDotColor } from '../utils';
 import { Conversation } from '../types';
@@ -172,15 +176,85 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
     );
 };
 
+const { useParams } = createNexusParam();
+
 export const DMListScreen: React.FC = () => {
     const { width } = useWindowDimensions();
     const isLargeScreen = width > 768;
     const router = useNexusRouter();
+    const apolloClient = useApolloClient();
+    const { params } = useParams();
+    const { friendId } = params;
 
     // Get the active user from Redux.
     const user: UserType = useAppSelector(
         (state: RootState) => state.user.user
     );
+
+    useEffect(() => {
+        void (async () => {
+            if (friendId && user?.id) {
+                const newConversationResult = await apolloClient.mutate({
+                    mutation: CREATE_CONVERSATION,
+                    variables: {
+                        type: 'direct',
+                        participantsUserIds: [friendId, user?.id],
+                    },
+                    update: (cache, { data: { createConversation } }) => {
+                        if (!createConversation) return;
+                        try {
+                            // Read the current conversations from the cache.
+                            const existingData = cache.readQuery<{
+                                getConversations: Conversation[];
+                            }>({
+                                query: GET_CONVERSATIONS,
+                                variables: { userId: user.id },
+                            });
+
+                            if (!existingData) return;
+
+                            const { getConversations } = existingData;
+
+                            // Check if the new conversation already exists in the list.
+                            const alreadyExists = getConversations.some(
+                                (conversation) =>
+                                    conversation.id === createConversation.id
+                            );
+
+                            // If it doesn't exist, write the updated list back to the cache.
+                            if (!alreadyExists) {
+                                cache.writeQuery({
+                                    query: GET_CONVERSATIONS,
+                                    variables: { userId: user.id },
+                                    data: {
+                                        getConversations: [
+                                            createConversation,
+                                            ...getConversations,
+                                        ],
+                                    },
+                                });
+                            }
+                        } catch (error) {
+                            console.error('Cache update error:', error);
+                        }
+                    },
+                });
+
+                const newConversation =
+                    newConversationResult.data.createConversation;
+
+                if (newConversation) {
+                    if (isLargeScreen) {
+                        setSelectedConversation(newConversation);
+                    } else {
+                        router.push('/chat', {
+                            conversationId: newConversation.id,
+                        });
+                    }
+                }
+            }
+        })();
+    }, [friendId, apolloClient, isLargeScreen, router, user?.id]);
 
     // Fetch conversations using the active user's ID.
     const { data, loading, error } = useQuery(GET_CONVERSATIONS, {

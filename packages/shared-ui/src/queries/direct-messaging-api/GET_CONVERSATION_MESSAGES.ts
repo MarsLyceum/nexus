@@ -16,6 +16,7 @@ export const GET_CONVERSATION_MESSAGES = gql`
             senderUserId
             createdAt
             edited
+            attachmentUrls
         }
     }
 `;

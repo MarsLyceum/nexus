@@ -8,6 +8,7 @@ export * from './useCurrentLocation';
 export * from './useDistanceBetweenAddresses';
 export * from './useFeedPosts';
 export * from './useFileUpload';
+export * from './useImageDetailsModal';
 export * from './useLinkPreview';
 export * from './useMediaTypes';
 export * from './useNexusRouter';

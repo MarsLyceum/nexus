@@ -10,10 +10,19 @@ import {
     FlatList,
     Platform,
 } from 'react-native';
-import { useQuery, useApolloClient, useMutation } from '@apollo/client';
+import {
+    useQuery,
+    useApolloClient,
+    useMutation,
+    useSubscription,
+} from '@apollo/client';
 import { v4 as uuidv4 } from 'uuid';
 
-import { useNexusRouter, createNexusParam } from '../hooks';
+import {
+    useNexusRouter,
+    createNexusParam,
+    useImageDetailsModal,
+} from '../hooks';
 import { COLORS } from '../constants';
 import {
     ChatInputContainer,
@@ -27,6 +36,7 @@ import {
     UPDATE_MESSAGE,
     GET_CONVERSATION_MESSAGES,
     DELETE_MESSAGE,
+    DM_ADDED,
 } from '../queries';
 import {
     Message,
@@ -37,6 +47,7 @@ import {
 } from '../types';
 import { getOnlineStatusDotColor } from '../utils';
 import { BackArrow } from '../buttons';
+import { ImageDetailsModal } from '../sections';
 
 interface ChatScreenProps {
     conversation?: Conversation;
@@ -63,6 +74,15 @@ const SkeletonMessageItem: React.FC = () => (
 export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
     const router = useNexusRouter();
     const { params } = useParams();
+    const {
+        modalVisible,
+        modalAttachments,
+        modalInitialIndex,
+        closeImagePreview,
+        handleInlineImagePress,
+        handleAttachmentPreviewPress,
+        handleMessageItemAttachmentPress,
+    } = useImageDetailsModal();
     const activeUser: UserType = useAppSelector(
         (state: RootState) => state.user.user
     );
@@ -228,6 +248,20 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
         skip: !conversation?.id,
     });
 
+    useSubscription(DM_ADDED, {
+        variables: { conversationId: conversation?.id || '' },
+        onSubscriptionData: ({ subscriptionData }) => {
+            const newMsg: Message | undefined = subscriptionData.data?.dmAdded;
+            if (newMsg) {
+                setMessages((prev) => {
+                    // dedupe by id
+                    if (prev.some((m) => m.id === newMsg.id)) return prev;
+                    return [newMsg, ...prev];
+                });
+            }
+        },
+    });
+
     // Initialize messages state from query data.
     const [messages, setMessages] = useState<Message[]>([]);
     useEffect(() => {
@@ -237,7 +271,13 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
     }, [data]);
 
     // Mutation hook for sending messages.
-    const [sendMessage] = useMutation(SEND_MESSAGE);
+    const [sendMessage] = useMutation(SEND_MESSAGE, {
+        context: {
+            headers: {
+                'x-apollo-operation-name': 'SendMessage',
+            },
+        },
+    });
     const [updateMessage] = useMutation(UPDATE_MESSAGE);
     const [deleteMessage] = useMutation(DELETE_MESSAGE);
 
@@ -268,20 +308,8 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
         }
     }, [fetchMore, messages.length, messagesLoading, conversation]);
 
-    // Callback to handle inline image press.
-    // eslint-disable-next-line unicorn/consistent-function-scoping
-    const onInlineImagePress = (url: string) => {
-        console.log('Inline image pressed:', url);
-    };
-
-    // Callback to handle attachment preview press.
-    // eslint-disable-next-line unicorn/consistent-function-scoping
-    const onAttachmentPreviewPress = (attachment: Attachment) => {
-        console.log('Attachment preview pressed:', attachment);
-    };
-
     // Updated handleSend now uses the SEND_MESSAGE mutation.
-    const handleSend = (text: string, attachmentUrls: string[]) => {
+    const handleSend = (text: string, attachments: Attachment[]) => {
         // Generate a temporary id for optimistic UI.
         const tempId = uuidv4();
         const newMessage: Message = {
@@ -297,11 +325,16 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
                 hour12: true,
             }),
             edited: false,
-            attachmentUrls,
         };
 
         // Optimistically update the UI.
-        setMessages((prevMessages) => [newMessage, ...prevMessages]);
+        setMessages((prevMessages) => [
+            {
+                ...newMessage,
+                attachmentUrls: attachments.map((att) => att.previewUri),
+            },
+            ...prevMessages,
+        ]);
 
         sendMessage({
             variables: {
@@ -309,6 +342,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
                 id: tempId,
                 content: text,
                 senderUserId: activeUser?.id,
+                attachments: attachments.map((att) => att.file),
             },
             optimisticResponse: {
                 sendMessage: {
@@ -351,12 +385,6 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
         senderUserId: msg.senderUserId,
         createdAt: msg.createdAt,
     });
-
-    // Callback for when an attachment is pressed.
-    // eslint-disable-next-line unicorn/consistent-function-scoping
-    const handleAttachmentPress = (attachmentUrls: string[], index: number) => {
-        console.log('Attachment pressed:', attachmentUrls, index);
-    };
 
     const handleSaveEdit = useCallback(
         (message: DirectMessageWithAvatar | MessageWithAvatar) => {
@@ -409,7 +437,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
             <MessageItem
                 message={transformedMessage}
                 width={width}
-                onAttachmentPress={handleAttachmentPress}
+                onAttachmentPress={handleMessageItemAttachmentPress}
                 scrollContainerRef={flatListRef} // Pass the FlatList ref to each MessageItem.
                 onSaveEdit={handleSaveEdit}
                 onDeleteMessage={handleDeleteMessage}
@@ -476,13 +504,19 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
                     }}
                 >
                     <ChatInputContainer
-                        // @ts-expect-error web only types
                         onSend={handleSend}
                         recipientName={
                             typeof headerName === 'string' ? headerName : 'Chat'
                         }
-                        onInlineImagePress={onInlineImagePress}
-                        onAttachmentPreviewPress={onAttachmentPreviewPress}
+                        onInlineImagePress={handleInlineImagePress}
+                        onAttachmentPreviewPress={handleAttachmentPreviewPress}
+                    />
+
+                    <ImageDetailsModal
+                        visible={modalVisible}
+                        attachments={modalAttachments}
+                        initialIndex={modalInitialIndex}
+                        onClose={closeImagePreview}
                     />
                 </View>
             </View>

@@ -1,5 +1,5 @@
 // TextChannelScreen.tsx
-import React, { useState } from 'react';
+import React from 'react';
 import { View, useWindowDimensions } from 'react-native';
 
 import { useAppSelector, RootState, UserType } from '../redux';
@@ -7,7 +7,11 @@ import { Header, ImageDetailsModal } from '../sections';
 import { COLORS } from '../constants';
 import { GroupChannel, Attachment } from '../types';
 import { MessageList, ChatInputContainer } from '../small-components';
-import { useChannelMessages, useSendMessage } from '../hooks';
+import {
+    useChannelMessages,
+    useSendMessage,
+    useImageDetailsModal,
+} from '../hooks';
 
 export type TextChannelScreenProps = {
     channel: GroupChannel;
@@ -21,11 +25,15 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
     );
     const { width } = useWindowDimensions();
     const isLargeScreen = width > 768;
-
-    // Modal state for image previews
-    const [modalVisible, setModalVisible] = useState(false);
-    const [modalAttachments, setModalAttachments] = useState<string[]>([]);
-    const [modalInitialIndex, setModalInitialIndex] = useState(0);
+    const {
+        modalVisible,
+        modalAttachments,
+        modalInitialIndex,
+        closeImagePreview,
+        handleInlineImagePress,
+        handleAttachmentPreviewPress,
+        handleMessageItemAttachmentPress,
+    } = useImageDetailsModal();
 
     // Custom hook to fetch messages
     const {
@@ -38,30 +46,6 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
 
     // Custom hook to send messages
     const sendMsg = useSendMessage(addMessage);
-
-    // Handler for inline image preview tap
-    const handleInlineImagePress = (url: string) => {
-        setModalAttachments([url]);
-        setModalInitialIndex(0);
-        setModalVisible(true);
-    };
-
-    // Handler for attachment preview tap from ChatInput
-    const handleAttachmentPreviewPress = (att: Attachment) => {
-        setModalAttachments([att.previewUri]);
-        setModalInitialIndex(0);
-        setModalVisible(true);
-    };
-
-    // Handler for tapping an attachment inside a MessageItem
-    const handleMessageItemAttachmentPress = (
-        _attachments: string[],
-        index: number
-    ) => {
-        setModalAttachments(_attachments);
-        setModalInitialIndex(index);
-        setModalVisible(true);
-    };
 
     // onSend callback for ChatInputContainer
     const handleSend = async (text: string, attachments: Attachment[]) => {
@@ -106,7 +90,7 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
                 visible={modalVisible}
                 attachments={modalAttachments}
                 initialIndex={modalInitialIndex}
-                onClose={() => setModalVisible(false)}
+                onClose={closeImagePreview}
             />
         </View>
     );

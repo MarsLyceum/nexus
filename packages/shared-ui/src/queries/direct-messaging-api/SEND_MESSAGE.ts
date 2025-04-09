@@ -6,12 +6,14 @@ export const SEND_MESSAGE = gql`
         $id: String!
         $content: String!
         $senderUserId: String!
+        $attachments: [Upload!]
     ) {
         sendMessage(
             conversationId: $conversationId
             id: $id
             content: $content
             senderUserId: $senderUserId
+            attachments: $attachments
         ) {
             id
         }

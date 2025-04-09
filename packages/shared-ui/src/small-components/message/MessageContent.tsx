@@ -16,7 +16,7 @@ export type MessageContentProps = {
     renderMessage?: boolean;
     renderLinkPreview?: boolean;
     renderAttachments?: boolean;
-    contentOverride?: string | null; // For live preview during editing
+    contentOverride?: string; // For live preview during editing
 };
 
 export const MessageContent: React.FC<MessageContentProps> = ({
@@ -31,8 +31,7 @@ export const MessageContent: React.FC<MessageContentProps> = ({
     const mediaInfos = useMediaTypes(message.attachmentUrls || []);
 
     // Use override content if provided, otherwise use message content
-    const effectiveContent =
-        contentOverride !== null ? contentOverride : message.content;
+    const effectiveContent = contentOverride ?? message.content;
 
     // Determine if the effective content is just a link.
     const trimmedContent = effectiveContent?.trim();

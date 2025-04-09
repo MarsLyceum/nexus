@@ -10,12 +10,10 @@ import {
     FlatList,
     Platform,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome5';
-import { useSearchParams } from 'solito/navigation';
 import { useQuery, useApolloClient, useMutation } from '@apollo/client';
 import { v4 as uuidv4 } from 'uuid';
 
-import { useNexusRouter } from '../hooks';
+import { useNexusRouter, createNexusParam } from '../hooks';
 import { COLORS } from '../constants';
 import {
     ChatInputContainer,
@@ -38,10 +36,13 @@ import {
     Attachment,
 } from '../types';
 import { getOnlineStatusDotColor } from '../utils';
+import { BackArrow } from '../buttons';
 
 interface ChatScreenProps {
     conversation?: Conversation;
 }
+
+const { useParams } = createNexusParam();
 
 // Skeleton screen component to show loading placeholders.
 const SkeletonMessageItem: React.FC = () => (
@@ -61,13 +62,15 @@ const SkeletonMessageItem: React.FC = () => (
 
 export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
     const router = useNexusRouter();
-    const params = useSearchParams<{ name?: string; avatar?: string }>();
+    const { params } = useParams();
     const activeUser: UserType = useAppSelector(
         (state: RootState) => state.user.user
     );
     const client = useApolloClient();
     const { width, height: windowHeight } = useWindowDimensions();
     const isLargeScreen = width > 768;
+    const [inputContainerHeight, setInputContainerHeight] =
+        useState<number>(70);
 
     // Create a ref for the FlatList scroll container.
     const flatListRef = useRef<FlatList>(null);
@@ -208,8 +211,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
     }
 
     const headerHeight = 70;
-    const inputHeight = 70;
-    const messagesHeight = windowHeight - (headerHeight + inputHeight);
+    const messagesHeight = windowHeight - (headerHeight + inputContainerHeight);
 
     // Use GET_CONVERSATION_MESSAGES to fetch messages.
     const LIMIT = 20;
@@ -422,11 +424,10 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
             {/* @ts-expect-error web only types */}
             <View style={styles.chatHeader}>
                 {!isLargeScreen && (
-                    <Icon.Button
-                        name="arrow-left"
-                        size={20}
-                        backgroundColor={COLORS.SecondaryBackground}
+                    <BackArrow
                         onPress={() => router.goBack()}
+                        // @ts-expect-error web styles
+                        style={styles.backArrow}
                     />
                 )}
                 {headerContent}
@@ -463,8 +464,17 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
                         />
                     )}
                 </View>
-                {/* @ts-expect-error web only types */}
-                <View style={styles.inputContainer}>
+                <View
+                    // @ts-expect-error web only types
+                    style={styles.inputContainer}
+                    onLayout={(e) => {
+                        const { height } = e.nativeEvent.layout;
+                        // Update only if changed to avoid unnecessary re-renders
+                        if (height !== inputContainerHeight) {
+                            setInputContainerHeight(height);
+                        }
+                    }}
+                >
                     <ChatInputContainer
                         // @ts-expect-error web only types
                         onSend={handleSend}
@@ -542,7 +552,7 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     inputContainer: {
-        height: 70,
+        minHeight: 70,
     },
     skeletonContainer: {
         flexDirection: 'row',
@@ -585,5 +595,8 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.InactiveText,
         borderRadius: 4,
         marginLeft: 10,
+    },
+    backArrow: {
+        marginRight: 10,
     },
 });

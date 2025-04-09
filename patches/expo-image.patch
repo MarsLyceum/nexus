@@ -1,0 +1,27 @@
+diff --git a/src/ImageModule.web.ts b/src/ImageModule.web.ts
+index 3c113aac5f4502b70e089c9b916aa6db9d7afbb3..360b1f3aa28ff6970daab61cc7c6e844e046492b 100644
+--- a/src/ImageModule.web.ts
++++ b/src/ImageModule.web.ts
+@@ -4,9 +4,6 @@ import type { ImageNativeModule, ImageRef, ImageSource } from './Image.types';
+ import ImageRefWeb from './web/ImageRef';
+ 
+ class ImageModule extends NativeModule implements ImageNativeModule {
+-  // @ts-ignore: Overrides the built-in `Function.name` property
+-  static name = 'ExpoImage';
+-
+   Image: typeof ImageRef = ImageRefWeb;
+ 
+   async prefetch(urls: string | string[], _, __): Promise<boolean> {
+@@ -63,6 +60,12 @@ class ImageModule extends NativeModule implements ImageNativeModule {
+   }
+ }
+ 
++Object.defineProperty(ImageModule, 'name', {
++  value: 'ExpoImage',
++  configurable: true, // makes it possible to override later if needed
++});
++
++
+ /**
+  * Helper that resolves to an `<img />` element once it finishes loading the given source.
+  */

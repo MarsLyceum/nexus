@@ -1,0 +1,38 @@
+diff --git a/src/environment/browser.web.ts b/src/environment/browser.web.ts
+index 18c84942309f62192c87b2ef9a587ffa0a3e79b9..eb7545f1e256b3882913314a97d847c403e88a4e 100644
+--- a/src/environment/browser.web.ts
++++ b/src/environment/browser.web.ts
+@@ -1,14 +1,24 @@
+-declare global {
+-  // Add IE-specific interface to Window
+-  interface Window {
+-    attachEvent(event: string, listener: EventListener): boolean;
++// stubs/expo-modules-core-environment.safe.ts
++
++// A helper that returns the global window if it exists, otherwise null.
++function getSafeWindow(): Window | null {
++  if (typeof globalThis !== 'undefined' && typeof globalThis.window !== 'undefined') {
++    return globalThis.window;
+   }
++  return null;
+ }
+ 
+-// Used for delegating node actions when browser APIs aren't available
+-// like in SSR websites.
+-export const isDOMAvailable = typeof window !== 'undefined' && !!window.document?.createElement;
++const safeWindow = getSafeWindow();
++
++// Only mark the DOM as available if safeWindow exists and has a functioning document.
++export const isDOMAvailable = safeWindow !== null &&
++  !!(safeWindow.document && typeof safeWindow.document.createElement === 'function');
++
++// Only use event listeners if the DOM is available.
+ export const canUseEventListeners =
+-  isDOMAvailable && !!(window.addEventListener || window.attachEvent);
+-export const canUseViewport = isDOMAvailable && !!window.screen;
++  isDOMAvailable && !!(safeWindow!.addEventListener);
++
++// Only use the viewport if the DOM is available.
++export const canUseViewport = isDOMAvailable && !!safeWindow!.screen;
++
+ export const isAsyncDebugging = false;

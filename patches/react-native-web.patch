@@ -1,0 +1,100 @@
+diff --git a/dist/exports/NativeEventEmitter/index.js b/dist/exports/NativeEventEmitter/index.js
+index c66e93ec3a0f6e9bc344c0c6969af6c96f8c4de7..02512a601f37f64b3c92f504c094f6c2fae2eedf 100644
+--- a/dist/exports/NativeEventEmitter/index.js
++++ b/dist/exports/NativeEventEmitter/index.js
+@@ -7,5 +7,5 @@
+  * 
+  */
+ 
+-import NativeEventEmitter from '../../vendor/react-native/EventEmitter/NativeEventEmitter';
++import NativeEventEmitter from '../../vendor/react-native/EventEmitter/NativeEventEmitter.js';
+ export default NativeEventEmitter;
+\ No newline at end of file
+diff --git a/dist/exports/NativeModules/index.js b/dist/exports/NativeModules/index.js
+index 4f205c0335ed92a7481ccd08969351dca4500ab1..7d7dbf9167888821880bf0dd1d623a197592c2c7 100644
+--- a/dist/exports/NativeModules/index.js
++++ b/dist/exports/NativeModules/index.js
+@@ -4,10 +4,10 @@
+  * This source code is licensed under the MIT license found in the
+  * LICENSE file in the root directory of this source tree.
+  *
+- * 
++ *
+  */
+ 
+-import UIManager from '../UIManager';
++import UIManager from '../UIManager/index.js';
+ 
+ // NativeModules shim
+ var NativeModules = {
+diff --git a/dist/exports/UIManager/index.js b/dist/exports/UIManager/index.js
+index 9dd5f831325fd3d73039c3037198ad1088b86612..685959a282024527e48aea43166b6b4885557e42 100644
+--- a/dist/exports/UIManager/index.js
++++ b/dist/exports/UIManager/index.js
+@@ -7,8 +7,8 @@
+  * 
+  */
+ 
+-import getBoundingClientRect from '../../modules/getBoundingClientRect';
+-import setValueForStyles from '../../modules/setValueForStyles';
++import getBoundingClientRect from '../../modules/getBoundingClientRect/index.js';
++import setValueForStyles from '../../modules/setValueForStyles/index.js';
+ var getRect = node => {
+   var height = node.offsetHeight;
+   var width = node.offsetWidth;
+diff --git a/dist/modules/setValueForStyles/dangerousStyleValue.js b/dist/modules/setValueForStyles/dangerousStyleValue.js
+index f498724f539bb419e19edc9efda2194300e63456..de09dccd44adafeddc6b4895f2bfcb07919e26c9 100644
+--- a/dist/modules/setValueForStyles/dangerousStyleValue.js
++++ b/dist/modules/setValueForStyles/dangerousStyleValue.js
+@@ -10,7 +10,7 @@
+  * 
+  */
+ 
+-import isUnitlessNumber from '../unitlessNumbers';
++import isUnitlessNumber from '../unitlessNumbers/index.js';
+ 
+ /**
+  * Convert a value into the proper css writable value. The style name `name`
+diff --git a/dist/modules/setValueForStyles/index.js b/dist/modules/setValueForStyles/index.js
+index ddd195d318e0b1d1a2d1ebc1ef2a39d5903b88be..b35b017899c291ba014cfe42b3ce3953ff2b4cc9 100644
+--- a/dist/modules/setValueForStyles/index.js
++++ b/dist/modules/setValueForStyles/index.js
+@@ -10,7 +10,7 @@
+  * 
+  */
+ 
+-import dangerousStyleValue from './dangerousStyleValue';
++import dangerousStyleValue from './dangerousStyleValue.js';
+ 
+ /**
+  * Sets the value for multiple styles on a node.  If a value is specified as
+diff --git a/dist/vendor/react-native/EventEmitter/NativeEventEmitter.js b/dist/vendor/react-native/EventEmitter/NativeEventEmitter.js
+index 16647fef3d00624d1a17d1e8f1fff43709e29abe..663ed087ac744451575b987e67db87b555b542b8 100644
+--- a/dist/vendor/react-native/EventEmitter/NativeEventEmitter.js
++++ b/dist/vendor/react-native/EventEmitter/NativeEventEmitter.js
+@@ -10,9 +10,9 @@
+ 
+ 'use strict';
+ 
+-import Platform from '../../../exports/Platform';
+-import RCTDeviceEventEmitter from './RCTDeviceEventEmitter';
+-import invariant from 'fbjs/lib/invariant';
++import Platform from '../../../exports/Platform/index.js';
++import RCTDeviceEventEmitter from './RCTDeviceEventEmitter.js';
++import invariant from 'fbjs/lib/invariant.js';
+ /**
+  * `NativeEventEmitter` is intended for use by Native Modules to emit events to
+  * JavaScript listeners. If a `NativeModule` is supplied to the constructor, it
+diff --git a/dist/vendor/react-native/EventEmitter/RCTDeviceEventEmitter.js b/dist/vendor/react-native/EventEmitter/RCTDeviceEventEmitter.js
+index a1cf34ed2aba1b261c26b95d42ff87860a3e3777..3b7cc66e6e869097037cd1729326982b98d92b7f 100644
+--- a/dist/vendor/react-native/EventEmitter/RCTDeviceEventEmitter.js
++++ b/dist/vendor/react-native/EventEmitter/RCTDeviceEventEmitter.js
+@@ -8,7 +8,7 @@
+  * @format
+  */
+ 
+-import EventEmitter from '../vendor/emitter/EventEmitter';
++import EventEmitter from '../vendor/emitter/EventEmitter.js';
+ 
+ // FIXME: use typed events
+ 

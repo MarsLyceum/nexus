@@ -29,7 +29,12 @@ module.exports = {
     },
     parser: '@typescript-eslint/parser',
     parserOptions: {
-        project: './tsconfig.json',
+        project: [
+            './tsconfig.json',
+            './apps/mobile/tsconfig.json',
+            './apps/web/tsconfig.json',
+            './packages/shared-ui/tsconfig.json',
+        ],
     },
     settings: {
         react: {
@@ -37,6 +42,8 @@ module.exports = {
         },
     },
     rules: {
+        'import/no-cycle': 'error',
+        'import/no-default-export': 'off',
         'unicorn/no-useless-undefined': 'off',
         '@typescript-eslint/no-unsafe-argument': 'off',
         '@typescript-eslint/no-unsafe-return': 'off',

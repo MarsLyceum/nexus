@@ -1,0 +1,49 @@
+{
+  "name": "nexus-web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "debug": "node server.js",
+    "dev": "next dev",
+    "build": "cross-env NODE_ENV=production next build",
+    "deploy": "python deploy.py",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "run-docker-container": "docker run -it --rm -p 8080:8080 gcr.io/hephaestus-418809/next-server:latest"
+  },
+  "dependencies": {
+    "@types/jsonwebtoken": "^9.0.9",
+    "jsonwebtoken": "^9.0.2",
+    "cross-env": "^7.0.3",
+    "react-native": "0.76.6",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "@expo/next-adapter": "^6.0.0",
+    "solito": "^4.4.1",
+    "react-native-web": "^0.19.13",
+    "next": "15.2.4",
+    "shared-ui": "workspace:*",
+    "file-loader": "^6.2.0",
+    "babel-loader": "^10.0.0",
+    "@babel/plugin-transform-flow-strip-types": "^7.26.5",
+    "next-transpile-modules": "^10.0.1",
+    "null-loader": "^4.0.1",
+    "string-replace-loader": "^3.1.0",
+    "directory-named-webpack-plugin": "^4.1.0",
+    "webpack-sources": "^3.2.3",
+    "express": "^4.21.2",
+    "@babel/plugin-transform-modules-commonjs": "^7.26.3",
+    "react-native-vector-icons": "^10.2.0",
+    "critters": "^0.0.25",
+    "react-virtualized": "^9.22.6",
+    "@next/eslint-plugin-next": "^15.2.4",
+    "eslint-config-next": "^15.2.4"
+  },
+  "devDependencies": {
+    "typescript": "^5",
+    "@types/node": "^20",
+    "@types/react": "18.3.1",
+    "@types/react-dom": "18.3.1"
+  }
+}

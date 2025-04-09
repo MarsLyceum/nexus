@@ -1,0 +1,164 @@
+import React, { useRef } from 'react';
+import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
+import { MiniModal } from './MiniModal';
+import { COLORS } from '../constants';
+import { Tooltip } from './Tooltip';
+import { Edit, MoreHorizontal } from '../icons';
+
+export type MessageOptionsModalProps = {
+    visible: boolean;
+    onClose: () => void;
+    anchorPosition?: { x: number; y: number; width: number; height: number };
+    onEdit: () => void;
+    onMore: (anchor: {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+    }) => void;
+    onMouseEnterModal?: () => void;
+    onMouseLeaveModal?: () => void;
+};
+
+export const MessageOptionsModal: React.FC<MessageOptionsModalProps> = ({
+    visible,
+    onClose,
+    anchorPosition,
+    onEdit,
+    onMore,
+    onMouseEnterModal,
+    onMouseLeaveModal,
+}) => {
+    const moreButtonRef = useRef<View>(null);
+
+    const handleMorePress = () => {
+        if (moreButtonRef.current) {
+            if (moreButtonRef.current.measureInWindow) {
+                moreButtonRef.current.measureInWindow((x, y, width, height) => {
+                    onMore({ x, y, width, height });
+                });
+            } else if (
+                (moreButtonRef.current as unknown as Element)
+                    .getBoundingClientRect
+            ) {
+                const rect = (
+                    moreButtonRef.current as unknown as Element
+                ).getBoundingClientRect();
+                onMore({
+                    x: rect.x,
+                    y: rect.y,
+                    width: rect.width,
+                    height: rect.height,
+                });
+            }
+        } else {
+            onMore({ x: 0, y: 0, width: 0, height: 0 });
+        }
+    };
+
+    return (
+        <MiniModal
+            visible={visible}
+            onClose={onClose}
+            anchorPosition={anchorPosition}
+            containerStyle={styles.modalContainer}
+            closeOnOutsideClick={false}
+            useRightAnchorAlignment
+            onMouseEnter={onMouseEnterModal}
+            onMouseLeave={onMouseLeaveModal}
+        >
+            <View style={styles.outerContainer}>
+                <View style={styles.iconsRow}>
+                    <Tooltip tooltipText="Like">
+                        <TouchableOpacity style={styles.iconWrapper}>
+                            <Text style={styles.emoji}>👍</Text>
+                        </TouchableOpacity>
+                    </Tooltip>
+
+                    <Tooltip tooltipText="100">
+                        <TouchableOpacity style={styles.iconWrapper}>
+                            <Text style={styles.emoji}>💯</Text>
+                        </TouchableOpacity>
+                    </Tooltip>
+
+                    <Tooltip tooltipText="Laugh">
+                        <TouchableOpacity style={styles.iconWrapper}>
+                            <Text style={styles.emoji}>😆</Text>
+                        </TouchableOpacity>
+                    </Tooltip>
+
+                    <Tooltip tooltipText="Neutral">
+                        <TouchableOpacity style={styles.iconWrapper}>
+                            <Text style={styles.emoji}>😐</Text>
+                        </TouchableOpacity>
+                    </Tooltip>
+
+                    <Tooltip tooltipText="Edit">
+                        <TouchableOpacity
+                            style={styles.iconWrapper}
+                            onPress={onEdit}
+                        >
+                            <Edit />
+                        </TouchableOpacity>
+                    </Tooltip>
+
+                    <Tooltip tooltipText="Share">
+                        <TouchableOpacity style={styles.iconWrapper}>
+                            <ArrowIcon />
+                        </TouchableOpacity>
+                    </Tooltip>
+
+                    <Tooltip tooltipText="More">
+                        <TouchableOpacity
+                            style={styles.iconWrapper}
+                            onPress={handleMorePress}
+                            ref={moreButtonRef}
+                        >
+                            <MoreHorizontal />
+                        </TouchableOpacity>
+                    </Tooltip>
+                </View>
+            </View>
+        </MiniModal>
+    );
+};
+
+const ArrowIcon: React.FC = () => (
+    <Svg width={20} height={20} viewBox="0 0 512 512" fill="none">
+        <Path
+            d="M256 64l-96 96h64v96h64v-96h64l-96-96zM96 256v128c0 17.7 14.3 32 32 32h256c17.7 0 32-14.3 32-32V256h-64v128H160V256H96z"
+            fill={COLORS.White} // Updated to use palette
+        />
+    </Svg>
+);
+
+const styles = StyleSheet.create({
+    modalContainer: {
+        width: 260,
+        backgroundColor: COLORS.PrimaryBackground,
+        borderRadius: 8,
+        paddingVertical: 6,
+        paddingHorizontal: 8,
+        shadowColor: COLORS.InactiveText,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+        elevation: 5,
+    },
+    outerContainer: {
+        // Letting mouse events bubble to capture modal hover events
+    },
+    iconsRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    iconWrapper: {
+        padding: 4,
+    },
+    emoji: {
+        fontSize: 18,
+        color: COLORS.White,
+    },
+});

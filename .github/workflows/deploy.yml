@@ -13,12 +13,15 @@ jobs:
             - name: Checkout repository
               uses: actions/checkout@v2
 
+            - id: 'auth'
+              uses: 'google-github-actions/auth@v2'
+              with:
+                  credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
             - name: Setup Google Cloud SDK
-              uses: google-github-actions/setup-gcloud@v0
+              uses: google-github-actions/setup-gcloud@v2
               with:
                   project_id: hephaestus-418809
-                  service_account_key: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-                  export_default_credentials: true
 
             # Optional: Cache Docker layers for faster builds in production
             - name: Cache Docker layers

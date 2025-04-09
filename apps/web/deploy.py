@@ -53,6 +53,12 @@ def main() -> None:
         f"docker build -f {dockerfile_path} -t gcr.io/{project_id}/{service_name}:latest --progress=plain {build_context}",
         env=env,
     )
+
+    print(
+        color_text("Configuring Docker credential helper for GCR...", OKCYAN)
+    )
+    run_command("gcloud auth configure-docker --quiet", env=env)
+
     print(color_text("Pushing Docker image...", OKCYAN))
     run_command(f"docker push gcr.io/{project_id}/{service_name}:latest")
 

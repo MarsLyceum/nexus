@@ -23,11 +23,11 @@ def main() -> None:
         print(color_text(f"Using .env file: {env_file}", OKGREEN))
         env_vars = load_env_variables(env_file)
 
-    if not os.getenv("GCP_SERVICE_ACCOUNT"):
-        # Locate the GCP service account key
-        key_file = find_key_file(
-            "../../service-account-keys", "hephaestus-418809-*.json"
-        )
+    # Locate the GCP service account key
+    key_file = find_key_file(
+        "../../service-account-keys", "hephaestus-418809-*.json"
+    )
+    if key_file is not None:
         print(color_text(f"Using key file: {key_file}", OKGREEN))
         os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = key_file
 

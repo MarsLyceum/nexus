@@ -23,7 +23,8 @@
         "polyfills/expo-polyfills.js",
         "stubs/expo-secure-store.js",
         ".next/types/**/*.ts",
-        "../../packages/shared-ui/src/small-components/Login.tsx"
+        "../../packages/shared-ui/src/small-components/Login.tsx",
+        "next.config.js"
     ],
     "exclude": ["node_modules"]
 }

@@ -14,6 +14,7 @@
     },
     "exports": {
         ".": "./src/index.ts",
+        "./screens": "./src/screens/index.ts",
         "./buttons": "./src/buttons/index.ts",
         "./cards": "./src/cards/index.ts",
         "./constants": "./src/constants/index.ts",

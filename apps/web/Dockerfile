@@ -1,70 +1,84 @@
 # syntax=docker/dockerfile:1
+ARG NODE_VERSION=22-alpine
 
-ARG NODE_VERSION=22.14.0
+#################################
+# Stage 1: Builder (dev deps + build)
+#################################
+FROM node:${NODE_VERSION} AS builder
+WORKDIR /app
 
-# ---------------------------
-# Stage 1: Builder
-# ---------------------------
-FROM --platform=linux/amd64 node:${NODE_VERSION}-alpine AS builder
-
-# Set tracing sampling rate (if needed during build)
-ENV TRACING_SAMPLING_RATE=1
-
-# Install pnpm globally
+# Install pnpm
 RUN npm install -g pnpm
 
-# Set working directory for the entire repository (monorepo root)
-WORKDIR /usr/src/web
+# Copy monorepo manifests, patches, workspace packages, and app code
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml tsconfig.json ./
+COPY .npmrc ./
+COPY patches ./patches
+COPY packages ./packages
+COPY apps/web ./apps/web
 
-# Copy the full repository (build context is the repo root)
-COPY . .
+# Install all deps (prod + dev) for the web app
+RUN pnpm install --frozen-lockfile -r
 
-# Remove any existing node_modules and install all workspace dependencies
-RUN rm -rf node_modules
-RUN pnpm install
-
-# Change directory to the Next.js app folder and build the app
-WORKDIR /usr/src/web/apps/web
+# Build the Next.js app
+WORKDIR /app/apps/web
 RUN pnpm run build
 
-# ---------------------------
-# Stage 2: Production
-# ---------------------------
-FROM --platform=linux/amd64 node:${NODE_VERSION}-alpine AS production
+#################################
+# Stage 2: Deps (prod deps only)
+#################################
+FROM node:${NODE_VERSION} AS deps
+WORKDIR /app
 
-# Set production environment variables
-ENV TRACING_SAMPLING_RATE=1
-ENV NODE_ENV=production
-ENV PNPM_HOME="/usr/local/share/.pnpm"
-ENV CI=true
-
-# Create the pnpm store directory and update PATH
-RUN mkdir -p ${PNPM_HOME}
-ENV PATH="${PNPM_HOME}/bin:${PATH}"
-
-# Install pnpm globally
+# Install pnpm
 RUN npm install -g pnpm
 
-# Set working directory for the entire repository
-WORKDIR /usr/src/web
+# Copy manifests and patches
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY patches ./patches
+COPY packages ./packages
+COPY apps/web/package.json ./apps/web/
+COPY .npmrc ./
 
-# Copy the entire repository from the builder stage (all workspace packages included)
-COPY --from=builder /usr/src/web .
+# Make tsconfig.json available to Next.js
+COPY tsconfig.json ./apps/web/tsconfig.json
 
-# Install only production dependencies for the entire workspace
-RUN pnpm install --prod --frozen-lockfile
+# Install only production deps for the web app
+RUN pnpm install --frozen-lockfile --prod --filter ./apps/web...
 
-# Change directory to the Next.js app folder
-WORKDIR /usr/src/web/apps/web
+#################################
+# Stage 3: Distroless Production
+#################################
+FROM gcr.io/distroless/nodejs22-debian12 AS production
+WORKDIR /app
 
-# Run the application as a non-root user
-USER node
+# Copy built output
+COPY --from=builder /app/apps/web/.next ./.next
+COPY --from=builder /app/apps/web/public ./public
+COPY --from=builder /app/apps/web/next.config.js ./
+COPY --from=builder /app/apps/web/plugins ./plugins
+COPY --from=builder /app/apps/web/stubs    ./stubs
+COPY --from=builder /app/apps/web/polyfills ./polyfills
 
-# Expose the port that the application listens on
+
+# Copy production node_modules
+COPY --from=deps /app/node_modules ./node_modules
+
+COPY --from=builder /app/packages/shared-ui ./node_modules/shared-ui
+
+# Copy package.json for metadata
+COPY --from=builder /app/apps/web/package.json ./
+
+# Use a non-root user
+USER nonroot
+
+# Expose port and set environment
 EXPOSE 8080
-
-# Set the environment variable for the port (Cloud Run requires this to be 8080)
 ENV PORT=8080
 
-# Start the Next.js server (ensure your package.json "start" script uses "next start")
-CMD ["pnpm", "run", "start"]
+# Optional healthcheck
+HEALTHCHECK --interval=30s --timeout=5s \
+    CMD ["wget","--quiet","--tries=1","--spider","http://localhost:8080/_next/static/health"] || exit 1
+
+# Start the Next.js server
+CMD ["node_modules/next/dist/bin/next", "start", "-p", "8080"]

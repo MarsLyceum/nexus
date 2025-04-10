@@ -1,180 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
     Text,
-    TouchableOpacity,
     StyleSheet,
     useWindowDimensions,
     FlatList,
 } from 'react-native';
-import { useQuery, useApolloClient } from '@apollo/client';
+import { useQuery, useApolloClient, useMutation } from '@apollo/client';
 
-import { NexusImage } from '../small-components';
 import { useNexusRouter, createNexusParam } from '../hooks';
 import { COLORS } from '../constants';
 import { ChatScreen } from './ChatScreen';
 import {
     GET_CONVERSATIONS,
-    FETCH_USER_QUERY,
     CREATE_CONVERSATION,
+    CLOSE_CONVERSATION,
 } from '../queries';
 import { useAppSelector, RootState, UserType } from '../redux';
-import { getOnlineStatusDotColor } from '../utils';
 import { Conversation } from '../types';
-
-interface ConversationItemProps {
-    conversation: Conversation;
-    activeUser: UserType;
-    selected: boolean;
-    onPress: (conversation: Conversation) => void;
-}
-
-// A skeleton placeholder for a conversation item.
-const ConversationSkeleton: React.FC = () => (
-    <View style={styles.skeletonItem}>
-        <View style={styles.skeletonAvatar} />
-        <View style={styles.skeletonTextContainer}>
-            <View style={styles.skeletonTitle} />
-            <View style={styles.skeletonSubtitle} />
-        </View>
-    </View>
-);
+import { ConversationItem, ConversationSkeleton } from '../small-components';
 
 // A component for rendering a single conversation item.
-export const ConversationItem: React.FC<ConversationItemProps> = ({
-    conversation,
-    activeUser,
-    selected,
-    onPress,
-}) => {
-    const client = useApolloClient();
-    const [groupUsers, setGroupUsers] = useState<UserType[]>([]);
-    const otherParticipantIds = conversation.participantsUserIds.filter(
-        (id) => id !== activeUser?.id
-    );
-
-    // --- ONE-TO-ONE CONVERSATION ---
-    if (otherParticipantIds.length === 1) {
-        const friendId = otherParticipantIds[0];
-        // eslint-disable-next-line react-hooks/rules-of-hooks
-        const { data, loading } = useQuery(FETCH_USER_QUERY, {
-            variables: { userId: friendId },
-        });
-
-        // Instead of showing the friendId (uuid) briefly,
-        // we render a skeleton until the username loads.
-        if (loading) {
-            return <ConversationSkeleton />;
-        }
-
-        const username = data?.fetchUser ? data.fetchUser.username : friendId;
-        const status = data?.fetchUser ? data.fetchUser.status : 'offline';
-        const avatarUrl = `https://picsum.photos/seed/${username}/40`;
-
-        return (
-            <TouchableOpacity
-                style={[
-                    styles.conversationItem,
-                    selected && styles.selectedConversationItem,
-                ]}
-                onPress={() => onPress(conversation)}
-            >
-                <View style={styles.avatarAndDot}>
-                    <NexusImage
-                        source={avatarUrl}
-                        alt="avatar"
-                        width={40}
-                        height={40}
-                        style={styles.avatar}
-                        contentFit="cover"
-                    />
-                    <View
-                        style={[
-                            styles.statusDot,
-                            {
-                                backgroundColor:
-                                    getOnlineStatusDotColor(status),
-                            },
-                        ]}
-                    />
-                </View>
-                <View style={styles.conversationTextContainer}>
-                    <Text style={styles.conversationTitle}>{username}</Text>
-                </View>
-            </TouchableOpacity>
-        );
-    }
-
-    // --- GROUP CONVERSATION ---
-    // For group conversations, fetch info for all participants (excluding the active user).
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    useEffect(() => {
-        let isMounted = true;
-        const fetchGroupUsers = async () => {
-            try {
-                const results = await Promise.all(
-                    otherParticipantIds.map((id) =>
-                        client.query({
-                            query: FETCH_USER_QUERY,
-                            variables: { userId: id },
-                        })
-                    )
-                );
-                if (isMounted) {
-                    const usersData = results.map((res) => res.data.fetchUser);
-                    setGroupUsers(usersData);
-                }
-            } catch (error) {
-                console.error('Error fetching group users:', error);
-            }
-        };
-        void fetchGroupUsers();
-        return () => {
-            isMounted = false;
-        };
-    }, [otherParticipantIds, client]);
-
-    const groupUsernames = groupUsers.map((u) => u?.username).join(', ');
-    const totalMembers = conversation.participantsUserIds.length;
-
-    return (
-        <TouchableOpacity
-            style={[
-                styles.conversationItem,
-                selected && styles.selectedConversationItem,
-            ]}
-            onPress={() => onPress(conversation)}
-        >
-            <View style={styles.avatarGroup}>
-                {groupUsers.slice(0, 3).map((user, index) => {
-                    const avatarUrl = `https://picsum.photos/seed/${user?.username}/40`;
-                    return (
-                        <NexusImage
-                            key={user?.id}
-                            source={avatarUrl}
-                            alt="avatar"
-                            width={40}
-                            height={40}
-                            // @ts-expect-error web only
-                            style={[
-                                // @ts-expect-error web only
-                                styles.groupAvatar,
-                                { marginLeft: index === 0 ? 0 : -10 },
-                            ]}
-                            contentFit="cover"
-                        />
-                    );
-                })}
-            </View>
-            <View style={styles.conversationTextContainer}>
-                <Text style={styles.conversationTitle}>
-                    {groupUsernames || 'Group Chat'}
-                </Text>
-                <Text style={styles.membersCount}>{totalMembers} Members</Text>
-            </View>
-        </TouchableOpacity>
-    );
-};
 
 const { useParams } = createNexusParam();
 
@@ -185,6 +31,14 @@ export const DMListScreen: React.FC = () => {
     const apolloClient = useApolloClient();
     const { params } = useParams();
     const { friendId } = params;
+    const [currentFriendId, setCurrentFriendId] = useState<string | undefined>(
+        friendId
+    );
+
+    const [closeConversation] = useMutation(CLOSE_CONVERSATION);
+    const [closedConversationIds, setClosedConversationIds] = useState<
+        string[]
+    >([]);
 
     // Get the active user from Redux.
     const user: UserType = useAppSelector(
@@ -192,13 +46,20 @@ export const DMListScreen: React.FC = () => {
     );
 
     useEffect(() => {
+        if (friendId) {
+            setCurrentFriendId(friendId);
+        }
+    }, [friendId]);
+
+    useEffect(() => {
         void (async () => {
-            if (friendId && user?.id) {
+            if (currentFriendId && user?.id) {
                 const newConversationResult = await apolloClient.mutate({
                     mutation: CREATE_CONVERSATION,
                     variables: {
                         type: 'direct',
-                        participantsUserIds: [friendId, user?.id],
+                        participantsUserIds: [currentFriendId, user?.id],
+                        requestedByUserId: user?.id,
                     },
                     update: (cache, { data: { createConversation } }) => {
                         if (!createConversation) return;
@@ -244,6 +105,10 @@ export const DMListScreen: React.FC = () => {
                     newConversationResult.data.createConversation;
 
                 if (newConversation) {
+                    setClosedConversationIds((prevClosed) =>
+                        prevClosed.filter((id) => id !== newConversation.id)
+                    );
+
                     if (isLargeScreen) {
                         setSelectedConversation(newConversation);
                     } else {
@@ -252,14 +117,18 @@ export const DMListScreen: React.FC = () => {
                         });
                     }
                 }
+
+                router.replace('/messages');
+                setCurrentFriendId(undefined);
             }
         })();
-    }, [friendId, apolloClient, isLargeScreen, router, user?.id]);
+    }, [currentFriendId, apolloClient, isLargeScreen, router, user?.id]);
 
     // Fetch conversations using the active user's ID.
     const { data, loading, error } = useQuery(GET_CONVERSATIONS, {
         variables: { userId: user?.id },
         skip: !user,
+        fetchPolicy: 'cache-and-network',
     });
 
     // State to hold the selected conversation on large screens.
@@ -273,9 +142,17 @@ export const DMListScreen: React.FC = () => {
             !selectedConversation &&
             data?.getConversations?.length > 0
         ) {
-            setSelectedConversation(data.getConversations[0]);
+            // Only pick open conversations.
+            const openConversations = data.getConversations.filter(
+                (conv: Conversation) => !closedConversationIds.includes(conv.id)
+            );
+
+            const newSelected =
+                openConversations.length > 0 ? openConversations[0] : undefined;
+
+            setSelectedConversation(newSelected);
         }
-    }, [isLargeScreen, selectedConversation, data]);
+    }, [isLargeScreen, selectedConversation, data, closedConversationIds]);
 
     const handleConversationPress = (conversation: Conversation) => {
         if (isLargeScreen) {
@@ -284,6 +161,78 @@ export const DMListScreen: React.FC = () => {
             router.push('/chat', { conversationId: conversation.id });
         }
     };
+
+    const handleCloseConversation = useCallback(
+        (conversation: Conversation) => {
+            void closeConversation({
+                variables: {
+                    conversationId: conversation.id,
+                    closedByUserId: user?.id,
+                },
+                optimisticResponse: {
+                    closeConversation: {
+                        __typename: 'Conversation',
+                        id: conversation.id,
+                    },
+                },
+                update: (
+                    cache,
+                    { data: { closeConversation: closedConv } }
+                ) => {
+                    cache.modify({
+                        fields: {
+                            getConversations(
+                                // eslint-disable-next-line @typescript-eslint/default-param-last
+                                existingConversations = [],
+                                { readField }
+                            ) {
+                                return existingConversations.filter(
+                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                    (convRef: any) =>
+                                        readField('id', convRef) !==
+                                        closedConv.id
+                                );
+                            },
+                        },
+                    });
+                },
+            });
+
+            if (selectedConversation?.id === conversation.id) {
+                setClosedConversationIds((prevClosed) => {
+                    // Create new closed list using the functional update
+                    const newClosed = [conversation.id, ...prevClosed];
+
+                    // Filter out the closed ones using the new closed array
+                    const remainingConversations = (
+                        data?.getConversations || []
+                    ).filter(
+                        (conv: Conversation) =>
+                            conv.id !== conversation.id &&
+                            !newClosed.includes(conv.id)
+                    );
+
+                    // Update selectedConversation based on remaining conversations
+                    if (remainingConversations.length > 0) {
+                        setSelectedConversation(remainingConversations[0]);
+                    } else {
+                        setSelectedConversation(undefined);
+                    }
+
+                    return newClosed;
+                });
+            } else {
+                // Otherwise, just update the closed IDs
+                setClosedConversationIds((prev) => [conversation.id, ...prev]);
+            }
+        },
+        [
+            closeConversation,
+            user?.id,
+            data?.getConversations,
+            selectedConversation?.id,
+        ]
+    );
 
     return (
         <View style={styles.container}>
@@ -304,7 +253,10 @@ export const DMListScreen: React.FC = () => {
                     </Text>
                 ) : (
                     <FlatList
-                        data={data?.getConversations || []}
+                        data={(data?.getConversations || []).filter(
+                            (conv: Conversation) =>
+                                !closedConversationIds.includes(conv.id)
+                        )}
                         keyExtractor={(item: Conversation) => item.id}
                         renderItem={({ item }) => (
                             <ConversationItem
@@ -312,6 +264,7 @@ export const DMListScreen: React.FC = () => {
                                 activeUser={user}
                                 selected={selectedConversation?.id === item.id}
                                 onPress={handleConversationPress}
+                                onClose={handleCloseConversation}
                             />
                         )}
                     />
@@ -353,80 +306,5 @@ const styles = StyleSheet.create({
     chatWrapper: {
         flex: 1,
         backgroundColor: COLORS.PrimaryBackground,
-    },
-    conversationItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 10,
-        paddingHorizontal: 15,
-    },
-    selectedConversationItem: {
-        backgroundColor: COLORS.SecondaryBackground,
-        borderRadius: 5,
-    },
-    avatarAndDot: {
-        position: 'relative',
-        marginRight: 10,
-    },
-    avatar: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-    },
-    statusDot: {
-        position: 'absolute',
-        bottom: 0,
-        right: 5,
-        width: 15,
-        height: 15,
-        borderRadius: 7,
-        borderWidth: 2,
-        borderColor: COLORS.SecondaryBackground,
-    },
-    avatarGroup: {
-        flexDirection: 'row',
-        marginRight: 10,
-    },
-    conversationTextContainer: {
-        flex: 1,
-    },
-    conversationTitle: {
-        fontSize: 14,
-        color: COLORS.White,
-        fontWeight: 'bold',
-    },
-    membersCount: {
-        fontSize: 12,
-        color: COLORS.InactiveText,
-    },
-    // Skeleton styles using palette colors
-    skeletonItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 10,
-        paddingHorizontal: 15,
-    },
-    skeletonAvatar: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: COLORS.InactiveText,
-    },
-    skeletonTextContainer: {
-        flex: 1,
-        marginLeft: 10,
-    },
-    skeletonTitle: {
-        width: '50%',
-        height: 10,
-        backgroundColor: COLORS.InactiveText,
-        borderRadius: 4,
-        marginBottom: 6,
-    },
-    skeletonSubtitle: {
-        width: '30%',
-        height: 10,
-        backgroundColor: COLORS.InactiveText,
-        borderRadius: 4,
     },
 });

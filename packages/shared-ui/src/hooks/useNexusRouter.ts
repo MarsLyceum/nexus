@@ -124,6 +124,21 @@ export function useNexusRouter(): NexusRouter {
                     // @ts-expect-error navigation
                     navigation.navigate(normalizedPath, params);
                 }
+
+                // Build full URL from the path and any params.
+                const url = buildUrlWithParams(path, params);
+
+                // If in a browser environment, update the URL via the History API.
+                if (typeof window !== 'undefined') {
+                    try {
+                        window.history.replaceState({}, '', url);
+                    } catch (error) {
+                        console.error(
+                            'Error using window.history.replaceState:',
+                            error
+                        );
+                    }
+                }
             },
             goBack: () => {
                 // If navigation can go back, do so; otherwise, navigate to home.

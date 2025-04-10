@@ -98,6 +98,10 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
 
     const { conversationId: conversationIdParam } = params;
 
+    useEffect(() => {
+        setConversationState(conversation);
+    }, [conversation]);
+
     // Create a ref for the FlatList scroll container.
     const flatListRef = useRef<FlatList>(null);
 

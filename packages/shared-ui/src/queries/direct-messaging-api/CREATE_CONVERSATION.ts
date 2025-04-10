@@ -5,11 +5,13 @@ export const CREATE_CONVERSATION = gql`
         $type: ConversationType!
         $participantsUserIds: [String!]!
         $channelId: String
+        $requestedByUserId: String!
     ) {
         createConversation(
             type: $type
             participantsUserIds: $participantsUserIds
             channelId: $channelId
+            requestedByUserId: $requestedByUserId
         ) {
             id
             type

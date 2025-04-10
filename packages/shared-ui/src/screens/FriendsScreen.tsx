@@ -30,11 +30,6 @@ import { useAppSelector, RootState } from '../redux';
 
 import { AddFriendsScreen } from './AddFriendsScreen';
 
-type RemoveFriendData = {
-    connectionId: string;
-    friend: Friend;
-};
-
 export const FriendsScreen: React.FC = () => {
     // Tab and dropdown state.
     const [activeTab, setActiveTab] = useState<string>('Online');
@@ -43,7 +38,7 @@ export const FriendsScreen: React.FC = () => {
         RawRect | undefined
     >();
     const [friendToRemove, setFriendToRemove] = useState<
-        RemoveFriendData | undefined
+        FriendItemData | undefined
     >();
     const [removeFriendModalVisible, setRemoveFriendModalVisible] =
         useState<boolean>(false);
@@ -139,7 +134,7 @@ export const FriendsScreen: React.FC = () => {
         measuredRect: { x: number; y: number; width: number; height: number }
     ) => {
         setDropdownRawRect(measuredRect);
-        setFriendToRemove({ connectionId: item.id, friend: item.friend });
+        setFriendToRemove(item);
         setDropdownVisible(true);
     };
 
@@ -176,6 +171,9 @@ export const FriendsScreen: React.FC = () => {
                     currentUserId={user?.id}
                     onAccept={() => handleAcceptFriend(item)}
                     onReject={() => handleRejectFriend(item)}
+                    onMorePress={(_ignored, measuredRect) =>
+                        handleMorePress(item, measuredRect)
+                    }
                 />
             );
         }
@@ -326,7 +324,12 @@ export const FriendsScreen: React.FC = () => {
                                 style={styles.dropdownMenuItemText}
                                 numberOfLines={1}
                             >
-                                Remove Friend
+                                {friendToRemove &&
+                                friendToRemove.status?.toLowerCase() ===
+                                    'pending' &&
+                                friendToRemove.requestedBy?.id === user?.id
+                                    ? 'Cancel Friend Request'
+                                    : 'Remove Friend'}
                             </Text>
                         </Pressable>
                     </DropdownMenu>
@@ -336,7 +339,8 @@ export const FriendsScreen: React.FC = () => {
             {/* Confirm Remove Friend Modal */}
             <ConfirmRemoveFriendModal
                 visible={removeFriendModalVisible}
-                friend={friendToRemove?.friend}
+                friendToRemove={friendToRemove}
+                user={user}
                 onConfirm={handleConfirmRemoveFriend}
                 onCancel={() => setRemoveFriendModalVisible(false)}
             />

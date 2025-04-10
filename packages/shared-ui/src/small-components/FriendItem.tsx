@@ -133,12 +133,14 @@ export const FriendItem: React.FC<FriendItemProps> = ({
             {/* If pending and NOT requested by me, show accept & ignore actions */}
             {isPending && !isRequestedByMe ? (
                 <View style={styles.pendingActions}>
-                    <ActionButton
-                        onPress={() => onAccept && onAccept()}
-                        tooltipText="Accept"
-                    >
-                        <CheckMark />
-                    </ActionButton>
+                    <View style={styles.acceptButton}>
+                        <ActionButton
+                            onPress={() => onAccept && onAccept()}
+                            tooltipText="Accept"
+                        >
+                            <CheckMark />
+                        </ActionButton>
+                    </View>
                     <ActionButton
                         onPress={() => onReject && onReject()}
                         tooltipText="Ignore"
@@ -149,18 +151,21 @@ export const FriendItem: React.FC<FriendItemProps> = ({
             ) : (
                 // For accepted friends or outgoing requests
                 <View style={styles.friendAction}>
-                    <View style={styles.messageButton}>
-                        <ActionButton
-                            tooltipText="Message"
-                            onPress={() =>
-                                router.push('/messages', {
-                                    friendId: friend.id,
-                                })
-                            }
-                        >
-                            <Chat />
-                        </ActionButton>
-                    </View>
+                    {!isPending && (
+                        <View style={styles.messageButton}>
+                            <ActionButton
+                                tooltipText="Message"
+                                onPress={() =>
+                                    router.push('/messages', {
+                                        friendId: friend.id,
+                                    })
+                                }
+                            >
+                                <Chat />
+                            </ActionButton>
+                        </View>
+                    )}
+
                     <View ref={moreButtonContainerRef}>
                         <ActionButton
                             onPress={() => {
@@ -252,5 +257,8 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         marginLeft: 8,
+    },
+    acceptButton: {
+        marginRight: 8,
     },
 });

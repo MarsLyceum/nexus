@@ -100,6 +100,33 @@ const withTM = require('next-transpile-modules')([
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     reactStrictMode: true,
+
+    env: {
+        NEXT_PUBLIC_USE_REMOTE_GRAPHQL: String(
+            process.env.USE_REMOTE_GRAPHQL === 'true'
+        ),
+    },
+
+    async rewrites() {
+        const LOCAL = 'http://localhost:4000';
+        const REMOTE =
+            'https://nexus-web-service-197277044151.us-west1.run.app';
+
+        // if in production *or* you explicitly requested remote, use REMOTE
+        const forceRemote =
+            process.env.NODE_ENV === 'production' ||
+            process.env.USE_REMOTE_GRAPHQL === 'true';
+
+        const target = forceRemote ? REMOTE : LOCAL;
+
+        return [
+            {
+                source: '/graphql/:path*',
+                destination: `${target}/graphql/:path*`,
+            },
+        ];
+    },
+
     experimental: {
         esmExternals: true,
         forceSwcTransforms: true,

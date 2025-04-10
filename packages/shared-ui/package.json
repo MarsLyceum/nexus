@@ -30,5 +30,7 @@
         "./types": "./src/types/index.ts",
         "./utils": "./src/utils/index.ts"
     },
-    "dependencies": {}
+    "dependencies": {
+        "dotenv": "^16.4.7"
+    }
 }

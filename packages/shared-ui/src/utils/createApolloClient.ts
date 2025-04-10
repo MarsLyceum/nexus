@@ -8,8 +8,11 @@ import ReconnectingWebSocket from 'reconnecting-websocket';
 import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { createClient } from 'graphql-ws';
 import createUploadLink from 'apollo-upload-client/createUploadLink.mjs';
+import dotenv from 'dotenv';
 
 import { getSafeWindow } from './getSafeWindow';
+
+dotenv.config();
 
 // Detect if the code is running in a Cloud Run container by checking for the K_SERVICE env variable.
 const isCloudRun =
@@ -23,16 +26,15 @@ const isDevDomain =
 
 // Use local server only if NOT running in Cloud Run or on the dev.my-nexus.net domain.
 const onRemoteServer = isCloudRun || isDevDomain;
-const useLocalServer = true;
 
 // Set endpoints based on whether we are using the local server or the Cloud Run server.
 const graphqlApiGatewayEndpointHttp =
-    !onRemoteServer && useLocalServer
+    !onRemoteServer && !(process.env.USE_REMOTE_GRAPHQL === 'true')
         ? 'http://localhost:4000/graphql'
         : 'https://nexus-web-service-197277044151.us-west1.run.app/graphql';
 
 const graphqlApiGatewayEndpointWs =
-    !onRemoteServer && useLocalServer
+    !onRemoteServer && !(process.env.USE_REMOTE_GRAPHQL === 'true')
         ? 'ws://localhost:4000/graphql'
         : 'wss://nexus-web-service-197277044151.us-west1.run.app/graphql';
 

@@ -9,8 +9,8 @@ import {
     LayoutChangeEvent,
     Dimensions,
 } from 'react-native';
-import { Portal } from 'react-native-paper';
 import Svg, { Path } from 'react-native-svg';
+import { Portal } from '../providers';
 import { COLORS } from '../constants';
 import { isComputer } from '../utils';
 

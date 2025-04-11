@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
-import { Portal } from 'react-native-paper';
+import { Portal } from '../providers';
 import { COLORS } from '../constants';
 
 export type MiniModalProps = {

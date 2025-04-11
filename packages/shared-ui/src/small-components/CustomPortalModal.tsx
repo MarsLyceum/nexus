@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, TouchableWithoutFeedback, StyleSheet } from 'react-native';
-import { Portal } from 'react-native-paper';
+import { Portal } from '../providers';
 import { COLORS } from '../constants';
 
 export type CustomPortalModalProps = {

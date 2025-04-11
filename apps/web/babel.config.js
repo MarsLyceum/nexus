@@ -23,6 +23,8 @@ module.exports = function (api) {
                 '@babel/plugin-transform-private-property-in-object',
                 { loose: true },
             ],
+            ['inline-dotenv', { path: '.env' }],
+            ['inline-dotenv', { path: '../../.env.local' }],
             'react-native-reanimated/plugin',
         ],
         sourceType: 'unambiguous',

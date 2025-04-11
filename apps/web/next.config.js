@@ -33,7 +33,7 @@ const TRANSPILED_PACKAGES = [
     'react-native-config',
     // 'react-native-gesture-handler',
     'react-native-get-random-values',
-    'react-native-paper',
+    // 'react-native-paper',
     'react-native-reanimated',
     'react-native-safe-area-context',
     'react-native-svg',

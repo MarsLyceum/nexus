@@ -8,13 +8,13 @@ import { StatusBar, Platform } from 'react-native';
 import { ApolloProvider } from '@apollo/client';
 import Toast from 'react-native-toast-message';
 import * as SplashScreen from 'expo-splash-screen';
-import { Provider as PortalProvider } from 'react-native-paper';
 import { Provider as ReduxProvider } from 'react-redux';
 import { store } from 'shared-ui/redux';
 import {
     ActiveGroupProvider,
     SearchProvider,
     CurrentCommentProvider,
+    PortalProvider,
 } from 'shared-ui/providers';
 import { StatusManager, Login } from 'shared-ui/small-components';
 import { COLORS } from 'shared-ui/constants';

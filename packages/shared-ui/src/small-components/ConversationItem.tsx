@@ -66,9 +66,11 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
                 style={[
                     styles.conversationItem,
                     selected && styles.selectedConversationItem,
+                    conversationHovered && {
+                        backgroundColor: COLORS.TertiaryBackground,
+                    },
                 ]}
                 onPress={() => onPress(conversation)}
-                // @ts-expect-error mouse enter
                 onMouseEnter={() => setConversationHovered(true)}
                 onMouseLeave={() => setConversationHovered(false)}
             >
@@ -156,6 +158,9 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
             style={[
                 styles.conversationItem,
                 selected && styles.selectedConversationItem,
+                conversationHovered && {
+                    backgroundColor: COLORS.TertiaryBackground,
+                },
             ]}
             onPress={() => onPress(conversation)}
         >

@@ -8,11 +8,8 @@ import ReconnectingWebSocket from 'reconnecting-websocket';
 import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { createClient } from 'graphql-ws';
 import createUploadLink from 'apollo-upload-client/createUploadLink.mjs';
-import dotenv from 'dotenv';
 
 import { getSafeWindow } from './getSafeWindow';
-
-dotenv.config();
 
 // Detect if the code is running in a Cloud Run container by checking for the K_SERVICE env variable.
 const isCloudRun =

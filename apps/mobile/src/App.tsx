@@ -25,7 +25,6 @@ import {
     Roboto_700Bold_Italic,
 } from '@expo-google-fonts/roboto';
 import * as SplashScreen from 'expo-splash-screen';
-import { Provider as PortalProvider } from 'react-native-paper';
 
 import { COLORS } from 'shared-ui/constants';
 import { store } from 'shared-ui/redux';
@@ -33,6 +32,7 @@ import {
     SearchProvider,
     ActiveGroupProvider,
     CurrentCommentProvider,
+    PortalProvider,
 } from 'shared-ui/providers';
 import { StatusManager, Login } from 'shared-ui/small-components';
 import {

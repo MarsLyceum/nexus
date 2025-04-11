@@ -68,14 +68,20 @@ export function DashboardLayoutClient({
             {/* Main content area: dynamic routes animate on change */}
             {/* @ts-expect-error web only types */}
             <View style={styles.mainContent}>
-                <AnimatePresence>
+                <AnimatePresence initial={false} mode="wait">
                     <motion.div
                         key={pathname}
                         initial={{ opacity: 0, x: 50 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -50 }}
                         transition={{ duration: 0.3 }}
-                        style={{ width: '100%', height: '100%' }}
+                        style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                        }}
                     >
                         {children}
                     </motion.div>
@@ -88,6 +94,8 @@ export function DashboardLayoutClient({
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        // @ts-expect-error web only types
+        height: '100vh',
         // @ts-expect-error web only types
         minHeight: '100vh', // Fills the viewport height
         flexDirection: 'row',
@@ -102,6 +110,9 @@ const styles = StyleSheet.create({
     mainContent: {
         flex: 1,
         backgroundColor: COLORS.PrimaryBackground,
+        position: 'relative',
+        // @ts-expect-error web only types
+        height: '100vh',
         // @ts-expect-error web only types
         minHeight: '100vh', // Fills the viewport height
     },

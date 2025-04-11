@@ -2,6 +2,7 @@ import React from 'react';
 
 import '../../polyfills/expo-polyfills.js';
 import 'react-native-get-random-values';
+
 import { ClientProviders } from '../route-components/ClientProviders';
 
 export const metadata = {
@@ -20,6 +21,12 @@ export default function RootLayout({
     return (
         <html lang="en">
             <head>
+                {/* 1) viewport meta for proper mobile/SSR scaling */}
+                <meta
+                    name="viewport"
+                    content="width=device-width,initial-scale=1"
+                />
+
                 <link rel="preconnect" href="https://fonts.googleapis.com" />
                 <link
                     rel="preconnect"

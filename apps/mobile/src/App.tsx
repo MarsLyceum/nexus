@@ -33,6 +33,7 @@ import {
     ActiveGroupProvider,
     CurrentCommentProvider,
     PortalProvider,
+    ThemeProvider,
 } from 'shared-ui/providers';
 import { StatusManager, Login } from 'shared-ui/small-components';
 import {
@@ -157,78 +158,81 @@ export default function App() {
 
     if (appIsReady) {
         return (
-            <ActiveGroupProvider>
-                <SearchProvider>
-                    <CurrentCommentProvider>
-                        <SafeAreaProvider>
-                            <StatusBar
-                                barStyle="light-content"
-                                backgroundColor={COLORS.AppBackground}
-                            />
-                            <SafeAreaView
-                                style={{
-                                    flex: 1,
-                                    backgroundColor: COLORS.AppBackground,
-                                }}
-                                edges={['top', 'left', 'right', 'bottom']}
-                            >
-                                {/* Inject custom scrollbar styles on web */}
-                                <CustomScrollbar />
-                                <ApolloProvider client={client}>
-                                    <ReduxProvider store={store}>
-                                        <PortalProvider>
-                                            <Login>
-                                                <NavigationContainer
-                                                    linking={linking}
-                                                >
-                                                    <StatusManager>
-                                                        <RootStack.Navigator
-                                                            screenOptions={{
-                                                                headerShown:
-                                                                    false,
-                                                                presentation:
-                                                                    'transparentModal', // This makes the screens render as modals by default
-                                                            }}
-                                                        >
-                                                            <RootStack.Screen
-                                                                name="Main"
-                                                                component={
-                                                                    MainStackScreen
-                                                                }
-                                                            />
-                                                            <RootStack.Screen
-                                                                name="CreateGroup"
-                                                                // @ts-expect-error navigator
-                                                                component={
-                                                                    CreateGroupModalScreen
-                                                                }
-                                                                options={{
+            <ThemeProvider>
+                <ActiveGroupProvider>
+                    <SearchProvider>
+                        <CurrentCommentProvider>
+                            <SafeAreaProvider>
+                                <StatusBar
+                                    barStyle="light-content"
+                                    backgroundColor={COLORS.AppBackground}
+                                />
+                                <SafeAreaView
+                                    style={{
+                                        flex: 1,
+                                        backgroundColor: COLORS.AppBackground,
+                                    }}
+                                    edges={['top', 'left', 'right', 'bottom']}
+                                >
+                                    {/* Inject custom scrollbar styles on web */}
+                                    <CustomScrollbar />
+                                    <ApolloProvider client={client}>
+                                        <ReduxProvider store={store}>
+                                            <PortalProvider>
+                                                <Login>
+                                                    <NavigationContainer
+                                                        linking={linking}
+                                                    >
+                                                        <StatusManager>
+                                                            <RootStack.Navigator
+                                                                screenOptions={{
+                                                                    headerShown:
+                                                                        false,
                                                                     presentation:
-                                                                        'transparentModal',
-                                                                    cardStyle: {
-                                                                        backgroundColor:
-                                                                            'transparent',
-                                                                    },
-                                                                    ...Platform.select(
-                                                                        {
-                                                                            ios: TransitionPresets.ModalPresentationIOS,
-                                                                        }
-                                                                    ),
+                                                                        'transparentModal', // This makes the screens render as modals by default
                                                                 }}
-                                                            />
-                                                        </RootStack.Navigator>
-                                                        <Toast />
-                                                    </StatusManager>
-                                                </NavigationContainer>
-                                            </Login>
-                                        </PortalProvider>
-                                    </ReduxProvider>
-                                </ApolloProvider>
-                            </SafeAreaView>
-                        </SafeAreaProvider>
-                    </CurrentCommentProvider>
-                </SearchProvider>
-            </ActiveGroupProvider>
+                                                            >
+                                                                <RootStack.Screen
+                                                                    name="Main"
+                                                                    component={
+                                                                        MainStackScreen
+                                                                    }
+                                                                />
+                                                                <RootStack.Screen
+                                                                    name="CreateGroup"
+                                                                    // @ts-expect-error navigator
+                                                                    component={
+                                                                        CreateGroupModalScreen
+                                                                    }
+                                                                    options={{
+                                                                        presentation:
+                                                                            'transparentModal',
+                                                                        cardStyle:
+                                                                            {
+                                                                                backgroundColor:
+                                                                                    'transparent',
+                                                                            },
+                                                                        ...Platform.select(
+                                                                            {
+                                                                                ios: TransitionPresets.ModalPresentationIOS,
+                                                                            }
+                                                                        ),
+                                                                    }}
+                                                                />
+                                                            </RootStack.Navigator>
+                                                            <Toast />
+                                                        </StatusManager>
+                                                    </NavigationContainer>
+                                                </Login>
+                                            </PortalProvider>
+                                        </ReduxProvider>
+                                    </ApolloProvider>
+                                </SafeAreaView>
+                            </SafeAreaProvider>
+                        </CurrentCommentProvider>
+                    </SearchProvider>
+                </ActiveGroupProvider>
+            </ThemeProvider>
         );
     }
 }

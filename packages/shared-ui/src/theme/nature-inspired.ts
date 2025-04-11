@@ -1,0 +1,166 @@
+// src/theme/nature-inspired.ts
+import { COLORS as DefaultColors } from '../constants/colors';
+import type { Theme } from './themes';
+
+export const NatureInspired: Theme[] = [
+    {
+        name: 'Forest Whisper',
+        colors: {
+            ...DefaultColors,
+            Primary: '#237544', // ↑ from #1B5E36 for better contrast
+            Secondary: '#3AA16A', // ↑ from #2E8B57
+            Tertiary: '#B6E3B1', // ↑ from #A3D9A5
+            PrimaryBackground: '#0D1A0D', // ↓ from #0F1F12
+            SecondaryBackground: '#11401A', // ↓ from #12401E
+            TertiaryBackground: '#18632B', // ↓ from #1A5E2A
+            AppBackground: '#09120D',
+            TextInput: '#1B2E1F',
+            ActiveText: '#FFFFFF',
+            MainText: '#E0E0E0',
+        },
+    },
+    {
+        name: 'Ocean Breeze',
+        colors: {
+            ...DefaultColors,
+            Primary: '#12778A',
+            Secondary: '#2BB5D4',
+            Tertiary: '#B4F0F5',
+            PrimaryBackground: '#061821',
+            SecondaryBackground: '#0C3449',
+            TertiaryBackground: '#155E7C',
+            AppBackground: '#051116',
+            TextInput: '#0C2730',
+            ActiveText: '#FFFFFF',
+            MainText: '#E0E0E0',
+        },
+    },
+    {
+        name: 'Mountain Peak',
+        colors: {
+            ...DefaultColors,
+            Primary: '#5A6B7D',
+            Secondary: '#8AA0BB',
+            Tertiary: '#C5D2DB',
+            PrimaryBackground: '#181C20',
+            SecondaryBackground: '#23272B',
+            TertiaryBackground: '#2E3339',
+            AppBackground: '#121318',
+            TextInput: '#1E2125',
+            ActiveText: '#FFFFFF',
+            MainText: '#E0E0E0',
+        },
+    },
+    {
+        name: 'Desert Mirage',
+        colors: {
+            ...DefaultColors,
+            Primary: '#C7956F',
+            Secondary: '#E0BA98',
+            Tertiary: '#F1D9BC',
+            PrimaryBackground: '#3A2F19',
+            SecondaryBackground: '#57482A',
+            TertiaryBackground: '#7A6540',
+            AppBackground: '#2E2415',
+            TextInput: '#4F422E',
+            ActiveText: '#FFFFFF',
+            MainText: '#E0E0E0',
+        },
+    },
+    {
+        name: 'Autumn Leaves',
+        colors: {
+            ...DefaultColors,
+            Primary: '#B24000',
+            Secondary: '#E15E00',
+            Tertiary: '#F2B14F',
+            PrimaryBackground: '#361A0A',
+            SecondaryBackground: '#5A3216',
+            TertiaryBackground: '#7F431F',
+            AppBackground: '#2B1509',
+            TextInput: '#5A331E',
+            ActiveText: '#FFFFFF',
+            MainText: '#E0E0E0',
+        },
+    },
+    {
+        name: 'Spring Blossom',
+        colors: {
+            ...DefaultColors,
+            Primary: '#D94D8A',
+            Secondary: '#FF4BAF',
+            Tertiary: '#FFD2E2',
+            PrimaryBackground: '#331B27',
+            SecondaryBackground: '#50263F',
+            TertiaryBackground: '#6F3258',
+            AppBackground: '#2D1522',
+            TextInput: '#59314A',
+            ActiveText: '#FFFFFF',
+            MainText: '#E0E0E0',
+        },
+    },
+    {
+        name: 'Winter Frost',
+        colors: {
+            ...DefaultColors,
+            Primary: '#7EB8D6',
+            Secondary: '#9FD2E9',
+            Tertiary: '#E3F5FA',
+            PrimaryBackground: '#0D1A25',
+            SecondaryBackground: '#1A3549',
+            TertiaryBackground: '#245F8A',
+            AppBackground: '#0C1420',
+            TextInput: '#1F364A',
+            ActiveText: '#FFFFFF',
+            MainText: '#E0E0E0',
+        },
+    },
+    {
+        name: 'Summer Glow',
+        colors: {
+            ...DefaultColors,
+            Primary: '#B38F00',
+            Secondary: '#FFBF00',
+            Tertiary: '#FFF6AD',
+            PrimaryBackground: '#4C3900',
+            SecondaryBackground: '#756100',
+            TertiaryBackground: '#9E8400',
+            AppBackground: '#443300',
+            TextInput: '#7B6700',
+            ActiveText: '#FFFFFF',
+            MainText: '#E0E0E0',
+        },
+    },
+    {
+        name: 'Tropical Paradise',
+        colors: {
+            ...DefaultColors,
+            Primary: '#02b5b5',
+            Secondary: '#00B8B8',
+            Tertiary: '#66D6D6',
+            PrimaryBackground: '#003939',
+            SecondaryBackground: '#006D6D',
+            TertiaryBackground: '#008F8F',
+            AppBackground: '#003F3F',
+            TextInput: '#005F5F',
+            ActiveText: '#FFFFFF',
+            MainText: '#E0E0E0',
+        },
+    },
+    {
+        name: 'Rainforest Canopy',
+        colors: {
+            ...DefaultColors,
+            Primary: '#166616',
+            Secondary: '#1F8B1F',
+            Tertiary: '#5ECDAA',
+            PrimaryBackground: '#0A160A',
+            SecondaryBackground: '#0F2F0F',
+            TertiaryBackground: '#184118',
+            AppBackground: '#081008',
+            TextInput: '#1B391B',
+            ActiveText: '#FFFFFF',
+            MainText: '#E0E0E0',
+        },
+    },
+];

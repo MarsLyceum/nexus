@@ -14,7 +14,7 @@ import {
     UserGroupsType,
 } from '../redux';
 import { GroupButton, SidebarButton } from '../buttons';
-import { Friends, Chat, Events, Search, Add } from '../icons';
+import { Friends, Chat, Events, Search, Add, Theme } from '../icons';
 import { FETCH_USER_GROUPS_QUERY } from '../queries';
 import { COLORS, SIDEBAR_WIDTH } from '../constants';
 import { detectEnvironment, Environment, getItem, setItem } from '../utils';
@@ -212,6 +212,7 @@ export const SidebarScreen = ({
         events: useRef<View>(null),
         search: useRef<View>(null),
         creategroup: useRef<View>(null),
+        theme: useRef<View>(null),
     };
 
     // Create a dictionary for dynamic group button refs.
@@ -376,6 +377,17 @@ export const SidebarScreen = ({
                         onPress={() => handlePress('CreateGroup')}
                         icon={<Add />}
                         text="Create Group"
+                    />
+                </View>
+
+                <View
+                    ref={staticButtonRefs.theme}
+                    style={styles.buttonContainer}
+                >
+                    <SidebarButton
+                        onPress={() => handlePress('theme')}
+                        icon={<Theme />}
+                        text="Change Theme"
                     />
                 </View>
             </View>

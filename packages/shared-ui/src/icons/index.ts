@@ -29,6 +29,7 @@ export * from './Search';
 export * from './Settings';
 export * from './SettingsIcon';
 export * from './Share';
+export * from './Theme';
 export * from './ThumbsDown';
 export * from './ThumbsUp';
 export * from './UpArrow';

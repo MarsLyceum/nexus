@@ -19,6 +19,7 @@ import {
     EventsScreen,
     SearchScreen,
     FriendsScreen,
+    ThemeScreen,
 } from 'shared-ui/screens';
 import { useNexusRouter } from 'shared-ui/hooks';
 
@@ -106,6 +107,7 @@ export function AppDrawerScreen() {
             <DrawerNavigator.Screen name="messages" component={DMListScreen} />
             <DrawerNavigator.Screen name="events" component={EventsScreen} />
             <DrawerNavigator.Screen name="search" component={SearchScreen} />
+            <DrawerNavigator.Screen name="theme" component={ThemeScreen} />
 
             {userGroups.map((group: Group) => (
                 <DrawerNavigator.Screen

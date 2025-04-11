@@ -5,7 +5,7 @@ export const COLORS = {
     White: '#FFFFFF',
     PrimaryBackground: '#281B31',
     SecondaryBackground: '#382348',
-    TertiaryBackground: '#32213d',
+    TertiaryBackground: '#412457',
     AppBackground: '#1F1524',
     InactiveText: '#989898',
     MainText: '#C5C5C5',

@@ -67,7 +67,7 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
                     styles.conversationItem,
                     selected && styles.selectedConversationItem,
                     conversationHovered && {
-                        backgroundColor: COLORS.TertiaryBackground,
+                        backgroundColor: COLORS.SecondaryBackground,
                     },
                 ]}
                 onPress={() => onPress(conversation)}
@@ -159,7 +159,7 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
                 styles.conversationItem,
                 selected && styles.selectedConversationItem,
                 conversationHovered && {
-                    backgroundColor: COLORS.TertiaryBackground,
+                    backgroundColor: COLORS.SecondaryBackground,
                 },
             ]}
             onPress={() => onPress(conversation)}
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 15,
     },
     selectedConversationItem: {
-        backgroundColor: COLORS.SecondaryBackground,
+        backgroundColor: COLORS.TertiaryBackground,
         borderRadius: 5,
     },
     avatarAndDot: {

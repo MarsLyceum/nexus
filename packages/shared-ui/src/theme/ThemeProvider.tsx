@@ -6,8 +6,11 @@ import React, {
     ReactNode,
     useEffect,
 } from 'react';
-import { Theme, themesByCategory } from '.';
+import { Platform } from 'react-native';
+import { Theme, themesByCategory } from './themes';
+
 import { COLORS } from '../constants/colors';
+import { getItem, setItem } from '../utils';
 
 type ThemeContextValue = {
     theme: Theme;
@@ -22,16 +25,18 @@ export const ThemeContext = createContext<ThemeContextValue>({
 });
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-    const [theme, setTheme] = useState<Theme>(() => {
-        const stored = localStorage.getItem('nexus-theme');
-        if (stored) {
-            const { category, name } = JSON.parse(stored);
-            return (
-                themesByCategory[category]?.find((t) => t.name === name) ??
-                defaultTheme
-            );
-        }
-        return defaultTheme;
+    const [theme, setTheme] = useState<Theme>(defaultTheme);
+    useEffect(() => {
+        (async () => {
+            const stored = await getItem('nexus-theme');
+            if (stored) {
+                const { category, name } = JSON.parse(stored);
+                setTheme(
+                    themesByCategory[category]?.find((t) => t.name === name) ??
+                        defaultTheme
+                );
+            }
+        })();
     });
 
     const setThemeByName = (name: string) => {
@@ -39,7 +44,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
             const found = themesByCategory[cat].find((t) => t.name === name);
             if (found) {
                 setTheme(found);
-                localStorage.setItem(
+                void setItem(
                     'nexus-theme',
                     JSON.stringify({ category: cat, name })
                 );
@@ -50,9 +55,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         // sync CSS vars
-        Object.entries(theme.colors).forEach(([key, val]) =>
-            document.documentElement.style.setProperty(`--${key}`, val)
-        );
+        if (Platform.OS === 'web') {
+            Object.entries(theme.colors).forEach(([key, val]) =>
+                document.documentElement.style.setProperty(`--${key}`, val)
+            );
+        }
     }, [theme]);
 
     return (

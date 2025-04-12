@@ -16,7 +16,8 @@ export const PastelDreams: Theme[] = [
             AppBackground: '#E5DBEE',
             TextInput: '#C9B8D9',
             ActiveText: '#000000',
-            MainText: '#2E1F2E',
+            MainText: '#1a1919',
+            InactiveText: '#262424',
         },
     },
     {
@@ -32,7 +33,8 @@ export const PastelDreams: Theme[] = [
             AppBackground: '#F9E9E3',
             TextInput: '#E7CBC4',
             ActiveText: '#000000',
-            MainText: '#3A1F18',
+            MainText: '#1a1919',
+            InactiveText: '#262424',
         },
     },
     {
@@ -48,7 +50,8 @@ export const PastelDreams: Theme[] = [
             AppBackground: '#DAF6F4',
             TextInput: '#B7E7E2',
             ActiveText: '#000000',
-            MainText: '#1F3A36',
+            MainText: '#1a1919',
+            InactiveText: '#262424',
         },
     },
     {
@@ -64,7 +67,8 @@ export const PastelDreams: Theme[] = [
             AppBackground: '#D8F2FB',
             TextInput: '#BEE5F6',
             ActiveText: '#000000',
-            MainText: '#1E2F3A',
+            MainText: '#1a1919',
+            InactiveText: '#262424',
         },
     },
     {
@@ -80,7 +84,8 @@ export const PastelDreams: Theme[] = [
             AppBackground: '#FCEAEA',
             TextInput: '#EACCCC',
             ActiveText: '#000000',
-            MainText: '#3A1F1F',
+            MainText: '#1a1919',
+            InactiveText: '#262424',
         },
     },
     {
@@ -96,7 +101,8 @@ export const PastelDreams: Theme[] = [
             AppBackground: '#F9F2E3',
             TextInput: '#E7DCC1',
             ActiveText: '#000000',
-            MainText: '#3A321F',
+            MainText: '#1a1919',
+            InactiveText: '#262424',
         },
     },
     {
@@ -112,7 +118,8 @@ export const PastelDreams: Theme[] = [
             AppBackground: '#EDE6ED',
             TextInput: '#D9CAD9',
             ActiveText: '#000000',
-            MainText: '#2E1F2E',
+            MainText: '#1a1919',
+            InactiveText: '#262424',
         },
     },
     {
@@ -128,7 +135,8 @@ export const PastelDreams: Theme[] = [
             AppBackground: '#E7F7E7',
             TextInput: '#CCE8CC',
             ActiveText: '#000000',
-            MainText: '#1F2E1F',
+            MainText: '#1a1919',
+            InactiveText: '#262424',
         },
     },
     {
@@ -144,7 +152,8 @@ export const PastelDreams: Theme[] = [
             AppBackground: '#FBEFEF',
             TextInput: '#E9D8D8',
             ActiveText: '#000000',
-            MainText: '#3A1F1F',
+            MainText: '#1a1919',
+            InactiveText: '#262424',
         },
     },
     {
@@ -160,7 +169,8 @@ export const PastelDreams: Theme[] = [
             AppBackground: '#FEF9E3',
             TextInput: '#F4EED0',
             ActiveText: '#000000',
-            MainText: '#3A321F',
+            MainText: '#1a1919',
+            InactiveText: '#262424',
         },
     },
     {
@@ -176,7 +186,8 @@ export const PastelDreams: Theme[] = [
             AppBackground: '#DED6DA',
             TextInput: '#C9BDC2',
             ActiveText: '#000000',
-            MainText: '#2A1F24',
+            MainText: '#1a1919',
+            InactiveText: '#262424',
         },
     },
     {
@@ -192,7 +203,8 @@ export const PastelDreams: Theme[] = [
             AppBackground: '#D9EAE7',
             TextInput: '#BFDCDC',
             ActiveText: '#000000',
-            MainText: '#1F2E2C',
+            MainText: '#1a1919',
+            InactiveText: '#262424',
         },
     },
 ];

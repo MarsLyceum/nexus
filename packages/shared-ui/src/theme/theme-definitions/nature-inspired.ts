@@ -17,6 +17,7 @@ export const NatureInspired: Theme[] = [
             TextInput: '#1B2E1F',
             ActiveText: '#FFFFFF',
             MainText: '#E0E0E0',
+            InactiveText: '#989898',
         },
     },
     {
@@ -33,6 +34,7 @@ export const NatureInspired: Theme[] = [
             TextInput: '#0C2730',
             ActiveText: '#FFFFFF',
             MainText: '#E0E0E0',
+            InactiveText: '#989898',
         },
     },
     {
@@ -49,6 +51,7 @@ export const NatureInspired: Theme[] = [
             TextInput: '#1E2125',
             ActiveText: '#FFFFFF',
             MainText: '#E0E0E0',
+            InactiveText: '#989898',
         },
     },
     {
@@ -65,6 +68,7 @@ export const NatureInspired: Theme[] = [
             TextInput: '#4F422E',
             ActiveText: '#FFFFFF',
             MainText: '#E0E0E0',
+            InactiveText: '#989898',
         },
     },
     {
@@ -81,6 +85,7 @@ export const NatureInspired: Theme[] = [
             TextInput: '#5A331E',
             ActiveText: '#FFFFFF',
             MainText: '#E0E0E0',
+            InactiveText: '#989898',
         },
     },
     {
@@ -97,6 +102,7 @@ export const NatureInspired: Theme[] = [
             TextInput: '#59314A',
             ActiveText: '#FFFFFF',
             MainText: '#E0E0E0',
+            InactiveText: '#989898',
         },
     },
     {
@@ -113,6 +119,7 @@ export const NatureInspired: Theme[] = [
             TextInput: '#1F364A',
             ActiveText: '#FFFFFF',
             MainText: '#E0E0E0',
+            InactiveText: '#989898',
         },
     },
     {
@@ -129,6 +136,7 @@ export const NatureInspired: Theme[] = [
             TextInput: '#7B6700',
             ActiveText: '#FFFFFF',
             MainText: '#E0E0E0',
+            InactiveText: '#989898',
         },
     },
     {
@@ -145,6 +153,7 @@ export const NatureInspired: Theme[] = [
             TextInput: '#005F5F',
             ActiveText: '#FFFFFF',
             MainText: '#E0E0E0',
+            InactiveText: '#989898',
         },
     },
     {
@@ -161,6 +170,7 @@ export const NatureInspired: Theme[] = [
             TextInput: '#1B391B',
             ActiveText: '#FFFFFF',
             MainText: '#E0E0E0',
+            InactiveText: '#989898',
         },
     },
 ];

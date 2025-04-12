@@ -19,6 +19,7 @@ export const DualTone: Theme[] = [
             TextInput: '#2A2940',
             ActiveText: '#FFFFFF',
             MainText: '#E0E0E0',
+            InactiveText: '#989898',
         },
     },
     {
@@ -35,6 +36,7 @@ export const DualTone: Theme[] = [
             TextInput: '#2E1F2E',
             ActiveText: '#FFFFFF',
             MainText: '#E0E0E0',
+            InactiveText: '#989898',
         },
     },
     {
@@ -51,6 +53,7 @@ export const DualTone: Theme[] = [
             TextInput: '#28342B',
             ActiveText: '#FFFFFF',
             MainText: '#E0E0E0',
+            InactiveText: '#989898',
         },
     },
     {
@@ -67,6 +70,7 @@ export const DualTone: Theme[] = [
             TextInput: '#2E2C29',
             ActiveText: '#FFFFFF',
             MainText: '#E0E0E0',
+            InactiveText: '#989898',
         },
     },
     {
@@ -83,6 +87,7 @@ export const DualTone: Theme[] = [
             TextInput: '#2F2434',
             ActiveText: '#FFFFFF',
             MainText: '#E0E0E0',
+            InactiveText: '#989898',
         },
     },
     {
@@ -99,6 +104,7 @@ export const DualTone: Theme[] = [
             TextInput: '#2B3741',
             ActiveText: '#FFFFFF',
             MainText: '#E0E0E0',
+            InactiveText: '#989898', // cool grey-blue for inactive text
         },
     },
     {
@@ -115,6 +121,7 @@ export const DualTone: Theme[] = [
             TextInput: '#2F2B27',
             ActiveText: '#FFFFFF',
             MainText: '#E0E0E0',
+            InactiveText: '#989898', // muted brown-olive tone
         },
     },
     {
@@ -131,6 +138,7 @@ export const DualTone: Theme[] = [
             TextInput: '#2E2F30',
             ActiveText: '#FFFFFF',
             MainText: '#E0E0E0',
+            InactiveText: '#989898', // muted tone to complement mustard and indigo
         },
     },
     {
@@ -147,6 +155,7 @@ export const DualTone: Theme[] = [
             TextInput: '#2F262F',
             ActiveText: '#FFFFFF',
             MainText: '#E0E0E0',
+            InactiveText: '#989898', // Updated: Neutral grey
         },
     },
     {
@@ -163,6 +172,7 @@ export const DualTone: Theme[] = [
             TextInput: '#2D272D',
             ActiveText: '#FFFFFF',
             MainText: '#E0E0E0',
+            InactiveText: '#989898', // Updated: Neutral grey
         },
     },
 ];

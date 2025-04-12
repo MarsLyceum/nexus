@@ -17,6 +17,7 @@ export const NeonPulse: Theme[] = [
             TextInput: '#003A3A',
             ActiveText: '#FFFFFF',
             MainText: '#E0E0E0',
+            InactiveText: '#989898',
         },
     },
     {
@@ -33,6 +34,7 @@ export const NeonPulse: Theme[] = [
             TextInput: '#3A003A',
             ActiveText: '#FFFFFF',
             MainText: '#E0E0E0',
+            InactiveText: '#989898',
         },
     },
     {
@@ -49,6 +51,7 @@ export const NeonPulse: Theme[] = [
             TextInput: '#3A3A00',
             ActiveText: '#FFFFFF',
             MainText: '#E0E0E0',
+            InactiveText: '#989898',
         },
     },
     {
@@ -65,6 +68,7 @@ export const NeonPulse: Theme[] = [
             TextInput: '#3A003A',
             ActiveText: '#FFFFFF',
             MainText: '#E0E0E0',
+            InactiveText: '#989898',
         },
     },
     {
@@ -81,6 +85,7 @@ export const NeonPulse: Theme[] = [
             TextInput: '#003A00',
             ActiveText: '#FFFFFF',
             MainText: '#E0E0E0',
+            InactiveText: '#989898',
         },
     },
     {
@@ -97,6 +102,7 @@ export const NeonPulse: Theme[] = [
             TextInput: '#3A1A1A',
             ActiveText: '#FFFFFF',
             MainText: '#E0E0E0',
+            InactiveText: '#989898',
         },
     },
     {
@@ -113,6 +119,7 @@ export const NeonPulse: Theme[] = [
             TextInput: '#3A3300',
             ActiveText: '#FFFFFF',
             MainText: '#E0E0E0',
+            InactiveText: '#989898',
         },
     },
     {
@@ -129,6 +136,7 @@ export const NeonPulse: Theme[] = [
             TextInput: '#3A001F',
             ActiveText: '#FFFFFF',
             MainText: '#E0E0E0',
+            InactiveText: '#989898',
         },
     },
     {
@@ -145,6 +153,7 @@ export const NeonPulse: Theme[] = [
             TextInput: '#003A2F',
             ActiveText: '#FFFFFF',
             MainText: '#E0E0E0',
+            InactiveText: '#989898',
         },
     },
     {
@@ -161,6 +170,7 @@ export const NeonPulse: Theme[] = [
             TextInput: '#3A0031',
             ActiveText: '#FFFFFF',
             MainText: '#E0E0E0',
+            InactiveText: '#989898',
         },
     },
 ];

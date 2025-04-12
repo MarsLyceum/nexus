@@ -8,9 +8,10 @@ import { TouchableOpacity, useWindowDimensions } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
 import { getItem } from 'shared-ui/utils';
-import { COLORS, SIDEBAR_WIDTH, USER_KEY } from 'shared-ui/constants';
+import { SIDEBAR_WIDTH, USER_KEY } from 'shared-ui/constants';
 import { useAppSelector, RootState, UserGroupsType } from 'shared-ui/redux';
 import { ActiveGroupContext } from 'shared-ui/providers';
+import { useTheme } from 'shared-ui/theme';
 import { Group } from 'shared-ui/types';
 import {
     GroupScreen,
@@ -37,6 +38,7 @@ const DrawerNavigator = createDrawerNavigator<DrawerParamList>();
 
 export function AppDrawerScreen() {
     const router = useNexusRouter();
+    const { theme } = useTheme();
 
     const userGroups: UserGroupsType = useAppSelector(
         (state: RootState) => state.userGroups.userGroups
@@ -67,7 +69,7 @@ export function AppDrawerScreen() {
             }) => ({
                 headerShown: !isDesktop,
                 headerStyle: {
-                    backgroundColor: COLORS.AppBackground,
+                    backgroundColor: theme.colors.AppBackground,
                     elevation: 0, // Remove Android shadow
                     shadowOpacity: 0, // Remove iOS shadow
                     borderBottomWidth: 0, // Remove any bottom border if present
@@ -97,7 +99,7 @@ export function AppDrawerScreen() {
                     width: SIDEBAR_WIDTH,
                     borderRightWidth: 0,
                     borderRightColor: 'transparent',
-                    backgroundColor: COLORS.AppBackground,
+                    backgroundColor: theme.colors.AppBackground,
                 },
                 sceneContainerStyle: { flex: 1 },
             })}

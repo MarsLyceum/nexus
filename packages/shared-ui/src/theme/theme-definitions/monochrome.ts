@@ -1,8 +1,8 @@
 // eslint-disable-next-line eslint-comments/disable-enable-pair
 /* eslint-disable max-lines */
 // src/theme/monochrome.ts
-import { COLORS as DefaultColors } from '../constants/colors';
-import type { Theme } from './themes';
+import { COLORS as DefaultColors } from '../../constants/colors';
+import type { Theme } from '../themes';
 
 export const Monochrome: Theme[] = [
     {

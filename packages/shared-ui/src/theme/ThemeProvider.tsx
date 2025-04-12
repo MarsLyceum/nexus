@@ -6,7 +6,7 @@ import React, {
     ReactNode,
     useEffect,
 } from 'react';
-import { Theme, themesByCategory } from '../theme';
+import { Theme, themesByCategory } from '.';
 import { COLORS } from '../constants/colors';
 
 type ThemeContextValue = {

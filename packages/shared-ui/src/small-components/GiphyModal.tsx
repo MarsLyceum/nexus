@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
     View,
     Text,
@@ -11,7 +11,8 @@ import {
 } from 'react-native';
 
 import { NexusImage } from './NexusImage';
-import { COLORS, GIPHY_API_KEY } from '../constants';
+import { GIPHY_API_KEY } from '../constants';
+import { useTheme, Theme } from '../theme';
 import { Attachment } from '../types';
 import { MiniModal } from './MiniModal';
 
@@ -54,6 +55,8 @@ export const GiphyModal: React.FC<GiphyModalProps> = ({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [giphyResults, setGiphyResults] = useState<any[]>([]);
     const [itemWidth, setItemWidth] = useState<number>(0); // Dynamic width for SolitoImage
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
 
     const windowWidth = Dimensions.get('window').width;
 
@@ -120,7 +123,7 @@ export const GiphyModal: React.FC<GiphyModalProps> = ({
     const giphyContainerStyle = {
         width: windowWidth < 768 ? 300 : 400,
         maxHeight: 400,
-        backgroundColor: COLORS.PrimaryBackground,
+        backgroundColor: theme.colors.PrimaryBackground,
         borderRadius: 8,
         padding: 20,
         shadowColor: '#000',
@@ -143,7 +146,7 @@ export const GiphyModal: React.FC<GiphyModalProps> = ({
                 value={giphyQuery}
                 onChangeText={setGiphyQuery}
                 placeholder="Search GIFs"
-                placeholderTextColor={COLORS.InactiveText}
+                placeholderTextColor={theme.colors.InactiveText}
                 onSubmitEditing={() => searchGiphy(giphyQuery)}
             />
             <ScrollView style={styles.giphyResultsContainer}>
@@ -173,36 +176,38 @@ export const GiphyModal: React.FC<GiphyModalProps> = ({
     );
 };
 
-const styles = StyleSheet.create({
-    modalTitle: {
-        fontSize: 18,
-        color: COLORS.White,
-        marginBottom: 15,
-    },
-    giphySearchInput: {
-        height: 40,
-        width: '100%',
-        backgroundColor: COLORS.TextInput,
-        borderRadius: 5,
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        marginBottom: 10,
-        color: COLORS.MainText,
-    },
-    giphyResultsContainer: {
-        flex: 1,
-        marginBottom: 15,
-    },
-    giphyGridContainer: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        justifyContent: 'space-between',
-    },
-    giphyResultItem: {
-        width: '48%',
-        marginBottom: 10,
-    },
-    giphyResultImage: {
-        borderRadius: 6,
-    },
-});
+function createStyles(theme: Theme) {
+    return StyleSheet.create({
+        modalTitle: {
+            fontSize: 18,
+            color: theme.colors.ActiveText,
+            marginBottom: 15,
+        },
+        giphySearchInput: {
+            height: 40,
+            width: '100%',
+            backgroundColor: theme.colors.TextInput,
+            borderRadius: 5,
+            paddingHorizontal: 10,
+            paddingVertical: 5,
+            marginBottom: 10,
+            color: theme.colors.MainText,
+        },
+        giphyResultsContainer: {
+            flex: 1,
+            marginBottom: 15,
+        },
+        giphyGridContainer: {
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            justifyContent: 'space-between',
+        },
+        giphyResultItem: {
+            width: '48%',
+            marginBottom: 10,
+        },
+        giphyResultImage: {
+            borderRadius: 6,
+        },
+    });
+}

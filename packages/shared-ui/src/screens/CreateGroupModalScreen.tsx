@@ -1,5 +1,5 @@
 // src/screens/CreateGroupModal.tsx
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
     View,
     Text,
@@ -13,10 +13,10 @@ import { RouteProp } from '@react-navigation/native';
 import { useMutation } from '@apollo/client';
 
 import { NexusImage } from '../small-components';
-import { COLORS } from '../constants';
 import { CREATE_GROUP_MUTATION } from '../queries';
 import { useAppSelector, RootState, UserType } from '../redux';
 import { useFileUpload } from '../hooks';
+import { useTheme, Theme } from '../theme';
 
 type RootStackParamList = {
     CreateGroup: undefined;
@@ -46,6 +46,8 @@ export const CreateGroupModalScreen: React.FC<Props> = ({ navigation }) => {
     );
 
     const [createGroup, { loading }] = useMutation(CREATE_GROUP_MUTATION);
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
 
     // Use the custom hook for file uploads.
     const { fileData, pickFile } = useFileUpload();
@@ -153,7 +155,7 @@ export const CreateGroupModalScreen: React.FC<Props> = ({ navigation }) => {
                 <TextInput
                     style={styles.textInput}
                     placeholder="Enter group name"
-                    placeholderTextColor={COLORS.InactiveText}
+                    placeholderTextColor={theme.colors.InactiveText}
                     value={groupName}
                     onChangeText={setGroupName}
                 />
@@ -180,106 +182,108 @@ export const CreateGroupModalScreen: React.FC<Props> = ({ navigation }) => {
     );
 };
 
-const styles = StyleSheet.create({
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    modalContainer: {
-        width: '85%',
-        backgroundColor: COLORS.AppBackground,
-        borderRadius: 8,
-        padding: 20,
-    },
-    modalTitle: {
-        fontSize: 18,
-        fontWeight: '600',
-        marginBottom: 15,
-        color: COLORS.White,
-    },
-    textInput: {
-        borderWidth: 1,
-        borderColor: COLORS.InactiveText,
-        borderRadius: 5,
-        padding: 10,
-        marginBottom: 15,
-        color: COLORS.White,
-        backgroundColor: COLORS.TextInput,
-    },
-    modalButtonRow: {
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
-    },
-    modalButton: {
-        marginLeft: 10,
-        paddingVertical: 8,
-        paddingHorizontal: 15,
-        borderRadius: 5,
-        backgroundColor: COLORS.Primary,
-    },
-    modalButtonText: {
-        color: COLORS.White,
-        fontWeight: '600',
-    },
-    groupAvatarContainer: {
-        alignItems: 'center',
-        marginBottom: 15,
-    },
-    groupAvatar: {
-        width: 80,
-        height: 80,
-        borderRadius: 40,
-    },
-    placeholderAvatar: {
-        width: 80,
-        height: 80,
-        borderRadius: 40,
-        backgroundColor: COLORS.InactiveText,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    placeholderAvatarText: {
-        color: COLORS.White,
-    },
-    uploadButton: {
-        marginTop: 10,
-        paddingVertical: 5,
-        paddingHorizontal: 10,
-        borderRadius: 5,
-        backgroundColor: COLORS.Primary,
-    },
-    uploadButtonText: {
-        color: COLORS.White,
-    },
-    privacyContainer: {
-        marginBottom: 15,
-    },
-    privacyLabel: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: COLORS.White,
-        marginBottom: 5,
-    },
-    privacyOptions: {
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-    },
-    privacyOption: {
-        flex: 1,
-        paddingVertical: 8,
-        marginHorizontal: 5,
-        borderRadius: 5,
-        borderWidth: 1,
-        borderColor: COLORS.InactiveText,
-        alignItems: 'center',
-    },
-    selectedPrivacyOption: {
-        backgroundColor: COLORS.Primary,
-    },
-    privacyOptionText: {
-        color: COLORS.White,
-        fontWeight: '600',
-    },
-});
+function createStyles(theme: Theme) {
+    return StyleSheet.create({
+        modalOverlay: {
+            flex: 1,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        modalContainer: {
+            width: '85%',
+            backgroundColor: theme.colors.AppBackground,
+            borderRadius: 8,
+            padding: 20,
+        },
+        modalTitle: {
+            fontSize: 18,
+            fontWeight: '600',
+            marginBottom: 15,
+            color: theme.colors.ActiveText,
+        },
+        textInput: {
+            borderWidth: 1,
+            borderColor: theme.colors.InactiveText,
+            borderRadius: 5,
+            padding: 10,
+            marginBottom: 15,
+            color: theme.colors.ActiveText,
+            backgroundColor: theme.colors.TextInput,
+        },
+        modalButtonRow: {
+            flexDirection: 'row',
+            justifyContent: 'flex-end',
+        },
+        modalButton: {
+            marginLeft: 10,
+            paddingVertical: 8,
+            paddingHorizontal: 15,
+            borderRadius: 5,
+            backgroundColor: theme.colors.Primary,
+        },
+        modalButtonText: {
+            color: theme.colors.ActiveText,
+            fontWeight: '600',
+        },
+        groupAvatarContainer: {
+            alignItems: 'center',
+            marginBottom: 15,
+        },
+        groupAvatar: {
+            width: 80,
+            height: 80,
+            borderRadius: 40,
+        },
+        placeholderAvatar: {
+            width: 80,
+            height: 80,
+            borderRadius: 40,
+            backgroundColor: theme.colors.InactiveText,
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        placeholderAvatarText: {
+            color: theme.colors.ActiveText,
+        },
+        uploadButton: {
+            marginTop: 10,
+            paddingVertical: 5,
+            paddingHorizontal: 10,
+            borderRadius: 5,
+            backgroundColor: theme.colors.Primary,
+        },
+        uploadButtonText: {
+            color: theme.colors.ActiveText,
+        },
+        privacyContainer: {
+            marginBottom: 15,
+        },
+        privacyLabel: {
+            fontSize: 16,
+            fontWeight: '600',
+            color: theme.colors.ActiveText,
+            marginBottom: 5,
+        },
+        privacyOptions: {
+            flexDirection: 'row',
+            justifyContent: 'space-around',
+        },
+        privacyOption: {
+            flex: 1,
+            paddingVertical: 8,
+            marginHorizontal: 5,
+            borderRadius: 5,
+            borderWidth: 1,
+            borderColor: theme.colors.InactiveText,
+            alignItems: 'center',
+        },
+        selectedPrivacyOption: {
+            backgroundColor: theme.colors.Primary,
+        },
+        privacyOptionText: {
+            color: theme.colors.ActiveText,
+            fontWeight: '600',
+        },
+    });
+}

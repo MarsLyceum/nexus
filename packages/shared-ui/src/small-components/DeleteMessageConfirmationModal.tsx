@@ -1,12 +1,14 @@
 // DeleteMessageModal.tsx
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { MiniModal } from './MiniModal'; // Import your existing MiniModal
-import { COLORS } from '../constants';
+
+import { useTheme, Theme } from '../theme';
 import { MessageWithAvatar, DirectMessageWithAvatar } from '../types';
 import { MessageContent } from './message';
-import { NexusImage } from './NexusImage'; // So we can show the avatar
 import { formatDateForChat } from '../utils';
+
+import { NexusImage } from './NexusImage'; // So we can show the avatar
+import { MiniModal } from './MiniModal'; // Import your existing MiniModal
 
 export type DeleteMessageModalProps = {
     /** Whether this modal is visible. */
@@ -29,6 +31,8 @@ export const DeleteMessageConfirmationModal: React.FC<
     DeleteMessageModalProps
 > = ({ visible, onClose, onConfirmDelete, message, onAttachmentPress }) => {
     const [modalWidth, setModalWidth] = useState<number>(420);
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
 
     // Format date/time similarly to your MessageItem logic
     // @ts-expect-error messag
@@ -111,84 +115,86 @@ export const DeleteMessageConfirmationModal: React.FC<
     );
 };
 
-const styles = StyleSheet.create({
-    modalContainer: {
-        width: 420,
-        maxWidth: 480,
-        backgroundColor: COLORS.PrimaryBackground,
-        borderRadius: 8,
-        paddingHorizontal: 16,
-        paddingVertical: 12,
-    },
-    header: {
-        marginBottom: 12,
-    },
-    headerTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: COLORS.White,
-    },
-    body: {
-        marginBottom: 16,
-    },
-    bodyText: {
-        fontSize: 14,
-        color: COLORS.MainText,
-        marginBottom: 16,
-    },
-    messagePreview: {
-        backgroundColor: COLORS.SecondaryBackground,
-        borderRadius: 4,
-        padding: 10,
-        marginBottom: 16,
-    },
-    authorRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 6,
-    },
-    avatar: {
-        borderRadius: 20,
-        marginRight: 10,
-    },
-    authorTextContainer: {
-        justifyContent: 'center',
-    },
-    authorText: {
-        fontWeight: 'bold',
-        color: COLORS.White,
-        fontSize: 14,
-    },
-    timestampText: {
-        fontSize: 12,
-        color: COLORS.InactiveText,
-    },
-    messageContentContainer: {
-        marginTop: 4,
-    },
-    footer: {
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
-    },
-    cancelButton: {
-        paddingVertical: 8,
-        paddingHorizontal: 16,
-        marginRight: 8,
-        borderRadius: 4,
-    },
-    cancelButtonText: {
-        color: COLORS.InactiveText,
-        fontSize: 14,
-    },
-    deleteButton: {
-        paddingVertical: 8,
-        paddingHorizontal: 16,
-        borderRadius: 4,
-        backgroundColor: COLORS.Error,
-    },
-    deleteButtonText: {
-        fontSize: 14,
-        fontWeight: 'bold',
-        color: COLORS.White,
-    },
-});
+function createStyles(theme: Theme) {
+    return StyleSheet.create({
+        modalContainer: {
+            width: 420,
+            maxWidth: 480,
+            backgroundColor: theme.colors.PrimaryBackground,
+            borderRadius: 8,
+            paddingHorizontal: 16,
+            paddingVertical: 12,
+        },
+        header: {
+            marginBottom: 12,
+        },
+        headerTitle: {
+            fontSize: 18,
+            fontWeight: 'bold',
+            color: theme.colors.ActiveText,
+        },
+        body: {
+            marginBottom: 16,
+        },
+        bodyText: {
+            fontSize: 14,
+            color: theme.colors.MainText,
+            marginBottom: 16,
+        },
+        messagePreview: {
+            backgroundColor: theme.colors.SecondaryBackground,
+            borderRadius: 4,
+            padding: 10,
+            marginBottom: 16,
+        },
+        authorRow: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginBottom: 6,
+        },
+        avatar: {
+            borderRadius: 20,
+            marginRight: 10,
+        },
+        authorTextContainer: {
+            justifyContent: 'center',
+        },
+        authorText: {
+            fontWeight: 'bold',
+            color: theme.colors.ActiveText,
+            fontSize: 14,
+        },
+        timestampText: {
+            fontSize: 12,
+            color: theme.colors.InactiveText,
+        },
+        messageContentContainer: {
+            marginTop: 4,
+        },
+        footer: {
+            flexDirection: 'row',
+            justifyContent: 'flex-end',
+        },
+        cancelButton: {
+            paddingVertical: 8,
+            paddingHorizontal: 16,
+            marginRight: 8,
+            borderRadius: 4,
+        },
+        cancelButtonText: {
+            color: theme.colors.InactiveText,
+            fontSize: 14,
+        },
+        deleteButton: {
+            paddingVertical: 8,
+            paddingHorizontal: 16,
+            borderRadius: 4,
+            backgroundColor: theme.colors.Error,
+        },
+        deleteButtonText: {
+            fontSize: 14,
+            fontWeight: 'bold',
+            color: theme.colors.ActiveText,
+        },
+    });
+}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
     View,
     Text,
@@ -14,13 +14,13 @@ import { useQuery, useMutation } from '@apollo/client';
 
 import { useNexusRouter } from '../hooks';
 import { useAppSelector, RootState, UserType } from '../redux';
-import { COLORS } from '../constants';
 import { BackArrow } from '../buttons';
 import {
     SEARCH_FOR_USERS_QUERY,
     GET_FRIENDS,
     SEND_FRIEND_REQUEST,
 } from '../queries';
+import { useTheme, Theme } from '../theme';
 
 export const AddFriendsScreen = () => {
     // State for the text input and the actual search query.
@@ -30,6 +30,8 @@ export const AddFriendsScreen = () => {
     const router = useNexusRouter();
     const { width } = useWindowDimensions();
     const isLargeScreen = width > 768;
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
 
     const user: UserType = useAppSelector(
         (state: RootState) => state.user.user
@@ -127,7 +129,7 @@ export const AddFriendsScreen = () => {
             <TextInput
                 style={styles.searchBox}
                 placeholder="Search for user"
-                placeholderTextColor={COLORS.InactiveText}
+                placeholderTextColor={theme.colors.InactiveText}
                 value={inputText}
                 onChangeText={setInputText}
                 // Trigger search on pressing enter
@@ -140,7 +142,7 @@ export const AddFriendsScreen = () => {
             {(searchLoading || friendsLoading) && (
                 <ActivityIndicator
                     size="large"
-                    color={COLORS.Primary}
+                    color={theme.colors.Primary}
                     style={{ marginVertical: 16 }}
                 />
             )}
@@ -159,72 +161,74 @@ export const AddFriendsScreen = () => {
     );
 };
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: COLORS.SecondaryBackground,
-        padding: 16,
-    },
-    searchBox: {
-        backgroundColor: COLORS.TextInput,
-        borderRadius: 8,
-        padding: 12,
-        color: COLORS.White,
-        marginBottom: 16,
-    },
-    listContainer: {
-        paddingBottom: 16,
-    },
-    friendItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: COLORS.PrimaryBackground,
-        borderRadius: 8,
-        padding: 12,
-        marginBottom: 12,
-    },
-    avatar: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-    },
-    friendInfo: {
-        flex: 1,
-        marginLeft: 12,
-    },
-    friendName: {
-        color: COLORS.White,
-        fontWeight: 'bold',
-        fontFamily: 'Roboto_700Bold',
-        fontSize: 16,
-    },
-    friendFullName: {
-        color: COLORS.White,
-        fontSize: 14,
-    },
-    addButton: {
-        backgroundColor: COLORS.Primary,
-        paddingVertical: 6,
-        paddingHorizontal: 12,
-        borderRadius: 4,
-    },
-    addButtonText: {
-        color: COLORS.White,
-        fontWeight: 'bold',
-        fontFamily: 'Roboto_700Bold',
-    },
-    searchHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 16,
-        width: '100%',
-    },
-    headerTitle: {
-        flex: 1,
-        textAlign: 'left',
-        color: COLORS.White,
-        fontSize: 20,
-        fontWeight: 'bold',
-        fontFamily: 'Roboto_700Bold',
-    },
-});
+function createStyles(theme: Theme) {
+    return StyleSheet.create({
+        container: {
+            flex: 1,
+            backgroundColor: theme.colors.SecondaryBackground,
+            padding: 16,
+        },
+        searchBox: {
+            backgroundColor: theme.colors.TextInput,
+            borderRadius: 8,
+            padding: 12,
+            color: theme.colors.ActiveText,
+            marginBottom: 16,
+        },
+        listContainer: {
+            paddingBottom: 16,
+        },
+        friendItem: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: theme.colors.PrimaryBackground,
+            borderRadius: 8,
+            padding: 12,
+            marginBottom: 12,
+        },
+        avatar: {
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+        },
+        friendInfo: {
+            flex: 1,
+            marginLeft: 12,
+        },
+        friendName: {
+            color: theme.colors.ActiveText,
+            fontWeight: 'bold',
+            fontFamily: 'Roboto_700Bold',
+            fontSize: 16,
+        },
+        friendFullName: {
+            color: theme.colors.ActiveText,
+            fontSize: 14,
+        },
+        addButton: {
+            backgroundColor: theme.colors.Primary,
+            paddingVertical: 6,
+            paddingHorizontal: 12,
+            borderRadius: 4,
+        },
+        addButtonText: {
+            color: theme.colors.ActiveText,
+            fontWeight: 'bold',
+            fontFamily: 'Roboto_700Bold',
+        },
+        searchHeader: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginBottom: 16,
+            width: '100%',
+        },
+        headerTitle: {
+            flex: 1,
+            textAlign: 'left',
+            color: theme.colors.ActiveText,
+            fontSize: 20,
+            fontWeight: 'bold',
+            fontFamily: 'Roboto_700Bold',
+        },
+    });
+}

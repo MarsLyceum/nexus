@@ -1,13 +1,21 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, {
+    useState,
+    useRef,
+    useEffect,
+    useCallback,
+    useMemo,
+} from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { NexusImage } from './NexusImage';
-import { COLORS } from '../constants';
+
+import { useTheme, Theme } from '../theme';
 import { MessageContent, MessageEditor } from './message';
-import { MessageOptionsModal } from './MessageOptionsModal';
 import { formatDateForChat } from '../utils';
 import type { MessageWithAvatar, DirectMessageWithAvatar } from '../types';
+
+import { MessageOptionsModal } from './MessageOptionsModal';
 import { MoreOptionsMenu } from './MoreOptionsMenu';
 import { DeleteMessageConfirmationModal } from './DeleteMessageConfirmationModal';
+import { NexusImage } from './NexusImage';
 
 export type MessageItemProps = {
     message: MessageWithAvatar | DirectMessageWithAvatar;
@@ -67,6 +75,8 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     >();
     const [showDeleteConfirmationModal, setShowDeleteConfirmationModal] =
         useState(false);
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
 
     const handleDeleteMessage = useCallback(() => {
         onDeleteMessage(currentMessage);
@@ -205,7 +215,6 @@ export const MessageItem: React.FC<MessageItemProps> = ({
         <View
             ref={containerRef}
             style={[styles.messageContainer, isHovered && styles.hovered]}
-            // @ts-expect-error mouse
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
         >
@@ -335,61 +344,63 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     );
 };
 
-const styles = StyleSheet.create({
-    messageContainer: {
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        padding: 15,
-        width: '100%',
-        position: 'relative',
-        overflow: 'visible',
-    },
-    hovered: {
-        backgroundColor: COLORS.TertiaryBackground,
-    },
-    avatar: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        marginRight: 10,
-    },
-    innerContainer: {
-        flex: 1,
-        flexShrink: 1,
-    },
-    userName: {
-        fontSize: 14,
-        fontWeight: 'bold',
-        color: COLORS.White,
-        fontFamily: 'Roboto_700Bold',
-    },
-    time: {
-        fontSize: 12,
-        color: COLORS.InactiveText,
-        fontFamily: 'Roboto_400Regular',
-    },
-    viewContainer: {
-        // Container for normal viewing mode
-    },
-    editContainer: {
-        // Container for edit mode components
-    },
-    linkPreviewsWhileEditing: {
-        marginTop: 10,
-    },
-    attachmentsWhileEditing: {
-        marginTop: 10,
-    },
-    optionsModalContainer: {
-        position: 'absolute',
-        zIndex: 100,
-    },
-    visible: {
-        display: 'flex',
-        opacity: 1,
-    },
-    hidden: {
-        display: 'none',
-        opacity: 0,
-    },
-});
+function createStyles(theme: Theme) {
+    return StyleSheet.create({
+        messageContainer: {
+            flexDirection: 'row',
+            alignItems: 'flex-start',
+            padding: 15,
+            width: '100%',
+            position: 'relative',
+            overflow: 'visible',
+        },
+        hovered: {
+            backgroundColor: theme.colors.TertiaryBackground,
+        },
+        avatar: {
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            marginRight: 10,
+        },
+        innerContainer: {
+            flex: 1,
+            flexShrink: 1,
+        },
+        userName: {
+            fontSize: 14,
+            fontWeight: 'bold',
+            color: theme.colors.ActiveText,
+            fontFamily: 'Roboto_700Bold',
+        },
+        time: {
+            fontSize: 12,
+            color: theme.colors.InactiveText,
+            fontFamily: 'Roboto_400Regular',
+        },
+        viewContainer: {
+            // Container for normal viewing mode
+        },
+        editContainer: {
+            // Container for edit mode components
+        },
+        linkPreviewsWhileEditing: {
+            marginTop: 10,
+        },
+        attachmentsWhileEditing: {
+            marginTop: 10,
+        },
+        optionsModalContainer: {
+            position: 'absolute',
+            zIndex: 100,
+        },
+        visible: {
+            display: 'flex',
+            opacity: 1,
+        },
+        hidden: {
+            display: 'none',
+            opacity: 0,
+        },
+    });
+}

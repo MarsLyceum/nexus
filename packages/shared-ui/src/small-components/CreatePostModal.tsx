@@ -1,5 +1,5 @@
 // CreatePostModal.tsx
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
     View,
     Text,
@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 
 import { NexusImage } from './NexusImage';
-import { COLORS } from '../constants';
+import { useTheme, Theme } from '../theme';
 import { AttachmentPreviews } from '../sections';
 import { Attachment } from '../types';
 import { CustomPortalModal } from './CustomPortalModal';
@@ -57,6 +57,8 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
     const [selectedAttachment, setSelectedAttachment] = useState<
         Attachment | undefined
     >(undefined);
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
 
     // New state to hold the parent container's dimensions for the preview image.
     const [previewParentSize, setPreviewParentSize] = useState({
@@ -85,7 +87,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
                         {/* First field: Title */}
                         <TextInput
                             placeholder={placeholderText}
-                            placeholderTextColor={COLORS.InactiveText}
+                            placeholderTextColor={theme.colors.InactiveText}
                             style={styles.textInput}
                             value={contentText}
                             onChangeText={setContentText}
@@ -101,14 +103,16 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
                                 onSubmit={handleCreate}
                                 onCancel={() => setModalVisible(false)}
                                 submitButtonText="Create"
-                                editorBackgroundColor={COLORS.PrimaryBackground}
+                                editorBackgroundColor={
+                                    theme.colors.PrimaryBackground
+                                }
                                 giphyVariant="download"
                                 showFormattingToggle
                             />
                         ) : (
                             <TextInput
                                 placeholder={placeholderText2}
-                                placeholderTextColor={COLORS.InactiveText}
+                                placeholderTextColor={theme.colors.InactiveText}
                                 style={[
                                     styles.textInput,
                                     { height: 100, textAlignVertical: 'top' },
@@ -188,37 +192,39 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
     );
 };
 
-const styles = StyleSheet.create({
-    modalContentContainer: {
-        padding: 20,
-        flexGrow: 1,
-    },
-    modalTitle: {
-        fontSize: 18,
-        fontWeight: '600',
-        marginBottom: 15,
-        color: COLORS.White,
-    },
-    textInput: {
-        borderWidth: 1,
-        borderColor: COLORS.InactiveText,
-        borderRadius: 5,
-        padding: 10,
-        marginBottom: 15,
-        color: COLORS.White,
-    },
-    buttonRow: {
-        flexDirection: 'row',
-        marginBottom: 15,
-    },
-    previewModalOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.9)',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    previewModalImage: {
-        borderWidth: 2,
-        borderColor: 'white',
-    },
-});
+function createStyles(theme: Theme) {
+    return StyleSheet.create({
+        modalContentContainer: {
+            padding: 20,
+            flexGrow: 1,
+        },
+        modalTitle: {
+            fontSize: 18,
+            fontWeight: '600',
+            marginBottom: 15,
+            color: theme.colors.ActiveText,
+        },
+        textInput: {
+            borderWidth: 1,
+            borderColor: theme.colors.InactiveText,
+            borderRadius: 5,
+            padding: 10,
+            marginBottom: 15,
+            color: theme.colors.ActiveText,
+        },
+        buttonRow: {
+            flexDirection: 'row',
+            marginBottom: 15,
+        },
+        previewModalOverlay: {
+            flex: 1,
+            backgroundColor: 'rgba(0,0,0,0.9)',
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        previewModalImage: {
+            borderWidth: 2,
+            borderColor: 'white',
+        },
+    });
+}

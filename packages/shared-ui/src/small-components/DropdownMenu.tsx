@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
-import { COLORS } from '../constants';
+
+import { useTheme, Theme } from '../theme';
 
 export type RawRect = {
     x: number;
@@ -30,6 +31,8 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
           }
         | undefined
     >();
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
 
     // Default positioning: align dropdown's top left with the more button's bottom left.
     let finalLeft = rawRect.x;
@@ -81,22 +84,24 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
     );
 };
 
-const styles = StyleSheet.create({
-    dismissOverlay: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        zIndex: 50,
-    },
-    dropdownMenu: {
-        position: 'absolute',
-        backgroundColor: COLORS.PrimaryBackground,
-        padding: 8,
-        borderRadius: 4,
-        minWidth: 120,
-        zIndex: 100,
-        elevation: 10, // ensures proper stacking on Android
-    },
-});
+function createStyles(theme: Theme) {
+    return StyleSheet.create({
+        dismissOverlay: {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 50,
+        },
+        dropdownMenu: {
+            position: 'absolute',
+            backgroundColor: theme.colors.PrimaryBackground,
+            padding: 8,
+            borderRadius: 4,
+            minWidth: 120,
+            zIndex: 100,
+            elevation: 10, // ensures proper stacking on Android
+        },
+    });
+}

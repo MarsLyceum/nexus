@@ -4,7 +4,7 @@ import { View, useWindowDimensions } from 'react-native';
 
 import { useAppSelector, RootState, UserType } from '../redux';
 import { Header, ImageDetailsModal } from '../sections';
-import { COLORS } from '../constants';
+import { useTheme } from '../theme';
 import { GroupChannel, Attachment } from '../types';
 import { MessageList, ChatInputContainer } from '../small-components';
 import {
@@ -34,6 +34,7 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
         handleAttachmentPreviewPress,
         handleMessageItemAttachmentPress,
     } = useImageDetailsModal();
+    const { theme } = useTheme();
 
     // Custom hook to fetch messages
     const {
@@ -64,7 +65,7 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
             style={{
                 flex: 1,
                 flexBasis: 0,
-                backgroundColor: COLORS.SecondaryBackground,
+                backgroundColor: theme.colors.SecondaryBackground,
             }}
         >
             <Header isLargeScreen={isLargeScreen} headerText={channel.name} />

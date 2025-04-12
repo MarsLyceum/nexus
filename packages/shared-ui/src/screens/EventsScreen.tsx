@@ -1,19 +1,21 @@
 // EventsScreen.tsx
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, FlatList, StyleSheet } from 'react-native';
 
 import { EventCard } from '../cards';
-import { COLORS } from '../constants';
+import { useTheme, Theme } from '../theme';
 import { Event } from '../types';
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        padding: 10,
-        backgroundColor: COLORS.SecondaryBackground,
-        height: '100%',
-    },
-});
+function createStyles(theme: Theme) {
+    return StyleSheet.create({
+        container: {
+            flex: 1,
+            padding: 10,
+            backgroundColor: theme.colors.SecondaryBackground,
+            height: '100%',
+        },
+    });
+}
 
 const events: Event[] = [
     {
@@ -42,12 +44,17 @@ const events: Event[] = [
     },
 ];
 
-export const EventsScreen: React.FC = () => (
-    <View style={styles.container}>
-        <FlatList
-            data={events}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => <EventCard {...item} preview />}
-        />
-    </View>
-);
+export const EventsScreen: React.FC = () => {
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
+
+    return (
+        <View style={styles.container}>
+            <FlatList
+                data={events}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => <EventCard {...item} preview />}
+            />
+        </View>
+    );
+};

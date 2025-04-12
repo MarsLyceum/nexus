@@ -9,7 +9,7 @@ import {
     GestureResponderEvent,
     Platform,
 } from 'react-native';
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { Formik } from 'formik';
 import { isEmail } from 'validator';
 import { FontAwesome } from '@expo/vector-icons';
@@ -23,7 +23,7 @@ import { User } from '../types';
 import { loginUser, useAppDispatch } from '../redux';
 import { validatePassword } from '../utils';
 import { PrimaryGradientButton } from '../buttons';
-import { COLORS } from '../constants';
+import { useTheme, Theme } from '../theme';
 
 const isWeb = Platform.OS === 'web';
 
@@ -45,139 +45,143 @@ const initialFormValues: FormValues = {
     phoneNumber: '',
 };
 
-const styles = StyleSheet.create({
-    topButton: {
-        marginTop: 38,
-    },
-    outerContainer: {
-        flex: 1,
-        backgroundColor: COLORS.AppBackground,
-    },
-    container: {
-        paddingHorizontal: 20,
-        backgroundColor: COLORS.PrimaryBackground,
-        alignItems: 'center',
-        paddingBottom: 40, // extra bottom padding to ensure scrollability
-    },
-    image: {
-        width: 100,
-        height: 100,
-        marginBottom: 20,
-    },
-    title: {
-        fontSize: 32,
-        fontWeight: 'bold',
-        color: COLORS.MainText,
-        marginTop: 20,
-        textAlign: 'center',
-    },
-    subtitle: {
-        fontSize: 16,
-        color: COLORS.InactiveText,
-        marginBottom: 20,
-        textAlign: 'center',
-    },
-    inputContainer: {
-        width: '100%',
-        marginBottom: 15,
-        height: 50,
-        alignItems: 'center',
-    },
-    input: {
-        height: 45,
-        flex: 1,
-        fontSize: 16,
-        marginRight: 5,
-        backgroundColor: COLORS.TextInput,
-        color: COLORS.White,
-        paddingHorizontal: 10,
-    },
-    orText: {
-        fontSize: 16,
-        color: COLORS.InactiveText,
-        marginVertical: 15,
-        textAlign: 'center',
-        marginLeft: 20,
-        marginRight: 20,
-    },
-    socialContainer: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-        width: '40%',
-    },
-    socialButton: {
-        width: 50,
-        height: 50,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderRadius: 25,
-        backgroundColor: COLORS.OffWhite,
-        marginHorizontal: 10,
-    },
-    button: {
-        width: '100%',
-        height: 50,
-        backgroundColor: COLORS.Primary,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderRadius: 25,
-        marginBottom: 15,
-    },
-    buttonText: {
-        color: COLORS.White,
-        fontSize: 16,
-        fontWeight: 'bold',
-    },
-    loginText: {
-        fontSize: 16,
-        color: COLORS.InactiveText,
-        marginTop: 30,
-        marginBottom: 34,
-        textAlign: 'center',
-    },
-    loginLink: {
-        color: COLORS.Link,
-        fontWeight: 'bold',
-    },
-    orContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        width: '100%',
-        justifyContent: 'center',
-    },
-    inputIcon: {
-        marginRight: 10,
-    },
-    inputWrapper: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        width: 285,
-        borderColor: COLORS.Secondary,
-        borderWidth: 1,
-        borderRadius: 25,
-        paddingHorizontal: 10,
-        backgroundColor: COLORS.TextInput,
-        height: 50,
-        flex: 1,
-        fontSize: 16,
-    },
-    scrollSection: isWeb
-        ? {
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              overflowY: 'auto',
-          }
-        : { flex: 1 },
-});
+function createStyles(theme: Theme) {
+    return StyleSheet.create({
+        topButton: {
+            marginTop: 38,
+        },
+        outerContainer: {
+            flex: 1,
+            backgroundColor: theme.colors.AppBackground,
+        },
+        container: {
+            paddingHorizontal: 20,
+            backgroundColor: theme.colors.PrimaryBackground,
+            alignItems: 'center',
+            paddingBottom: 40, // extra bottom padding to ensure scrollability
+        },
+        image: {
+            width: 100,
+            height: 100,
+            marginBottom: 20,
+        },
+        title: {
+            fontSize: 32,
+            fontWeight: 'bold',
+            color: theme.colors.MainText,
+            marginTop: 20,
+            textAlign: 'center',
+        },
+        subtitle: {
+            fontSize: 16,
+            color: theme.colors.InactiveText,
+            marginBottom: 20,
+            textAlign: 'center',
+        },
+        inputContainer: {
+            width: '100%',
+            marginBottom: 15,
+            height: 50,
+            alignItems: 'center',
+        },
+        input: {
+            height: 45,
+            flex: 1,
+            fontSize: 16,
+            marginRight: 5,
+            backgroundColor: theme.colors.TextInput,
+            color: theme.colors.ActiveText,
+            paddingHorizontal: 10,
+        },
+        orText: {
+            fontSize: 16,
+            color: theme.colors.InactiveText,
+            marginVertical: 15,
+            textAlign: 'center',
+            marginLeft: 20,
+            marginRight: 20,
+        },
+        socialContainer: {
+            flexDirection: 'row',
+            justifyContent: 'center',
+            alignItems: 'center',
+            width: '40%',
+        },
+        socialButton: {
+            width: 50,
+            height: 50,
+            justifyContent: 'center',
+            alignItems: 'center',
+            borderRadius: 25,
+            backgroundColor: theme.colors.ActiveText,
+            marginHorizontal: 10,
+        },
+        button: {
+            width: '100%',
+            height: 50,
+            backgroundColor: theme.colors.Primary,
+            justifyContent: 'center',
+            alignItems: 'center',
+            borderRadius: 25,
+            marginBottom: 15,
+        },
+        buttonText: {
+            color: theme.colors.ActiveText,
+            fontSize: 16,
+            fontWeight: 'bold',
+        },
+        loginText: {
+            fontSize: 16,
+            color: theme.colors.InactiveText,
+            marginTop: 30,
+            marginBottom: 34,
+            textAlign: 'center',
+        },
+        loginLink: {
+            color: theme.colors.Link,
+            fontWeight: 'bold',
+        },
+        orContainer: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            width: '100%',
+            justifyContent: 'center',
+        },
+        inputIcon: {
+            marginRight: 10,
+        },
+        inputWrapper: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            width: 285,
+            borderColor: theme.colors.Secondary,
+            borderWidth: 1,
+            borderRadius: 25,
+            paddingHorizontal: 10,
+            backgroundColor: theme.colors.TextInput,
+            height: 50,
+            flex: 1,
+            fontSize: 16,
+        },
+        scrollSection: isWeb
+            ? {
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  overflowY: 'auto',
+              }
+            : { flex: 1 },
+    });
+}
 
 export function SignUpScreen(): JSX.Element {
     const dispatch = useAppDispatch();
     const router = useNexusRouter();
     const apolloClient = useApolloClient();
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
 
     const updateUserData = useCallback(
         (user: User) => {
@@ -258,9 +262,11 @@ export function SignUpScreen(): JSX.Element {
                                     <UserIcon style={styles.inputIcon} />
                                     <TextInput
                                         placeholder="First Name"
-                                        placeholderTextColor={COLORS.White}
+                                        placeholderTextColor={
+                                            theme.colors.ActiveText
+                                        }
                                         style={styles.input}
-                                        selectionColor={COLORS.Secondary}
+                                        selectionColor={theme.colors.Secondary}
                                         onBlur={handleBlur('firstName')}
                                         onChangeText={handleChange('firstName')}
                                     />
@@ -275,7 +281,9 @@ export function SignUpScreen(): JSX.Element {
                                     <UserIcon style={styles.inputIcon} />
                                     <TextInput
                                         placeholder="Last Name"
-                                        placeholderTextColor={COLORS.White}
+                                        placeholderTextColor={
+                                            theme.colors.ActiveText
+                                        }
                                         style={styles.input}
                                         onBlur={handleBlur('lastName')}
                                         onChangeText={handleChange('lastName')}
@@ -291,7 +299,9 @@ export function SignUpScreen(): JSX.Element {
                                     <UserIcon style={styles.inputIcon} />
                                     <TextInput
                                         placeholder="Username"
-                                        placeholderTextColor={COLORS.White}
+                                        placeholderTextColor={
+                                            theme.colors.ActiveText
+                                        }
                                         style={styles.input}
                                         onBlur={handleBlur('username')}
                                         onChangeText={handleChange('username')}
@@ -307,7 +317,9 @@ export function SignUpScreen(): JSX.Element {
                                     <Email style={styles.inputIcon} />
                                     <TextInput
                                         placeholder="Enter your email"
-                                        placeholderTextColor={COLORS.White}
+                                        placeholderTextColor={
+                                            theme.colors.ActiveText
+                                        }
                                         style={styles.input}
                                         keyboardType="email-address"
                                         value={values.email}
@@ -323,7 +335,9 @@ export function SignUpScreen(): JSX.Element {
                                     <Phone style={styles.inputIcon} />
                                     <TextInput
                                         placeholder="Phone Number"
-                                        placeholderTextColor={COLORS.White}
+                                        placeholderTextColor={
+                                            theme.colors.ActiveText
+                                        }
                                         style={styles.input}
                                         keyboardType="phone-pad"
                                         value={values.phoneNumber}
@@ -340,7 +354,9 @@ export function SignUpScreen(): JSX.Element {
                                     <Lock style={styles.inputIcon} />
                                     <TextInput
                                         placeholder="Password"
-                                        placeholderTextColor={COLORS.White}
+                                        placeholderTextColor={
+                                            theme.colors.ActiveText
+                                        }
                                         style={styles.input}
                                         secureTextEntry
                                         onBlur={handleBlur('password')}

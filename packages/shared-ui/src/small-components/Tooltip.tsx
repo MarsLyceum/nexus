@@ -1,5 +1,5 @@
 // Tooltip.tsx
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import {
     Text,
     View,
@@ -10,8 +10,9 @@ import {
     Dimensions,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
+
 import { Portal } from '../providers';
-import { COLORS } from '../constants';
+import { useTheme, Theme } from '../theme';
 import { isComputer } from '../utils';
 
 export const Tooltip = ({
@@ -32,6 +33,8 @@ export const Tooltip = ({
           }
         | undefined
     >();
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
 
     // Dimensions for the tooltip bubble.
     const [bubbleWidth, setBubbleWidth] = useState(0);
@@ -130,7 +133,7 @@ export const Tooltip = ({
                     ]}
                     pointerEvents="none"
                 >
-                    <RoundedTriangle color={COLORS.AppBackground} />
+                    <RoundedTriangle color={theme.colors.AppBackground} />
                 </View>
             )}
             <View
@@ -154,7 +157,7 @@ export const Tooltip = ({
                     ]}
                     pointerEvents="none"
                 >
-                    <RoundedTriangle color={COLORS.AppBackground} />
+                    <RoundedTriangle color={theme.colors.AppBackground} />
                 </View>
             )}
         </View>
@@ -204,42 +207,44 @@ export const RoundedTriangle = ({
     </Svg>
 );
 
-const styles = StyleSheet.create({
-    tooltipContainer: {
-        position: 'relative',
-    },
-    fullScreenWrapper: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-    },
-    portalContainer: {
-        position: 'absolute',
-        zIndex: 999,
-    },
-    bubbleContainer: {
-        position: 'relative',
-    },
-    tooltipBubble: {
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 4,
-        backgroundColor: COLORS.AppBackground,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.3,
-        shadowRadius: 2,
-        elevation: 2,
-    },
-    tooltipText: {
-        color: COLORS.White,
-        fontSize: 14,
-    },
-    arrow: {
-        position: 'absolute',
-        width: 12,
-        height: 6,
-    },
-});
+function createStyles(theme: Theme) {
+    return StyleSheet.create({
+        tooltipContainer: {
+            position: 'relative',
+        },
+        fullScreenWrapper: {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+        },
+        portalContainer: {
+            position: 'absolute',
+            zIndex: 999,
+        },
+        bubbleContainer: {
+            position: 'relative',
+        },
+        tooltipBubble: {
+            paddingHorizontal: 8,
+            paddingVertical: 4,
+            borderRadius: 4,
+            backgroundColor: theme.colors.AppBackground,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.3,
+            shadowRadius: 2,
+            elevation: 2,
+        },
+        tooltipText: {
+            color: theme.colors.ActiveText,
+            fontSize: 14,
+        },
+        arrow: {
+            position: 'absolute',
+            width: 12,
+            height: 6,
+        },
+    });
+}

@@ -28,7 +28,8 @@
         "./small-components": "./src/small-components/index.ts",
         "./styles": "./src/styles/index.ts",
         "./types": "./src/types/index.ts",
-        "./utils": "./src/utils/index.ts"
+        "./utils": "./src/utils/index.ts",
+        "./theme": "./src/theme/index.ts"
     },
     "dependencies": {
         "dotenv": "^16.4.7"

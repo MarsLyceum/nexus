@@ -1,6 +1,12 @@
 // eslint-disable-next-line eslint-comments/disable-enable-pair
 /* eslint-disable max-lines */
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, {
+    useState,
+    useEffect,
+    useCallback,
+    useRef,
+    useMemo,
+} from 'react';
 import {
     View,
     Text,
@@ -23,7 +29,6 @@ import {
     createNexusParam,
     useImageDetailsModal,
 } from '../hooks';
-import { COLORS } from '../constants';
 import {
     ChatInputContainer,
     NexusImage,
@@ -49,28 +54,13 @@ import {
 import { getOnlineStatusDotColor } from '../utils';
 import { BackArrow } from '../buttons';
 import { ImageDetailsModal } from '../sections';
+import { useTheme, Theme } from '../theme';
 
 interface ChatScreenProps {
     conversation?: Conversation;
 }
 
 const { useParams } = createNexusParam();
-
-// Skeleton screen component to show loading placeholders.
-const SkeletonMessageItem: React.FC = () => (
-    // @ts-expect-error web only types
-    <View style={styles.skeletonContainer}>
-        {/* @ts-expect-error web only types */}
-        <View style={styles.skeletonAvatar} />
-        {/* @ts-expect-error web only types */}
-        <View style={styles.skeletonContent}>
-            {/* @ts-expect-error web only types */}
-            <View style={styles.skeletonLineShort} />
-            {/* @ts-expect-error web only types */}
-            <View style={styles.skeletonLineLong} />
-        </View>
-    </View>
-);
 
 export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
     const router = useNexusRouter();
@@ -95,6 +85,19 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
     const isLargeScreen = width > 768;
     const [inputContainerHeight, setInputContainerHeight] =
         useState<number>(70);
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
+
+    // Skeleton screen component to show loading placeholders.
+    const SkeletonMessageItem: React.FC = () => (
+        <View style={styles.skeletonContainer}>
+            <View style={styles.skeletonAvatar} />
+            <View style={styles.skeletonContent}>
+                <View style={styles.skeletonLineShort} />
+                <View style={styles.skeletonLineLong} />
+            </View>
+        </View>
+    );
 
     const { conversationId: conversationIdParam } = params;
 
@@ -180,9 +183,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
         if (isOneToOne) {
             if (getConversationsLoading || fetchedUserLoading) {
                 // Render skeleton placeholders for both avatar and username.
-                // @ts-expect-error web only types
                 headerName = <View style={styles.skeletonHeaderText} />;
-                // @ts-expect-error web only types
                 headerContent = <View style={styles.skeletonHeaderAvatar} />;
             } else {
                 // For one-to-one, show the other user's username and online status dot.
@@ -191,24 +192,23 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
                     fetchedUserData?.fetchUser?.status || 'offline';
                 headerName = friendUsername;
                 headerContent = (
-                    // @ts-expect-error web only types
                     <View style={styles.avatarAndDot}>
                         <NexusImage
                             source={`https://picsum.photos/seed/${friendUsername || 'default'}/40`}
                             alt="avatar"
                             width={40}
                             height={40}
-                            // @ts-expect-error web only types
                             style={styles.headerAvatar}
                             contentFit="cover"
                         />
                         <View
                             style={[
-                                // @ts-expect-error web only types
                                 styles.statusDot,
                                 {
-                                    backgroundColor:
-                                        getOnlineStatusDotColor(friendStatus),
+                                    backgroundColor: getOnlineStatusDotColor(
+                                        theme,
+                                        friendStatus
+                                    ),
                                 },
                             ]}
                         />
@@ -219,7 +219,6 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
             // For group conversations, list all participants' usernames (excluding active user).
             headerName = groupUsers.map((user) => user?.username).join(', ');
             headerContent = (
-                // @ts-expect-error web only types
                 <View style={styles.avatarGroup}>
                     {groupUsers.slice(0, 3).map((user, index) => (
                         <NexusImage
@@ -457,32 +456,26 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
     };
 
     return (
-        // @ts-expect-error web only types
         <SafeAreaView style={styles.container}>
             {/* Chat Header */}
-            {/* @ts-expect-error web only types */}
             <View style={styles.chatHeader}>
                 {!isLargeScreen && (
                     <BackArrow
                         onPress={() => router.goBack()}
-                        // @ts-expect-error web styles
                         style={styles.backArrow}
                     />
                 )}
                 {headerContent}
                 {typeof headerName === 'string' ? (
-                    // @ts-expect-error web only types
                     <Text style={styles.chatTitle}>{headerName}</Text>
                 ) : (
                     headerName
                 )}
             </View>
             {/* Main Content Area */}
-            {/* @ts-expect-error web only types */}
             <View style={styles.mainContent}>
                 <View
                     style={[
-                        // @ts-expect-error web only types
                         styles.messagesContainer,
                         { height: messagesHeight },
                     ]}
@@ -504,7 +497,6 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
                     )}
                 </View>
                 <View
-                    // @ts-expect-error web only types
                     style={styles.inputContainer}
                     onLayout={(e) => {
                         const { height } = e.nativeEvent.layout;
@@ -535,113 +527,114 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
     );
 };
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        flexBasis: 0,
-        backgroundColor: COLORS.SecondaryBackground,
-        overflow: 'hidden',
-        // @ts-expect-error web only
-        height: '100%',
-        ...(Platform.OS === 'web' && { height: '100vh' }),
-    },
-    chatHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: COLORS.SecondaryBackground,
-        borderBottomWidth: 1,
-        borderColor: COLORS.InactiveText,
-        padding: 15,
-    },
-    headerAvatar: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-    },
-    avatarAndDot: {
-        position: 'relative',
-        marginRight: 10,
-    },
-    statusDot: {
-        position: 'absolute',
-        bottom: 0,
-        right: 5,
-        width: 15,
-        height: 15,
-        borderRadius: 7,
-        borderWidth: 2,
-        borderColor: COLORS.SecondaryBackground,
-    },
-    avatarGroup: {
-        flexDirection: 'row',
-        marginRight: 10,
-    },
-    groupAvatar: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: COLORS.SecondaryBackground,
-    },
-    chatTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: COLORS.White,
-        marginLeft: 10,
-    },
-    mainContent: {
-        flex: 1,
-        flexDirection: 'column',
-    },
-    messagesContainer: {
-        flex: 1,
-    },
-    inputContainer: {
-        minHeight: 70,
-    },
-    skeletonContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginVertical: 10,
-        paddingHorizontal: 15,
-    },
-    skeletonAvatar: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: COLORS.InactiveText,
-    },
-    skeletonContent: {
-        flex: 1,
-        marginLeft: 10,
-    },
-    skeletonLineShort: {
-        width: '30%',
-        height: 10,
-        backgroundColor: COLORS.InactiveText,
-        marginBottom: 6,
-        borderRadius: 5,
-    },
-    skeletonLineLong: {
-        width: '80%',
-        height: 10,
-        backgroundColor: COLORS.InactiveText,
-        borderRadius: 5,
-    },
-    skeletonHeaderAvatar: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: COLORS.InactiveText,
-    },
-    skeletonHeaderText: {
-        width: 100,
-        height: 20,
-        backgroundColor: COLORS.InactiveText,
-        borderRadius: 4,
-        marginLeft: 10,
-    },
-    backArrow: {
-        marginRight: 10,
-    },
-});
+function createStyles(theme: Theme) {
+    return StyleSheet.create({
+        container: {
+            flex: 1,
+            flexBasis: 0,
+            backgroundColor: theme.colors.SecondaryBackground,
+            overflow: 'hidden',
+            height: '100%',
+            ...(Platform.OS === 'web' && { height: '100vh' }),
+        },
+        chatHeader: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: theme.colors.SecondaryBackground,
+            borderBottomWidth: 1,
+            borderColor: theme.colors.InactiveText,
+            padding: 15,
+        },
+        headerAvatar: {
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+        },
+        avatarAndDot: {
+            position: 'relative',
+            marginRight: 10,
+        },
+        statusDot: {
+            position: 'absolute',
+            bottom: 0,
+            right: 5,
+            width: 15,
+            height: 15,
+            borderRadius: 7,
+            borderWidth: 2,
+            borderColor: theme.colors.SecondaryBackground,
+        },
+        avatarGroup: {
+            flexDirection: 'row',
+            marginRight: 10,
+        },
+        groupAvatar: {
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            borderWidth: 1,
+            borderColor: theme.colors.SecondaryBackground,
+        },
+        chatTitle: {
+            fontSize: 18,
+            fontWeight: 'bold',
+            color: theme.colors.ActiveText,
+            marginLeft: 10,
+        },
+        mainContent: {
+            flex: 1,
+            flexDirection: 'column',
+        },
+        messagesContainer: {
+            flex: 1,
+        },
+        inputContainer: {
+            minHeight: 70,
+        },
+        skeletonContainer: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginVertical: 10,
+            paddingHorizontal: 15,
+        },
+        skeletonAvatar: {
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            backgroundColor: theme.colors.InactiveText,
+        },
+        skeletonContent: {
+            flex: 1,
+            marginLeft: 10,
+        },
+        skeletonLineShort: {
+            width: '30%',
+            height: 10,
+            backgroundColor: theme.colors.InactiveText,
+            marginBottom: 6,
+            borderRadius: 5,
+        },
+        skeletonLineLong: {
+            width: '80%',
+            height: 10,
+            backgroundColor: theme.colors.InactiveText,
+            borderRadius: 5,
+        },
+        skeletonHeaderAvatar: {
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            backgroundColor: theme.colors.InactiveText,
+        },
+        skeletonHeaderText: {
+            width: 100,
+            height: 20,
+            backgroundColor: theme.colors.InactiveText,
+            borderRadius: 4,
+            marginLeft: 10,
+        },
+        backArrow: {
+            marginRight: 10,
+        },
+    });
+}

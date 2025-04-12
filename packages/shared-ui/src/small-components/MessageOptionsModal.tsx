@@ -1,10 +1,12 @@
-import React, { useRef } from 'react';
+import React, { useRef, useMemo } from 'react';
 import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { MiniModal } from './MiniModal';
-import { COLORS } from '../constants';
-import { Tooltip } from './Tooltip';
+
+import { useTheme, Theme } from '../theme';
 import { Edit, MoreHorizontal } from '../icons';
+
+import { Tooltip } from './Tooltip';
+import { MiniModal } from './MiniModal';
 
 export type MessageOptionsModalProps = {
     visible: boolean;
@@ -31,6 +33,8 @@ export const MessageOptionsModal: React.FC<MessageOptionsModalProps> = ({
     onMouseLeaveModal,
 }) => {
     const moreButtonRef = useRef<View>(null);
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
 
     const handleMorePress = () => {
         if (moreButtonRef.current) {
@@ -105,7 +109,7 @@ export const MessageOptionsModal: React.FC<MessageOptionsModalProps> = ({
 
                     <Tooltip tooltipText="Share">
                         <TouchableOpacity style={styles.iconWrapper}>
-                            <ArrowIcon />
+                            <ArrowIcon theme={theme} />
                         </TouchableOpacity>
                     </Tooltip>
 
@@ -124,41 +128,43 @@ export const MessageOptionsModal: React.FC<MessageOptionsModalProps> = ({
     );
 };
 
-const ArrowIcon: React.FC = () => (
+const ArrowIcon = ({ theme }: { theme: Theme }) => (
     <Svg width={20} height={20} viewBox="0 0 512 512" fill="none">
         <Path
             d="M256 64l-96 96h64v96h64v-96h64l-96-96zM96 256v128c0 17.7 14.3 32 32 32h256c17.7 0 32-14.3 32-32V256h-64v128H160V256H96z"
-            fill={COLORS.White} // Updated to use palette
+            fill={theme.colors.ActiveText} // Updated to use palette
         />
     </Svg>
 );
 
-const styles = StyleSheet.create({
-    modalContainer: {
-        width: 260,
-        backgroundColor: COLORS.PrimaryBackground,
-        borderRadius: 8,
-        paddingVertical: 6,
-        paddingHorizontal: 8,
-        shadowColor: COLORS.InactiveText,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
-        elevation: 5,
-    },
-    outerContainer: {
-        // Letting mouse events bubble to capture modal hover events
-    },
-    iconsRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    iconWrapper: {
-        padding: 4,
-    },
-    emoji: {
-        fontSize: 18,
-        color: COLORS.White,
-    },
-});
+function createStyles(theme: Theme) {
+    return StyleSheet.create({
+        modalContainer: {
+            width: 260,
+            backgroundColor: theme.colors.PrimaryBackground,
+            borderRadius: 8,
+            paddingVertical: 6,
+            paddingHorizontal: 8,
+            shadowColor: theme.colors.InactiveText,
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.3,
+            shadowRadius: 4,
+            elevation: 5,
+        },
+        outerContainer: {
+            // Letting mouse events bubble to capture modal hover events
+        },
+        iconsRow: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+        },
+        iconWrapper: {
+            padding: 4,
+        },
+        emoji: {
+            fontSize: 18,
+            color: theme.colors.ActiveText,
+        },
+    });
+}

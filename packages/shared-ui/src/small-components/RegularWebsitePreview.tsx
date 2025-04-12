@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
     View,
     TouchableOpacity,
@@ -8,11 +8,12 @@ import {
     Image as RNImage, // for getSize
 } from 'react-native';
 
-import { NexusImage } from './NexusImage';
-import { getDomainFromUrl } from '../utils/linkPreviewUtils';
-import { COLORS } from '../constants';
+import { getDomainFromUrl } from '../utils';
+import { useTheme, Theme } from '../theme';
 import { PreviewData } from '../types';
 import { ImageDetailsModal } from '../sections'; // Large image modal
+
+import { NexusImage } from './NexusImage';
 
 export type RegularWebsitePreviewProps = {
     url: string;
@@ -25,6 +26,8 @@ export const RegularWebsitePreview: React.FC<RegularWebsitePreviewProps> = ({
 }) => {
     // State to control modal visibility.
     const [modalVisible, setModalVisible] = useState(false);
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
 
     // State to store the actual image dimensions.
     const [imageDimensions, setImageDimensions] = useState<
@@ -119,45 +122,47 @@ export const RegularWebsitePreview: React.FC<RegularWebsitePreviewProps> = ({
     );
 };
 
-const styles = StyleSheet.create({
-    linkPreviewContainer: {
-        borderLeftWidth: 5,
-        borderLeftColor: COLORS.AppBackground,
-        backgroundColor: COLORS.TertiaryBackground,
-        padding: 10,
-        marginVertical: 5,
-    },
-    // Default style for the image; dynamic dimensions will override these.
-    linkPreviewImage: {
-        height: 150, // fallback height
-        marginTop: 5,
-        marginBottom: 5,
-        borderRadius: 8,
-    },
-    imageTouchable: {
-        alignSelf: 'flex-start', // prevents stretching to full container width
-    },
-    linkPreviewTitle: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        marginBottom: 3,
-        color: COLORS.White,
-        fontFamily: 'Roboto_700Bold',
-    },
-    linkPreviewDescription: {
-        fontSize: 14,
-        color: COLORS.White,
-        fontFamily: 'Roboto_400Regular',
-        paddingTop: 5,
-        paddingBottom: 5,
-    },
-    linkPreviewSite: {
-        fontSize: 12,
-        color: COLORS.InactiveText,
-        fontFamily: 'Roboto_400Regular',
-        marginTop: 5,
-    },
-    linkPreviewSiteTouchable: {
-        alignSelf: 'flex-start',
-    },
-});
+function createStyles(theme: Theme) {
+    return StyleSheet.create({
+        linkPreviewContainer: {
+            borderLeftWidth: 5,
+            borderLeftColor: theme.colors.AppBackground,
+            backgroundColor: theme.colors.TertiaryBackground,
+            padding: 10,
+            marginVertical: 5,
+        },
+        // Default style for the image; dynamic dimensions will override these.
+        linkPreviewImage: {
+            height: 150, // fallback height
+            marginTop: 5,
+            marginBottom: 5,
+            borderRadius: 8,
+        },
+        imageTouchable: {
+            alignSelf: 'flex-start', // prevents stretching to full container width
+        },
+        linkPreviewTitle: {
+            fontSize: 16,
+            fontWeight: 'bold',
+            marginBottom: 3,
+            color: theme.colors.ActiveText,
+            fontFamily: 'Roboto_700Bold',
+        },
+        linkPreviewDescription: {
+            fontSize: 14,
+            color: theme.colors.ActiveText,
+            fontFamily: 'Roboto_400Regular',
+            paddingTop: 5,
+            paddingBottom: 5,
+        },
+        linkPreviewSite: {
+            fontSize: 12,
+            color: theme.colors.InactiveText,
+            fontFamily: 'Roboto_400Regular',
+            marginTop: 5,
+        },
+        linkPreviewSiteTouchable: {
+            alignSelf: 'flex-start',
+        },
+    });
+}

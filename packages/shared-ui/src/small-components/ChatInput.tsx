@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import {
     View,
     TouchableOpacity,
@@ -7,14 +7,14 @@ import {
     Text,
 } from 'react-native';
 
-import { NexusImage } from './NexusImage';
-import { COLORS } from '../constants';
+import { useTheme, Theme } from '../theme';
 import { AttachmentPreviews } from '../sections';
 import { Attachment } from '../types';
-import { MarkdownTextInput } from './MarkdownTextInput';
 import { extractUrls } from '../utils';
 import { Cancel, ImageIcon, PaperPlane } from '../icons';
 
+import { MarkdownTextInput } from './MarkdownTextInput';
+import { NexusImage } from './NexusImage';
 import { GiphyModal } from './GiphyModal';
 
 export type ChatInputProps = {
@@ -50,6 +50,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           }
         | undefined
     >();
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
 
     // Create a ref for the GIF button.
     const gifButtonRef = useRef<View>(null);
@@ -92,7 +94,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                                     )
                                 }
                             >
-                                <Cancel size={15} color={COLORS.White} />
+                                <Cancel
+                                    size={15}
+                                    color={theme.colors.ActiveText}
+                                />
                             </TouchableOpacity>
                         </View>
                     ))}
@@ -166,59 +171,61 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     );
 };
 
-const styles = StyleSheet.create({
-    inputBorderLine: {
-        height: 1,
-        backgroundColor: '#4A3A5A',
-        width: '100%',
-    },
-    inlineAttachmentContainer: {
-        paddingVertical: 10,
-        paddingHorizontal: 10,
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    attachmentPreview: {
-        position: 'relative',
-        marginRight: 10,
-    },
-    attachmentImage: {
-        width: 80,
-        height: 80,
-        borderRadius: 10,
-    },
-    removeAttachmentButton: {
-        position: 'absolute',
-        top: 4,
-        right: 4,
-        backgroundColor: COLORS.AppBackground,
-        width: 24,
-        height: 24,
-        borderRadius: 12,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    inputContainerNoBorder: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 10,
-        backgroundColor: COLORS.SecondaryBackground,
-    },
-    imageButton: {
-        marginRight: 10,
-        padding: 8,
-    },
-    gifButton: {
-        marginHorizontal: 10,
-        padding: 8,
-    },
-    gifButtonText: {
-        color: COLORS.White,
-        fontSize: 16,
-        fontWeight: 'bold',
-    },
-    sendButton: {
-        marginLeft: 10,
-        padding: 8,
-    },
-});
+function createStyles(theme: Theme) {
+    return StyleSheet.create({
+        inputBorderLine: {
+            height: 1,
+            backgroundColor: '#4A3A5A',
+            width: '100%',
+        },
+        inlineAttachmentContainer: {
+            paddingVertical: 10,
+            paddingHorizontal: 10,
+            flexDirection: 'row',
+            alignItems: 'center',
+        },
+        attachmentPreview: {
+            position: 'relative',
+            marginRight: 10,
+        },
+        attachmentImage: {
+            width: 80,
+            height: 80,
+            borderRadius: 10,
+        },
+        removeAttachmentButton: {
+            position: 'absolute',
+            top: 4,
+            right: 4,
+            backgroundColor: theme.colors.AppBackground,
+            width: 24,
+            height: 24,
+            borderRadius: 12,
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        inputContainerNoBorder: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            padding: 10,
+            backgroundColor: theme.colors.SecondaryBackground,
+        },
+        imageButton: {
+            marginRight: 10,
+            padding: 8,
+        },
+        gifButton: {
+            marginHorizontal: 10,
+            padding: 8,
+        },
+        gifButtonText: {
+            color: theme.colors.ActiveText,
+            fontSize: 16,
+            fontWeight: 'bold',
+        },
+        sendButton: {
+            marginLeft: 10,
+            padding: 8,
+        },
+    });
+}

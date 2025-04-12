@@ -7,8 +7,7 @@ import {
     TouchableOpacity,
     ScrollView,
 } from 'react-native';
-import { themesByCategory } from '../theme';
-import { useTheme } from '../providers';
+import { useTheme, themesByCategory } from '../theme';
 
 export const ThemeScreen: React.FC = () => {
     const { theme, setThemeByName } = useTheme();

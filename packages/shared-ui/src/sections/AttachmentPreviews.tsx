@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 // Mobile drag and drop library
 import DraggableFlatList from 'react-native-draggable-flatlist';
@@ -22,7 +22,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { Cancel } from '../icons';
 import { Attachment } from '../types';
 import { NexusVideo, NexusImage } from '../small-components';
-import { COLORS } from '../constants';
+import { useTheme, Theme } from '../theme';
 
 type AttachmentPreviewsProps = {
     attachments: Attachment[];
@@ -37,17 +37,17 @@ export const AttachmentPreviews: React.FC<AttachmentPreviewsProps> = ({
     onRemoveAttachment,
     onAttachmentsReorder,
 }) => {
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
+
+    const pointerSensor = useSensor(PointerSensor, {
+        activationConstraint: { distance: 5 },
+    });
+    const sensors = useSensors(pointerSensor);
+
     if (attachments.length > 0) {
         // WEB IMPLEMENTATION USING dnd-kit
         if (Platform.OS === 'web') {
-            // eslint-disable-next-line react-hooks/rules-of-hooks
-            const sensors = useSensors(
-                // eslint-disable-next-line react-hooks/rules-of-hooks
-                useSensor(PointerSensor, {
-                    activationConstraint: { distance: 5 },
-                })
-            );
-
             const handleDragEnd = (event: DragEndEvent) => {
                 const { active, over } = event;
                 if (over && active.id !== over.id) {
@@ -85,6 +85,7 @@ export const AttachmentPreviews: React.FC<AttachmentPreviewsProps> = ({
                                     attachment={item}
                                     onAttachmentPress={onAttachmentPress}
                                     onRemoveAttachment={onRemoveAttachment}
+                                    styles={styles}
                                 />
                             ))}
                         </View>
@@ -135,7 +136,10 @@ export const AttachmentPreviews: React.FC<AttachmentPreviewsProps> = ({
                                 style={styles.removeAttachmentButton}
                                 onPress={() => onRemoveAttachment(item.id)}
                             >
-                                <Cancel size={15} color={COLORS.White} />
+                                <Cancel
+                                    size={15}
+                                    color={theme.colors.ActiveText}
+                                />
                             </TouchableOpacity>
                         )}
                     </View>
@@ -166,6 +170,7 @@ interface SortableItemProps {
     attachment: Attachment;
     onAttachmentPress?: (attachment: Attachment) => void;
     onRemoveAttachment?: (attachmentId: string) => void;
+    styles: ReturnType<typeof createStyles>;
 }
 
 const SortableItem: React.FC<SortableItemProps> = ({
@@ -173,9 +178,12 @@ const SortableItem: React.FC<SortableItemProps> = ({
     attachment,
     onAttachmentPress,
     onRemoveAttachment,
+    styles,
 }) => {
     const { attributes, listeners, setNodeRef, transform, transition } =
         useSortable({ id });
+    const { theme } = useTheme();
+
     // Removed the inline marginRight here so the item uses the margin defined in styles.draggableItem
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -184,7 +192,7 @@ const SortableItem: React.FC<SortableItemProps> = ({
     };
     const isVideo = attachment.file?.type?.startsWith('video');
     return (
-        // @ts-expect-error web only styles
+        // @ts-expect-error ref
         <View
             ref={setNodeRef}
             style={[styles.draggableItem, style]}
@@ -218,7 +226,7 @@ const SortableItem: React.FC<SortableItemProps> = ({
                         style={styles.removeAttachmentButton}
                         onPress={() => onRemoveAttachment(attachment.id)}
                     >
-                        <Cancel size={15} color={COLORS.White} />
+                        <Cancel size={15} color={theme.colors.ActiveText} />
                     </TouchableOpacity>
                 )}
             </View>
@@ -226,36 +234,38 @@ const SortableItem: React.FC<SortableItemProps> = ({
     );
 };
 
-const styles = StyleSheet.create({
-    attachmentsContainer: {
-        paddingVertical: 10,
-    },
-    attachmentsPreviewContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 10,
-    },
-    draggableItem: {
-        // Added marginRight for consistent spacing across platforms.
-        marginRight: 10,
-    },
-    attachmentPreview: {
-        position: 'relative',
-    },
-    attachmentImage: {
-        width: 80,
-        height: 80,
-        borderRadius: 10,
-    },
-    removeAttachmentButton: {
-        position: 'absolute',
-        top: 4,
-        right: 4,
-        backgroundColor: COLORS.AppBackground,
-        width: 24,
-        height: 24,
-        borderRadius: 12,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-});
+function createStyles(theme: Theme) {
+    return StyleSheet.create({
+        attachmentsContainer: {
+            paddingVertical: 10,
+        },
+        attachmentsPreviewContainer: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingHorizontal: 10,
+        },
+        draggableItem: {
+            // Added marginRight for consistent spacing across platforms.
+            marginRight: 10,
+        },
+        attachmentPreview: {
+            position: 'relative',
+        },
+        attachmentImage: {
+            width: 80,
+            height: 80,
+            borderRadius: 10,
+        },
+        removeAttachmentButton: {
+            position: 'absolute',
+            top: 4,
+            right: 4,
+            backgroundColor: theme.colors.AppBackground,
+            width: 24,
+            height: 24,
+            borderRadius: 12,
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+    });
+}

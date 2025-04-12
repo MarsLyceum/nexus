@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
-import { COLORS } from '../constants';
+import { useTheme, Theme } from '../theme';
 
 type CreateContentButtonProps = {
     buttonText: string;
@@ -10,29 +10,41 @@ type CreateContentButtonProps = {
 export const CreateContentButton: React.FC<CreateContentButtonProps> = ({
     buttonText,
     onPress,
-}) => (
-    <View style={styles.bottomSection}>
-        <TouchableOpacity style={styles.input} onPress={onPress}>
-            <Text style={{ color: COLORS.InactiveText }}>{buttonText}</Text>
-        </TouchableOpacity>
-    </View>
-);
+}) => {
+    const { theme } = useTheme();
+    const styles = useMemo(
+        () => createCreateContentButtonStyles(theme),
+        [theme]
+    );
 
-const styles = StyleSheet.create({
-    bottomSection: {
-        height: 60,
-        borderTopWidth: 1,
-        borderTopColor: '#4A3A5A',
-        backgroundColor: COLORS.SecondaryBackground,
-        justifyContent: 'center',
-        paddingHorizontal: 10,
-    },
-    input: {
-        backgroundColor: COLORS.TextInput,
-        color: 'white',
-        paddingVertical: 10,
-        paddingHorizontal: 15,
-        borderRadius: 20,
-        fontSize: 14,
-    },
-});
+    return (
+        <View style={styles.bottomSection}>
+            <TouchableOpacity style={styles.input} onPress={onPress}>
+                <Text style={{ color: theme.colors.InactiveText }}>
+                    {buttonText}
+                </Text>
+            </TouchableOpacity>
+        </View>
+    );
+};
+
+function createCreateContentButtonStyles(theme: Theme) {
+    return StyleSheet.create({
+        bottomSection: {
+            height: 60,
+            borderTopWidth: 1,
+            borderTopColor: '#4A3A5A',
+            backgroundColor: theme.colors.SecondaryBackground,
+            justifyContent: 'center',
+            paddingHorizontal: 10,
+        },
+        input: {
+            backgroundColor: theme.colors.TextInput,
+            color: theme.colors.ActiveText,
+            paddingVertical: 10,
+            paddingHorizontal: 15,
+            borderRadius: 20,
+            fontSize: 14,
+        },
+    });
+}

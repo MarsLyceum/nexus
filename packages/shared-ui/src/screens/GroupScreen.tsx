@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext, useEffect, useMemo } from 'react';
 import {
     View,
     Text,
@@ -24,7 +24,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-import { COLORS } from '../constants';
+import { useTheme, Theme } from '../theme';
 import { Group, GroupChannel } from '../types';
 import { Feed, Chat, Events } from '../icons';
 import { ActiveGroupContext } from '../providers';
@@ -33,69 +33,71 @@ import { useNexusRouter } from '../hooks';
 import { GroupChannelScreen } from './GroupChannelScreen';
 import { GroupEventsScreen } from './GroupEventsScreen';
 
-const styles = StyleSheet.create({
-    largeScreenContainer: {
-        flex: 1,
-        flexDirection: 'row',
-        backgroundColor: COLORS.PrimaryBackground,
-        height: '100%',
-    },
-    sidebarContainer: {
-        backgroundColor: COLORS.PrimaryBackground,
-    },
-    chatWrapper: {
-        flex: 1,
-        backgroundColor: COLORS.PrimaryBackground,
-    },
-    channelListContainer: {
-        flex: 1,
-        backgroundColor: COLORS.PrimaryBackground,
-        padding: 20,
-    },
-    serverTitle: {
-        fontSize: 20,
-        fontFamily: 'Roboto_700Bold',
-        fontWeight: 'bold',
-        color: 'white',
-        marginBottom: 10,
-    },
-    memberInfo: {
-        fontSize: 12,
-        color: 'white',
-        marginBottom: 10,
-    },
-    groupDescription: {
-        fontFamily: 'Roboto_400Regular',
-        fontSize: 14,
-        color: 'white',
-        marginBottom: 20,
-    },
-    channelItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 10,
-        paddingHorizontal: 8,
-    },
-    activeChannelItemWrapper: {
-        backgroundColor: COLORS.SecondaryBackground,
-        padding: 4,
-        marginVertical: 2,
-        borderRadius: 5,
-    },
-    icon: {
-        marginRight: 10,
-    },
-    channelText: {
-        fontSize: 16,
-        fontFamily: 'Roboto_400Regular',
-        color: 'gray',
-    },
-    activeChannelText: {
-        color: 'white',
-        fontWeight: 'bold',
-        fontFamily: 'Roboto_700Bold',
-    },
-});
+function createStyles(theme: Theme) {
+    return StyleSheet.create({
+        largeScreenContainer: {
+            flex: 1,
+            flexDirection: 'row',
+            backgroundColor: theme.colors.PrimaryBackground,
+            height: '100%',
+        },
+        sidebarContainer: {
+            backgroundColor: theme.colors.PrimaryBackground,
+        },
+        chatWrapper: {
+            flex: 1,
+            backgroundColor: theme.colors.PrimaryBackground,
+        },
+        channelListContainer: {
+            flex: 1,
+            backgroundColor: theme.colors.PrimaryBackground,
+            padding: 20,
+        },
+        serverTitle: {
+            fontSize: 20,
+            fontFamily: 'Roboto_700Bold',
+            fontWeight: 'bold',
+            color: theme.colors.ActiveText,
+            marginBottom: 10,
+        },
+        memberInfo: {
+            fontSize: 12,
+            color: theme.colors.ActiveText,
+            marginBottom: 10,
+        },
+        groupDescription: {
+            fontFamily: 'Roboto_400Regular',
+            fontSize: 14,
+            color: theme.colors.ActiveText,
+            marginBottom: 20,
+        },
+        channelItem: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingVertical: 10,
+            paddingHorizontal: 8,
+        },
+        activeChannelItemWrapper: {
+            backgroundColor: theme.colors.SecondaryBackground,
+            padding: 4,
+            marginVertical: 2,
+            borderRadius: 5,
+        },
+        icon: {
+            marginRight: 10,
+        },
+        channelText: {
+            fontSize: 16,
+            fontFamily: 'Roboto_400Regular',
+            color: theme.colors.MainText,
+        },
+        activeChannelText: {
+            color: theme.colors.ActiveText,
+            fontWeight: 'bold',
+            fontFamily: 'Roboto_700Bold',
+        },
+    });
+}
 
 type ActiveView = 'messages' | 'events';
 
@@ -106,6 +108,7 @@ type ChannelListProps = {
     isLargeScreen: boolean;
     activeView: ActiveView;
     setActiveView: (view: ActiveView) => void;
+    styles: ReturnType<typeof createStyles>;
 };
 
 export function GroupScreen() {
@@ -114,6 +117,8 @@ export function GroupScreen() {
     const { width } = useWindowDimensions();
     const isLargeScreen = width > 768;
     const [activeView, setActiveView] = useState<ActiveView>('messages');
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
 
     // When an active group becomes available and no active channel is set, use the first channel.
     useEffect(() => {
@@ -138,10 +143,10 @@ export function GroupScreen() {
                     flex: 1,
                     justifyContent: 'center',
                     alignItems: 'center',
-                    backgroundColor: COLORS.PrimaryBackground,
+                    backgroundColor: theme.colors.PrimaryBackground,
                 }}
             >
-                <Text style={{ color: COLORS.White }}>
+                <Text style={{ color: theme.colors.ActiveText }}>
                     No active group selected.
                 </Text>
             </View>
@@ -159,6 +164,7 @@ export function GroupScreen() {
                         setActiveChannel={setActiveChannel}
                         activeView={activeView}
                         setActiveView={setActiveView}
+                        styles={styles}
                     />
                 </View>
                 <View style={styles.chatWrapper}>
@@ -180,6 +186,7 @@ export function GroupScreen() {
             isLargeScreen={isLargeScreen}
             activeView={activeView}
             setActiveView={setActiveView}
+            styles={styles}
         />
     );
 }
@@ -191,6 +198,7 @@ const ChannelList: React.FC<ChannelListProps> = ({
     isLargeScreen,
     activeView,
     setActiveView,
+    styles,
 }) => {
     // Get the router for navigation
     const router = useNexusRouter();
@@ -201,6 +209,7 @@ const ChannelList: React.FC<ChannelListProps> = ({
 
     // Local state for channel order.
     const [channels, setChannels] = useState<GroupChannel[]>(group.channels);
+    const { theme } = useTheme();
 
     // Update local channels if the group prop changes.
     useEffect(() => {
@@ -252,14 +261,18 @@ const ChannelList: React.FC<ChannelListProps> = ({
                         <Feed
                             style={styles.icon}
                             color={
-                                isActive ? COLORS.White : COLORS.InactiveText
+                                isActive
+                                    ? theme.colors.ActiveText
+                                    : theme.colors.InactiveText
                             }
                         />
                     ) : (
                         <Chat
                             style={styles.icon}
                             color={
-                                isActive ? COLORS.White : COLORS.InactiveText
+                                isActive
+                                    ? theme.colors.ActiveText
+                                    : theme.colors.InactiveText
                             }
                         />
                     )}
@@ -313,14 +326,18 @@ const ChannelList: React.FC<ChannelListProps> = ({
                         <Feed
                             style={styles.icon}
                             color={
-                                isActive ? COLORS.White : COLORS.InactiveText
+                                isActive
+                                    ? theme.colors.ActiveText
+                                    : theme.colors.InactiveText
                             }
                         />
                     ) : (
                         <Chat
                             style={styles.icon}
                             color={
-                                isActive ? COLORS.White : COLORS.InactiveText
+                                isActive
+                                    ? theme.colors.ActiveText
+                                    : theme.colors.InactiveText
                             }
                         />
                     )}
@@ -417,8 +434,8 @@ const ChannelList: React.FC<ChannelListProps> = ({
                         <Events
                             color={
                                 activeView === 'events'
-                                    ? COLORS.White
-                                    : COLORS.InactiveText
+                                    ? theme.colors.ActiveText
+                                    : theme.colors.InactiveText
                             }
                             style={styles.icon}
                         />

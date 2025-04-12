@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
     View,
     Text,
@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { useQuery, useApolloClient } from '@apollo/client';
 
-import { COLORS } from '../constants';
+import { useTheme, Theme } from '../theme';
 import { FETCH_USER_QUERY } from '../queries';
 import { UserType } from '../redux';
 import { getOnlineStatusDotColor } from '../utils';
@@ -42,6 +42,8 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
         useState<boolean>(false);
     const [conversationHovered, setConversationHovered] =
         useState<boolean>(false);
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
 
     // --- ONE-TO-ONE CONVERSATION ---
     if (otherParticipantIds.length === 1) {
@@ -67,7 +69,7 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
                     styles.conversationItem,
                     selected && styles.selectedConversationItem,
                     conversationHovered && {
-                        backgroundColor: COLORS.SecondaryBackground,
+                        backgroundColor: theme.colors.SecondaryBackground,
                     },
                 ]}
                 onPress={() => onPress(conversation)}
@@ -87,8 +89,10 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
                         style={[
                             styles.statusDot,
                             {
-                                backgroundColor:
-                                    getOnlineStatusDotColor(status),
+                                backgroundColor: getOnlineStatusDotColor(
+                                    theme,
+                                    status
+                                ),
                             },
                         ]}
                     />
@@ -102,7 +106,6 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
                         onPress={() => onClose(conversation)}
                     >
                         <View
-                            // @ts-expect-error mouse enter
                             onMouseEnter={() => setCloseButtonHovered(true)}
                             onMouseLeave={() => setCloseButtonHovered(false)}
                         >
@@ -110,8 +113,8 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
                                 size={14}
                                 color={
                                     closeButtonHovered
-                                        ? COLORS.White
-                                        : COLORS.InactiveText
+                                        ? theme.colors.ActiveText
+                                        : theme.colors.InactiveText
                                 }
                             />
                         </View>
@@ -159,7 +162,7 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
                 styles.conversationItem,
                 selected && styles.selectedConversationItem,
                 conversationHovered && {
-                    backgroundColor: COLORS.SecondaryBackground,
+                    backgroundColor: theme.colors.SecondaryBackground,
                 },
             ]}
             onPress={() => onPress(conversation)}
@@ -195,51 +198,53 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
     );
 };
 
-const styles = StyleSheet.create({
-    conversationItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 10,
-        paddingHorizontal: 15,
-    },
-    selectedConversationItem: {
-        backgroundColor: COLORS.TertiaryBackground,
-        borderRadius: 5,
-    },
-    avatarAndDot: {
-        position: 'relative',
-        marginRight: 10,
-    },
-    avatar: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-    },
-    statusDot: {
-        position: 'absolute',
-        bottom: 0,
-        right: 5,
-        width: 15,
-        height: 15,
-        borderRadius: 7,
-        borderWidth: 2,
-        borderColor: COLORS.SecondaryBackground,
-    },
-    avatarGroup: {
-        flexDirection: 'row',
-        marginRight: 10,
-    },
-    conversationTextContainer: {
-        flex: 1,
-    },
-    conversationTitle: {
-        fontSize: 14,
-        color: COLORS.White,
-        fontWeight: 'bold',
-    },
-    membersCount: {
-        fontSize: 12,
-        color: COLORS.InactiveText,
-    },
-    closeButton: {},
-});
+function createStyles(theme: Theme) {
+    return StyleSheet.create({
+        conversationItem: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingVertical: 10,
+            paddingHorizontal: 15,
+        },
+        selectedConversationItem: {
+            backgroundColor: theme.colors.TertiaryBackground,
+            borderRadius: 5,
+        },
+        avatarAndDot: {
+            position: 'relative',
+            marginRight: 10,
+        },
+        avatar: {
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+        },
+        statusDot: {
+            position: 'absolute',
+            bottom: 0,
+            right: 5,
+            width: 15,
+            height: 15,
+            borderRadius: 7,
+            borderWidth: 2,
+            borderColor: theme.colors.SecondaryBackground,
+        },
+        avatarGroup: {
+            flexDirection: 'row',
+            marginRight: 10,
+        },
+        conversationTextContainer: {
+            flex: 1,
+        },
+        conversationTitle: {
+            fontSize: 14,
+            color: theme.colors.ActiveText,
+            fontWeight: 'bold',
+        },
+        membersCount: {
+            fontSize: 12,
+            color: theme.colors.InactiveText,
+        },
+        closeButton: {},
+    });
+}

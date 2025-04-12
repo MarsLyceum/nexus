@@ -1,6 +1,6 @@
 // src/theme/neon-pulse.ts
-import { COLORS as DefaultColors } from '../constants/colors';
-import type { Theme } from './themes';
+import { COLORS as DefaultColors } from '../../constants/colors';
+import type { Theme } from '../themes';
 
 export const NeonPulse: Theme[] = [
     {

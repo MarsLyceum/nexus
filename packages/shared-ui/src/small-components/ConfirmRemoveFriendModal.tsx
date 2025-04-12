@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
     Modal,
     View,
@@ -7,7 +7,7 @@ import {
     Platform,
     StyleSheet,
 } from 'react-native';
-import { COLORS } from '../constants';
+import { useTheme, Theme } from '../theme';
 
 import { User } from '../types';
 
@@ -32,6 +32,10 @@ export const ConfirmRemoveFriendModal: React.FC<ConfirmationModalProps> = ({
         friendToRemove &&
         friendToRemove.status?.toLowerCase() === 'pending' &&
         friendToRemove.requestedBy?.id === user?.id;
+
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
+
     return (
         <Modal visible={visible} transparent animationType="fade">
             <View style={styles.modalContainer}>
@@ -78,48 +82,50 @@ export const ConfirmRemoveFriendModal: React.FC<ConfirmationModalProps> = ({
     );
 };
 
-const styles = StyleSheet.create({
-    modalContainer: {
-        flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    modalContent: {
-        backgroundColor: COLORS.PrimaryBackground,
-        padding: 20,
-        borderRadius: 8,
-        alignItems: 'center',
-        width: '80%',
-    },
-    modalTitle: {
-        fontSize: 18,
-        color: COLORS.White,
-        marginBottom: 10,
-        textAlign: 'center',
-    },
-    modalMessage: {
-        fontSize: 14,
-        color: COLORS.InactiveText,
-        marginBottom: 20,
-        textAlign: 'center',
-    },
-    modalButton: {
-        marginVertical: 5,
-        paddingVertical: 10,
-        paddingHorizontal: 20,
-        borderRadius: 4,
-        width: '100%',
-        alignItems: 'center',
-    },
-    removeButton: {
-        backgroundColor: COLORS.Error,
-    },
-    cancelButton: {
-        backgroundColor: COLORS.TextInput,
-    },
-    buttonText: {
-        color: COLORS.White,
-        fontWeight: 'bold',
-    },
-});
+function createStyles(theme: Theme) {
+    return StyleSheet.create({
+        modalContainer: {
+            flex: 1,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        modalContent: {
+            backgroundColor: theme.colors.PrimaryBackground,
+            padding: 20,
+            borderRadius: 8,
+            alignItems: 'center',
+            width: '80%',
+        },
+        modalTitle: {
+            fontSize: 18,
+            color: theme.colors.ActiveText,
+            marginBottom: 10,
+            textAlign: 'center',
+        },
+        modalMessage: {
+            fontSize: 14,
+            color: theme.colors.InactiveText,
+            marginBottom: 20,
+            textAlign: 'center',
+        },
+        modalButton: {
+            marginVertical: 5,
+            paddingVertical: 10,
+            paddingHorizontal: 20,
+            borderRadius: 4,
+            width: '100%',
+            alignItems: 'center',
+        },
+        removeButton: {
+            backgroundColor: theme.colors.Error,
+        },
+        cancelButton: {
+            backgroundColor: theme.colors.TextInput,
+        },
+        buttonText: {
+            color: theme.colors.ActiveText,
+            fontWeight: 'bold',
+        },
+    });
+}

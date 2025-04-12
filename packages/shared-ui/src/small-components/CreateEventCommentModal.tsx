@@ -1,5 +1,5 @@
-// File: buttons/CreateEventCommentModal.tsx
-import React from 'react';
+// File: CreateEventCommentModal.tsx
+import React, { useMemo } from 'react';
 import {
     View,
     Text,
@@ -8,7 +8,8 @@ import {
     Pressable,
     StyleSheet,
 } from 'react-native';
-import { COLORS } from '../constants';
+
+import { useTheme, Theme } from '../theme';
 import { AttachmentPreviews } from '../sections';
 import { Attachment } from '../types';
 
@@ -43,6 +44,9 @@ export const CreateEventCommentModal: React.FC<
         );
     };
 
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
+
     return (
         <Modal
             visible={modalVisible}
@@ -55,7 +59,7 @@ export const CreateEventCommentModal: React.FC<
                     <Text style={styles.modalTitle}>{buttonText}</Text>
                     <TextInput
                         placeholder="Write your comment..."
-                        placeholderTextColor={COLORS.InactiveText}
+                        placeholderTextColor={theme.colors.InactiveText}
                         style={styles.textInput}
                         value={contentText}
                         onChangeText={setContentText}
@@ -86,46 +90,48 @@ export const CreateEventCommentModal: React.FC<
     );
 };
 
-const styles = StyleSheet.create({
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    modalContainer: {
-        width: '85%',
-        backgroundColor: COLORS.AppBackground,
-        borderRadius: 8,
-        padding: 20,
-    },
-    modalTitle: {
-        fontSize: 18,
-        fontWeight: '600',
-        marginBottom: 15,
-        color: COLORS.White,
-    },
-    textInput: {
-        borderWidth: 1,
-        borderColor: COLORS.InactiveText,
-        borderRadius: 5,
-        padding: 10,
-        marginBottom: 15,
-        color: COLORS.White,
-    },
-    modalButtonRow: {
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
-    },
-    modalButton: {
-        marginLeft: 10,
-        paddingVertical: 8,
-        paddingHorizontal: 15,
-        borderRadius: 5,
-        backgroundColor: COLORS.Primary,
-    },
-    modalButtonText: {
-        color: COLORS.White,
-        fontWeight: '600',
-    },
-});
+function createStyles(theme: Theme) {
+    return StyleSheet.create({
+        modalOverlay: {
+            flex: 1,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        modalContainer: {
+            width: '85%',
+            backgroundColor: theme.colors.AppBackground,
+            borderRadius: 8,
+            padding: 20,
+        },
+        modalTitle: {
+            fontSize: 18,
+            fontWeight: '600',
+            marginBottom: 15,
+            color: theme.colors.ActiveText,
+        },
+        textInput: {
+            borderWidth: 1,
+            borderColor: theme.colors.InactiveText,
+            borderRadius: 5,
+            padding: 10,
+            marginBottom: 15,
+            color: theme.colors.ActiveText,
+        },
+        modalButtonRow: {
+            flexDirection: 'row',
+            justifyContent: 'flex-end',
+        },
+        modalButton: {
+            marginLeft: 10,
+            paddingVertical: 8,
+            paddingHorizontal: 15,
+            borderRadius: 5,
+            backgroundColor: theme.colors.Primary,
+        },
+        modalButtonText: {
+            color: theme.colors.ActiveText,
+            fontWeight: '600',
+        },
+    });
+}

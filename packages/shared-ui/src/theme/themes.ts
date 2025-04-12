@@ -3,11 +3,11 @@
 // src/theme/themes.ts
 import { COLORS as DefaultColors } from '../constants/colors';
 
-import { Monochrome } from './monochrome';
-import { DualTone } from './dual-tone';
-import { NatureInspired } from './nature-inspired';
-import { PastelDreams } from './pastel-dreams';
-import { NeonPulse } from './neon-pulse';
+import { Monochrome } from './theme-definitions/monochrome';
+import { DualTone } from './theme-definitions/dual-tone';
+import { NatureInspired } from './theme-definitions/nature-inspired';
+import { PastelDreams } from './theme-definitions/pastel-dreams';
+import { NeonPulse } from './theme-definitions/neon-pulse';
 
 export type Theme = {
     name: string;

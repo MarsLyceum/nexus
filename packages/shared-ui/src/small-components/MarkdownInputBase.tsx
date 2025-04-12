@@ -1,5 +1,5 @@
 // MarkdownInputBase.tsx
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useMemo } from 'react';
 import {
     ScrollView,
     View,
@@ -10,8 +10,10 @@ import {
     TextInputScrollEventData,
     Platform,
 } from 'react-native';
+
+import { useTheme, Theme } from '../theme';
+
 import { MarkdownOverlay } from './MarkdownOverlay';
-import { COLORS } from '../constants';
 import { EmojiPicker, EmojiPickerHandle } from './EmojiPicker';
 
 export interface MarkdownInputBaseProps extends TextInputProps {
@@ -45,6 +47,9 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
     onKeyDown, // Destructure onKeyDown here
     ...rest
 }) => {
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
+
     const overlayScrollRef = useRef<ScrollView>(null);
     // <-- Create a ref for the EmojiPicker
     const emojiPickerRef = useRef<EmojiPickerHandle>(null);
@@ -157,7 +162,7 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
                 value={value}
                 onChangeText={onChangeText}
                 placeholder={placeholder}
-                placeholderTextColor={COLORS.MainText}
+                placeholderTextColor={theme.colors.MainText}
                 multiline={multiline}
                 scrollEnabled
                 textAlignVertical="top"
@@ -191,19 +196,21 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
     );
 };
 
-const styles = StyleSheet.create({
-    inputWrapper: {
-        position: 'relative',
-        borderWidth: 1,
-        borderColor: 'gray',
-    },
-    input: {
-        flex: 1,
-        color: 'white',
-        fontSize: 14,
-        fontFamily: 'Roboto_400Regular',
-        textAlignVertical: 'top',
-        paddingHorizontal: 10,
-        lineHeight: 20,
-    },
-});
+function createStyles(theme: Theme) {
+    return StyleSheet.create({
+        inputWrapper: {
+            position: 'relative',
+            borderWidth: 1,
+            borderColor: theme.colors.InactiveText,
+        },
+        input: {
+            flex: 1,
+            color: theme.colors.ActiveText,
+            fontSize: 14,
+            fontFamily: 'Roboto_400Regular',
+            textAlignVertical: 'top',
+            paddingHorizontal: 10,
+            lineHeight: 20,
+        },
+    });
+}

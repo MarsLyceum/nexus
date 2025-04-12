@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
     View,
     Text,
@@ -7,10 +7,12 @@ import {
     TextStyle,
     StyleSheet as RNStyleSheet,
 } from 'react-native';
+
+import { extractUrls } from '../../utils';
+import { useTheme, Theme } from '../../theme';
+
 import { MarkdownEditor } from '../MarkdownEditor';
 import { MarkdownRenderer } from '../MarkdownRenderer';
-import { extractUrls } from '../../utils';
-import { COLORS } from '../../constants';
 
 export type MessageEditorProps = {
     initialContent: string;
@@ -33,6 +35,8 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({
     const [measuredLineHeight, setMeasuredLineHeight] = useState<
         number | undefined
     >();
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
 
     const isOnlyUrl =
         extractUrls(editedContent).length === 1 &&
@@ -197,29 +201,31 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({
     );
 };
 
-const styles = StyleSheet.create({
-    editContainer: {
-        marginTop: 5,
-        position: 'relative',
-        borderColor: COLORS.SecondaryBackground,
-        borderWidth: 1,
-        borderRadius: 4,
-        padding: 8,
-        backgroundColor: COLORS.TertiaryBackground,
-    },
-    instructionText: {
-        marginTop: 4,
-        fontSize: 12,
-        color: COLORS.InactiveText,
-        fontStyle: 'italic',
-    },
-    clickableText: {
-        color: COLORS.Tertiary,
-    },
-    urlText: {
-        fontSize: 14,
-        color: COLORS.White,
-        fontFamily: 'Roboto_400Regular',
-        padding: 4,
-    },
-});
+function createStyles(theme: Theme) {
+    return StyleSheet.create({
+        editContainer: {
+            marginTop: 5,
+            position: 'relative',
+            borderColor: theme.colors.SecondaryBackground,
+            borderWidth: 1,
+            borderRadius: 4,
+            padding: 8,
+            backgroundColor: theme.colors.TertiaryBackground,
+        },
+        instructionText: {
+            marginTop: 4,
+            fontSize: 12,
+            color: theme.colors.InactiveText,
+            fontStyle: 'italic',
+        },
+        clickableText: {
+            color: theme.colors.Tertiary,
+        },
+        urlText: {
+            fontSize: 14,
+            color: theme.colors.ActiveText,
+            fontFamily: 'Roboto_400Regular',
+            padding: 4,
+        },
+    });
+}

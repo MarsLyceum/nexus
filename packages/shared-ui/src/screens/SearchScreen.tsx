@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useMemo } from 'react';
 import {
     View,
     Text,
@@ -7,8 +7,8 @@ import {
     TouchableOpacity,
 } from 'react-native';
 
+import { useTheme, Theme } from '../theme';
 import { BackArrow } from '../buttons';
-import { COLORS } from '../constants';
 import { SearchBox, PostItem } from '../sections';
 import { useSearchFilter, useNexusRouter } from '../hooks';
 import { SearchContext } from '../providers';
@@ -83,7 +83,9 @@ const parseCount = (count: string): number => {
 
 export const SearchScreen = () => {
     const { searchText, setSearchText } = useContext(SearchContext);
-    const router = useNexusRouter(); // using solito for universal routing
+    const router = useNexusRouter();
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
 
     const filteredResults = useSearchFilter<SearchResult>(
         MOCK_RESULTS,
@@ -148,7 +150,7 @@ export const SearchScreen = () => {
 
                 {filteredResults.length === 0 && (
                     <View style={{ marginTop: 20 }}>
-                        <Text style={{ color: COLORS.White }}>
+                        <Text style={{ color: theme.colors.ActiveText }}>
                             No results found for "{searchText}".
                         </Text>
                     </View>
@@ -158,43 +160,45 @@ export const SearchScreen = () => {
     );
 };
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: COLORS.SecondaryBackground,
-    },
-    headerRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 10,
-        paddingVertical: 10,
-        borderBottomWidth: 1,
-        borderBottomColor: COLORS.TextInput,
-    },
-    filterRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginLeft: 10,
-    },
-    filterButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginRight: 10,
-    },
-    filterButtonText: {
-        color: COLORS.InactiveText,
-        fontFamily: 'Roboto_400Regular',
-        marginRight: 4,
-        fontSize: 13,
-    },
-    filterIcon: {
-        marginTop: 1,
-    },
-    searchBoxContainer: {
-        padding: 10,
-    },
-    resultsContainer: {
-        flex: 1,
-        paddingHorizontal: 10,
-    },
-});
+function createStyles(theme: Theme) {
+    return StyleSheet.create({
+        container: {
+            flex: 1,
+            backgroundColor: theme.colors.SecondaryBackground,
+        },
+        headerRow: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingHorizontal: 10,
+            paddingVertical: 10,
+            borderBottomWidth: 1,
+            borderBottomColor: theme.colors.TextInput,
+        },
+        filterRow: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginLeft: 10,
+        },
+        filterButton: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginRight: 10,
+        },
+        filterButtonText: {
+            color: theme.colors.InactiveText,
+            fontFamily: 'Roboto_400Regular',
+            marginRight: 4,
+            fontSize: 13,
+        },
+        filterIcon: {
+            marginTop: 1,
+        },
+        searchBoxContainer: {
+            padding: 10,
+        },
+        resultsContainer: {
+            flex: 1,
+            paddingHorizontal: 10,
+        },
+    });
+}

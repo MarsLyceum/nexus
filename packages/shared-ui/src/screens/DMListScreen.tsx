@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
     View,
     Text,
@@ -8,8 +8,8 @@ import {
 } from 'react-native';
 import { useQuery, useApolloClient, useMutation } from '@apollo/client';
 
+import { useTheme, Theme } from '../theme';
 import { useNexusRouter, createNexusParam } from '../hooks';
-import { COLORS } from '../constants';
 import { ChatScreen } from './ChatScreen';
 import {
     GET_CONVERSATIONS,
@@ -39,6 +39,8 @@ export const DMListScreen: React.FC = () => {
     const [closedConversationIds, setClosedConversationIds] = useState<
         string[]
     >([]);
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
 
     // Get the active user from Redux.
     const user: UserType = useAppSelector(
@@ -248,7 +250,7 @@ export const DMListScreen: React.FC = () => {
                         renderItem={() => <ConversationSkeleton />}
                     />
                 ) : error ? (
-                    <Text style={{ color: COLORS.Error, margin: 16 }}>
+                    <Text style={{ color: theme.colors.Error, margin: 16 }}>
                         Error fetching conversations.
                     </Text>
                 ) : (
@@ -280,31 +282,33 @@ export const DMListScreen: React.FC = () => {
     );
 };
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        flexDirection: 'row',
-        backgroundColor: COLORS.PrimaryBackground,
-        height: '100%',
-    },
-    sidebar: {
-        width: 250,
-        backgroundColor: COLORS.PrimaryBackground,
-        paddingTop: 10,
-    },
-    dmHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        paddingHorizontal: 15,
-        paddingVertical: 8,
-    },
-    dmTitle: {
-        fontSize: 12,
-        color: COLORS.InactiveText,
-        fontWeight: 'bold',
-    },
-    chatWrapper: {
-        flex: 1,
-        backgroundColor: COLORS.PrimaryBackground,
-    },
-});
+function createStyles(theme: Theme) {
+    return StyleSheet.create({
+        container: {
+            flex: 1,
+            flexDirection: 'row',
+            backgroundColor: theme.colors.PrimaryBackground,
+            height: '100%',
+        },
+        sidebar: {
+            width: 250,
+            backgroundColor: theme.colors.PrimaryBackground,
+            paddingTop: 10,
+        },
+        dmHeader: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            paddingHorizontal: 15,
+            paddingVertical: 8,
+        },
+        dmTitle: {
+            fontSize: 12,
+            color: theme.colors.InactiveText,
+            fontWeight: 'bold',
+        },
+        chatWrapper: {
+            flex: 1,
+            backgroundColor: theme.colors.PrimaryBackground,
+        },
+    });
+}

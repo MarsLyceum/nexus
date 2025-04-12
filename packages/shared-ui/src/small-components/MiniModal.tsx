@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
+
 import { Portal } from '../providers';
-import { COLORS } from '../constants';
+import { useTheme, Theme } from '../theme';
 
 export type MiniModalProps = {
     visible: boolean;
@@ -38,6 +39,8 @@ export const MiniModal: React.FC<MiniModalProps> = ({
     const modalRef = useRef<View>(null);
     const [measuredHeight, setMeasuredHeight] = useState<number | undefined>();
     const [measuredWidth, setMeasuredWidth] = useState<number | undefined>();
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
 
     const flattenedContainerStyle = StyleSheet.flatten(containerStyle);
 
@@ -335,7 +338,6 @@ export const MiniModal: React.FC<MiniModalProps> = ({
                     computedContainerStyle,
                     { pointerEvents: 'auto', zIndex: 100 },
                 ]}
-                // @ts-expect-error mouse enter
                 onMouseEnter={onMouseEnter}
                 onMouseLeave={onMouseLeave}
                 onLayout={(e) => {
@@ -349,30 +351,32 @@ export const MiniModal: React.FC<MiniModalProps> = ({
     );
 };
 
-const styles = StyleSheet.create({
-    miniModalContainer: {
-        position: 'absolute',
-        left: '50%',
-        bottom: 70,
-        width: 350,
-        maxHeight: 250,
-        backgroundColor: COLORS.PrimaryBackground,
-        borderRadius: 8,
-        padding: 10,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
-        elevation: 5,
-        transform: [{ translateX: -175 }],
-    },
-    modalOverlay: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.7)', // Adjust opacity as needed
-        zIndex: 50,
-    },
-});
+function createStyles(theme: Theme) {
+    return StyleSheet.create({
+        miniModalContainer: {
+            position: 'absolute',
+            left: '50%',
+            bottom: 70,
+            width: 350,
+            maxHeight: 250,
+            backgroundColor: theme.colors.PrimaryBackground,
+            borderRadius: 8,
+            padding: 10,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.3,
+            shadowRadius: 4,
+            elevation: 5,
+            transform: [{ translateX: -175 }],
+        },
+        modalOverlay: {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.7)', // Adjust opacity as needed
+            zIndex: 50,
+        },
+    });
+}

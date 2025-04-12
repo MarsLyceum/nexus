@@ -26,14 +26,13 @@ import {
 } from '@expo-google-fonts/roboto';
 import * as SplashScreen from 'expo-splash-screen';
 
-import { COLORS } from 'shared-ui/constants';
 import { store } from 'shared-ui/redux';
+import { useTheme, ThemeProvider } from 'shared-ui/theme';
 import {
     SearchProvider,
     ActiveGroupProvider,
     CurrentCommentProvider,
     PortalProvider,
-    ThemeProvider,
 } from 'shared-ui/providers';
 import { StatusManager, Login } from 'shared-ui/small-components';
 import {
@@ -66,6 +65,7 @@ if (__DEV__) {
  * On native platforms, it renders null.
  */
 const CustomScrollbar = () => {
+    const { theme } = useTheme();
     if (Platform.OS !== 'web') return <></>;
     return (
         <style>{`
@@ -75,16 +75,16 @@ const CustomScrollbar = () => {
         height: 10px;
       }
       ::-webkit-scrollbar-track {
-        background: ${COLORS.PrimaryBackground};
+        background: ${theme.colors.PrimaryBackground};
       }
       ::-webkit-scrollbar-thumb {
-        background-color: ${COLORS.TextInput};
+        background-color: ${theme.colors.TextInput};
         border-radius: 999px;
       }
       /* Firefox */
       * {
         scrollbar-width: thin;
-        scrollbar-color: ${COLORS.TextInput} ${COLORS.PrimaryBackground};
+        scrollbar-color: ${theme.colors.TextInput} ${theme.colors.PrimaryBackground};
       }
     `}</style>
     );
@@ -133,6 +133,84 @@ function MainStackScreen() {
     );
 }
 
+const AppContent = () => {
+    const { theme } = useTheme();
+
+    return (
+        <ActiveGroupProvider>
+            <SearchProvider>
+                <CurrentCommentProvider>
+                    <SafeAreaProvider>
+                        <StatusBar
+                            barStyle="light-content"
+                            backgroundColor={theme.colors.AppBackground}
+                        />
+                        <SafeAreaView
+                            style={{
+                                flex: 1,
+                                backgroundColor: theme.colors.AppBackground,
+                            }}
+                            edges={['top', 'left', 'right', 'bottom']}
+                        >
+                            {/* Inject custom scrollbar styles on web */}
+                            <CustomScrollbar />
+                            <ApolloProvider client={client}>
+                                <ReduxProvider store={store}>
+                                    <PortalProvider>
+                                        <Login>
+                                            <NavigationContainer
+                                                linking={linking}
+                                            >
+                                                <StatusManager>
+                                                    <RootStack.Navigator
+                                                        screenOptions={{
+                                                            headerShown: false,
+                                                            presentation:
+                                                                'transparentModal', // This makes the screens render as modals by default
+                                                        }}
+                                                    >
+                                                        <RootStack.Screen
+                                                            name="Main"
+                                                            component={
+                                                                MainStackScreen
+                                                            }
+                                                        />
+                                                        <RootStack.Screen
+                                                            name="CreateGroup"
+                                                            // @ts-expect-error navigator
+                                                            component={
+                                                                CreateGroupModalScreen
+                                                            }
+                                                            options={{
+                                                                presentation:
+                                                                    'transparentModal',
+                                                                cardStyle: {
+                                                                    backgroundColor:
+                                                                        'transparent',
+                                                                },
+                                                                ...Platform.select(
+                                                                    {
+                                                                        ios: TransitionPresets.ModalPresentationIOS,
+                                                                    }
+                                                                ),
+                                                            }}
+                                                        />
+                                                    </RootStack.Navigator>
+                                                    <Toast />
+                                                </StatusManager>
+                                            </NavigationContainer>
+                                        </Login>
+                                    </PortalProvider>
+                                </ReduxProvider>
+                            </ApolloProvider>
+                        </SafeAreaView>
+                    </SafeAreaProvider>
+                </CurrentCommentProvider>
+            </SearchProvider>
+        </ActiveGroupProvider>
+    );
+};
+
 // The main App component with the stack navigator integrating all screens.
 // eslint-disable-next-line import/no-default-export
 export default function App() {
@@ -159,79 +237,7 @@ export default function App() {
     if (appIsReady) {
         return (
             <ThemeProvider>
-                <ActiveGroupProvider>
-                    <SearchProvider>
-                        <CurrentCommentProvider>
-                            <SafeAreaProvider>
-                                <StatusBar
-                                    barStyle="light-content"
-                                    backgroundColor={COLORS.AppBackground}
-                                />
-                                <SafeAreaView
-                                    style={{
-                                        flex: 1,
-                                        backgroundColor: COLORS.AppBackground,
-                                    }}
-                                    edges={['top', 'left', 'right', 'bottom']}
-                                >
-                                    {/* Inject custom scrollbar styles on web */}
-                                    <CustomScrollbar />
-                                    <ApolloProvider client={client}>
-                                        <ReduxProvider store={store}>
-                                            <PortalProvider>
-                                                <Login>
-                                                    <NavigationContainer
-                                                        linking={linking}
-                                                    >
-                                                        <StatusManager>
-                                                            <RootStack.Navigator
-                                                                screenOptions={{
-                                                                    headerShown:
-                                                                        false,
-                                                                    presentation:
-                                                                        'transparentModal', // This makes the screens render as modals by default
-                                                                }}
-                                                            >
-                                                                <RootStack.Screen
-                                                                    name="Main"
-                                                                    component={
-                                                                        MainStackScreen
-                                                                    }
-                                                                />
-                                                                <RootStack.Screen
-                                                                    name="CreateGroup"
-                                                                    // @ts-expect-error navigator
-                                                                    component={
-                                                                        CreateGroupModalScreen
-                                                                    }
-                                                                    options={{
-                                                                        presentation:
-                                                                            'transparentModal',
-                                                                        cardStyle:
-                                                                            {
-                                                                                backgroundColor:
-                                                                                    'transparent',
-                                                                            },
-                                                                        ...Platform.select(
-                                                                            {
-                                                                                ios: TransitionPresets.ModalPresentationIOS,
-                                                                            }
-                                                                        ),
-                                                                    }}
-                                                                />
-                                                            </RootStack.Navigator>
-                                                            <Toast />
-                                                        </StatusManager>
-                                                    </NavigationContainer>
-                                                </Login>
-                                            </PortalProvider>
-                                        </ReduxProvider>
-                                    </ApolloProvider>
-                                </SafeAreaView>
-                            </SafeAreaProvider>
-                        </CurrentCommentProvider>
-                    </SearchProvider>
-                </ActiveGroupProvider>
+                <AppContent />
             </ThemeProvider>
         );
     }

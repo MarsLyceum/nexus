@@ -50,7 +50,7 @@ export function FacebookIcon({
 }
 
 function createStyles(theme: Theme) {
-    StyleSheet.create({
+    return StyleSheet.create({
         topButton: {
             marginTop: 38,
             marginBottom: 80,

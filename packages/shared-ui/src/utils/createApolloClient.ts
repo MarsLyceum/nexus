@@ -28,12 +28,12 @@ const onRemoteServer = isCloudRun || isDevDomain;
 const graphqlApiGatewayEndpointHttp =
     !onRemoteServer && !(process.env.USE_REMOTE_GRAPHQL === 'true')
         ? 'http://192.168.1.48:4000/graphql'
-        : 'https://nexus-web-service-197277044151.us-west1.run.app/graphql';
+        : 'https://dev.my-nexus.net/graphql';
 
 const graphqlApiGatewayEndpointWs =
     !onRemoteServer && !(process.env.USE_REMOTE_GRAPHQL === 'true')
         ? 'ws://192.168.1.48:4000/graphql'
-        : 'wss://nexus-web-service-197277044151.us-west1.run.app/graphql';
+        : 'wss://dev.my-nexus.net/graphql';
 
 // Create a common error link.
 const errorLink = onError((error) => {

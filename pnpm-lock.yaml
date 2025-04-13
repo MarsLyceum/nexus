@@ -589,9 +589,9 @@ importers:
       axios:
         specifier: ^1.7.9
         version: 1.8.4
-      babel-plugin-inline-dotenv:
-        specifier: ^1.7.0
-        version: 1.7.0(dotenv-expand@11.0.7)
+      babel-plugin-transform-inline-environment-variables:
+        specifier: ^0.4.4
+        version: 0.4.4
       bcrypt:
         specifier: ^5.1.1
         version: 5.1.1(encoding@0.1.13)
@@ -916,9 +916,9 @@ importers:
       babel-loader:
         specifier: ^10.0.0
         version: 10.0.0(@babel/core@7.26.10)(webpack@5.99.5)
-      babel-plugin-inline-dotenv:
-        specifier: ^1.7.0
-        version: 1.7.0(dotenv-expand@11.0.7)
+      babel-plugin-transform-inline-environment-variables:
+        specifier: ^0.4.4
+        version: 0.4.4
       babel-preset-expo:
         specifier: ^12.0.11
         version: 12.0.11(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))
@@ -1896,7 +1896,7 @@ packages:
 
   '@expo/bunyan@4.0.1':
     resolution: {integrity: sha512-+Lla7nYSiHZirgK+U/uYzsLv/X+HaJienbD5AKX1UQZHYfWaP+9uuQluRB4GrEVWF0GZ7vEVp/jzaOT9k/SQlg==}
-    engines: {node: '>=0.10.0'}
+    engines: {'0': node >=0.10.0}
 
   '@expo/cli@0.22.24':
     resolution: {integrity: sha512-lhdenxBC8/x/vL39j79eXE09mOaqNNLmiSDdY/PblnI+UNzGgsQ48hBTYa/MQhd0ioXXVKurZL2941dLKwcxJw==}
@@ -4194,14 +4194,6 @@ packages:
       '@babel/core': ^7.12.0
       webpack: '>=5.61.0'
 
-  babel-plugin-inline-dotenv@1.7.0:
-    resolution: {integrity: sha512-FUrXEwY9R9ZO8l0NFHqXFBzHjjMvdIJlELrzJoE6imDsj6Vh7g9svm7iHPHVYPbHmt6BPB2eCAJkwvG6kr5byg==}
-    peerDependencies:
-      dotenv-expand: '>= 5.0.0'
-    peerDependenciesMeta:
-      dotenv-expand:
-        optional: true
-
   babel-plugin-istanbul@6.1.1:
     resolution: {integrity: sha512-Y1IQok9821cC9onCx5otgFfRm7Lm+I+wwxOx738M/WLPZ9Q42m4IG5W0FNX8WLL2gYMZo3JkuXIH2DOpWM+qwA==}
     engines: {node: '>=8'}
@@ -4236,6 +4228,9 @@ packages:
 
   babel-plugin-transform-flow-enums@0.0.2:
     resolution: {integrity: sha512-g4aaCrDDOsWjbm0PUUeVnkcVd6AKJsVc/MbnPhEotEpkeJQP6b8nzewohQi7+QS8UyPehOhGWn0nOwjvWpmMvQ==}
+
+  babel-plugin-transform-inline-environment-variables@0.4.4:
+    resolution: {integrity: sha512-bJILBtn5a11SmtR2j/3mBOjX4K3weC6cq+NNZ7hG22wCAqpc3qtj/iN7dSe9HDiS46lgp1nHsQgeYrea/RUe+g==}
 
   babel-preset-current-node-syntax@1.1.0:
     resolution: {integrity: sha512-ldYss8SbBlWva1bs28q78Ju5Zq1F+8BrqBZZ0VFhLBvhh6lCpC2o3gDJi/5DRLs9FgYZCnmPYIVFU4lRXCkyUw==}
@@ -15383,12 +15378,6 @@ snapshots:
       find-up: 5.0.0
       webpack: 5.99.5
 
-  babel-plugin-inline-dotenv@1.7.0(dotenv-expand@11.0.7):
-    dependencies:
-      dotenv: 16.5.0
-    optionalDependencies:
-      dotenv-expand: 11.0.7
-
   babel-plugin-istanbul@6.1.1:
     dependencies:
       '@babel/helper-plugin-utils': 7.26.5
@@ -15445,6 +15434,8 @@ snapshots:
       '@babel/plugin-syntax-flow': 7.26.0(@babel/core@7.26.10)
     transitivePeerDependencies:
       - '@babel/core'
+
+  babel-plugin-transform-inline-environment-variables@0.4.4: {}
 
   babel-preset-current-node-syntax@1.1.0(@babel/core@7.26.10):
     dependencies:

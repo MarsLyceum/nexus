@@ -7,20 +7,27 @@ import {
     TouchableOpacity,
     ScrollView,
     Dimensions,
-    Platform,
+    Platform, // Keep Platform import if needed for future platform-specific tweaks
 } from 'react-native';
-import { useTheme, themesByCategory, Theme } from '../theme';
+// Assuming useTheme and themesByCategory are correctly imported from your theme setup
+import { useTheme, themesByCategory, Theme } from '../theme'; // Adjust path if necessary
 
 // --- Helper: Get screen width for responsive layout ---
 const screenWidth = Dimensions.get('window').width;
-const numColumns = screenWidth > 600 ? 6 : 4;
-const itemMargin = 6;
-const itemPadding = 12;
-const itemWidth =
-    (screenWidth - itemPadding * 2 - itemMargin * numColumns) / numColumns;
+// Adjust columns based on screen width (example thresholds)
+const numColumns = screenWidth > 1000 ? 6 : screenWidth > 600 ? 5 : 4;
+const itemPaddingHorizontal = 16; // Overall padding for the scroll view
+const itemMargin = 8; // Margin between items
+
+// --- Adjusted Item Width Calculation ---
+const totalHorizontalMargin = itemMargin * (numColumns - 1);
+const availableWidth =
+    screenWidth - itemPaddingHorizontal * 2 - totalHorizontalMargin;
+const itemWidth = availableWidth / numColumns;
+
 // --- Adjusted Preview Height Calculation ---
-// Make height mostly dependent on width + a small fixed amount for the label/padding
-const previewHeight = 100; // Even less extra height
+// Make height proportional to width for a better aspect ratio, plus space for label
+const previewHeight = itemWidth * 0.6 + 35; // Aspect ratio + fixed height for label/padding
 
 // --- ThemePreview Component Definition ---
 interface ThemePreviewProps {
@@ -29,86 +36,96 @@ interface ThemePreviewProps {
     onPress: () => void;
 }
 
-const ThemePreview: React.FC<ThemePreviewProps> = ({
-    themeData,
-    isActive,
-    onPress,
-}) => {
-    const { theme: activeTheme } = useTheme();
+const ThemePreview: React.FC<ThemePreviewProps> = React.memo(
+    ({ themeData, isActive, onPress }) => {
+        // Get the currently active theme context to style the *active* indicator/border correctly
+        const { theme: activeThemeContext } = useTheme();
 
-    return (
-        <TouchableOpacity
-            onPress={onPress}
-            style={[
-                styles.previewContainer,
-                {
-                    width: itemWidth,
-                    height: previewHeight,
-                    backgroundColor: themeData.colors.PrimaryBackground, // Background still represents the theme bg
-                    borderColor: isActive
-                        ? activeTheme.colors.Primary
-                        : 'rgba(128, 128, 128, 0.2)',
-                    borderWidth: isActive ? 1.5 : 0.5,
-                },
-            ]}
-            accessibilityLabel={`Select theme: ${themeData.name}`}
-            accessibilityRole="button"
-            accessibilityState={{ selected: isActive }}
-        >
-            {/* Visual color swatches - VERY THIN */}
-            <View style={styles.swatchContainer}>
-                <View
-                    style={[
-                        styles.swatch,
-                        { backgroundColor: themeData.colors.Primary },
-                    ]}
-                />
-                <View
-                    style={[
-                        styles.swatch,
-                        { backgroundColor: themeData.colors.MainText },
-                    ]}
-                />
-                {/* Add maybe one more very thin swatch if absolutely needed */}
-                {/* <View style={[styles.swatch, { backgroundColor: themeData.colors.Secondary }]} /> */}
-            </View>
-
-            {/* Theme Name Label */}
-            <Text
+        return (
+            <TouchableOpacity
+                onPress={onPress}
                 style={[
-                    styles.previewLabel,
-                    { color: themeData.colors.MainText },
+                    styles.previewContainer,
+                    {
+                        width: itemWidth,
+                        height: previewHeight,
+                        backgroundColor: themeData.colors.PrimaryBackground, // Use the theme's background
+                        // --- Improved Active State Styling ---
+                        borderColor: isActive
+                            ? activeThemeContext.colors.Primary // Use active theme's primary color for border
+                            : 'rgba(128, 128, 128, 0.3)', // Softer border for inactive
+                        borderWidth: isActive ? 2 : 1, // Thicker border when active
+                        marginRight: itemMargin, // Apply margin consistently
+                        marginBottom: itemMargin,
+                    },
                 ]}
-                numberOfLines={1}
-                ellipsizeMode="tail"
+                accessibilityLabel={`Select theme: ${themeData.name}`}
+                accessibilityRole="button"
+                accessibilityState={{ selected: isActive }}
             >
-                {themeData.name}
-            </Text>
-
-            {/* Active Indicator */}
-            {isActive && (
-                <View
-                    style={[
-                        styles.activeIndicator,
-                        {
-                            backgroundColor:
-                                activeTheme.colors.PrimaryBackground,
-                        },
-                    ]}
-                >
-                    <Text
+                {/* --- More Informative Swatches --- */}
+                <View style={styles.swatchContainer}>
+                    <View
                         style={[
-                            styles.checkmark,
-                            { color: activeTheme.colors.Primary },
+                            styles.swatch,
+                            { backgroundColor: themeData.colors.Primary },
+                        ]}
+                    />
+                    {/* Added Secondary color swatch */}
+                    <View
+                        style={[
+                            styles.swatch,
+                            { backgroundColor: themeData.colors.Secondary }, // Assuming Secondary exists
+                        ]}
+                    />
+                    <View
+                        style={[
+                            styles.swatch,
+                            { backgroundColor: themeData.colors.MainText },
+                        ]}
+                    />
+                </View>
+
+                {/* --- Slightly Larger Theme Name Label --- */}
+                <Text
+                    style={[
+                        styles.previewLabel,
+                        { color: themeData.colors.MainText }, // Label color from its own theme
+                    ]}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                >
+                    {themeData.name}
+                </Text>
+
+                {/* --- Clearer Active Indicator --- */}
+                {isActive && (
+                    <View
+                        style={[
+                            styles.activeIndicator,
+                            {
+                                // Use active theme's background for contrast, primary for border
+                                backgroundColor:
+                                    activeThemeContext.colors.PrimaryBackground,
+                                borderColor: activeThemeContext.colors.Primary,
+                            },
                         ]}
                     >
-                        ✓
-                    </Text>
-                </View>
-            )}
-        </TouchableOpacity>
-    );
-};
+                        <Text
+                            style={[
+                                styles.checkmark,
+                                // Use active theme's primary color for the checkmark itself
+                                { color: activeThemeContext.colors.Primary },
+                            ]}
+                        >
+                            ✓
+                        </Text>
+                    </View>
+                )}
+            </TouchableOpacity>
+        );
+    }
+); // Use React.memo for performance optimization if themeData doesn't change unnecessarily
 
 // --- Main ThemeScreen Component ---
 export const ThemeScreen: React.FC = () => {
@@ -118,17 +135,24 @@ export const ThemeScreen: React.FC = () => {
         <ScrollView
             style={[
                 styles.container,
-                { backgroundColor: theme.colors.PrimaryBackground },
+                { backgroundColor: theme.colors.PrimaryBackground }, // Use active theme background
             ]}
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={[
+                styles.scrollContent,
+                // Adjust padding based on calculated horizontal padding
+                { paddingHorizontal: itemPaddingHorizontal },
+            ]}
             showsVerticalScrollIndicator={false}
         >
+            {/* Screen Title */}
             <Text style={[styles.title, { color: theme.colors.Primary }]}>
                 Select Theme
             </Text>
 
+            {/* Map through categories and themes */}
             {Object.entries(themesByCategory).map(([category, themes]) => (
                 <View key={category} style={styles.section}>
+                    {/* Category Title */}
                     <Text
                         style={[
                             styles.sectionTitle,
@@ -137,12 +161,13 @@ export const ThemeScreen: React.FC = () => {
                     >
                         {category}
                     </Text>
+                    {/* Grid for themes within the category */}
                     <View style={styles.themeGrid}>
                         {themes.map((t) => (
                             <ThemePreview
                                 key={t.name}
                                 themeData={t}
-                                isActive={t.name === theme.name}
+                                isActive={t.name === theme.name} // Check if this theme 't' is the active one
                                 onPress={() => setThemeByName(t.name)}
                             />
                         ))}
@@ -159,83 +184,76 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     scrollContent: {
-        padding: itemPadding,
-        paddingBottom: 24,
+        paddingTop: 20, // Add some top padding
+        paddingBottom: 30, // Ensure space at the bottom
+        // horizontal padding is set dynamically based on itemPaddingHorizontal
     },
     title: {
-        fontSize: 20,
+        fontSize: 22, // Slightly larger title
         fontWeight: 'bold',
-        marginBottom: 16,
+        marginBottom: 24, // More space below title
         textAlign: 'center',
     },
     section: {
-        marginBottom: 20,
+        marginBottom: 24, // More space between sections
     },
     sectionTitle: {
-        fontSize: 16,
+        fontSize: 18, // Larger category titles
         fontWeight: '600',
-        marginBottom: 8,
-        marginLeft: itemMargin / 2,
+        marginBottom: 12, // More space below category title
+        // Removed marginLeft, grid alignment handles spacing
     },
     themeGrid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
+        // No margin/padding here, handled by item margin and scrollview padding
     },
-    // Styles for ThemePreview Component
+    // --- Styles for ThemePreview Component ---
     previewContainer: {
-        borderRadius: 6,
-        overflow: 'hidden', // Important to clip the swatch container if it has border radius
-        paddingTop: 4, // Reduced top/bottom padding
-        paddingBottom: 4,
-        paddingHorizontal: 5, // Keep horizontal padding same
+        borderRadius: 8, // Slightly more rounded corners
+        overflow: 'hidden',
+        padding: 6, // Internal padding around content
         alignItems: 'center',
         justifyContent: 'space-between', // Pushes label towards bottom
-        marginBottom: itemMargin,
-        marginRight: itemMargin,
-        position: 'relative', // Needed for absolute positioning of indicator
+        position: 'relative',
+        // Width, Height, MarginRight, MarginBottom applied dynamically inline
     },
     // --- Updated Swatch Styles ---
     swatchContainer: {
         flexDirection: 'row',
-        height: 6, // <<<<<----- DRASTICALLY REDUCED HEIGHT HERE
-        width: '100%', // Take full width inside padding
-        // marginBottom: 4, // Reduce space below swatches
-        borderRadius: 2, // Optional: tiny radius for swatch container itself
-        overflow: 'hidden', // Clip the individual swatches
-        // Removed marginBottom to bring label closer
+        height: 12, // <<<----- Increased swatch height slightly
+        width: '100%',
+        borderRadius: 4, // Rounded corners for the swatch group
+        overflow: 'hidden',
+        marginBottom: 8, // Space between swatches and label
     },
     swatch: {
-        // Single style for all swatches now
-        flex: 1, // Make swatches equal width for simplicity
+        flex: 1, // Divide space equally
     },
-    // swatchPrimary: { // Removed specific swatch styles, using generic 'swatch'
-    //     flex: 1,
-    // },
-    // swatchText: { // Removed specific swatch styles, using generic 'swatch'
-    //     flex: 1,
-    // },
+    // --- Updated Label Styles ---
     previewLabel: {
-        fontSize: 10,
+        fontSize: 12, // <<<----- Increased label font size
         fontWeight: '500',
         textAlign: 'center',
-        width: '100%',
-        marginTop: 4, // Add small margin top now that swatch margin bottom is removed
+        width: '100%', // Ensure it takes full width for centering
     },
+    // --- Updated Active Indicator Styles ---
     activeIndicator: {
         position: 'absolute',
-        top: 2, // Adjust position slightly due to reduced padding
-        right: 2, // Adjust position slightly
-        borderRadius: 8,
-        width: 16,
-        height: 16,
+        top: 4, // Position near top-right corner
+        right: 4,
+        borderRadius: 10, // Make it circular
+        width: 20, // <<<----- Slightly larger indicator
+        height: 20, // <<<----- Slightly larger indicator
         alignItems: 'center',
         justifyContent: 'center',
-        borderWidth: 0.5,
-        borderColor: 'rgba(128, 128, 128, 0.4)',
+        borderWidth: 1, // Give indicator a border
+        // Background and BorderColor applied dynamically inline
     },
     checkmark: {
-        fontSize: 9,
+        fontSize: 11, // <<<----- Slightly larger checkmark
         fontWeight: 'bold',
-        lineHeight: 14, // Adjust line height for vertical centering in indicator
+        lineHeight: 18, // Adjust line height for vertical centering
+        // Color applied dynamically inline
     },
 });

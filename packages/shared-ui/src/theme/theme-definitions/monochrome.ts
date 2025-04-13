@@ -57,7 +57,7 @@ export const Monochrome: Theme[] = [
             TextInput: '#665800',
             ActiveText: '#000000',
             MainText: '#222222',
-            InactiveText: '#989898', // Updated: Neutral grey
+            InactiveText: '#989898',
         },
     },
     {

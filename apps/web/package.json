@@ -18,7 +18,7 @@
     "@types/jsonwebtoken": "^9.0.9",
     "jsonwebtoken": "^9.0.2",
     "cross-env": "^7.0.3",
-    "react-native": "0.76.6",
+    "react-native": "0.76.9",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "@expo/next-adapter": "^6.0.0",

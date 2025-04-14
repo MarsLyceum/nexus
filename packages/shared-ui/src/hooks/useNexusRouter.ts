@@ -2,6 +2,7 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import { redirect, useRouter as useNextRouter } from 'next/navigation';
 import { useNavigation, StackActions } from '@react-navigation/native';
+import { Platform } from 'react-native';
 import { detectEnvironment, Environment } from '../utils';
 
 // Define the type for our custom router API using types (not interfaces)
@@ -125,11 +126,11 @@ export function useNexusRouter(): NexusRouter {
                     navigation.navigate(normalizedPath, params);
                 }
 
-                // Build full URL from the path and any params.
-                const url = buildUrlWithParams(path, params);
-
                 // If in a browser environment, update the URL via the History API.
-                if (typeof window !== 'undefined') {
+                if (Platform.OS === 'web' && typeof window !== 'undefined') {
+                    // Build full URL from the path and any params.
+                    const url = buildUrlWithParams(path, params);
+
                     try {
                         window.history.replaceState({}, '', url);
                     } catch (error) {

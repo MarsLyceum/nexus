@@ -5,13 +5,14 @@ import React, {
     useCallback,
     useMemo,
 } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 
 import { useTheme, Theme } from '../theme';
 import { MessageContent, MessageEditor } from './message';
-import { formatDateForChat } from '../utils';
+import { formatDateForChat, isComputer } from '../utils';
 import type { MessageWithAvatar, DirectMessageWithAvatar } from '../types';
 
+import { MessageOptionsBottomSheet } from './MessageOptionsBottomSheet';
 import { MessageOptionsModal } from './MessageOptionsModal';
 import { MoreOptionsMenu } from './MoreOptionsMenu';
 import { DeleteMessageConfirmationModal } from './DeleteMessageConfirmationModal';
@@ -44,6 +45,9 @@ export const MessageItem: React.FC<MessageItemProps> = ({
 }) => {
     const [currentMessage, setCurrentMessage] = useState(message);
     const [optionsModalVisible, setOptionsModalVisible] = useState(false);
+    const [bottomSheetVisible, setBottomSheetVisible] =
+        useState<boolean>(false);
+
     const [anchorPosition, setAnchorPosition] = useState<
         | {
               x: number;
@@ -83,6 +87,10 @@ export const MessageItem: React.FC<MessageItemProps> = ({
         setShowDeleteConfirmationModal(false);
     }, [currentMessage, onDeleteMessage]);
 
+    const handleLongPress = useCallback((): void => {
+        setBottomSheetVisible(true);
+    }, []);
+
     // Measure the container and set the anchor based on its top-right edge.
     const showModal = () => {
         if (containerRef.current) {
@@ -120,29 +128,35 @@ export const MessageItem: React.FC<MessageItemProps> = ({
         }, 300);
     };
 
+    // eslint-disable-next-line consistent-return
     useEffect(() => {
-        const handleDocumentMouseMove = (e: MouseEvent) => {
-            if (containerRef.current) {
-                const rect = (
-                    containerRef.current as unknown as Element
-                ).getBoundingClientRect();
-                const { clientX, clientY } = e;
-                const isOverMessage =
-                    clientX >= rect.left &&
-                    clientX <= rect.right &&
-                    clientY >= rect.top &&
-                    clientY <= rect.bottom;
-                if (!isOverMessage) {
-                    setOptionsModalVisible(false);
+        if (isComputer()) {
+            const handleDocumentMouseMove = (e: MouseEvent) => {
+                if (containerRef.current) {
+                    const rect = (
+                        containerRef.current as unknown as Element
+                    ).getBoundingClientRect();
+                    const { clientX, clientY } = e;
+                    const isOverMessage =
+                        clientX >= rect.left &&
+                        clientX <= rect.right &&
+                        clientY >= rect.top &&
+                        clientY <= rect.bottom;
+                    if (!isOverMessage) {
+                        setOptionsModalVisible(false);
+                    }
                 }
-            }
-        };
-        document.addEventListener('mousemove', handleDocumentMouseMove, {
-            passive: true,
-        });
-        return () => {
-            document.removeEventListener('mousemove', handleDocumentMouseMove);
-        };
+            };
+            document.addEventListener('mousemove', handleDocumentMouseMove, {
+                passive: true,
+            });
+            return () => {
+                document.removeEventListener(
+                    'mousemove',
+                    handleDocumentMouseMove
+                );
+            };
+        }
     }, []);
 
     useEffect(() => {
@@ -212,135 +226,166 @@ export const MessageItem: React.FC<MessageItemProps> = ({
         currentMessage.attachmentUrls.length > 0;
 
     return (
-        <View
-            ref={containerRef}
-            style={[styles.messageContainer, isHovered && styles.hovered]}
+        <Pressable
+            onLongPress={handleLongPress}
+            onPressIn={() => setIsHovered(true)}
+            onPressOut={() => setIsHovered(false)}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
         >
-            <NexusImage
-                source={currentMessage.avatar}
-                style={styles.avatar}
-                width={40}
-                height={40}
-                alt="User avatar"
-            />
-            <View style={styles.innerContainer}>
-                <Text style={styles.userName}>
-                    {currentMessage.username}{' '}
-                    <Text style={styles.time}>
-                        {formatDateForChat(messageDate)}
+            <View
+                ref={containerRef}
+                style={[styles.messageContainer, isHovered && styles.hovered]}
+            >
+                <NexusImage
+                    source={currentMessage.avatar}
+                    style={styles.avatar}
+                    width={40}
+                    height={40}
+                    alt="User avatar"
+                />
+                <View style={styles.innerContainer}>
+                    <Text style={styles.userName}>
+                        {currentMessage.username}{' '}
+                        <Text style={styles.time}>
+                            {formatDateForChat(messageDate)}
+                        </Text>
                     </Text>
-                </Text>
 
-                {/* Content view section - always mounted, visibility controlled by style */}
-                <View
-                    style={[
-                        styles.viewContainer,
-                        isEditing ? styles.hidden : styles.visible,
-                    ]}
-                >
-                    <MessageContent
-                        message={currentMessage}
-                        width={width}
-                        onAttachmentPress={onAttachmentPress}
-                        renderMessage
-                        renderLinkPreview
-                        renderAttachments
-                    />
-                </View>
-
-                {/* Edit section - always mounted, visibility controlled by style */}
-                <View
-                    style={[
-                        styles.editContainer,
-                        isEditing ? styles.visible : styles.hidden,
-                    ]}
-                >
-                    {/* Text editor */}
-                    <MessageEditor
-                        initialContent={editedContent}
-                        width={width}
-                        onChange={setEditedContent}
-                        onSave={handleSaveEdit}
-                        onCancel={handleCancelEdit}
-                    />
-
-                    {/* Link previews with live updates */}
-                    <View style={styles.linkPreviewsWhileEditing}>
+                    {/* Content view section - always mounted, visibility controlled by style */}
+                    <View
+                        style={[
+                            styles.viewContainer,
+                            isEditing ? styles.hidden : styles.visible,
+                        ]}
+                    >
                         <MessageContent
                             message={currentMessage}
                             width={width}
                             onAttachmentPress={onAttachmentPress}
-                            renderMessage={false}
+                            renderMessage
                             renderLinkPreview
-                            renderAttachments={false}
-                            contentOverride={editedContent}
+                            renderAttachments
                         />
                     </View>
 
-                    {/* Attachments section */}
-                    {hasAttachments && (
-                        <View style={styles.attachmentsWhileEditing}>
+                    {/* Edit section - always mounted, visibility controlled by style */}
+                    <View
+                        style={[
+                            styles.editContainer,
+                            isEditing ? styles.visible : styles.hidden,
+                        ]}
+                    >
+                        {/* Text editor */}
+                        {isComputer() && (
+                            <MessageEditor
+                                initialContent={editedContent}
+                                width={width}
+                                onChange={setEditedContent}
+                                onSave={handleSaveEdit}
+                                onCancel={handleCancelEdit}
+                            />
+                        )}
+
+                        {/* Link previews with live updates */}
+                        <View style={styles.linkPreviewsWhileEditing}>
                             <MessageContent
                                 message={currentMessage}
                                 width={width}
                                 onAttachmentPress={onAttachmentPress}
                                 renderMessage={false}
-                                renderLinkPreview={false}
-                                renderAttachments
+                                renderLinkPreview
+                                renderAttachments={false}
+                                contentOverride={editedContent}
+                            />
+                        </View>
+
+                        {/* Attachments section */}
+                        {hasAttachments && (
+                            <View style={styles.attachmentsWhileEditing}>
+                                <MessageContent
+                                    message={currentMessage}
+                                    width={width}
+                                    onAttachmentPress={onAttachmentPress}
+                                    renderMessage={false}
+                                    renderLinkPreview={false}
+                                    renderAttachments
+                                />
+                            </View>
+                        )}
+                    </View>
+                </View>
+
+                {/* Options modal */}
+                {!isEditing &&
+                    (optionsModalVisible || showMoreOptions) &&
+                    anchorPosition && (
+                        <View style={styles.optionsModalContainer}>
+                            <MessageOptionsModal
+                                visible
+                                onClose={() => setOptionsModalVisible(false)}
+                                anchorPosition={anchorPosition}
+                                onEdit={handleEdit}
+                                onMore={handleMore}
+                                onMouseEnterModal={() => setModalHovered(true)}
+                                onMouseLeaveModal={() => {
+                                    setModalHovered(false);
+                                    setOptionsModalVisible(false);
+                                }}
                             />
                         </View>
                     )}
-                </View>
-            </View>
 
-            {/* Options modal */}
-            {!isEditing &&
-                (optionsModalVisible || showMoreOptions) &&
-                anchorPosition && (
-                    <View style={styles.optionsModalContainer}>
-                        <MessageOptionsModal
-                            visible
-                            onClose={() => setOptionsModalVisible(false)}
-                            anchorPosition={anchorPosition}
-                            onEdit={handleEdit}
-                            onMore={handleMore}
-                            onMouseEnterModal={() => setModalHovered(true)}
-                            onMouseLeaveModal={() => {
-                                setModalHovered(false);
-                                setOptionsModalVisible(false);
-                            }}
-                        />
-                    </View>
+                {bottomSheetVisible && (
+                    <MessageOptionsBottomSheet
+                        visible={bottomSheetVisible}
+                        onClose={() => setBottomSheetVisible(false)}
+                        onEdit={handleEdit}
+                        onReply={() => {
+                            // Add your reply functionality or logging here.
+                        }}
+                        onForward={() => {}}
+                        onCreateThread={() => {}}
+                        onCopyText={() => {}}
+                        onMarkUnread={() => {}}
+                        onPinMessage={() => {}}
+                        onApps={() => {}}
+                        onMention={() => {}}
+                        onCopyMessageLink={() => {}}
+                        onRemoveEmbed={() => {}}
+                        onDeleteMessage={() =>
+                            setShowDeleteConfirmationModal(true)
+                        }
+                    />
                 )}
 
-            <MoreOptionsMenu
-                anchorPosition={moreButtonAnchor}
-                visible={showMoreOptions}
-                onClose={handleCloseMoreOptions}
-                onEdit={handleEdit}
-                onReply={() => {}}
-                onForward={() => {}}
-                onCreateThread={() => {}}
-                onAddReaction={() => {}}
-                onCopyText={() => {}}
-                onPinMessage={() => {}}
-                onMarkUnread={() => {}}
-                onCopyMessageLink={() => {}}
-                onDeleteMessage={() => setShowDeleteConfirmationModal(true)}
-            />
-
-            {showDeleteConfirmationModal && (
-                <DeleteMessageConfirmationModal
-                    visible={showDeleteConfirmationModal}
-                    onClose={() => setShowDeleteConfirmationModal(false)}
-                    onConfirmDelete={handleDeleteMessage}
-                    message={currentMessage}
-                    onAttachmentPress={onAttachmentPress}
+                <MoreOptionsMenu
+                    anchorPosition={moreButtonAnchor}
+                    visible={showMoreOptions}
+                    onClose={handleCloseMoreOptions}
+                    onEdit={handleEdit}
+                    onReply={() => {}}
+                    onForward={() => {}}
+                    onCreateThread={() => {}}
+                    onAddReaction={() => {}}
+                    onCopyText={() => {}}
+                    onPinMessage={() => {}}
+                    onMarkUnread={() => {}}
+                    onCopyMessageLink={() => {}}
+                    onDeleteMessage={() => setShowDeleteConfirmationModal(true)}
                 />
-            )}
-        </View>
+
+                {showDeleteConfirmationModal && (
+                    <DeleteMessageConfirmationModal
+                        visible={showDeleteConfirmationModal}
+                        onClose={() => setShowDeleteConfirmationModal(false)}
+                        onConfirmDelete={handleDeleteMessage}
+                        message={currentMessage}
+                        onAttachmentPress={onAttachmentPress}
+                    />
+                )}
+            </View>
+        </Pressable>
     );
 };
 

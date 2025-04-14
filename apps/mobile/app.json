@@ -47,7 +47,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "46cea6b7-6a97-4f60-bad0-c74ac8cf7d38"
+        "projectId": "73dc2121-89ab-4077-a226-2689a0d79309"
       }
     },
     "jsEngine": "hermes",
@@ -58,7 +58,15 @@
         "expo-build-properties",
         {
           "android": {
-            "kotlinVersion": "2.0.0"
+            "kotlinVersion": "1.9.25",
+            "gradleProperties": {
+              "KOTLIN_COMPOSE_COMPILER_PLUGIN_EMBEDDABLE_VERSION": "1.9.25"
+            },
+            "extraGradleRepositories": [
+              "maven { url 'https://maven.pkg.jetbrains.space/public/p/compose/dev' }",
+              "maven { url 'https://maven.pkg.jetbrains.space/public/p/kotlin/dev' }"
+            ],
+            "extraGradleConfiguration": "configurations.all { resolutionStrategy { force 'org.jetbrains.kotlin:kotlin-compose-compiler-plugin-embeddable:1.9.25' } }"
           }
         }
       ]

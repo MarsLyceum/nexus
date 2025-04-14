@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
+import { View, StyleSheet, Dimensions, Platform } from 'react-native';
 
 import { Portal } from '../providers';
 import { useTheme, Theme } from '../theme';
@@ -48,22 +48,24 @@ export const MiniModal: React.FC<MiniModalProps> = ({
     useEffect(() => {
         if (!visible || !closeOnOutsideClick) return;
 
-        const handleOutsideClick = (e: MouseEvent) => {
-            if (modalRef.current) {
-                const modalElement = modalRef.current as unknown as Element;
-                if (!modalElement.contains(e.target as Node)) {
-                    onClose();
+        if (Platform.OS === 'web') {
+            const handleOutsideClick = (e: MouseEvent) => {
+                if (modalRef.current) {
+                    const modalElement = modalRef.current as unknown as Element;
+                    if (!modalElement.contains(e.target as Node)) {
+                        onClose();
+                    }
                 }
-            }
-        };
+            };
 
-        document.addEventListener('mousedown', handleOutsideClick, {
-            passive: true,
-        });
-        // eslint-disable-next-line consistent-return
-        return () => {
-            document.removeEventListener('mousedown', handleOutsideClick);
-        };
+            document.addEventListener('mousedown', handleOutsideClick, {
+                passive: true,
+            });
+            // eslint-disable-next-line consistent-return
+            return () => {
+                document.removeEventListener('mousedown', handleOutsideClick);
+            };
+        }
     }, [visible, closeOnOutsideClick, onClose]);
 
     if (!visible) return undefined;

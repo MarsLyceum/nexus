@@ -9,8 +9,6 @@ import {
     Text,
     StyleSheet,
     Easing,
-    ScrollView,
-    TouchableHighlight,
 } from 'react-native';
 import { useTheme, Theme } from '../theme';
 import { Edit, Delete } from '../icons';
@@ -62,7 +60,6 @@ export function MessageOptionsBottomSheet({
     // Animated value for the bottom sheet's vertical position.
     const topAnim = useRef(new Animated.Value(SNAP_CLOSED)).current;
     // Outer pan responder tracking.
-    const scrollOffset = useRef(0);
     const outerStartOffset = useRef<number>(0);
     // Track whether the modal is fully expanded.
     const [modalExpanded, setModalExpanded] = useState(false);
@@ -80,7 +77,13 @@ export function MessageOptionsBottomSheet({
 
     // For measuring scrollable content size.
     const [contentHeight, setContentHeight] = useState<number>(0);
-    const [containerHeight, setContainerHeight] = useState<number>(0);
+
+    // Compute the visible container height based on snap position.
+    // When collapsed: visible height = screenHeight - SNAP_COLLAPSED (i.e. 400).
+    // When expanded: visible height = screenHeight - SNAP_EXPANDED.
+    const visibleContainerHeight = useMemo(() => {
+        return screenHeight - (modalExpanded ? SNAP_EXPANDED : SNAP_COLLAPSED);
+    }, [modalExpanded, screenHeight]);
 
     // ---------------------------
     // Outer PanResponder for the bottom sheet
@@ -93,14 +96,14 @@ export function MessageOptionsBottomSheet({
                     if (modalExpanded) return false;
                     return (
                         Math.abs(gestureState.dy) > 10 &&
-                        scrollOffset.current <= 0
+                        // Only engage if inner scroll is at top (logic could be enhanced in production)
+                        gestureState.dy > 0
                     );
                 },
                 onMoveShouldSetPanResponderCapture: (evt, gestureState) => {
                     if (modalExpanded) return false;
                     return (
-                        Math.abs(gestureState.dy) > 10 &&
-                        scrollOffset.current <= 0
+                        Math.abs(gestureState.dy) > 10 && gestureState.dy > 0
                     );
                 },
                 onPanResponderGrant: () => {
@@ -150,7 +153,14 @@ export function MessageOptionsBottomSheet({
                     }
                 },
             }),
-        [modalExpanded, topAnim]
+        [
+            modalExpanded,
+            topAnim,
+            SNAP_COLLAPSED,
+            SNAP_EXPANDED,
+            SNAP_CLOSED,
+            onClose,
+        ]
     );
 
     useEffect(() => {
@@ -169,7 +179,7 @@ export function MessageOptionsBottomSheet({
                 useNativeDriver: false,
             }).start(() => setModalExpanded(false));
         }
-    }, [visible, topAnim]);
+    }, [visible, topAnim, SNAP_COLLAPSED, SNAP_CLOSED]);
 
     const styles = useMemo(
         () => createStyles(theme, screenHeight),
@@ -177,7 +187,7 @@ export function MessageOptionsBottomSheet({
     );
 
     // ---------------------------
-    // Inner PanResponder for the custom scroll view (using built-in offset/flatten)
+    // Inner PanResponder for the custom scroll view
     // ---------------------------
     const innerPanResponder = useMemo(
         () =>
@@ -191,8 +201,20 @@ export function MessageOptionsBottomSheet({
                     innerScrollY.setValue(0);
                 },
                 onPanResponderMove: (evt, gestureState) => {
-                    // Multiply dy by -1 so that upward drags (dy negative) increase the offset.
-                    innerScrollY.setValue(-gestureState.dy);
+                    // Calculate new absolute offset from the starting offset and gesture's dy.
+                    let newOffset =
+                        innerScrollYOffset.current - gestureState.dy;
+                    // Calculate maximum scrollable offset using the visible scrollable height.
+                    const maxScroll = Math.max(
+                        contentHeight - visibleContainerHeight,
+                        0
+                    );
+                    // Clamp the new offset between 0 and maxScroll
+                    newOffset = clamp(newOffset, 0, maxScroll);
+                    // Set the animated value as the difference between clamped offset and persistent offset.
+                    innerScrollY.setValue(
+                        newOffset - innerScrollYOffset.current
+                    );
                 },
                 onPanResponderRelease: () => {
                     innerScrollY.flattenOffset();
@@ -202,7 +224,7 @@ export function MessageOptionsBottomSheet({
                     innerScrollY.flattenOffset();
                 },
             }),
-        []
+        [contentHeight, visibleContainerHeight]
     );
 
     return (
@@ -234,12 +256,8 @@ export function MessageOptionsBottomSheet({
                     <View style={styles.handleBar} />
                 </Animated.View>
                 {/* Inner custom scroll container */}
-                <View
-                    style={{ flex: 1, overflow: 'hidden' }}
-                    onLayout={(evt) =>
-                        setContainerHeight(evt.nativeEvent.layout.height)
-                    }
-                >
+                {/* Removed the onLayout here since we now compute the visible height */}
+                <View style={{ flex: 1, overflow: 'hidden' }}>
                     <Animated.View
                         {...innerPanResponder.panHandlers}
                         // Apply the transformation: content moves opposite to the scroll offset.

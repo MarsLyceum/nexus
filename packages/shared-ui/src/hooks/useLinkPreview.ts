@@ -10,29 +10,17 @@ import { PreviewData } from '../types';
 
 type UseLinkPreviewParams = {
     url?: string;
-    previewData?: PreviewData;
 };
 
-export function useLinkPreview({
-    url,
-    previewData: initialPreviewData,
-}: UseLinkPreviewParams) {
-    const [previewData, setPreviewData] = useState<PreviewData>(
-        initialPreviewData || {}
-    );
-    const [loading, setLoading] = useState<boolean>(!initialPreviewData);
+export function useLinkPreview({ url }: UseLinkPreviewParams) {
+    const [previewData, setPreviewData] = useState<PreviewData>({});
+    const [loading, setLoading] = useState<boolean>(true);
     const [isImage, setIsImage] = useState<boolean>(false);
     const [imageDimensions, setImageDimensions] = useState<
         { width: number; height: number } | undefined
     >(undefined);
 
     useEffect(() => {
-        // If preview data was provided, do not fetch anything.
-        if (initialPreviewData) {
-            setPreviewData(initialPreviewData);
-            setLoading(false);
-            return;
-        }
         if (!url) {
             setLoading(false);
             return;
@@ -283,7 +271,7 @@ export function useLinkPreview({
             }
         }
         void fetchPreview();
-    }, [url, initialPreviewData]);
+    }, [url, imageDimensions]);
 
     return { previewData, loading, isImage, imageDimensions };
 }

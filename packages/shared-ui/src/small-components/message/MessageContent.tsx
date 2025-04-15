@@ -4,7 +4,7 @@ import { NexusImage } from '../NexusImage';
 import { LinkPreview } from '../LinkPreview';
 import { MarkdownRenderer } from '../MarkdownRenderer';
 import { extractUrls, isImageExtensionUrl } from '../../utils';
-import { useMediaTypes } from '../../hooks';
+import { useMediaTypes, useLinkPreview } from '../../hooks';
 import { NexusVideo } from '../NexusVideo';
 import type { MessageWithAvatar, DirectMessageWithAvatar } from '../../types';
 
@@ -36,7 +36,13 @@ export const MessageContent: React.FC<MessageContentProps> = ({
     // Determine if the effective content is just a link.
     const trimmedContent = effectiveContent?.trim();
     const urls = extractUrls(trimmedContent ?? '');
-    const isJustLink = urls.length === 1 && trimmedContent === urls[0];
+    const { previewData, isImage } = useLinkPreview({
+        url: urls[0],
+    });
+    const isJustImageOrEmbeddLink =
+        urls.length === 1 &&
+        trimmedContent === urls[0] &&
+        (isImage || previewData.embedHtml);
 
     // Helper to render the message text using MarkdownRenderer.
     // Updated to pass the isEdited prop.
@@ -85,7 +91,7 @@ export const MessageContent: React.FC<MessageContentProps> = ({
                 <>
                     {/* Render message text if enabled and content is not just a link */}
                     {renderMessage &&
-                        !isJustLink &&
+                        !isJustImageOrEmbeddLink &&
                         renderMessageText(effectiveContent, message.edited)}
 
                     {/* Render link previews if enabled */}

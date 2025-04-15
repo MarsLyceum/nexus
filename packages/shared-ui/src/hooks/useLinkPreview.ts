@@ -271,7 +271,7 @@ export function useLinkPreview({ url }: UseLinkPreviewParams) {
             }
         }
         void fetchPreview();
-    }, [url, imageDimensions]);
+    }, [url]);
 
     return { previewData, loading, isImage, imageDimensions };
 }

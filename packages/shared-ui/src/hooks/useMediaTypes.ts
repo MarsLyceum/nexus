@@ -20,8 +20,26 @@ export const useMediaTypes = (urls: string[]): { [url: string]: MediaInfo } => {
         urls.forEach((url) => {
             // Only process URLs that haven't been handled yet.
             if (!mediaInfo[url]) {
+                let fetchUrl = url;
+                if (Platform.OS === 'web') {
+                    try {
+                        const parsedUrl = new URL(
+                            url ?? '',
+                            window.location.origin
+                        );
+                        if (
+                            parsedUrl.origin !== window.location.origin &&
+                            parsedUrl.hostname !== window.location.hostname
+                        ) {
+                            fetchUrl = `https://images.weserv.nl/?url=${encodeURIComponent(url)}`;
+                        }
+                    } catch {
+                        fetchUrl = `https://images.weserv.nl/?url=${encodeURIComponent(url)}`;
+                    }
+                }
+
                 // Fetch HEAD to determine the content type.
-                fetch(url, { method: 'HEAD' })
+                fetch(fetchUrl, { method: 'HEAD' })
                     .then((response) => {
                         const contentType =
                             response.headers.get('content-type') || '';

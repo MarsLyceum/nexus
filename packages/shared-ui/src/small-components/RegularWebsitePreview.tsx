@@ -24,6 +24,7 @@ export const RegularWebsitePreview: React.FC<RegularWebsitePreviewProps> = ({
     url,
     previewData,
 }) => {
+    console.log('previewData:', previewData);
     // State to control modal visibility.
     const [modalVisible, setModalVisible] = useState(false);
     const { theme } = useTheme();

@@ -1,5 +1,6 @@
 // NexusImage.tsx
 import React, { useLayoutEffect, useRef, useState } from 'react';
+import { Platform } from 'react-native';
 // Next.js Image import – no longer used in Next environments.
 // import NextImage from 'next/image';
 // Expo Image import – used for React Native.
@@ -69,11 +70,28 @@ export const NexusImage = (props: NexusImageProps) => {
     const { width: containerWidth, height: containerHeight } =
         useContainerDimensions(containerRef);
 
+    let proxySource = typeof source === 'string' ? source : source.uri;
+    if (Platform.OS === 'web') {
+        try {
+            const parsedUrl = new URL(
+                proxySource ?? '',
+                window.location.origin
+            );
+            if (
+                parsedUrl.origin !== window.location.origin &&
+                parsedUrl.hostname !== window.location.hostname
+            ) {
+                proxySource = `https://images.weserv.nl/?url=${encodeURIComponent(proxySource)}`;
+            }
+        } catch {
+            proxySource = `https://images.weserv.nl/?url=${encodeURIComponent(proxySource)}`;
+        }
+    }
+
     // --- React Native: use Expo Image ---
     if (env === 'react-native-mobile' || env === 'react-native-web') {
         // Expo Image requires the source to be an object with a `uri` property.
-        const expoSource =
-            typeof source === 'string' ? { uri: source } : source;
+        const expoSource = { uri: proxySource };
         // Merge provided width and height into the style for proper sizing in Expo.
         const expoStyle: React.CSSProperties = { ...style };
         if (width) expoStyle.width = width;
@@ -126,7 +144,7 @@ export const NexusImage = (props: NexusImageProps) => {
             return <div ref={containerRef} style={containerStyle} />;
         }
 
-        const src = typeof source === 'string' ? source : source.uri;
+        const src = proxySource;
         return (
             <div ref={containerRef} style={containerStyle}>
                 <img
@@ -148,7 +166,7 @@ export const NexusImage = (props: NexusImageProps) => {
     // For static dimensions, extract numeric width/height.
     const numericWidth = getNumericSize(width, style.width) || 300; // Fallback width.
     const numericHeight = getNumericSize(height, style.height) || 200; // Fallback height.
-    const src = typeof source === 'string' ? source : source.uri;
+    const src = proxySource;
     return (
         <img
             src={src}

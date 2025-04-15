@@ -153,10 +153,9 @@ export const BottomSheet = ({
                 onPanResponderMove: (evt, gestureState) => {
                     let newOffset =
                         innerScrollYOffset.current - gestureState.dy;
-                    const maxScroll = Math.max(
-                        contentHeight - visibleContainerHeight,
-                        0
-                    );
+                    const maxScroll =
+                        Math.max(contentHeight - visibleContainerHeight, 0) +
+                        20;
                     newOffset = clamp(newOffset, 0, maxScroll);
                     innerScrollY.setValue(
                         newOffset - innerScrollYOffset.current

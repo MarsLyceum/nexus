@@ -1,9 +1,12 @@
 // MessageOptionsBottomSheet.tsx
 import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { BottomSheet } from './BottomSheet';
-import { useTheme, Theme } from '../theme';
 import Svg, { Path } from 'react-native-svg';
+
+import { useTheme, Theme } from '../theme';
+import { Edit, Delete, Cancel } from '../icons';
+
+import { BottomSheet } from './BottomSheet';
 
 export type MessageOptionsBottomSheetProps = {
     visible: boolean;
@@ -55,7 +58,7 @@ export function MessageOptionsBottomSheet({
             <View style={styles.sectionTop}>
                 <MenuItem
                     label="Edit Message"
-                    icon={<EditIcon color={theme.colors.ActiveText} />}
+                    icon={<Edit color={theme.colors.ActiveText} />}
                     onPress={onEdit}
                     theme={theme}
                 />
@@ -123,14 +126,14 @@ export function MessageOptionsBottomSheet({
             <View style={styles.sectionBottom}>
                 <MenuItem
                     label="Remove Embed"
-                    icon={<RemoveEmbedIcon color={theme.colors.Error} />}
+                    icon={<Cancel color={theme.colors.Error} />}
                     onPress={onRemoveEmbed}
                     theme={theme}
                     destructive
                 />
                 <MenuItem
                     label="Delete Message"
-                    icon={<TrashIcon color={theme.colors.Error} />}
+                    icon={<Delete color={theme.colors.Error} />}
                     onPress={onDeleteMessage}
                     theme={theme}
                     destructive
@@ -168,27 +171,6 @@ export function MenuItem({
 // -----------------------
 // Inline SVG icon components
 // -----------------------
-
-function EditIcon({ size = 20, color }: { size?: number; color: string }) {
-    return (
-        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-            <Path
-                d="M11 4H6a2 2 0 0 0-2 2v5l10 10 5-5L11 4z"
-                stroke={color}
-                strokeWidth={2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-            />
-            <Path
-                d="M18.5 2.5a2.121 2.121 0 0 1 3 3L15 12l-3-3 6.5-6.5z"
-                stroke={color}
-                strokeWidth={2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-            />
-        </Svg>
-    );
-}
 
 function ReplyIcon({ size = 20, color }: { size?: number; color: string }) {
     return (
@@ -357,68 +339,6 @@ function LinkIcon({ size = 20, color }: { size?: number; color: string }) {
                 strokeWidth={2}
                 strokeLinecap="round"
                 strokeLinejoin="round"
-            />
-        </Svg>
-    );
-}
-
-function RemoveEmbedIcon({
-    size = 20,
-    color,
-}: {
-    size?: number;
-    color: string;
-}) {
-    return (
-        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-            <Path
-                d="M18 6L6 18"
-                stroke={color}
-                strokeWidth={2}
-                strokeLinecap="round"
-            />
-            <Path
-                d="M6 6l12 12"
-                stroke={color}
-                strokeWidth={2}
-                strokeLinecap="round"
-            />
-        </Svg>
-    );
-}
-
-function TrashIcon({ size = 20, color }: { size?: number; color: string }) {
-    return (
-        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-            <Path
-                d="M3 6h18"
-                stroke={color}
-                strokeWidth={2}
-                strokeLinecap="round"
-            />
-            <Path
-                d="M8 6V4h8v2"
-                stroke={color}
-                strokeWidth={2}
-                strokeLinecap="round"
-            />
-            <Path
-                d="M10 11v6"
-                stroke={color}
-                strokeWidth={2}
-                strokeLinecap="round"
-            />
-            <Path
-                d="M14 11v6"
-                stroke={color}
-                strokeWidth={2}
-                strokeLinecap="round"
-            />
-            <Path
-                d="M5 6l1 14h12l1-14"
-                stroke={color}
-                strokeWidth={2}
-                strokeLinecap="round"
             />
         </Svg>
     );

@@ -59,18 +59,20 @@ export function MessageOptionsBottomSheet({
 
     // Animated value for the bottom sheet's vertical position.
     const topAnim = useRef(new Animated.Value(SNAP_CLOSED)).current;
-    // Outer pan responder tracking.
-    const outerStartOffset = useRef<number>(0);
     // Track whether the modal is fully expanded.
     const [modalExpanded, setModalExpanded] = useState(false);
 
     // ---------------------------
-    // Custom inner scroll variables
+    // Utility function to clamp values.
     // ---------------------------
     function clamp(value: number, min: number, max: number): number {
         return Math.max(min, Math.min(value, max));
     }
-    // innerScrollY holds our animated scroll offset.
+
+    // ---------------------------
+    // Custom inner scroll variables
+    // ---------------------------
+    // innerScrollY holds our animated scroll offset (delta value during a gesture).
     const innerScrollY = useRef(new Animated.Value(0)).current;
     // Persistent storage for the inner scroll offset.
     const innerScrollYOffset = useRef(0);
@@ -86,30 +88,48 @@ export function MessageOptionsBottomSheet({
     }, [modalExpanded, screenHeight]);
 
     // ---------------------------
-    // Outer PanResponder for the bottom sheet
+    // Outer PanResponder for the bottom sheet drag
     // ---------------------------
-    const panResponder = useMemo(
+    // This pan responder is attached to the overall bottom sheet container.
+    // It handles the gestures when the sheet is not fully expanded,
+    // and in the expanded state it handles downward drags when the inner scroll is at zero.
+    const outerStartOffset = useRef<number>(0);
+    const outerPanResponder = useMemo(
         () =>
             PanResponder.create({
+                // Always want to be the responder if the touch occurs on non-scroll areas.
                 onStartShouldSetPanResponder: () => true,
                 onMoveShouldSetPanResponder: (evt, gestureState) => {
-                    if (modalExpanded) return false;
-                    return (
-                        Math.abs(gestureState.dy) > 10 &&
-                        // Only engage if inner scroll is at top (logic could be enhanced in production)
-                        gestureState.dy > 0
-                    );
+                    if (modalExpanded) {
+                        // When expanded, only take over if dragging down and inner scroll is at top.
+                        if (
+                            gestureState.dy > 10 &&
+                            innerScrollYOffset.current === 0
+                        ) {
+                            return true;
+                        }
+                        return false;
+                    }
+                    // When not expanded, any significant move should drag the sheet.
+                    return Math.abs(gestureState.dy) > 10;
                 },
                 onMoveShouldSetPanResponderCapture: (evt, gestureState) => {
-                    if (modalExpanded) return false;
-                    return (
-                        Math.abs(gestureState.dy) > 10 && gestureState.dy > 0
-                    );
+                    if (modalExpanded) {
+                        if (
+                            gestureState.dy > 10 &&
+                            innerScrollYOffset.current === 0
+                        ) {
+                            return true;
+                        }
+                        return false;
+                    }
+                    return Math.abs(gestureState.dy) > 10;
                 },
                 onPanResponderGrant: () => {
                     outerStartOffset.current = topAnim.__getValue();
                 },
                 onPanResponderMove: (evt, gestureState) => {
+                    // Calculate the new sheet position using the outer gesture delta.
                     let newSheetPosition =
                         outerStartOffset.current + gestureState.dy;
                     newSheetPosition = clamp(
@@ -120,7 +140,7 @@ export function MessageOptionsBottomSheet({
                     topAnim.setValue(newSheetPosition);
                 },
                 onPanResponderRelease: (evt, gestureState) => {
-                    let newSheetPosition = clamp(
+                    const newSheetPosition = clamp(
                         outerStartOffset.current + gestureState.dy,
                         SNAP_EXPANDED,
                         SNAP_CLOSED
@@ -163,6 +183,49 @@ export function MessageOptionsBottomSheet({
         ]
     );
 
+    // ---------------------------
+    // Inner PanResponder for the custom scroll view
+    // ---------------------------
+    // This pan responder is attached to the custom scrollable area.
+    // It becomes active only when the sheet is fully expanded.
+    // While active, it updates the inner scroll offset.
+    const innerPanResponder = useMemo(
+        () =>
+            PanResponder.create({
+                onStartShouldSetPanResponder: () => modalExpanded,
+                onMoveShouldSetPanResponder: (evt, gestureState) =>
+                    modalExpanded && Math.abs(gestureState.dy) > 2,
+                onPanResponderGrant: () => {
+                    // Set the starting scroll offset.
+                    innerScrollY.setOffset(innerScrollYOffset.current);
+                    innerScrollY.setValue(0);
+                },
+                onPanResponderMove: (evt, gestureState) => {
+                    let newOffset =
+                        innerScrollYOffset.current - gestureState.dy;
+                    const maxScroll = Math.max(
+                        contentHeight - visibleContainerHeight,
+                        0
+                    );
+                    newOffset = clamp(newOffset, 0, maxScroll);
+                    innerScrollY.setValue(
+                        newOffset - innerScrollYOffset.current
+                    );
+                },
+                onPanResponderRelease: () => {
+                    innerScrollY.flattenOffset();
+                    innerScrollYOffset.current = innerScrollY.__getValue();
+                },
+                onPanResponderTerminate: () => {
+                    innerScrollY.flattenOffset();
+                },
+            }),
+        [modalExpanded, contentHeight, visibleContainerHeight, innerScrollY]
+    );
+
+    // ---------------------------
+    // useEffect for visibility changes
+    // ---------------------------
     useEffect(() => {
         if (visible) {
             Animated.timing(topAnim, {
@@ -186,47 +249,6 @@ export function MessageOptionsBottomSheet({
         [theme, screenHeight]
     );
 
-    // ---------------------------
-    // Inner PanResponder for the custom scroll view
-    // ---------------------------
-    const innerPanResponder = useMemo(
-        () =>
-            PanResponder.create({
-                onStartShouldSetPanResponder: () => true,
-                onMoveShouldSetPanResponder: (evt, gestureState) =>
-                    Math.abs(gestureState.dy) > 2,
-                onPanResponderGrant: () => {
-                    // Record the current persistent offset.
-                    innerScrollY.setOffset(innerScrollYOffset.current);
-                    innerScrollY.setValue(0);
-                },
-                onPanResponderMove: (evt, gestureState) => {
-                    // Calculate new absolute offset from the starting offset and gesture's dy.
-                    let newOffset =
-                        innerScrollYOffset.current - gestureState.dy;
-                    // Calculate maximum scrollable offset using the visible scrollable height.
-                    const maxScroll = Math.max(
-                        contentHeight - visibleContainerHeight,
-                        0
-                    );
-                    // Clamp the new offset between 0 and maxScroll
-                    newOffset = clamp(newOffset, 0, maxScroll);
-                    // Set the animated value as the difference between clamped offset and persistent offset.
-                    innerScrollY.setValue(
-                        newOffset - innerScrollYOffset.current
-                    );
-                },
-                onPanResponderRelease: () => {
-                    innerScrollY.flattenOffset();
-                    innerScrollYOffset.current = innerScrollY.__getValue();
-                },
-                onPanResponderTerminate: () => {
-                    innerScrollY.flattenOffset();
-                },
-            }),
-        [contentHeight, visibleContainerHeight]
-    );
-
     return (
         <Modal
             visible={visible}
@@ -248,19 +270,20 @@ export function MessageOptionsBottomSheet({
             >
                 <View />
             </TouchableOpacity>
+            {/* The outer pan responder is attached here so that the entire bottom sheet container
+                (including areas outside the custom scroll view) can respond to drag gestures. */}
             <Animated.View
-                {...panResponder.panHandlers}
+                {...outerPanResponder.panHandlers}
                 style={[styles.bottomSheetContainer, { top: topAnim }]}
             >
                 <Animated.View style={styles.handleBarContainer}>
                     <View style={styles.handleBar} />
                 </Animated.View>
-                {/* Inner custom scroll container */}
-                {/* Removed the onLayout here since we now compute the visible height */}
+                {/* The custom scroll container now uses the inner pan responder.
+                    This area will handle scroll gestures once the sheet is fully expanded. */}
                 <View style={{ flex: 1, overflow: 'hidden' }}>
                     <Animated.View
                         {...innerPanResponder.panHandlers}
-                        // Apply the transformation: content moves opposite to the scroll offset.
                         style={{
                             transform: [
                                 {

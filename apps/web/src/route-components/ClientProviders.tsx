@@ -9,7 +9,6 @@ import { ApolloProvider } from '@apollo/client';
 import Toast from 'react-native-toast-message';
 import * as SplashScreen from 'expo-splash-screen';
 import { Provider as ReduxProvider } from 'react-redux';
-import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { store } from 'shared-ui/redux';
 import {
@@ -95,12 +94,10 @@ const ClientProvidersContent = ({
                                         <GestureHandlerRootView
                                             style={{ flex: 1 }}
                                         >
-                                            <BottomSheetModalProvider>
-                                                <StatusManager>
-                                                    <Login>{children}</Login>
-                                                    <Toast />
-                                                </StatusManager>
-                                            </BottomSheetModalProvider>
+                                            <StatusManager>
+                                                <Login>{children}</Login>
+                                                <Toast />
+                                            </StatusManager>
                                         </GestureHandlerRootView>
                                     </PortalProvider>
                                 </ReduxProvider>
@@ -134,7 +131,7 @@ export function ClientProviders({ children }: { children: React.ReactNode }) {
 
     return (
         <ThemeProvider>
-            <ClientProvidersContent>{children}</ClientProvidersContent>;
+            <ClientProvidersContent>{children}</ClientProvidersContent>
         </ThemeProvider>
     );
 }

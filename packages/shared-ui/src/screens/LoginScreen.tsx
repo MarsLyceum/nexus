@@ -258,24 +258,16 @@ export function LoginScreen(): JSX.Element {
     };
 
     return (
-        // @ts-expect-error web only
         <SafeAreaView style={styles.outerContainer}>
-            {/* @ts-expect-error web only */}
             <ScrollView contentContainerStyle={styles.innerScrollContainer}>
-                {/* @ts-expect-error web only */}
                 <View style={styles.container}>
-                    {/* @ts-expect-error web only */}
                     <Text style={styles.title}>Log in</Text>
 
-                    {/* @ts-expect-error web only */}
                     <View style={styles.inputContainer}>
-                        {/* @ts-expect-error web only */}
                         <View style={styles.inputWrapper}>
-                            {/* @ts-expect-error web only */}
                             <Email style={styles.inputIcon} />
                             <TextInput
                                 placeholder="Enter your email"
-                                // @ts-expect-error web only
                                 style={styles.input}
                                 keyboardType="email-address"
                                 value={email}
@@ -284,15 +276,11 @@ export function LoginScreen(): JSX.Element {
                         </View>
                     </View>
                     <Text style={{ color: 'red' }}>{errors.email}</Text>
-                    {/* @ts-expect-error web only */}
                     <View style={styles.inputContainer}>
-                        {/* @ts-expect-error web only */}
                         <View style={styles.inputWrapper}>
-                            {/* @ts-expect-error web only */}
                             <Lock style={styles.inputIcon} />
                             <TextInput
                                 placeholder="Password"
-                                // @ts-expect-error web only
                                 style={styles.input}
                                 secureTextEntry
                                 value={password}
@@ -302,40 +290,32 @@ export function LoginScreen(): JSX.Element {
                     </View>
                     <Text style={{ color: 'red' }}>{errors.password}</Text>
 
-                    {/* @ts-expect-error web only */}
                     <Text style={styles.forgotPasswordText}>
                         <Pressable
                             onPress={() => router.push('/forgot-password')}
                         >
-                            {/* @ts-expect-error web only */}
                             <Text style={styles.forgotPasswordLink}>
                                 Forgot password?
                             </Text>
                         </Pressable>
                     </Text>
 
-                    {/* @ts-expect-error web only */}
                     <View style={styles.orContainer}>
                         <HorizontalLine />
-                        {/* @ts-expect-error web only */}
                         <Text style={styles.orText}>or log in with</Text>
                         <HorizontalLine />
                     </View>
 
-                    {/* @ts-expect-error web only */}
                     <View style={styles.socialContainer}>
-                        {/* @ts-expect-error web only */}
                         <Pressable style={styles.socialButton}>
                             <FacebookIcon size={24} color="#4267B2" />
                         </Pressable>
-                        {/* @ts-expect-error web only */}
                         <Pressable style={styles.socialButton}>
                             <GoogleLogo />
                         </Pressable>
                     </View>
 
                     <PrimaryGradientButton
-                        // @ts-expect-error web only
                         style={styles.topButton}
                         title="Login"
                         onPress={handleSubmit}

@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { BottomSheet } from './BottomSheet';
 import { useTheme, Theme } from '../theme';
-import { Edit, Delete } from '../icons';
+import Svg, { Path } from 'react-native-svg';
 
 export type MessageOptionsBottomSheetProps = {
     visible: boolean;
@@ -44,60 +44,93 @@ export function MessageOptionsBottomSheet({
     return (
         <BottomSheet visible={visible} onClose={onClose}>
             <View style={styles.reactionsRow}>
-                <TouchableOpacity style={styles.reactionButton}>
-                    <Text style={styles.reactionText}>👍</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.reactionButton}>
-                    <Text style={styles.reactionText}>💯</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.reactionButton}>
-                    <Text style={styles.reactionText}>😆</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.reactionButton}>
-                    <Text style={styles.reactionText}>😐</Text>
-                </TouchableOpacity>
+                {['👍', '💯', '😆', '😐'].map((emoji) => (
+                    <TouchableOpacity key={emoji} style={styles.reactionButton}>
+                        <Text style={styles.reactionText}>{emoji}</Text>
+                    </TouchableOpacity>
+                ))}
             </View>
-            <MenuItem
-                label="Edit Message"
-                icon={<Edit />}
-                onPress={onEdit}
-                theme={theme}
-            />
-            <MenuItem label="Reply" onPress={onReply} theme={theme} />
-            <MenuItem label="Forward" onPress={onForward} theme={theme} />
-            <MenuItem
-                label="Create Thread"
-                onPress={onCreateThread}
-                theme={theme}
-            />
-            <MenuItem label="Copy Text" onPress={onCopyText} theme={theme} />
-            <MenuItem
-                label="Mark Unread"
-                onPress={onMarkUnread}
-                theme={theme}
-            />
-            <MenuItem
-                label="Pin Message"
-                onPress={onPinMessage}
-                theme={theme}
-            />
-            <MenuItem label="Apps" onPress={onApps} theme={theme} />
-            <MenuItem label="Mention" onPress={onMention} theme={theme} />
-            <MenuItem
-                label="Copy Message Link"
-                onPress={onCopyMessageLink}
-                theme={theme}
-            />
-            <View style={styles.destructiveContainer}>
+
+            {/* ───── Primary Actions ───── */}
+            <View style={styles.sectionTop}>
+                <MenuItem
+                    label="Edit Message"
+                    icon={<EditIcon color={theme.colors.ActiveText} />}
+                    onPress={onEdit}
+                    theme={theme}
+                />
+                <MenuItem
+                    label="Reply"
+                    icon={<ReplyIcon color={theme.colors.ActiveText} />}
+                    onPress={onReply}
+                    theme={theme}
+                />
+                <MenuItem
+                    label="Forward"
+                    icon={<ForwardIcon color={theme.colors.ActiveText} />}
+                    onPress={onForward}
+                    theme={theme}
+                />
+                <MenuItem
+                    label="Create Thread"
+                    icon={<ThreadIcon color={theme.colors.ActiveText} />}
+                    onPress={onCreateThread}
+                    theme={theme}
+                />
+            </View>
+
+            {/* ───── Secondary Actions ───── */}
+            <View style={styles.sectionMiddle}>
+                <MenuItem
+                    label="Copy Text"
+                    icon={<CopyIcon color={theme.colors.ActiveText} />}
+                    onPress={onCopyText}
+                    theme={theme}
+                />
+                <MenuItem
+                    label="Mark Unread"
+                    icon={<MailIcon color={theme.colors.ActiveText} />}
+                    onPress={onMarkUnread}
+                    theme={theme}
+                />
+                <MenuItem
+                    label="Pin Message"
+                    icon={<PinIcon color={theme.colors.ActiveText} />}
+                    onPress={onPinMessage}
+                    theme={theme}
+                />
+                <MenuItem
+                    label="Apps"
+                    icon={<AppsIcon color={theme.colors.ActiveText} />}
+                    onPress={onApps}
+                    theme={theme}
+                />
+                <MenuItem
+                    label="Mention"
+                    icon={<MentionIcon color={theme.colors.ActiveText} />}
+                    onPress={onMention}
+                    theme={theme}
+                />
+                <MenuItem
+                    label="Copy Message Link"
+                    icon={<LinkIcon color={theme.colors.ActiveText} />}
+                    onPress={onCopyMessageLink}
+                    theme={theme}
+                />
+            </View>
+
+            {/* ───── Destructive Actions ───── */}
+            <View style={styles.sectionBottom}>
                 <MenuItem
                     label="Remove Embed"
+                    icon={<RemoveEmbedIcon color={theme.colors.Error} />}
                     onPress={onRemoveEmbed}
                     theme={theme}
                     destructive
                 />
                 <MenuItem
                     label="Delete Message"
-                    icon={<Delete />}
+                    icon={<TrashIcon color={theme.colors.Error} />}
                     onPress={onDeleteMessage}
                     theme={theme}
                     destructive
@@ -115,7 +148,7 @@ export function MenuItem({
     destructive = false,
 }: {
     label: string;
-    icon?: React.ReactNode;
+    icon: React.ReactNode;
     onPress: () => void;
     theme: Theme;
     destructive?: boolean;
@@ -132,6 +165,269 @@ export function MenuItem({
     );
 }
 
+// -----------------------
+// Inline SVG icon components
+// -----------------------
+
+function EditIcon({ size = 20, color }: { size?: number; color: string }) {
+    return (
+        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+            <Path
+                d="M11 4H6a2 2 0 0 0-2 2v5l10 10 5-5L11 4z"
+                stroke={color}
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+            <Path
+                d="M18.5 2.5a2.121 2.121 0 0 1 3 3L15 12l-3-3 6.5-6.5z"
+                stroke={color}
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+        </Svg>
+    );
+}
+
+function ReplyIcon({ size = 20, color }: { size?: number; color: string }) {
+    return (
+        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+            <Path
+                d="M10 14l-6-6 6-6"
+                stroke={color}
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+            <Path
+                d="M4 8h16a4 4 0 0 1 4 4v8"
+                stroke={color}
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+        </Svg>
+    );
+}
+
+function ForwardIcon({ size = 20, color }: { size?: number; color: string }) {
+    return (
+        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+            <Path
+                d="M14 10l6 6-6 6"
+                stroke={color}
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+            <Path
+                d="M20 16H4a4 4 0 0 1-4-4V4"
+                stroke={color}
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+        </Svg>
+    );
+}
+
+function ThreadIcon({ size = 20, color }: { size?: number; color: string }) {
+    return (
+        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+            <Path
+                d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10z"
+                stroke={color}
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+        </Svg>
+    );
+}
+
+function CopyIcon({ size = 20, color }: { size?: number; color: string }) {
+    return (
+        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+            <Path
+                d="M16 16H6V6h10v10z"
+                stroke={color}
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+            <Path
+                d="M18 18H8V8h10v10z"
+                stroke={color}
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+        </Svg>
+    );
+}
+
+function MailIcon({ size = 20, color }: { size?: number; color: string }) {
+    return (
+        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+            <Path
+                d="M4 4h16v16H4V4z"
+                stroke={color}
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+            <Path
+                d="M4 4l8 8 8-8"
+                stroke={color}
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+        </Svg>
+    );
+}
+
+function PinIcon({ size = 20, color }: { size?: number; color: string }) {
+    return (
+        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+            <Path
+                d="M12 2v20"
+                stroke={color}
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+            <Path
+                d="M5 15l7-7 7 7"
+                stroke={color}
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+        </Svg>
+    );
+}
+
+function AppsIcon({ size = 20, color }: { size?: number; color: string }) {
+    return (
+        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+            <Path d="M3 3h8v8H3z" stroke={color} strokeWidth={2} />
+            <Path d="M13 3h8v8h-8z" stroke={color} strokeWidth={2} />
+            <Path d="M3 13h8v8H3z" stroke={color} strokeWidth={2} />
+            <Path d="M13 13h8v8h-8z" stroke={color} strokeWidth={2} />
+        </Svg>
+    );
+}
+
+function MentionIcon({ size = 20, color }: { size?: number; color: string }) {
+    return (
+        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+            <Path
+                d="M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0z"
+                stroke={color}
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+            <Path
+                d="M16 12v2a6 6 0 1 1-12 0v-2"
+                stroke={color}
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+        </Svg>
+    );
+}
+
+function LinkIcon({ size = 20, color }: { size?: number; color: string }) {
+    return (
+        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+            <Path
+                d="M10 14a5 5 0 0 1 0-7l1-1a5 5 0 0 1 7 7l-1 1a5 5 0 0 1-7 0z"
+                stroke={color}
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+            <Path
+                d="M14 10l-1 1"
+                stroke={color}
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+        </Svg>
+    );
+}
+
+function RemoveEmbedIcon({
+    size = 20,
+    color,
+}: {
+    size?: number;
+    color: string;
+}) {
+    return (
+        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+            <Path
+                d="M18 6L6 18"
+                stroke={color}
+                strokeWidth={2}
+                strokeLinecap="round"
+            />
+            <Path
+                d="M6 6l12 12"
+                stroke={color}
+                strokeWidth={2}
+                strokeLinecap="round"
+            />
+        </Svg>
+    );
+}
+
+function TrashIcon({ size = 20, color }: { size?: number; color: string }) {
+    return (
+        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+            <Path
+                d="M3 6h18"
+                stroke={color}
+                strokeWidth={2}
+                strokeLinecap="round"
+            />
+            <Path
+                d="M8 6V4h8v2"
+                stroke={color}
+                strokeWidth={2}
+                strokeLinecap="round"
+            />
+            <Path
+                d="M10 11v6"
+                stroke={color}
+                strokeWidth={2}
+                strokeLinecap="round"
+            />
+            <Path
+                d="M14 11v6"
+                stroke={color}
+                strokeWidth={2}
+                strokeLinecap="round"
+            />
+            <Path
+                d="M5 6l1 14h12l1-14"
+                stroke={color}
+                strokeWidth={2}
+                strokeLinecap="round"
+            />
+        </Svg>
+    );
+}
+
+// -----------------------
+// Styles
+// -----------------------
+
 function createStyles(theme: Theme) {
     return StyleSheet.create({
         reactionsRow: {
@@ -147,12 +443,31 @@ function createStyles(theme: Theme) {
             fontSize: 20,
             color: theme.colors.ActiveText,
         },
-        destructiveContainer: {
-            marginTop: 16,
-            borderTopWidth: StyleSheet.hairlineWidth,
-            borderTopColor: theme.colors.InactiveText,
-            paddingTop: 8,
-            paddingHorizontal: 16,
+        sectionTop: {
+            marginHorizontal: 16,
+            backgroundColor: theme.colors.SecondaryBackground,
+            borderTopLeftRadius: 12,
+            borderTopRightRadius: 12,
+            borderBottomLeftRadius: 12,
+            borderBottomRightRadius: 12,
+            overflow: 'hidden',
+        },
+        sectionMiddle: {
+            marginHorizontal: 16,
+            marginTop: 32,
+            backgroundColor: theme.colors.SecondaryBackground,
+            borderTopLeftRadius: 12,
+            borderTopRightRadius: 12,
+            borderBottomLeftRadius: 12,
+            borderBottomRightRadius: 12,
+            overflow: 'hidden',
+        },
+        sectionBottom: {
+            marginHorizontal: 16,
+            marginTop: 32,
+            backgroundColor: theme.colors.SecondaryBackground,
+            borderRadius: 12,
+            overflow: 'hidden',
             marginBottom: 32,
         },
     });
@@ -165,11 +480,13 @@ function createMenuItemStyles(theme: Theme, destructive: boolean) {
             alignItems: 'center',
             paddingVertical: 12,
             paddingHorizontal: 16,
+            backgroundColor: 'transparent',
             borderBottomWidth: StyleSheet.hairlineWidth,
             borderBottomColor: theme.colors.InactiveText,
-            backgroundColor: theme.colors.PrimaryBackground,
         },
         iconContainer: {
+            width: 24,
+            alignItems: 'center',
             marginRight: 12,
         },
         labelText: {

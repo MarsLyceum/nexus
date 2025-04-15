@@ -1,6 +1,7 @@
 export * from './image-modal';
 export * from './message';
 export * from './ActionButton';
+export * from './BottomSheet';
 export * from './ChatInput';
 export * from './ChatInputContainer';
 export * from './CommentEditor';

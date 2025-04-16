@@ -159,31 +159,14 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({
                 height={`${Math.max(60, editorHeight)}px`}
                 onKeyDown={isDesktop ? handleKeyDown : undefined}
             />
-            {isDesktop ? (
-                <Text style={styles.instructionText}>
-                    escape to{' '}
-                    <Text style={styles.clickableText} onPress={onCancel}>
-                        cancel
-                    </Text>{' '}
-                    • shift + enter for multiple lines • enter to{' '}
-                    <Text style={styles.clickableText} onPress={onSave}>
-                        save
-                    </Text>
-                </Text>
-            ) : (
-                <View style={mobileStyles.mobileButtonContainer}>
-                    <NexusButton
-                        label="Cancel"
-                        onPress={onCancel}
-                        variant="outline"
-                    />
-                    <NexusButton
-                        label="Save"
-                        onPress={onSave}
-                        variant="filled"
-                    />
-                </View>
-            )}
+            <View style={mobileStyles.mobileButtonContainer}>
+                <NexusButton
+                    label="Cancel"
+                    onPress={onCancel}
+                    variant="outline"
+                />
+                <NexusButton label="Save" onPress={onSave} variant="filled" />
+            </View>
             {isOnlyUrl &&
                 avgCharWidth === undefined &&
                 measuredLineHeight === undefined && (
@@ -216,7 +199,7 @@ function createStyles(theme: Theme) {
             marginTop: 5,
             position: 'relative',
             borderColor: theme.colors.SecondaryBackground,
-            borderWidth: 1,
+            borderWidth: 2,
             borderRadius: 4,
             padding: 8,
             backgroundColor: theme.colors.TertiaryBackground,

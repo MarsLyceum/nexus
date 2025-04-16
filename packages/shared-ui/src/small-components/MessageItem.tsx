@@ -188,6 +188,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
 
     const handleEdit = () => {
         setOptionsModalVisible(false);
+        setBottomSheetVisible(false);
         setIsEditing(true);
     };
 

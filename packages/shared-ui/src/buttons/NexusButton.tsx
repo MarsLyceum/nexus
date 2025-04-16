@@ -61,7 +61,7 @@ export const NexusButton: React.FC<NexusButtonProps> = ({
                 backgroundColor: bgColor,
                 borderColor: bgColor,
                 borderWidth: 2,
-                borderRadius: 6,
+                borderRadius: 12,
             };
         }
         // Outline variant uses a transparent background with a colored border.
@@ -69,11 +69,10 @@ export const NexusButton: React.FC<NexusButtonProps> = ({
             ? darkenColor(theme.colors.Primary, 0.1)
             : theme.colors.Primary;
         return {
-            // backgroundColor: 'transparent',
             backgroundColor: theme.colors.ActiveText,
             borderColor: outlineColor,
             borderWidth: 2,
-            borderRadius: 6,
+            borderRadius: 12,
         };
     };
 

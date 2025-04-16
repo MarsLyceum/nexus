@@ -8,7 +8,8 @@ import {
     StyleSheet as RNStyleSheet,
 } from 'react-native';
 
-import { extractUrls } from '../../utils';
+import { extractUrls, isComputer } from '../../utils';
+import { NexusButton } from '../../buttons';
 import { useTheme, Theme } from '../../theme';
 
 import { MarkdownEditor } from '../MarkdownEditor';
@@ -29,6 +30,9 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({
     onSave,
     onCancel,
 }) => {
+    // Determine platform-specific behavior.
+    const isDesktop = isComputer();
+
     const [editedContent, setEditedContent] = useState(initialContent);
     const [editorHeight, setEditorHeight] = useState<number>(60);
     const [avgCharWidth, setAvgCharWidth] = useState<number | undefined>();
@@ -54,7 +58,6 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({
         if (!text.trim()) {
             return 60;
         }
-
         const effectiveWidth = containerWidth - horizontalPadding;
         const charsPerLine =
             Math.floor(effectiveWidth / avgCharWidthInner) || 1;
@@ -62,15 +65,11 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({
         return lines * lineHeight + verticalPadding;
     };
 
-    // For URL-only messages, update the editor height based on measured text style.
     useEffect(() => {
-        // For empty content, always use default height
         if (!editedContent.trim()) {
             setEditorHeight(60);
             return;
         }
-
-        // For URL content with measurements
         if (isOnlyUrl && avgCharWidth && measuredLineHeight) {
             const flattened: StyleProp<TextStyle> =
                 RNStyleSheet.flatten(styles.urlText) || {};
@@ -96,15 +95,13 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({
         }
     }, [editedContent, isOnlyUrl, width, avgCharWidth, measuredLineHeight]);
 
-    // For non-URL messages, use a hidden MarkdownRenderer to update height.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // Use hidden MarkdownRenderer to calculate the content's height.
     const handleNonUrlLayout = (e: any) => {
-        const { height } = e.nativeEvent.layout;
+        const { height } = e.nativeEvent;
         setEditorHeight(Math.max(60, height));
     };
 
-    // Existing key handler if the MarkdownEditor is focused.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // Key handler when the editor is focused (desktop only).
     const handleKeyDown = (e: any) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -115,23 +112,24 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({
         }
     };
 
-    // Global key event listener to capture key events even when the editor isn't focused.
+    // Global key listener (desktop only).
     useEffect(() => {
-        const handleGlobalKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                onSave();
-            } else if (e.key === 'Escape') {
-                e.preventDefault();
-                onCancel();
-            }
-        };
-
-        window.addEventListener('keydown', handleGlobalKeyDown);
-        return () => {
-            window.removeEventListener('keydown', handleGlobalKeyDown);
-        };
-    }, [onSave, onCancel]);
+        if (isDesktop) {
+            const handleGlobalKeyDown = (e: KeyboardEvent) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    onSave();
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    onCancel();
+                }
+            };
+            window.addEventListener('keydown', handleGlobalKeyDown);
+            return () => {
+                window.removeEventListener('keydown', handleGlobalKeyDown);
+            };
+        }
+    }, [onSave, onCancel, isDesktop]);
 
     return (
         <View style={styles.editContainer}>
@@ -159,25 +157,36 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({
                 placeholder=""
                 width="100%"
                 height={`${Math.max(60, editorHeight)}px`}
-                onKeyDown={handleKeyDown} // This remains for when the editor is focused.
+                onKeyDown={isDesktop ? handleKeyDown : undefined}
             />
-            <Text style={styles.instructionText}>
-                escape to{' '}
-                <Text style={styles.clickableText} onPress={onCancel}>
-                    cancel
-                </Text>{' '}
-                • shift + enter for multiple lines • enter to{' '}
-                <Text style={styles.clickableText} onPress={onSave}>
-                    save
+            {isDesktop ? (
+                <Text style={styles.instructionText}>
+                    escape to{' '}
+                    <Text style={styles.clickableText} onPress={onCancel}>
+                        cancel
+                    </Text>{' '}
+                    • shift + enter for multiple lines • enter to{' '}
+                    <Text style={styles.clickableText} onPress={onSave}>
+                        save
+                    </Text>
                 </Text>
-            </Text>
-
-            {/* No link previews here anymore - they will be rendered by MessageItem */}
-
-            {/* Hidden measurement element for URL-only messages */}
+            ) : (
+                <View style={mobileStyles.mobileButtonContainer}>
+                    <NexusButton
+                        label="Cancel"
+                        onPress={onCancel}
+                        variant="outline"
+                    />
+                    <NexusButton
+                        label="Save"
+                        onPress={onSave}
+                        variant="filled"
+                    />
+                </View>
+            )}
             {isOnlyUrl &&
-                avgCharWidth === null &&
-                measuredLineHeight === null && (
+                avgCharWidth === undefined &&
+                measuredLineHeight === undefined && (
                     <Text
                         style={[
                             styles.urlText,
@@ -229,3 +238,11 @@ function createStyles(theme: Theme) {
         },
     });
 }
+
+const mobileStyles = StyleSheet.create({
+    mobileButtonContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        marginTop: 8,
+    },
+});

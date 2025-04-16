@@ -277,15 +277,13 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                         ]}
                     >
                         {/* Text editor */}
-                        {isComputer() && (
-                            <MessageEditor
-                                initialContent={editedContent}
-                                width={width}
-                                onChange={setEditedContent}
-                                onSave={handleSaveEdit}
-                                onCancel={handleCancelEdit}
-                            />
-                        )}
+                        <MessageEditor
+                            initialContent={editedContent}
+                            width={width}
+                            onChange={setEditedContent}
+                            onSave={handleSaveEdit}
+                            onCancel={handleCancelEdit}
+                        />
 
                         {/* Link previews with live updates */}
                         <View style={styles.linkPreviewsWhileEditing}>

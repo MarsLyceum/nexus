@@ -87,17 +87,17 @@ export const MessageContent: React.FC<MessageContentProps> = ({
 
     return (
         <View style={styles.messageContent}>
-            {effectiveContent && (
+            {effectiveContent ? (
                 <>
-                    {/* Render message text if enabled and content is not just a link */}
                     {renderMessage &&
                         !isJustImageOrEmbeddLink &&
                         renderMessageText(effectiveContent, message.edited)}
 
-                    {/* Render link previews if enabled */}
                     {renderLinkPreview &&
                         renderLinkPreviews(effectiveContent, width)}
                 </>
+            ) : (
+                <></>
             )}
 
             {/* Only render attachments if requested and attachments exist */}

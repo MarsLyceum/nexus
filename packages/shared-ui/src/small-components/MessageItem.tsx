@@ -207,12 +207,14 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     }
 
     const handleSaveEdit = () => {
-        setCurrentMessage((prevMessage) => ({
-            ...prevMessage,
+        const updatedMessage: MessageWithAvatar | DirectMessageWithAvatar = {
+            ...currentMessage,
             content: editedContent,
             edited: true,
-        }));
-        onSaveEdit(currentMessage);
+        };
+
+        setCurrentMessage(updatedMessage);
+        onSaveEdit(updatedMessage);
         setIsEditing(false);
     };
 

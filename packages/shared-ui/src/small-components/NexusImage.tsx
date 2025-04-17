@@ -1,5 +1,5 @@
 // NexusImage.tsx
-import React, { useLayoutEffect, useRef, useState } from 'react';
+import React, { useLayoutEffect, useRef, useState, useEffect } from 'react';
 import { Platform } from 'react-native';
 // Next.js Image import – no longer used in Next environments.
 // import NextImage from 'next/image';
@@ -70,28 +70,59 @@ export const NexusImage = (props: NexusImageProps) => {
     const { width: containerWidth, height: containerHeight } =
         useContainerDimensions(containerRef);
 
-    let proxySource = typeof source === 'string' ? source : source.uri;
-    if (Platform.OS === 'web') {
-        try {
-            const parsedUrl = new URL(
-                proxySource ?? '',
-                window.location.origin
+    const originalUri = typeof source === 'string' ? source : source.uri;
+    const fallbackUri = `https://images.weserv.nl/?url=${encodeURIComponent(originalUri)}`;
+
+    const [imageUri, setImageUri] = useState(originalUri);
+    const [didFallback, setDidFallback] = useState(false);
+
+    const handleError = () => {
+        if (!didFallback) {
+            console.warn(
+                `[NexusImage] failed to load ${originalUri}, falling back to proxy ${fallbackUri}`
             );
-            if (
-                parsedUrl.origin !== window.location.origin &&
-                parsedUrl.hostname !== window.location.hostname
-            ) {
-                proxySource = `https://images.weserv.nl/?url=${encodeURIComponent(proxySource)}`;
-            }
-        } catch {
-            proxySource = `https://images.weserv.nl/?url=${encodeURIComponent(proxySource)}`;
+            setImageUri(fallbackUri);
+            setDidFallback(true);
+            // TODO: wire this into your analytics/logging system
         }
-    }
+    };
+
+    useEffect(() => {
+        let stillMounted = true;
+        setDidFallback(false); // reset if originalUri ever changes
+        setImageUri(originalUri); // start fresh
+
+        void (async () => {
+            try {
+                const res = await fetch(originalUri, { method: 'HEAD' });
+                if (stillMounted && !res.ok && !didFallback) {
+                    console.warn(
+                        `[NexusImage] HEAD ${res.status} for ${originalUri}, falling back…`
+                    );
+                    setImageUri(fallbackUri);
+                    setDidFallback(true);
+                }
+            } catch (error) {
+                if (stillMounted && !didFallback) {
+                    console.warn(
+                        `[NexusImage] HEAD error for ${originalUri}:`,
+                        error
+                    );
+                    setImageUri(fallbackUri);
+                    setDidFallback(true);
+                }
+            }
+        })();
+
+        return () => {
+            stillMounted = false;
+        };
+    }, [originalUri]);
 
     // --- React Native: use Expo Image ---
     if (env === 'react-native-mobile' || env === 'react-native-web') {
         // Expo Image requires the source to be an object with a `uri` property.
-        const expoSource = { uri: proxySource };
+        const expoSource = { uri: imageUri };
         // Merge provided width and height into the style for proper sizing in Expo.
         const expoStyle: React.CSSProperties = { ...style };
         if (width) expoStyle.width = width;
@@ -103,6 +134,7 @@ export const NexusImage = (props: NexusImageProps) => {
                 style={expoStyle}
                 accessibilityLabel={alt}
                 contentFit={contentFit} // Pass contentFit directly
+                onError={handleError}
                 {...rest}
             />
         );
@@ -144,11 +176,10 @@ export const NexusImage = (props: NexusImageProps) => {
             return <div ref={containerRef} style={containerStyle} />;
         }
 
-        const src = proxySource;
         return (
             <div ref={containerRef} style={containerStyle}>
                 <img
-                    src={src}
+                    src={imageUri}
                     alt={alt}
                     width={containerWidth}
                     height={containerHeight}
@@ -157,6 +188,7 @@ export const NexusImage = (props: NexusImageProps) => {
                         width: '100%',
                         height: '100%',
                     }}
+                    onError={handleError}
                     {...rest}
                 />
             </div>
@@ -166,14 +198,14 @@ export const NexusImage = (props: NexusImageProps) => {
     // For static dimensions, extract numeric width/height.
     const numericWidth = getNumericSize(width, style.width) || 300; // Fallback width.
     const numericHeight = getNumericSize(height, style.height) || 200; // Fallback height.
-    const src = proxySource;
     return (
         <img
-            src={src}
+            src={imageUri}
             alt={alt}
             width={numericWidth}
             height={numericHeight}
             style={{ ...style, objectFit: contentFit ?? style.objectFit }}
+            onError={handleError}
             {...rest}
         />
     );

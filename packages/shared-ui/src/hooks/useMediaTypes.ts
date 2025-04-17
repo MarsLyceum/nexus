@@ -20,39 +20,60 @@ export const useMediaTypes = (urls: string[]): { [url: string]: MediaInfo } => {
         urls.forEach((url) => {
             // Only process URLs that haven't been handled yet.
             if (!mediaInfo[url]) {
-                let fetchUrl = url;
-                if (Platform.OS === 'web') {
-                    try {
-                        const parsedUrl = new URL(
-                            url ?? '',
-                            window.location.origin
+                const originalUri = url;
+                const fallbackUri = `https://images.weserv.nl/?url=${encodeURIComponent(originalUri)}`;
+
+                const handleFetch = (response: Response) => {
+                    const contentType =
+                        response.headers.get('content-type') || '';
+                    const type: MediaType = contentType.startsWith('video')
+                        ? 'video'
+                        : 'image';
+
+                    // eslint-disable-next-line promise/always-return
+                    if (type === 'image') {
+                        // For images, use RNImage.getSize.
+                        RNImage.getSize(
+                            url,
+                            (width, height) =>
+                                setMediaInfo((prev) => ({
+                                    ...prev,
+                                    [url]: {
+                                        type,
+                                        width,
+                                        height,
+                                        aspectRatio: width / height,
+                                    },
+                                })),
+                            (error) => {
+                                console.error(
+                                    'Failed to get image dimensions for',
+                                    url,
+                                    error
+                                );
+                                const defaultWidth = 300;
+                                setMediaInfo((prev) => ({
+                                    ...prev,
+                                    [url]: {
+                                        type,
+                                        width: defaultWidth,
+                                        height: defaultWidth,
+                                        aspectRatio: 1,
+                                    },
+                                }));
+                            }
                         );
-                        if (
-                            parsedUrl.origin !== window.location.origin &&
-                            parsedUrl.hostname !== window.location.hostname
-                        ) {
-                            fetchUrl = `https://images.weserv.nl/?url=${encodeURIComponent(url)}`;
-                        }
-                    } catch {
-                        fetchUrl = `https://images.weserv.nl/?url=${encodeURIComponent(url)}`;
-                    }
-                }
-
-                // Fetch HEAD to determine the content type.
-                fetch(fetchUrl, { method: 'HEAD' })
-                    .then((response) => {
-                        const contentType =
-                            response.headers.get('content-type') || '';
-                        const type: MediaType = contentType.startsWith('video')
-                            ? 'video'
-                            : 'image';
-
-                        // eslint-disable-next-line promise/always-return
-                        if (type === 'image') {
-                            // For images, use RNImage.getSize.
-                            RNImage.getSize(
-                                url,
-                                (width, height) =>
+                    } else {
+                        // For videos:
+                        // eslint-disable-next-line no-lonely-if
+                        if (Platform.OS === 'web') {
+                            // Use an HTMLVideoElement on web.
+                            const video = document.createElement('video');
+                            video.src = url;
+                            video.addEventListener('loadedmetadata', () => {
+                                const width = video.videoWidth;
+                                const height = video.videoHeight;
+                                if (width && height) {
                                     setMediaInfo((prev) => ({
                                         ...prev,
                                         [url]: {
@@ -61,47 +82,77 @@ export const useMediaTypes = (urls: string[]): { [url: string]: MediaInfo } => {
                                             height,
                                             aspectRatio: width / height,
                                         },
-                                    })),
-                                (error) => {
-                                    console.error(
-                                        'Failed to get image dimensions for',
-                                        url,
-                                        error
-                                    );
+                                    }));
+                                } else {
+                                    // Fallback if dimensions are zero.
                                     const defaultWidth = 300;
+                                    const defaultAspect = 16 / 9;
                                     setMediaInfo((prev) => ({
                                         ...prev,
                                         [url]: {
                                             type,
                                             width: defaultWidth,
-                                            height: defaultWidth,
-                                            aspectRatio: 1,
+                                            height:
+                                                defaultWidth / defaultAspect,
+                                            aspectRatio: defaultAspect,
                                         },
                                     }));
                                 }
-                            );
+                            });
+                            video.addEventListener('error', (error) => {
+                                console.error(
+                                    'Error loading video metadata for',
+                                    url,
+                                    error
+                                );
+                                const defaultWidth = 300;
+                                const defaultAspect = 16 / 9;
+                                setMediaInfo((prev) => ({
+                                    ...prev,
+                                    [url]: {
+                                        type,
+                                        width: defaultWidth,
+                                        height: defaultWidth / defaultAspect,
+                                        aspectRatio: defaultAspect,
+                                    },
+                                }));
+                            });
                         } else {
-                            // For videos:
-                            // eslint-disable-next-line no-lonely-if
-                            if (Platform.OS === 'web') {
-                                // Use an HTMLVideoElement on web.
-                                const video = document.createElement('video');
-                                video.src = url;
-                                video.addEventListener('loadedmetadata', () => {
-                                    const width = video.videoWidth;
-                                    const height = video.videoHeight;
-                                    if (width && height) {
-                                        setMediaInfo((prev) => ({
-                                            ...prev,
-                                            [url]: {
-                                                type,
-                                                width,
-                                                height,
-                                                aspectRatio: width / height,
-                                            },
-                                        }));
+                            // For native, use expo-video's generateThumbnailsAsync.
+                            const player = createVideoPlayer(url);
+                            player
+                                .generateThumbnailsAsync([0])
+                                .then((thumbnails) => {
+                                    // eslint-disable-next-line promise/always-return
+                                    if (thumbnails && thumbnails.length > 0) {
+                                        const thumbnail = thumbnails[0];
+                                        const { width, height } = thumbnail;
+                                        if (width && height) {
+                                            setMediaInfo((prev) => ({
+                                                ...prev,
+                                                [url]: {
+                                                    type,
+                                                    width,
+                                                    height,
+                                                    aspectRatio: width / height,
+                                                },
+                                            }));
+                                        } else {
+                                            const defaultWidth = 300;
+                                            const defaultAspect = 16 / 9;
+                                            setMediaInfo((prev) => ({
+                                                ...prev,
+                                                [url]: {
+                                                    type,
+                                                    width: defaultWidth,
+                                                    height:
+                                                        defaultWidth /
+                                                        defaultAspect,
+                                                    aspectRatio: defaultAspect,
+                                                },
+                                            }));
+                                        }
                                     } else {
-                                        // Fallback if dimensions are zero.
                                         const defaultWidth = 300;
                                         const defaultAspect = 16 / 9;
                                         setMediaInfo((prev) => ({
@@ -116,10 +167,11 @@ export const useMediaTypes = (urls: string[]): { [url: string]: MediaInfo } => {
                                             },
                                         }));
                                     }
-                                });
-                                video.addEventListener('error', (error) => {
+                                    // Optionally, release the player: player.release();
+                                })
+                                .catch((error) => {
                                     console.error(
-                                        'Error loading video metadata for',
+                                        'Failed to generate thumbnail for video',
                                         url,
                                         error
                                     );
@@ -136,97 +188,32 @@ export const useMediaTypes = (urls: string[]): { [url: string]: MediaInfo } => {
                                         },
                                     }));
                                 });
-                            } else {
-                                // For native, use expo-video's generateThumbnailsAsync.
-                                const player = createVideoPlayer(url);
-                                player
-                                    .generateThumbnailsAsync([0])
-                                    .then((thumbnails) => {
-                                        // eslint-disable-next-line promise/always-return
-                                        if (
-                                            thumbnails &&
-                                            thumbnails.length > 0
-                                        ) {
-                                            const thumbnail = thumbnails[0];
-                                            const { width, height } = thumbnail;
-                                            if (width && height) {
-                                                setMediaInfo((prev) => ({
-                                                    ...prev,
-                                                    [url]: {
-                                                        type,
-                                                        width,
-                                                        height,
-                                                        aspectRatio:
-                                                            width / height,
-                                                    },
-                                                }));
-                                            } else {
-                                                const defaultWidth = 300;
-                                                const defaultAspect = 16 / 9;
-                                                setMediaInfo((prev) => ({
-                                                    ...prev,
-                                                    [url]: {
-                                                        type,
-                                                        width: defaultWidth,
-                                                        height:
-                                                            defaultWidth /
-                                                            defaultAspect,
-                                                        aspectRatio:
-                                                            defaultAspect,
-                                                    },
-                                                }));
-                                            }
-                                        } else {
-                                            const defaultWidth = 300;
-                                            const defaultAspect = 16 / 9;
-                                            setMediaInfo((prev) => ({
-                                                ...prev,
-                                                [url]: {
-                                                    type,
-                                                    width: defaultWidth,
-                                                    height:
-                                                        defaultWidth /
-                                                        defaultAspect,
-                                                    aspectRatio: defaultAspect,
-                                                },
-                                            }));
-                                        }
-                                        // Optionally, release the player: player.release();
-                                    })
-                                    .catch((error) => {
-                                        console.error(
-                                            'Failed to generate thumbnail for video',
-                                            url,
-                                            error
-                                        );
-                                        const defaultWidth = 300;
-                                        const defaultAspect = 16 / 9;
-                                        setMediaInfo((prev) => ({
-                                            ...prev,
-                                            [url]: {
-                                                type,
-                                                width: defaultWidth,
-                                                height:
-                                                    defaultWidth /
-                                                    defaultAspect,
-                                                aspectRatio: defaultAspect,
-                                            },
-                                        }));
-                                    });
-                            }
                         }
-                    })
-                    .catch((error) => {
-                        console.error('Failed to fetch HEAD for', url, error);
-                        setMediaInfo((prev) => ({
-                            ...prev,
-                            [url]: {
-                                type: 'image',
-                                width: 300,
-                                height: 300,
-                                aspectRatio: 1,
-                            },
-                        }));
+                    }
+                };
+
+                // Fetch HEAD to determine the content type.
+                fetch(originalUri, { method: 'HEAD' })
+                    .then(handleFetch)
+                    .catch(() => {
+                        fetch(fallbackUri, { method: 'HEAD' })
+                            .then(handleFetch)
+                            .catch((error) => {
+                                console.error(
+                                    'Failed to fetch HEAD for',
+                                    url,
+                                    error
+                                );
+                                setMediaInfo((prev) => ({
+                                    ...prev,
+                                    [url]: {
+                                        type: 'image',
+                                        width: 300,
+                                        height: 300,
+                                        aspectRatio: 1,
+                                    },
+                                }));
+                            });
                     });
             }
         });

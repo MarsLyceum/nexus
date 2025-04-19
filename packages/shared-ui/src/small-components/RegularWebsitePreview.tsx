@@ -71,6 +71,8 @@ export const RegularWebsitePreview: React.FC<RegularWebsitePreviewProps> = ({
         imageContainerWidth
     );
 
+    console.log('computedSize:', computedSize);
+
     return (
         <View style={styles.linkPreviewContainer}>
             {previewData.title ? (
@@ -101,11 +103,10 @@ export const RegularWebsitePreview: React.FC<RegularWebsitePreviewProps> = ({
                             ...styles.linkPreviewImage,
                         }}
                         contentPosition="left center"
-                        contentFit="contain"
+                        contentFit="cover"
                         width={computedSize.width}
                         height={computedSize.height}
                         alt="Website preview image"
-                        unoptimized
                     />
                 </TouchableOpacity>
             ) : undefined}
@@ -136,10 +137,10 @@ function createStyles(theme: Theme) {
         },
         // Default style for the image; dynamic dimensions will override these.
         linkPreviewImage: {
-            height: 150, // fallback height
             marginTop: 5,
             marginBottom: 5,
             borderRadius: 8,
+            overflow: 'hidden',
         },
         imageTouchable: {
             alignSelf: 'flex-start', // prevents stretching to full container width

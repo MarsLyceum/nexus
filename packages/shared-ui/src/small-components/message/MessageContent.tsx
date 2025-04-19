@@ -162,7 +162,7 @@ export const MessageContent: React.FC<MessageContentProps> = ({
                                             style={{
                                                 ...styles.messageAttachmentImage,
                                             }}
-                                            contentFit="contain"
+                                            contentFit="cover"
                                             width={computedSize.width}
                                             height={computedSize.height}
                                             alt="Message attachment image"

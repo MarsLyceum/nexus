@@ -154,7 +154,7 @@ export const NexusImage = (props: NexusImageProps) => {
     }, [originalUri]);
 
     // --- React Native: use Expo Image ---
-    if (env === 'react-native-mobile' || env === 'react-native-web') {
+    if (env === 'react-native-mobile') {
         // Expo Image requires the source to be an object with a `uri` property.
         const expoSource = { uri: imageUri };
         // Merge provided width and height into the style for proper sizing in Expo.

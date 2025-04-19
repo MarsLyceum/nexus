@@ -127,20 +127,18 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
                                         muted={false}
                                         repeat
                                         paused
-                                        contentFit="contain"
+                                        contentFit="cover"
                                     />
                                 ) : (
                                     <NexusImage
                                         source={url}
                                         width={computedSize.width}
                                         height={attachmentHeight}
-                                        alt=""
+                                        alt="attachment image"
                                         style={{
                                             ...styles.galleryImage,
-                                            width: computedSize.width,
-                                            height: attachmentHeight,
                                         }}
-                                        contentFit="contain"
+                                        contentFit="cover"
                                     />
                                 )}
                             </TouchableOpacity>

@@ -140,8 +140,7 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
                 >
                     <NexusImage
                         source={uri}
-                        style={{ width: '100%', height: '100%' }}
-                        contentFit="contain"
+                        contentFit="cover"
                         width={nonZoomedSize.width}
                         height={nonZoomedSize.height}
                         alt="Computer image preview"
@@ -180,8 +179,7 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
                 >
                     <NexusImage
                         source={uri}
-                        style={{ width: '100%', height: '100%' }}
-                        contentFit="contain"
+                        contentFit="cover"
                         width={zoomedSize.width}
                         height={zoomedSize.height}
                         alt="Computer image preview zoomed"

@@ -5,7 +5,7 @@ import React, {
     useEffect,
     useMemo,
 } from 'react';
-import { View, ScrollView, Pressable } from 'react-native';
+import { View, Pressable, Platform } from 'react-native';
 import { useImageResolution, fitContainer } from 'react-native-zoom-toolkit';
 
 import { NexusImage } from '../NexusImage';
@@ -57,8 +57,26 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
             }),
         [aspectRatio, zoomedContainerWidth, zoomedContainerHeight]
     );
-    const zoomedOffsetX = (zoomedContainerWidth - zoomedSize.width) / 2;
-    const zoomedOffsetY = (zoomedContainerHeight - zoomedSize.height) / 2;
+
+    const scrollRef = useRef<HTMLDivElement | null>(null);
+
+    useEffect(() => {
+        if (zoomed && Platform.OS === 'web' && scrollRef.current) {
+            // compute the offsets to center
+            const x = (zoomedContainerWidth - containerWidth) / 2;
+            const y = (zoomedContainerHeight - containerHeight) / 2;
+
+            // scroll the <div> itself:
+            scrollRef.current.scrollLeft = x;
+            scrollRef.current.scrollTop = y;
+        }
+    }, [
+        zoomed,
+        zoomedContainerWidth,
+        zoomedContainerHeight,
+        containerWidth,
+        containerHeight,
+    ]);
 
     // Measure the visible image area using onLayout.
     const [visibleRect, setVisibleRect] = useState<
@@ -153,15 +171,18 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
     // Zoomed state: render image inside a ScrollView (vertical scrolling enabled).
     return (
         // @ts-expect-error styles
-        <View style={{ flex: 1, cursor: 'zoom-out' }}>
-            <ScrollView
-                // @ts-expect-error styles
-                style={{ flex: 1, cursor: 'zoom-out' }}
-                contentContainerStyle={{
+        <View
+            style={{ flex: 1, cursor: 'zoom-out', overflow: 'auto' }}
+            ref={scrollRef}
+        >
+            <View
+                style={{
                     width: zoomedContainerWidth,
-                    alignSelf: 'center', // centers horizontally
+                    height: zoomedContainerHeight,
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
                 }}
-                showsVerticalScrollIndicator
             >
                 <Pressable
                     onPress={handleImagePress}
@@ -172,8 +193,6 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
                     style={{
                         width: zoomedSize.width,
                         height: zoomedSize.height,
-                        marginLeft: zoomedOffsetX,
-                        marginTop: zoomedOffsetY,
                         cursor: 'zoom-out',
                     }}
                 >
@@ -185,7 +204,7 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
                         alt="Computer image preview zoomed"
                     />
                 </Pressable>
-            </ScrollView>
+            </View>
         </View>
     );
 };

@@ -1,10 +1,13 @@
 // NexusImage.tsx
 import React, { useLayoutEffect, useRef, useState, useEffect } from 'react';
-import { Platform } from 'react-native';
 // Next.js Image import – no longer used in Next environments.
 // import NextImage from 'next/image';
 // Expo Image import – used for React Native.
-import { Image as ExpoImage, ImageContentFit } from 'expo-image';
+import {
+    Image as ExpoImage,
+    ImageContentFit,
+    ImageContentPosition,
+} from 'expo-image';
 
 import { detectEnvironment, Environment } from '../utils';
 
@@ -18,6 +21,7 @@ export type NexusImageProps = {
     width?: number | string;
     height?: number | string;
     contentFit?: ImageContentFit; // e.g., 'contain', 'cover', etc.
+    contentPosition?: ImageContentPosition;
     unoptimized?: boolean;
     // Allow any additional props
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -41,6 +45,35 @@ const useContainerDimensions = (ref: React.RefObject<HTMLDivElement>) => {
     return dimensions;
 };
 
+function contentPositionToCss(pos?: ImageContentPosition): string | undefined {
+    // 1) string shorthand (e.g. 'left center')
+    if (typeof pos === 'string') {
+        return pos;
+    }
+    // 2) undefined or null
+    if (!pos) {
+        return undefined;
+    }
+
+    // 3) horizontal: check 'left' or 'right'
+    let horiz = '50%';
+    if ('left' in pos && typeof pos.left === 'number') {
+        horiz = `${pos.left * 100}%`;
+    } else if ('right' in pos && typeof pos.right === 'number') {
+        horiz = `${(1 - pos.right) * 100}%`;
+    }
+
+    // 4) vertical: check 'top' or 'bottom'
+    let vert = '50%';
+    if ('top' in pos && typeof pos.top === 'number') {
+        vert = `${pos.top * 100}%`;
+    } else if ('bottom' in pos && typeof pos.bottom === 'number') {
+        vert = `${(1 - pos.bottom) * 100}%`;
+    }
+
+    return `${horiz} ${vert}`;
+}
+
 /**
  * NexusImage
  *
@@ -61,6 +94,7 @@ export const NexusImage = (props: NexusImageProps) => {
         width,
         height,
         contentFit,
+        contentPosition,
         unoptimized,
         ...rest
     } = props;
@@ -135,6 +169,7 @@ export const NexusImage = (props: NexusImageProps) => {
                 accessibilityLabel={alt}
                 contentFit={contentFit} // Pass contentFit directly
                 onError={handleError}
+                contentPosition={contentPosition}
                 {...rest}
             />
         );
@@ -185,6 +220,9 @@ export const NexusImage = (props: NexusImageProps) => {
                     height={containerHeight}
                     style={{
                         objectFit: contentFit ?? 'contain',
+                        objectPosition:
+                            contentPositionToCss(contentPosition) ??
+                            'center center',
                         width: '100%',
                         height: '100%',
                     }}
@@ -204,7 +242,12 @@ export const NexusImage = (props: NexusImageProps) => {
             alt={alt}
             width={numericWidth}
             height={numericHeight}
-            style={{ ...style, objectFit: contentFit ?? style.objectFit }}
+            style={{
+                ...style,
+                objectFit: contentFit ?? style.objectFit,
+                objectPosition:
+                    contentPositionToCss(contentPosition) ?? 'center center',
+            }}
             onError={handleError}
             {...rest}
         />

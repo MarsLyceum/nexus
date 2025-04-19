@@ -3,7 +3,11 @@ import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { NexusImage } from '../NexusImage';
 import { LinkPreview } from '../LinkPreview';
 import { MarkdownRenderer } from '../MarkdownRenderer';
-import { extractUrls, isImageExtensionUrl } from '../../utils';
+import {
+    extractUrls,
+    isImageExtensionUrl,
+    computeMediaSize,
+} from '../../utils';
 import { useMediaTypes, useLinkPreview } from '../../hooks';
 import { NexusVideo } from '../NexusVideo';
 import type { MessageWithAvatar, DirectMessageWithAvatar } from '../../types';
@@ -122,15 +126,10 @@ export const MessageContent: React.FC<MessageContentProps> = ({
                         {message.attachmentUrls.map((url, index) => {
                             const info = mediaInfos[url];
 
-                            const baseContainerWidth =
-                                attachmentContainerWidth || 300;
-                            const attachmentComputedWidth =
-                                baseContainerWidth < 300
-                                    ? baseContainerWidth * 0.85
-                                    : 300;
-                            const attachmentComputedHeight = info?.aspectRatio
-                                ? attachmentComputedWidth / info.aspectRatio
-                                : 150;
+                            const computedSize = computeMediaSize(
+                                info?.aspectRatio,
+                                attachmentContainerWidth
+                            );
 
                             return (
                                 <TouchableOpacity
@@ -148,8 +147,8 @@ export const MessageContent: React.FC<MessageContentProps> = ({
                                             style={[
                                                 styles.messageAttachmentImage,
                                                 {
-                                                    width: attachmentComputedWidth,
-                                                    height: attachmentComputedHeight,
+                                                    width: computedSize.width,
+                                                    height: computedSize.height,
                                                 },
                                             ]}
                                             muted={false}
@@ -164,8 +163,8 @@ export const MessageContent: React.FC<MessageContentProps> = ({
                                                 ...styles.messageAttachmentImage,
                                             }}
                                             contentFit="contain"
-                                            width={attachmentComputedWidth}
-                                            height={attachmentComputedHeight}
+                                            width={computedSize.width}
+                                            height={computedSize.height}
                                             alt="Message attachment image"
                                         />
                                     ) : undefined}

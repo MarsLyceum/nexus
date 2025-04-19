@@ -8,7 +8,7 @@ import {
     Image as RNImage, // for getSize
 } from 'react-native';
 
-import { getDomainFromUrl } from '../utils';
+import { getDomainFromUrl, computeMediaSize } from '../utils';
 import { useTheme, Theme } from '../theme';
 import { PreviewData } from '../types';
 import { ImageDetailsModal } from '../sections'; // Large image modal
@@ -64,17 +64,12 @@ export const RegularWebsitePreview: React.FC<RegularWebsitePreviewProps> = ({
         }
     }, [previewImage]);
 
-    // Calculate dynamic dimensions (50% of native size), with fallbacks.
-    const computedWidth = imageDimensions
-        ? imageDimensions.width > 450
-            ? imageDimensions.width * 0.35
-            : imageDimensions.width * 0.5
-        : 200;
-    const computedHeight = imageDimensions
-        ? imageDimensions.height > 450
-            ? imageDimensions.height * 0.35
-            : imageDimensions.height * 0.5
-        : 150;
+    const [imageContainerWidth, setImageContainerWidth] = useState<number>(300);
+
+    const computedSize = computeMediaSize(
+        imageDimensions ? imageDimensions.height / imageDimensions.width : 1,
+        imageContainerWidth
+    );
 
     return (
         <View style={styles.linkPreviewContainer}>
@@ -90,17 +85,25 @@ export const RegularWebsitePreview: React.FC<RegularWebsitePreviewProps> = ({
                 <TouchableOpacity
                     onPress={() => setModalVisible(true)}
                     style={styles.imageTouchable} // restricts touchable area to image size
+                    onLayout={(e) => {
+                        const layoutWidth = e.nativeEvent.layout.width;
+                        if (
+                            layoutWidth &&
+                            layoutWidth !== imageContainerWidth
+                        ) {
+                            setImageContainerWidth(layoutWidth);
+                        }
+                    }}
                 >
                     <NexusImage
                         source={previewImage}
                         style={{
                             ...styles.linkPreviewImage,
-                            width: computedWidth,
-                            height: computedHeight,
                         }}
+                        contentPosition="left center"
                         contentFit="contain"
-                        width={computedWidth}
-                        height={computedHeight}
+                        width={computedSize.width}
+                        height={computedSize.height}
                         alt="Website preview image"
                         unoptimized
                     />

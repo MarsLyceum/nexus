@@ -1,3 +1,4 @@
+export * from './computeMediaSize';
 export * from './convertDeltaToMarkdownWithFencesAndFormatting';
 export * from './createApolloClient';
 export * from './detectEnvironment';

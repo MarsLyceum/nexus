@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { StyleSheet, Pressable } from 'react-native';
 
-import { NexusImage } from './NexusImage';
 import { ImageDetailsModal } from '../sections';
+import { computeMediaSize } from '../utils';
+
+import { NexusImage } from './NexusImage';
 
 export type ImagePreviewProps = {
     url: string;
@@ -16,12 +18,10 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({
     imageDimensions,
 }) => {
     const [modalVisible, setModalVisible] = useState(false);
-    const baseContainerWidth = containerWidth || 300;
-    const targetWidth =
-        baseContainerWidth < 300 ? baseContainerWidth * 0.85 : 300;
-    const computedHeight = imageDimensions
-        ? targetWidth * (imageDimensions.height / imageDimensions.width)
-        : 150;
+    const computedSize = computeMediaSize(
+        imageDimensions ? imageDimensions.height / imageDimensions.width : 1,
+        containerWidth
+    );
 
     return (
         <>
@@ -32,14 +32,12 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({
                 <NexusImage
                     source={url}
                     style={{
-                        width: targetWidth,
-                        height: computedHeight,
                         marginBottom: 5,
                         borderRadius: 8,
                     }}
                     contentFit="contain"
-                    width={targetWidth}
-                    height={computedHeight}
+                    width={computedSize.width}
+                    height={computedSize.height}
                     alt="Image preview"
                 />
             </Pressable>

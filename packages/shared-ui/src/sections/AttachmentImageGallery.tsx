@@ -7,10 +7,12 @@ import {
     useWindowDimensions,
 } from 'react-native';
 
-import { CarouselDots } from './CarouselDots';
-import { ArrowButton } from './ArrowButton';
 import { ImageCountOverlay, NexusVideo, NexusImage } from '../small-components';
 import { useMediaTypes } from '../hooks';
+import { computeMediaSize } from '../utils';
+
+import { CarouselDots } from './CarouselDots';
+import { ArrowButton } from './ArrowButton';
 
 export type AttachmentImageGalleryProps = {
     attachmentUrls: string[];
@@ -35,12 +37,7 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
     const isDesktop = clientWidth > 768;
 
     // Compute dimensions based on clientWidth.
-    const baseContainerWidth = clientWidth || 300;
-    const targetWidth =
-        baseContainerWidth < 300 ? baseContainerWidth * 0.85 : 300;
-    const computedImageHeight = imageAspectRatio
-        ? targetWidth / imageAspectRatio
-        : 150;
+    const computedSize = computeMediaSize(imageAspectRatio, clientWidth);
 
     // Retrieve media info for each attachment.
     const mediaInfos = useMediaTypes(attachmentUrls);
@@ -58,14 +55,14 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleMomentumScrollEnd = (event: any) => {
         const offsetX = event.nativeEvent.contentOffset.x;
-        const newIndex = Math.round(offsetX / targetWidth);
+        const newIndex = Math.round(offsetX / computedSize.width);
         setCurrentAttachmentIndex(newIndex);
     };
 
     const goToIndex = (newIndex: number) => {
         setCurrentAttachmentIndex(newIndex);
         scrollViewRef.current?.scrollTo({
-            x: newIndex * targetWidth,
+            x: newIndex * computedSize.width,
             animated: true,
         });
     };
@@ -84,7 +81,7 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
             <View
                 style={[
                     styles.imageContainer,
-                    { width: targetWidth, height: computedImageHeight },
+                    { width: computedSize.width, height: computedSize.height },
                 ]}
             >
                 <ScrollView
@@ -93,7 +90,7 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
                     showsHorizontalScrollIndicator={false}
                     onMomentumScrollEnd={handleMomentumScrollEnd}
                     contentContainerStyle={{
-                        width: targetWidth * attachmentUrls.length,
+                        width: computedSize.width * attachmentUrls.length,
                     }}
                     ref={scrollViewRef}
                 >
@@ -102,8 +99,8 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
                         const info = mediaInfos[url];
                         // Compute the height for this image.
                         const attachmentHeight = info
-                            ? targetWidth / info.aspectRatio
-                            : computedImageHeight;
+                            ? computedSize.width / info.aspectRatio
+                            : computedSize.height;
 
                         // Check if the media is a video.
                         const isVideo = info && info.type === 'video';
@@ -123,7 +120,7 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
                                         style={[
                                             styles.galleryImage,
                                             {
-                                                width: targetWidth,
+                                                width: computedSize.width,
                                                 height: attachmentHeight,
                                             },
                                         ]}
@@ -135,12 +132,12 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
                                 ) : (
                                     <NexusImage
                                         source={url}
-                                        width={targetWidth}
+                                        width={computedSize.width}
                                         height={attachmentHeight}
                                         alt=""
                                         style={{
                                             ...styles.galleryImage,
-                                            width: targetWidth,
+                                            width: computedSize.width,
                                             height: attachmentHeight,
                                         }}
                                         contentFit="contain"
@@ -172,7 +169,7 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
                             style={{
                                 position: 'absolute',
                                 left: 10,
-                                top: computedImageHeight / 2 - 15,
+                                top: computedSize.height / 2 - 15,
                             }}
                         />
                         <ArrowButton
@@ -195,7 +192,7 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
                             style={{
                                 position: 'absolute',
                                 right: 10,
-                                top: computedImageHeight / 2 - 15,
+                                top: computedSize.height / 2 - 15,
                             }}
                         />
                     </>

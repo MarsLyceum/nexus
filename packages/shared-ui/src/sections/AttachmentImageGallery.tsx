@@ -26,7 +26,7 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
     // Use useWindowDimensions to get a safe default if containerWidth is invalid.
     const { width: windowWidth } = useWindowDimensions();
     const initialWidth =
-        containerWidth > 0 ? containerWidth : windowWidth || 360;
+        containerWidth > 0 ? containerWidth : windowWidth || 300;
     const [clientWidth, setClientWidth] = useState<number>(initialWidth);
     const [currentAttachmentIndex, setCurrentAttachmentIndex] = useState(0);
     const [imageAspectRatio, setImageAspectRatio] = useState(1); // Default to square
@@ -35,9 +35,9 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
     const isDesktop = clientWidth > 768;
 
     // Compute dimensions based on clientWidth.
-    const baseContainerWidth = clientWidth || 360;
+    const baseContainerWidth = clientWidth || 300;
     const targetWidth =
-        baseContainerWidth < 360 ? baseContainerWidth * 0.85 : 360;
+        baseContainerWidth < 300 ? baseContainerWidth * 0.85 : 300;
     const computedImageHeight = imageAspectRatio
         ? targetWidth / imageAspectRatio
         : 150;

@@ -16,9 +16,9 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({
     imageDimensions,
 }) => {
     const [modalVisible, setModalVisible] = useState(false);
-    const baseContainerWidth = containerWidth || 360;
+    const baseContainerWidth = containerWidth || 300;
     const targetWidth =
-        baseContainerWidth < 360 ? baseContainerWidth * 0.85 : 360;
+        baseContainerWidth < 300 ? baseContainerWidth * 0.85 : 300;
     const computedHeight = imageDimensions
         ? targetWidth * (imageDimensions.height / imageDimensions.width)
         : 150;

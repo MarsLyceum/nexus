@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { NexusImage } from '../NexusImage';
 import { LinkPreview } from '../LinkPreview';
@@ -85,6 +85,9 @@ export const MessageContent: React.FC<MessageContentProps> = ({
         return undefined;
     };
 
+    const [attachmentContainerWidth, setAttachmentContainerWidth] =
+        useState<number>(300);
+
     return (
         <View style={styles.messageContent}>
             {effectiveContent ? (
@@ -104,9 +107,31 @@ export const MessageContent: React.FC<MessageContentProps> = ({
             {renderAttachments &&
                 message.attachmentUrls &&
                 message.attachmentUrls.length > 0 && (
-                    <View style={styles.messageAttachmentsContainer}>
+                    <View
+                        style={styles.messageAttachmentsContainer}
+                        onLayout={(e) => {
+                            const layoutWidth = e.nativeEvent.layout.width;
+                            if (
+                                layoutWidth &&
+                                layoutWidth !== attachmentContainerWidth
+                            ) {
+                                setAttachmentContainerWidth(layoutWidth);
+                            }
+                        }}
+                    >
                         {message.attachmentUrls.map((url, index) => {
                             const info = mediaInfos[url];
+
+                            const baseContainerWidth =
+                                attachmentContainerWidth || 300;
+                            const attachmentComputedWidth =
+                                baseContainerWidth < 300
+                                    ? baseContainerWidth * 0.85
+                                    : 300;
+                            const attachmentComputedHeight = info?.aspectRatio
+                                ? attachmentComputedWidth / info.aspectRatio
+                                : 150;
+
                             return (
                                 <TouchableOpacity
                                     key={index}
@@ -123,8 +148,8 @@ export const MessageContent: React.FC<MessageContentProps> = ({
                                             style={[
                                                 styles.messageAttachmentImage,
                                                 {
-                                                    width: info.width * 0.5,
-                                                    height: info.height * 0.5,
+                                                    width: attachmentComputedWidth,
+                                                    height: attachmentComputedHeight,
                                                 },
                                             ]}
                                             muted={false}
@@ -137,12 +162,10 @@ export const MessageContent: React.FC<MessageContentProps> = ({
                                             source={url}
                                             style={{
                                                 ...styles.messageAttachmentImage,
-                                                width: info.width * 0.5,
-                                                height: info.height * 0.5,
                                             }}
                                             contentFit="contain"
-                                            width={info.width * 0.5}
-                                            height={info.height * 0.5}
+                                            width={attachmentComputedWidth}
+                                            height={attachmentComputedHeight}
                                             alt="Message attachment image"
                                         />
                                     ) : undefined}

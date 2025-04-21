@@ -80,7 +80,8 @@ export const SendMessageModal: React.FC<SendMessageModalProps> = ({
                 styles.container,
                 { width: Math.min(440, viewportWidth - 32) },
             ]}
-            layout="below right"
+            layout="right"
+            gap={20}
         >
             {/* Header */}
             <View style={styles.header}>

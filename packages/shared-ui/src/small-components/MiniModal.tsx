@@ -29,6 +29,7 @@ export type MiniModalProps = {
     useRightAnchorAlignment?: boolean;
     /** NEW explicit position: e.g. "below-right", "left above" */
     layout?: LayoutString;
+    gap?: number;
     onMouseEnter?: () => void;
     onMouseLeave?: () => void;
 };
@@ -48,6 +49,7 @@ export const MiniModal: React.FC<MiniModalProps> = ({
     layout,
     onMouseEnter,
     onMouseLeave,
+    gap = 5,
 }) => {
     const modalRef = useRef<View>(null);
     const [measuredHeight, setMeasuredHeight] = useState<number>();
@@ -113,7 +115,6 @@ export const MiniModal: React.FC<MiniModalProps> = ({
             right: tokens.includes('right'),
         };
 
-        const gap = 5;
         const { width: vw, height: vh } = Dimensions.get('window');
         const wantW = (flattenedContainerStyle as any)?.width ?? 260;
         const wantH = (flattenedContainerStyle as any)?.maxHeight ?? 250;
@@ -167,7 +168,6 @@ export const MiniModal: React.FC<MiniModalProps> = ({
 
         const horizontalMargin = screenWidth * 0.02;
         const verticalMargin = screenHeight * 0.02;
-        const offset = 5;
 
         const availableAbove = anchorPosition.y - verticalMargin;
         const availableBelow =
@@ -262,17 +262,17 @@ export const MiniModal: React.FC<MiniModalProps> = ({
         } else {
             computedLeft =
                 anchorPosition.x + anchorPosition.width / 2 - modalWidth / 2;
-            computedTop = anchorPosition.y - modalHeight - offset;
+            computedTop = anchorPosition.y - modalHeight - gap;
             if (computedTop < verticalMargin) {
-                computedTop = anchorPosition.y + anchorPosition.height + offset;
+                computedTop = anchorPosition.y + anchorPosition.height + gap;
                 if (computedTop + modalHeight > screenHeight - verticalMargin) {
                     computedLeft =
-                        anchorPosition.x + anchorPosition.width + offset;
+                        anchorPosition.x + anchorPosition.width + gap;
                     if (
                         computedLeft + modalWidth >
                         screenWidth - horizontalMargin
                     ) {
-                        computedLeft = anchorPosition.x - modalWidth - offset;
+                        computedLeft = anchorPosition.x - modalWidth - gap;
                         if (computedLeft < horizontalMargin) {
                             computedLeft = Math.min(
                                 Math.max(

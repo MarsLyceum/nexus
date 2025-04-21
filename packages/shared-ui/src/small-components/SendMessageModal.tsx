@@ -6,7 +6,6 @@ import {
     StyleSheet,
     ScrollView,
     TextInput,
-    TouchableOpacity,
     useWindowDimensions,
     Pressable,
 } from 'react-native';
@@ -14,6 +13,7 @@ import {
 import { useTheme, Theme } from '../theme';
 import { Friend } from '../types';
 import { NexusButton } from '../buttons';
+import { CheckMark } from '../icons';
 
 import { MiniModal } from './MiniModal';
 import { NexusImage } from './NexusImage';
@@ -129,7 +129,12 @@ export const SendMessageModal: React.FC<SendMessageModalProps> = ({
                                     isChecked && styles.checkboxChecked,
                                 ]}
                             >
-                                {isChecked && <View style={styles.checkDot} />}
+                                {isChecked && (
+                                    <CheckMark
+                                        size={14}
+                                        color={theme.colors.ActiveText}
+                                    />
+                                )}
                             </View>
                         </Pressable>
                     );
@@ -221,12 +226,6 @@ function createStyles(theme: Theme) {
         checkboxChecked: {
             borderColor: theme.colors.Primary,
             backgroundColor: theme.colors.Primary,
-        },
-        checkDot: {
-            width: 10,
-            height: 10,
-            backgroundColor: theme.colors.ActiveText,
-            borderRadius: 2,
         },
         footer: {
             alignItems: 'flex-end',

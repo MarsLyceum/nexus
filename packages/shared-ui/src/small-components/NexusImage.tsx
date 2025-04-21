@@ -1,5 +1,6 @@
 // NexusImage.tsx
 import React, { useLayoutEffect, useRef, useState, useEffect } from 'react';
+import { StyleSheet } from 'react-native';
 // Next.js Image import – no longer used in Next environments.
 // import NextImage from 'next/image';
 // Expo Image import – used for React Native.
@@ -236,6 +237,8 @@ export const NexusImage = (props: NexusImageProps) => {
     // For static dimensions, extract numeric width/height.
     const numericWidth = getNumericSize(width, style.width) || 300; // Fallback width.
     const numericHeight = getNumericSize(height, style.height) || 200; // Fallback height.
+    const flattenedStyle =
+        style && Array.isArray(style) ? StyleSheet.flatten(style) : style;
     return (
         <img
             src={imageUri}
@@ -243,7 +246,7 @@ export const NexusImage = (props: NexusImageProps) => {
             width={numericWidth}
             height={numericHeight}
             style={{
-                ...style,
+                ...flattenedStyle,
                 objectFit: contentFit ?? style.objectFit,
                 objectPosition:
                     contentPositionToCss(contentPosition) ?? 'center center',

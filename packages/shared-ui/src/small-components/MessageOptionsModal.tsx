@@ -74,31 +74,31 @@ export const MessageOptionsModal: React.FC<MessageOptionsModalProps> = ({
         >
             <View style={styles.outerContainer}>
                 <View style={styles.iconsRow}>
-                    <Tooltip tooltipText="Like">
+                    <Tooltip text="Like">
                         <TouchableOpacity style={styles.iconWrapper}>
                             <Text style={styles.emoji}>👍</Text>
                         </TouchableOpacity>
                     </Tooltip>
 
-                    <Tooltip tooltipText="100">
+                    <Tooltip text="100">
                         <TouchableOpacity style={styles.iconWrapper}>
                             <Text style={styles.emoji}>💯</Text>
                         </TouchableOpacity>
                     </Tooltip>
 
-                    <Tooltip tooltipText="Laugh">
+                    <Tooltip text="Laugh">
                         <TouchableOpacity style={styles.iconWrapper}>
                             <Text style={styles.emoji}>😆</Text>
                         </TouchableOpacity>
                     </Tooltip>
 
-                    <Tooltip tooltipText="Neutral">
+                    <Tooltip text="Neutral">
                         <TouchableOpacity style={styles.iconWrapper}>
                             <Text style={styles.emoji}>😐</Text>
                         </TouchableOpacity>
                     </Tooltip>
 
-                    <Tooltip tooltipText="Edit">
+                    <Tooltip text="Edit">
                         <TouchableOpacity
                             style={styles.iconWrapper}
                             onPress={onEdit}
@@ -107,13 +107,13 @@ export const MessageOptionsModal: React.FC<MessageOptionsModalProps> = ({
                         </TouchableOpacity>
                     </Tooltip>
 
-                    <Tooltip tooltipText="Share">
+                    <Tooltip text="Share">
                         <TouchableOpacity style={styles.iconWrapper}>
                             <ArrowIcon theme={theme} />
                         </TouchableOpacity>
                     </Tooltip>
 
-                    <Tooltip tooltipText="More">
+                    <Tooltip text="More">
                         <TouchableOpacity
                             style={styles.iconWrapper}
                             onPress={handleMorePress}

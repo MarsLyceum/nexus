@@ -180,7 +180,7 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
                 </TouchableOpacity>
                 {!useMarkdown && showFormattingToggle && (
                     <Tooltip
-                        tooltipText={
+                        text={
                             showFormattingOptions
                                 ? 'Hide formatting options'
                                 : 'Show formatting options'

@@ -40,6 +40,7 @@ export * from './NexusImage';
 export * from './NexusVideo';
 export * from './PatchedFlashList';
 export * from './RegularWebsitePreview';
+export * from './SendMessageModal';
 export * from './SkeletonComment';
 export * from './SkeletonMessageItem';
 export * from './SkeletonPostItem';

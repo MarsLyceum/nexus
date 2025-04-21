@@ -36,6 +36,7 @@ export type NexusButtonProps = {
      * - 'outline' shows a transparent background with a border (for Cancel).
      */
     variant?: 'filled' | 'outline';
+    disabled?: boolean;
 };
 
 /**
@@ -48,11 +49,25 @@ export const NexusButton: React.FC<NexusButtonProps> = ({
     label,
     onPress,
     variant = 'filled',
+    disabled = false,
 }) => {
     const { theme } = useTheme();
 
     // Determine the button container style based on whether it is pressed.
     const getButtonStyles = (isPressed: boolean) => {
+        if (disabled) {
+            return {
+                backgroundColor:
+                    variant === 'filled'
+                        ? theme.colors.SecondaryBackground
+                        : theme.colors.ActiveText,
+                borderColor: theme.colors.InactiveText,
+                borderWidth: 2,
+                borderRadius: 12,
+                opacity: 0.5, // quick visual cue
+            };
+        }
+
         if (variant === 'filled') {
             const bgColor = isPressed
                 ? darkenColor(theme.colors.Primary, 0.1)
@@ -78,6 +93,8 @@ export const NexusButton: React.FC<NexusButtonProps> = ({
 
     // Determine the text color based on the variant and press state.
     const getTextColor = (isPressed: boolean) => {
+        if (disabled) return theme.colors.InactiveText;
+
         if (variant === 'filled') {
             return theme.colors.ActiveText;
         }
@@ -93,6 +110,7 @@ export const NexusButton: React.FC<NexusButtonProps> = ({
                 styles.nexusButtonBase,
                 getButtonStyles(pressed),
             ]}
+            disabled={disabled}
         >
             {({ pressed }) => (
                 <Text

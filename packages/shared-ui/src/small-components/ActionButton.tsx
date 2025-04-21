@@ -45,7 +45,7 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
     );
 
     return tooltipText ? (
-        <Tooltip tooltipText={tooltipText}>{content}</Tooltip>
+        <Tooltip text={tooltipText}>{content}</Tooltip>
     ) : (
         content
     );

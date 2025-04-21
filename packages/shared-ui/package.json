@@ -33,6 +33,7 @@
     },
     "dependencies": {
         "dotenv": "^16.4.7",
-        "@gorhom/bottom-sheet": "^5.1.2"
+        "@gorhom/bottom-sheet": "^5.1.2",
+        "react-use": "^17.6.0"
     }
 }

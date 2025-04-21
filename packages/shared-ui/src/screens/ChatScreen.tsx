@@ -220,7 +220,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
             headerName = groupUsers.map((user) => user?.username).join(', ');
             headerContent = (
                 <View style={styles.avatarGroup}>
-                    {groupUsers.slice(0, 3).map((user, index) => (
+                    {groupUsers.map((user, index) => (
                         <NexusImage
                             key={user?.id}
                             source={`https://picsum.photos/seed/${user?.username || 'default'}/40`}

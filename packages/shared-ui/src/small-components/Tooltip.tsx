@@ -16,10 +16,10 @@ import { useTheme, Theme } from '../theme';
 import { isComputer } from '../utils';
 
 export const Tooltip = ({
-    tooltipText,
+    text,
     children,
 }: {
-    tooltipText: string;
+    text: string;
     children?: React.ReactNode;
 }) => {
     // Otherwise, on computer devices, use the tooltip functionality.
@@ -142,7 +142,7 @@ export const Tooltip = ({
                 pointerEvents="none"
             >
                 <Text style={styles.tooltipText} numberOfLines={1}>
-                    {tooltipText}
+                    {text}
                 </Text>
             </View>
             {/* Render arrow below bubble if tooltip is above the trigger */}
@@ -173,7 +173,7 @@ export const Tooltip = ({
             {/* Wrap trigger element to capture measurements */}
             <View ref={triggerWrapperRef}>
                 <Pressable {...triggerProps}>
-                    {children ?? <Text>{tooltipText}</Text>}
+                    {children ?? <Text>{text}</Text>}
                 </Pressable>
             </View>
             {open && triggerPos && (

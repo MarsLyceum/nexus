@@ -5,6 +5,7 @@ import {
     StyleSheet,
     useWindowDimensions,
     FlatList,
+    TouchableOpacity,
 } from 'react-native';
 import { useQuery, useApolloClient, useMutation } from '@apollo/client';
 
@@ -15,10 +16,17 @@ import {
     GET_CONVERSATIONS,
     CREATE_CONVERSATION,
     CLOSE_CONVERSATION,
+    GET_FRIENDS,
 } from '../queries';
 import { useAppSelector, RootState, UserType } from '../redux';
-import { Conversation } from '../types';
-import { ConversationItem, ConversationSkeleton } from '../small-components';
+import { Conversation, FriendItemData } from '../types';
+import {
+    ConversationItem,
+    ConversationSkeleton,
+    Tooltip,
+    SendMessageModal,
+} from '../small-components';
+import { Add } from '../icons';
 
 // A component for rendering a single conversation item.
 
@@ -35,6 +43,7 @@ export const DMListScreen: React.FC = () => {
         friendId
     );
 
+    const [showSendMessageModal, setShowSendMessageModal] = useState(false);
     const [closeConversation] = useMutation(CLOSE_CONVERSATION);
     const [closedConversationIds, setClosedConversationIds] = useState<
         string[]
@@ -46,6 +55,65 @@ export const DMListScreen: React.FC = () => {
     const user: UserType = useAppSelector(
         (state: RootState) => state.user.user
     );
+    const [dmHeaderHovered, setDmHeaderHovered] = useState<boolean>(false);
+    const {
+        data: friendsData,
+        // loading: friendsLoading,
+        // error: friendsError,
+    } = useQuery(GET_FRIENDS, {
+        variables: { userId: user?.id },
+    });
+
+    const createConversation = useCallback(
+        (friendIds: string[]) =>
+            apolloClient.mutate({
+                mutation: CREATE_CONVERSATION,
+                variables: {
+                    type: friendIds.length === 1 ? 'direct' : 'group',
+                    participantsUserIds: [...friendIds, user?.id],
+                    requestedByUserId: user?.id,
+                },
+                update: (cache, { data: { createConversationData } }) => {
+                    if (!createConversationData) return;
+                    try {
+                        // Read the current conversations from the cache.
+                        const existingData = cache.readQuery<{
+                            getConversations: Conversation[];
+                        }>({
+                            query: GET_CONVERSATIONS,
+                            variables: { userId: user?.id },
+                        });
+
+                        if (!existingData) return;
+
+                        const { getConversations } = existingData;
+
+                        // Check if the new conversation already exists in the list.
+                        const alreadyExists = getConversations.some(
+                            (conversation) =>
+                                conversation.id === createConversationData.id
+                        );
+
+                        // If it doesn't exist, write the updated list back to the cache.
+                        if (!alreadyExists) {
+                            cache.writeQuery({
+                                query: GET_CONVERSATIONS,
+                                variables: { userId: user?.id },
+                                data: {
+                                    getConversations: [
+                                        createConversation,
+                                        ...getConversations,
+                                    ],
+                                },
+                            });
+                        }
+                    } catch (error) {
+                        console.error('Cache update error:', error);
+                    }
+                },
+            }),
+        [user?.id, apolloClient]
+    );
 
     useEffect(() => {
         if (friendId) {
@@ -56,52 +124,9 @@ export const DMListScreen: React.FC = () => {
     useEffect(() => {
         void (async () => {
             if (currentFriendId && user?.id) {
-                const newConversationResult = await apolloClient.mutate({
-                    mutation: CREATE_CONVERSATION,
-                    variables: {
-                        type: 'direct',
-                        participantsUserIds: [currentFriendId, user?.id],
-                        requestedByUserId: user?.id,
-                    },
-                    update: (cache, { data: { createConversation } }) => {
-                        if (!createConversation) return;
-                        try {
-                            // Read the current conversations from the cache.
-                            const existingData = cache.readQuery<{
-                                getConversations: Conversation[];
-                            }>({
-                                query: GET_CONVERSATIONS,
-                                variables: { userId: user.id },
-                            });
-
-                            if (!existingData) return;
-
-                            const { getConversations } = existingData;
-
-                            // Check if the new conversation already exists in the list.
-                            const alreadyExists = getConversations.some(
-                                (conversation) =>
-                                    conversation.id === createConversation.id
-                            );
-
-                            // If it doesn't exist, write the updated list back to the cache.
-                            if (!alreadyExists) {
-                                cache.writeQuery({
-                                    query: GET_CONVERSATIONS,
-                                    variables: { userId: user.id },
-                                    data: {
-                                        getConversations: [
-                                            createConversation,
-                                            ...getConversations,
-                                        ],
-                                    },
-                                });
-                            }
-                        } catch (error) {
-                            console.error('Cache update error:', error);
-                        }
-                    },
-                });
+                const newConversationResult = await createConversation([
+                    currentFriendId,
+                ]);
 
                 const newConversation =
                     newConversationResult.data.createConversation;
@@ -240,8 +265,37 @@ export const DMListScreen: React.FC = () => {
         <View style={styles.container}>
             {/* Sidebar with conversation list */}
             <View style={styles.sidebar}>
-                <View style={styles.dmHeader}>
-                    <Text style={styles.dmTitle}>Messages</Text>
+                <View
+                    style={styles.dmHeader}
+                    onMouseEnter={() => setDmHeaderHovered(true)}
+                    onMouseLeave={() => setDmHeaderHovered(false)}
+                >
+                    <Text
+                        style={[
+                            styles.dmTitle,
+                            {
+                                color: dmHeaderHovered
+                                    ? theme.colors.ActiveText
+                                    : theme.colors.InactiveText,
+                            },
+                        ]}
+                    >
+                        Messages
+                    </Text>
+                    <Tooltip text="Create Message">
+                        <TouchableOpacity
+                            onPress={() => setShowSendMessageModal(true)}
+                        >
+                            <Add
+                                size={14}
+                                color={
+                                    dmHeaderHovered
+                                        ? theme.colors.ActiveText
+                                        : theme.colors.InactiveText
+                                }
+                            />
+                        </TouchableOpacity>
+                    </Tooltip>
                 </View>
                 {loading ? (
                     <FlatList
@@ -278,6 +332,19 @@ export const DMListScreen: React.FC = () => {
                     <ChatScreen conversation={selectedConversation} />
                 </View>
             )}
+
+            <SendMessageModal
+                visible={showSendMessageModal}
+                onClose={() => setShowSendMessageModal(false)}
+                onCreateDM={(friendIds) => {
+                    void createConversation(friendIds);
+                }}
+                friends={
+                    friendsData?.getFriends.map(
+                        (friendData: FriendItemData) => friendData.friend
+                    ) ?? []
+                }
+            />
         </View>
     );
 };
@@ -303,8 +370,7 @@ function createStyles(theme: Theme) {
         },
         dmTitle: {
             fontSize: 12,
-            color: theme.colors.InactiveText,
-            fontWeight: 'bold',
+            fontFamily: 'Roboto_700Bold',
         },
         chatWrapper: {
             flex: 1,

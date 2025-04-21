@@ -82,10 +82,15 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     const { theme } = useTheme();
     const styles = useMemo(() => createStyles(theme), [theme]);
 
-    const handleDeleteMessage = useCallback(() => {
+    const handleDeleteMessageConfirm = useCallback(() => {
         onDeleteMessage(currentMessage);
         setShowDeleteConfirmationModal(false);
     }, [currentMessage, onDeleteMessage]);
+
+    const handleDeleteMessage = useCallback(() => {
+        setBottomSheetVisible(false);
+        setShowDeleteConfirmationModal(true);
+    }, []);
 
     const handleLongPress = useCallback((): void => {
         setBottomSheetVisible(true);
@@ -354,9 +359,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                         onMention={() => {}}
                         onCopyMessageLink={() => {}}
                         onRemoveEmbed={() => {}}
-                        onDeleteMessage={() =>
-                            setShowDeleteConfirmationModal(true)
-                        }
+                        onDeleteMessage={handleDeleteMessage}
                     />
                 )}
 
@@ -373,14 +376,14 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                     onPinMessage={() => {}}
                     onMarkUnread={() => {}}
                     onCopyMessageLink={() => {}}
-                    onDeleteMessage={() => setShowDeleteConfirmationModal(true)}
+                    onDeleteMessage={handleDeleteMessage}
                 />
 
                 {showDeleteConfirmationModal && (
                     <DeleteMessageConfirmationModal
                         visible={showDeleteConfirmationModal}
                         onClose={() => setShowDeleteConfirmationModal(false)}
-                        onConfirmDelete={handleDeleteMessage}
+                        onConfirmDelete={handleDeleteMessageConfirm}
                         message={currentMessage}
                         onAttachmentPress={onAttachmentPress}
                     />

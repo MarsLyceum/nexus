@@ -1,6 +1,12 @@
 // DeleteMessageModal.tsx
 import React, { useState, useMemo } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import {
+    View,
+    Text,
+    TouchableOpacity,
+    StyleSheet,
+    useWindowDimensions,
+} from 'react-native';
 
 import { useTheme, Theme } from '../theme';
 import { MessageWithAvatar, DirectMessageWithAvatar } from '../types';
@@ -30,9 +36,17 @@ export type DeleteMessageModalProps = {
 export const DeleteMessageConfirmationModal: React.FC<
     DeleteMessageModalProps
 > = ({ visible, onClose, onConfirmDelete, message, onAttachmentPress }) => {
+    const { width: viewportWidth } = useWindowDimensions();
     const [modalWidth, setModalWidth] = useState<number>(420);
     const { theme } = useTheme();
     const styles = useMemo(() => createStyles(theme), [theme]);
+
+    const responsiveWidth = useMemo(() => {
+        const SAFE_MARGIN = 32;
+        const DESKTOP_WIDTH = 420;
+        const MAX_WIDTH = 480;
+        return Math.min(DESKTOP_WIDTH, MAX_WIDTH, viewportWidth - SAFE_MARGIN);
+    }, [viewportWidth]);
 
     // Format date/time similarly to your MessageItem logic
     // @ts-expect-error messag
@@ -49,7 +63,7 @@ export const DeleteMessageConfirmationModal: React.FC<
             onClose={onClose}
             centered
             closeOnOutsideClick
-            containerStyle={styles.modalContainer}
+            containerStyle={[styles.modalContainer, { width: responsiveWidth }]}
         >
             <View style={styles.header}>
                 <Text style={styles.headerTitle}>Delete Message</Text>
@@ -90,7 +104,7 @@ export const DeleteMessageConfirmationModal: React.FC<
                     >
                         <MessageContent
                             message={message}
-                            width={modalWidth}
+                            width={responsiveWidth}
                             onAttachmentPress={onAttachmentPress}
                             renderMessage
                             renderLinkPreview
@@ -118,7 +132,6 @@ export const DeleteMessageConfirmationModal: React.FC<
 function createStyles(theme: Theme) {
     return StyleSheet.create({
         modalContainer: {
-            width: 420,
             maxWidth: 480,
             backgroundColor: theme.colors.PrimaryBackground,
             borderRadius: 8,

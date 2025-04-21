@@ -22,6 +22,7 @@ export type SendMessageModalProps = {
     visible: boolean;
     onClose: () => void;
     onCreateDM: (friendIds: string[]) => void;
+    anchorPosition?: { x: number; y: number; width: number; height: number };
     friends: Friend[];
 };
 
@@ -30,6 +31,7 @@ export const SendMessageModal: React.FC<SendMessageModalProps> = ({
     onClose,
     onCreateDM,
     friends,
+    anchorPosition,
 }) => {
     const { width: viewportWidth, height: viewportHeight } =
         useWindowDimensions();
@@ -72,12 +74,13 @@ export const SendMessageModal: React.FC<SendMessageModalProps> = ({
         <MiniModal
             visible={visible}
             onClose={onClose}
-            centered
             closeOnOutsideClick
+            anchorPosition={anchorPosition}
             containerStyle={[
                 styles.container,
                 { width: Math.min(440, viewportWidth - 32) },
             ]}
+            layout="below right"
         >
             {/* Header */}
             <View style={styles.header}>

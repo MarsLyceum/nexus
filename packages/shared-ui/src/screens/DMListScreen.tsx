@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, {
+    useState,
+    useEffect,
+    useCallback,
+    useMemo,
+    useRef,
+} from 'react';
 import {
     View,
     Text,
@@ -43,6 +49,17 @@ export const DMListScreen: React.FC = () => {
     const [currentFriendId, setCurrentFriendId] = useState<string | undefined>(
         friendId
     );
+    const createConversationButtonRef = useRef<View>(null);
+    const [createConversationButtonAnchor, setCreateConversationButtonAnchor] =
+        useState<
+            | {
+                  x: number;
+                  y: number;
+                  width: number;
+                  height: number;
+              }
+            | undefined
+        >();
 
     const [showSendMessageModal, setShowSendMessageModal] = useState(false);
     const [closeConversation] = useMutation(CLOSE_CONVERSATION);
@@ -269,7 +286,33 @@ export const DMListScreen: React.FC = () => {
                     </Text>
                     <Tooltip text="Create Message">
                         <TouchableOpacity
-                            onPress={() => setShowSendMessageModal(true)}
+                            ref={createConversationButtonRef}
+                            onPress={() => {
+                                if (createConversationButtonRef.current) {
+                                    createConversationButtonRef.current.measureInWindow(
+                                        (
+                                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                            x: any,
+                                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                            y: any,
+                                            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-shadow
+                                            width: any,
+                                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                            height: any
+                                        ) => {
+                                            setCreateConversationButtonAnchor({
+                                                x,
+                                                y,
+                                                width,
+                                                height,
+                                            });
+                                            setShowSendMessageModal(true);
+                                        }
+                                    );
+                                } else {
+                                    setShowSendMessageModal(true);
+                                }
+                            }}
                         >
                             <Add
                                 size={14}
@@ -325,6 +368,7 @@ export const DMListScreen: React.FC = () => {
                     const newConversation = await createConversation(friendIds);
                     setActiveConversation(newConversation);
                 }}
+                anchorPosition={createConversationButtonAnchor}
                 friends={
                     friendsData?.getFriends.map(
                         (friendData: FriendItemData) => friendData.friend

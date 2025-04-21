@@ -161,7 +161,7 @@ export const SendMessageModal: React.FC<SendMessageModalProps> = ({
 function createStyles(theme: Theme) {
     return StyleSheet.create({
         container: {
-            backgroundColor: theme.colors.PrimaryBackground,
+            backgroundColor: theme.colors.TertiaryBackground,
             borderRadius: 8,
             padding: 16,
         },

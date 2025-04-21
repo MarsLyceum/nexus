@@ -14,7 +14,6 @@ import {
     TouchableOpacity,
 } from 'react-native';
 import { useQuery, useApolloClient, useMutation } from '@apollo/client';
-import { useAsyncFn } from 'react-use';
 
 import { useTheme, Theme } from '../theme';
 import { useNexusRouter, createNexusParam } from '../hooks';
@@ -82,23 +81,6 @@ export const DMListScreen: React.FC = () => {
         variables: { userId: user?.id },
     });
 
-    const [, createConversation] = useAsyncFn(
-        async (friendIds: string[]): Promise<Conversation> => {
-            const newConversation = await apolloClient.mutate({
-                mutation: CREATE_CONVERSATION,
-                variables: {
-                    type: friendIds.length === 1 ? 'direct' : 'group',
-                    participantsUserIds: [...friendIds, user?.id],
-                    requestedByUserId: user?.id,
-                },
-            });
-            await refetchConversations();
-
-            return newConversation.data.createConversation;
-        },
-        [user?.id, apolloClient]
-    );
-
     const setActiveConversation = useCallback(
         (newConversation?: Conversation) => {
             if (newConversation) {
@@ -124,6 +106,36 @@ export const DMListScreen: React.FC = () => {
         }
     }, [friendId]);
 
+    // Fetch conversations using the active user's ID.
+    const {
+        data,
+        loading,
+        error,
+        refetch: refetchConversations,
+    } = useQuery(GET_CONVERSATIONS, {
+        variables: { userId: user?.id },
+        skip: !user,
+        fetchPolicy: 'cache-and-network',
+        notifyOnNetworkStatusChange: true,
+    });
+
+    const createConversation = useCallback(
+        async (friendIds: string[]): Promise<Conversation> => {
+            const newConversation = await apolloClient.mutate({
+                mutation: CREATE_CONVERSATION,
+                variables: {
+                    type: friendIds.length === 1 ? 'direct' : 'group',
+                    participantsUserIds: [...friendIds, user?.id],
+                    requestedByUserId: user?.id,
+                },
+            });
+            await refetchConversations();
+
+            return newConversation.data.createConversation;
+        },
+        [user?.id, apolloClient, refetchConversations]
+    );
+
     useEffect(() => {
         void (async () => {
             if (currentFriendId && user?.id) {
@@ -146,19 +158,6 @@ export const DMListScreen: React.FC = () => {
         createConversation,
         setActiveConversation,
     ]);
-
-    // Fetch conversations using the active user's ID.
-    const {
-        data,
-        loading,
-        error,
-        refetch: refetchConversations,
-    } = useQuery(GET_CONVERSATIONS, {
-        variables: { userId: user?.id },
-        skip: !user,
-        fetchPolicy: 'cache-and-network',
-        notifyOnNetworkStatusChange: true,
-    });
 
     // State to hold the selected conversation on large screens.
     const [selectedConversation, setSelectedConversation] = useState<

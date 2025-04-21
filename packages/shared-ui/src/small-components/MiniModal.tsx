@@ -57,6 +57,16 @@ export const MiniModal: React.FC<MiniModalProps> = ({
     const { theme } = useTheme();
     const styles = useMemo(() => createStyles(theme), [theme]);
 
+    const [modalLocation, setModalLocation] = useState<
+        | {
+              x: number;
+              y: number;
+              width: number;
+              height: number;
+          }
+        | undefined
+    >();
+
     const flattenedContainerStyle = StyleSheet.flatten(containerStyle);
 
     /* -------------------------- outside click ----------------------- */
@@ -339,21 +349,47 @@ export const MiniModal: React.FC<MiniModalProps> = ({
     /* ------------------------------------------------------------------ */
     return (
         <Portal>
-            {centered && <View style={styles.modalOverlay} />}
             <View
-                ref={modalRef}
-                style={[
-                    computedContainerStyle,
-                    { pointerEvents: 'auto', zIndex: 100 },
-                ]}
-                onMouseEnter={onMouseEnter}
-                onMouseLeave={onMouseLeave}
-                onLayout={(e) => {
-                    setMeasuredHeight(e.nativeEvent.layout.height);
-                    setMeasuredWidth(e.nativeEvent.layout.width);
+                style={StyleSheet.absoluteFillObject}
+                // we *don’t* claim the responder—just listen in capture phase
+                onStartShouldSetResponderCapture={(evt) => {
+                    if (closeOnOutsideClick && modalLocation) {
+                        const { pageX, pageY } = evt.nativeEvent;
+                        const { x, y, width, height } = modalLocation;
+
+                        // if tap is *outside* the modal’s rectangle...
+                        if (
+                            pageX < x ||
+                            pageX > x + width ||
+                            pageY < y ||
+                            pageY > y + height
+                        ) {
+                            onClose();
+                        }
+                    }
+                    // return false so we never become “the” responder
+                    return false;
                 }}
             >
-                {children}
+                {centered && <View style={styles.modalOverlay} />}
+                <View
+                    ref={modalRef}
+                    style={[
+                        computedContainerStyle,
+                        { pointerEvents: 'auto', zIndex: 100 },
+                    ]}
+                    onMouseEnter={onMouseEnter}
+                    onMouseLeave={onMouseLeave}
+                    onLayout={(e) => {
+                        const { x, y, width, height } = e.nativeEvent.layout;
+
+                        setMeasuredHeight(height);
+                        setMeasuredWidth(width);
+                        setModalLocation({ x, y, width, height });
+                    }}
+                >
+                    {children}
+                </View>
             </View>
         </Portal>
     );

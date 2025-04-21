@@ -320,10 +320,9 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
 
     // Updated handleSend now uses the SEND_MESSAGE mutation.
     const handleSend = (text: string, attachments: Attachment[]) => {
-        // Generate a temporary id for optimistic UI.
-        const tempId = uuidv4();
+        const id = uuidv4();
         const newMessage: Message = {
-            id: tempId,
+            id,
             content: text,
             senderUserId: activeUser?.id ?? '',
             createdAt: new Date().toISOString(),
@@ -342,14 +341,14 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
         sendMessage({
             variables: {
                 conversationId: conversationState?.id,
-                id: tempId,
+                id,
                 content: text,
                 senderUserId: activeUser?.id,
                 attachments: attachments.map((att) => att.file),
             },
             optimisticResponse: {
                 sendMessage: {
-                    id: tempId,
+                    id,
                     __typename: 'Message',
                 },
             },

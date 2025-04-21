@@ -35,8 +35,12 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
 }) => {
     const client = useApolloClient();
     const [groupUsers, setGroupUsers] = useState<UserType[]>([]);
-    const otherParticipantIds = conversation.participantsUserIds.filter(
-        (id) => id !== activeUser?.id
+    const otherParticipantIds = useMemo(
+        () =>
+            conversation.participantsUserIds.filter(
+                (id) => id !== activeUser?.id
+            ),
+        [activeUser?.id, conversation.participantsUserIds]
     );
     const [closeButtonHovered, setCloseButtonHovered] =
         useState<boolean>(false);

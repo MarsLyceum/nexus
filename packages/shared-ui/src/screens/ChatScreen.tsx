@@ -484,7 +484,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
                             keyExtractor={(item) => item.id}
                             renderItem={renderItem}
                             onEndReached={handleLoadMore}
-                            onEndReachedThreshold={0.1}
+                            onEndReachedThreshold={0.2}
                         />
                     )}
                 </View>

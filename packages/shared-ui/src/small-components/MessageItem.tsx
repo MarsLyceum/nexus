@@ -98,7 +98,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
 
     // Measure the container and set the anchor based on its top-right edge.
     const showModal = () => {
-        if (containerRef.current) {
+        if (isComputer() && containerRef.current) {
             const rect = (
                 containerRef.current as unknown as Element
             ).getBoundingClientRect();
@@ -235,7 +235,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
 
     return (
         <Pressable
-            onLongPress={handleLongPress}
+            {...(isComputer() ? {} : { onLongPress: handleLongPress })}
             onPressIn={() => setIsHovered(true)}
             onPressOut={() => setIsHovered(false)}
             onMouseEnter={handleMouseEnter}

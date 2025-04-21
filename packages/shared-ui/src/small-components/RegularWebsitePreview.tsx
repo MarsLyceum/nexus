@@ -71,10 +71,16 @@ export const RegularWebsitePreview: React.FC<RegularWebsitePreviewProps> = ({
         imageContainerWidth
     );
 
-    console.log('computedSize:', computedSize);
-
     return (
-        <View style={styles.linkPreviewContainer}>
+        <View
+            style={styles.linkPreviewContainer}
+            onLayout={(e) => {
+                const layoutWidth = e.nativeEvent.layout.width;
+                if (layoutWidth && layoutWidth !== imageContainerWidth) {
+                    setImageContainerWidth(layoutWidth);
+                }
+            }}
+        >
             {previewData.title ? (
                 <Text style={styles.linkPreviewTitle}>{previewData.title}</Text>
             ) : undefined}
@@ -87,15 +93,6 @@ export const RegularWebsitePreview: React.FC<RegularWebsitePreviewProps> = ({
                 <TouchableOpacity
                     onPress={() => setModalVisible(true)}
                     style={styles.imageTouchable} // restricts touchable area to image size
-                    onLayout={(e) => {
-                        const layoutWidth = e.nativeEvent.layout.width;
-                        if (
-                            layoutWidth &&
-                            layoutWidth !== imageContainerWidth
-                        ) {
-                            setImageContainerWidth(layoutWidth);
-                        }
-                    }}
                 >
                     <NexusImage
                         source={previewImage}

@@ -16,6 +16,7 @@ export const CREATE_CONVERSATION = gql`
             id
             type
             participantsUserIds
+            closedByUserIds
             channelId
         }
     }

@@ -8,6 +8,7 @@ import {
     TouchableOpacity,
 } from 'react-native';
 import { useQuery, useApolloClient, useMutation } from '@apollo/client';
+import { useAsyncFn } from 'react-use';
 
 import { useTheme, Theme } from '../theme';
 import { useNexusRouter, createNexusParam } from '../hooks';
@@ -64,55 +65,40 @@ export const DMListScreen: React.FC = () => {
         variables: { userId: user?.id },
     });
 
-    const createConversation = useCallback(
-        (friendIds: string[]) =>
-            apolloClient.mutate({
+    const [, createConversation] = useAsyncFn(
+        async (friendIds: string[]): Promise<Conversation> => {
+            const newConversation = await apolloClient.mutate({
                 mutation: CREATE_CONVERSATION,
                 variables: {
                     type: friendIds.length === 1 ? 'direct' : 'group',
                     participantsUserIds: [...friendIds, user?.id],
                     requestedByUserId: user?.id,
                 },
-                update: (cache, { data: { createConversationData } }) => {
-                    if (!createConversationData) return;
-                    try {
-                        // Read the current conversations from the cache.
-                        const existingData = cache.readQuery<{
-                            getConversations: Conversation[];
-                        }>({
-                            query: GET_CONVERSATIONS,
-                            variables: { userId: user?.id },
-                        });
+            });
+            await refetchConversations();
 
-                        if (!existingData) return;
-
-                        const { getConversations } = existingData;
-
-                        // Check if the new conversation already exists in the list.
-                        const alreadyExists = getConversations.some(
-                            (conversation) =>
-                                conversation.id === createConversationData.id
-                        );
-
-                        // If it doesn't exist, write the updated list back to the cache.
-                        if (!alreadyExists) {
-                            cache.writeQuery({
-                                query: GET_CONVERSATIONS,
-                                variables: { userId: user?.id },
-                                data: {
-                                    getConversations: [
-                                        createConversation,
-                                        ...getConversations,
-                                    ],
-                                },
-                            });
-                        }
-                    } catch (error) {
-                        console.error('Cache update error:', error);
-                    }
-                },
-            }),
+            return newConversation.data.createConversation;
+        },
         [user?.id, apolloClient]
+    );
+
+    const setActiveConversation = useCallback(
+        (newConversation?: Conversation) => {
+            if (newConversation) {
+                setClosedConversationIds((prevClosed) =>
+                    prevClosed.filter((id) => id !== newConversation.id)
+                );
+
+                if (isLargeScreen) {
+                    setSelectedConversation(newConversation);
+                } else {
+                    router.push('/chat', {
+                        conversationId: newConversation.id,
+                    });
+                }
+            }
+        },
+        [isLargeScreen, router]
     );
 
     useEffect(() => {
@@ -124,38 +110,37 @@ export const DMListScreen: React.FC = () => {
     useEffect(() => {
         void (async () => {
             if (currentFriendId && user?.id) {
-                const newConversationResult = await createConversation([
+                const newConversation = await createConversation([
                     currentFriendId,
                 ]);
 
-                const newConversation =
-                    newConversationResult.data.createConversation;
-
-                if (newConversation) {
-                    setClosedConversationIds((prevClosed) =>
-                        prevClosed.filter((id) => id !== newConversation.id)
-                    );
-
-                    if (isLargeScreen) {
-                        setSelectedConversation(newConversation);
-                    } else {
-                        router.push('/chat', {
-                            conversationId: newConversation.id,
-                        });
-                    }
-                }
+                setActiveConversation(newConversation);
 
                 router.replace('/messages');
                 setCurrentFriendId(undefined);
             }
         })();
-    }, [currentFriendId, apolloClient, isLargeScreen, router, user?.id]);
+    }, [
+        currentFriendId,
+        apolloClient,
+        isLargeScreen,
+        router,
+        user?.id,
+        createConversation,
+        setActiveConversation,
+    ]);
 
     // Fetch conversations using the active user's ID.
-    const { data, loading, error } = useQuery(GET_CONVERSATIONS, {
+    const {
+        data,
+        loading,
+        error,
+        refetch: refetchConversations,
+    } = useQuery(GET_CONVERSATIONS, {
         variables: { userId: user?.id },
         skip: !user,
         fetchPolicy: 'cache-and-network',
+        notifyOnNetworkStatusChange: true,
     });
 
     // State to hold the selected conversation on large screens.
@@ -336,8 +321,9 @@ export const DMListScreen: React.FC = () => {
             <SendMessageModal
                 visible={showSendMessageModal}
                 onClose={() => setShowSendMessageModal(false)}
-                onCreateDM={(friendIds) => {
-                    void createConversation(friendIds);
+                onCreateDM={async (friendIds) => {
+                    const newConversation = await createConversation(friendIds);
+                    setActiveConversation(newConversation);
                 }}
                 friends={
                     friendsData?.getFriends.map(

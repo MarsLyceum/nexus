@@ -161,7 +161,7 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
     const totalMembers = conversation.participantsUserIds.length;
 
     return (
-        <TouchableOpacity
+        <Pressable
             style={[
                 styles.conversationItem,
                 selected && styles.selectedConversationItem,
@@ -170,6 +170,8 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
                 },
             ]}
             onPress={() => onPress(conversation)}
+            onMouseEnter={() => setConversationHovered(true)}
+            onMouseLeave={() => setConversationHovered(false)}
         >
             <View style={styles.avatarGroup}>
                 {groupUsers.slice(0, 3).map((user, index) => {
@@ -183,9 +185,8 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
                             height={40}
                             // @ts-expect-error web only
                             style={[
-                                // @ts-expect-error web only
                                 styles.groupAvatar,
-                                { marginLeft: index === 0 ? 0 : -10 },
+                                { marginLeft: index === 0 ? 0 : -15 },
                             ]}
                             contentFit="cover"
                         />
@@ -198,7 +199,27 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
                 </Text>
                 <Text style={styles.membersCount}>{totalMembers} Members</Text>
             </View>
-        </TouchableOpacity>
+            {conversationHovered && (
+                <TouchableOpacity
+                    style={styles.closeButton}
+                    onPress={() => onClose(conversation)}
+                >
+                    <View
+                        onMouseEnter={() => setCloseButtonHovered(true)}
+                        onMouseLeave={() => setCloseButtonHovered(false)}
+                    >
+                        <Cancel
+                            size={14}
+                            color={
+                                closeButtonHovered
+                                    ? theme.colors.ActiveText
+                                    : theme.colors.InactiveText
+                            }
+                        />
+                    </View>
+                </TouchableOpacity>
+            )}
+        </Pressable>
     );
 };
 
@@ -221,6 +242,11 @@ function createStyles(theme: Theme) {
         avatar: {
             width: 40,
             height: 40,
+            borderRadius: 20,
+        },
+        groupAvatar: {
+            width: 30,
+            height: 30,
             borderRadius: 20,
         },
         statusDot: {

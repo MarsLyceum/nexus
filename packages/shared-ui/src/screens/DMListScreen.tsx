@@ -9,7 +9,6 @@ import {
     View,
     Text,
     StyleSheet,
-    useWindowDimensions,
     FlatList,
     TouchableOpacity,
 } from 'react-native';
@@ -17,7 +16,6 @@ import { useQuery, useApolloClient, useMutation } from '@apollo/client';
 
 import { useTheme, Theme } from '../theme';
 import { useNexusRouter, createNexusParam } from '../hooks';
-import { ChatScreen } from './ChatScreen';
 import {
     GET_CONVERSATIONS,
     CREATE_CONVERSATION,
@@ -33,14 +31,16 @@ import {
     SendMessageModal,
 } from '../small-components';
 import { Add } from '../icons';
+import { isComputer } from '../utils';
+
+import { ChatScreen } from './ChatScreen';
 
 // A component for rendering a single conversation item.
 
 const { useParams } = createNexusParam();
 
 export const DMListScreen: React.FC = () => {
-    const { width } = useWindowDimensions();
-    const isLargeScreen = width > 768;
+    const isComputerDevice = isComputer();
     const router = useNexusRouter();
     const apolloClient = useApolloClient();
     const { params } = useParams();
@@ -88,7 +88,7 @@ export const DMListScreen: React.FC = () => {
                     prevClosed.filter((id) => id !== newConversation.id)
                 );
 
-                if (isLargeScreen) {
+                if (isComputerDevice) {
                     setSelectedConversation(newConversation);
                 } else {
                     router.push('/chat', {
@@ -97,7 +97,7 @@ export const DMListScreen: React.FC = () => {
                 }
             }
         },
-        [isLargeScreen, router]
+        [isComputerDevice, router]
     );
 
     useEffect(() => {
@@ -152,7 +152,6 @@ export const DMListScreen: React.FC = () => {
     }, [
         currentFriendId,
         apolloClient,
-        isLargeScreen,
         router,
         user?.id,
         createConversation,
@@ -166,7 +165,7 @@ export const DMListScreen: React.FC = () => {
 
     useEffect(() => {
         if (
-            isLargeScreen &&
+            isComputerDevice &&
             !selectedConversation &&
             data?.getConversations?.length > 0
         ) {
@@ -180,10 +179,10 @@ export const DMListScreen: React.FC = () => {
 
             setSelectedConversation(newSelected);
         }
-    }, [isLargeScreen, selectedConversation, data, closedConversationIds]);
+    }, [isComputerDevice, selectedConversation, data, closedConversationIds]);
 
     const handleConversationPress = (conversation: Conversation) => {
-        if (isLargeScreen) {
+        if (isComputerDevice) {
             setSelectedConversation(conversation);
         } else {
             router.push('/chat', { conversationId: conversation.id });
@@ -354,7 +353,7 @@ export const DMListScreen: React.FC = () => {
                 )}
             </View>
 
-            {isLargeScreen && selectedConversation && (
+            {isComputerDevice && selectedConversation && (
                 <View style={styles.chatWrapper}>
                     <ChatScreen conversation={selectedConversation} />
                 </View>
@@ -392,7 +391,7 @@ function createStyles(theme: Theme) {
             height: '100%',
         },
         sidebar: {
-            width: 250,
+            width: isComputer() ? 250 : '100%',
             backgroundColor: theme.colors.PrimaryBackground,
             paddingTop: 10,
         },

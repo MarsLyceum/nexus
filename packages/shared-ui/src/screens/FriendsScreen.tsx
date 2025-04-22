@@ -11,9 +11,9 @@ import {
 import { useQuery, useMutation } from '@apollo/client';
 
 import { useNexusRouter } from '../hooks';
+import { FriendItemData } from '../types';
 import {
     FriendItem,
-    FriendItemData,
     DropdownMenu,
     RawRect,
     ConfirmRemoveFriendModal,

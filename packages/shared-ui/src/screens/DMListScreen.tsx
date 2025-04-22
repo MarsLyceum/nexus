@@ -369,9 +369,14 @@ export const DMListScreen: React.FC = () => {
                 }}
                 anchorPosition={createConversationButtonAnchor}
                 friends={
-                    friendsData?.getFriends.map(
-                        (friendData: FriendItemData) => friendData.friend
-                    ) ?? []
+                    friendsData?.getFriends
+                        .filter(
+                            (friendData: FriendItemData) =>
+                                friendData.status === 'accepted'
+                        )
+                        .map(
+                            (friendData: FriendItemData) => friendData.friend
+                        ) ?? []
                 }
             />
         </View>

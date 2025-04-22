@@ -14,6 +14,7 @@ import { useTheme, Theme } from '../theme';
 import { Friend } from '../types';
 import { NexusButton } from '../buttons';
 import { CheckMark } from '../icons';
+import { getOnlineStatusDotColor } from '../utils';
 
 import { MiniModal } from './MiniModal';
 import { NexusImage } from './NexusImage';
@@ -85,7 +86,7 @@ export const SendMessageModal: React.FC<SendMessageModalProps> = ({
         >
             {/* Header */}
             <View style={styles.header}>
-                <Text style={styles.title}>Select Friends</Text>
+                <Text style={styles.title}>Select Friends to Message</Text>
             </View>
 
             {/* Search */}
@@ -113,13 +114,27 @@ export const SendMessageModal: React.FC<SendMessageModalProps> = ({
                                 pressed && styles.rowPressed,
                             ]}
                         >
-                            <NexusImage
-                                source={`https://picsum.photos/seed/${friend.username}/40`}
-                                width={32}
-                                height={32}
-                                style={styles.avatar}
-                                alt={`${friend.username} avatar`}
-                            />
+                            <View style={styles.avatarAndDot}>
+                                <NexusImage
+                                    source={`https://picsum.photos/seed/${friend.username}/40`}
+                                    width={32}
+                                    height={32}
+                                    style={styles.avatar}
+                                    alt={`${friend.username} avatar`}
+                                />
+                                <View
+                                    style={[
+                                        styles.statusDot,
+                                        {
+                                            backgroundColor:
+                                                getOnlineStatusDotColor(
+                                                    theme,
+                                                    friend.status
+                                                ),
+                                        },
+                                    ]}
+                                />
+                            </View>
                             <View style={styles.textCol}>
                                 <Text style={styles.displayName}>
                                     {friend.username}
@@ -160,6 +175,20 @@ export const SendMessageModal: React.FC<SendMessageModalProps> = ({
 
 function createStyles(theme: Theme) {
     return StyleSheet.create({
+        avatarAndDot: {
+            position: 'relative',
+            marginRight: 8,
+        },
+        statusDot: {
+            position: 'absolute',
+            bottom: 0,
+            right: 5,
+            width: 15,
+            height: 15,
+            borderRadius: 7,
+            borderWidth: 2,
+            borderColor: theme.colors.SecondaryBackground,
+        },
         container: {
             backgroundColor: theme.colors.TertiaryBackground,
             borderRadius: 8,

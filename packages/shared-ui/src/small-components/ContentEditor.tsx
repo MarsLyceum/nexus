@@ -1,5 +1,5 @@
 // ContentEditor.tsx
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import {
     View,
     Text,
@@ -15,7 +15,7 @@ import { RichTextEditor, AttachmentPreviews } from '../sections';
 import { Attachment } from '../types';
 import { useFileUpload } from '../hooks';
 import { GiphyModal } from './GiphyModal';
-import { COLORS } from '../constants';
+import { useTheme, Theme } from '../theme';
 import { Tooltip } from './Tooltip';
 import { FormattingOptions } from '../icons/FormattingOptions';
 
@@ -53,12 +53,18 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
     submitButtonText,
     isExpanded = true,
     onExpand,
-    editorBackgroundColor = COLORS.PrimaryBackground,
+    editorBackgroundColor: editorBackgroundColorProp,
     giphyVariant = 'uri',
     onGifSelect,
     showFormattingToggle = false,
     updateContent,
 }) => {
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
+
+    const editorBackgroundColor =
+        editorBackgroundColorProp ?? theme.colors.PrimaryBackground;
+
     const { pickFile } = useFileUpload();
     const [useMarkdown, setUseMarkdown] = useState(false);
     const [showGiphy, setShowGiphy] = useState(false);
@@ -174,7 +180,7 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
                 </TouchableOpacity>
                 {!useMarkdown && showFormattingToggle && (
                     <Tooltip
-                        tooltipText={
+                        text={
                             showFormattingOptions
                                 ? 'Hide formatting options'
                                 : 'Show formatting options'
@@ -185,7 +191,7 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
                                 styles.formatToggleButton,
                                 {
                                     backgroundColor: showFormattingOptions
-                                        ? COLORS.Primary
+                                        ? theme.colors.Primary
                                         : 'transparent',
                                 },
                             ]}
@@ -193,7 +199,10 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
                                 setShowFormattingOptions((prev) => !prev)
                             }
                         >
-                            <FormattingOptions size={18} color={COLORS.White} />
+                            <FormattingOptions
+                                size={18}
+                                color={theme.colors.ActiveText}
+                            />
                         </Pressable>
                     </Tooltip>
                 )}
@@ -299,105 +308,107 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
     );
 };
 
-const styles = StyleSheet.create({
-    container: {
-        marginTop: 10,
-        marginBottom: 10,
-        borderWidth: 0,
-        borderRadius: 5,
-        padding: 10,
-        position: 'relative',
-    },
-    toggleButton: {
-        alignSelf: 'flex-end',
-        marginBottom: 8,
-        paddingVertical: 4,
-        paddingHorizontal: 8,
-        borderRadius: 4,
-        backgroundColor: COLORS.Primary,
-    },
-    toggleButtonText: {
-        color: COLORS.White,
-        fontWeight: '600',
-    },
-    editorContainer: {
-        marginBottom: 10,
-    },
-    formatAndAttachContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 10,
-    },
-    imageButton: {
-        marginLeft: 10,
-        padding: 8,
-        backgroundColor: COLORS.SecondaryBackground,
-        borderRadius: 5,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    gifButton: {
-        marginLeft: 10,
-        padding: 8,
-        backgroundColor: COLORS.SecondaryBackground,
-        borderRadius: 5,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    gifButtonText: {
-        color: COLORS.White,
-        fontSize: 16,
-        fontWeight: 'bold',
-    },
-    formatToggleButton: {
-        marginLeft: 10,
-        padding: 8,
-        borderRadius: 5,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    buttonRow: {
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
-        marginTop: 5,
-    },
-    cancelButton: {
-        marginRight: 10,
-        paddingVertical: 8,
-        paddingHorizontal: 15,
-        borderRadius: 5,
-        backgroundColor: COLORS.White,
-        borderWidth: 1,
-        borderColor: COLORS.Primary,
-    },
-    cancelButtonText: {
-        color: COLORS.Primary,
-        fontWeight: '600',
-    },
-    submitButton: {
-        paddingVertical: 8,
-        paddingHorizontal: 15,
-        borderRadius: 5,
-        backgroundColor: COLORS.Primary,
-    },
-    submitButtonText: {
-        color: COLORS.White,
-        fontWeight: '600',
-    },
-    errorMessage: {
-        color: COLORS.Error,
-        marginBottom: 5,
-        textAlign: 'center',
-    },
-    // --- New styles for preview modal ---
-    previewModalOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.9)',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    previewModalImage: {
-        borderWidth: 2,
-        borderColor: 'white',
-    },
-});
+function createStyles(theme: Theme) {
+    return StyleSheet.create({
+        container: {
+            marginTop: 10,
+            marginBottom: 10,
+            borderWidth: 0,
+            borderRadius: 5,
+            padding: 10,
+            position: 'relative',
+        },
+        toggleButton: {
+            alignSelf: 'flex-end',
+            marginBottom: 8,
+            paddingVertical: 4,
+            paddingHorizontal: 8,
+            borderRadius: 4,
+            backgroundColor: theme.colors.Primary,
+        },
+        toggleButtonText: {
+            color: theme.colors.ActiveText,
+            fontWeight: '600',
+        },
+        editorContainer: {
+            marginBottom: 10,
+        },
+        formatAndAttachContainer: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginBottom: 10,
+        },
+        imageButton: {
+            marginLeft: 10,
+            padding: 8,
+            backgroundColor: theme.colors.SecondaryBackground,
+            borderRadius: 5,
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        gifButton: {
+            marginLeft: 10,
+            padding: 8,
+            backgroundColor: theme.colors.SecondaryBackground,
+            borderRadius: 5,
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        gifButtonText: {
+            color: theme.colors.ActiveText,
+            fontSize: 16,
+            fontWeight: 'bold',
+        },
+        formatToggleButton: {
+            marginLeft: 10,
+            padding: 8,
+            borderRadius: 5,
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        buttonRow: {
+            flexDirection: 'row',
+            justifyContent: 'flex-end',
+            marginTop: 5,
+        },
+        cancelButton: {
+            marginRight: 10,
+            paddingVertical: 8,
+            paddingHorizontal: 15,
+            borderRadius: 5,
+            backgroundColor: theme.colors.ActiveText,
+            borderWidth: 1,
+            borderColor: theme.colors.Primary,
+        },
+        cancelButtonText: {
+            color: theme.colors.Primary,
+            fontWeight: '600',
+        },
+        submitButton: {
+            paddingVertical: 8,
+            paddingHorizontal: 15,
+            borderRadius: 5,
+            backgroundColor: theme.colors.Primary,
+        },
+        submitButtonText: {
+            color: theme.colors.ActiveText,
+            fontWeight: '600',
+        },
+        errorMessage: {
+            color: theme.colors.Error,
+            marginBottom: 5,
+            textAlign: 'center',
+        },
+        // --- New styles for preview modal ---
+        previewModalOverlay: {
+            flex: 1,
+            backgroundColor: 'rgba(0,0,0,0.9)',
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        previewModalImage: {
+            borderWidth: 2,
+            borderColor: 'white',
+        },
+    });
+}

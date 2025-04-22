@@ -1,4 +1,10 @@
 // babel.config.js
+
+const dotenv = require('dotenv');
+
+dotenv.config({ path: '.env' });
+dotenv.config({ path: '../../.env.local' });
+
 module.exports = function (api) {
     // Detect web usage (for Next.js)
     const isWeb = api.caller(
@@ -22,6 +28,10 @@ module.exports = function (api) {
             [
                 '@babel/plugin-transform-private-property-in-object',
                 { loose: true },
+            ],
+            [
+                'babel-plugin-transform-inline-environment-variables',
+                { include: ['JWT_SECRET', 'USE_REMOTE_GRAPHQL'] },
             ],
             'react-native-reanimated/plugin',
         ],

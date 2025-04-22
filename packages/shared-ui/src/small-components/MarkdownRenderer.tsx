@@ -10,66 +10,66 @@ import {
 } from 'react-native';
 import MarkdownIt from 'markdown-it';
 import RenderHTML, { defaultHTMLElementModels } from 'react-native-render-html';
-import { COLORS } from '../constants';
 
-// ---------------------
-// Styles
-// ---------------------
-const styles = StyleSheet.create({
-    // Use white for paragraph text as desired.
-    document: {
-        fontSize: 16,
-        lineHeight: 22,
-        fontFamily: 'Roboto_400Regular',
-    },
-    code_inline: {
-        fontFamily: 'monospace',
-        backgroundColor: '#2f3136',
-        color: '#c7c7c7',
-        paddingHorizontal: 4,
-        paddingVertical: 2,
-    },
-    blockquote: {
-        backgroundColor: COLORS.AppBackground,
-        padding: 10,
-        borderLeftColor: '#4ea1f3',
-        borderLeftWidth: 4,
-        marginVertical: 8,
-    },
-    spoilerText: {
-        fontSize: 16,
-    },
-    linkText: {
-        color: COLORS.Link,
-        textDecorationLine: 'underline',
-        fontSize: 16,
-        fontFamily: 'Roboto_400Regular',
-    },
-    heading1: {
-        fontSize: 32,
-        fontWeight: 'bold',
-        marginTop: 8,
-        marginBottom: 8,
-        color: COLORS.White,
-        fontFamily: 'Roboto_700Bold',
-        lineHeight: 40,
-    },
-    ellipsisText: {
-        color: COLORS.White,
-        fontSize: 18,
-    },
-    emojiLarge: {
-        fontSize: 64,
-        textAlign: 'left',
-        fontFamily: 'Roboto_400Regular',
-    },
-    // The edited tag should be smaller and styled (using a lighter gray per your palette).
-    editedTag: {
-        fontSize: 12,
-        color: COLORS.InactiveText, // e.g., "#989898"
-        fontFamily: 'Roboto_400Regular',
-    },
-});
+import { useTheme, Theme } from '../theme';
+
+function createStyles(theme: Theme) {
+    return StyleSheet.create({
+        // Use white for paragraph text as desired.
+        document: {
+            fontSize: 16,
+            lineHeight: 22,
+            fontFamily: 'Roboto_400Regular',
+        },
+        code_inline: {
+            fontFamily: 'monospace',
+            backgroundColor: '#2f3136',
+            color: '#c7c7c7',
+            paddingHorizontal: 4,
+            paddingVertical: 2,
+        },
+        blockquote: {
+            backgroundColor: theme.colors.AppBackground,
+            padding: 10,
+            borderLeftColor: '#4ea1f3',
+            borderLeftWidth: 4,
+            marginVertical: 8,
+        },
+        spoilerText: {
+            fontSize: 16,
+        },
+        linkText: {
+            color: theme.colors.Link,
+            textDecorationLine: 'underline',
+            fontSize: 16,
+            fontFamily: 'Roboto_400Regular',
+        },
+        heading1: {
+            fontSize: 32,
+            fontWeight: 'bold',
+            marginTop: 8,
+            marginBottom: 8,
+            color: theme.colors.ActiveText,
+            fontFamily: 'Roboto_700Bold',
+            lineHeight: 40,
+        },
+        ellipsisText: {
+            color: theme.colors.ActiveText,
+            fontSize: 18,
+        },
+        emojiLarge: {
+            fontSize: 64,
+            textAlign: 'left',
+            fontFamily: 'Roboto_400Regular',
+        },
+        // The edited tag should be smaller and styled (using a lighter gray per your palette).
+        editedTag: {
+            fontSize: 12,
+            color: theme.colors.InactiveText, // e.g., "#989898"
+            fontFamily: 'Roboto_400Regular',
+        },
+    });
+}
 
 // ---------------------
 // Helpers
@@ -98,6 +98,9 @@ const InlineSpoiler: React.FC<{ children: React.ReactNode }> = ({
     children,
 }) => {
     const [revealed, setRevealed] = React.useState(false);
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
+
     return (
         <Text
             onPress={() => setRevealed((prev) => !prev)}
@@ -106,9 +109,9 @@ const InlineSpoiler: React.FC<{ children: React.ReactNode }> = ({
                 styles.spoilerText,
                 {
                     backgroundColor: revealed
-                        ? COLORS.AppBackground
-                        : COLORS.White,
-                    color: COLORS.White,
+                        ? theme.colors.AppBackground
+                        : theme.colors.ActiveText,
+                    color: theme.colors.ActiveText,
                     alignSelf: 'flex-start',
                 },
             ]}
@@ -129,6 +132,10 @@ const InlineLink: React.FC<{ tnode: any }> = ({ tnode }) => {
     }
     const content =
         tnode.domNode?.textContent || extractTextFromTnode(tnode) || '';
+
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
+
     if (Platform.OS === 'web') {
         const webStyle = {
             color: styles.linkText.color,
@@ -265,34 +272,6 @@ mdInstance.core.ruler.after(
     spoilerPostProcessor
 );
 
-// ---------------------
-// Custom <span> Renderer
-// ---------------------
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const customSpanRenderer = ({ tnode }: any) => {
-    if (!tnode) return undefined;
-    const className = tnode.attributes?.class || '';
-    const content =
-        tnode.domNode?.textContent || extractTextFromTnode(tnode) || '';
-    const classes = new Set(
-        className.split(' ').map((cls: string) => cls.trim())
-    );
-    if (classes.has('spoiler')) {
-        return <InlineSpoiler>{content}</InlineSpoiler>;
-    }
-    if (classes.has('edited')) {
-        return <Text style={styles.editedTag}>{content}</Text>;
-    }
-    // Fallback: return a default Text element with inherited style.
-    return <Text>{content}</Text>;
-};
-
-const customRenderers = {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    a: ({ tnode }: any) => <InlineLink tnode={tnode} />,
-    span: customSpanRenderer,
-};
-
 const customHTMLElementModels = {
     ...defaultHTMLElementModels,
 };
@@ -314,6 +293,8 @@ export const MarkdownRenderer: React.FC<{
     const contentWidth = Dimensions.get('window').width;
     const [contentHeight, setContentHeight] = React.useState(0);
     const [expanded, setExpanded] = React.useState(false);
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
 
     // Convert Markdown to HTML.
     // If isEdited is true, insert the edited tag inline at the end of the last paragraph.
@@ -345,7 +326,7 @@ export const MarkdownRenderer: React.FC<{
         () => ({
             div: styles.document,
             p: {
-                color: COLORS.White, // Ensure paragraphs render with white text
+                color: theme.colors.ActiveText, // Ensure paragraphs render with white text
                 fontSize: 16,
                 lineHeight: 22,
                 fontFamily: 'Roboto_400Regular',
@@ -359,6 +340,37 @@ export const MarkdownRenderer: React.FC<{
     );
     const baseStyle = useMemo(() => ({ marginTop: 0, paddingTop: 0 }), []);
     const defaultTextProps = useMemo(() => ({ selectable: true }), []);
+
+    const customSpanRenderer = useCallback(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ({ tnode }: any) => {
+            if (!tnode) return undefined;
+            const className = tnode.attributes?.class || '';
+            const content =
+                tnode.domNode?.textContent || extractTextFromTnode(tnode) || '';
+            const classes = new Set(
+                className.split(' ').map((cls: string) => cls.trim())
+            );
+            if (classes.has('spoiler')) {
+                return <InlineSpoiler>{content}</InlineSpoiler>;
+            }
+            if (classes.has('edited')) {
+                return <Text style={styles.editedTag}>{content}</Text>;
+            }
+            // Fallback: return a default Text element with inherited style.
+            return <Text>{content}</Text>;
+        },
+        [styles.editedTag]
+    );
+
+    const customRenderers = useMemo(
+        () => ({
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            a: ({ tnode }: any) => <InlineLink tnode={tnode} />,
+            span: customSpanRenderer,
+        }),
+        [customSpanRenderer]
+    );
 
     const fullContent = (
         <View onLayout={handleOnLayout}>

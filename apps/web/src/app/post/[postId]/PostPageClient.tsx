@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { PostScreen } from 'shared-ui/screens/PostScreen'; // adjust the import as needed
+import { PostScreen } from 'shared-ui/screens';
 import type { Post, User } from 'shared-ui/types';
 
 type PostPageProps = {

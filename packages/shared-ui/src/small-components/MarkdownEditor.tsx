@@ -1,7 +1,9 @@
 // MarkdownEditor.tsx
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
-import { COLORS } from '../constants';
+
+import { useTheme, Theme } from '../theme';
+
 import { MarkdownInputBase, MarkdownInputBaseProps } from './MarkdownInputBase';
 
 export interface MarkdownEditorProps extends MarkdownInputBaseProps {}
@@ -19,6 +21,8 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
 }) => {
     // State to track focus.
     const [isFocused, setIsFocused] = React.useState(false);
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
 
     // Convert height to a number if it is a string ending with "px" on non-web platforms.
     let parsedHeight: string | number = height;
@@ -84,46 +88,47 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
     );
 };
 
-const styles = StyleSheet.create({
-    container: {
-        flexDirection: 'column',
-    },
-    inputWrapper: {
-        flex: 1,
-        position: 'relative',
-        backgroundColor: COLORS.PrimaryBackground,
-        borderRadius: 20,
-        overflow: 'hidden',
-        borderWidth: 0,
-        borderColor: 'transparent',
-    },
-    activeInputWrapper: {
-        borderWidth: 1,
-        borderColor: COLORS.White,
-    },
-    inputTextOverlay: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        fontSize: 14,
-        color: 'white',
-        lineHeight: 20,
-        fontFamily: 'Roboto_400Regular',
-        zIndex: 1,
-    },
-    input: {
-        flex: 1,
-        fontSize: 14,
-        color: 'transparent', // nearly invisible text
-        // @ts-expect-error web only type
-        caretColor: 'white',
-        paddingTop: 10,
-        lineHeight: 20,
-        borderRadius: 20,
-        backgroundColor: 'transparent', // Transparent to show overlay beneath
-        fontFamily: 'Roboto_400Regular',
-        textAlignVertical: 'top',
-        zIndex: 2,
-    },
-});
+function createStyles(theme: Theme) {
+    return StyleSheet.create({
+        container: {
+            flexDirection: 'column',
+        },
+        inputWrapper: {
+            flex: 1,
+            position: 'relative',
+            backgroundColor: theme.colors.PrimaryBackground,
+            borderRadius: 20,
+            overflow: 'hidden',
+            borderWidth: 0,
+            borderColor: 'transparent',
+        },
+        activeInputWrapper: {
+            borderWidth: 1,
+            borderColor: theme.colors.ActiveText,
+        },
+        inputTextOverlay: {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            fontSize: 14,
+            color: theme.colors.ActiveText,
+            lineHeight: 20,
+            fontFamily: 'Roboto_400Regular',
+            zIndex: 1,
+        },
+        input: {
+            flex: 1,
+            fontSize: 14,
+            color: 'transparent', // nearly invisible text
+            caretColor: theme.colors.ActiveText,
+            paddingTop: 10,
+            lineHeight: 20,
+            borderRadius: 20,
+            backgroundColor: 'transparent', // Transparent to show overlay beneath
+            fontFamily: 'Roboto_400Regular',
+            textAlignVertical: 'top',
+            zIndex: 2,
+        },
+    });
+}

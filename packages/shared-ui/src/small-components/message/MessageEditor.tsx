@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
     View,
     Text,
@@ -6,11 +6,15 @@ import {
     StyleProp,
     TextStyle,
     StyleSheet as RNStyleSheet,
+    LayoutChangeEvent,
 } from 'react-native';
+
+import { extractUrls, isComputer } from '../../utils';
+import { NexusButton } from '../../buttons';
+import { useTheme, Theme } from '../../theme';
+
 import { MarkdownEditor } from '../MarkdownEditor';
 import { MarkdownRenderer } from '../MarkdownRenderer';
-import { extractUrls } from '../../utils';
-import { COLORS } from '../../constants';
 
 export type MessageEditorProps = {
     initialContent: string;
@@ -27,12 +31,17 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({
     onSave,
     onCancel,
 }) => {
+    // Determine platform-specific behavior.
+    const isDesktop = isComputer();
+
     const [editedContent, setEditedContent] = useState(initialContent);
     const [editorHeight, setEditorHeight] = useState<number>(60);
     const [avgCharWidth, setAvgCharWidth] = useState<number | undefined>();
     const [measuredLineHeight, setMeasuredLineHeight] = useState<
         number | undefined
     >();
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
 
     const isOnlyUrl =
         extractUrls(editedContent).length === 1 &&
@@ -50,7 +59,6 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({
         if (!text.trim()) {
             return 60;
         }
-
         const effectiveWidth = containerWidth - horizontalPadding;
         const charsPerLine =
             Math.floor(effectiveWidth / avgCharWidthInner) || 1;
@@ -58,15 +66,11 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({
         return lines * lineHeight + verticalPadding;
     };
 
-    // For URL-only messages, update the editor height based on measured text style.
     useEffect(() => {
-        // For empty content, always use default height
         if (!editedContent.trim()) {
             setEditorHeight(60);
             return;
         }
-
-        // For URL content with measurements
         if (isOnlyUrl && avgCharWidth && measuredLineHeight) {
             const flattened: StyleProp<TextStyle> =
                 RNStyleSheet.flatten(styles.urlText) || {};
@@ -90,18 +94,23 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({
             );
             setEditorHeight(Math.max(60, estimatedHeight));
         }
-    }, [editedContent, isOnlyUrl, width, avgCharWidth, measuredLineHeight]);
+    }, [
+        editedContent,
+        isOnlyUrl,
+        width,
+        avgCharWidth,
+        measuredLineHeight,
+        styles.urlText,
+    ]);
 
-    // For non-URL messages, use a hidden MarkdownRenderer to update height.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const handleNonUrlLayout = (e: any) => {
+    // Use hidden MarkdownRenderer to calculate the content's height.
+    const handleNonUrlLayout = (e: LayoutChangeEvent) => {
         const { height } = e.nativeEvent.layout;
         setEditorHeight(Math.max(60, height));
     };
 
-    // Existing key handler if the MarkdownEditor is focused.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const handleKeyDown = (e: any) => {
+    // Key handler when the editor is focused (desktop only).
+    const handleKeyDown = (e: KeyboardEvent) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             onSave();
@@ -111,23 +120,25 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({
         }
     };
 
-    // Global key event listener to capture key events even when the editor isn't focused.
+    // Global key listener (desktop only).
+    // eslint-disable-next-line consistent-return
     useEffect(() => {
-        const handleGlobalKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                onSave();
-            } else if (e.key === 'Escape') {
-                e.preventDefault();
-                onCancel();
-            }
-        };
-
-        window.addEventListener('keydown', handleGlobalKeyDown);
-        return () => {
-            window.removeEventListener('keydown', handleGlobalKeyDown);
-        };
-    }, [onSave, onCancel]);
+        if (isDesktop) {
+            const handleGlobalKeyDown = (e: KeyboardEvent) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    onSave();
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    onCancel();
+                }
+            };
+            window.addEventListener('keydown', handleGlobalKeyDown);
+            return () => {
+                window.removeEventListener('keydown', handleGlobalKeyDown);
+            };
+        }
+    }, [onSave, onCancel, isDesktop]);
 
     return (
         <View style={styles.editContainer}>
@@ -155,25 +166,19 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({
                 placeholder=""
                 width="100%"
                 height={`${Math.max(60, editorHeight)}px`}
-                onKeyDown={handleKeyDown} // This remains for when the editor is focused.
+                onKeyDown={isDesktop ? handleKeyDown : undefined}
             />
-            <Text style={styles.instructionText}>
-                escape to{' '}
-                <Text style={styles.clickableText} onPress={onCancel}>
-                    cancel
-                </Text>{' '}
-                • shift + enter for multiple lines • enter to{' '}
-                <Text style={styles.clickableText} onPress={onSave}>
-                    save
-                </Text>
-            </Text>
-
-            {/* No link previews here anymore - they will be rendered by MessageItem */}
-
-            {/* Hidden measurement element for URL-only messages */}
+            <View style={mobileStyles.mobileButtonContainer}>
+                <NexusButton
+                    label="Cancel"
+                    onPress={onCancel}
+                    variant="outline"
+                />
+                <NexusButton label="Save" onPress={onSave} variant="filled" />
+            </View>
             {isOnlyUrl &&
-                avgCharWidth === null &&
-                measuredLineHeight === null && (
+                avgCharWidth === undefined &&
+                measuredLineHeight === undefined && (
                     <Text
                         style={[
                             styles.urlText,
@@ -197,29 +202,39 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({
     );
 };
 
-const styles = StyleSheet.create({
-    editContainer: {
-        marginTop: 5,
-        position: 'relative',
-        borderColor: COLORS.SecondaryBackground,
-        borderWidth: 1,
-        borderRadius: 4,
-        padding: 8,
-        backgroundColor: COLORS.TertiaryBackground,
-    },
-    instructionText: {
-        marginTop: 4,
-        fontSize: 12,
-        color: COLORS.InactiveText,
-        fontStyle: 'italic',
-    },
-    clickableText: {
-        color: COLORS.Tertiary,
-    },
-    urlText: {
-        fontSize: 14,
-        color: COLORS.White,
-        fontFamily: 'Roboto_400Regular',
-        padding: 4,
+function createStyles(theme: Theme) {
+    return StyleSheet.create({
+        editContainer: {
+            marginTop: 5,
+            position: 'relative',
+            borderColor: theme.colors.SecondaryBackground,
+            borderWidth: 2,
+            borderRadius: 4,
+            padding: 8,
+            backgroundColor: theme.colors.TertiaryBackground,
+        },
+        instructionText: {
+            marginTop: 4,
+            fontSize: 12,
+            color: theme.colors.InactiveText,
+            fontStyle: 'italic',
+        },
+        clickableText: {
+            color: theme.colors.Tertiary,
+        },
+        urlText: {
+            fontSize: 14,
+            color: theme.colors.ActiveText,
+            fontFamily: 'Roboto_400Regular',
+            padding: 4,
+        },
+    });
+}
+
+const mobileStyles = StyleSheet.create({
+    mobileButtonContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        marginTop: 8,
     },
 });

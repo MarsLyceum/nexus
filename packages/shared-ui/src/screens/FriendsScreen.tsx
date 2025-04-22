@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
     View,
     Text,
@@ -11,10 +11,9 @@ import {
 import { useQuery, useMutation } from '@apollo/client';
 
 import { useNexusRouter } from '../hooks';
+import { FriendItemData } from '../types';
 import {
     FriendItem,
-    Friend,
-    FriendItemData,
     DropdownMenu,
     RawRect,
     ConfirmRemoveFriendModal,
@@ -25,15 +24,10 @@ import {
     ACCEPT_FRIEND_REQUEST,
     FRIEND_STATUS_CHANGED,
 } from '../queries';
-import { COLORS } from '../constants';
 import { useAppSelector, RootState } from '../redux';
+import { useTheme, Theme } from '../theme';
 
 import { AddFriendsScreen } from './AddFriendsScreen';
-
-type RemoveFriendData = {
-    connectionId: string;
-    friend: Friend;
-};
 
 export const FriendsScreen: React.FC = () => {
     // Tab and dropdown state.
@@ -43,10 +37,12 @@ export const FriendsScreen: React.FC = () => {
         RawRect | undefined
     >();
     const [friendToRemove, setFriendToRemove] = useState<
-        RemoveFriendData | undefined
+        FriendItemData | undefined
     >();
     const [removeFriendModalVisible, setRemoveFriendModalVisible] =
         useState<boolean>(false);
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
 
     // Replace useNavigation() with Solito's router.
     const router = useNexusRouter();
@@ -123,7 +119,7 @@ export const FriendsScreen: React.FC = () => {
         if (!friendToRemove) return;
         try {
             await removeFriendMutation({
-                variables: { friendId: friendToRemove.connectionId },
+                variables: { friendId: friendToRemove.id },
             });
         } catch (error) {
             console.error('Error removing friend:', error);
@@ -139,7 +135,7 @@ export const FriendsScreen: React.FC = () => {
         measuredRect: { x: number; y: number; width: number; height: number }
     ) => {
         setDropdownRawRect(measuredRect);
-        setFriendToRemove({ connectionId: item.id, friend: item.friend });
+        setFriendToRemove(item);
         setDropdownVisible(true);
     };
 
@@ -176,6 +172,9 @@ export const FriendsScreen: React.FC = () => {
                     currentUserId={user?.id}
                     onAccept={() => handleAcceptFriend(item)}
                     onReject={() => handleRejectFriend(item)}
+                    onMorePress={(_ignored, measuredRect) =>
+                        handleMorePress(item, measuredRect)
+                    }
                 />
             );
         }
@@ -326,7 +325,12 @@ export const FriendsScreen: React.FC = () => {
                                 style={styles.dropdownMenuItemText}
                                 numberOfLines={1}
                             >
-                                Remove Friend
+                                {friendToRemove &&
+                                friendToRemove.status?.toLowerCase() ===
+                                    'pending' &&
+                                friendToRemove.requestedBy?.id === user?.id
+                                    ? 'Cancel Friend Request'
+                                    : 'Remove Friend'}
                             </Text>
                         </Pressable>
                     </DropdownMenu>
@@ -336,7 +340,8 @@ export const FriendsScreen: React.FC = () => {
             {/* Confirm Remove Friend Modal */}
             <ConfirmRemoveFriendModal
                 visible={removeFriendModalVisible}
-                friend={friendToRemove?.friend}
+                friendToRemove={friendToRemove}
+                user={user}
                 onConfirm={handleConfirmRemoveFriend}
                 onCancel={() => setRemoveFriendModalVisible(false)}
             />
@@ -344,96 +349,98 @@ export const FriendsScreen: React.FC = () => {
     );
 };
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: COLORS.SecondaryBackground,
-        position: 'relative',
-        height: '100%',
-    },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 16,
-        backgroundColor: COLORS.PrimaryBackground,
-    },
-    tabItem: {
-        marginRight: 16,
-        color: COLORS.White,
-        opacity: 0.7,
-    },
-    activeTab: {
-        opacity: 1,
-        fontWeight: 'bold',
-        fontFamily: 'Roboto_700Bold',
-        color: COLORS.White,
-    },
-    addFriendButton: {
-        backgroundColor: COLORS.Primary,
-        paddingVertical: 8,
-        paddingHorizontal: 16,
-        borderRadius: 4,
-    },
-    addFriendText: {
-        color: COLORS.White,
-    },
-    friendsListArea: {
-        flex: 1,
-        padding: 8,
-    },
-    skeletonFriendItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: COLORS.SecondaryBackground,
-        marginVertical: 4,
-        borderRadius: 4,
-        padding: 12,
-    },
-    skeletonAvatarAndDot: {
-        position: 'relative',
-        marginRight: 8,
-    },
-    skeletonAvatar: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        backgroundColor: COLORS.TextInput,
-        marginRight: 8,
-    },
-    skeletonStatusDot: {
-        position: 'absolute',
-        bottom: 0,
-        right: 5,
-        width: 15,
-        height: 15,
-        borderRadius: 7,
-        borderWidth: 2,
-        borderColor: COLORS.SecondaryBackground,
-        backgroundColor: COLORS.InactiveText,
-    },
-    skeletonDetails: {
-        flex: 1,
-        justifyContent: 'center',
-    },
-    skeletonNameLine: {
-        height: 12,
-        width: '30%',
-        backgroundColor: COLORS.InactiveText,
-        borderRadius: 4,
-        marginBottom: 4,
-    },
-    skeletonStatusLine: {
-        height: 10,
-        width: '20%',
-        backgroundColor: COLORS.InactiveText,
-        borderRadius: 4,
-    },
-    dropdownMenuItem: {
-        paddingVertical: 8,
-        paddingHorizontal: 4,
-    },
-    dropdownMenuItemText: {
-        color: COLORS.Error,
-        fontSize: 14,
-    },
-});
+function createStyles(theme: Theme) {
+    return StyleSheet.create({
+        container: {
+            flex: 1,
+            backgroundColor: theme.colors.SecondaryBackground,
+            position: 'relative',
+            height: '100%',
+        },
+        header: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            padding: 16,
+            backgroundColor: theme.colors.PrimaryBackground,
+        },
+        tabItem: {
+            marginRight: 16,
+            color: theme.colors.ActiveText,
+            opacity: 0.7,
+        },
+        activeTab: {
+            opacity: 1,
+            fontWeight: 'bold',
+            fontFamily: 'Roboto_700Bold',
+            color: theme.colors.ActiveText,
+        },
+        addFriendButton: {
+            backgroundColor: theme.colors.Primary,
+            paddingVertical: 8,
+            paddingHorizontal: 16,
+            borderRadius: 4,
+        },
+        addFriendText: {
+            color: theme.colors.ActiveText,
+        },
+        friendsListArea: {
+            flex: 1,
+            padding: 8,
+        },
+        skeletonFriendItem: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: theme.colors.SecondaryBackground,
+            marginVertical: 4,
+            borderRadius: 4,
+            padding: 12,
+        },
+        skeletonAvatarAndDot: {
+            position: 'relative',
+            marginRight: 8,
+        },
+        skeletonAvatar: {
+            width: 32,
+            height: 32,
+            borderRadius: 16,
+            backgroundColor: theme.colors.TextInput,
+            marginRight: 8,
+        },
+        skeletonStatusDot: {
+            position: 'absolute',
+            bottom: 0,
+            right: 5,
+            width: 15,
+            height: 15,
+            borderRadius: 7,
+            borderWidth: 2,
+            borderColor: theme.colors.SecondaryBackground,
+            backgroundColor: theme.colors.InactiveText,
+        },
+        skeletonDetails: {
+            flex: 1,
+            justifyContent: 'center',
+        },
+        skeletonNameLine: {
+            height: 12,
+            width: '30%',
+            backgroundColor: theme.colors.InactiveText,
+            borderRadius: 4,
+            marginBottom: 4,
+        },
+        skeletonStatusLine: {
+            height: 10,
+            width: '20%',
+            backgroundColor: theme.colors.InactiveText,
+            borderRadius: 4,
+        },
+        dropdownMenuItem: {
+            paddingVertical: 8,
+            paddingHorizontal: 4,
+        },
+        dropdownMenuItemText: {
+            color: theme.colors.Error,
+            fontSize: 14,
+        },
+    });
+}

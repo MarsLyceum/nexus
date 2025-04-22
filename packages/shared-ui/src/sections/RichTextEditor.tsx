@@ -3,7 +3,7 @@ import { View, StyleSheet, Platform, Pressable } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { getRichTextEditorHtml } from './RichTextEditorBase';
 import { convertDeltaToMarkdownWithFencesAndFormatting } from '../utils';
-import { COLORS } from '../constants';
+import { useTheme } from '../theme';
 
 export const RichTextEditor: React.FC<{
     placeholder?: string;
@@ -25,21 +25,25 @@ export const RichTextEditor: React.FC<{
     height = '150px',
     width = '100%',
     borderRadius = '20px', // <-- default value
-    backgroundColor = COLORS.PrimaryBackground,
+    backgroundColor: backgroundColorProp,
     updateContent = false,
 }) => {
+    const { theme } = useTheme();
     const isWeb = Platform.OS === 'web';
+    const backgroundColor =
+        backgroundColorProp ?? theme.colors.PrimaryBackground;
 
     const webSrcDoc = useMemo(
         () =>
             getRichTextEditorHtml(
+                theme,
+                backgroundColor,
                 placeholder,
                 initialContent,
                 showToolbar,
                 height,
                 width,
-                borderRadius, // pass custom border radius
-                backgroundColor // pass custom background color
+                borderRadius // pass custom border radius
             ),
         [
             placeholder,
@@ -55,13 +59,14 @@ export const RichTextEditor: React.FC<{
     const mobileHtml = useMemo(
         () =>
             getRichTextEditorHtml(
+                theme,
+                backgroundColor,
                 placeholder,
                 initialContent,
                 showToolbar,
                 height,
                 width,
-                borderRadius, // pass custom border radius
-                backgroundColor // pass custom background color
+                borderRadius // pass custom border radius
             ),
         [placeholder, showToolbar, height, width, borderRadius, backgroundColor]
     );
@@ -123,7 +128,6 @@ export const RichTextEditor: React.FC<{
 
     if (isWeb) {
         return (
-            // @ts-expect-error width height
             <View style={[webStyles.container, { width, height }]}>
                 <style>{`
                     .my-editor-iframe {
@@ -177,7 +181,6 @@ export const RichTextEditor: React.FC<{
         <View
             style={[
                 mobileStyles.outerContainer,
-                // @ts-expect-error width height
                 { width: containerWidth, height: containerHeight },
             ]}
         >
@@ -212,7 +215,6 @@ const webStyles = StyleSheet.create({
         flex: 1,
         width: '100%',
         height: '100%',
-        // @ts-expect-error: web-only type for border styling
         border: 'none',
         backgroundColor: 'transparent',
     },

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
     SafeAreaView,
     View,
@@ -12,9 +12,9 @@ import {
 } from 'react-native';
 import { NavigationProp, RouteProp } from '@react-navigation/native';
 
+import { useTheme, Theme } from '../theme';
 import { EventCard } from '../cards';
 import { CreateContentButton } from '../buttons';
-import { COLORS } from '../constants';
 import { Attachment } from '../types';
 import { CommentThread, CommentNode } from '../sections';
 import { useAppSelector, RootState, UserType } from '../redux';
@@ -46,68 +46,71 @@ type EventDetailsScreenProps = {
 const BOTTOM_INPUT_HEIGHT = 60;
 const isWeb = Platform.OS === 'web';
 
-const styles = StyleSheet.create<{
-    safeContainer: ViewStyle;
-    container: ViewStyle;
-    mainContainer: ViewStyle;
-    scrollSection: ViewStyle;
-    scrollView: ViewStyle;
-    descriptionContainer: ViewStyle;
-    descriptionText: TextStyle;
-    createContentButtonContainer: ViewStyle;
-}>({
-    // @ts-expect-error web only types
-    safeContainer: {
-        flex: 1,
-        backgroundColor: COLORS.SecondaryBackground,
-        paddingTop: 15,
-        ...(isWeb && { height: '100vh', display: 'flex' }),
-    },
-    container: {
-        flex: 1,
-    },
-    mainContainer: {
-        flex: 1,
-    },
-    scrollSection: isWeb
-        ? {
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: BOTTOM_INPUT_HEIGHT,
-              overflowY: 'auto',
-          }
-        : { flex: 1 },
-    scrollView: {
-        paddingHorizontal: 15,
-        paddingBottom: 20,
-    },
-    descriptionContainer: {
-        backgroundColor: COLORS.PrimaryBackground,
-        borderRadius: 8,
-        padding: 15,
-        marginVertical: 10,
-    },
-    descriptionText: {
-        color: COLORS.White,
-        fontSize: 14,
-        lineHeight: 20,
-    },
-    createContentButtonContainer: {
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        height: BOTTOM_INPUT_HEIGHT,
-    },
-});
+function createStyles(theme: Theme) {
+    return StyleSheet.create<{
+        safeContainer: ViewStyle;
+        container: ViewStyle;
+        mainContainer: ViewStyle;
+        scrollSection: ViewStyle;
+        scrollView: ViewStyle;
+        descriptionContainer: ViewStyle;
+        descriptionText: TextStyle;
+        createContentButtonContainer: ViewStyle;
+    }>({
+        safeContainer: {
+            flex: 1,
+            backgroundColor: theme.colors.SecondaryBackground,
+            paddingTop: 15,
+            ...(isWeb && { height: '100vh', display: 'flex' }),
+        },
+        container: {
+            flex: 1,
+        },
+        mainContainer: {
+            flex: 1,
+        },
+        scrollSection: isWeb
+            ? {
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: BOTTOM_INPUT_HEIGHT,
+                  overflowY: 'auto',
+              }
+            : { flex: 1 },
+        scrollView: {
+            paddingHorizontal: 15,
+            paddingBottom: 20,
+        },
+        descriptionContainer: {
+            backgroundColor: theme.colors.PrimaryBackground,
+            borderRadius: 8,
+            padding: 15,
+            marginVertical: 10,
+        },
+        descriptionText: {
+            color: theme.colors.ActiveText,
+            fontSize: 14,
+            lineHeight: 20,
+        },
+        createContentButtonContainer: {
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: BOTTOM_INPUT_HEIGHT,
+        },
+    });
+}
 
 export const EventDetailsScreen: React.FC<EventDetailsScreenProps> = ({
     navigation,
     route,
 }) => {
     const { event } = route.params;
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
 
     // Comments state.
     const [comments, setComments] = useState<CommentNode[]>([]);

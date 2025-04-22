@@ -1,5 +1,5 @@
 // GroupEventsScreen.tsx
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
     View,
     FlatList,
@@ -15,9 +15,9 @@ import {
 import { useNexusRouter } from '../hooks';
 import { EventCard } from '../cards';
 import { Header } from '../sections';
-import { COLORS } from '../constants';
 import { useAppSelector, RootState, UserType } from '../redux';
 import { Event } from '../types';
+import { useTheme, Theme } from '../theme';
 
 const initialEvents: Event[] = [
     {
@@ -60,6 +60,8 @@ export const GroupEventsScreen = () => {
     const [attendees, setAttendees] = useState('');
     const [location, setLocation] = useState('');
     const [imageUrl, setImageUrl] = useState('');
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
 
     const user: UserType = useAppSelector(
         (state: RootState) => state.user.user
@@ -132,28 +134,28 @@ export const GroupEventsScreen = () => {
                         <TextInput
                             style={styles.input}
                             placeholder="Title"
-                            placeholderTextColor={COLORS.InactiveText}
+                            placeholderTextColor={theme.colors.InactiveText}
                             value={title}
                             onChangeText={setTitle}
                         />
                         <TextInput
                             style={styles.input}
                             placeholder="Date & Time"
-                            placeholderTextColor={COLORS.InactiveText}
+                            placeholderTextColor={theme.colors.InactiveText}
                             value={dateTime}
                             onChangeText={setDateTime}
                         />
                         <TextInput
                             style={styles.input}
                             placeholder="Group Name"
-                            placeholderTextColor={COLORS.InactiveText}
+                            placeholderTextColor={theme.colors.InactiveText}
                             value={groupName}
                             onChangeText={setGroupName}
                         />
                         <TextInput
                             style={styles.input}
                             placeholder="Attendees"
-                            placeholderTextColor={COLORS.InactiveText}
+                            placeholderTextColor={theme.colors.InactiveText}
                             value={attendees}
                             onChangeText={setAttendees}
                             keyboardType="numeric"
@@ -161,14 +163,14 @@ export const GroupEventsScreen = () => {
                         <TextInput
                             style={styles.input}
                             placeholder="Location"
-                            placeholderTextColor={COLORS.InactiveText}
+                            placeholderTextColor={theme.colors.InactiveText}
                             value={location}
                             onChangeText={setLocation}
                         />
                         <TextInput
                             style={styles.input}
                             placeholder="Image URL (optional)"
-                            placeholderTextColor={COLORS.InactiveText}
+                            placeholderTextColor={theme.colors.InactiveText}
                             value={imageUrl}
                             onChangeText={setImageUrl}
                         />
@@ -176,12 +178,12 @@ export const GroupEventsScreen = () => {
                             <Button
                                 title="Cancel"
                                 onPress={() => setModalVisible(false)}
-                                color={COLORS.Primary}
+                                color={theme.colors.Primary}
                             />
                             <Button
                                 title="Create"
                                 onPress={handleAddEvent}
-                                color={COLORS.Primary}
+                                color={theme.colors.Primary}
                             />
                         </View>
                     </View>
@@ -191,62 +193,64 @@ export const GroupEventsScreen = () => {
     );
 };
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: COLORS.SecondaryBackground,
-    },
-    fab: {
-        position: 'absolute',
-        bottom: 20,
-        right: 20,
-        backgroundColor: COLORS.Primary,
-        width: 60,
-        height: 60,
-        borderRadius: 30,
-        alignItems: 'center',
-        justifyContent: 'center',
-        elevation: 5,
-    },
-    fabIcon: {
-        fontSize: 30,
-        color: COLORS.White,
-    },
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    modalContainer: {
-        width: '80%',
-        backgroundColor: COLORS.AppBackground,
-        padding: 20,
-        borderRadius: 10,
-        elevation: 10,
-    },
-    modalTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        marginBottom: 20,
-        textAlign: 'center',
-        color: COLORS.White,
-    },
-    input: {
-        height: 40,
-        backgroundColor: COLORS.TextInput,
-        borderColor: COLORS.Primary,
-        borderWidth: 1,
-        borderRadius: 5,
-        marginBottom: 15,
-        paddingHorizontal: 10,
-        color: COLORS.White,
-    },
-    buttonContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-    },
-    eventList: {
-        padding: 15,
-    },
-});
+function createStyles(theme: Theme) {
+    return StyleSheet.create({
+        container: {
+            flex: 1,
+            backgroundColor: theme.colors.SecondaryBackground,
+        },
+        fab: {
+            position: 'absolute',
+            bottom: 20,
+            right: 20,
+            backgroundColor: theme.colors.Primary,
+            width: 60,
+            height: 60,
+            borderRadius: 30,
+            alignItems: 'center',
+            justifyContent: 'center',
+            elevation: 5,
+        },
+        fabIcon: {
+            fontSize: 30,
+            color: theme.colors.ActiveText,
+        },
+        modalOverlay: {
+            flex: 1,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        modalContainer: {
+            width: '80%',
+            backgroundColor: theme.colors.AppBackground,
+            padding: 20,
+            borderRadius: 10,
+            elevation: 10,
+        },
+        modalTitle: {
+            fontSize: 20,
+            fontWeight: 'bold',
+            marginBottom: 20,
+            textAlign: 'center',
+            color: theme.colors.ActiveText,
+        },
+        input: {
+            height: 40,
+            backgroundColor: theme.colors.TextInput,
+            borderColor: theme.colors.Primary,
+            borderWidth: 1,
+            borderRadius: 5,
+            marginBottom: 15,
+            paddingHorizontal: 10,
+            color: theme.colors.ActiveText,
+        },
+        buttonContainer: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+        },
+        eventList: {
+            padding: 15,
+        },
+    });
+}

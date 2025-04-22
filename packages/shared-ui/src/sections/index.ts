@@ -5,7 +5,6 @@ export * from './CarouselDots';
 export * from './CommentsManager';
 export * from './CommentThread';
 export * from './Header';
-export * from './HtmlRenderer';
 export * from './ImageDetailsModal';
 export * from './PostItem';
 export * from './RichTextEditor';

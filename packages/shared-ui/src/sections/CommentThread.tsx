@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useMemo } from 'react';
 import {
     View,
     Text,
@@ -11,7 +11,7 @@ import { useApolloClient } from '@apollo/client';
 
 import { useNexusRouter } from '../hooks';
 import { VoteActions } from './VoteActions';
-import { COLORS } from '../constants';
+import { useTheme, Theme } from '../theme';
 import { CurrentCommentContext } from '../providers';
 import {
     MarkdownRenderer,
@@ -27,95 +27,97 @@ import { FETCH_POST_COMMENTS_QUERY } from '../queries';
 import { AttachmentImageGallery } from './AttachmentImageGallery';
 import { ImageDetailsModal } from './ImageDetailsModal';
 
-const styles = StyleSheet.create({
-    commentContainer: {
-        borderLeftWidth: 3,
-        borderLeftColor: COLORS.TextInput,
-        marginBottom: 15,
-    },
-    singleComment: {
-        backgroundColor: COLORS.PrimaryBackground,
-        borderRadius: 6,
-        paddingLeft: 2,
-        paddingTop: 15,
-        paddingBottom: 15,
-    },
-    commentHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 6,
-    },
-    collapseIcon: {
-        marginRight: 8,
-    },
-    commentUserPic: {
-        width: 28,
-        height: 28,
-        borderRadius: 14,
-        marginRight: 8,
-    },
-    commentUser: {
-        color: COLORS.White,
-        fontWeight: '600',
-        marginRight: 6,
-    },
-    opBadge: {
-        backgroundColor: COLORS.Primary,
-        color: COLORS.White,
-        fontSize: 10,
-        fontWeight: 'bold',
-        paddingHorizontal: 4,
-        paddingVertical: 2,
-        borderRadius: 4,
-        marginRight: 6,
-    },
-    commentTime: {
-        color: COLORS.InactiveText,
-        fontSize: 12,
-    },
-    collapsedCommentText: {
-        color: COLORS.InactiveText,
-        fontSize: 12,
-        marginLeft: 12,
-        flex: 1,
-    },
-    commentContentWrapper: {
-        alignSelf: 'stretch',
-        flex: 1,
-        maxWidth: '100%',
-        paddingLeft: 10,
-        marginTop: 4,
-    },
-    commentText: {
-        color: COLORS.White,
-        fontSize: 14,
-        lineHeight: 20,
-    },
-    actionsRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'flex-end',
-        marginTop: 8,
-    },
-    replyIcon: {
-        marginRight: 12,
-    },
-    voteActionsContainer: {},
-    replyInputContainer: {
-        marginTop: 10,
-    },
-    continueConversationButton: {
-        marginTop: 10,
-        padding: 8,
-        backgroundColor: COLORS.Primary,
-        borderRadius: 4,
-        alignSelf: 'center',
-    },
-    continueConversationText: {
-        color: COLORS.White,
-        fontSize: 14,
-    },
-});
+function createStyles(theme: Theme) {
+    return StyleSheet.create({
+        commentContainer: {
+            borderLeftWidth: 3,
+            borderLeftColor: theme.colors.TextInput,
+            marginBottom: 15,
+        },
+        singleComment: {
+            backgroundColor: theme.colors.PrimaryBackground,
+            borderRadius: 6,
+            paddingLeft: 2,
+            paddingTop: 15,
+            paddingBottom: 15,
+        },
+        commentHeader: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginBottom: 6,
+        },
+        collapseIcon: {
+            marginRight: 8,
+        },
+        commentUserPic: {
+            width: 28,
+            height: 28,
+            borderRadius: 14,
+            marginRight: 8,
+        },
+        commentUser: {
+            color: theme.colors.ActiveText,
+            fontWeight: '600',
+            marginRight: 6,
+        },
+        opBadge: {
+            backgroundColor: theme.colors.Primary,
+            color: theme.colors.ActiveText,
+            fontSize: 10,
+            fontWeight: 'bold',
+            paddingHorizontal: 4,
+            paddingVertical: 2,
+            borderRadius: 4,
+            marginRight: 6,
+        },
+        commentTime: {
+            color: theme.colors.InactiveText,
+            fontSize: 12,
+        },
+        collapsedCommentText: {
+            color: theme.colors.InactiveText,
+            fontSize: 12,
+            marginLeft: 12,
+            flex: 1,
+        },
+        commentContentWrapper: {
+            alignSelf: 'stretch',
+            flex: 1,
+            maxWidth: '100%',
+            paddingLeft: 10,
+            marginTop: 4,
+        },
+        commentText: {
+            color: theme.colors.ActiveText,
+            fontSize: 14,
+            lineHeight: 20,
+        },
+        actionsRow: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'flex-end',
+            marginTop: 8,
+        },
+        replyIcon: {
+            marginRight: 12,
+        },
+        voteActionsContainer: {},
+        replyInputContainer: {
+            marginTop: 10,
+        },
+        continueConversationButton: {
+            marginTop: 10,
+            padding: 8,
+            backgroundColor: theme.colors.Primary,
+            borderRadius: 4,
+            alignSelf: 'center',
+        },
+        continueConversationText: {
+            color: theme.colors.ActiveText,
+            fontSize: 14,
+        },
+    });
+}
 
 export type CommentNode = {
     id: string;
@@ -180,6 +182,8 @@ const CommentThreadComponent = ({
     const [collapsed, setCollapsed] = useState(comment.upvotes < -1);
     const [showInlineReply, setShowInlineReply] = useState(false);
     const router = useNexusRouter();
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
 
     // NEW: State for attachment modal in comments
     const [modalVisible, setModalVisible] = useState(false);
@@ -234,7 +238,7 @@ const CommentThreadComponent = ({
                     <Icon
                         name={collapsed ? 'chevron-right' : 'chevron-down'}
                         size={12}
-                        color={COLORS.InactiveText}
+                        color={theme.colors.InactiveText}
                         style={styles.collapseIcon}
                     />
                     <NexusImage
@@ -321,7 +325,7 @@ const CommentThreadComponent = ({
                                     <Icon
                                         name="reply"
                                         size={18}
-                                        color={COLORS.White}
+                                        color={theme.colors.ActiveText}
                                     />
                                 </ActionButton>
                                 <View style={styles.voteActionsContainer}>
@@ -351,7 +355,7 @@ const CommentThreadComponent = ({
                                         });
                                     }}
                                     editorBackgroundColor={
-                                        COLORS.SecondaryBackground
+                                        theme.colors.SecondaryBackground
                                     }
                                     expandedByDefault
                                 />

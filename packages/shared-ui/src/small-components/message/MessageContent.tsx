@@ -1,10 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { NexusImage } from '../NexusImage';
 import { LinkPreview } from '../LinkPreview';
 import { MarkdownRenderer } from '../MarkdownRenderer';
-import { extractUrls, isImageExtensionUrl } from '../../utils';
-import { useMediaTypes } from '../../hooks';
+import {
+    extractUrls,
+    isImageExtensionUrl,
+    computeMediaSize,
+} from '../../utils';
+import { useMediaTypes, useLinkPreview } from '../../hooks';
 import { NexusVideo } from '../NexusVideo';
 import type { MessageWithAvatar, DirectMessageWithAvatar } from '../../types';
 
@@ -36,7 +40,13 @@ export const MessageContent: React.FC<MessageContentProps> = ({
     // Determine if the effective content is just a link.
     const trimmedContent = effectiveContent?.trim();
     const urls = extractUrls(trimmedContent ?? '');
-    const isJustLink = urls.length === 1 && trimmedContent === urls[0];
+    const { previewData, isImage } = useLinkPreview({
+        url: urls[0],
+    });
+    const isJustImageOrEmbeddLink =
+        urls.length === 1 &&
+        trimmedContent === urls[0] &&
+        (isImage || previewData.embedHtml);
 
     // Helper to render the message text using MarkdownRenderer.
     // Updated to pass the isEdited prop.
@@ -79,28 +89,48 @@ export const MessageContent: React.FC<MessageContentProps> = ({
         return undefined;
     };
 
+    const [attachmentContainerWidth, setAttachmentContainerWidth] =
+        useState<number>(300);
+
     return (
         <View style={styles.messageContent}>
-            {effectiveContent && (
+            {effectiveContent ? (
                 <>
-                    {/* Render message text if enabled and content is not just a link */}
                     {renderMessage &&
-                        !isJustLink &&
+                        !isJustImageOrEmbeddLink &&
                         renderMessageText(effectiveContent, message.edited)}
 
-                    {/* Render link previews if enabled */}
                     {renderLinkPreview &&
                         renderLinkPreviews(effectiveContent, width)}
                 </>
+            ) : (
+                <></>
             )}
 
             {/* Only render attachments if requested and attachments exist */}
             {renderAttachments &&
                 message.attachmentUrls &&
                 message.attachmentUrls.length > 0 && (
-                    <View style={styles.messageAttachmentsContainer}>
+                    <View
+                        style={styles.messageAttachmentsContainer}
+                        onLayout={(e) => {
+                            const layoutWidth = e.nativeEvent.layout.width;
+                            if (
+                                layoutWidth &&
+                                layoutWidth !== attachmentContainerWidth
+                            ) {
+                                setAttachmentContainerWidth(layoutWidth);
+                            }
+                        }}
+                    >
                         {message.attachmentUrls.map((url, index) => {
                             const info = mediaInfos[url];
+
+                            const computedSize = computeMediaSize(
+                                info?.aspectRatio,
+                                attachmentContainerWidth
+                            );
+
                             return (
                                 <TouchableOpacity
                                     key={index}
@@ -117,8 +147,8 @@ export const MessageContent: React.FC<MessageContentProps> = ({
                                             style={[
                                                 styles.messageAttachmentImage,
                                                 {
-                                                    width: info.width * 0.5,
-                                                    height: info.height * 0.5,
+                                                    width: computedSize.width,
+                                                    height: computedSize.height,
                                                 },
                                             ]}
                                             muted={false}
@@ -131,12 +161,10 @@ export const MessageContent: React.FC<MessageContentProps> = ({
                                             source={url}
                                             style={{
                                                 ...styles.messageAttachmentImage,
-                                                width: info.width * 0.5,
-                                                height: info.height * 0.5,
                                             }}
-                                            contentFit="contain"
-                                            width={info.width * 0.5}
-                                            height={info.height * 0.5}
+                                            contentFit="cover"
+                                            width={computedSize.width}
+                                            height={computedSize.height}
                                             alt="Message attachment image"
                                         />
                                     ) : undefined}

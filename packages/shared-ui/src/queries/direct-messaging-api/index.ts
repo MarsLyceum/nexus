@@ -1,3 +1,5 @@
+export * from './CLOSE_CONVERSATION';
+export * from './CREATE_CONVERSATION';
 export * from './DELETE_MESSAGE';
 export * from './DM_ADDED';
 export * from './GET_CONVERSATIONS';

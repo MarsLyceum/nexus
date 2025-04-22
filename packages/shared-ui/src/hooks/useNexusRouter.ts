@@ -2,6 +2,7 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import { redirect, useRouter as useNextRouter } from 'next/navigation';
 import { useNavigation, StackActions } from '@react-navigation/native';
+import { Platform } from 'react-native';
 import { detectEnvironment, Environment } from '../utils';
 
 // Define the type for our custom router API using types (not interfaces)
@@ -103,8 +104,9 @@ export function useNexusRouter(): NexusRouter {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             push: (path: string, params?: Record<string, any>) => {
                 const normalizedPath = normalizePath(path);
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                if (typeof (navigation as any).push === 'function') {
+                const state = navigation.getState();
+                // Check for a stack navigator by inspecting the state type.
+                if (state?.type === 'stack') {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     (navigation as any).push(normalizedPath, params);
                 } else {
@@ -122,6 +124,21 @@ export function useNexusRouter(): NexusRouter {
                 } else {
                     // @ts-expect-error navigation
                     navigation.navigate(normalizedPath, params);
+                }
+
+                // If in a browser environment, update the URL via the History API.
+                if (Platform.OS === 'web' && typeof window !== 'undefined') {
+                    // Build full URL from the path and any params.
+                    const url = buildUrlWithParams(path, params);
+
+                    try {
+                        window.history.replaceState({}, '', url);
+                    } catch (error) {
+                        console.error(
+                            'Error using window.history.replaceState:',
+                            error
+                        );
+                    }
                 }
             },
             goBack: () => {

@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useMemo } from 'react';
 import {
     Text,
     View,
@@ -21,7 +21,7 @@ import { Email, Lock, GoogleLogo } from '../icons';
 import { HorizontalLine } from '../images';
 import { PrimaryGradientButton } from '../buttons';
 import { User } from '../types';
-import { COLORS } from '../constants';
+import { useTheme, Theme } from '../theme';
 
 const isWeb = Platform.OS === 'web';
 
@@ -49,146 +49,147 @@ export function FacebookIcon({
     );
 }
 
-const styles = StyleSheet.create({
-    topButton: {
-        marginTop: 38,
-        marginBottom: 80,
-    },
-    outerContainer: {
-        flex: 1,
-        backgroundColor: COLORS.AppBackground,
-    },
-    container: {
-        flex: 1,
-        paddingHorizontal: 20,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: COLORS.PrimaryBackground,
-    },
-    image: {
-        width: 100,
-        height: 100,
-        marginBottom: 20,
-    },
-    title: {
-        fontSize: 32,
-        fontWeight: 'bold',
-        color: COLORS.MainText,
-        marginTop: 20, // Changed from -125 to 20 to keep content within view
-        textAlign: 'center',
-    },
-    subtitle: {
-        fontSize: 16,
-        color: COLORS.InactiveText,
-        marginBottom: 20,
-        textAlign: 'center',
-    },
-    inputContainer: {
-        width: '100%',
-        marginTop: 15,
-        marginBottom: 15,
-        height: 50,
-        alignItems: 'center',
-    },
-    input: {
-        borderColor: COLORS.OffWhite,
-        height: 45,
-        flex: 1,
-        fontSize: 16,
-        marginRight: 5,
-        backgroundColor: COLORS.TextInput,
-        color: COLORS.MainText,
-        paddingHorizontal: 10,
-    },
-    orText: {
-        fontSize: 16,
-        color: COLORS.InactiveText,
-        marginVertical: 15,
-        textAlign: 'center',
-        marginLeft: 20,
-        marginRight: 20,
-    },
-    socialContainer: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-        width: '40%',
-    },
-    socialButton: {
-        width: 50,
-        height: 50,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderRadius: 25,
-        backgroundColor: COLORS.OffWhite,
-        marginLeft: 10,
-        marginRight: 10,
-    },
-    button: {
-        width: '100%',
-        height: 50,
-        backgroundColor: COLORS.Primary,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderRadius: 25,
-        marginBottom: 15,
-    },
-    buttonText: {
-        color: COLORS.White,
-        fontSize: 16,
-        fontWeight: 'bold',
-    },
-    forgotPasswordText: {
-        fontSize: 16,
-        color: COLORS.InactiveText,
-        marginTop: 17,
-        marginBottom: 53,
-        textAlign: 'center',
-    },
-    forgotPasswordLink: {
-        color: COLORS.Link,
-        fontWeight: 'bold',
-    },
-    // Updated innerScrollContainer to use flex and a minHeight on web
-    // @ts-expect-error web only
-    innerScrollContainer: isWeb
-        ? {
-              flexGrow: 1,
-              minHeight: '100vh',
-              justifyContent: 'center',
-              alignItems: 'center',
-              paddingVertical: 20,
-          }
-        : {
-              width: '100%',
-              flexGrow: 1,
-              justifyContent: 'center',
-              alignItems: 'center',
-              paddingVertical: 20,
-          },
-    orContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        width: '100%',
-        justifyContent: 'center',
-    },
-    inputIcon: {
-        marginRight: 10,
-    },
-    inputWrapper: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        width: 285,
-        borderColor: COLORS.OffWhite,
-        borderWidth: 1,
-        borderRadius: 25,
-        paddingHorizontal: 10,
-        backgroundColor: COLORS.TextInput,
-        height: 50,
-        flex: 1,
-        fontSize: 16,
-    },
-});
+function createStyles(theme: Theme) {
+    return StyleSheet.create({
+        topButton: {
+            marginTop: 38,
+            marginBottom: 80,
+        },
+        outerContainer: {
+            flex: 1,
+            backgroundColor: theme.colors.AppBackground,
+        },
+        container: {
+            flex: 1,
+            paddingHorizontal: 20,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: theme.colors.PrimaryBackground,
+        },
+        image: {
+            width: 100,
+            height: 100,
+            marginBottom: 20,
+        },
+        title: {
+            fontSize: 32,
+            fontWeight: 'bold',
+            color: theme.colors.MainText,
+            marginTop: 20, // Changed from -125 to 20 to keep content within view
+            textAlign: 'center',
+        },
+        subtitle: {
+            fontSize: 16,
+            color: theme.colors.InactiveText,
+            marginBottom: 20,
+            textAlign: 'center',
+        },
+        inputContainer: {
+            width: '100%',
+            marginTop: 15,
+            marginBottom: 15,
+            height: 50,
+            alignItems: 'center',
+        },
+        input: {
+            borderColor: theme.colors.ActiveText,
+            height: 45,
+            flex: 1,
+            fontSize: 16,
+            marginRight: 5,
+            backgroundColor: theme.colors.TextInput,
+            color: theme.colors.MainText,
+            paddingHorizontal: 10,
+        },
+        orText: {
+            fontSize: 16,
+            color: theme.colors.InactiveText,
+            marginVertical: 15,
+            textAlign: 'center',
+            marginLeft: 20,
+            marginRight: 20,
+        },
+        socialContainer: {
+            flexDirection: 'row',
+            justifyContent: 'center',
+            alignItems: 'center',
+            width: '40%',
+        },
+        socialButton: {
+            width: 50,
+            height: 50,
+            justifyContent: 'center',
+            alignItems: 'center',
+            borderRadius: 25,
+            backgroundColor: theme.colors.ActiveText,
+            marginLeft: 10,
+            marginRight: 10,
+        },
+        button: {
+            width: '100%',
+            height: 50,
+            backgroundColor: theme.colors.Primary,
+            justifyContent: 'center',
+            alignItems: 'center',
+            borderRadius: 25,
+            marginBottom: 15,
+        },
+        buttonText: {
+            color: theme.colors.ActiveText,
+            fontSize: 16,
+            fontWeight: 'bold',
+        },
+        forgotPasswordText: {
+            fontSize: 16,
+            color: theme.colors.InactiveText,
+            marginTop: 17,
+            marginBottom: 53,
+            textAlign: 'center',
+        },
+        forgotPasswordLink: {
+            color: theme.colors.Link,
+            fontWeight: 'bold',
+        },
+        // Updated innerScrollContainer to use flex and a minHeight on web
+        innerScrollContainer: isWeb
+            ? {
+                  flexGrow: 1,
+                  minHeight: '100vh',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  paddingVertical: 20,
+              }
+            : {
+                  width: '100%',
+                  flexGrow: 1,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  paddingVertical: 20,
+              },
+        orContainer: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            width: '100%',
+            justifyContent: 'center',
+        },
+        inputIcon: {
+            marginRight: 10,
+        },
+        inputWrapper: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            width: 285,
+            borderColor: theme.colors.ActiveText,
+            borderWidth: 1,
+            borderRadius: 25,
+            paddingHorizontal: 10,
+            backgroundColor: theme.colors.TextInput,
+            height: 50,
+            flex: 1,
+            fontSize: 16,
+        },
+    });
+}
 
 export function LoginScreen(): JSX.Element {
     const dispatch = useAppDispatch();
@@ -200,6 +201,8 @@ export function LoginScreen(): JSX.Element {
         initialFormValues.password
     );
     const [errors, setErrors] = useState<Partial<FormValues>>({});
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
 
     const updateUserData = useCallback(
         (user: User) => {
@@ -255,24 +258,16 @@ export function LoginScreen(): JSX.Element {
     };
 
     return (
-        // @ts-expect-error web only
         <SafeAreaView style={styles.outerContainer}>
-            {/* @ts-expect-error web only */}
             <ScrollView contentContainerStyle={styles.innerScrollContainer}>
-                {/* @ts-expect-error web only */}
                 <View style={styles.container}>
-                    {/* @ts-expect-error web only */}
                     <Text style={styles.title}>Log in</Text>
 
-                    {/* @ts-expect-error web only */}
                     <View style={styles.inputContainer}>
-                        {/* @ts-expect-error web only */}
                         <View style={styles.inputWrapper}>
-                            {/* @ts-expect-error web only */}
                             <Email style={styles.inputIcon} />
                             <TextInput
                                 placeholder="Enter your email"
-                                // @ts-expect-error web only
                                 style={styles.input}
                                 keyboardType="email-address"
                                 value={email}
@@ -281,15 +276,11 @@ export function LoginScreen(): JSX.Element {
                         </View>
                     </View>
                     <Text style={{ color: 'red' }}>{errors.email}</Text>
-                    {/* @ts-expect-error web only */}
                     <View style={styles.inputContainer}>
-                        {/* @ts-expect-error web only */}
                         <View style={styles.inputWrapper}>
-                            {/* @ts-expect-error web only */}
                             <Lock style={styles.inputIcon} />
                             <TextInput
                                 placeholder="Password"
-                                // @ts-expect-error web only
                                 style={styles.input}
                                 secureTextEntry
                                 value={password}
@@ -299,40 +290,32 @@ export function LoginScreen(): JSX.Element {
                     </View>
                     <Text style={{ color: 'red' }}>{errors.password}</Text>
 
-                    {/* @ts-expect-error web only */}
                     <Text style={styles.forgotPasswordText}>
                         <Pressable
                             onPress={() => router.push('/forgot-password')}
                         >
-                            {/* @ts-expect-error web only */}
                             <Text style={styles.forgotPasswordLink}>
                                 Forgot password?
                             </Text>
                         </Pressable>
                     </Text>
 
-                    {/* @ts-expect-error web only */}
                     <View style={styles.orContainer}>
                         <HorizontalLine />
-                        {/* @ts-expect-error web only */}
                         <Text style={styles.orText}>or log in with</Text>
                         <HorizontalLine />
                     </View>
 
-                    {/* @ts-expect-error web only */}
                     <View style={styles.socialContainer}>
-                        {/* @ts-expect-error web only */}
                         <Pressable style={styles.socialButton}>
                             <FacebookIcon size={24} color="#4267B2" />
                         </Pressable>
-                        {/* @ts-expect-error web only */}
                         <Pressable style={styles.socialButton}>
                             <GoogleLogo />
                         </Pressable>
                     </View>
 
                     <PrimaryGradientButton
-                        // @ts-expect-error web only
                         style={styles.topButton}
                         title="Login"
                         onPress={handleSubmit}

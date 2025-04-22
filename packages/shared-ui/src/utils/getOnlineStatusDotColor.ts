@@ -1,26 +1,29 @@
-import { COLORS } from '../constants';
+import { Theme } from '../theme';
 
-export const getOnlineStatusDotColor = (status?: string): string => {
+export const getOnlineStatusDotColor = (
+    theme: Theme,
+    status?: string
+): string => {
     const currentStatus = status ? status.toLowerCase() : 'online';
     switch (currentStatus) {
         case 'online': {
-            return COLORS.Success;
+            return theme.colors.Success;
         }
         case 'online_dnd': {
-            return COLORS.Error;
+            return theme.colors.Error;
         }
         case 'idle': {
-            return COLORS.Idle;
+            return theme.colors.Idle;
         }
         case 'offline':
         case 'invisible': {
-            return COLORS.InactiveText;
+            return theme.colors.InactiveText;
         }
         case 'offline_dnd': {
-            return COLORS.Error;
+            return theme.colors.Error;
         }
         default: {
-            return COLORS.InactiveText;
+            return theme.colors.InactiveText;
         }
     }
 };

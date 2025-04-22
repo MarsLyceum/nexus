@@ -73,7 +73,7 @@ export const StatusManager: React.FC<{ children: ReactNode }> = ({
                     void setStatus('online');
                     resetIdleTimer();
                 }
-                if (nextAppState === 'background') {
+                if (nextAppState === 'background' && Platform.OS !== 'web') {
                     void setStatus('offline');
                 }
             }

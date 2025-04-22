@@ -1,13 +1,22 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { NexusImage } from './NexusImage';
-import { COLORS } from '../constants';
+import React, {
+    useState,
+    useRef,
+    useEffect,
+    useCallback,
+    useMemo,
+} from 'react';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+
+import { useTheme, Theme } from '../theme';
 import { MessageContent, MessageEditor } from './message';
-import { MessageOptionsModal } from './MessageOptionsModal';
-import { formatDateForChat } from '../utils';
+import { formatDateForChat, isComputer } from '../utils';
 import type { MessageWithAvatar, DirectMessageWithAvatar } from '../types';
+
+import { MessageOptionsBottomSheet } from './MessageOptionsBottomSheet';
+import { MessageOptionsModal } from './MessageOptionsModal';
 import { MoreOptionsMenu } from './MoreOptionsMenu';
 import { DeleteMessageConfirmationModal } from './DeleteMessageConfirmationModal';
+import { NexusImage } from './NexusImage';
 
 export type MessageItemProps = {
     message: MessageWithAvatar | DirectMessageWithAvatar;
@@ -36,6 +45,9 @@ export const MessageItem: React.FC<MessageItemProps> = ({
 }) => {
     const [currentMessage, setCurrentMessage] = useState(message);
     const [optionsModalVisible, setOptionsModalVisible] = useState(false);
+    const [bottomSheetVisible, setBottomSheetVisible] =
+        useState<boolean>(false);
+
     const [anchorPosition, setAnchorPosition] = useState<
         | {
               x: number;
@@ -67,15 +79,26 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     >();
     const [showDeleteConfirmationModal, setShowDeleteConfirmationModal] =
         useState(false);
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
 
-    const handleDeleteMessage = useCallback(() => {
+    const handleDeleteMessageConfirm = useCallback(() => {
         onDeleteMessage(currentMessage);
         setShowDeleteConfirmationModal(false);
     }, [currentMessage, onDeleteMessage]);
 
+    const handleDeleteMessage = useCallback(() => {
+        setBottomSheetVisible(false);
+        setShowDeleteConfirmationModal(true);
+    }, []);
+
+    const handleLongPress = useCallback((): void => {
+        setBottomSheetVisible(true);
+    }, []);
+
     // Measure the container and set the anchor based on its top-right edge.
     const showModal = () => {
-        if (containerRef.current) {
+        if (isComputer() && containerRef.current) {
             const rect = (
                 containerRef.current as unknown as Element
             ).getBoundingClientRect();
@@ -110,29 +133,35 @@ export const MessageItem: React.FC<MessageItemProps> = ({
         }, 300);
     };
 
+    // eslint-disable-next-line consistent-return
     useEffect(() => {
-        const handleDocumentMouseMove = (e: MouseEvent) => {
-            if (containerRef.current) {
-                const rect = (
-                    containerRef.current as unknown as Element
-                ).getBoundingClientRect();
-                const { clientX, clientY } = e;
-                const isOverMessage =
-                    clientX >= rect.left &&
-                    clientX <= rect.right &&
-                    clientY >= rect.top &&
-                    clientY <= rect.bottom;
-                if (!isOverMessage) {
-                    setOptionsModalVisible(false);
+        if (isComputer()) {
+            const handleDocumentMouseMove = (e: MouseEvent) => {
+                if (containerRef.current) {
+                    const rect = (
+                        containerRef.current as unknown as Element
+                    ).getBoundingClientRect();
+                    const { clientX, clientY } = e;
+                    const isOverMessage =
+                        clientX >= rect.left &&
+                        clientX <= rect.right &&
+                        clientY >= rect.top &&
+                        clientY <= rect.bottom;
+                    if (!isOverMessage) {
+                        setOptionsModalVisible(false);
+                    }
                 }
-            }
-        };
-        document.addEventListener('mousemove', handleDocumentMouseMove, {
-            passive: true,
-        });
-        return () => {
-            document.removeEventListener('mousemove', handleDocumentMouseMove);
-        };
+            };
+            document.addEventListener('mousemove', handleDocumentMouseMove, {
+                passive: true,
+            });
+            return () => {
+                document.removeEventListener(
+                    'mousemove',
+                    handleDocumentMouseMove
+                );
+            };
+        }
     }, []);
 
     useEffect(() => {
@@ -164,6 +193,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
 
     const handleEdit = () => {
         setOptionsModalVisible(false);
+        setBottomSheetVisible(false);
         setIsEditing(true);
     };
 
@@ -182,12 +212,14 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     }
 
     const handleSaveEdit = () => {
-        setCurrentMessage((prevMessage) => ({
-            ...prevMessage,
+        const updatedMessage: MessageWithAvatar | DirectMessageWithAvatar = {
+            ...currentMessage,
             content: editedContent,
             edited: true,
-        }));
-        onSaveEdit(currentMessage);
+        };
+
+        setCurrentMessage(updatedMessage);
+        onSaveEdit(updatedMessage);
         setIsEditing(false);
     };
 
@@ -202,194 +234,222 @@ export const MessageItem: React.FC<MessageItemProps> = ({
         currentMessage.attachmentUrls.length > 0;
 
     return (
-        <View
-            ref={containerRef}
-            style={[styles.messageContainer, isHovered && styles.hovered]}
-            // @ts-expect-error mouse
+        <Pressable
+            {...(isComputer() ? {} : { onLongPress: handleLongPress })}
+            onPressIn={() => setIsHovered(true)}
+            onPressOut={() => setIsHovered(false)}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
         >
-            <NexusImage
-                source={currentMessage.avatar}
-                style={styles.avatar}
-                width={40}
-                height={40}
-                alt="User avatar"
-            />
-            <View style={styles.innerContainer}>
-                <Text style={styles.userName}>
-                    {currentMessage.username}{' '}
-                    <Text style={styles.time}>
-                        {formatDateForChat(messageDate)}
+            <View
+                ref={containerRef}
+                style={[styles.messageContainer, isHovered && styles.hovered]}
+            >
+                <NexusImage
+                    source={currentMessage.avatar}
+                    style={styles.avatar}
+                    width={40}
+                    height={40}
+                    alt="User avatar"
+                />
+                <View style={styles.innerContainer}>
+                    <Text style={styles.userName}>
+                        {currentMessage.username}{' '}
+                        <Text style={styles.time}>
+                            {formatDateForChat(messageDate)}
+                        </Text>
                     </Text>
-                </Text>
 
-                {/* Content view section - always mounted, visibility controlled by style */}
-                <View
-                    style={[
-                        styles.viewContainer,
-                        isEditing ? styles.hidden : styles.visible,
-                    ]}
-                >
-                    <MessageContent
-                        message={currentMessage}
-                        width={width}
-                        onAttachmentPress={onAttachmentPress}
-                        renderMessage
-                        renderLinkPreview
-                        renderAttachments
-                    />
-                </View>
-
-                {/* Edit section - always mounted, visibility controlled by style */}
-                <View
-                    style={[
-                        styles.editContainer,
-                        isEditing ? styles.visible : styles.hidden,
-                    ]}
-                >
-                    {/* Text editor */}
-                    <MessageEditor
-                        initialContent={editedContent}
-                        width={width}
-                        onChange={setEditedContent}
-                        onSave={handleSaveEdit}
-                        onCancel={handleCancelEdit}
-                    />
-
-                    {/* Link previews with live updates */}
-                    <View style={styles.linkPreviewsWhileEditing}>
+                    {/* Content view section - always mounted, visibility controlled by style */}
+                    <View
+                        style={[
+                            styles.viewContainer,
+                            isEditing ? styles.hidden : styles.visible,
+                        ]}
+                    >
                         <MessageContent
                             message={currentMessage}
                             width={width}
                             onAttachmentPress={onAttachmentPress}
-                            renderMessage={false}
+                            renderMessage
                             renderLinkPreview
-                            renderAttachments={false}
-                            contentOverride={editedContent}
+                            renderAttachments
                         />
                     </View>
 
-                    {/* Attachments section */}
-                    {hasAttachments && (
-                        <View style={styles.attachmentsWhileEditing}>
+                    {/* Edit section - always mounted, visibility controlled by style */}
+                    <View
+                        style={[
+                            styles.editContainer,
+                            isEditing ? styles.visible : styles.hidden,
+                        ]}
+                    >
+                        {/* Text editor */}
+                        <MessageEditor
+                            initialContent={editedContent}
+                            width={width}
+                            onChange={setEditedContent}
+                            onSave={handleSaveEdit}
+                            onCancel={handleCancelEdit}
+                        />
+
+                        {/* Link previews with live updates */}
+                        <View style={styles.linkPreviewsWhileEditing}>
                             <MessageContent
                                 message={currentMessage}
                                 width={width}
                                 onAttachmentPress={onAttachmentPress}
                                 renderMessage={false}
-                                renderLinkPreview={false}
-                                renderAttachments
+                                renderLinkPreview
+                                renderAttachments={false}
+                                contentOverride={editedContent}
+                            />
+                        </View>
+
+                        {/* Attachments section */}
+                        {hasAttachments && (
+                            <View style={styles.attachmentsWhileEditing}>
+                                <MessageContent
+                                    message={currentMessage}
+                                    width={width}
+                                    onAttachmentPress={onAttachmentPress}
+                                    renderMessage={false}
+                                    renderLinkPreview={false}
+                                    renderAttachments
+                                />
+                            </View>
+                        )}
+                    </View>
+                </View>
+
+                {/* Options modal */}
+                {!isEditing &&
+                    (optionsModalVisible || showMoreOptions) &&
+                    anchorPosition && (
+                        <View style={styles.optionsModalContainer}>
+                            <MessageOptionsModal
+                                visible
+                                onClose={() => setOptionsModalVisible(false)}
+                                anchorPosition={anchorPosition}
+                                onEdit={handleEdit}
+                                onMore={handleMore}
+                                onMouseEnterModal={() => setModalHovered(true)}
+                                onMouseLeaveModal={() => {
+                                    setModalHovered(false);
+                                    setOptionsModalVisible(false);
+                                }}
                             />
                         </View>
                     )}
-                </View>
-            </View>
 
-            {/* Options modal */}
-            {!isEditing &&
-                (optionsModalVisible || showMoreOptions) &&
-                anchorPosition && (
-                    <View style={styles.optionsModalContainer}>
-                        <MessageOptionsModal
-                            visible
-                            onClose={() => setOptionsModalVisible(false)}
-                            anchorPosition={anchorPosition}
-                            onEdit={handleEdit}
-                            onMore={handleMore}
-                            onMouseEnterModal={() => setModalHovered(true)}
-                            onMouseLeaveModal={() => {
-                                setModalHovered(false);
-                                setOptionsModalVisible(false);
-                            }}
-                        />
-                    </View>
+                {bottomSheetVisible && (
+                    <MessageOptionsBottomSheet
+                        visible={bottomSheetVisible}
+                        onClose={() => setBottomSheetVisible(false)}
+                        onEdit={handleEdit}
+                        onReply={() => {
+                            // Add your reply functionality or logging here.
+                        }}
+                        onForward={() => {}}
+                        onCreateThread={() => {}}
+                        onCopyText={() => {}}
+                        onMarkUnread={() => {}}
+                        onPinMessage={() => {}}
+                        onApps={() => {}}
+                        onMention={() => {}}
+                        onCopyMessageLink={() => {}}
+                        onRemoveEmbed={() => {}}
+                        onDeleteMessage={handleDeleteMessage}
+                    />
                 )}
 
-            <MoreOptionsMenu
-                anchorPosition={moreButtonAnchor}
-                visible={showMoreOptions}
-                onClose={handleCloseMoreOptions}
-                onEdit={handleEdit}
-                onReply={() => {}}
-                onForward={() => {}}
-                onCreateThread={() => {}}
-                onAddReaction={() => {}}
-                onCopyText={() => {}}
-                onPinMessage={() => {}}
-                onMarkUnread={() => {}}
-                onCopyMessageLink={() => {}}
-                onDeleteMessage={() => setShowDeleteConfirmationModal(true)}
-            />
-
-            {showDeleteConfirmationModal && (
-                <DeleteMessageConfirmationModal
-                    visible={showDeleteConfirmationModal}
-                    onClose={() => setShowDeleteConfirmationModal(false)}
-                    onConfirmDelete={handleDeleteMessage}
-                    message={currentMessage}
-                    onAttachmentPress={onAttachmentPress}
+                <MoreOptionsMenu
+                    anchorPosition={moreButtonAnchor}
+                    visible={showMoreOptions}
+                    onClose={handleCloseMoreOptions}
+                    onEdit={handleEdit}
+                    onReply={() => {}}
+                    onForward={() => {}}
+                    onCreateThread={() => {}}
+                    onAddReaction={() => {}}
+                    onCopyText={() => {}}
+                    onPinMessage={() => {}}
+                    onMarkUnread={() => {}}
+                    onCopyMessageLink={() => {}}
+                    onDeleteMessage={handleDeleteMessage}
                 />
-            )}
-        </View>
+
+                {showDeleteConfirmationModal && (
+                    <DeleteMessageConfirmationModal
+                        visible={showDeleteConfirmationModal}
+                        onClose={() => setShowDeleteConfirmationModal(false)}
+                        onConfirmDelete={handleDeleteMessageConfirm}
+                        message={currentMessage}
+                        onAttachmentPress={onAttachmentPress}
+                    />
+                )}
+            </View>
+        </Pressable>
     );
 };
 
-const styles = StyleSheet.create({
-    messageContainer: {
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        padding: 15,
-        width: '100%',
-        position: 'relative',
-        overflow: 'visible',
-    },
-    hovered: {
-        backgroundColor: COLORS.TertiaryBackground,
-    },
-    avatar: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        marginRight: 10,
-    },
-    innerContainer: {
-        flex: 1,
-        flexShrink: 1,
-    },
-    userName: {
-        fontSize: 14,
-        fontWeight: 'bold',
-        color: COLORS.White,
-        fontFamily: 'Roboto_700Bold',
-    },
-    time: {
-        fontSize: 12,
-        color: COLORS.InactiveText,
-        fontFamily: 'Roboto_400Regular',
-    },
-    viewContainer: {
-        // Container for normal viewing mode
-    },
-    editContainer: {
-        // Container for edit mode components
-    },
-    linkPreviewsWhileEditing: {
-        marginTop: 10,
-    },
-    attachmentsWhileEditing: {
-        marginTop: 10,
-    },
-    optionsModalContainer: {
-        position: 'absolute',
-        zIndex: 100,
-    },
-    visible: {
-        display: 'flex',
-        opacity: 1,
-    },
-    hidden: {
-        display: 'none',
-        opacity: 0,
-    },
-});
+function createStyles(theme: Theme) {
+    return StyleSheet.create({
+        messageContainer: {
+            flexDirection: 'row',
+            alignItems: 'flex-start',
+            padding: 15,
+            width: '100%',
+            position: 'relative',
+            overflow: 'visible',
+        },
+        hovered: {
+            backgroundColor: theme.colors.TertiaryBackground,
+        },
+        avatar: {
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            marginRight: 10,
+        },
+        innerContainer: {
+            flex: 1,
+            flexShrink: 1,
+        },
+        userName: {
+            fontSize: 14,
+            fontWeight: 'bold',
+            color: theme.colors.ActiveText,
+            fontFamily: 'Roboto_700Bold',
+        },
+        time: {
+            fontSize: 12,
+            color: theme.colors.InactiveText,
+            fontFamily: 'Roboto_400Regular',
+        },
+        viewContainer: {
+            // Container for normal viewing mode
+        },
+        editContainer: {
+            // Container for edit mode components
+        },
+        linkPreviewsWhileEditing: {
+            marginTop: 10,
+        },
+        attachmentsWhileEditing: {
+            marginTop: 10,
+        },
+        optionsModalContainer: {
+            position: 'absolute',
+            zIndex: 100,
+        },
+        visible: {
+            display: 'flex',
+            opacity: 1,
+        },
+        hidden: {
+            display: 'none',
+            opacity: 0,
+        },
+    });
+}

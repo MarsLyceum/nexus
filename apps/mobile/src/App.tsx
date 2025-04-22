@@ -15,6 +15,8 @@ import { ApolloProvider } from '@apollo/client';
 import { Provider as ReduxProvider } from 'react-redux';
 import { loadErrorMessages, loadDevMessages } from '@apollo/client/dev';
 import { Lato_400Regular, Lato_700Bold } from '@expo-google-fonts/lato';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+
 import {
     useFonts,
     Roboto_400Regular,
@@ -25,14 +27,14 @@ import {
     Roboto_700Bold_Italic,
 } from '@expo-google-fonts/roboto';
 import * as SplashScreen from 'expo-splash-screen';
-import { Provider as PortalProvider } from 'react-native-paper';
 
-import { COLORS } from 'shared-ui/constants';
 import { store } from 'shared-ui/redux';
+import { useTheme, ThemeProvider } from 'shared-ui/theme';
 import {
     SearchProvider,
     ActiveGroupProvider,
     CurrentCommentProvider,
+    PortalProvider,
 } from 'shared-ui/providers';
 import { StatusManager, Login } from 'shared-ui/small-components';
 import {
@@ -65,6 +67,7 @@ if (__DEV__) {
  * On native platforms, it renders null.
  */
 const CustomScrollbar = () => {
+    const { theme } = useTheme();
     if (Platform.OS !== 'web') return <></>;
     return (
         <style>{`
@@ -74,16 +77,16 @@ const CustomScrollbar = () => {
         height: 10px;
       }
       ::-webkit-scrollbar-track {
-        background: ${COLORS.PrimaryBackground};
+        background: ${theme.colors.PrimaryBackground};
       }
       ::-webkit-scrollbar-thumb {
-        background-color: ${COLORS.TextInput};
+        background-color: ${theme.colors.TextInput};
         border-radius: 999px;
       }
       /* Firefox */
       * {
         scrollbar-width: thin;
-        scrollbar-color: ${COLORS.TextInput} ${COLORS.PrimaryBackground};
+        scrollbar-color: ${theme.colors.TextInput} ${theme.colors.PrimaryBackground};
       }
     `}</style>
     );
@@ -132,43 +135,23 @@ function MainStackScreen() {
     );
 }
 
-// The main App component with the stack navigator integrating all screens.
-// eslint-disable-next-line import/no-default-export
-export default function App() {
-    const [appIsReady, setAppIsReady] = useState(false);
-    const [fontsLoaded] = useFonts({
-        Lato_400Regular,
-        Lato_700Bold,
-        Roboto_400Regular,
-        Roboto_400Regular_Italic,
-        Roboto_500Medium,
-        Roboto_500Medium_Italic,
-        Roboto_700Bold,
-        Roboto_700Bold_Italic,
-    });
+const AppContent = () => {
+    const { theme } = useTheme();
 
-    useEffect(() => {
-        if (fontsLoaded) {
-            // eslint-disable-next-line no-void
-            void SplashScreen.hideAsync(); // Hide splash screen once fonts are loaded
-            setAppIsReady(true);
-        }
-    }, [fontsLoaded]);
-
-    if (appIsReady) {
-        return (
+    return (
+        <GestureHandlerRootView style={{ flex: 1 }}>
             <ActiveGroupProvider>
                 <SearchProvider>
                     <CurrentCommentProvider>
                         <SafeAreaProvider>
                             <StatusBar
                                 barStyle="light-content"
-                                backgroundColor={COLORS.AppBackground}
+                                backgroundColor={theme.colors.AppBackground}
                             />
                             <SafeAreaView
                                 style={{
                                     flex: 1,
-                                    backgroundColor: COLORS.AppBackground,
+                                    backgroundColor: theme.colors.AppBackground,
                                 }}
                                 edges={['top', 'left', 'right', 'bottom']}
                             >
@@ -229,6 +212,38 @@ export default function App() {
                     </CurrentCommentProvider>
                 </SearchProvider>
             </ActiveGroupProvider>
+        </GestureHandlerRootView>
+    );
+};
+
+// The main App component with the stack navigator integrating all screens.
+// eslint-disable-next-line import/no-default-export
+export default function App() {
+    const [appIsReady, setAppIsReady] = useState(false);
+    const [fontsLoaded] = useFonts({
+        Lato_400Regular,
+        Lato_700Bold,
+        Roboto_400Regular,
+        Roboto_400Regular_Italic,
+        Roboto_500Medium,
+        Roboto_500Medium_Italic,
+        Roboto_700Bold,
+        Roboto_700Bold_Italic,
+    });
+
+    useEffect(() => {
+        if (fontsLoaded) {
+            // eslint-disable-next-line no-void
+            void SplashScreen.hideAsync(); // Hide splash screen once fonts are loaded
+            setAppIsReady(true);
+        }
+    }, [fontsLoaded]);
+
+    if (appIsReady) {
+        return (
+            <ThemeProvider>
+                <AppContent />
+            </ThemeProvider>
         );
     }
 }

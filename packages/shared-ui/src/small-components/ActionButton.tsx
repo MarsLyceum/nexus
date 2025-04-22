@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Pressable, StyleSheet, View, ViewStyle } from 'react-native';
+
+import { useTheme, Theme } from '../theme';
+
 import { Tooltip } from './Tooltip';
-import { COLORS } from '../constants';
 
 export type ActionButtonProps = {
     onPress: () => void;
@@ -19,6 +21,8 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
     transparent = false,
 }) => {
     const [active, setActive] = useState(false);
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
 
     const content = (
         <Pressable
@@ -41,34 +45,36 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
     );
 
     return tooltipText ? (
-        <Tooltip tooltipText={tooltipText}>{content}</Tooltip>
+        <Tooltip text={tooltipText}>{content}</Tooltip>
     ) : (
         content
     );
 };
 
-const styles = StyleSheet.create({
-    iconButton: {
-        width: 45,
-        height: 45,
-        borderRadius: 23,
-        backgroundColor: COLORS.AppBackground,
-        justifyContent: 'center',
-        alignItems: 'center',
-        position: 'relative',
-        overflow: 'hidden',
-    },
-    transparent: {
-        backgroundColor: 'transparent',
-    },
-    activeOverlay: {
-        ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(255, 255, 255, 0.04)', // extremely subtle white overlay
-        borderRadius: 23,
-    },
-    childrenContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-});
+function createStyles(theme: Theme) {
+    return StyleSheet.create({
+        iconButton: {
+            width: 45,
+            height: 45,
+            borderRadius: 23,
+            backgroundColor: theme.colors.AppBackground,
+            justifyContent: 'center',
+            alignItems: 'center',
+            position: 'relative',
+            overflow: 'hidden',
+        },
+        transparent: {
+            backgroundColor: 'transparent',
+        },
+        activeOverlay: {
+            ...StyleSheet.absoluteFillObject,
+            backgroundColor: 'rgba(255, 255, 255, 0.04)', // extremely subtle white overlay
+            borderRadius: 23,
+        },
+        childrenContainer: {
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+    });
+}

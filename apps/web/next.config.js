@@ -11,16 +11,16 @@ const TRANSPILED_PACKAGES = [
     // Expo & related modules
     '@expo-google-fonts',
     '@expo/vector-icons',
-    '@react-native/assets-registry',
+    // '@react-native/assets-registry',
     'expo',
-    'expo-asset',
+    // 'expo-asset',
     'expo-auth-session',
     'expo-calendar',
     'expo-constants',
     'expo-file-system',
     // 'expo-font',
     'expo-image',
-    'expo-image-loader',
+    // 'expo-image-loader',
     'expo-image-picker',
     'expo-location',
     'expo-modules-core',
@@ -31,9 +31,9 @@ const TRANSPILED_PACKAGES = [
     // React Native core
     'react-native',
     'react-native-config',
-    'react-native-gesture-handler',
+    // 'react-native-gesture-handler',
     'react-native-get-random-values',
-    'react-native-paper',
+    // 'react-native-paper',
     'react-native-reanimated',
     'react-native-safe-area-context',
     'react-native-svg',
@@ -44,13 +44,13 @@ const TRANSPILED_PACKAGES = [
     'react-native-zoom-toolkit',
 
     // Navigation, lists, and utilities
-    '@jsamr/react-native-li',
+    // '@jsamr/react-native-li',
     '@react-navigation/core',
     '@react-navigation/native',
     '@shopify/flash-list',
-    'recyclerlistview',
+    // 'recyclerlistview',
     'solito',
-    'use-latest-callback',
+    // 'use-latest-callback',
 
     // Additional packages from dependencies (if needed)
     '@react-native-async-storage/async-storage',
@@ -100,6 +100,33 @@ const withTM = require('next-transpile-modules')([
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     reactStrictMode: true,
+
+    env: {
+        NEXT_PUBLIC_USE_REMOTE_GRAPHQL: String(
+            process.env.USE_REMOTE_GRAPHQL === 'true'
+        ),
+    },
+
+    async rewrites() {
+        const LOCAL = 'http://localhost:4000';
+        const REMOTE =
+            'https://nexus-web-service-197277044151.us-west1.run.app';
+
+        // if in production *or* you explicitly requested remote, use REMOTE
+        const forceRemote =
+            process.env.NODE_ENV === 'production' ||
+            process.env.USE_REMOTE_GRAPHQL === 'true';
+
+        const target = forceRemote ? REMOTE : LOCAL;
+
+        return [
+            {
+                source: '/graphql/:path*',
+                destination: `${target}/graphql/:path*`,
+            },
+        ];
+    },
+
     experimental: {
         esmExternals: true,
         forceSwcTransforms: true,
@@ -152,46 +179,30 @@ const nextConfig = {
     transpilePackages: TRANSPILED_PACKAGES,
 
     webpack: (
-        config: {
-            module: any;
-            resolve: {
-                mainFields: string[];
-                modules: any[];
-                fallback: { fs: boolean };
-                plugins: any;
-                fullySpecified: boolean;
-                extensions: string[];
-                alias: { [x: string]: any };
-            };
-            entry: () => Promise<any>;
-            plugins: any[];
-        },
-        { isServer }: any
+        config,
+
+        { isServer }
     ) => {
         const transpilePackagesRegex = new RegExp(
             `[/\\\\]node_modules[/\\\\](${TRANSPILED_PACKAGES?.map((p) => p.replace(/\//g, '[/\\\\]')).join('|')})[/\\\\]`
         );
 
-        const oneOfRule = config.module.rules.find(
-            (rule: any) => 'oneOf' in rule
-        );
+        const oneOfRule = config.module.rules.find((rule) => 'oneOf' in rule);
         // https://github.com/vercel/next.js/issues/35110#issuecomment-2286611619
-        oneOfRule.oneOf.forEach(
-            (rule: { use: (string | string[])[]; exclude: any[] }) => {
-                if (
-                    'use' in rule &&
-                    Array.isArray(rule.use) &&
-                    rule.use.some(
-                        (u: string | string[]) =>
-                            typeof u === 'string' &&
-                            (u.includes('react-refresh') ||
-                                u.includes('react-refresh-utils'))
-                    )
-                ) {
-                    rule.exclude = [rule.exclude, transpilePackagesRegex];
-                }
+        oneOfRule.oneOf.forEach((rule) => {
+            if (
+                'use' in rule &&
+                Array.isArray(rule.use) &&
+                rule.use.some(
+                    (u) =>
+                        typeof u === 'string' &&
+                        (u.includes('react-refresh') ||
+                            u.includes('react-refresh-utils'))
+                )
+            ) {
+                rule.exclude = [rule.exclude, transpilePackagesRegex];
             }
-        );
+        });
 
         config.module.parser = {
             javascript: {

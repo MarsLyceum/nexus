@@ -10,6 +10,7 @@ import { createClient } from 'graphql-ws';
 import createUploadLink from 'apollo-upload-client/createUploadLink.mjs';
 
 import { getSafeWindow } from './getSafeWindow';
+import { detectEnvironment } from './detectEnvironment';
 
 // Detect if the code is running in a Cloud Run container by checking for the K_SERVICE env variable.
 const isCloudRun =
@@ -23,18 +24,25 @@ const isDevDomain =
 
 // Use local server only if NOT running in Cloud Run or on the dev.my-nexus.net domain.
 const onRemoteServer = isCloudRun || isDevDomain;
-const useLocalServer = true;
+
+const environment = detectEnvironment();
+const isNext =
+    environment === 'nextjs-client' || environment === 'nextjs-server';
 
 // Set endpoints based on whether we are using the local server or the Cloud Run server.
 const graphqlApiGatewayEndpointHttp =
-    !onRemoteServer && useLocalServer
-        ? 'http://localhost:4000/graphql'
-        : 'https://nexus-web-service-197277044151.us-west1.run.app/graphql';
+    !onRemoteServer && !(process.env.USE_REMOTE_GRAPHQL === 'true')
+        ? isNext
+            ? 'http://localhost:3000/graphql'
+            : 'http://192.168.1.48:4000/graphql'
+        : 'https://dev.my-nexus.net/graphql';
 
 const graphqlApiGatewayEndpointWs =
-    !onRemoteServer && useLocalServer
-        ? 'ws://localhost:4000/graphql'
-        : 'wss://nexus-web-service-197277044151.us-west1.run.app/graphql';
+    !onRemoteServer && !(process.env.USE_REMOTE_GRAPHQL === 'true')
+        ? isNext
+            ? 'ws://localhost:3000/graphql'
+            : 'ws://192.168.1.48:4000/graphql'
+        : 'wss://dev.my-nexus.net/graphql';
 
 // Create a common error link.
 const errorLink = onError((error) => {

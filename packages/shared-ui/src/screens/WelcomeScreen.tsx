@@ -5,67 +5,69 @@ import {
     StyleSheet,
     View,
     Platform,
+    Text,
 } from 'react-native';
-import React, { useEffect } from 'react';
-import styled from 'styled-components/native';
+import React, { useEffect, useMemo } from 'react';
 
 import { useNexusRouter } from '../hooks';
 import { RootState, useAppSelector, useAppDispatch, loadUser } from '../redux';
 import { PeepsLogo } from '../images/PeepsLogo';
 import { PrimaryGradientButton, SecondaryButton } from '../buttons';
 import { Footer } from '..';
-import { COLORS } from '../constants';
+import { useTheme, Theme } from '../theme';
 
 const isWeb = Platform.OS === 'web';
 
-const Tagline = styled.Text`
-    font-family: Lato_700Bold;
-    font-size: 24px;
-    margin-top: 63px;
-    color: ${COLORS.MainText};
-`;
-
-const styles = StyleSheet.create({
-    topButton: {
-        marginTop: 63,
-    },
-    bottomButton: {
-        marginTop: 48,
-    },
-    centeredContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingVertical: 20,
-        width: '100%',
-    },
-    // @ts-expect-error web only types
-    outerContainer: {
-        flex: 1,
-        backgroundColor: COLORS.AppBackground,
-        // For web, ensure the container fills the viewport.
-        ...(isWeb && { position: 'relative', minHeight: '100vh' }),
-    },
-    innerScrollContainer: isWeb
-        ? {
-              // Remove absolute positioning for web to allow natural flow
-              flexGrow: 1,
-          }
-        : {
-              width: '100%',
-              flexGrow: 1,
-          },
-    footerContainer: {
-        flexShrink: 0,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-});
+function createStyles(theme: Theme) {
+    return StyleSheet.create({
+        topButton: {
+            marginTop: 63,
+        },
+        bottomButton: {
+            marginTop: 48,
+        },
+        centeredContainer: {
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            paddingVertical: 20,
+            width: '100%',
+        },
+        outerContainer: {
+            flex: 1,
+            backgroundColor: theme.colors.AppBackground,
+            // For web, ensure the container fills the viewport.
+            ...(isWeb && { position: 'relative', minHeight: '100vh' }),
+        },
+        innerScrollContainer: isWeb
+            ? {
+                  // Remove absolute positioning for web to allow natural flow
+                  flexGrow: 1,
+              }
+            : {
+                  width: '100%',
+                  flexGrow: 1,
+              },
+        footerContainer: {
+            flexShrink: 0,
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        tagline: {
+            fontFamily: 'Lato_700Bold',
+            fontSize: 24,
+            marginTop: 63,
+            color: theme.colors.MainText,
+        },
+    });
+}
 
 export function WelcomeScreen(): JSX.Element {
     const dispatch = useAppDispatch();
     const user = useAppSelector((state: RootState) => state.user.user);
     const router = useNexusRouter();
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
 
     useEffect(() => {
         dispatch(loadUser());
@@ -79,31 +81,25 @@ export function WelcomeScreen(): JSX.Element {
     }, [user, router]);
 
     return (
-        // @ts-expect-error web only types
         <SafeAreaView style={styles.outerContainer}>
             <ScrollView
                 showsHorizontalScrollIndicator={false}
-                // @ts-expect-error web only types
                 contentContainerStyle={styles.innerScrollContainer}
             >
-                {/* @ts-expect-error web only types */}
                 <View style={styles.centeredContainer}>
                     <PeepsLogo />
-                    <Tagline>Where friends and communities thrive</Tagline>
+                    <Text>Where friends and communities thrive</Text>
                     <PrimaryGradientButton
-                        // @ts-expect-error web only types
                         style={styles.topButton}
                         title="Create an account"
                         onPress={() => router.push('/signup')}
                     />
                     <SecondaryButton
-                        // @ts-expect-error web only
                         style={styles.bottomButton}
                         title="Log in"
                         onPress={() => router.push('/login')}
                     />
                 </View>
-                {/* @ts-expect-error web only */}
                 <View style={styles.footerContainer}>
                     <Footer />
                 </View>

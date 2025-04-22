@@ -70,14 +70,22 @@ export function createNexusParam<T extends Record<string, any>>() {
             setParams = useCallback(
                 (newParams: Partial<T>) => {
                     // Merge current and new parameters
-                    const mergedParams = { ...paramsObj, ...newParams };
+                    const currentParamsInner = Object.fromEntries(
+                        // eslint-disable-next-line unicorn/prefer-spread
+                        Array.from(searchParams.entries())
+                    );
+
+                    const mergedParams = {
+                        ...currentParamsInner,
+                        ...newParams,
+                    };
                     // Use the current path as base.
                     const basePath = getSafeWindow()?.location.pathname ?? '';
                     const newUrl = buildUrlWithParams(basePath, mergedParams);
                     // Replace the URL without adding a new history entry.
                     nextRouter.replace(newUrl);
                 },
-                [nextRouter, paramsObj]
+                [nextRouter, searchParams]
             );
         } else if (
             environment === 'react-native-mobile' ||
@@ -96,12 +104,14 @@ export function createNexusParam<T extends Record<string, any>>() {
             // eslint-disable-next-line react-hooks/rules-of-hooks
             setParams = useCallback(
                 (newParams: Partial<T>) => {
+                    const currentParamsInner = route.params || {};
+
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     if (typeof (navigation as any).setParams === 'function') {
                         // Merge the new params with the current ones.
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         (navigation as any).setParams({
-                            ...currentParams,
+                            ...currentParamsInner,
                             ...newParams,
                         });
                     } else {
@@ -110,12 +120,12 @@ export function createNexusParam<T extends Record<string, any>>() {
                         // (Assumes that the route name is set correctly in your navigator.)
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         (navigation as any).replace(route.name, {
-                            ...currentParams,
+                            ...currentParamsInner,
                             ...newParams,
                         });
                     }
                 },
-                [navigation, currentParams, route.name]
+                [navigation, route.params, route.name]
             );
         } else {
             // --- FALLBACK (or unsupported environment) ---

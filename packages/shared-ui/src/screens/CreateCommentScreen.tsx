@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useMemo } from 'react';
 import {
     View,
     Text,
@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import { NavigationProp } from '@react-navigation/core';
 
-import { COLORS } from '../constants';
 import { AttachmentImageGallery, ImageDetailsModal } from '../sections';
 import {
     LinkPreview,
@@ -19,6 +18,7 @@ import {
 } from '../small-components';
 import { getRelativeTime, extractUrls, stripHtml } from '../utils';
 import { CurrentCommentContext } from '../providers';
+import { useTheme, Theme } from '../theme';
 
 type RootStackParamList = {
     CreateComment: Record<string, unknown>;
@@ -40,6 +40,8 @@ export const CreateCommentScreen: React.FC<CreateCommentScreenProps> = ({
         postId,
         parentAttachmentUrls,
     } = useContext(CurrentCommentContext);
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
 
     // Compute parent content details for link preview logic
     const urlsInParentContent = extractUrls(parentContent);
@@ -66,21 +68,16 @@ export const CreateCommentScreen: React.FC<CreateCommentScreenProps> = ({
     };
 
     return (
-        // @ts-expect-error style
         <SafeAreaView style={styles.safeContainer}>
-            {/* @ts-expect-error style */}
             <ScrollView
                 style={styles.scrollSection}
                 contentContainerStyle={styles.scrollContainerStyle}
             >
-                {/* @ts-expect-error style */}
                 <View style={styles.modalContainer}>
-                    {/* @ts-expect-error style */}
                     <Text style={styles.userInfo}>
                         {parentUser} • {getRelativeTime(parentDate)}
                     </Text>
                     <View
-                        // @ts-expect-error style
                         style={styles.parentContentContainer}
                         onLayout={handleParentLayout}
                     >
@@ -132,7 +129,7 @@ export const CreateCommentScreen: React.FC<CreateCommentScreenProps> = ({
                         onCancel={() => navigation.goBack()}
                         onCommentCreated={() => navigation.goBack()}
                         expandedByDefault
-                        editorBackgroundColor={COLORS.PrimaryBackground}
+                        editorBackgroundColor={theme.colors.PrimaryBackground}
                     />
                 </View>
                 {parentAttachmentUrls && parentAttachmentUrls.length > 0 && (
@@ -150,84 +147,85 @@ export const CreateCommentScreen: React.FC<CreateCommentScreenProps> = ({
 
 const isWeb = Platform.OS === 'web';
 
-const styles = StyleSheet.create({
-    scrollSection: isWeb
-        ? {
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              overflowY: 'auto',
-              backgroundColor: COLORS.AppBackground,
-          }
-        : { flex: 1, backgroundColor: COLORS.AppBackground },
-    // @ts-expect-error web only types
-    safeContainer: {
-        flex: 1,
-        backgroundColor: COLORS.SecondaryBackground,
-        paddingTop: 15,
-        ...(isWeb && { height: '100vh', display: 'flex' }),
-    },
-    scrollContainer: {
-        flex: 1,
-        backgroundColor: COLORS.AppBackground,
-    },
-    scrollContainerStyle: {
-        flexGrow: 1,
-    },
-    modalContainer: {
-        backgroundColor: COLORS.AppBackground,
-        borderRadius: 8,
-        padding: 20,
-    },
-    modalTitle: {
-        fontSize: 18,
-        fontWeight: '600',
-        marginBottom: 15,
-        color: COLORS.White,
-    },
-    userInfo: {
-        fontSize: 14,
-        color: COLORS.InactiveText,
-        marginBottom: 10,
-    },
-    parentContentContainer: {
-        borderWidth: 1,
-        borderColor: COLORS.InactiveText,
-        borderRadius: 5,
-        padding: 10,
-        marginBottom: 15,
-        backgroundColor: COLORS.SecondaryBackground,
-    },
-    toggleButton: {
-        alignSelf: 'flex-end',
-        marginBottom: 10,
-        paddingVertical: 6,
-        paddingHorizontal: 10,
-        backgroundColor: COLORS.SecondaryBackground,
-        borderRadius: 5,
-    },
-    modalButtonRow: {
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
-    },
-    modalButton: {
-        marginLeft: 10,
-        paddingVertical: 8,
-        paddingHorizontal: 15,
-        borderRadius: 5,
-        backgroundColor: COLORS.Primary,
-    },
-    modalButtonText: {
-        color: COLORS.White,
-        fontWeight: '600',
-    },
-    editorContainer: {
-        marginBottom: 15,
-    },
-    toggleButtonText: {
-        color: COLORS.White,
-        fontWeight: '600',
-    },
-});
+function createStyles(theme: Theme) {
+    return StyleSheet.create({
+        scrollSection: isWeb
+            ? {
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  overflowY: 'auto',
+                  backgroundColor: theme.colors.AppBackground,
+              }
+            : { flex: 1, backgroundColor: theme.colors.AppBackground },
+        safeContainer: {
+            flex: 1,
+            backgroundColor: theme.colors.SecondaryBackground,
+            paddingTop: 15,
+            ...(isWeb && { height: '100vh', display: 'flex' }),
+        },
+        scrollContainer: {
+            flex: 1,
+            backgroundColor: theme.colors.AppBackground,
+        },
+        scrollContainerStyle: {
+            flexGrow: 1,
+        },
+        modalContainer: {
+            backgroundColor: theme.colors.AppBackground,
+            borderRadius: 8,
+            padding: 20,
+        },
+        modalTitle: {
+            fontSize: 18,
+            fontWeight: '600',
+            marginBottom: 15,
+            color: theme.colors.ActiveText,
+        },
+        userInfo: {
+            fontSize: 14,
+            color: theme.colors.InactiveText,
+            marginBottom: 10,
+        },
+        parentContentContainer: {
+            borderWidth: 1,
+            borderColor: theme.colors.InactiveText,
+            borderRadius: 5,
+            padding: 10,
+            marginBottom: 15,
+            backgroundColor: theme.colors.SecondaryBackground,
+        },
+        toggleButton: {
+            alignSelf: 'flex-end',
+            marginBottom: 10,
+            paddingVertical: 6,
+            paddingHorizontal: 10,
+            backgroundColor: theme.colors.SecondaryBackground,
+            borderRadius: 5,
+        },
+        modalButtonRow: {
+            flexDirection: 'row',
+            justifyContent: 'flex-end',
+        },
+        modalButton: {
+            marginLeft: 10,
+            paddingVertical: 8,
+            paddingHorizontal: 15,
+            borderRadius: 5,
+            backgroundColor: theme.colors.Primary,
+        },
+        modalButtonText: {
+            color: theme.colors.ActiveText,
+            fontWeight: '600',
+        },
+        editorContainer: {
+            marginBottom: 15,
+        },
+        toggleButtonText: {
+            color: theme.colors.ActiveText,
+            fontWeight: '600',
+        },
+    });
+}

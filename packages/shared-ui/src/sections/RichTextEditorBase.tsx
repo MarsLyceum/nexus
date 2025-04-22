@@ -1,5 +1,6 @@
 import { marked } from 'marked';
-import { COLORS } from '../constants';
+
+import { Theme } from '../theme';
 
 // --- Custom Marked Extension for Spoilers ---
 const spoilerExtension = {
@@ -47,14 +48,17 @@ const spoilerExtension = {
 marked.use({ extensions: [spoilerExtension] });
 
 export function getRichTextEditorHtml(
+    theme: Theme,
+    backgroundColorProp?: string,
     placeholder: string = 'Start typing...',
     initialContent: string = '',
     showToolbar: boolean = true,
     height: string = '80vh',
     width: string = '100%',
-    borderRadius: string = '5px',
-    backgroundColor: string = COLORS.SecondaryBackground // new parameter for background color
+    borderRadius: string = '5px'
 ): string {
+    const backgroundColor =
+        backgroundColorProp ?? theme.colors.SecondaryBackground;
     const editorHeight = height;
     const editorWidth = width;
     const initialHTML = initialContent ? marked(initialContent) : '<p><br></p>';
@@ -74,7 +78,7 @@ export function getRichTextEditorHtml(
         width: ${editorWidth} !important;
       }
       .quill-wrapper {
-        border: 1px solid ${COLORS.TextInput} !important;
+        border: 1px solid ${theme.colors.TextInput} !important;
         border-radius: ${borderRadius} !important;
         width: 100%;
         height: ${editorHeight} !important;
@@ -113,85 +117,85 @@ export function getRichTextEditorHtml(
         height: 100% !important;
         padding: 10px !important;
         box-sizing: border-box;
-        color: ${COLORS.MainText} !important;
+        color: ${theme.colors.MainText} !important;
         overflow-y: auto;
       }
       .ql-editor.ql-blank::before { 
-        color: ${COLORS.MainText} !important;
+        color: ${theme.colors.MainText} !important;
       }
       .ql-toolbar button {
-        color: ${COLORS.MainText} !important;
+        color: ${theme.colors.MainText} !important;
       }
       .ql-toolbar button svg { 
-        stroke: ${COLORS.MainText} !important;
-        fill: ${COLORS.MainText} !important;
+        stroke: ${theme.colors.MainText} !important;
+        fill: ${theme.colors.MainText} !important;
       }
       .ql-stroke { 
-        stroke: ${COLORS.MainText} !important;
+        stroke: ${theme.colors.MainText} !important;
       }
       .ql-fill { 
-        fill: ${COLORS.MainText} !important;
+        fill: ${theme.colors.MainText} !important;
       }
       .ql-toolbar button:hover svg,
       .ql-toolbar button.ql-active svg {
-        stroke: ${COLORS.Secondary} !important;
-        fill: ${COLORS.Secondary} !important;
+        stroke: ${theme.colors.Secondary} !important;
+        fill: ${theme.colors.Secondary} !important;
       }
       .ql-toolbar button:hover .ql-stroke,
       .ql-toolbar button.ql-active .ql-stroke { 
-        stroke: ${COLORS.Secondary} !important;
+        stroke: ${theme.colors.Secondary} !important;
       }
       .ql-toolbar button:hover .ql-fill,
       .ql-toolbar button.ql-active .ql-fill { 
-        fill: ${COLORS.Secondary} !important;
+        fill: ${theme.colors.Secondary} !important;
       }
       .ql-toolbar .ql-picker-label,
       .ql-toolbar .ql-picker-item { 
-        color: ${COLORS.MainText} !important;
+        color: ${theme.colors.MainText} !important;
       }
       .ql-toolbar .ql-picker-label:hover,
       .ql-toolbar .ql-picker-item:hover,
       .ql-toolbar .ql-picker-label.ql-active,
       .ql-toolbar .ql-picker-item.ql-selected { 
-        color: ${COLORS.Secondary} !important;
+        color: ${theme.colors.Secondary} !important;
       }
       .ql-picker-options { 
-        background-color: ${COLORS.AppBackground} !important;
+        background-color: ${theme.colors.AppBackground} !important;
       }
       .ql-tooltip {
         background-color: ${backgroundColor} !important;
-        border: 1px solid ${COLORS.TextInput} !important;
-        color: ${COLORS.MainText} !important;
+        border: 1px solid ${theme.colors.TextInput} !important;
+        color: ${theme.colors.MainText} !important;
         border-radius: 5px !important;
         transform: translate(10%, 10%) !important;
         z-index: 1000;
       }
       .ql-tooltip input {
-        background-color: ${COLORS.SecondaryBackground} !important;
-        color: ${COLORS.MainText} !important;
-        border: 1px solid ${COLORS.TextInput} !important;
+        background-color: ${theme.colors.SecondaryBackground} !important;
+        color: ${theme.colors.MainText} !important;
+        border: 1px solid ${theme.colors.TextInput} !important;
         border-radius: 3px !important;
         padding: 5px;
       }
       .ql-tooltip .ql-action { 
-        color: ${COLORS.Secondary} !important;
+        color: ${theme.colors.Secondary} !important;
       }
       .spoiler {
-        background-color: ${COLORS.InactiveText} !important;
-        color: ${COLORS.White} !important;
+        background-color: ${theme.colors.InactiveText} !important;
+        color: ${theme.colors.ActiveText} !important;
         border-radius: 3px;
         padding: 2px 6px;
       }
       .ql-editor table,
       .ql-editor table th,
       .ql-editor table td { 
-        border: 1px solid ${COLORS.White} !important;
+        border: 1px solid ${theme.colors.ActiveText} !important;
       }
       .custom-bullet {
         display: inline-block;
         width: 1em;
         margin-right: 0.2em;
-        color: ${COLORS.Secondary};
+        color: ${theme.colors.Secondary};
       }
       /* Ensure the line in our spoiler icon inherits the correct color */
       .ql-toolbar button svg.ql-spoiler-icon line {
@@ -200,12 +204,12 @@ export function getRichTextEditorHtml(
       /* Override spoiler icon line color on hover/active */
       .ql-toolbar button:hover svg.ql-spoiler-icon line,
       .ql-toolbar button.ql-active svg.ql-spoiler-icon line {
-        stroke: ${COLORS.Secondary} !important;
+        stroke: ${theme.colors.Secondary} !important;
       }
       /* Force the whole spoiler icon to adopt the secondary color on hover/active */
       .ql-toolbar button:hover svg.ql-spoiler-icon,
       .ql-toolbar button.ql-active svg.ql-spoiler-icon {
-        color: ${COLORS.Secondary} !important;
+        color: ${theme.colors.Secondary} !important;
       }
     </style>
   </head>

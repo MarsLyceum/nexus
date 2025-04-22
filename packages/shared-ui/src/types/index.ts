@@ -2,6 +2,7 @@ export * from './Attachment';
 export * from './DirectMessages';
 export * from './Event';
 export * from './FeedPost';
+export * from './Friend';
 export * from './Group';
 export * from './Message';
 export * from './PreviewData';

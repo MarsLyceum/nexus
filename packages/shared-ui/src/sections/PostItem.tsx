@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
     View,
     Text,
@@ -13,7 +13,7 @@ import Toast from 'react-native-toast-message';
 
 import { VoteActions } from './VoteActions';
 import { BackArrow } from '../buttons';
-import { COLORS } from '../constants';
+import { useTheme, Theme } from '../theme';
 import { ImageDetailsModal } from './ImageDetailsModal';
 import { AttachmentImageGallery } from './AttachmentImageGallery';
 import {
@@ -25,94 +25,96 @@ import {
 import { stripHtml, extractUrls } from '../utils';
 import { Share as ShareIcon } from '../icons';
 
-const styles = StyleSheet.create({
-    postContainer: {
-        backgroundColor: COLORS.PrimaryBackground,
-        borderRadius: 8,
-        padding: 15,
-        marginVertical: 10,
-    },
-    postRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 10,
-    },
-    backArrow: {
-        marginRight: 10,
-    },
-    userPic: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        marginRight: 10,
-    },
-    groupPic: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        marginRight: 10,
-    },
-    headerTextContainer: {
-        flexDirection: 'column',
-    },
-    groupText: {
-        color: COLORS.White,
-        fontSize: 14,
-        fontWeight: 'bold',
-    },
-    subText: {
-        color: COLORS.InactiveText,
-        fontSize: 12,
-    },
-    postTitle: {
-        color: COLORS.White,
-        fontSize: 16,
-        fontWeight: 'bold',
-        marginBottom: 10,
-    },
-    flairContainer: {
-        alignSelf: 'flex-start',
-        paddingHorizontal: 10,
-        paddingVertical: 10,
-        borderRadius: 12,
-        backgroundColor: COLORS.Primary,
-        marginBottom: 10,
-    },
-    flairText: {
-        color: COLORS.White,
-        fontSize: 12,
-    },
-    contentText: {
-        color: COLORS.White,
-        fontSize: 14,
-        marginBottom: 10,
-    },
-    actionsContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'flex-start',
-        marginTop: 10,
-    },
-    // Container for grouping the share button and its count.
-    buttonGroup: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginLeft: 10,
-    },
-    // Share button style matching the vote actions.
-    shareButton: {
-        width: 45,
-        height: 45,
-        borderRadius: 23,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    shareCountText: {
-        color: COLORS.White,
-        fontSize: 12,
-        marginLeft: 4,
-    },
-});
+function createStyles(theme: Theme) {
+    return StyleSheet.create({
+        postContainer: {
+            backgroundColor: theme.colors.PrimaryBackground,
+            borderRadius: 8,
+            padding: 15,
+            marginVertical: 10,
+        },
+        postRow: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginBottom: 10,
+        },
+        backArrow: {
+            marginRight: 10,
+        },
+        userPic: {
+            width: 36,
+            height: 36,
+            borderRadius: 18,
+            marginRight: 10,
+        },
+        groupPic: {
+            width: 36,
+            height: 36,
+            borderRadius: 18,
+            marginRight: 10,
+        },
+        headerTextContainer: {
+            flexDirection: 'column',
+        },
+        groupText: {
+            color: theme.colors.ActiveText,
+            fontSize: 14,
+            fontWeight: 'bold',
+        },
+        subText: {
+            color: theme.colors.InactiveText,
+            fontSize: 12,
+        },
+        postTitle: {
+            color: theme.colors.ActiveText,
+            fontSize: 16,
+            fontWeight: 'bold',
+            marginBottom: 10,
+        },
+        flairContainer: {
+            alignSelf: 'flex-start',
+            paddingHorizontal: 10,
+            paddingVertical: 10,
+            borderRadius: 12,
+            backgroundColor: theme.colors.Primary,
+            marginBottom: 10,
+        },
+        flairText: {
+            color: theme.colors.ActiveText,
+            fontSize: 12,
+        },
+        contentText: {
+            color: theme.colors.ActiveText,
+            fontSize: 14,
+            marginBottom: 10,
+        },
+        actionsContainer: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'flex-start',
+            marginTop: 10,
+        },
+        // Container for grouping the share button and its count.
+        buttonGroup: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginLeft: 10,
+        },
+        // Share button style matching the vote actions.
+        shareButton: {
+            width: 45,
+            height: 45,
+            borderRadius: 23,
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        shareCountText: {
+            color: theme.colors.ActiveText,
+            fontSize: 12,
+            marginLeft: 4,
+        },
+    });
+}
 
 export type PostItemProps = {
     id: string;
@@ -179,6 +181,8 @@ export const PostItem: React.FC<PostItemProps> = ({
 
     const onUpvote = () => setVoteCount((prev) => prev + 1);
     const onDownvote = () => setVoteCount((prev) => prev - 1);
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
 
     // Compute inner width based on measured container width with a fallback
     const innerWidth =

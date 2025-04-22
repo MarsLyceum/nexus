@@ -1,37 +1,45 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { COLORS } from '../constants';
 
-export const SkeletonComment: React.FC = () => (
-    <View style={skeletonCommentStyles.container}>
-        <View style={skeletonCommentStyles.avatar} />
-        <View style={skeletonCommentStyles.content}>
-            <View style={skeletonCommentStyles.line} />
-            <View style={[skeletonCommentStyles.line, { width: '80%' }]} />
+import { useTheme, Theme } from '../theme';
+
+export const SkeletonComment: React.FC = () => {
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
+
+    return (
+        <View style={styles.container}>
+            <View style={styles.avatar} />
+            <View style={styles.content}>
+                <View style={styles.line} />
+                <View style={[styles.line, { width: '80%' }]} />
+            </View>
         </View>
-    </View>
-);
+    );
+};
 
-const skeletonCommentStyles = StyleSheet.create({
-    container: {
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        marginBottom: 10,
-    },
-    avatar: {
-        width: 30,
-        height: 30,
-        borderRadius: 15,
-        backgroundColor: COLORS.InactiveText,
-    },
-    content: {
-        flex: 1,
-        marginLeft: 10,
-    },
-    line: {
-        height: 10,
-        backgroundColor: COLORS.InactiveText,
-        borderRadius: 5,
-        marginBottom: 5,
-    },
-});
+function createStyles(theme: Theme) {
+    return StyleSheet.create({
+        container: {
+            flexDirection: 'row',
+            alignItems: 'flex-start',
+            marginBottom: 10,
+        },
+        avatar: {
+            width: 30,
+            height: 30,
+            borderRadius: 15,
+            backgroundColor: theme.colors.InactiveText,
+        },
+        content: {
+            flex: 1,
+            marginLeft: 10,
+        },
+        line: {
+            height: 10,
+            backgroundColor: theme.colors.InactiveText,
+            borderRadius: 5,
+            marginBottom: 5,
+        },
+    });
+}

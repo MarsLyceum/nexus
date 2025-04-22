@@ -1,6 +1,6 @@
 // eslint-disable-next-line eslint-comments/disable-enable-pair
 /* eslint-disable max-lines */
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
     View,
     Text,
@@ -17,7 +17,7 @@ import * as Calendar from 'expo-calendar';
 import Svg, { Path } from 'react-native-svg';
 
 import { NexusImage } from '../small-components';
-import { COLORS } from '../constants';
+import { useTheme, Theme } from '../theme';
 import { BackArrow } from '../buttons';
 
 // Custom SVG Icons (using paths from FontAwesome)
@@ -48,151 +48,153 @@ export const CheckCircleIcon: React.FC<{ size: number; color: string }> = ({
     </Svg>
 );
 
-const styles = StyleSheet.create({
-    card: {
-        backgroundColor: COLORS.PrimaryBackground,
-        borderRadius: 8,
-        padding: 15,
-        marginVertical: 10,
-        alignSelf: 'center',
-        width: '100%',
-    },
-    titleRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 10,
-    },
-    backArrow: {
-        marginRight: 10,
-    },
-    topRow: {
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-    },
-    textContainer: {
-        flex: 1,
-        marginRight: 10,
-    },
-    title: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: 'white',
-    },
-    dateTime: {
-        fontSize: 14,
-        color: COLORS.AccentText,
-        marginVertical: 2,
-    },
-    groupName: {
-        fontSize: 14,
-        color: 'white',
-    },
-    attendees: {
-        fontSize: 12,
-        color: 'gray',
-        marginBottom: 8,
-    },
-    addressRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginVertical: 8,
-    },
-    addressText: {
-        fontSize: 14,
-        color: COLORS.AccentText,
-        marginLeft: 5,
-    },
-    description: {
-        fontSize: 14,
-        color: '#ddd',
-        marginVertical: 10,
-        lineHeight: 20,
-    },
-    rsvpButton: {
-        backgroundColor: COLORS.Primary,
-        paddingVertical: 10,
-        paddingHorizontal: 20,
-        borderRadius: 5,
-        alignSelf: 'flex-start',
-        marginTop: 10,
-    },
-    rsvpButtonContent: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    rsvpButtonText: {
-        color: COLORS.White,
-        fontSize: 12,
-        fontWeight: 'bold',
-    },
-    eventImage: {
-        width: 140,
-        height: 105,
-        borderRadius: 5,
-        alignSelf: 'flex-start',
-    },
-    modalContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    },
-    modalContent: {
-        width: '80%',
-        backgroundColor: COLORS.PrimaryBackground,
-        borderRadius: 8,
-        padding: 20,
-    },
-    modalTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: 'white',
-        marginBottom: 10,
-    },
-    modalItemContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginVertical: 5,
-    },
-    profilePic: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        marginRight: 10,
-    },
-    modalItemText: {
-        fontSize: 16,
-        color: 'white',
-    },
-    closeButton: {
-        marginTop: 20,
-        alignSelf: 'flex-end',
-    },
-    profilesContainer: {
-        marginVertical: 8,
-    },
-    profileRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginVertical: 4,
-    },
-    profileLabel: {
-        fontSize: 14,
-        color: 'white',
-        marginRight: 8,
-    },
-    stackedProfilesContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    profileImage: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        borderWidth: 2,
-        borderColor: COLORS.PrimaryBackground,
-    },
-});
+function createStyles(theme: Theme) {
+    return StyleSheet.create({
+        card: {
+            backgroundColor: theme.colors.PrimaryBackground,
+            borderRadius: 8,
+            padding: 15,
+            marginVertical: 10,
+            alignSelf: 'center',
+            width: '100%',
+        },
+        titleRow: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginBottom: 10,
+        },
+        backArrow: {
+            marginRight: 10,
+        },
+        topRow: {
+            flexDirection: 'row',
+            alignItems: 'flex-start',
+        },
+        textContainer: {
+            flex: 1,
+            marginRight: 10,
+        },
+        title: {
+            fontSize: 16,
+            fontWeight: 'bold',
+            color: theme.colors.ActiveText,
+        },
+        dateTime: {
+            fontSize: 14,
+            color: theme.colors.AccentText,
+            marginVertical: 2,
+        },
+        groupName: {
+            fontSize: 14,
+            color: theme.colors.ActiveText,
+        },
+        attendees: {
+            fontSize: 12,
+            color: theme.colors.InactiveText,
+            marginBottom: 8,
+        },
+        addressRow: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginVertical: 8,
+        },
+        addressText: {
+            fontSize: 14,
+            color: theme.colors.AccentText,
+            marginLeft: 5,
+        },
+        description: {
+            fontSize: 14,
+            color: theme.colors.ActiveText,
+            marginVertical: 10,
+            lineHeight: 20,
+        },
+        rsvpButton: {
+            backgroundColor: theme.colors.Primary,
+            paddingVertical: 10,
+            paddingHorizontal: 20,
+            borderRadius: 5,
+            alignSelf: 'flex-start',
+            marginTop: 10,
+        },
+        rsvpButtonContent: {
+            flexDirection: 'row',
+            alignItems: 'center',
+        },
+        rsvpButtonText: {
+            color: theme.colors.ActiveText,
+            fontSize: 12,
+            fontWeight: 'bold',
+        },
+        eventImage: {
+            width: 140,
+            height: 105,
+            borderRadius: 5,
+            alignSelf: 'flex-start',
+        },
+        modalContainer: {
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        },
+        modalContent: {
+            width: '80%',
+            backgroundColor: theme.colors.PrimaryBackground,
+            borderRadius: 8,
+            padding: 20,
+        },
+        modalTitle: {
+            fontSize: 18,
+            fontWeight: 'bold',
+            color: theme.colors.ActiveText,
+            marginBottom: 10,
+        },
+        modalItemContainer: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginVertical: 5,
+        },
+        profilePic: {
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            marginRight: 10,
+        },
+        modalItemText: {
+            fontSize: 16,
+            color: theme.colors.ActiveText,
+        },
+        closeButton: {
+            marginTop: 20,
+            alignSelf: 'flex-end',
+        },
+        profilesContainer: {
+            marginVertical: 8,
+        },
+        profileRow: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginVertical: 4,
+        },
+        profileLabel: {
+            fontSize: 14,
+            color: theme.colors.ActiveText,
+            marginRight: 8,
+        },
+        stackedProfilesContainer: {
+            flexDirection: 'row',
+            alignItems: 'center',
+        },
+        profileImage: {
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            borderWidth: 2,
+            borderColor: theme.colors.PrimaryBackground,
+        },
+    });
+}
 
 type Person = {
     id: number;
@@ -230,6 +232,8 @@ export const EventCard: React.FC<EventCardProps> = ({
     const [joined, setJoined] = useState(false);
     const { width: screenWidth } = useWindowDimensions();
     const isSmallScreen = screenWidth < 768;
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
 
     // Event image dimensions (140×105 on larger screens; full width & 200 height on small screens)
     const eventImageWidth = isSmallScreen ? screenWidth : 140;
@@ -442,7 +446,7 @@ export const EventCard: React.FC<EventCardProps> = ({
                         <View style={styles.addressRow}>
                             <MapMarkerIcon
                                 size={16}
-                                color={COLORS.AccentText}
+                                color={theme.colors.AccentText}
                             />
                             <Text style={styles.addressText}>{location}</Text>
                         </View>
@@ -484,12 +488,12 @@ export const EventCard: React.FC<EventCardProps> = ({
                             {joined ? (
                                 <TimesCircleIcon
                                     size={16}
-                                    color={COLORS.White}
+                                    color={theme.colors.ActiveText}
                                 />
                             ) : (
                                 <CheckCircleIcon
                                     size={16}
-                                    color={COLORS.White}
+                                    color={theme.colors.ActiveText}
                                 />
                             )}
                             <Text
@@ -579,7 +583,9 @@ export const EventCard: React.FC<EventCardProps> = ({
                                 setModalListType(undefined);
                             }}
                         >
-                            <Text style={{ color: COLORS.Primary }}>Close</Text>
+                            <Text style={{ color: theme.colors.Primary }}>
+                                Close
+                            </Text>
                         </TouchableOpacity>
                     </View>
                 </View>

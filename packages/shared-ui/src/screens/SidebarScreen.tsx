@@ -1,4 +1,10 @@
-import React, { useRef, useState, useEffect, useLayoutEffect } from 'react';
+import React, {
+    useRef,
+    useState,
+    useEffect,
+    useLayoutEffect,
+    useMemo,
+} from 'react';
 import { View, Animated, StyleSheet, ScrollView } from 'react-native';
 import { DrawerContentComponentProps } from '@react-navigation/drawer';
 import { useApolloClient } from '@apollo/client';
@@ -14,10 +20,18 @@ import {
     UserGroupsType,
 } from '../redux';
 import { GroupButton, SidebarButton } from '../buttons';
-import { Friends, Chat, Events, Search, Add } from '../icons';
+import {
+    Friends,
+    Chat,
+    Events,
+    Search,
+    Add,
+    Theme as ThemeIcon,
+} from '../icons';
 import { FETCH_USER_GROUPS_QUERY } from '../queries';
-import { COLORS, SIDEBAR_WIDTH } from '../constants';
+import { SIDEBAR_WIDTH } from '../constants';
 import { detectEnvironment, Environment, getItem, setItem } from '../utils';
+import { useTheme, Theme } from '../theme';
 
 // Enhanced helper function to merge groups from cache and fetched data.
 // It uses lodash.isequal for deep comparison and preserves object identity when possible.
@@ -54,57 +68,52 @@ const mergeGroups = (
 const BUTTON_MARGIN_TOP = 32;
 const CONTENT_PADDING_LEFT = 10;
 
-const styles = StyleSheet.create({
-    sidebarContainer: {
-        width: SIDEBAR_WIDTH,
-        height: '100%',
-        backgroundColor: COLORS.AppBackground,
-        position: 'absolute',
-        left: 0,
-        top: 0,
-        bottom: 0,
-        overflow: 'hidden',
-    },
-    sidebarButtonsContainer: {
-        position: 'relative',
-    },
-    buttonContainer: {
-        marginBottom: 16,
-    },
-    highlight: {
-        position: 'absolute',
-        left: -CONTENT_PADDING_LEFT,
-        width: 4,
-        backgroundColor: COLORS.OffWhite,
-        borderTopRightRadius: 20,
-        borderBottomRightRadius: 20,
-        zIndex: 999,
-    },
-    skeletonButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    skeletonAvatar: {
-        width: 45,
-        height: 45,
-        borderRadius: 20,
-        backgroundColor: COLORS.InactiveText,
-        marginRight: 10,
-    },
-    skeletonText: {
-        width: 100,
-        height: 16,
-        borderRadius: 4,
-        backgroundColor: COLORS.InactiveText,
-    },
-});
-
-const SkeletonGroupButton = () => (
-    <View style={styles.skeletonButton}>
-        <View style={styles.skeletonAvatar} />
-        <View style={styles.skeletonText} />
-    </View>
-);
+function createStyles(theme: Theme) {
+    return StyleSheet.create({
+        sidebarContainer: {
+            width: SIDEBAR_WIDTH,
+            height: '100%',
+            backgroundColor: theme.colors.AppBackground,
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            bottom: 0,
+            overflow: 'hidden',
+        },
+        sidebarButtonsContainer: {
+            position: 'relative',
+        },
+        buttonContainer: {
+            marginBottom: 16,
+        },
+        highlight: {
+            position: 'absolute',
+            left: -CONTENT_PADDING_LEFT,
+            width: 4,
+            backgroundColor: theme.colors.ActiveText,
+            borderTopRightRadius: 20,
+            borderBottomRightRadius: 20,
+            zIndex: 999,
+        },
+        skeletonButton: {
+            flexDirection: 'row',
+            alignItems: 'center',
+        },
+        skeletonAvatar: {
+            width: 45,
+            height: 45,
+            borderRadius: 20,
+            backgroundColor: theme.colors.InactiveText,
+            marginRight: 10,
+        },
+        skeletonText: {
+            width: 100,
+            height: 16,
+            borderRadius: 4,
+            backgroundColor: theme.colors.InactiveText,
+        },
+    });
+}
 
 // Extend the props so that currentRoute is optional.
 type SidebarScreenProps = DrawerContentComponentProps & {
@@ -123,6 +132,8 @@ export const SidebarScreen = ({
         currentRoute ??
         (state?.routeNames ? state.routeNames[state.index] : 'friends');
     const [selectedButton, setSelectedButton] = useState<string>(initialRoute);
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
 
     // Update the selected button when currentRoute changes (if provided)
     useEffect(() => {
@@ -212,6 +223,7 @@ export const SidebarScreen = ({
         events: useRef<View>(null),
         search: useRef<View>(null),
         creategroup: useRef<View>(null),
+        theme: useRef<View>(null),
     };
 
     // Create a dictionary for dynamic group button refs.
@@ -279,6 +291,13 @@ export const SidebarScreen = ({
             navigation.navigate(normalizedRoute);
         }
     };
+
+    const SkeletonGroupButton = () => (
+        <View style={styles.skeletonButton}>
+            <View style={styles.skeletonAvatar} />
+            <View style={styles.skeletonText} />
+        </View>
+    );
 
     return (
         <ScrollView
@@ -376,6 +395,17 @@ export const SidebarScreen = ({
                         onPress={() => handlePress('CreateGroup')}
                         icon={<Add />}
                         text="Create Group"
+                    />
+                </View>
+
+                <View
+                    ref={staticButtonRefs.theme}
+                    style={styles.buttonContainer}
+                >
+                    <SidebarButton
+                        onPress={() => handlePress('theme')}
+                        icon={<ThemeIcon />}
+                        text="Change Theme"
                     />
                 </View>
             </View>

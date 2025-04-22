@@ -1,11 +1,13 @@
 // CommentEditor.tsx
 import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
+
 import { useAppSelector, RootState, UserType } from '../redux';
-import { COLORS } from '../constants';
-import { ContentEditor } from './ContentEditor';
+import { useTheme } from '../theme';
 import { Attachment } from '../types';
 import { useCreateComment } from '../hooks';
+
+import { ContentEditor } from './ContentEditor';
 
 export type CommentEditorProps = {
     postId: string;
@@ -21,9 +23,14 @@ export const CommentEditor: React.FC<CommentEditorProps> = ({
     parentCommentId,
     onCancel,
     onCommentCreated,
-    editorBackgroundColor = COLORS.PrimaryBackground,
+    editorBackgroundColor: editorBackgroundColorProp,
     expandedByDefault = false,
 }) => {
+    const { theme } = useTheme();
+
+    const editorBackgroundColor =
+        editorBackgroundColorProp ?? theme.colors.PrimaryBackground;
+
     const user: UserType = useAppSelector(
         (state: RootState) => state.user.user
     );

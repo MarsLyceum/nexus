@@ -23,7 +23,6 @@ import {
     FETCH_POST_COMMENTS_QUERY,
 } from '../queries';
 import { PostItem, CommentsManager } from '../sections';
-import { COLORS } from '../constants';
 import { CreateContentButton } from '../buttons';
 import { getRelativeTime, isComputer } from '../utils';
 import type { Post, PostData, User } from '../types';
@@ -33,6 +32,7 @@ import {
     SkeletonComment,
     CommentEditor,
 } from '../small-components';
+import { useTheme } from '../theme';
 
 type PostScreenProps = {
     id?: string;
@@ -60,6 +60,7 @@ export const PostScreen: React.FC<PostScreenProps> = (props) => {
     const postObj: Post | undefined = props.post || params.post;
     const userProp = props.user || params.user;
     const parentCommentId = props.parentCommentId || params.parentCommentId;
+    const { theme } = useTheme();
 
     const dispatch = useAppDispatch();
     const client = useApolloClient();
@@ -155,61 +156,63 @@ export const PostScreen: React.FC<PostScreenProps> = (props) => {
     const isWeb = Platform.OS === 'web';
 
     // Create dynamic styles based on device type.
-    const computedStyles = StyleSheet.create({
-        // @ts-expect-error web only
-        safeContainer: {
-            flex: 1,
-            backgroundColor: COLORS.SecondaryBackground,
-            paddingTop: 15,
-            ...(isWeb && { minHeight: '100vh', display: 'flex' }),
-        },
-        container: { flex: 1 },
-        mainContainer: {
-            flex: 1,
-            position: 'relative',
-            ...(isDesktop ? {} : { paddingBottom: BOTTOM_INPUT_HEIGHT }),
-        },
-        scrollSection: isWeb
-            ? isDesktop
-                ? {
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      overflowY: 'auto',
-                  }
-                : {
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      bottom: BOTTOM_INPUT_HEIGHT,
-                      overflowY: 'auto',
-                  }
-            : { flex: 1 },
-        scrollView: {
-            paddingHorizontal: 15,
-            paddingBottom: 20,
-        },
-        createContentButtonContainer: isDesktop
-            ? {}
-            : {
-                  position: 'absolute',
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  height: BOTTOM_INPUT_HEIGHT,
-              },
-    });
+    const computedStyles = useMemo(
+        () =>
+            StyleSheet.create({
+                safeContainer: {
+                    flex: 1,
+                    backgroundColor: theme.colors.SecondaryBackground,
+                    paddingTop: 15,
+                    ...(isWeb && { minHeight: '100vh', display: 'flex' }),
+                },
+                container: { flex: 1 },
+                mainContainer: {
+                    flex: 1,
+                    position: 'relative',
+                    ...(isDesktop
+                        ? {}
+                        : { paddingBottom: BOTTOM_INPUT_HEIGHT }),
+                },
+                scrollSection: isWeb
+                    ? isDesktop
+                        ? {
+                              position: 'absolute',
+                              top: 0,
+                              left: 0,
+                              right: 0,
+                              bottom: 0,
+                              overflowY: 'auto',
+                          }
+                        : {
+                              position: 'absolute',
+                              top: 0,
+                              left: 0,
+                              right: 0,
+                              bottom: BOTTOM_INPUT_HEIGHT,
+                              overflowY: 'auto',
+                          }
+                    : { flex: 1 },
+                scrollView: {
+                    paddingHorizontal: 15,
+                    paddingBottom: 20,
+                },
+                createContentButtonContainer: isDesktop
+                    ? {}
+                    : {
+                          position: 'absolute',
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          height: BOTTOM_INPUT_HEIGHT,
+                      },
+            }),
+        [theme, isDesktop, isWeb]
+    );
 
     if (loading) {
         return (
-            // @ts-expect-error web only
             <SafeAreaView style={computedStyles.safeContainer}>
-                {/* @ts-expect-error web only */}
                 <View style={computedStyles.mainContainer}>
-                    {/* @ts-expect-error web only */}
                     <ScrollView
                         style={computedStyles.scrollSection}
                         contentContainerStyle={computedStyles.scrollView}
@@ -227,7 +230,6 @@ export const PostScreen: React.FC<PostScreenProps> = (props) => {
 
     if (error) {
         return (
-            // @ts-expect-error web only
             <SafeAreaView style={computedStyles.safeContainer}>
                 <View
                     style={{
@@ -251,13 +253,10 @@ export const PostScreen: React.FC<PostScreenProps> = (props) => {
           };
 
     return (
-        // @ts-expect-error web only
         <SafeAreaView style={computedStyles.safeContainer}>
             {/* @ts-expect-error web only */}
             <ContainerComponent {...containerProps}>
-                {/* @ts-expect-error web only */}
                 <View style={computedStyles.mainContainer}>
-                    {/* @ts-expect-error web only */}
                     <ScrollView
                         style={computedStyles.scrollSection}
                         contentContainerStyle={computedStyles.scrollView}
@@ -305,7 +304,6 @@ export const PostScreen: React.FC<PostScreenProps> = (props) => {
                     {!isDesktop && (
                         // Show CreateContentButton on mobile; reset comment context before navigating.
                         <View
-                            // @ts-expect-error web only
                             style={computedStyles.createContentButtonContainer}
                         >
                             <CreateContentButton

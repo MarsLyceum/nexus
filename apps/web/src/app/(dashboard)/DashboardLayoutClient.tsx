@@ -3,13 +3,14 @@
 'use client';
 
 import '../../../polyfills/expo-polyfills';
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { AnimatePresence, motion } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 import { useNexusRouter } from 'shared-ui/hooks';
 import { SidebarScreen } from 'shared-ui/screens';
-import { COLORS, SIDEBAR_WIDTH } from 'shared-ui/constants';
+import { SIDEBAR_WIDTH } from 'shared-ui/constants';
+import { useTheme, Theme } from 'shared-ui/theme';
 import {
     UserGroupsType,
     retrieveUserGroups,
@@ -29,6 +30,9 @@ export function DashboardLayoutClient({
     const pathname = usePathname();
     const router = useNexusRouter();
     const dispatch = useAppDispatch();
+    const { theme } = useTheme();
+
+    const styles = useMemo(() => createDashboardStyles(theme), [theme]);
 
     useEffect(() => {
         dispatch(retrieveUserGroups(groups));
@@ -51,10 +55,8 @@ export function DashboardLayoutClient({
     };
 
     return (
-        // @ts-expect-error web only types
         <View style={styles.container}>
             {/* Sidebar area stays persistent */}
-            {/* @ts-expect-error web only types */}
             <View style={styles.sidebar}>
                 {/* Pass the current route and fetched groups to the SidebarScreen */}
                 <SidebarScreen
@@ -66,16 +68,21 @@ export function DashboardLayoutClient({
             </View>
 
             {/* Main content area: dynamic routes animate on change */}
-            {/* @ts-expect-error web only types */}
             <View style={styles.mainContent}>
-                <AnimatePresence>
+                <AnimatePresence initial={false} mode="wait">
                     <motion.div
                         key={pathname}
                         initial={{ opacity: 0, x: 50 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -50 }}
                         transition={{ duration: 0.3 }}
-                        style={{ width: '100%', height: '100%' }}
+                        style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                        }}
                     >
                         {children}
                     </motion.div>
@@ -85,24 +92,30 @@ export function DashboardLayoutClient({
     );
 }
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        // @ts-expect-error web only types
-        minHeight: '100vh', // Fills the viewport height
-        flexDirection: 'row',
-        backgroundColor: COLORS.AppBackground,
-    },
-    sidebar: {
-        width: SIDEBAR_WIDTH,
-        backgroundColor: COLORS.AppBackground,
-        paddingTop: 20,
-        paddingHorizontal: 10,
-    },
-    mainContent: {
-        flex: 1,
-        backgroundColor: COLORS.PrimaryBackground,
-        // @ts-expect-error web only types
-        minHeight: '100vh', // Fills the viewport height
-    },
-});
+export function createDashboardStyles(theme: Theme) {
+    return StyleSheet.create({
+        container: {
+            flex: 1,
+            height: '100vh',
+            minHeight: '100vh', // Fills the viewport height
+            flexDirection: 'row',
+            backgroundColor: theme.colors.AppBackground,
+            overflow: 'hidden',
+        },
+        sidebar: {
+            width: SIDEBAR_WIDTH,
+            backgroundColor: theme.colors.AppBackground,
+            paddingTop: 20,
+            paddingHorizontal: 10,
+            height: '100%',
+            overflowY: 'auto',
+        },
+        mainContent: {
+            flex: 1,
+            backgroundColor: theme.colors.PrimaryBackground,
+            position: 'relative',
+            height: '100%',
+            overflowY: 'auto',
+        },
+    });
+}

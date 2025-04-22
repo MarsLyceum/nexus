@@ -4,6 +4,7 @@ import React, {
     useRef,
     forwardRef,
     useImperativeHandle,
+    useMemo,
 } from 'react';
 import {
     Text,
@@ -14,7 +15,7 @@ import {
 } from 'react-native';
 // @ts-expect-error no types
 import emoji from 'emoji-dictionary';
-import { COLORS } from '../constants';
+import { useTheme, Theme } from '../theme';
 import { MiniModal } from './MiniModal';
 
 export type EmojiSuggestion = { name: string; emoji: string };
@@ -41,6 +42,8 @@ const EmojiPickerComponent = (
     );
     const [activeEmojiIndex, setActiveEmojiIndex] = useState(0);
     const scrollRef = useRef<ScrollView>(null);
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
 
     // Update suggestions based on colon query.
     useEffect(() => {
@@ -179,25 +182,27 @@ export const EmojiPicker = forwardRef<EmojiPickerHandle, EmojiPickerProps>(
     EmojiPickerComponent
 );
 
-const styles = StyleSheet.create({
-    container: {
-        // You can style this container as needed.
-        maxHeight: 250,
-        padding: 10,
-    },
-    emojiSuggestionButton: {
-        height: ITEM_HEIGHT,
-        justifyContent: 'center',
-        paddingHorizontal: 10,
-        marginBottom: 5,
-        backgroundColor: COLORS.PrimaryBackground,
-        borderRadius: 5,
-    },
-    activeEmojiSuggestionButton: {
-        backgroundColor: COLORS.SecondaryBackground,
-    },
-    emojiSuggestionText: {
-        color: COLORS.White,
-        fontSize: 14,
-    },
-});
+function createStyles(theme: Theme) {
+    return StyleSheet.create({
+        container: {
+            // You can style this container as needed.
+            maxHeight: 250,
+            padding: 10,
+        },
+        emojiSuggestionButton: {
+            height: ITEM_HEIGHT,
+            justifyContent: 'center',
+            paddingHorizontal: 10,
+            marginBottom: 5,
+            backgroundColor: theme.colors.PrimaryBackground,
+            borderRadius: 5,
+        },
+        activeEmojiSuggestionButton: {
+            backgroundColor: theme.colors.SecondaryBackground,
+        },
+        emojiSuggestionText: {
+            color: theme.colors.ActiveText,
+            fontSize: 14,
+        },
+    });
+}

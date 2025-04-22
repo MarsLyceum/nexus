@@ -1,28 +1,39 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
-import { Portal } from 'react-native-paper';
-import { COLORS } from '../constants';
+// eslint-disable-next-line eslint-comments/disable-enable-pair
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useEffect, useRef, useState, useMemo } from 'react';
+import { View, StyleSheet, Dimensions, Platform } from 'react-native';
+
+import { Portal } from '../providers';
+import { useTheme, Theme } from '../theme';
+
+/* ------------------------------------------------------------------ */
+/*                               Types                                */
+/* ------------------------------------------------------------------ */
+type Primitive = 'above' | 'below' | 'left' | 'right';
+type LayoutString =
+    | Primitive
+    | `${Primitive}-${Primitive}`
+    | `${Primitive} ${Primitive}`; // "below-left" or "below left"
 
 export type MiniModalProps = {
     visible: boolean;
     onClose: () => void;
     containerStyle?: object;
-    // Anchor position holds the layout (x, y, width, height) of the target element.
     anchorPosition?: { x: number; y: number; width: number; height: number };
     children: React.ReactNode;
-    /** When true, clicks outside the modal will close it (default: true) */
     closeOnOutsideClick?: boolean;
     centered?: boolean;
-    /**
-     * If true, the modal’s right edge will be aligned with the anchor’s right edge
-     * and its top will match the anchor’s top (the new behavior for the message options modal).
-     * If false or not provided, the modal will use the old logic (used for GIF modal).
-     */
     useRightAnchorAlignment?: boolean;
-    onMouseEnter?: (() => void) | undefined;
-    onMouseLeave?: (() => void) | undefined;
+    /** NEW explicit position: e.g. "below-right", "left above" */
+    layout?: LayoutString;
+    gap?: number;
+    onMouseEnter?: () => void;
+    onMouseLeave?: () => void;
 };
 
+/* ------------------------------------------------------------------ */
+/*                             Component                              */
+/* ------------------------------------------------------------------ */
 export const MiniModal: React.FC<MiniModalProps> = ({
     visible,
     onClose,
@@ -30,295 +41,295 @@ export const MiniModal: React.FC<MiniModalProps> = ({
     anchorPosition,
     children,
     closeOnOutsideClick = true,
+    centered,
     useRightAnchorAlignment = false,
+    layout,
     onMouseEnter,
     onMouseLeave,
-    centered,
+    gap = 5,
 }) => {
     const modalRef = useRef<View>(null);
-    const [measuredHeight, setMeasuredHeight] = useState<number | undefined>();
-    const [measuredWidth, setMeasuredWidth] = useState<number | undefined>();
+    const [measuredHeight, setMeasuredHeight] = useState<number>();
+    const [measuredWidth, setMeasuredWidth] = useState<number>();
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
+
+    const [modalLocation, setModalLocation] = useState<
+        | {
+              x: number;
+              y: number;
+              width: number;
+              height: number;
+          }
+        | undefined
+    >();
 
     const flattenedContainerStyle = StyleSheet.flatten(containerStyle);
 
-    // Outside click detection
+    /* -------------------------- outside click ----------------------- */
     useEffect(() => {
         if (!visible || !closeOnOutsideClick) return;
-
-        const handleOutsideClick = (e: MouseEvent) => {
-            if (modalRef.current) {
-                const modalElement = modalRef.current as unknown as Element;
-                if (!modalElement.contains(e.target as Node)) {
+        if (Platform.OS === 'web') {
+            const handleOutsideClick = (e: MouseEvent) => {
+                if (
+                    modalRef.current &&
+                    !(modalRef.current as unknown as Element).contains(
+                        e.target as Node
+                    )
+                )
                     onClose();
-                }
-            }
-        };
-
-        document.addEventListener('mousedown', handleOutsideClick, {
-            passive: true,
-        });
-        // eslint-disable-next-line consistent-return
-        return () => {
-            document.removeEventListener('mousedown', handleOutsideClick);
-        };
+            };
+            document.addEventListener('mousedown', handleOutsideClick, {
+                passive: true,
+            });
+            // eslint-disable-next-line consistent-return
+            return () =>
+                document.removeEventListener('mousedown', handleOutsideClick);
+        }
     }, [visible, closeOnOutsideClick, onClose]);
 
     if (!visible) return undefined;
 
-    let computedContainerStyle;
+    /* ------------------------------------------------------------------
+          COMPUTE CONTAINER STYLE
+       ------------------------------------------------------------------ */
+    let computedContainerStyle: object;
 
     if (centered) {
-        // Skip anchor logic and simply center the modal.
-        // Use your measured dimensions or fallback widths/heights.
-        const desiredWidth =
-            (flattenedContainerStyle &&
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (flattenedContainerStyle as any).width) ||
-            420;
-        const desiredHeight =
-            (flattenedContainerStyle &&
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (flattenedContainerStyle as any).height) ||
-            200;
-        const modalWidth =
-            measuredWidth !== undefined ? measuredWidth : desiredWidth;
-        const modalHeight =
-            measuredHeight !== undefined ? measuredHeight : desiredHeight;
-
+        const wantW = (flattenedContainerStyle as any)?.width ?? 420;
+        const wantH = (flattenedContainerStyle as any)?.height ?? 200;
+        const w = measuredWidth ?? wantW;
+        const h = measuredHeight ?? wantH;
         computedContainerStyle = {
             ...flattenedContainerStyle,
             position: 'absolute',
             left: '50%',
             top: '50%',
-            // For a perfect center, shift by half the modal's width & height:
-            transform: [
-                { translateX: -modalWidth / 2 },
-                { translateY: -modalHeight / 2 },
-            ],
+            transform: [{ translateX: -w / 2 }, { translateY: -h / 2 }],
+        };
+    } else if (anchorPosition && layout) {
+        const tokens = layout
+            .toLowerCase()
+            .replace('-', ' ')
+            .split(' ')
+            .filter(Boolean) as Primitive[];
+
+        const wants = {
+            above: tokens.includes('above'),
+            below: tokens.includes('below'),
+            left: tokens.includes('left'),
+            right: tokens.includes('right'),
+        };
+
+        const { width: vw, height: vh } = Dimensions.get('window');
+        const wantW = (flattenedContainerStyle as any)?.width ?? 260;
+        const wantH = (flattenedContainerStyle as any)?.maxHeight ?? 250;
+        const w = measuredWidth ?? wantW;
+        const h = measuredHeight ?? wantH;
+
+        /* horizontal */
+        let left = anchorPosition.x + anchorPosition.width / 2 - w / 2;
+        if (wants.left) left = anchorPosition.x - w - gap;
+        else if (wants.right)
+            left = anchorPosition.x + anchorPosition.width + gap;
+
+        /* vertical */
+        let top = anchorPosition.y + anchorPosition.height / 2 - h / 2;
+        if (wants.above) top = anchorPosition.y - h - gap;
+        else if (wants.below)
+            top = anchorPosition.y + anchorPosition.height + gap;
+
+        /* clamp */
+        left = Math.min(Math.max(left, 0), vw - w);
+        top = Math.min(Math.max(top, 0), vh - h);
+
+        computedContainerStyle = {
+            ...flattenedContainerStyle,
+            position: 'absolute',
+            left,
+            top,
+        };
+    } else if (anchorPosition && useRightAnchorAlignment) {
+        const { width: screenWidth } = Dimensions.get('window');
+        const wantW = (flattenedContainerStyle as any)?.width ?? 260;
+        const w = measuredWidth ?? wantW;
+        let left = anchorPosition.x - w;
+        left = Math.max(0, Math.min(left, screenWidth - w));
+        const top = anchorPosition.y;
+        computedContainerStyle = {
+            ...flattenedContainerStyle,
+            position: 'absolute',
+            left,
+            top,
         };
     } else if (anchorPosition) {
-        if (useRightAnchorAlignment) {
-            // New logic: align the modal’s right edge with the anchor’s right edge,
-            // and set its top to the anchor’s top.
-            const { width: screenWidth } = Dimensions.get('window');
-            // Use the width from containerStyle if available; fallback to 260.
-            const desiredWidth =
-                (flattenedContainerStyle &&
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    (flattenedContainerStyle as any).width) ||
-                260;
+        const { width: screenWidth, height: screenHeight } =
+            Dimensions.get('window');
+        const wantW = (flattenedContainerStyle as any)?.width ?? 350;
+        const wantH = (flattenedContainerStyle as any)?.maxHeight ?? 250;
+        const modalWidth = measuredWidth ?? wantW;
+        const modalHeight = measuredHeight ?? wantH;
 
-            const modalWidth =
-                measuredWidth !== undefined ? measuredWidth : desiredWidth;
-            // Compute the left coordinate so that left + desiredWidth equals anchorPosition.x
-            let computedLeft = anchorPosition.x - modalWidth;
-            // Clamp computedLeft so that the modal doesn't go off-screen.
-            computedLeft = Math.max(
-                0,
-                Math.min(computedLeft, screenWidth - modalWidth)
+        const horizontalMargin = screenWidth * 0.02;
+        const verticalMargin = screenHeight * 0.02;
+
+        const availableAbove = anchorPosition.y - verticalMargin;
+        const availableBelow =
+            screenHeight -
+            (anchorPosition.y + anchorPosition.height) -
+            verticalMargin;
+        const availableRight =
+            screenWidth -
+            (anchorPosition.x + anchorPosition.width) -
+            horizontalMargin;
+        const availableLeft = anchorPosition.x - horizontalMargin;
+
+        const fitsAbove = availableAbove >= modalHeight;
+        const fitsBelow = availableBelow >= modalHeight;
+        const fitsRight = availableRight >= modalWidth;
+        const fitsLeft = availableLeft >= modalWidth;
+
+        let computedLeft: number;
+        let computedTop: number;
+
+        if (!fitsAbove && !fitsBelow && !fitsRight && !fitsLeft) {
+            const ratioAbove = availableAbove / modalHeight;
+            const ratioBelow = availableBelow / modalHeight;
+            const ratioRight = availableRight / modalWidth;
+            const ratioLeft = availableLeft / modalWidth;
+            const ratios = [
+                { direction: 'above', ratio: ratioAbove },
+                { direction: 'below', ratio: ratioBelow },
+                { direction: 'right', ratio: ratioRight },
+                { direction: 'left', ratio: ratioLeft },
+            ];
+            // eslint-disable-next-line unicorn/no-array-reduce
+            const best = ratios.reduce((prev, curr) =>
+                curr.ratio > prev.ratio ? curr : prev
             );
-            const computedTop = anchorPosition.y;
-            computedContainerStyle = {
-                ...flattenedContainerStyle,
-                position: 'absolute',
-                left: computedLeft,
-                top: computedTop,
-            };
-        } else {
-            // Old logic: compute position based on available space (fitsAbove, fitsBelow, etc.)
-            const { width: screenWidth, height: screenHeight } =
-                Dimensions.get('window');
-            const desiredWidth =
-                (flattenedContainerStyle &&
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    (flattenedContainerStyle as any).width) ||
-                350;
-            const desiredHeight =
-                (flattenedContainerStyle &&
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    (flattenedContainerStyle as any).maxHeight) ||
-                250;
 
-            const modalWidth =
-                measuredWidth !== undefined ? measuredWidth : desiredWidth;
-            const modalHeight =
-                measuredHeight !== undefined ? measuredHeight : desiredHeight;
-
-            const horizontalMargin = screenWidth * 0.02;
-            const verticalMargin = screenHeight * 0.02;
-            const offset = 5;
-
-            const availableAbove = anchorPosition.y - verticalMargin;
-            const availableBelow =
-                screenHeight -
-                (anchorPosition.y + anchorPosition.height) -
-                verticalMargin;
-            const availableRight =
-                screenWidth -
-                (anchorPosition.x + anchorPosition.width) -
-                horizontalMargin;
-            const availableLeft = anchorPosition.x - horizontalMargin;
-
-            const fitsAbove = availableAbove >= modalHeight;
-            const fitsBelow = availableBelow >= modalHeight;
-            const fitsRight = availableRight >= modalWidth;
-            const fitsLeft = availableLeft >= modalWidth;
-
-            let computedLeft;
-            let computedTop;
-
-            if (!fitsAbove && !fitsBelow && !fitsRight && !fitsLeft) {
-                const ratioAbove = availableAbove / modalHeight;
-                const ratioBelow = availableBelow / modalHeight;
-                const ratioRight = availableRight / modalWidth;
-                const ratioLeft = availableLeft / modalWidth;
-                const ratios = [
-                    { direction: 'above', ratio: ratioAbove },
-                    { direction: 'below', ratio: ratioBelow },
-                    { direction: 'right', ratio: ratioRight },
-                    { direction: 'left', ratio: ratioLeft },
-                ];
-                // eslint-disable-next-line unicorn/no-array-reduce
-                const best = ratios.reduce((prev, curr) =>
-                    curr.ratio > prev.ratio ? curr : prev
-                );
-
-                // eslint-disable-next-line default-case
-                switch (best.direction) {
-                    case 'above': {
-                        computedTop = verticalMargin;
-                        computedLeft = Math.min(
-                            Math.max(
-                                anchorPosition.x +
-                                    anchorPosition.width / 2 -
-                                    modalWidth / 2,
-                                horizontalMargin
-                            ),
-                            screenWidth - modalWidth - horizontalMargin
-                        );
-
-                        break;
-                    }
-                    case 'below': {
-                        computedTop =
-                            screenHeight - modalHeight - verticalMargin;
-                        computedLeft = Math.min(
-                            Math.max(
-                                anchorPosition.x +
-                                    anchorPosition.width / 2 -
-                                    modalWidth / 2,
-                                horizontalMargin
-                            ),
-                            screenWidth - modalWidth - horizontalMargin
-                        );
-
-                        break;
-                    }
-                    case 'right': {
-                        computedLeft =
-                            screenWidth - modalWidth - horizontalMargin;
-                        computedTop = Math.min(
-                            Math.max(
-                                anchorPosition.y +
-                                    anchorPosition.height / 2 -
-                                    modalHeight / 2,
-                                verticalMargin
-                            ),
-                            screenHeight - modalHeight - verticalMargin
-                        );
-
-                        break;
-                    }
-                    case 'left': {
-                        computedLeft = horizontalMargin;
-                        computedTop = Math.min(
-                            Math.max(
-                                anchorPosition.y +
-                                    anchorPosition.height / 2 -
-                                    modalHeight / 2,
-                                verticalMargin
-                            ),
-                            screenHeight - modalHeight - verticalMargin
-                        );
-
-                        break;
-                    }
-                    // No default
+            // eslint-disable-next-line default-case
+            switch (best.direction) {
+                case 'above': {
+                    computedTop = verticalMargin;
+                    computedLeft = Math.min(
+                        Math.max(
+                            anchorPosition.x +
+                                anchorPosition.width / 2 -
+                                modalWidth / 2,
+                            horizontalMargin
+                        ),
+                        screenWidth - modalWidth - horizontalMargin
+                    );
+                    break;
                 }
-            } else {
-                computedLeft =
-                    anchorPosition.x +
-                    anchorPosition.width / 2 -
-                    modalWidth / 2;
-                computedTop = anchorPosition.y - modalHeight - offset;
-                if (computedTop < verticalMargin) {
-                    computedTop =
-                        anchorPosition.y + anchorPosition.height + offset;
-                    if (
-                        computedTop + modalHeight >
-                        screenHeight - verticalMargin
-                    ) {
-                        computedLeft =
-                            anchorPosition.x + anchorPosition.width + offset;
-                        if (
-                            computedLeft + modalWidth >
-                            screenWidth - horizontalMargin
-                        ) {
-                            computedLeft =
-                                anchorPosition.x - modalWidth - offset;
-                            if (computedLeft < horizontalMargin) {
-                                computedLeft = Math.min(
-                                    Math.max(
-                                        anchorPosition.x +
-                                            anchorPosition.width / 2 -
-                                            modalWidth / 2,
-                                        horizontalMargin
-                                    ),
-                                    screenWidth - modalWidth - horizontalMargin
-                                );
-                            }
-                        }
-                        computedTop =
+                case 'below': {
+                    computedTop = screenHeight - modalHeight - verticalMargin;
+                    computedLeft = Math.min(
+                        Math.max(
+                            anchorPosition.x +
+                                anchorPosition.width / 2 -
+                                modalWidth / 2,
+                            horizontalMargin
+                        ),
+                        screenWidth - modalWidth - horizontalMargin
+                    );
+                    break;
+                }
+                case 'right': {
+                    computedLeft = screenWidth - modalWidth - horizontalMargin;
+                    computedTop = Math.min(
+                        Math.max(
                             anchorPosition.y +
-                            anchorPosition.height / 2 -
-                            modalHeight / 2;
-                        computedTop = Math.min(
-                            Math.max(computedTop, verticalMargin),
-                            screenHeight - modalHeight - verticalMargin
-                        );
-                    } else {
-                        computedLeft = Math.min(
-                            Math.max(
-                                anchorPosition.x +
-                                    anchorPosition.width / 2 -
-                                    modalWidth / 2,
-                                horizontalMargin
-                            ),
-                            screenWidth - modalWidth - horizontalMargin
-                        );
+                                anchorPosition.height / 2 -
+                                modalHeight / 2,
+                            verticalMargin
+                        ),
+                        screenHeight - modalHeight - verticalMargin
+                    );
+                    break;
+                }
+                case 'left': {
+                    computedLeft = horizontalMargin;
+                    computedTop = Math.min(
+                        Math.max(
+                            anchorPosition.y +
+                                anchorPosition.height / 2 -
+                                modalHeight / 2,
+                            verticalMargin
+                        ),
+                        screenHeight - modalHeight - verticalMargin
+                    );
+                    break;
+                }
+            }
+        } else {
+            computedLeft =
+                anchorPosition.x + anchorPosition.width / 2 - modalWidth / 2;
+            computedTop = anchorPosition.y - modalHeight - gap;
+            if (computedTop < verticalMargin) {
+                computedTop = anchorPosition.y + anchorPosition.height + gap;
+                if (computedTop + modalHeight > screenHeight - verticalMargin) {
+                    computedLeft =
+                        anchorPosition.x + anchorPosition.width + gap;
+                    if (
+                        computedLeft + modalWidth >
+                        screenWidth - horizontalMargin
+                    ) {
+                        computedLeft = anchorPosition.x - modalWidth - gap;
+                        if (computedLeft < horizontalMargin) {
+                            computedLeft = Math.min(
+                                Math.max(
+                                    anchorPosition.x +
+                                        anchorPosition.width / 2 -
+                                        modalWidth / 2,
+                                    horizontalMargin
+                                ),
+                                screenWidth - modalWidth - horizontalMargin
+                            );
+                        }
                     }
+                    computedTop =
+                        anchorPosition.y +
+                        anchorPosition.height / 2 -
+                        modalHeight / 2;
+                    computedTop = Math.min(
+                        Math.max(computedTop, verticalMargin),
+                        screenHeight - modalHeight - verticalMargin
+                    );
                 } else {
                     computedLeft = Math.min(
-                        Math.max(computedLeft, horizontalMargin),
+                        Math.max(
+                            anchorPosition.x +
+                                anchorPosition.width / 2 -
+                                modalWidth / 2,
+                            horizontalMargin
+                        ),
                         screenWidth - modalWidth - horizontalMargin
                     );
                 }
+            } else {
+                computedLeft = Math.min(
+                    Math.max(computedLeft, horizontalMargin),
+                    screenWidth - modalWidth - horizontalMargin
+                );
             }
-
-            const availableBottom = screenHeight - verticalMargin;
-            // Clamp computedTop to ensure the modal stays fully visible vertically.
-            computedTop = Math.max(
-                Math.min(computedTop ?? 0, availableBottom - modalHeight),
-                verticalMargin
-            );
-
-            computedContainerStyle = {
-                ...flattenedContainerStyle,
-                position: 'absolute',
-                left: computedLeft,
-                top: computedTop,
-            };
         }
+
+        const availableBottom = screenHeight - verticalMargin;
+        computedTop = Math.max(
+            // @ts-expect-error let
+            Math.min(computedTop ?? 0, availableBottom - modalHeight),
+            verticalMargin
+        );
+
+        computedContainerStyle = {
+            ...flattenedContainerStyle,
+            position: 'absolute',
+            // @ts-expect-error let
+            left: computedLeft,
+            top: computedTop,
+        };
     } else {
         computedContainerStyle = StyleSheet.flatten([
             styles.miniModalContainer,
@@ -326,53 +337,87 @@ export const MiniModal: React.FC<MiniModalProps> = ({
         ]);
     }
 
+    /* ------------------------------------------------------------------ */
+    /*                               Render                               */
+    /* ------------------------------------------------------------------ */
     return (
         <Portal>
-            {centered && <View style={styles.modalOverlay} />}
             <View
-                ref={modalRef}
-                style={[
-                    computedContainerStyle,
-                    { pointerEvents: 'auto', zIndex: 100 },
-                ]}
-                // @ts-expect-error mouse enter
-                onMouseEnter={onMouseEnter}
-                onMouseLeave={onMouseLeave}
-                onLayout={(e) => {
-                    setMeasuredHeight(e.nativeEvent.layout.height);
-                    setMeasuredWidth(e.nativeEvent.layout.width);
+                pointerEvents="box-none"
+                style={StyleSheet.absoluteFillObject}
+                // we *don’t* claim the responder—just listen in capture phase
+                onStartShouldSetResponderCapture={(evt) => {
+                    if (closeOnOutsideClick && modalLocation) {
+                        const { pageX, pageY } = evt.nativeEvent;
+                        const { x, y, width, height } = modalLocation;
+
+                        // if tap is *outside* the modal’s rectangle...
+                        if (
+                            pageX < x ||
+                            pageX > x + width ||
+                            pageY < y ||
+                            pageY > y + height
+                        ) {
+                            onClose();
+                        }
+                    }
+                    // return false so we never become “the” responder
+                    return false;
                 }}
             >
-                {children}
+                {centered && <View style={styles.modalOverlay} />}
+                <View
+                    ref={modalRef}
+                    style={[
+                        computedContainerStyle,
+                        { pointerEvents: 'auto', zIndex: 100 },
+                    ]}
+                    onMouseEnter={onMouseEnter}
+                    onMouseLeave={onMouseLeave}
+                    onLayout={(e) => {
+                        const { x, y, width, height } = e.nativeEvent.layout;
+
+                        setMeasuredHeight(height);
+                        setMeasuredWidth(width);
+                        setModalLocation({ x, y, width, height });
+                    }}
+                >
+                    {children}
+                </View>
             </View>
         </Portal>
     );
 };
 
-const styles = StyleSheet.create({
-    miniModalContainer: {
-        position: 'absolute',
-        left: '50%',
-        bottom: 70,
-        width: 350,
-        maxHeight: 250,
-        backgroundColor: COLORS.PrimaryBackground,
-        borderRadius: 8,
-        padding: 10,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
-        elevation: 5,
-        transform: [{ translateX: -175 }],
-    },
-    modalOverlay: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.7)', // Adjust opacity as needed
-        zIndex: 50,
-    },
-});
+/* ------------------------------------------------------------------ */
+/*                               Styles                               */
+/* ------------------------------------------------------------------ */
+function createStyles(theme: Theme) {
+    return StyleSheet.create({
+        miniModalContainer: {
+            position: 'absolute',
+            left: '50%',
+            bottom: 70,
+            width: 350,
+            maxHeight: 250,
+            backgroundColor: theme.colors.PrimaryBackground,
+            borderRadius: 8,
+            padding: 10,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.3,
+            shadowRadius: 4,
+            elevation: 5,
+            transform: [{ translateX: -175 }],
+        },
+        modalOverlay: {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            zIndex: 50,
+        },
+    });
+}

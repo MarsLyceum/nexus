@@ -1,5 +1,5 @@
 // FeedChannelScreen.tsx
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
     SafeAreaView,
     FlatList,
@@ -9,8 +9,8 @@ import {
     View,
 } from 'react-native';
 
+import { useTheme, Theme } from '../theme';
 import { Header, PostItem } from '../sections';
-import { COLORS } from '../constants';
 import { CreateContentButton } from '../buttons';
 import { useAppSelector, RootState, UserType } from '../redux';
 import { FeedPost, Attachment, GroupChannel } from '../types';
@@ -28,76 +28,65 @@ import { detectEnvironment } from '../utils';
 
 const BOTTOM_INPUT_HEIGHT = 60;
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        flexBasis: 0,
-        backgroundColor: COLORS.SecondaryBackground,
-    },
-    feedList: {
-        padding: 15,
-        paddingBottom: BOTTOM_INPUT_HEIGHT,
-    },
-    skeletonContainer: {
-        backgroundColor: COLORS.PrimaryBackground,
-        padding: 15,
-        marginBottom: 10,
-        borderRadius: 8,
-        shadowColor: COLORS.OffWhite,
-        shadowOpacity: 0.1,
-        shadowRadius: 5,
-        elevation: 2,
-    },
-    skeletonHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 10,
-    },
-    skeletonAvatar: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: COLORS.InactiveText,
-    },
-    skeletonTextBlock: {
-        height: 20,
-        backgroundColor: COLORS.InactiveText,
-        borderRadius: 4,
-        marginLeft: 10,
-        flex: 1,
-    },
-    skeletonTitle: {
-        height: 20,
-        backgroundColor: COLORS.InactiveText,
-        borderRadius: 4,
-        marginBottom: 10,
-    },
-    skeletonContent: {
-        height: 60,
-        backgroundColor: COLORS.InactiveText,
-        borderRadius: 4,
-    },
-    createContentButtonContainer: {
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        height: BOTTOM_INPUT_HEIGHT,
-    },
-});
-
-const SkeletonPostItem: React.FC = () => (
-    <View style={styles.skeletonContainer}>
-        <View style={styles.skeletonHeader}>
-            <View style={styles.skeletonAvatar} />
-            <View style={[styles.skeletonTextBlock, { width: '60%' }]} />
-        </View>
-        <View style={[styles.skeletonTitle, { width: '80%' }]} />
-        <View
-            style={[styles.skeletonContent, { width: '100%', marginTop: 10 }]}
-        />
-    </View>
-);
+function createStyles(theme: Theme) {
+    return StyleSheet.create({
+        container: {
+            flex: 1,
+            flexBasis: 0,
+            backgroundColor: theme.colors.SecondaryBackground,
+        },
+        feedList: {
+            padding: 15,
+            paddingBottom: BOTTOM_INPUT_HEIGHT,
+        },
+        skeletonContainer: {
+            backgroundColor: theme.colors.PrimaryBackground,
+            padding: 15,
+            marginBottom: 10,
+            borderRadius: 8,
+            shadowColor: theme.colors.ActiveText,
+            shadowOpacity: 0.1,
+            shadowRadius: 5,
+            elevation: 2,
+        },
+        skeletonHeader: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginBottom: 10,
+        },
+        skeletonAvatar: {
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            backgroundColor: theme.colors.InactiveText,
+        },
+        skeletonTextBlock: {
+            height: 20,
+            backgroundColor: theme.colors.InactiveText,
+            borderRadius: 4,
+            marginLeft: 10,
+            flex: 1,
+        },
+        skeletonTitle: {
+            height: 20,
+            backgroundColor: theme.colors.InactiveText,
+            borderRadius: 4,
+            marginBottom: 10,
+        },
+        skeletonContent: {
+            height: 60,
+            backgroundColor: theme.colors.InactiveText,
+            borderRadius: 4,
+        },
+        createContentButtonContainer: {
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: BOTTOM_INPUT_HEIGHT,
+        },
+    });
+}
 
 interface FeedChannelScreenProps {
     channel?: GroupChannel;
@@ -109,6 +98,8 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
     // Get the channel from URL params if not provided as a prop.
     // const [channelFromParam] = useParam('channelId');
     const channel = channelProp;
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
 
     const user: UserType = useAppSelector(
         (state: RootState) => state.user.user
@@ -146,6 +137,22 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
 
     // Determine if we're on desktop (web)
     const isDesktop = Platform.OS === 'web' && width > 768;
+
+    const SkeletonPostItem: React.FC = () => (
+        <View style={styles.skeletonContainer}>
+            <View style={styles.skeletonHeader}>
+                <View style={styles.skeletonAvatar} />
+                <View style={[styles.skeletonTextBlock, { width: '60%' }]} />
+            </View>
+            <View style={[styles.skeletonTitle, { width: '80%' }]} />
+            <View
+                style={[
+                    styles.skeletonContent,
+                    { width: '100%', marginTop: 10 },
+                ]}
+            />
+        </View>
+    );
 
     return (
         <SafeAreaView

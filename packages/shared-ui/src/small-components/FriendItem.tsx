@@ -1,37 +1,13 @@
-import React, { useRef } from 'react';
+import React, { useRef, useMemo } from 'react';
 import { View, Text, StyleSheet, View as RNView } from 'react-native';
 
 import { NexusImage } from './NexusImage';
-import { MoreVertical, CheckMark, Cancel } from '../icons';
-import { COLORS } from '../constants';
+import { MoreVertical, CheckMark, Cancel, Chat } from '../icons';
+import { useTheme, Theme } from '../theme';
 import { ActionButton } from './ActionButton';
 import { getOnlineStatusDotColor } from '../utils';
-
-export type Friend = {
-    id?: string;
-    email?: string;
-    username?: string;
-    firstName?: string;
-    lastName?: string;
-    phoneNumber?: string;
-    status?: string;
-};
-
-export type FriendItemData = {
-    friend: Friend;
-    id: string;
-    // This is the relationship status (accepted, pending, blocked, etc.)
-    status?: string;
-    requestedBy?: {
-        id: string;
-        email: string;
-        username: string;
-        firstName: string;
-        lastName: string;
-        phoneNumber: string;
-        status: string;
-    } | null;
-};
+import { useNexusRouter } from '../hooks';
+import { Friend, FriendItemData } from '../types';
 
 type FriendItemProps = {
     item: FriendItemData;
@@ -62,6 +38,10 @@ export const FriendItem: React.FC<FriendItemProps> = ({
     onReject,
 }) => {
     const moreButtonContainerRef = useRef<RNView>(null);
+    const router = useNexusRouter();
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
+
     const { friend, status: relationshipStatusRaw, requestedBy } = item;
     const relationshipStatus = relationshipStatusRaw
         ? relationshipStatusRaw.toLowerCase()
@@ -97,7 +77,7 @@ export const FriendItem: React.FC<FriendItemProps> = ({
         relationshipStatus === 'accepted'
             ? onlineStatus || 'online'
             : relationshipStatus || 'online';
-    const dotColor = getOnlineStatusDotColor(statusForDot);
+    const dotColor = getOnlineStatusDotColor(theme, statusForDot);
     const avatarUrl = `https://picsum.photos/seed/${friend.username}/40`;
 
     return (
@@ -130,12 +110,14 @@ export const FriendItem: React.FC<FriendItemProps> = ({
             {/* If pending and NOT requested by me, show accept & ignore actions */}
             {isPending && !isRequestedByMe ? (
                 <View style={styles.pendingActions}>
-                    <ActionButton
-                        onPress={() => onAccept && onAccept()}
-                        tooltipText="Accept"
-                    >
-                        <CheckMark />
-                    </ActionButton>
+                    <View style={styles.acceptButton}>
+                        <ActionButton
+                            onPress={() => onAccept && onAccept()}
+                            tooltipText="Accept"
+                        >
+                            <CheckMark />
+                        </ActionButton>
+                    </View>
                     <ActionButton
                         onPress={() => onReject && onReject()}
                         tooltipText="Ignore"
@@ -146,6 +128,21 @@ export const FriendItem: React.FC<FriendItemProps> = ({
             ) : (
                 // For accepted friends or outgoing requests
                 <View style={styles.friendAction}>
+                    {!isPending && (
+                        <View style={styles.messageButton}>
+                            <ActionButton
+                                tooltipText="Message"
+                                onPress={() =>
+                                    router.push('/messages', {
+                                        friendId: friend.id,
+                                    })
+                                }
+                            >
+                                <Chat />
+                            </ActionButton>
+                        </View>
+                    )}
+
                     <View ref={moreButtonContainerRef}>
                         <ActionButton
                             onPress={() => {
@@ -181,56 +178,66 @@ export const FriendItem: React.FC<FriendItemProps> = ({
     );
 };
 
-const styles = StyleSheet.create({
-    friendItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: COLORS.SecondaryBackground,
-        marginVertical: 4,
-        borderRadius: 4,
-        padding: 12,
-    },
-    avatarAndDot: {
-        position: 'relative',
-        marginRight: 8,
-    },
-    avatar: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        marginRight: 8,
-    },
-    statusDot: {
-        position: 'absolute',
-        bottom: 0,
-        right: 5,
-        width: 15,
-        height: 15,
-        borderRadius: 7,
-        borderWidth: 2,
-        borderColor: COLORS.SecondaryBackground,
-    },
-    friendDetails: {
-        flex: 1,
-        justifyContent: 'center',
-    },
-    friendName: {
-        fontWeight: 'bold',
-        fontFamily: 'Roboto_700Bold',
-        color: COLORS.White,
-        marginBottom: 2,
-    },
-    friendStatus: {
-        color: COLORS.InactiveText,
-        fontSize: 12,
-    },
-    friendAction: {
-        marginLeft: 8,
-        position: 'relative',
-    },
-    pendingActions: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginLeft: 8,
-    },
-});
+function createStyles(theme: Theme) {
+    return StyleSheet.create({
+        friendItem: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: theme.colors.SecondaryBackground,
+            marginVertical: 4,
+            borderRadius: 4,
+            padding: 12,
+        },
+        avatarAndDot: {
+            position: 'relative',
+            marginRight: 8,
+        },
+        avatar: {
+            width: 32,
+            height: 32,
+            borderRadius: 16,
+            marginRight: 8,
+        },
+        statusDot: {
+            position: 'absolute',
+            bottom: 0,
+            right: 5,
+            width: 15,
+            height: 15,
+            borderRadius: 7,
+            borderWidth: 2,
+            borderColor: theme.colors.SecondaryBackground,
+        },
+        friendDetails: {
+            flex: 1,
+            justifyContent: 'center',
+        },
+        friendName: {
+            fontWeight: 'bold',
+            fontFamily: 'Roboto_700Bold',
+            color: theme.colors.ActiveText,
+            marginBottom: 2,
+        },
+        friendStatus: {
+            color: theme.colors.InactiveText,
+            fontSize: 12,
+        },
+        friendAction: {
+            display: 'flex',
+            flexDirection: 'row',
+            marginLeft: 8,
+            position: 'relative',
+        },
+        messageButton: {
+            paddingRight: 8,
+        },
+        pendingActions: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginLeft: 8,
+        },
+        acceptButton: {
+            marginRight: 8,
+        },
+    });
+}

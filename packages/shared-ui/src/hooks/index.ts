@@ -12,5 +12,6 @@ export * from './useImageDetailsModal';
 export * from './useLinkPreview';
 export * from './useMediaTypes';
 export * from './useNexusRouter';
+export * from './useScreenWidth';
 export * from './useSearchFilter';
 export * from './useSendMessages';

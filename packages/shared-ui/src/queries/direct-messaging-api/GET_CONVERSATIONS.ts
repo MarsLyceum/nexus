@@ -6,6 +6,7 @@ export const GET_CONVERSATIONS = gql`
             id
             type
             participantsUserIds
+            closedByUserIds
             channelId
         }
     }

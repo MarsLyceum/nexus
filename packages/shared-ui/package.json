@@ -33,6 +33,8 @@
     },
     "dependencies": {
         "dotenv": "^16.4.7",
-        "@gorhom/bottom-sheet": "^5.1.2"
+        "@gorhom/bottom-sheet": "^5.1.2",
+        "@types/react-native": "^0.73.0",
+        "react-native": "^0.76.9"
     }
 }

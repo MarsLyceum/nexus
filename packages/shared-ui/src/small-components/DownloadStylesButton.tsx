@@ -10,8 +10,9 @@ export const DownloadStylesButton: React.FC = () => {
                 const sheet = document.styleSheets[i];
                 const rules = sheet.cssRules;
                 if (rules) {
+                    // @ts-expect-error rules
                     for (const rule of rules) {
-                        css += `${rule.cssText  }\n`;
+                        css += `${rule.cssText}\n`;
                     }
                 }
             } catch (error) {

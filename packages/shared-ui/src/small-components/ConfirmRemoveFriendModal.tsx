@@ -9,9 +9,7 @@ import {
 } from 'react-native';
 import { useTheme, Theme } from '../theme';
 
-import { User } from '../types';
-
-import { FriendItemData } from './FriendItem';
+import { User, FriendItemData } from '../types';
 
 type ConfirmationModalProps = {
     visible: boolean;

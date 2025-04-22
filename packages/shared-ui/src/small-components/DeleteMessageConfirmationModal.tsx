@@ -1,5 +1,5 @@
 // DeleteMessageModal.tsx
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import {
     View,
     Text,
@@ -37,7 +37,6 @@ export const DeleteMessageConfirmationModal: React.FC<
     DeleteMessageModalProps
 > = ({ visible, onClose, onConfirmDelete, message, onAttachmentPress }) => {
     const { width: viewportWidth } = useWindowDimensions();
-    const [modalWidth, setModalWidth] = useState<number>(420);
     const { theme } = useTheme();
     const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -95,13 +94,7 @@ export const DeleteMessageConfirmationModal: React.FC<
                         </View>
                     </View>
 
-                    <View
-                        style={styles.messageContentContainer}
-                        onLayout={(e) => {
-                            const measuredWidth = e.nativeEvent.layout.width;
-                            setModalWidth(measuredWidth);
-                        }}
-                    >
+                    <View style={styles.messageContentContainer}>
                         <MessageContent
                             message={message}
                             width={responsiveWidth}

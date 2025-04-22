@@ -7,9 +7,11 @@ module.exports = {
         'unicorn',
         'react',
         'react-hooks',
+        'import',
     ],
     extends: [
         'eslint:recommended',
+        'plugin:import/recommended',
         'plugin:react/recommended',
         'plugin:react-hooks/recommended-legacy',
         'airbnb-base',

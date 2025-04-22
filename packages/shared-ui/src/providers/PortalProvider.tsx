@@ -21,7 +21,7 @@ type PortalContextType = {
 /**
  * Create a Context for the portal system
  */
-const PortalContext = createContext<PortalContextType | null>(null);
+const PortalContext = createContext<PortalContextType | undefined>(undefined);
 
 /**
  * PortalProvider: wraps your app and renders portals at top level
@@ -99,5 +99,5 @@ export const Portal: React.FC<{ children: ReactNode }> = ({ children }) => {
         }
     }, [children]);
 
-    return null;
+    return undefined;
 };

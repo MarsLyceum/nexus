@@ -36,6 +36,7 @@ export const BottomSheet = ({
     const [modalExpanded, setModalExpanded] = useState(false);
 
     // Utility function to clamp values.
+    // eslint-disable-next-line unicorn/consistent-function-scoping
     function clamp(value: number, min: number, max: number): number {
         return Math.max(min, Math.min(value, max));
     }
@@ -82,6 +83,7 @@ export const BottomSheet = ({
                     return Math.abs(gestureState.dy) > 10;
                 },
                 onPanResponderGrant: () => {
+                    // @ts-expect-error get value
                     // eslint-disable-next-line no-underscore-dangle
                     outerStartOffset.current = topAnim.__getValue();
                 },
@@ -163,6 +165,7 @@ export const BottomSheet = ({
                 },
                 onPanResponderRelease: () => {
                     innerScrollY.flattenOffset();
+                    // @ts-expect-error getValue
                     // eslint-disable-next-line no-underscore-dangle
                     innerScrollYOffset.current = innerScrollY.__getValue();
                 },

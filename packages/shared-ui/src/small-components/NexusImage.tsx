@@ -118,7 +118,6 @@ export const NexusImage = (props: NexusImageProps) => {
             );
             setImageUri(fallbackUri);
             setDidFallback(true);
-            // TODO: wire this into your analytics/logging system
         }
     };
 
@@ -152,7 +151,7 @@ export const NexusImage = (props: NexusImageProps) => {
         return () => {
             stillMounted = false;
         };
-    }, [originalUri]);
+    }, [originalUri, didFallback, fallbackUri]);
 
     // --- React Native: use Expo Image ---
     if (env === 'react-native-mobile') {

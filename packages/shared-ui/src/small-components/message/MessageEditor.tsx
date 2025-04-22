@@ -6,6 +6,7 @@ import {
     StyleProp,
     TextStyle,
     StyleSheet as RNStyleSheet,
+    LayoutChangeEvent,
 } from 'react-native';
 
 import { extractUrls, isComputer } from '../../utils';
@@ -93,16 +94,23 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({
             );
             setEditorHeight(Math.max(60, estimatedHeight));
         }
-    }, [editedContent, isOnlyUrl, width, avgCharWidth, measuredLineHeight]);
+    }, [
+        editedContent,
+        isOnlyUrl,
+        width,
+        avgCharWidth,
+        measuredLineHeight,
+        styles.urlText,
+    ]);
 
     // Use hidden MarkdownRenderer to calculate the content's height.
-    const handleNonUrlLayout = (e: any) => {
-        const { height } = e.nativeEvent;
+    const handleNonUrlLayout = (e: LayoutChangeEvent) => {
+        const { height } = e.nativeEvent.layout;
         setEditorHeight(Math.max(60, height));
     };
 
     // Key handler when the editor is focused (desktop only).
-    const handleKeyDown = (e: any) => {
+    const handleKeyDown = (e: KeyboardEvent) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             onSave();
@@ -113,6 +121,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({
     };
 
     // Global key listener (desktop only).
+    // eslint-disable-next-line consistent-return
     useEffect(() => {
         if (isDesktop) {
             const handleGlobalKeyDown = (e: KeyboardEvent) => {

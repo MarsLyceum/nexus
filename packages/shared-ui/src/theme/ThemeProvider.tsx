@@ -27,7 +27,7 @@ export const ThemeContext = createContext<ThemeContextValue>({
 export function ThemeProvider({ children }: { children: ReactNode }) {
     const [theme, setTheme] = useState<Theme>(defaultTheme);
     useEffect(() => {
-        (async () => {
+        void (async () => {
             const stored = await getItem('nexus-theme');
             if (stored) {
                 const { category, name } = JSON.parse(stored);

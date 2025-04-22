@@ -1,8 +1,5 @@
 // eslint-disable-next-line eslint-comments/disable-enable-pair
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* MiniModal.tsx – original logic fully preserved, plus new `layout` prop
-   that accepts any combination of: above | below | left | right      */
-
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { View, StyleSheet, Dimensions, Platform } from 'react-native';
 
@@ -85,19 +82,19 @@ export const MiniModal: React.FC<MiniModalProps> = ({
             document.addEventListener('mousedown', handleOutsideClick, {
                 passive: true,
             });
+            // eslint-disable-next-line consistent-return
             return () =>
                 document.removeEventListener('mousedown', handleOutsideClick);
         }
     }, [visible, closeOnOutsideClick, onClose]);
 
-    if (!visible) return null;
+    if (!visible) return undefined;
 
     /* ------------------------------------------------------------------
           COMPUTE CONTAINER STYLE
        ------------------------------------------------------------------ */
     let computedContainerStyle: object;
 
-    /* 1. Centered branch (unchanged) */
     if (centered) {
         const wantW = (flattenedContainerStyle as any)?.width ?? 420;
         const wantH = (flattenedContainerStyle as any)?.height ?? 200;
@@ -111,7 +108,6 @@ export const MiniModal: React.FC<MiniModalProps> = ({
             transform: [{ translateX: -w / 2 }, { translateY: -h / 2 }],
         };
     } else if (anchorPosition && layout) {
-        /* 2. Explicit layout (NEW) */
         const tokens = layout
             .toLowerCase()
             .replace('-', ' ')
@@ -154,7 +150,6 @@ export const MiniModal: React.FC<MiniModalProps> = ({
             top,
         };
     } else if (anchorPosition && useRightAnchorAlignment) {
-        /* 3. useRightAnchorAlignment branch (original, unchanged) */
         const { width: screenWidth } = Dimensions.get('window');
         const wantW = (flattenedContainerStyle as any)?.width ?? 260;
         const w = measuredWidth ?? wantW;
@@ -168,7 +163,6 @@ export const MiniModal: React.FC<MiniModalProps> = ({
             top,
         };
     } else if (anchorPosition) {
-        /* 4. Original adaptive logic (entire block kept verbatim) */
         const { width: screenWidth, height: screenHeight } =
             Dimensions.get('window');
         const wantW = (flattenedContainerStyle as any)?.width ?? 350;
@@ -337,7 +331,6 @@ export const MiniModal: React.FC<MiniModalProps> = ({
             top: computedTop,
         };
     } else {
-        /* 5. Fallback */
         computedContainerStyle = StyleSheet.flatten([
             styles.miniModalContainer,
             flattenedContainerStyle,

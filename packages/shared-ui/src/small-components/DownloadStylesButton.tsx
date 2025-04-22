@@ -10,8 +10,8 @@ export const DownloadStylesButton: React.FC = () => {
                 const sheet = document.styleSheets[i];
                 const rules = sheet.cssRules;
                 if (rules) {
-                    for (let j = 0; j < rules.length; j++) {
-                        css += rules[j].cssText + '\n';
+                    for (const rule of rules) {
+                        css += `${rule.cssText  }\n`;
                     }
                 }
             } catch (error) {
@@ -31,9 +31,9 @@ export const DownloadStylesButton: React.FC = () => {
         const link = document.createElement('a');
         link.href = url;
         link.download = 'rnw.css';
-        document.body.appendChild(link);
+        document.body.append(link);
         link.click();
-        document.body.removeChild(link);
+        link.remove();
         URL.revokeObjectURL(url);
     }, []);
 

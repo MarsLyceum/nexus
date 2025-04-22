@@ -350,6 +350,7 @@ export const MiniModal: React.FC<MiniModalProps> = ({
     return (
         <Portal>
             <View
+                pointerEvents="box-none"
                 style={StyleSheet.absoluteFillObject}
                 // we *don’t* claim the responder—just listen in capture phase
                 onStartShouldSetResponderCapture={(evt) => {

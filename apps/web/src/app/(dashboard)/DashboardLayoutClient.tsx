@@ -100,19 +100,22 @@ export function createDashboardStyles(theme: Theme) {
             minHeight: '100vh', // Fills the viewport height
             flexDirection: 'row',
             backgroundColor: theme.colors.AppBackground,
+            overflow: 'hidden',
         },
         sidebar: {
             width: SIDEBAR_WIDTH,
             backgroundColor: theme.colors.AppBackground,
             paddingTop: 20,
             paddingHorizontal: 10,
+            height: '100%',
+            overflowY: 'auto',
         },
         mainContent: {
             flex: 1,
             backgroundColor: theme.colors.PrimaryBackground,
             position: 'relative',
-            height: '100vh',
-            minHeight: '100vh', // Fills the viewport height
+            height: '100%',
+            overflowY: 'auto',
         },
     });
 }

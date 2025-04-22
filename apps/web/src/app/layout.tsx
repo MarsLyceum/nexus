@@ -41,7 +41,16 @@ export default function RootLayout({
                     rel="stylesheet"
                 />
             </head>
-            <body style={{ margin: 0, padding: 0, height: '100%' }}>
+            <body
+                style={{
+                    margin: 0,
+                    padding: 0,
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'row',
+                    overflow: 'hidden',
+                }}
+            >
                 <ClientProviders>{children}</ClientProviders>
             </body>
         </html>

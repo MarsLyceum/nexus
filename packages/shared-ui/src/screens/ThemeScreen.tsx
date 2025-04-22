@@ -6,38 +6,24 @@ import {
     StyleSheet,
     TouchableOpacity,
     ScrollView,
-    Dimensions,
-    Platform, // Keep Platform import if needed for future platform-specific tweaks
 } from 'react-native';
 // Assuming useTheme and themesByCategory are correctly imported from your theme setup
 import { useTheme, themesByCategory, Theme } from '../theme'; // Adjust path if necessary
-
-// --- Helper: Get screen width for responsive layout ---
-const screenWidth = Dimensions.get('window').width;
-// Adjust columns based on screen width (example thresholds)
-const numColumns = screenWidth > 1000 ? 6 : screenWidth > 600 ? 5 : 4;
-const itemPaddingHorizontal = 16; // Overall padding for the scroll view
-const itemMargin = 8; // Margin between items
-
-// --- Adjusted Item Width Calculation ---
-const totalHorizontalMargin = itemMargin * (numColumns - 1);
-const availableWidth =
-    screenWidth - itemPaddingHorizontal * 2 - totalHorizontalMargin;
-const itemWidth = availableWidth / numColumns;
-
-// --- Adjusted Preview Height Calculation ---
-// Make height proportional to width for a better aspect ratio, plus space for label
-const previewHeight = itemWidth * 0.6 + 35; // Aspect ratio + fixed height for label/padding
+import { useScreenWidth } from '../hooks';
 
 // --- ThemePreview Component Definition ---
 interface ThemePreviewProps {
     themeData: Theme;
     isActive: boolean;
     onPress: () => void;
+    width: number;
+    height: number;
+    margin: number;
 }
 
+// eslint-disable-next-line react/display-name
 const ThemePreview: React.FC<ThemePreviewProps> = React.memo(
-    ({ themeData, isActive, onPress }) => {
+    ({ themeData, isActive, onPress, width, height, margin }) => {
         // Get the currently active theme context to style the *active* indicator/border correctly
         const { theme: activeThemeContext } = useTheme();
 
@@ -47,16 +33,16 @@ const ThemePreview: React.FC<ThemePreviewProps> = React.memo(
                 style={[
                     styles.previewContainer,
                     {
-                        width: itemWidth,
-                        height: previewHeight,
+                        width,
+                        height,
                         backgroundColor: themeData.colors.PrimaryBackground, // Use the theme's background
                         // --- Improved Active State Styling ---
                         borderColor: isActive
                             ? activeThemeContext.colors.Primary // Use active theme's primary color for border
                             : 'rgba(128, 128, 128, 0.3)', // Softer border for inactive
                         borderWidth: isActive ? 2 : 1, // Thicker border when active
-                        marginRight: itemMargin, // Apply margin consistently
-                        marginBottom: itemMargin,
+                        marginRight: margin, // Apply margin consistently
+                        marginBottom: margin,
                     },
                 ]}
                 accessibilityLabel={`Select theme: ${themeData.name}`}
@@ -130,6 +116,24 @@ const ThemePreview: React.FC<ThemePreviewProps> = React.memo(
 // --- Main ThemeScreen Component ---
 export const ThemeScreen: React.FC = () => {
     const { theme, setThemeByName } = useTheme();
+    const screenWidth = useScreenWidth(1920);
+
+    // --- Helper: Get screen width for responsive layout ---
+    // const screenWidth = Dimensions.get('window').width;
+    // Adjust columns based on screen width (example thresholds)
+    const numColumns = screenWidth > 1000 ? 6 : screenWidth > 600 ? 5 : 4;
+    const itemPaddingHorizontal = 16; // Overall padding for the scroll view
+    const itemMargin = 8; // Margin between items
+
+    // --- Adjusted Item Width Calculation ---
+    const totalHorizontalMargin = itemMargin * (numColumns - 1);
+    const availableWidth =
+        screenWidth - itemPaddingHorizontal * 2 - totalHorizontalMargin;
+    const itemWidth = availableWidth / numColumns;
+
+    // --- Adjusted Preview Height Calculation ---
+    // Make height proportional to width for a better aspect ratio, plus space for label
+    const previewHeight = itemWidth * 0.6 + 35; // Aspect ratio + fixed height for label/padding
 
     return (
         <ScrollView
@@ -169,6 +173,9 @@ export const ThemeScreen: React.FC = () => {
                                 themeData={t}
                                 isActive={t.name === theme.name} // Check if this theme 't' is the active one
                                 onPress={() => setThemeByName(t.name)}
+                                width={itemWidth}
+                                height={previewHeight}
+                                margin={itemMargin}
                             />
                         ))}
                     </View>

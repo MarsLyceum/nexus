@@ -128,7 +128,10 @@ export const NexusImage = (props: NexusImageProps) => {
 
         void (async () => {
             try {
-                const res = await fetch(originalUri, { method: 'HEAD' });
+                const res = await fetch(originalUri, {
+                    method: 'HEAD',
+                    mode: 'no-cors',
+                });
                 if (stillMounted && !res.ok && !didFallback) {
                     console.warn(
                         `[NexusImage] HEAD ${res.status} for ${originalUri}, falling back…`
@@ -142,8 +145,24 @@ export const NexusImage = (props: NexusImageProps) => {
                         `[NexusImage] HEAD error for ${originalUri}:`,
                         error
                     );
-                    setImageUri(fallbackUri);
-                    setDidFallback(true);
+
+                    try {
+                        const get = await fetch(originalUri, {
+                            method: 'GET',
+                        });
+                        // if GET returns at least partial, we assume the image exists
+                        if (stillMounted && get.ok) return;
+                        console.warn(
+                            `[NexusImage] GET ${get.status} for ${originalUri}, falling back…`
+                        );
+                    } catch (getErr) {
+                        console.warn(
+                            `[NexusImage] GET error for ${originalUri}:`,
+                            getErr
+                        );
+                        setImageUri(fallbackUri);
+                        setDidFallback(true);
+                    }
                 }
             }
         })();
@@ -151,7 +170,7 @@ export const NexusImage = (props: NexusImageProps) => {
         return () => {
             stillMounted = false;
         };
-    }, [originalUri, didFallback, fallbackUri]);
+    }, [originalUri, fallbackUri]);
 
     // --- React Native: use Expo Image ---
     if (env === 'react-native-mobile') {

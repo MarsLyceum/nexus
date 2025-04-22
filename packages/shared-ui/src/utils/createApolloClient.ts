@@ -26,6 +26,7 @@ const isDevDomain =
 const onRemoteServer = isCloudRun || isDevDomain;
 
 const environment = detectEnvironment();
+const isReactNativeWeb = environment === 'react-native-web';
 const isNext =
     environment === 'nextjs-client' || environment === 'nextjs-server';
 
@@ -34,14 +35,18 @@ const graphqlApiGatewayEndpointHttp =
     !onRemoteServer && !(process.env.USE_REMOTE_GRAPHQL === 'true')
         ? isNext
             ? 'http://localhost:3000/graphql'
-            : 'http://192.168.1.48:4000/graphql'
+            : isReactNativeWeb
+              ? 'http://localhost:8081/graphql'
+              : 'http://192.168.1.48:4000/graphql'
         : 'https://dev.my-nexus.net/graphql';
 
 const graphqlApiGatewayEndpointWs =
     !onRemoteServer && !(process.env.USE_REMOTE_GRAPHQL === 'true')
         ? isNext
             ? 'ws://localhost:3000/graphql'
-            : 'ws://192.168.1.48:4000/graphql'
+            : isReactNativeWeb
+              ? 'ws://localhost:4000/graphql'
+              : 'ws://192.168.1.48:4000/graphql'
         : 'wss://dev.my-nexus.net/graphql';
 
 // Create a common error link.

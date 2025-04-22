@@ -18,6 +18,7 @@
         "run:android": "npx expo run:android"
     },
     "dependencies": {
+        "http-proxy-middleware": "^3.0.5",
         "expo-router": "^4.0.20",
         "babel-plugin-transform-inline-environment-variables": "^0.4.4",
         "expo-asset": "^11.0.5",

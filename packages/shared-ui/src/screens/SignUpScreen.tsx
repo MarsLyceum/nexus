@@ -15,13 +15,14 @@ import { isEmail } from 'validator';
 import { FontAwesome } from '@expo/vector-icons';
 import { useApolloClient } from '@apollo/client';
 
+import { REFRESH_TOKEN_KEY, ACCESS_TOKEN_KEY } from '../constants';
 import { useNexusRouter } from '../hooks';
 import { REGISTER_USER_MUTATION } from '../queries';
 import { HorizontalLine } from '../images';
 import { GoogleLogo, UserIcon, Email, Phone, Lock } from '../icons';
 import { User } from '../types';
 import { loginUser, useAppDispatch } from '../redux';
-import { validatePassword } from '../utils';
+import { validatePassword, setItemSecure } from '../utils';
 import { PrimaryGradientButton } from '../buttons';
 import { useTheme, Theme } from '../theme';
 
@@ -221,7 +222,22 @@ export function SignUpScreen(): JSX.Element {
                     phoneNumber: values.phoneNumber,
                 },
             });
-            const user: User = result.data.registerUser;
+            const {
+                token,
+                accessToken,
+                refreshToken,
+                ...user
+            }: User & {
+                token: string;
+                accessToken: string;
+                refreshToken: string;
+            } = result.data.registerUser;
+
+            if (Platform.OS !== 'web') {
+                await setItemSecure(ACCESS_TOKEN_KEY, accessToken);
+                await setItemSecure(REFRESH_TOKEN_KEY, refreshToken);
+            }
+
             updateUserData(user);
             router.push('/');
         } catch (error) {

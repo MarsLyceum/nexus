@@ -13,6 +13,8 @@ import { useNexusRouter } from '../hooks';
 import { RootState, useAppSelector, useAppDispatch, loadUser } from '../redux';
 import { PeepsLogo } from '../images/PeepsLogo';
 import { PrimaryGradientButton, SecondaryButton } from '../buttons';
+import { getItemSecure } from '../utils';
+import { ACCESS_TOKEN_KEY } from '../constants';
 import { Footer } from '..';
 import { useTheme, Theme } from '../theme';
 
@@ -70,15 +72,28 @@ export function WelcomeScreen(): JSX.Element {
     const styles = useMemo(() => createStyles(theme), [theme]);
 
     useEffect(() => {
-        dispatch(loadUser());
-    }, [dispatch]);
+        void (async () => {
+            if (Platform.OS !== 'web') {
+                const token =
+                    (await getItemSecure(ACCESS_TOKEN_KEY)) ?? undefined;
+                if (!token && router.getCurrentRoute() !== '/login') {
+                    router.replace('/login');
+                }
+                if (user && token && router.getCurrentRoute() !== '/') {
+                    router.replace('/');
+                }
+            }
+            if (
+                Platform.OS === 'web' &&
+                user &&
+                router.getCurrentRoute() !== '/'
+            ) {
+                router.replace('/');
+            }
+        })();
 
-    useEffect(() => {
-        if (user) {
-            // If user is loaded, navigate to the matching screen
-            router.push('/');
-        }
-    }, [user, router]);
+        dispatch(loadUser());
+    }, [dispatch, router, user]);
 
     return (
         <SafeAreaView style={styles.outerContainer}>

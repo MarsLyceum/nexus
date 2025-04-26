@@ -13,10 +13,11 @@ import Svg, { Path } from 'react-native-svg';
 import { isEmail } from 'validator';
 import { useApolloClient } from '@apollo/client';
 
+import { REFRESH_TOKEN_KEY, ACCESS_TOKEN_KEY } from '../constants';
 import { useNexusRouter } from '../hooks';
 import { loginUser, useAppDispatch } from '../redux';
 import { LOGIN_USER } from '../queries';
-import { validatePassword } from '../utils';
+import { validatePassword, setItemSecure } from '../utils';
 import { Email, Lock, GoogleLogo } from '../icons';
 import { HorizontalLine } from '../images';
 import { PrimaryGradientButton } from '../buttons';
@@ -231,12 +232,26 @@ export function LoginScreen(): JSX.Element {
         passwordInner: string
     ) => {
         try {
-            const result = await apolloClient.mutate<{ loginUser: User }>({
+            const result = await apolloClient.mutate<{
+                loginUser: User & {
+                    token: string;
+                    accessToken: string;
+                    refreshToken: string;
+                };
+            }>({
                 mutation: LOGIN_USER,
                 variables: { email: emailInner, password: passwordInner },
             });
             if (result.data?.loginUser) {
-                const user = result.data.loginUser;
+                const { token, refreshToken, accessToken, ...user } =
+                    result.data.loginUser;
+
+                if (Platform.OS !== 'web') {
+                    console.log('ACCESS_TOKEN_KEY:', ACCESS_TOKEN_KEY);
+                    await setItemSecure(ACCESS_TOKEN_KEY, accessToken);
+                    await setItemSecure(REFRESH_TOKEN_KEY, refreshToken);
+                }
+
                 updateUserData(user);
                 // Navigate to AppDrawer screen
                 router.push('/');

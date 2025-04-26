@@ -1,8 +1,11 @@
 import React, { useEffect, useRef, ReactNode, useCallback } from 'react';
 import { AppState, AppStateStatus, View, Platform } from 'react-native';
 import { useMutation } from '@apollo/client';
+
 import { useAppSelector, UserType, RootState } from '../redux';
 import { UPDATE_USER } from '../queries';
+import { getItemSecure } from '../utils';
+import { ACCESS_TOKEN_KEY } from '../constants';
 
 export const StatusManager: React.FC<{ children: ReactNode }> = ({
     children,
@@ -17,6 +20,13 @@ export const StatusManager: React.FC<{ children: ReactNode }> = ({
     // This function updates the user status using GraphQL
     const setStatus = useCallback(
         async (status: string) => {
+            if (Platform.OS !== 'web') {
+                const token =
+                    (await getItemSecure(ACCESS_TOKEN_KEY)) ?? undefined;
+                if (!token) {
+                    return;
+                }
+            }
             if (!user) return;
             // Determine effective status based on DND preference
             let effectiveStatus = status;

@@ -1,6 +1,11 @@
 // eslint-disable-next-line eslint-comments/disable-enable-pair
 /* eslint-disable react-hooks/rules-of-hooks */
-import { redirect, useRouter as useNextRouter } from 'next/navigation';
+import {
+    redirect,
+    useRouter as useNextRouter,
+    usePathname,
+    useSearchParams,
+} from 'next/navigation';
 import { useNavigation, StackActions } from '@react-navigation/native';
 import { Platform } from 'react-native';
 import { detectEnvironment, Environment } from '../utils';
@@ -12,6 +17,7 @@ export type NexusRouter = {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     replace: (path: string, params?: Record<string, any>) => void;
     goBack: () => void;
+    getCurrentRoute: () => string;
 };
 
 // Helper to build a URL with query parameters for Next.js.
@@ -53,11 +59,25 @@ export function useNexusRouter(): NexusRouter {
             goBack: () => {
                 throw new Error('goBack is not supported on the server side.');
             },
+            getCurrentRoute: () => {
+                throw new Error(
+                    'getCurrentRoute is not supported on the server side.'
+                );
+            },
         };
     }
 
     if (environment === 'nextjs-client') {
         const router = useNextRouter();
+        const pathname = usePathname();
+        const searchParams = useSearchParams();
+
+        // rebuild the full URL
+        const asPath =
+            searchParams.toString().length > 0
+                ? `${pathname}?${searchParams.toString()}`
+                : pathname;
+
         return {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             push: (path: string, params?: Record<string, any>) => {
@@ -78,6 +98,7 @@ export function useNexusRouter(): NexusRouter {
                     router.push('/');
                 }
             },
+            getCurrentRoute: () => asPath,
         };
     }
 
@@ -149,6 +170,14 @@ export function useNexusRouter(): NexusRouter {
                     // @ts-expect-error navigation
                     navigation.navigate('welcome');
                 }
+            },
+            getCurrentRoute: () => {
+                const state = navigation.getState();
+                const route = state?.routes[state?.index ?? 0];
+                if (route?.name) {
+                    return `/${route?.name}`;
+                }
+                throw new Error('unknown route');
             },
         };
     }

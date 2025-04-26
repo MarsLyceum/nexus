@@ -2,13 +2,18 @@
 
 import { ApolloClient, InMemoryCache, from, split } from '@apollo/client';
 import { onError } from '@apollo/client/link/error';
-import { getMainDefinition } from '@apollo/client/utilities';
+import { setContext } from '@apollo/client/link/context';
+import { getMainDefinition, Observable } from '@apollo/client/utilities';
 import { Platform } from 'react-native';
 import ReconnectingWebSocket from 'reconnecting-websocket';
 import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { createClient } from 'graphql-ws';
 import createUploadLink from 'apollo-upload-client/createUploadLink.mjs';
 
+import { REFRESH_TOKEN } from '../queries';
+import { REFRESH_TOKEN_KEY, ACCESS_TOKEN_KEY } from '../constants';
+
+import { getItemSecure, setItemSecure } from './storageUtil';
 import { getSafeWindow } from './getSafeWindow';
 import { detectEnvironment } from './detectEnvironment';
 
@@ -49,82 +54,152 @@ const graphqlApiGatewayEndpointWs =
               : 'ws://192.168.1.48:4000/graphql'
         : 'wss://dev.my-nexus.net/graphql';
 
-// Create a common error link.
-const errorLink = onError((error) => {
-    console.error('Apollo Error:', error);
-});
+export const createApolloClient = () => {
+    let client!: ApolloClient<unknown>;
 
-// Create an HTTP link using createUploadLink to support file uploads.
-const httpLink = from([
-    errorLink,
-    createUploadLink({
-        uri: graphqlApiGatewayEndpointHttp,
-        credentials: 'include', // Ensures cookies are sent with requests
-        // This function tells apollo-upload-client which values represent files.
-        // @ts-expect-error file
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        isExtractableFile: (value: any) => {
-            if (value === undefined || value === null) return false;
-            if (typeof File !== 'undefined' && value instanceof File)
-                return true;
-            if (typeof Blob !== 'undefined' && value instanceof Blob)
-                return true;
-            if (
-                typeof value === 'object' &&
-                typeof value.uri === 'string' &&
-                typeof value.name === 'string' &&
-                typeof value.type === 'string'
-            ) {
-                if (
-                    Platform.OS === 'web' &&
-                    typeof value.createReadStream !== 'function'
-                ) {
-                    Object.defineProperty(value, 'createReadStream', {
-                        value: () => {
-                            throw new Error(
-                                'createReadStream is not supported on web'
+    const authLink = setContext(async (_, { headers }) => {
+        // on web we rely on cookies; mobile gets header
+        let token: string | undefined;
+        if (Platform.OS !== 'web') {
+            token = (await getItemSecure(ACCESS_TOKEN_KEY)) ?? undefined;
+        }
+
+        return {
+            headers: {
+                ...headers,
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+        };
+    });
+
+    // eslint-disable-next-line consistent-return
+    const errorLink = onError((errorResponse) => {
+        const { graphQLErrors, operation, forward } = errorResponse;
+        console.error('Apollo Error:', errorResponse);
+
+        const authError = graphQLErrors?.find(
+            (e) => e.extensions?.code === 'UNAUTHENTICATED'
+        );
+        if (authError) {
+            return new Observable((observer) => {
+                void (async () => {
+                    try {
+                        const refreshToken =
+                            Platform.OS !== 'web'
+                                ? (await getItemSecure(REFRESH_TOKEN_KEY)) ??
+                                  undefined
+                                : undefined;
+                        const response = await client.mutate({
+                            mutation: REFRESH_TOKEN,
+                            variables: { refreshToken },
+                        });
+                        if (
+                            Platform.OS !== 'web' &&
+                            response.data?.refreshToken
+                        ) {
+                            const {
+                                accessToken: newAccessToken,
+                                refreshToken: newRefreshToken,
+                            } = response.data.refreshToken;
+
+                            await setItemSecure(
+                                ACCESS_TOKEN_KEY,
+                                newAccessToken
                             );
-                        },
-                        writable: false,
-                        enumerable: false,
-                    });
+                            await setItemSecure(
+                                REFRESH_TOKEN_KEY,
+                                newRefreshToken
+                            );
+                        }
+
+                        forward(operation).subscribe({
+                            next: (result) => observer.next(result),
+                            error: (err) => observer.error(err),
+                            complete: () => observer.complete(),
+                        });
+                    } catch (error) {
+                        console.error('errorLink: refresh failed', error);
+                        observer.error(error);
+                    }
+                })();
+            });
+        }
+    });
+
+    // Create an HTTP link using createUploadLink to support file uploads.
+    const httpLink = from([
+        authLink,
+        errorLink,
+        createUploadLink({
+            uri: graphqlApiGatewayEndpointHttp,
+            credentials: 'include', // Ensures cookies are sent with requests
+            // This function tells apollo-upload-client which values represent files.
+            // @ts-expect-error file
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            isExtractableFile: (value: any) => {
+                if (value === undefined || value === null) return false;
+                if (typeof File !== 'undefined' && value instanceof File)
+                    return true;
+                if (typeof Blob !== 'undefined' && value instanceof Blob)
+                    return true;
+                if (
+                    typeof value === 'object' &&
+                    typeof value.uri === 'string' &&
+                    typeof value.name === 'string' &&
+                    typeof value.type === 'string'
+                ) {
+                    if (
+                        Platform.OS === 'web' &&
+                        typeof value.createReadStream !== 'function'
+                    ) {
+                        Object.defineProperty(value, 'createReadStream', {
+                            value: () => {
+                                throw new Error(
+                                    'createReadStream is not supported on web'
+                                );
+                            },
+                            writable: false,
+                            enumerable: false,
+                        });
+                    }
+                    return true;
                 }
-                return true;
-            }
-            return false;
-        },
-    }),
-]);
+                return false;
+            },
+        }),
+    ]);
 
-// Create a WebSocket link for subscriptions (client-only).
-const wsLink = getSafeWindow()
-    ? new GraphQLWsLink(
-          createClient({
-              url: graphqlApiGatewayEndpointWs,
-              webSocketImpl: ReconnectingWebSocket,
-          })
-      )
-    : undefined;
+    // Create a WebSocket link for subscriptions (client-only).
+    const wsLink = getSafeWindow()
+        ? new GraphQLWsLink(
+              createClient({
+                  url: graphqlApiGatewayEndpointWs,
+                  webSocketImpl: ReconnectingWebSocket,
+              })
+          )
+        : undefined;
 
-// Use split to direct subscriptions to wsLink and other operations to httpLink.
-const link =
-    !getSafeWindow() || !wsLink
-        ? httpLink
-        : split(
-              ({ query }) => {
-                  const definition = getMainDefinition(query);
-                  return (
-                      definition.kind === 'OperationDefinition' &&
-                      definition.operation === 'subscription'
-                  );
-              },
-              wsLink,
-              httpLink
-          );
+    // Use split to direct subscriptions to wsLink and other operations to httpLink.
+    const link =
+        !getSafeWindow() || !wsLink
+            ? httpLink
+            : split(
+                  ({ query }) => {
+                      const definition = getMainDefinition(query);
+                      return (
+                          definition.kind === 'OperationDefinition' &&
+                          definition.operation === 'subscription'
+                      );
+                  },
+                  wsLink,
+                  httpLink
+              );
 
-export const createApolloClient = () =>
-    new ApolloClient({
+    client = new ApolloClient({
         ssrMode: !getSafeWindow(),
         link,
         cache: new InMemoryCache(),
     });
+
+    return client;
+};

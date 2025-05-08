@@ -12,6 +12,7 @@ import RNCanvas, {
 } from 'react-native-canvas';
 import Slider from '@react-native-community/slider';
 import { useGifFrames } from '../hooks';
+import { useTheme } from '../theme';
 
 type DOMCanvasCtx = CanvasRenderingContext2D;
 
@@ -19,20 +20,19 @@ export type GifPlayerProps = {
     source: string;
     width: number;
     height: number;
+    position: number;
 };
 
 export const GifPlayer: React.FC<GifPlayerProps> = ({
     source,
     width,
     height,
+    position,
 }) => {
-    const { frames, totalDuration } = useGifFrames(source);
-    const [position, setPosition] = useState(0); // ms into the loop
-    const [playing, setPlaying] = useState(false);
+    const { frames } = useGifFrames(source);
 
     const canvasRefWeb = useRef<HTMLCanvasElement>(null);
     const canvasRefNative = useRef<RNCanvas>(null);
-    const rafRef = useRef<number>();
 
     // find current frame index by accumulating delays
     const getFrameIndex = useCallback(() => {
@@ -83,25 +83,6 @@ export const GifPlayer: React.FC<GifPlayerProps> = ({
         [frames, getFrameIndex, width, height]
     );
 
-    // animation loop
-    useEffect(() => {
-        const step = (timestamp: number) => {
-            setPosition((pos) => {
-                const next = playing
-                    ? (pos + (timestamp - (rafRef.current || timestamp))) %
-                      totalDuration
-                    : pos;
-                return next;
-            });
-            rafRef.current = timestamp;
-            if (playing) requestAnimationFrame(step);
-        };
-        if (playing) requestAnimationFrame(step);
-        return () => {
-            if (rafRef.current) cancelAnimationFrame(rafRef.current);
-        };
-    }, [playing, totalDuration]);
-
     useEffect(() => {
         const canvas =
             Platform.OS === 'web'
@@ -134,7 +115,9 @@ export const GifPlayer: React.FC<GifPlayerProps> = ({
             // HTML canvas path
             const html = canvas as HTMLCanvasElement;
             const ctx = html.getContext('2d');
-            if (ctx) draw(ctx);
+            if (ctx) {
+                void draw(ctx);
+            }
         } else {
             // react-native-canvas path
             const rnCanvas = canvas as RNCanvas;
@@ -145,65 +128,22 @@ export const GifPlayer: React.FC<GifPlayerProps> = ({
     }, [position, frames, draw]);
 
     return (
-        <View style={{ width, height }}>
-            {Platform.OS === 'web' ? (
-                <canvas
-                    ref={canvasRefWeb}
-                    width={width}
-                    height={height}
-                    style={{ width: '100%', height: '100%' }}
-                />
-            ) : (
-                <RNCanvas
-                    ref={canvasRefNative}
-                    style={{ width: '100%', height: '100%' }}
-                />
-            )}
-
-            <TouchableOpacity
-                onPress={(e) => {
-                    e.stopPropagation(); // don’t bubble up to zoom
-                    setPlaying((p) => !p);
-                }}
-                style={{
-                    position: 'absolute' as const,
-                    bottom: 12,
-                    left: 12,
-                    width: 32,
-                    height: 32,
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    backgroundColor: 'rgba(0,0,0,0.6)',
-                    borderRadius: 16,
-                }}
-            >
-                <Text style={{ color: 'white', fontSize: 16 }}>
-                    {playing ? '❚❚' : '▶️'}
-                </Text>
-            </TouchableOpacity>
-
-            {/* seek bar */}
-            <Slider
-                style={styles.slider}
-                minimumValue={0}
-                maximumValue={totalDuration}
-                value={position}
-                onSlidingStart={() => setPlaying(false)}
-                onValueChange={(val) => setPosition(val)}
-                onSlidingComplete={(val) => {
-                    setPosition(val);
-                    setPlaying(true);
-                }}
-            />
+        <View>
+            <View style={{ width, height }}>
+                {Platform.OS === 'web' ? (
+                    <canvas
+                        ref={canvasRefWeb}
+                        width={width}
+                        height={height}
+                        style={{ width: '100%', height: '100%' }}
+                    />
+                ) : (
+                    <RNCanvas
+                        ref={canvasRefNative}
+                        style={{ width: '100%', height: '100%' }}
+                    />
+                )}
+            </View>
         </View>
     );
 };
-
-const styles = StyleSheet.create({
-    slider: {
-        position: 'absolute',
-        bottom: 8,
-        left: 8,
-        right: 8,
-    },
-});

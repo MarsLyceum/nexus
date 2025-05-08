@@ -82,12 +82,10 @@ export const GifPlayerControls = forwardRef<
 
 const styles = StyleSheet.create({
     container: {
-        position: 'absolute',
-        bottom: 8,
-        left: 8,
-        right: 8,
         flexDirection: 'row',
         alignItems: 'center',
+        marginTop: 8,
+        width: '100%',
     },
     playButton: {
         width: 32,

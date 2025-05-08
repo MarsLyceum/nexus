@@ -83,6 +83,12 @@ config.resolver.nodeModulesPaths = [
     path.join(workspaceRoot, 'node_modules'),
 ];
 
+config.resolver.extraNodeModules = {
+    react: path.resolve(projectRoot, 'node_modules/react'),
+    'react-native': path.join(projectRoot, 'node_modules/react-native'),
+    // any other shared packages...
+};
+
 // Ensure Metro resolves the proper fields for React Native.
 config.resolver.resolverMainFields = ['react-native', 'browser', 'main'];
 

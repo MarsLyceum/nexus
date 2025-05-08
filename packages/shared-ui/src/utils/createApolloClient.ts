@@ -73,58 +73,70 @@ export const createApolloClient = () => {
     });
 
     // eslint-disable-next-line consistent-return
-    const errorLink = onError((errorResponse) => {
-        const { graphQLErrors, operation, forward } = errorResponse;
-        console.error('Apollo Error:', errorResponse);
+    const errorLink = onError(
+        (errorResponse: {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            graphQLErrors?: any;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            operation: any;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            forward: any;
+            // eslint-disable-next-line consistent-return
+        }) => {
+            const { graphQLErrors, operation, forward } = errorResponse;
+            console.error('Apollo Error:', errorResponse);
 
-        const authError = graphQLErrors?.find(
-            (e) => e.extensions?.code === 'UNAUTHENTICATED'
-        );
-        if (authError) {
-            return new Observable((observer) => {
-                void (async () => {
-                    try {
-                        const refreshToken =
-                            Platform.OS !== 'web'
-                                ? (await getItemSecure(REFRESH_TOKEN_KEY)) ??
-                                  undefined
-                                : undefined;
-                        const response = await client.mutate({
-                            mutation: REFRESH_TOKEN,
-                            variables: { refreshToken },
-                        });
-                        if (
-                            Platform.OS !== 'web' &&
-                            response.data?.refreshToken
-                        ) {
-                            const {
-                                accessToken: newAccessToken,
-                                refreshToken: newRefreshToken,
-                            } = response.data.refreshToken;
+            const authError = graphQLErrors?.find(
+                (e: { extensions: { code: string } }) =>
+                    e.extensions?.code === 'UNAUTHENTICATED'
+            );
+            if (authError) {
+                return new Observable((observer) => {
+                    void (async () => {
+                        try {
+                            const refreshToken =
+                                Platform.OS !== 'web'
+                                    ? (await getItemSecure(
+                                          REFRESH_TOKEN_KEY
+                                      )) ?? undefined
+                                    : undefined;
+                            const response = await client.mutate({
+                                mutation: REFRESH_TOKEN,
+                                variables: { refreshToken },
+                            });
+                            if (
+                                Platform.OS !== 'web' &&
+                                response.data?.refreshToken
+                            ) {
+                                const {
+                                    accessToken: newAccessToken,
+                                    refreshToken: newRefreshToken,
+                                } = response.data.refreshToken;
 
-                            await setItemSecure(
-                                ACCESS_TOKEN_KEY,
-                                newAccessToken
-                            );
-                            await setItemSecure(
-                                REFRESH_TOKEN_KEY,
-                                newRefreshToken
-                            );
+                                await setItemSecure(
+                                    ACCESS_TOKEN_KEY,
+                                    newAccessToken
+                                );
+                                await setItemSecure(
+                                    REFRESH_TOKEN_KEY,
+                                    newRefreshToken
+                                );
+                            }
+
+                            forward(operation).subscribe({
+                                next: (result) => observer.next(result),
+                                error: (err) => observer.error(err),
+                                complete: () => observer.complete(),
+                            });
+                        } catch (error) {
+                            console.error('errorLink: refresh failed', error);
+                            observer.error(error);
                         }
-
-                        forward(operation).subscribe({
-                            next: (result) => observer.next(result),
-                            error: (err) => observer.error(err),
-                            complete: () => observer.complete(),
-                        });
-                    } catch (error) {
-                        console.error('errorLink: refresh failed', error);
-                        observer.error(error);
-                    }
-                })();
-            });
+                    })();
+                });
+            }
         }
-    });
+    );
 
     // Create an HTTP link using createUploadLink to support file uploads.
     const httpLink = from([

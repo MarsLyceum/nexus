@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { useTheme } from '../theme';
+import { Play, Pause } from '../icons';
 
 const formatTime = (ms: number) => {
     const totalSeconds = Math.floor(ms / 1000);
@@ -57,7 +58,7 @@ export const GifPlayerControls = forwardRef<
                     onPress={onTogglePlay}
                     style={styles.playButton}
                 >
-                    <Text style={styles.playIcon}>{playing ? '❚❚' : '▶️'}</Text>
+                    {playing ? <Pause /> : <Play />}
                 </TouchableOpacity>
 
                 <Slider
@@ -94,10 +95,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: 'rgba(0,0,0,0.6)',
         borderRadius: 16,
-    },
-    playIcon: {
-        color: 'white',
-        fontSize: 16,
     },
     slider: {
         flex: 1,

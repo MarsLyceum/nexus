@@ -34,3 +34,5 @@ export * from './ThumbsDown';
 export * from './ThumbsUp';
 export * from './UpArrow';
 export * from './User';
+export * from './Play';
+export * from './Pause';

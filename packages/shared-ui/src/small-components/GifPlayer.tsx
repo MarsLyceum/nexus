@@ -56,20 +56,19 @@ export const GifPlayer: React.FC<GifPlayerProps> = ({
             ctx.clearRect(0, 0, width, height);
 
             // 2) Draw new one
+            let imgData: ImageData;
+            // eslint-disable-next-line unicorn/prefer-ternary
+            if (frame.imageData instanceof ImageData) {
+                imgData = frame.imageData;
+            } else {
+                // frame.imageData.data: Uint8ClampedArray, plus width/height props
+                imgData = new ImageData(
+                    frame.imageData.data,
+                    frame.imageData.width,
+                    frame.imageData.height
+                );
+            }
             if (Platform.OS === 'web') {
-                let imgData: ImageData;
-                // eslint-disable-next-line unicorn/prefer-ternary
-                if (frame.imageData instanceof ImageData) {
-                    imgData = frame.imageData;
-                } else {
-                    // frame.imageData.data: Uint8ClampedArray, plus width/height props
-                    imgData = new ImageData(
-                        frame.imageData.data,
-                        frame.imageData.width,
-                        frame.imageData.height
-                    );
-                }
-
                 const bitmap = await createImageBitmap(imgData);
 
                 ctx.clearRect(0, 0, targetW, targetH);
@@ -77,7 +76,7 @@ export const GifPlayer: React.FC<GifPlayerProps> = ({
                 ctx.drawImage(bitmap, 0, 0, targetW, targetH);
             } else {
                 // react-native-canvas putImageData returns a Promise
-                void (ctx as RNCanvasCtx).putImageData(frame.imageData, 0, 0);
+                void (ctx as RNCanvasCtx).putImageData(imgData, 0, 0);
             }
         },
         [frames, getFrameIndex, width, height]

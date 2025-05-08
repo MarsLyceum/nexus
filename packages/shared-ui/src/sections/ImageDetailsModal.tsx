@@ -3,7 +3,7 @@ import { Modal, StyleSheet, View, Dimensions } from 'react-native';
 import Carousel from 'react-native-reanimated-carousel';
 
 import { isComputer as isComputerUtil } from '../utils';
-import { ImageCountOverlay, ItemRenderer } from '../small-components';
+import { ImageCountOverlay, MediaRenderer } from '../small-components';
 import { useMediaTypes } from '../hooks';
 
 import { ArrowButton } from './ArrowButton';
@@ -82,7 +82,7 @@ export const ImageDetailsModal: React.FC<ImageDetailsModalProps> = ({
         const key = `${item}_${info ? info.type : 'unknown'}`;
         return (
             <View key={key} style={{ width: '100%', height: '100%' }}>
-                <ItemRenderer
+                <MediaRenderer
                     item={item}
                     isComputer={isComputer}
                     mediaInfo={info}
@@ -105,17 +105,21 @@ export const ImageDetailsModal: React.FC<ImageDetailsModalProps> = ({
                 <View style={styles.centeredContent}>
                     <View style={styles.contentWrapper}>
                         <View style={styles.carouselContainer}>
-                            <Carousel
-                                ref={carouselRef}
-                                data={mediaAttachments}
-                                renderItem={renderItem}
-                                width={containerWidth}
-                                height={containerHeight}
-                                defaultIndex={effectiveInitialIndex}
-                                onSnapToItem={(index: number) =>
-                                    setCurrentIndex(index)
-                                }
-                            />
+                            {mediaAttachments.length > 1 ? (
+                                <Carousel
+                                    ref={carouselRef}
+                                    data={mediaAttachments}
+                                    renderItem={renderItem}
+                                    width={containerWidth}
+                                    height={containerHeight}
+                                    defaultIndex={effectiveInitialIndex}
+                                    onSnapToItem={(index: number) =>
+                                        setCurrentIndex(index)
+                                    }
+                                />
+                            ) : (
+                                renderItem({ item: mediaAttachments[0] })
+                            )}
                             <ImageCountOverlay
                                 currentIndex={currentIndex}
                                 total={mediaAttachments.length}

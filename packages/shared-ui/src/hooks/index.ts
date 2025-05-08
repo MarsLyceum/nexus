@@ -15,3 +15,4 @@ export * from './useNexusRouter';
 export * from './useScreenWidth';
 export * from './useSearchFilter';
 export * from './useSendMessages';
+export * from './useGifFrames';

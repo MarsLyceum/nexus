@@ -48,3 +48,4 @@ export * from './SkeletonMessageItem';
 export * from './SkeletonPostItem';
 export * from './StatusManager';
 export * from './Tooltip';
+export * from './GifPlayer';

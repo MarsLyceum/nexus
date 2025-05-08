@@ -5,7 +5,7 @@ import { NexusVideo } from '../NexusVideo';
 import { MobileImageRenderer } from './MobileImageRenderer';
 import { ComputerImageRenderer } from './ComputerImageRenderer';
 
-export type ItemRendererProps = {
+export type MediaRendererProps = {
     item: string;
     mediaInfo: { type: string } | undefined;
     containerWidth: number;
@@ -14,7 +14,7 @@ export type ItemRendererProps = {
     onClose: () => void;
 };
 
-export const ItemRenderer: React.FC<ItemRendererProps> = ({
+export const MediaRenderer: React.FC<MediaRendererProps> = ({
     item,
     mediaInfo,
     containerWidth,

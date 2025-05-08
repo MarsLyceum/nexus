@@ -9,6 +9,7 @@ import { View, Pressable, Platform } from 'react-native';
 import { useImageResolution, fitContainer } from 'react-native-zoom-toolkit';
 
 import { NexusImage } from '../NexusImage';
+import { GifPlayer } from '../GifPlayer';
 
 export type ComputerImageRendererProps = {
     uri: string;
@@ -139,7 +140,8 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
         return (
             <View
                 style={{
-                    flex: 1,
+                    width: containerWidth,
+                    height: containerHeight,
                     justifyContent: 'center',
                     alignItems: 'center',
                 }}
@@ -156,13 +158,21 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
                     ref={imageWrapperRef}
                     onLayout={handleLayout}
                 >
-                    <NexusImage
-                        source={uri}
-                        contentFit="cover"
-                        width={nonZoomedSize.width}
-                        height={nonZoomedSize.height}
-                        alt="Computer image preview"
-                    />
+                    {uri.toLowerCase().endsWith('.gif') ? (
+                        <GifPlayer
+                            source={uri}
+                            width={nonZoomedSize.width}
+                            height={nonZoomedSize.height}
+                        />
+                    ) : (
+                        <NexusImage
+                            source={uri}
+                            contentFit="cover"
+                            width={nonZoomedSize.width}
+                            height={nonZoomedSize.height}
+                            alt="Computer image preview"
+                        />
+                    )}
                 </Pressable>
             </View>
         );
@@ -172,7 +182,12 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
     return (
         // @ts-expect-error styles
         <View
-            style={{ flex: 1, cursor: 'zoom-out', overflow: 'auto' }}
+            style={{
+                cursor: 'zoom-out',
+                overflow: 'auto',
+                width: containerWidth,
+                height: containerHeight,
+            }}
             ref={scrollRef}
         >
             <View
@@ -196,13 +211,21 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
                         cursor: 'zoom-out',
                     }}
                 >
-                    <NexusImage
-                        source={uri}
-                        contentFit="cover"
-                        width={zoomedSize.width}
-                        height={zoomedSize.height}
-                        alt="Computer image preview zoomed"
-                    />
+                    {uri.toLowerCase().endsWith('.gif') ? (
+                        <GifPlayer
+                            source={uri}
+                            width={zoomedSize.width}
+                            height={zoomedSize.height}
+                        />
+                    ) : (
+                        <NexusImage
+                            source={uri}
+                            contentFit="cover"
+                            width={zoomedSize.width}
+                            height={zoomedSize.height}
+                            alt="Computer image preview zoomed"
+                        />
+                    )}
                 </Pressable>
             </View>
         </View>

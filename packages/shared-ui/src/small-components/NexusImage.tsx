@@ -108,6 +108,8 @@ export const NexusImage = (props: NexusImageProps) => {
     const originalUri = typeof source === 'string' ? source : source.uri;
     const fallbackUri = `https://images.weserv.nl/?url=${encodeURIComponent(originalUri)}`;
 
+    const isGif = /\.gif$/i.test(originalUri);
+
     const [imageUri, setImageUri] = useState(originalUri);
     const [didFallback, setDidFallback] = useState(false);
 
@@ -123,6 +125,13 @@ export const NexusImage = (props: NexusImageProps) => {
 
     useEffect(() => {
         let stillMounted = true;
+
+        if (isGif) {
+            setDidFallback(false);
+            setImageUri(originalUri);
+            return;
+        }
+
         setDidFallback(false); // reset if originalUri ever changes
         setImageUri(originalUri); // start fresh
 

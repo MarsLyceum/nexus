@@ -132,15 +132,7 @@ export const MessageContent: React.FC<MessageContentProps> = ({
                             );
 
                             return (
-                                <TouchableOpacity
-                                    key={index}
-                                    onPress={() =>
-                                        onAttachmentPress(
-                                            message.attachmentUrls ?? [],
-                                            index
-                                        )
-                                    }
-                                >
+                                <View key={index}>
                                     {info && info.type === 'video' ? (
                                         <NexusVideo
                                             source={{ uri: url }}
@@ -157,18 +149,28 @@ export const MessageContent: React.FC<MessageContentProps> = ({
                                             contentFit="cover"
                                         />
                                     ) : info && info.type === 'image' ? (
-                                        <NexusImage
-                                            source={url}
-                                            style={{
-                                                ...styles.messageAttachmentImage,
-                                            }}
-                                            contentFit="cover"
-                                            width={computedSize.width}
-                                            height={computedSize.height}
-                                            alt="Message attachment image"
-                                        />
+                                        <TouchableOpacity
+                                            onPress={() =>
+                                                onAttachmentPress(
+                                                    message.attachmentUrls ??
+                                                        [],
+                                                    index
+                                                )
+                                            }
+                                        >
+                                            <NexusImage
+                                                source={url}
+                                                style={{
+                                                    ...styles.messageAttachmentImage,
+                                                }}
+                                                contentFit="cover"
+                                                width={computedSize.width}
+                                                height={computedSize.height}
+                                                alt="Message attachment image"
+                                            />
+                                        </TouchableOpacity>
                                     ) : undefined}
-                                </TouchableOpacity>
+                                </View>
                             );
                         })}
                     </View>

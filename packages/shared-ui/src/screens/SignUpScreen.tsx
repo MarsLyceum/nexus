@@ -15,7 +15,11 @@ import { isEmail } from 'validator';
 import { FontAwesome } from '@expo/vector-icons';
 import { useApolloClient } from '@apollo/client';
 
-import { REFRESH_TOKEN_KEY, ACCESS_TOKEN_KEY } from '../constants';
+import {
+    REFRESH_TOKEN_KEY,
+    ACCESS_TOKEN_KEY,
+    REFRESH_TOKEN_EXPIRES_AT_KEY,
+} from '../constants';
 import { useNexusRouter } from '../hooks';
 import { REGISTER_USER_MUTATION } from '../queries';
 import { HorizontalLine } from '../images';
@@ -226,16 +230,22 @@ export function SignUpScreen(): JSX.Element {
                 token,
                 accessToken,
                 refreshToken,
+                refreshTokenExpiresAt,
                 ...user
             }: User & {
                 token: string;
                 accessToken: string;
                 refreshToken: string;
+                refreshTokenExpiresAt: string;
             } = result.data.registerUser;
 
             if (Platform.OS !== 'web') {
                 await setItemSecure(ACCESS_TOKEN_KEY, accessToken);
                 await setItemSecure(REFRESH_TOKEN_KEY, refreshToken);
+                await setItemSecure(
+                    REFRESH_TOKEN_EXPIRES_AT_KEY,
+                    refreshTokenExpiresAt
+                );
             }
 
             updateUserData(user);

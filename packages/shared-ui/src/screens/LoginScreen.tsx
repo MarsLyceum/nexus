@@ -13,7 +13,11 @@ import Svg, { Path } from 'react-native-svg';
 import { isEmail } from 'validator';
 import { useApolloClient } from '@apollo/client';
 
-import { REFRESH_TOKEN_KEY, ACCESS_TOKEN_KEY } from '../constants';
+import {
+    REFRESH_TOKEN_KEY,
+    ACCESS_TOKEN_KEY,
+    REFRESH_TOKEN_EXPIRES_AT_KEY,
+} from '../constants';
 import { useNexusRouter } from '../hooks';
 import { loginUser, useAppDispatch } from '../redux';
 import { LOGIN_USER } from '../queries';
@@ -237,19 +241,28 @@ export function LoginScreen(): JSX.Element {
                     token: string;
                     accessToken: string;
                     refreshToken: string;
+                    refreshTokenExpiresAt: string;
                 };
             }>({
                 mutation: LOGIN_USER,
                 variables: { email: emailInner, password: passwordInner },
             });
             if (result.data?.loginUser) {
-                const { token, refreshToken, accessToken, ...user } =
-                    result.data.loginUser;
+                const {
+                    token,
+                    refreshToken,
+                    accessToken,
+                    refreshTokenExpiresAt,
+                    ...user
+                } = result.data.loginUser;
 
                 if (Platform.OS !== 'web') {
-                    console.log('ACCESS_TOKEN_KEY:', ACCESS_TOKEN_KEY);
                     await setItemSecure(ACCESS_TOKEN_KEY, accessToken);
                     await setItemSecure(REFRESH_TOKEN_KEY, refreshToken);
+                    await setItemSecure(
+                        REFRESH_TOKEN_EXPIRES_AT_KEY,
+                        refreshTokenExpiresAt
+                    );
                 }
 
                 updateUserData(user);

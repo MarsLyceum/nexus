@@ -11,6 +11,9 @@ export const LOGIN_USER = gql`
             phoneNumber
             status
             token
+            accessToken
+            refreshToken
+            refreshTokenExpiresAt
         }
     }
 `;

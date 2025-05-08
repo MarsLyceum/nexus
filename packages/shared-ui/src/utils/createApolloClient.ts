@@ -11,7 +11,11 @@ import { createClient } from 'graphql-ws';
 import createUploadLink from 'apollo-upload-client/createUploadLink.mjs';
 
 import { REFRESH_TOKEN } from '../queries';
-import { REFRESH_TOKEN_KEY, ACCESS_TOKEN_KEY } from '../constants';
+import {
+    REFRESH_TOKEN_KEY,
+    ACCESS_TOKEN_KEY,
+    REFRESH_TOKEN_EXPIRES_AT_KEY,
+} from '../constants';
 
 import { getItemSecure, setItemSecure } from './storageUtil';
 import { getSafeWindow } from './getSafeWindow';
@@ -93,6 +97,20 @@ export const createApolloClient = () => {
             if (authError) {
                 return new Observable((observer) => {
                     void (async () => {
+                        const rawExpiresAt = await getItemSecure(
+                            REFRESH_TOKEN_EXPIRES_AT_KEY
+                        );
+                        const expiresAt = rawExpiresAt
+                            ? Number.parseInt(rawExpiresAt, 10)
+                            : 0;
+
+                        if (!expiresAt || Date.now() / 1000 >= expiresAt) {
+                            await setItemSecure(ACCESS_TOKEN_KEY, '');
+                            await setItemSecure(REFRESH_TOKEN_KEY, '');
+                            observer.complete();
+                            return;
+                        }
+
                         try {
                             const refreshToken =
                                 Platform.OS !== 'web'
@@ -111,6 +129,7 @@ export const createApolloClient = () => {
                                 const {
                                     accessToken: newAccessToken,
                                     refreshToken: newRefreshToken,
+                                    refreshTokenExpiresAt,
                                 } = response.data.refreshToken;
 
                                 await setItemSecure(
@@ -120,6 +139,10 @@ export const createApolloClient = () => {
                                 await setItemSecure(
                                     REFRESH_TOKEN_KEY,
                                     newRefreshToken
+                                );
+                                await setItemSecure(
+                                    REFRESH_TOKEN_EXPIRES_AT_KEY,
+                                    refreshTokenExpiresAt
                                 );
                             }
 

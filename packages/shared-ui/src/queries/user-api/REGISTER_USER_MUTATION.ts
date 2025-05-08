@@ -25,6 +25,9 @@ export const REGISTER_USER_MUTATION = gql`
             phoneNumber
             status
             token
+            accessToken
+            refreshToken
+            refreshTokenExpiresAt
         }
     }
 `;

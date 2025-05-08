@@ -13,8 +13,12 @@ import { useNexusRouter } from '../hooks';
 import { RootState, useAppSelector, useAppDispatch, loadUser } from '../redux';
 import { PeepsLogo } from '../images/PeepsLogo';
 import { PrimaryGradientButton, SecondaryButton } from '../buttons';
-import { getItemSecure } from '../utils';
-import { ACCESS_TOKEN_KEY } from '../constants';
+import { getItemSecure, setItemSecure } from '../utils';
+import {
+    ACCESS_TOKEN_KEY,
+    REFRESH_TOKEN_EXPIRES_AT_KEY,
+    REFRESH_TOKEN_KEY,
+} from '../constants';
 import { Footer } from '..';
 import { useTheme, Theme } from '../theme';
 
@@ -74,8 +78,21 @@ export function WelcomeScreen(): JSX.Element {
     useEffect(() => {
         void (async () => {
             if (Platform.OS !== 'web') {
+                const rawExpiresAt = await getItemSecure(
+                    REFRESH_TOKEN_EXPIRES_AT_KEY
+                );
+                const expiresAt = rawExpiresAt
+                    ? Number.parseInt(rawExpiresAt, 10)
+                    : 0;
+
+                if (!expiresAt || Date.now() / 1000 >= expiresAt) {
+                    await setItemSecure(ACCESS_TOKEN_KEY, '');
+                    await setItemSecure(REFRESH_TOKEN_KEY, '');
+                }
+
                 const token =
                     (await getItemSecure(ACCESS_TOKEN_KEY)) ?? undefined;
+
                 if (!token && router.getCurrentRoute() !== '/login') {
                     router.replace('/login');
                 }

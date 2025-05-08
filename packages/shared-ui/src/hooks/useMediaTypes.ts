@@ -17,7 +17,8 @@ export const useMediaTypes = (urls: string[]): { [url: string]: MediaInfo } => {
     );
 
     useEffect(() => {
-        urls.forEach((url) => {
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
+        urls.forEach(async (url) => {
             // Only process URLs that haven't been handled yet.
             if (!mediaInfo[url]) {
                 const originalUri = url;
@@ -29,6 +30,9 @@ export const useMediaTypes = (urls: string[]): { [url: string]: MediaInfo } => {
                     const type: MediaType = contentType.startsWith('video')
                         ? 'video'
                         : 'image';
+                    console.log('url:', url);
+                    console.log('contentType:', contentType);
+                    console.log('response:', response);
 
                     // eslint-disable-next-line promise/always-return
                     if (type === 'image') {
@@ -193,28 +197,51 @@ export const useMediaTypes = (urls: string[]): { [url: string]: MediaInfo } => {
                 };
 
                 // Fetch HEAD to determine the content type.
-                fetch(originalUri, { method: 'HEAD' })
-                    .then(handleFetch)
-                    .catch(() => {
-                        fetch(fallbackUri, { method: 'HEAD' })
-                            .then(handleFetch)
-                            .catch((error) => {
-                                console.error(
-                                    'Failed to fetch HEAD for',
-                                    url,
-                                    error
-                                );
-                                setMediaInfo((prev) => ({
-                                    ...prev,
-                                    [url]: {
-                                        type: 'image',
-                                        width: 300,
-                                        height: 300,
-                                        aspectRatio: 1,
-                                    },
-                                }));
-                            });
+                try {
+                    const response = await fetch(originalUri, {
+                        method: 'HEAD',
                     });
+                    handleFetch(response);
+                } catch (error) {
+                    console.error(
+                        'Failed to fetch HEAD for',
+                        originalUri,
+                        error
+                    );
+                    try {
+                        const response = await fetch(originalUri, {
+                            method: 'GET',
+                        });
+                        handleFetch(response);
+                    } catch (error_) {
+                        console.error(
+                            'Failed to fetch GET for',
+                            originalUri,
+                            error_
+                        );
+                        try {
+                            const response = await fetch(fallbackUri, {
+                                method: 'HEAD',
+                            });
+                            handleFetch(response);
+                        } catch (error__) {
+                            console.error(
+                                'Failed to fetch HEAD for',
+                                fallbackUri,
+                                error__
+                            );
+                            setMediaInfo((prev) => ({
+                                ...prev,
+                                [url]: {
+                                    type: 'image',
+                                    width: 300,
+                                    height: 300,
+                                    aspectRatio: 1,
+                                },
+                            }));
+                        }
+                    }
+                }
             }
         });
     }, [urls, mediaInfo]);

@@ -10,7 +10,7 @@ export function computeMediaSize(
     }
 
     const computedWidth = baseWidth;
-    const computedHeight = computedWidth * mediaAspectRatio;
+    const computedHeight = computedWidth / mediaAspectRatio;
 
     return { width: computedWidth, height: computedHeight };
 }

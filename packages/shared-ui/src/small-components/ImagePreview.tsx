@@ -19,7 +19,7 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({
 }) => {
     const [modalVisible, setModalVisible] = useState(false);
     const computedSize = computeMediaSize(
-        imageDimensions ? imageDimensions.height / imageDimensions.width : 1,
+        imageDimensions ? imageDimensions.width / imageDimensions.height : 1,
         containerWidth
     );
 

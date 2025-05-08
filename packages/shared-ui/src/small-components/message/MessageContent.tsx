@@ -154,7 +154,7 @@ export const MessageContent: React.FC<MessageContentProps> = ({
                                             muted={false}
                                             repeat
                                             paused
-                                            contentFit="contain"
+                                            contentFit="cover"
                                         />
                                     ) : info && info.type === 'image' ? (
                                         <NexusImage

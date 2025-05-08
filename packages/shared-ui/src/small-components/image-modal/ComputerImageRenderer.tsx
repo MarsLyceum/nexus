@@ -149,20 +149,28 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
 
     // Attach a document-level mousedown listener to dismiss the modal if clicking outside.
     useEffect(() => {
-        if (!visibleRect || !controlsRect) return;
+        if (!visibleRect || (isGif && !controlsRect)) return;
         const handleDocumentClick = (event: MouseEvent) => {
             const { clientX, clientY } = event;
             if (
-                (clientX < visibleRect.left ||
-                    clientX > visibleRect.right ||
-                    clientY < visibleRect.top ||
-                    clientY > visibleRect.bottom) &&
-                (clientX < controlsRect.left ||
-                    clientX > controlsRect.right ||
-                    clientY < controlsRect.top ||
-                    clientY > controlsRect.bottom)
+                clientX < visibleRect.left ||
+                clientX > visibleRect.right ||
+                clientY < visibleRect.top ||
+                clientY > visibleRect.bottom
             ) {
-                onClose();
+                if (
+                    isGif &&
+                    controlsRect &&
+                    (clientX < controlsRect.left ||
+                        clientX > controlsRect.right ||
+                        clientY < controlsRect.top ||
+                        clientY > controlsRect.bottom)
+                ) {
+                    onClose();
+                }
+                if (!isGif) {
+                    onClose();
+                }
             }
         };
         document.addEventListener('mousedown', handleDocumentClick);

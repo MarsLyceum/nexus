@@ -39,9 +39,13 @@ const isReactNativeWeb = environment === 'react-native-web';
 const isNext =
     environment === 'nextjs-client' || environment === 'nextjs-server';
 
+const useRemoteGraphql: boolean = isNext
+    ? process.env.NEXT_PUBLIC_USE_REMOTE_GRAPHQL === 'true'
+    : process.env.USE_REMOTE_GRAPHQL === 'true';
+
 // Set endpoints based on whether we are using the local server or the Cloud Run server.
 const graphqlApiGatewayEndpointHttp =
-    !onRemoteServer && !(process.env.USE_REMOTE_GRAPHQL === 'true')
+    !onRemoteServer && !useRemoteGraphql
         ? isNext
             ? 'http://localhost:3000/graphql'
             : isReactNativeWeb
@@ -50,7 +54,7 @@ const graphqlApiGatewayEndpointHttp =
         : 'https://dev.my-nexus.net/graphql';
 
 const graphqlApiGatewayEndpointWs =
-    !onRemoteServer && !(process.env.USE_REMOTE_GRAPHQL === 'true')
+    !onRemoteServer && !useRemoteGraphql
         ? isNext
             ? 'ws://localhost:3000/graphql'
             : isReactNativeWeb
@@ -97,18 +101,20 @@ export const createApolloClient = () => {
             if (authError) {
                 return new Observable((observer) => {
                     void (async () => {
-                        const rawExpiresAt = await getItemSecure(
-                            REFRESH_TOKEN_EXPIRES_AT_KEY
-                        );
-                        const expiresAt = rawExpiresAt
-                            ? Number.parseInt(rawExpiresAt, 10)
-                            : 0;
+                        if (Platform.OS !== 'web') {
+                            const rawExpiresAt = await getItemSecure(
+                                REFRESH_TOKEN_EXPIRES_AT_KEY
+                            );
+                            const expiresAt = rawExpiresAt
+                                ? Number.parseInt(rawExpiresAt, 10)
+                                : 0;
 
-                        if (!expiresAt || Date.now() / 1000 >= expiresAt) {
-                            await setItemSecure(ACCESS_TOKEN_KEY, '');
-                            await setItemSecure(REFRESH_TOKEN_KEY, '');
-                            observer.complete();
-                            return;
+                            if (!expiresAt || Date.now() / 1000 >= expiresAt) {
+                                await setItemSecure(ACCESS_TOKEN_KEY, '');
+                                await setItemSecure(REFRESH_TOKEN_KEY, '');
+                                observer.complete();
+                                return;
+                            }
                         }
 
                         try {

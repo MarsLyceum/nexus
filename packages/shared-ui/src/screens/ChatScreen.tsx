@@ -33,6 +33,7 @@ import {
     ChatInputContainer,
     NexusImage,
     MessageItem,
+    PatchedFlashList,
 } from '../small-components';
 import { useAppSelector, RootState, UserType } from '../redux';
 import {
@@ -106,7 +107,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
     }, [conversation]);
 
     // Create a ref for the FlatList scroll container.
-    const flatListRef = useRef<FlatList>(null);
+    const flatListRef = useRef<FlashList<Message>>(null);
 
     // Determine if the conversation is one-to-one.
     const isOneToOne =
@@ -477,7 +478,16 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
                             <SkeletonMessageItem key={index} />
                         ))
                     ) : (
-                        <FlatList
+                        // <FlatList
+                        //     ref={flatListRef}
+                        //     data={messages}
+                        //     inverted
+                        //     keyExtractor={(item) => item.id}
+                        //     renderItem={renderItem}
+                        //     onEndReached={handleLoadMore}
+                        //     onEndReachedThreshold={0.2}
+                        // />
+                        <PatchedFlashList
                             ref={flatListRef}
                             data={messages}
                             inverted

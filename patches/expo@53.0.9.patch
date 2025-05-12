@@ -1,0 +1,48 @@
+diff --git a/tsconfig.base.json b/tsconfig.base.json
+index 8ac46972e5fee979a012b8d66878775acf52704d..1a973212a29cef3ee4f7a43d92f0e6b749190257 100644
+--- a/tsconfig.base.json
++++ b/tsconfig.base.json
+@@ -1,21 +1,26 @@
+ {
+-  "$schema": "https://json.schemastore.org/tsconfig",
+-  "display": "Expo",
++    "$schema": "https://json.schemastore.org/tsconfig",
++    "display": "Expo",
+ 
+-  "compilerOptions": {
+-    "allowJs": true,
+-    "esModuleInterop": true,
+-    "jsx": "react-native",
+-    "lib": ["DOM", "ESNext"],
+-    "module": "preserve",
+-    "moduleDetection": "force",
+-    "moduleResolution": "bundler",
+-    "customConditions": ["react-native"],
+-    "noEmit": true,
+-    "resolveJsonModule": true,
+-    "skipLibCheck": true,
+-    "target": "ESNext"
+-  },
++    "compilerOptions": {
++        "allowJs": true,
++        "esModuleInterop": true,
++        "jsx": "react-native",
++        "lib": ["DOM", "ESNext"],
++        "module": "esnext",
++        "moduleDetection": "force",
++        "moduleResolution": "bundler",
++        "customConditions": ["react-native"],
++        "noEmit": true,
++        "resolveJsonModule": true,
++        "skipLibCheck": true,
++        "target": "ESNext"
++    },
+ 
+-  "exclude": ["node_modules", "babel.config.js", "metro.config.js", "jest.config.js"]
++    "exclude": [
++        "node_modules",
++        "babel.config.js",
++        "metro.config.js",
++        "jest.config.js"
++    ]
+ }

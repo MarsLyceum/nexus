@@ -1,38 +1,67 @@
-import React, { useEffect } from 'react';
+// PatchedFlashList.tsx
+import React, {
+    useEffect,
+    useRef,
+    useImperativeHandle,
+    forwardRef,
+} from 'react';
 import { Platform } from 'react-native';
 import { FlashList, FlashListProps } from '@shopify/flash-list';
 
-export function PatchedFlashList<T>(props: FlashListProps<T>) {
-    // eslint-disable-next-line consistent-return
-    useEffect(() => {
-        if (props.inverted && Platform.OS === 'web') {
-            // Use nativeID to find the DOM element.
-            // Ensure your FlashList has nativeID="chat-items"
-            const node = document.querySelector('#chat-items');
-            if (node) {
-                const wheelHandler = (e: WheelEvent) => {
-                    // Invert the wheel deltas
-                    const deltaY = -e.deltaY;
-                    const deltaX = -e.deltaX;
-                    node.scrollBy({
-                        top: deltaY,
-                        left: deltaX,
-                        behavior: 'auto',
-                    });
-                    e.preventDefault();
-                };
-                // @ts-expect-error web event
-                node.addEventListener('wheel', wheelHandler, {
-                    passive: false,
-                });
-                return () => {
-                    // @ts-expect-error web event
-                    node.removeEventListener('wheel', wheelHandler);
-                };
-            }
-        }
-    }, [props.inverted]);
+// keep your eslint-disable if you like
+// eslint-disable-next-line react/display-name
+function PatchedFlashListInner<T>(
+    { inverted, ...props }: FlashListProps<T>,
+    ref: React.Ref<FlashList<T>>
+) {
+    const listRef = useRef<FlashList<T>>(null);
+    // expose underlying FlashList methods to parent
+    useImperativeHandle(ref, () => listRef.current!);
 
-    // Removed the ref prop to avoid forwarding it to internal components.
-    return <FlashList {...props} nativeID="chat-items" />;
+    useEffect(() => {
+        console.log(
+            `[PatchedFlashList] inverted=${inverted}, platform=${Platform.OS}`
+        );
+        if (inverted && Platform.OS === 'web') {
+            const node = document.querySelector('#chat-items');
+            if (!node) {
+                console.warn('[PatchedFlashList] no #chat-items found');
+                return;
+            }
+
+            let ticking = false;
+            const wheelHandler = (e: WheelEvent) => {
+                e.preventDefault();
+                const deltaY = -e.deltaY;
+                if (!ticking) {
+                    window.requestAnimationFrame(() => {
+                        node.scrollBy({ top: deltaY, behavior: 'auto' });
+                        ticking = false;
+                    });
+                    ticking = true;
+                }
+            };
+
+            // @ts-expect-error DOM API
+            node.addEventListener('wheel', wheelHandler, { passive: false });
+            // eslint-disable-next-line consistent-return
+            return () => {
+                // @ts-expect-error DOM API
+                node.removeEventListener('wheel', wheelHandler);
+            };
+        }
+    }, [inverted]);
+
+    return (
+        <FlashList
+            {...(props as FlashListProps<T>)}
+            inverted={inverted}
+            ref={listRef}
+            nativeID="chat-items"
+        />
+    );
 }
+
+export const PatchedFlashList = forwardRef(PatchedFlashListInner) as <T>(
+    props: FlashListProps<T> & { ref?: React.Ref<FlashList<T>> }
+) => React.ReactElement | null;

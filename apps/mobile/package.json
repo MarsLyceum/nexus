@@ -79,7 +79,7 @@
         "eslint-plugin-react-native": "^4.1.0",
         "eslint-plugin-unicorn": "^51.0.1",
         "events": "^3.3.0",
-        "expo": "^53.0.8",
+        "expo": "^53.0.9",
         "expo-auth-session": "^6.1.5",
         "expo-calendar": "^14.1.4",
         "expo-constants": "^17.1.6",

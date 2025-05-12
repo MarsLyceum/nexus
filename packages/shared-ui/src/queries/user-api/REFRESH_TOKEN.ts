@@ -5,6 +5,7 @@ export const REFRESH_TOKEN = gql`
         refreshToken(refreshToken: $refreshToken) {
             accessToken
             refreshToken
+            refreshTokenExpiresAt
         }
     }
 `;

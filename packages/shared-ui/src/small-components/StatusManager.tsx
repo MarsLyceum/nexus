@@ -27,7 +27,7 @@ export const StatusManager: React.FC<{ children: ReactNode }> = ({
                     return;
                 }
             }
-            if (!user) return;
+            if (!user || !user.id) return;
             // Determine effective status based on DND preference
             let effectiveStatus = status;
             if (

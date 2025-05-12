@@ -68,49 +68,42 @@ function createStyles(theme: Theme) {
     });
 }
 
-export function WelcomeScreen(): JSX.Element {
+export function WelcomeScreen(): React.JSX.Element {
     const dispatch = useAppDispatch();
     const user = useAppSelector((state: RootState) => state.user.user);
-    const router = useNexusRouter();
+    const { isFocused, replace, getCurrentRoute, push } = useNexusRouter();
     const { theme } = useTheme();
     const styles = useMemo(() => createStyles(theme), [theme]);
 
     useEffect(() => {
+        dispatch(loadUser());
+    }, [dispatch]);
+
+    useEffect(() => {
+        if (!isFocused('/welcome')) return;
+
         void (async () => {
             if (Platform.OS !== 'web') {
-                const rawExpiresAt = await getItemSecure(
-                    REFRESH_TOKEN_EXPIRES_AT_KEY
-                );
-                const expiresAt = rawExpiresAt
-                    ? Number.parseInt(rawExpiresAt, 10)
-                    : 0;
-
+                const raw = await getItemSecure(REFRESH_TOKEN_EXPIRES_AT_KEY);
+                const expiresAt = raw ? Number.parseInt(raw, 10) : 0;
                 if (!expiresAt || Date.now() / 1000 >= expiresAt) {
                     await setItemSecure(ACCESS_TOKEN_KEY, '');
                     await setItemSecure(REFRESH_TOKEN_KEY, '');
                 }
 
-                const token =
-                    (await getItemSecure(ACCESS_TOKEN_KEY)) ?? undefined;
-
-                if (!token && router.getCurrentRoute() !== '/login') {
-                    router.replace('/login');
+                const token = (await getItemSecure(ACCESS_TOKEN_KEY)) || '';
+                if (!token && getCurrentRoute() !== '/login') {
+                    replace('/login');
+                    return;
                 }
-                if (user && token && router.getCurrentRoute() !== '/') {
-                    router.replace('/');
+                if (user && token && getCurrentRoute() !== '/') {
+                    replace('/');
                 }
-            }
-            if (
-                Platform.OS === 'web' &&
-                user &&
-                router.getCurrentRoute() !== '/'
-            ) {
-                router.replace('/');
+            } else if (user && getCurrentRoute() !== '/') {
+                replace('/');
             }
         })();
-
-        dispatch(loadUser());
-    }, [dispatch, router, user]);
+    }, [replace, isFocused, getCurrentRoute, user]);
 
     return (
         <SafeAreaView style={styles.outerContainer}>
@@ -124,12 +117,12 @@ export function WelcomeScreen(): JSX.Element {
                     <PrimaryGradientButton
                         style={styles.topButton}
                         title="Create an account"
-                        onPress={() => router.push('/signup')}
+                        onPress={() => push('/signup')}
                     />
                     <SecondaryButton
                         style={styles.bottomButton}
                         title="Log in"
-                        onPress={() => router.push('/login')}
+                        onPress={() => push('/login')}
                     />
                 </View>
                 <View style={styles.footerContainer}>

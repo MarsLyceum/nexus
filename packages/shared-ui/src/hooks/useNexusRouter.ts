@@ -6,7 +6,11 @@ import {
     usePathname,
     useSearchParams,
 } from 'next/navigation';
-import { useNavigation, StackActions } from '@react-navigation/native';
+import {
+    useNavigation,
+    CommonActions,
+    NavigationState,
+} from '@react-navigation/native';
 import { Platform } from 'react-native';
 import { detectEnvironment, Environment } from '../utils';
 
@@ -18,6 +22,7 @@ export type NexusRouter = {
     replace: (path: string, params?: Record<string, any>) => void;
     goBack: () => void;
     getCurrentRoute: () => string;
+    isFocused: (path: string) => boolean;
 };
 
 // Helper to build a URL with query parameters for Next.js.
@@ -64,6 +69,7 @@ export function useNexusRouter(): NexusRouter {
                     'getCurrentRoute is not supported on the server side.'
                 );
             },
+            isFocused: () => true,
         };
     }
 
@@ -77,6 +83,8 @@ export function useNexusRouter(): NexusRouter {
             searchParams.toString().length > 0
                 ? `${pathname}?${searchParams.toString()}`
                 : pathname;
+
+        const getCurrentRoute = () => asPath;
 
         return {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -98,7 +106,8 @@ export function useNexusRouter(): NexusRouter {
                     router.push('/');
                 }
             },
-            getCurrentRoute: () => asPath,
+            getCurrentRoute,
+            isFocused: (path: string) => getCurrentRoute() === path,
         };
     }
 
@@ -121,6 +130,26 @@ export function useNexusRouter(): NexusRouter {
             return normalized;
         };
 
+        const findActiveRouteName = (state: NavigationState): string => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const route = state.routes[state.index] as any;
+            // if there’s a nested state, dig in
+            if (route.state) {
+                return findActiveRouteName(route.state as NavigationState);
+            }
+            return route.name;
+        };
+
+        const getCurrentRoute = () => {
+            const state = navigation.getState();
+            if (state) {
+                const name = findActiveRouteName(state);
+                return name === DEFAULT_ROOT_ROUTE ? '/' : `/${name}`;
+            }
+
+            throw new Error('unknown route');
+        };
+
         return {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             push: (path: string, params?: Record<string, any>) => {
@@ -140,7 +169,10 @@ export function useNexusRouter(): NexusRouter {
                 const normalizedPath = normalizePath(path);
                 if (navigation.dispatch) {
                     navigation.dispatch(
-                        StackActions.replace(normalizedPath, params)
+                        CommonActions.reset({
+                            index: 0,
+                            routes: [{ name: normalizedPath, params }],
+                        })
                     );
                 } else {
                     // @ts-expect-error navigation
@@ -171,14 +203,8 @@ export function useNexusRouter(): NexusRouter {
                     navigation.navigate('welcome');
                 }
             },
-            getCurrentRoute: () => {
-                const state = navigation.getState();
-                const route = state?.routes[state?.index ?? 0];
-                if (route?.name) {
-                    return `/${route?.name}`;
-                }
-                throw new Error('unknown route');
-            },
+            getCurrentRoute,
+            isFocused: (path: string) => getCurrentRoute() === path,
         };
     }
 

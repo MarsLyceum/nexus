@@ -1,6 +1,12 @@
 // utils/apolloClient.ts
 
-import { ApolloClient, InMemoryCache, from, split } from '@apollo/client';
+import {
+    ApolloClient,
+    FetchResult,
+    InMemoryCache,
+    from,
+    split,
+} from '@apollo/client';
 import { onError } from '@apollo/client/link/error';
 import { setContext } from '@apollo/client/link/context';
 import { getMainDefinition, Observable } from '@apollo/client/utilities';
@@ -62,7 +68,7 @@ const graphqlApiGatewayEndpointWs =
               : 'ws://192.168.1.48:4000/graphql'
         : 'wss://dev.my-nexus.net/graphql';
 
-export const createApolloClient = () => {
+export const createApolloClient = (serverCookie?: string) => {
     let client!: ApolloClient<unknown>;
 
     const authLink = setContext(async (_, { headers }) => {
@@ -76,9 +82,12 @@ export const createApolloClient = () => {
             headers: {
                 ...headers,
                 ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                ...(serverCookie ? { cookie: serverCookie } : {}),
             },
         };
     });
+
+    let hasRefreshed = false;
 
     // eslint-disable-next-line consistent-return
     const errorLink = onError(
@@ -100,6 +109,17 @@ export const createApolloClient = () => {
             );
             if (authError) {
                 return new Observable((observer) => {
+                    // only try once per operation
+                    if (hasRefreshed) {
+                        console.warn(
+                            '[auth] already retried refresh, giving up'
+                        );
+                        observer.error(authError);
+                        return;
+                    }
+
+                    hasRefreshed = true;
+
                     void (async () => {
                         if (Platform.OS !== 'web') {
                             const rawExpiresAt = await getItemSecure(
@@ -128,6 +148,13 @@ export const createApolloClient = () => {
                                 mutation: REFRESH_TOKEN,
                                 variables: { refreshToken },
                             });
+                            if (!response.data?.refreshToken) {
+                                console.warn(
+                                    '[auth] refreshToken mutation returned no data'
+                                );
+                                observer.error(new Error('Refresh failed'));
+                                return;
+                            }
                             if (
                                 Platform.OS !== 'web' &&
                                 response.data?.refreshToken
@@ -153,8 +180,10 @@ export const createApolloClient = () => {
                             }
 
                             forward(operation).subscribe({
-                                next: (result) => observer.next(result),
-                                error: (err) => observer.error(err),
+                                next: (result: FetchResult) =>
+                                    observer.next(result),
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                error: (err: any) => observer.error(err),
                                 complete: () => observer.complete(),
                             });
                         } catch (error) {

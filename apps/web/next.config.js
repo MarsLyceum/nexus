@@ -107,25 +107,26 @@ const nextConfig = {
         ),
     },
 
-    async rewrites() {
-        const LOCAL = 'http://localhost:4000';
-        const REMOTE =
-            'https://nexus-web-service-197277044151.us-west1.run.app';
+    // async rewrites() {
+    //     const LOCAL = 'http://localhost:4000';
+    //     const REMOTE =
+    //         'https://nexus-web-service-197277044151.us-west1.run.app';
 
-        // if in production *or* you explicitly requested remote, use REMOTE
-        const forceRemote =
-            process.env.NODE_ENV === 'production' ||
-            process.env.USE_REMOTE_GRAPHQL === 'true';
+    //     // if in production *or* you explicitly requested remote, use REMOTE
+    //     const forceRemote =
+    //         (process.env.NODE_ENV === 'production' &&
+    //             !(process.env.LOCAL_BUILD === 'true')) ||
+    //         process.env.USE_REMOTE_GRAPHQL === 'true';
 
-        const target = forceRemote ? REMOTE : LOCAL;
+    //     const target = forceRemote ? REMOTE : LOCAL;
 
-        return [
-            {
-                source: '/graphql/:path*',
-                destination: `${target}/graphql/:path*`,
-            },
-        ];
-    },
+    //     return [
+    //         {
+    //             source: '/graphql/:path*',
+    //             destination: `${target}/graphql/:path*`,
+    //         },
+    //     ];
+    // },
 
     experimental: {
         esmExternals: true,

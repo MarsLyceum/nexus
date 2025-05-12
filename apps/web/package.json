@@ -6,6 +6,7 @@
     "debug": "node server.js",
     "dev": "next dev",
     "build": "cross-env NODE_ENV=production next build",
+    "build-dev": "cross-env LOCAL_BUILD=true NODE_ENV=production next build",
     "deploy": "python deploy.py",
     "start": "next start",
     "lint": "next lint",

@@ -5,7 +5,14 @@ import React, {
     useCallback,
     useMemo,
 } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import {
+    View,
+    Text,
+    StyleSheet,
+    Pressable as RNPressable,
+    Platform,
+} from 'react-native';
+import { Pressable as RNGHPressable } from 'react-native-gesture-handler';
 
 import { useTheme, Theme } from '../theme';
 import { MessageContent, MessageEditor } from './message';
@@ -17,6 +24,8 @@ import { MessageOptionsModal } from './MessageOptionsModal';
 import { MoreOptionsMenu } from './MoreOptionsMenu';
 import { DeleteMessageConfirmationModal } from './DeleteMessageConfirmationModal';
 import { NexusImage } from './NexusImage';
+
+const Pressable = Platform.OS === 'web' ? RNPressable : RNGHPressable;
 
 export type MessageItemProps = {
     message: MessageWithAvatar | DirectMessageWithAvatar;

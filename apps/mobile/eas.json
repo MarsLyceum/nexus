@@ -5,7 +5,8 @@
     "build": {
         "development": {
             "env": {
-                "EXPO_USE_BRIDGLESS_ARCHITECTURE": "true"
+                "EXPO_USE_BRIDGLESS_ARCHITECTURE": "true",
+                "EXPO_USE_PNPM": "1"
             }
         },
         "preview": {

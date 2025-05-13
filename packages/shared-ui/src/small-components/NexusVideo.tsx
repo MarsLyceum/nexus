@@ -1,5 +1,7 @@
 import React from 'react';
 import { useVideoPlayer, VideoView } from 'expo-video';
+import { Platform } from 'react-native';
+import { createNativeWrapper } from 'react-native-gesture-handler';
 
 type NexusVideoProps = {
     source: { uri: string };
@@ -11,6 +13,9 @@ type NexusVideoProps = {
     contentFit?: 'contain' | 'cover' | 'fill';
     controls?: boolean;
 };
+
+const VideoComponent =
+    Platform.OS === 'web' ? VideoView : createNativeWrapper(VideoView);
 
 export const NexusVideo: React.FC<NexusVideoProps> = ({
     source,
@@ -34,9 +39,14 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
         }
     });
 
+    const togglePlayback = () => {
+        if (player.playing) player.pause();
+        else player.play();
+    };
+
     // Render the VideoView from expo-video.
     return (
-        <VideoView
+        <VideoComponent
             style={style}
             player={player}
             contentFit={contentFit}

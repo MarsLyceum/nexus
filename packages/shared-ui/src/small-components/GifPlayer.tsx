@@ -6,30 +6,18 @@ import React, {
     useCallback,
     useMemo,
 } from 'react';
-import {
-    Platform,
-    View,
-    TouchableOpacity,
-    StyleSheet,
-    Text,
-} from 'react-native';
+import { Platform, View } from 'react-native';
 import {
     Canvas as SkiaCanvas,
-    useCanvasRef,
     Image as SkiaImage,
     Skia,
     AlphaType,
     ColorType,
     useClock,
 } from '@shopify/react-native-skia';
-import Slider from '@react-native-community/slider';
+import { useSharedValue, useDerivedValue } from 'react-native-reanimated';
+
 import { useGifFrames } from '../hooks';
-import { useTheme } from '../theme';
-import {
-    useSharedValue,
-    useDerivedValue,
-    runOnJS,
-} from 'react-native-reanimated';
 
 type DOMCanvasCtx = CanvasRenderingContext2D;
 
@@ -195,16 +183,18 @@ export const GifPlayer: React.FC<GifPlayerProps> = ({
                         style={{ width: '100%', height: '100%' }}
                     />
                 ) : (
-                    <SkiaCanvas style={{ width, height }} opaque={false}>
-                        <SkiaImage
-                            image={skiaImages[frameIndex.value]}
-                            x={0}
-                            y={0}
-                            width={width}
-                            height={height}
-                            fit="fill"
-                        />
-                    </SkiaCanvas>
+                    skiaImages && (
+                        <SkiaCanvas style={{ width, height }} opaque={false}>
+                            <SkiaImage
+                                image={skiaImages[frameIndex.value]}
+                                x={0}
+                                y={0}
+                                width={width}
+                                height={height}
+                                fit="fill"
+                            />
+                        </SkiaCanvas>
+                    )
                 )}
             </View>
         </View>

@@ -13,6 +13,9 @@ export type UseGifFramesResult = {
     error?: Error;
 };
 
+type CacheEntry = { frames: GifFrame[]; totalDuration: number };
+const gifCache = new Map<string, CacheEntry>();
+
 export function useGifFrames(uri: string): UseGifFramesResult {
     const [frames, setFrames] = useState<GifFrame[]>([]);
     const [totalDuration, setTotalDuration] = useState(0);
@@ -20,6 +23,15 @@ export function useGifFrames(uri: string): UseGifFramesResult {
 
     useEffect(() => {
         let cancelled = false;
+
+        if (gifCache.has(uri)) {
+            const { frames: cachedFrames, totalDuration: cachedDuration } =
+                gifCache.get(uri)!;
+            setFrames(cachedFrames);
+            setTotalDuration(cachedDuration);
+            return;
+        }
+
         fetch(uri)
             .then((res) => res.arrayBuffer())
             .then((buffer) => {
@@ -43,6 +55,7 @@ export function useGifFrames(uri: string): UseGifFramesResult {
                 }
                 // eslint-disable-next-line promise/always-return
                 if (!cancelled) {
+                    gifCache.set(uri, { frames: out, totalDuration: sum });
                     setFrames(out);
                     setTotalDuration(sum);
                 }

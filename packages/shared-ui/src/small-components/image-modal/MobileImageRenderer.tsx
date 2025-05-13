@@ -156,6 +156,7 @@ export const MobileImageRenderer: React.FC<MobileImageRendererProps> = ({
                             width={imageWidth}
                             height={imageHeight}
                             position={position}
+                            playing={playing}
                         />
                     ) : (
                         <NexusImage

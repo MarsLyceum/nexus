@@ -1,5 +1,11 @@
 // GifPlayer.tsx
-import React, { useRef, useState, useEffect, useCallback } from 'react';
+import React, {
+    useRef,
+    useState,
+    useEffect,
+    useCallback,
+    useMemo,
+} from 'react';
 import {
     Platform,
     View,
@@ -7,12 +13,23 @@ import {
     StyleSheet,
     Text,
 } from 'react-native';
-import RNCanvas, {
-    CanvasRenderingContext2D as RNCanvasCtx,
-} from 'react-native-canvas';
+import {
+    Canvas as SkiaCanvas,
+    useCanvasRef,
+    Image as SkiaImage,
+    Skia,
+    AlphaType,
+    ColorType,
+    useClock,
+} from '@shopify/react-native-skia';
 import Slider from '@react-native-community/slider';
 import { useGifFrames } from '../hooks';
 import { useTheme } from '../theme';
+import {
+    useSharedValue,
+    useDerivedValue,
+    runOnJS,
+} from 'react-native-reanimated';
 
 type DOMCanvasCtx = CanvasRenderingContext2D;
 
@@ -21,6 +38,7 @@ export type GifPlayerProps = {
     width: number;
     height: number;
     position: number;
+    playing: boolean;
 };
 
 export const GifPlayer: React.FC<GifPlayerProps> = ({
@@ -28,11 +46,60 @@ export const GifPlayer: React.FC<GifPlayerProps> = ({
     width,
     height,
     position,
+    playing,
 }) => {
     const { frames } = useGifFrames(source);
 
     const canvasRefWeb = useRef<HTMLCanvasElement>(null);
-    const canvasRefNative = useRef<RNCanvas>(null);
+
+    const positionSV = useSharedValue(position);
+    const playingSV = useSharedValue(playing);
+
+    const totalDuration = frames.reduce((sum, f) => sum + f.delay, 0);
+
+    const clock = useClock();
+
+    const delays = useMemo(() => frames.map((f) => f.delay), [frames]);
+    const skiaImages = useMemo(() => {
+        if (Platform.OS !== 'web') {
+            return frames.map((frame) => {
+                const {
+                    data,
+                    width: w,
+                    height: h,
+                } = frame.imageData as {
+                    data: Uint8ClampedArray;
+                    width: number;
+                    height: number;
+                };
+                const skData = Skia.Data.fromBytes(new Uint8Array(data.buffer));
+                return Skia.Image.MakeImage(
+                    {
+                        width: w,
+                        height: h,
+                        alphaType: AlphaType.Premul,
+                        colorType: ColorType.RGBA_8888,
+                    },
+                    skData,
+                    w * 4
+                );
+            });
+        }
+    }, [frames]);
+
+    useEffect(() => {
+        playingSV.value = playing;
+    }, [playing]);
+    useEffect(() => {
+        positionSV.value = position;
+    }, [position]);
+
+    const virtualPos = useDerivedValue(() => {
+        'worklet';
+        return playingSV.value
+            ? clock.value % totalDuration
+            : Math.min(Math.max(positionSV.value, 0), totalDuration);
+    }, [totalDuration]);
 
     // find current frame index by accumulating delays
     const getFrameIndex = useCallback(() => {
@@ -44,9 +111,21 @@ export const GifPlayer: React.FC<GifPlayerProps> = ({
         return frames.length - 1;
     }, [frames, position]);
 
+    const frameIndex = useDerivedValue(() => {
+        'worklet';
+        let acc = 0;
+        for (let i = 0; i < delays.length; i++) {
+            acc += delays[i];
+            if (virtualPos.value < acc) {
+                return i;
+            }
+        }
+        return delays.length - 1;
+    }, [delays, totalDuration]);
+
     // draw the frame
     const draw = useCallback(
-        async (ctx: RNCanvasCtx | DOMCanvasCtx) => {
+        async (ctx: DOMCanvasCtx) => {
             const idx = getFrameIndex();
             const frame = frames[idx];
             const targetW = width;
@@ -72,21 +151,14 @@ export const GifPlayer: React.FC<GifPlayerProps> = ({
                 const bitmap = await createImageBitmap(imgData);
 
                 ctx.clearRect(0, 0, targetW, targetH);
-                // @ts-expect-error bitmap
                 ctx.drawImage(bitmap, 0, 0, targetW, targetH);
-            } else {
-                // react-native-canvas putImageData returns a Promise
-                void (ctx as RNCanvasCtx).putImageData(imgData, 0, 0);
             }
         },
         [frames, getFrameIndex, width, height]
     );
 
     useEffect(() => {
-        const canvas =
-            Platform.OS === 'web'
-                ? canvasRefWeb.current
-                : canvasRefNative.current;
+        const canvas = Platform.OS === 'web' ? canvasRefWeb.current : undefined;
         if (!canvas) return;
 
         if (Platform.OS === 'web') {
@@ -94,20 +166,12 @@ export const GifPlayer: React.FC<GifPlayerProps> = ({
             const html = canvas as HTMLCanvasElement;
             html.width = width;
             html.height = height;
-        } else {
-            // react-native-canvas path
-            const rnCanvas = canvas as RNCanvas;
-            rnCanvas.width = width;
-            rnCanvas.height = height;
         }
     }, [width, height]);
 
     // whenever position or frames change, redraw
     useEffect(() => {
-        const canvas =
-            Platform.OS === 'web'
-                ? canvasRefWeb.current
-                : canvasRefNative.current;
+        const canvas = Platform.OS === 'web' ? canvasRefWeb.current : undefined;
         if (!canvas || frames.length === 0) return;
 
         if (Platform.OS === 'web') {
@@ -117,12 +181,6 @@ export const GifPlayer: React.FC<GifPlayerProps> = ({
             if (ctx) {
                 void draw(ctx);
             }
-        } else {
-            // react-native-canvas path
-            const rnCanvas = canvas as RNCanvas;
-            const ctx = rnCanvas.getContext('2d');
-            // react-native-canvas putImageData is async under the hood
-            void draw(ctx);
         }
     }, [position, frames, draw]);
 
@@ -137,10 +195,16 @@ export const GifPlayer: React.FC<GifPlayerProps> = ({
                         style={{ width: '100%', height: '100%' }}
                     />
                 ) : (
-                    <RNCanvas
-                        ref={canvasRefNative}
-                        style={{ width: '100%', height: '100%' }}
-                    />
+                    <SkiaCanvas style={{ width, height }} opaque={false}>
+                        <SkiaImage
+                            image={skiaImages[frameIndex.value]}
+                            x={0}
+                            y={0}
+                            width={width}
+                            height={height}
+                            fit="fill"
+                        />
+                    </SkiaCanvas>
                 )}
             </View>
         </View>

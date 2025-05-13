@@ -216,6 +216,7 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
                             width={nonZoomedSize.width}
                             height={nonZoomedSize.height}
                             position={position}
+                            playing={playing}
                         />
                     ) : (
                         <NexusImage
@@ -285,6 +286,7 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
                                 width={zoomedSize.width}
                                 height={zoomedSize.height}
                                 position={position}
+                                playing={playing}
                             />
                         ) : (
                             <NexusImage

@@ -82,7 +82,7 @@
         "axios": "^1.7.9",
         "bcrypt": "^5.1.1",
         "crypto-browserify": "^3.12.1",
-        "eas-cli": "^9.2.0",
+        "eas-cli": "^16.6.1",
         "emoji-dictionary": "^1.0.12",
         "eslint": "^8.57.1",
         "eslint-config-airbnb-typescript": "^18.0.0",

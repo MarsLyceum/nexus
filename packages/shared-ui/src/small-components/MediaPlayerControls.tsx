@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { useTheme } from '../theme';
-import { Play, Pause } from '../icons';
+import { Play, Pause, Volume, VolumeMuted } from '../icons';
 
 const formatTime = (ms: number) => {
     const totalSeconds = Math.floor(ms / 1000);
@@ -20,9 +20,11 @@ const formatTime = (ms: number) => {
 
 export type MediaPlayerControlsProps = {
     playing: boolean;
+    volumeMuted?: boolean;
     position: number;
     totalDuration: number;
     onTogglePlay: () => void;
+    onToggleVolumeMuted?: () => void;
     onSlidingStart: () => void;
     onValueChange: (val: number) => void;
     onSlidingComplete: (val: number) => void;
@@ -36,9 +38,11 @@ export const MediaPlayerControls = forwardRef<
     (
         {
             playing,
+            volumeMuted,
             position,
             totalDuration,
             onTogglePlay,
+            onToggleVolumeMuted,
             onSlidingStart,
             onValueChange,
             onSlidingComplete,
@@ -73,6 +77,10 @@ export const MediaPlayerControls = forwardRef<
                 <Text style={[styles.time, { color: theme.colors.ActiveText }]}>
                     {formatTime(position)} / {formatTime(totalDuration)}
                 </Text>
+
+                <TouchableOpacity onPress={onToggleVolumeMuted}>
+                    {volumeMuted ? <VolumeMuted /> : <Volume />}
+                </TouchableOpacity>
             </View>
         );
     }
@@ -91,5 +99,6 @@ const styles = StyleSheet.create({
     },
     time: {
         fontSize: 14,
+        marginRight: 8,
     },
 });

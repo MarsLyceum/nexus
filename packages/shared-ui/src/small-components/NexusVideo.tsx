@@ -32,6 +32,7 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
 
     // internal playback state
     const [playing, setPlaying] = useState(!paused);
+    const [volumeMuted, setVolumeMuted] = useState(muted);
     const [position, setPosition] = useState(0); // ms
     const [totalDuration, setTotalDuration] = useState(0); // ms
 
@@ -39,12 +40,19 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
     const togglePlay = useCallback(() => {
         setPlaying((p) => !p);
     }, []);
+
+    const toggleVolumeMuted = useCallback(() => {
+        setVolumeMuted((m) => !m);
+    }, []);
+
     const onSeekStart = useCallback(() => {
         // optionally pause while dragging
     }, []);
+
     const onSeek = useCallback((ms: number) => {
         setPosition(ms);
     }, []);
+
     const onSeekComplete = useCallback(
         (ms: number) => {
             setPosition(ms);
@@ -62,13 +70,17 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
         if (isWeb) {
             const v = webRef.current!;
             v.src = source.uri;
-            v.muted = muted;
             v.loop = repeat;
             setPlaying(!paused);
             if (paused) v.pause();
             else void v.play();
         }
-    }, [source.uri, muted, repeat, paused, isWeb]);
+    }, [source.uri, repeat, paused, isWeb]);
+
+    useEffect(() => {
+        if (!isWeb) return;
+        webRef.current!.muted = volumeMuted;
+    }, [volumeMuted, isWeb]);
 
     // update position & duration from native events
     // eslint-disable-next-line consistent-return
@@ -100,6 +112,12 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
             }
         }
     }, [playing, isWeb]);
+
+    useEffect(() => {
+        if (isWeb && webRef.current) {
+            webRef.current.muted = volumeMuted;
+        }
+    }, [volumeMuted, isWeb]);
 
     if (isWeb) {
         const objectFit = contentFit;
@@ -133,9 +151,11 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
                     >
                         <MediaPlayerControls
                             playing={playing}
+                            volumeMuted={volumeMuted}
                             position={position}
                             totalDuration={totalDuration}
                             onTogglePlay={togglePlay}
+                            onToggleVolumeMuted={toggleVolumeMuted}
                             onSlidingStart={onSeekStart}
                             onValueChange={onSeek}
                             onSlidingComplete={onSeekComplete}
@@ -170,7 +190,7 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
             <Video
                 source={source}
                 style={{ width: '100%', height: '100%' }}
-                muted={muted}
+                muted={volumeMuted}
                 repeat={repeat}
                 paused={!playing}
                 resizeMode={resizeMode}
@@ -192,9 +212,11 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
                 >
                     <MediaPlayerControls
                         playing={playing}
+                        volumeMuted={volumeMuted}
                         position={position}
                         totalDuration={totalDuration}
                         onTogglePlay={togglePlay}
+                        onToggleVolumeMuted={toggleVolumeMuted}
                         onSlidingStart={onSeekStart}
                         onValueChange={onSeek}
                         onSlidingComplete={onSeekComplete}

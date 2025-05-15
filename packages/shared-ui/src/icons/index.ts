@@ -36,3 +36,5 @@ export * from './UpArrow';
 export * from './User';
 export * from './Play';
 export * from './Pause';
+export * from './Volume';
+export * from './VolumeMuted';

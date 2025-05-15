@@ -1,22 +1,19 @@
 // apps/mobile/scripts/build-eas-local.js
 import { spawnSync } from 'child_process';
-import { resolve, join } from 'path';
+import { resolve } from 'path';
 import { config as loadEnv } from 'dotenv';
-import { renameSync } from 'fs';
+import { renameSync, rmSync, readdirSync } from 'fs';
 
-const projectDir = resolve(process.cwd()); // e.g. C:\…\apps\mobile or /home/you/.../apps/mobile
-const monorepoRoot = resolve(projectDir, '..', '..'); // go up two levels to your repo root
-
+// Setup paths & env
+const projectDir = resolve(process.cwd());
+const monorepoRoot = resolve(projectDir, '..', '..');
 loadEnv({ path: resolve(monorepoRoot, '.env.local') });
-
 process.env.EAS_PROJECT_ROOT = '..';
 
 const workspaceFile = resolve(projectDir, 'pnpm-workspace.yaml');
 const buildWorkspaceFile = resolve(projectDir, 'pnpm-workspace.yaml.build');
 
-const uid = process.getuid(); // on Linux/WSL2
-const gid = process.getgid();
-
+// Swap in the build‑workspace file
 try {
     renameSync(buildWorkspaceFile, workspaceFile);
     console.log(`✔️  Swapped in ${buildWorkspaceFile} → ${workspaceFile}`);
@@ -25,36 +22,52 @@ try {
     process.exit(1);
 }
 
+// Detect OS
 const isWindows = process.platform === 'win32';
-const userFlags =
-    !isWindows && typeof process.getuid === 'function'
-        ? ['--user', `${process.getuid()}:${process.getgid()}`]
-        : [];
 
-const dockerArgs = [
-    'run',
-    '--rm',
-    ...userFlags,
-    `${uid}:${gid}`,
-    '--mount',
-    `type=bind,src=${monorepoRoot},target=/workspace`,
-    '-e',
-    `EXPO_TOKEN=${process.env.EXPO_TOKEN || ''}`,
-    '-w',
-    '/workspace/apps/mobile',
-    'eas-android-builder',
-    'build',
-    '--platform',
-    'android',
-    '--local',
-    '--non-interactive',
-    '--profile',
-    'development',
-];
+let result;
+if (isWindows) {
+    // ── Windows: use Docker build + fix ACLs ──
+    const dockerArgs = [
+        'run',
+        '--rm',
+        // no --user needed on Windows
+        '--mount',
+        `type=bind,src=${monorepoRoot},target=/workspace`,
+        '-e',
+        `EXPO_TOKEN=${process.env.EXPO_TOKEN || ''}`,
+        '-w',
+        '/workspace/apps/mobile',
+        'eas-android-builder',
+        'build',
+        '--platform',
+        'android',
+        '--local',
+        '--non-interactive',
+        '--profile',
+        'development',
+    ];
+    console.log('> docker', dockerArgs.join(' '));
+    result = spawnSync('docker', dockerArgs, { stdio: 'inherit' });
+} else {
+    // ── macOS / WSL / Linux: direct EAS build ──
+    console.log('> running eas build directly');
+    result = spawnSync(
+        'eas',
+        [
+            'build',
+            '--platform',
+            'android',
+            '--local',
+            '--non-interactive',
+            '--profile',
+            'development',
+        ],
+        { stdio: 'inherit' }
+    );
+}
 
-console.log('> docker', dockerArgs.join(' '));
-const result = spawnSync('docker', dockerArgs, { stdio: 'inherit' });
-
+// Restore the original build‑workspace file
 try {
     renameSync(workspaceFile, buildWorkspaceFile);
     console.log(`✔️  Restored ${workspaceFile} → ${buildWorkspaceFile}`);
@@ -63,16 +76,37 @@ try {
     process.exit(1);
 }
 
-// TODO: remove the node_modules folders and reinstall after running
-spawnSync(
-    'icacls',
-    [
-        `${monorepoRoot}\\apps\\mobile\\node_modules`,
-        '/grant',
-        `${process.env.USERNAME}:(OI)(CI)F`,
-        '/T',
-    ],
-    { stdio: 'inherit' }
-);
+try {
+    // paths to clean
+    const toDelete = [
+        resolve(monorepoRoot, 'node_modules'),
+        // apps/*/node_modules
+        ...readdirSync(resolve(monorepoRoot, 'apps')).map((dir) =>
+            resolve(monorepoRoot, 'apps', dir, 'node_modules')
+        ),
+        // packages/*/node_modules
+        ...readdirSync(resolve(monorepoRoot, 'packages')).map((dir) =>
+            resolve(monorepoRoot, 'packages', dir, 'node_modules')
+        ),
+    ];
+
+    toDelete.forEach((path) => {
+        rmSync(path, { recursive: true, force: true });
+        console.log(`🗑️  Removed ${path}`);
+    });
+
+    console.log('🔄  Running pnpm install in monorepo root…');
+    const install = spawnSync('pnpm', ['install'], {
+        cwd: monorepoRoot,
+        stdio: 'inherit',
+    });
+    if (install.status !== 0) {
+        console.error('❌  pnpm install failed');
+        process.exit(install.status);
+    }
+} catch (err) {
+    console.error('❌  Error during cleanup/install:', err);
+    process.exit(1);
+}
 
 process.exit(result.status ?? 1);

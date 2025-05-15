@@ -1,4 +1,4 @@
-// GifPlayerControls.tsx
+// MediaPlayerControls.tsx
 import React, { forwardRef } from 'react';
 import {
     View,
@@ -18,7 +18,7 @@ const formatTime = (ms: number) => {
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 };
 
-export type GifPlayerControlsProps = {
+export type MediaPlayerControlsProps = {
     playing: boolean;
     position: number;
     totalDuration: number;
@@ -29,9 +29,9 @@ export type GifPlayerControlsProps = {
 };
 
 // eslint-disable-next-line react/display-name
-export const GifPlayerControls = forwardRef<
+export const MediaPlayerControls = forwardRef<
     View,
-    GifPlayerControlsProps & ViewProps
+    MediaPlayerControlsProps & ViewProps
 >(
     (
         {
@@ -43,7 +43,7 @@ export const GifPlayerControls = forwardRef<
             onValueChange,
             onSlidingComplete,
             ...viewProps
-        }: GifPlayerControlsProps & ViewProps,
+        }: MediaPlayerControlsProps & ViewProps,
         ref
     ) => {
         const { theme } = useTheme();
@@ -54,10 +54,7 @@ export const GifPlayerControls = forwardRef<
                 ref={ref}
                 onLayout={viewProps.onLayout}
             >
-                <TouchableOpacity
-                    onPress={onTogglePlay}
-                    style={styles.playButton}
-                >
+                <TouchableOpacity onPress={onTogglePlay}>
                     {playing ? <Pause /> : <Play />}
                 </TouchableOpacity>
 
@@ -74,7 +71,7 @@ export const GifPlayerControls = forwardRef<
                 />
 
                 <Text style={[styles.time, { color: theme.colors.ActiveText }]}>
-                    {formatTime(position)}
+                    {formatTime(position)} / {formatTime(totalDuration)}
                 </Text>
             </View>
         );
@@ -87,14 +84,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginTop: 8,
         width: '100%',
-    },
-    playButton: {
-        width: 32,
-        height: 32,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0,0,0,0.6)',
-        borderRadius: 16,
     },
     slider: {
         flex: 1,

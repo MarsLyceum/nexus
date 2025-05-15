@@ -8,7 +8,7 @@ import {
 
 import { useGifPlayer } from '../../hooks';
 import { GifPlayer } from '../GifPlayer';
-import { GifPlayerControls } from '../GifPlayerControls';
+import { MediaPlayerControls } from '../MediaPlayerControls';
 import { NexusImage } from '../NexusImage';
 
 export type MobileImageRendererProps = {
@@ -173,7 +173,7 @@ export const MobileImageRenderer: React.FC<MobileImageRendererProps> = ({
                 <View style={{ flex: 1 }} />
             )}
             {isGif && (
-                <GifPlayerControls
+                <MediaPlayerControls
                     playing={playing}
                     position={position}
                     totalDuration={totalDuration}

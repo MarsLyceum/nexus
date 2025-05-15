@@ -11,7 +11,7 @@ import { useImageResolution, fitContainer } from 'react-native-zoom-toolkit';
 import { useGifPlayer } from '../../hooks';
 import { NexusImage } from '../NexusImage';
 import { GifPlayer } from '../GifPlayer';
-import { GifPlayerControls } from '../GifPlayerControls';
+import { MediaPlayerControls } from '../MediaPlayerControls';
 
 export type ComputerImageRendererProps = {
     uri: string;
@@ -229,7 +229,7 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
                     )}
                 </Pressable>
                 {isGif && (
-                    <GifPlayerControls
+                    <MediaPlayerControls
                         playing={playing}
                         position={position}
                         totalDuration={totalDuration}
@@ -302,7 +302,7 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
             </View>
 
             {isGif && (
-                <GifPlayerControls
+                <MediaPlayerControls
                     playing={playing}
                     position={position}
                     totalDuration={totalDuration}

@@ -1,11 +1,5 @@
 // GifPlayer.tsx
-import React, {
-    useRef,
-    useState,
-    useEffect,
-    useCallback,
-    useMemo,
-} from 'react';
+import React, { useRef, useEffect, useCallback, useMemo } from 'react';
 import { Platform, View } from 'react-native';
 import {
     Canvas as SkiaCanvas,

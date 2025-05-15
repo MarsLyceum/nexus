@@ -63,6 +63,7 @@ export function useGifFrames(uri: string): UseGifFramesResult {
             .catch((error_) => {
                 if (!cancelled) setError(error_);
             });
+        // eslint-disable-next-line consistent-return
         return () => {
             cancelled = true;
         };

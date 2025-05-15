@@ -1,9 +1,11 @@
 {
     "cli": {
-        "version": ">= 7.6.2"
+        "version": ">= 16.6.0",
+        "appVersionSource": "remote"
     },
     "build": {
         "development": {
+            "developmentClient": true,
             "env": {
                 "EXPO_USE_BRIDGLESS_ARCHITECTURE": "true",
                 "EXPO_USE_PNPM": "1"
@@ -14,12 +16,14 @@
                 "buildType": "apk"
             },
             "env": {
-                "EXPO_USE_BRIDGLESS_ARCHITECTURE": "true"
+                "EXPO_USE_BRIDGLESS_ARCHITECTURE": "true",
+                "EXPO_USE_PNPM": "1"
             }
         },
         "production": {
             "env": {
-                "EXPO_USE_BRIDGLESS_ARCHITECTURE": "true"
+                "EXPO_USE_BRIDGLESS_ARCHITECTURE": "true",
+                "EXPO_USE_PNPM": "1"
             }
         },
         "preview2": {
@@ -32,8 +36,7 @@
         },
         "preview4": {
             "distribution": "internal"
-        },
-        "production": {}
+        }
     },
     "submit": {
         "production": {}

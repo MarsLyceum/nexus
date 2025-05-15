@@ -1,5 +1,5 @@
 // MediaPlayerControls.tsx
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useState, useMemo, useRef, useEffect } from 'react';
 import {
     View,
     TouchableOpacity,
@@ -8,7 +8,7 @@ import {
     ViewProps,
 } from 'react-native';
 import Slider from '@react-native-community/slider';
-import { useTheme } from '../theme';
+import { useTheme, Theme } from '../theme';
 import { Play, Pause, Volume, VolumeMuted } from '../icons';
 
 const formatTime = (ms: number) => {
@@ -21,6 +21,7 @@ const formatTime = (ms: number) => {
 export type MediaPlayerControlsProps = {
     playing: boolean;
     volumeMuted?: boolean;
+    volumeLevel?: number;
     position: number;
     totalDuration: number;
     onTogglePlay: () => void;
@@ -28,6 +29,7 @@ export type MediaPlayerControlsProps = {
     onSlidingStart: () => void;
     onValueChange: (val: number) => void;
     onSlidingComplete: (val: number) => void;
+    onVolumeChange?: (v: number) => void;
 };
 
 // eslint-disable-next-line react/display-name
@@ -39,10 +41,12 @@ export const MediaPlayerControls = forwardRef<
         {
             playing,
             volumeMuted,
+            volumeLevel,
             position,
             totalDuration,
             onTogglePlay,
             onToggleVolumeMuted,
+            onVolumeChange,
             onSlidingStart,
             onValueChange,
             onSlidingComplete,
@@ -51,6 +55,27 @@ export const MediaPlayerControls = forwardRef<
         ref
     ) => {
         const { theme } = useTheme();
+        const [showVolumeSlider, setShowVolumeSlider] = useState(false);
+        const styles = useMemo(() => createStyles(theme), [theme]);
+
+        const SLIDER_HEIGHT = 120;
+        const volDragging = useRef(false);
+        const startY = useRef(0);
+        const startVol = useRef(volumeLevel);
+
+        useEffect(() => {
+            if (!volumeMuted && volumeLevel === 0 && onToggleVolumeMuted) {
+                onToggleVolumeMuted();
+            }
+            if (
+                volumeMuted &&
+                volumeLevel &&
+                volumeLevel > 0 &&
+                onToggleVolumeMuted
+            ) {
+                onToggleVolumeMuted();
+            }
+        }, [volumeLevel, onToggleVolumeMuted, volumeMuted]);
 
         return (
             <View
@@ -61,12 +86,12 @@ export const MediaPlayerControls = forwardRef<
                 <TouchableOpacity onPress={onTogglePlay}>
                     {playing ? <Pause /> : <Play />}
                 </TouchableOpacity>
-
                 <Slider
                     style={styles.slider}
                     minimumValue={0}
                     maximumValue={totalDuration}
                     value={position}
+                    step={1}
                     onSlidingStart={onSlidingStart}
                     onValueChange={onValueChange}
                     onSlidingComplete={onSlidingComplete}
@@ -77,28 +102,200 @@ export const MediaPlayerControls = forwardRef<
                 <Text style={[styles.time, { color: theme.colors.ActiveText }]}>
                     {formatTime(position)} / {formatTime(totalDuration)}
                 </Text>
+                <View
+                    // on web: open on hover
+                    onMouseEnter={() => setShowVolumeSlider(true)}
+                    onMouseLeave={() => setShowVolumeSlider(false)}
+                    // on native: open on press-in, close on press-out
+                    onTouchStart={() => setShowVolumeSlider(true)}
+                    onTouchEnd={() => setShowVolumeSlider(false)}
+                    style={styles.volumeWrapper}
+                >
+                    <TouchableOpacity onPress={onToggleVolumeMuted}>
+                        {volumeMuted ? <VolumeMuted /> : <Volume />}
+                    </TouchableOpacity>
 
-                <TouchableOpacity onPress={onToggleVolumeMuted}>
-                    {volumeMuted ? <VolumeMuted /> : <Volume />}
-                </TouchableOpacity>
+                    {showVolumeSlider && (
+                        <View
+                            style={styles.volumeSliderContainer}
+                            // start drag
+                            onMouseDown={(e: any) => {
+                                // begin drag
+                                volDragging.current = true;
+                                startY.current = e.clientY;
+                                startVol.current = volumeLevel ?? 0;
+                                onSlidingStart();
+
+                                // document‑level move & up
+                                const onDocMouseMove = (ev: MouseEvent) => {
+                                    if (!volDragging.current) return;
+                                    const dy = startY.current - ev.clientY;
+                                    const r =
+                                        startVol.current + dy / SLIDER_HEIGHT;
+                                    onVolumeChange?.(
+                                        Math.max(0, Math.min(1, r))
+                                    );
+                                };
+                                const onDocMouseUp = (ev: MouseEvent) => {
+                                    if (!volDragging.current) return;
+                                    volDragging.current = false;
+                                    document.removeEventListener(
+                                        'mousemove',
+                                        onDocMouseMove
+                                    );
+                                    document.removeEventListener(
+                                        'mouseup',
+                                        onDocMouseUp
+                                    );
+                                    const dy = startY.current - ev.clientY;
+                                    const r =
+                                        startVol.current + dy / SLIDER_HEIGHT;
+                                    onSlidingComplete(
+                                        Math.max(0, Math.min(1, r))
+                                    );
+                                };
+                                document.addEventListener(
+                                    'mousemove',
+                                    onDocMouseMove
+                                );
+                                document.addEventListener(
+                                    'mouseup',
+                                    onDocMouseUp
+                                );
+                            }}
+                            onTouchStart={(e: any) => {
+                                volDragging.current = true;
+                                startY.current = e.nativeEvent.pageY;
+                                startVol.current = volumeLevel;
+                                onSlidingStart();
+                            }}
+                            // during drag
+                            onMouseMove={(e: any) => {
+                                if (!volDragging.current) return;
+                                const dy = startY.current - e.clientY;
+                                const ratio = Math.max(
+                                    0,
+                                    Math.min(
+                                        1,
+                                        startVol.current + dy / SLIDER_HEIGHT
+                                    )
+                                );
+                                onVolumeChange?.(ratio);
+                            }}
+                            onTouchMove={(e: any) => {
+                                if (!volDragging.current) return;
+                                const dy = startY.current - e.nativeEvent.pageY;
+                                const ratio = Math.max(
+                                    0,
+                                    Math.min(
+                                        1,
+                                        startVol.current + dy / SLIDER_HEIGHT
+                                    )
+                                );
+                                onVolumeChange?.(ratio);
+                            }}
+                            // end drag
+                            onMouseUp={(e: any) => {
+                                if (!volDragging.current) return;
+                                volDragging.current = false;
+                                const dy = startY.current - e.clientY;
+                                const ratio = Math.max(
+                                    0,
+                                    Math.min(
+                                        1,
+                                        startVol.current + dy / SLIDER_HEIGHT
+                                    )
+                                );
+                                onSlidingComplete(ratio);
+                            }}
+                            onTouchEnd={(e: any) => {
+                                if (!volDragging.current) return;
+                                volDragging.current = false;
+                                const dy = startY.current - e.nativeEvent.pageY;
+                                const ratio = Math.max(
+                                    0,
+                                    Math.min(
+                                        1,
+                                        startVol.current + dy / SLIDER_HEIGHT
+                                    )
+                                );
+                                onSlidingComplete(ratio);
+                            }}
+                        >
+                            <View style={styles.volumeSliderWrapper}>
+                                <Slider
+                                    style={styles.volumeSlider}
+                                    minimumValue={0}
+                                    maximumValue={1}
+                                    step={0.01}
+                                    value={volumeLevel}
+                                    onValueChange={onVolumeChange}
+                                    minimumTrackTintColor={
+                                        theme.colors.ActiveText
+                                    }
+                                    thumbTintColor={theme.colors.ActiveText}
+                                    pointerEvents="none"
+                                />
+                            </View>
+                        </View>
+                    )}
+                </View>
             </View>
         );
     }
 );
 
-const styles = StyleSheet.create({
-    container: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginTop: 8,
-        width: '100%',
-    },
-    slider: {
-        flex: 1,
-        marginHorizontal: 8,
-    },
-    time: {
-        fontSize: 14,
-        marginRight: 8,
-    },
-});
+function createStyles(theme: Theme) {
+    return StyleSheet.create({
+        container: {
+            flexDirection: 'row',
+            alignItems: 'flex-end',
+            marginTop: 8,
+            width: '100%',
+        },
+        slider: {
+            flex: 1,
+            marginHorizontal: 8,
+            accentColor: theme.colors.ActiveText,
+        },
+        time: {
+            fontSize: 14,
+            marginRight: 8,
+        },
+        volumeWrapper: {
+            position: 'relative',
+            marginLeft: 8,
+            width: 40, // same as your volumeSliderContainer width
+            height: 120 + 32, // slider height (120) + bottom offset (32)
+            justifyContent: 'flex-end', // push the icon down to where it was
+            alignItems: 'center',
+            overflow: 'visible', // still allow the slider to overflow up
+        },
+        volumeSliderContainer: {
+            position: 'absolute',
+            bottom: 32, // lifts it above the icon
+            left: '50%', // center‑over icon
+            transform: [{ translateX: -20 }],
+            width: 40,
+            height: 120,
+            backgroundColor: 'rgba(0,0,0,0.6)',
+            borderRadius: 4,
+            justifyContent: 'center',
+            alignItems: 'center',
+            paddingVertical: 8,
+        },
+        volumeSlider: {
+            width: 100, // slider’s “length”
+            height: 30, // slider’s “thickness”
+        },
+        volumeSliderWrapper: {
+            width: 120, // slider length
+            height: 30, // slider thickness
+            transform: [{ rotate: '-90deg' }],
+            // ensure rotation origin is the center
+            // transformOrigin: '50% 50%',
+
+            transformOrigin: 'center center',
+        },
+    });
+}

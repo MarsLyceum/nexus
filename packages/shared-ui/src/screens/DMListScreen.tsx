@@ -15,7 +15,7 @@ import {
 import { useQuery, useApolloClient, useMutation } from '@apollo/client';
 
 import { useTheme, Theme } from '../theme';
-import { useNexusRouter, createNexusParam } from '../hooks';
+import { useNexusRouter, createNexusParam, useIsComputer } from '../hooks';
 import {
     GET_CONVERSATIONS,
     CREATE_CONVERSATION,
@@ -31,7 +31,6 @@ import {
     SendMessageModal,
 } from '../small-components';
 import { Add } from '../icons';
-import { isComputer } from '../utils';
 
 import { ChatScreen } from './ChatScreen';
 
@@ -40,7 +39,7 @@ import { ChatScreen } from './ChatScreen';
 const { useParams } = createNexusParam();
 
 export const DMListScreen: React.FC = () => {
-    const isComputerDevice = isComputer();
+    const isComputer = useIsComputer();
     const router = useNexusRouter();
     const apolloClient = useApolloClient();
     const { params } = useParams();
@@ -66,7 +65,10 @@ export const DMListScreen: React.FC = () => {
         string[]
     >([]);
     const { theme } = useTheme();
-    const styles = useMemo(() => createStyles(theme), [theme]);
+    const styles = useMemo(
+        () => createStyles(theme, isComputer),
+        [theme, isComputer]
+    );
 
     // Get the active user from Redux.
     const user: UserType = useAppSelector(
@@ -88,7 +90,7 @@ export const DMListScreen: React.FC = () => {
                     prevClosed.filter((id) => id !== newConversation.id)
                 );
 
-                if (isComputerDevice) {
+                if (isComputer) {
                     setSelectedConversation(newConversation);
                 } else {
                     router.push('/chat', {
@@ -97,7 +99,7 @@ export const DMListScreen: React.FC = () => {
                 }
             }
         },
-        [isComputerDevice, router]
+        [isComputer, router]
     );
 
     useEffect(() => {
@@ -165,7 +167,7 @@ export const DMListScreen: React.FC = () => {
 
     useEffect(() => {
         if (
-            isComputerDevice &&
+            isComputer &&
             !selectedConversation &&
             data?.getConversations?.length > 0
         ) {
@@ -179,15 +181,18 @@ export const DMListScreen: React.FC = () => {
 
             setSelectedConversation(newSelected);
         }
-    }, [isComputerDevice, selectedConversation, data, closedConversationIds]);
+    }, [isComputer, selectedConversation, data, closedConversationIds]);
 
-    const handleConversationPress = (conversation: Conversation) => {
-        if (isComputerDevice) {
-            setSelectedConversation(conversation);
-        } else {
-            router.push('/chat', { conversationId: conversation.id });
-        }
-    };
+    const handleConversationPress = useCallback(
+        (conversation: Conversation) => {
+            if (isComputer) {
+                setSelectedConversation(conversation);
+            } else {
+                router.push('/chat', { conversationId: conversation.id });
+            }
+        },
+        [isComputer, router]
+    );
 
     const handleCloseConversation = useCallback(
         (conversation: Conversation) => {
@@ -353,7 +358,7 @@ export const DMListScreen: React.FC = () => {
                 )}
             </View>
 
-            {isComputerDevice && selectedConversation && (
+            {isComputer && selectedConversation && (
                 <View style={styles.chatWrapper}>
                     <ChatScreen conversation={selectedConversation} />
                 </View>
@@ -382,7 +387,7 @@ export const DMListScreen: React.FC = () => {
     );
 };
 
-function createStyles(theme: Theme) {
+function createStyles(theme: Theme, isComputer: boolean) {
     return StyleSheet.create({
         container: {
             flex: 1,
@@ -391,7 +396,7 @@ function createStyles(theme: Theme) {
             height: '100%',
         },
         sidebar: {
-            width: isComputer() ? 250 : '100%',
+            width: isComputer ? 250 : '100%',
             backgroundColor: theme.colors.PrimaryBackground,
             paddingTop: 10,
         },

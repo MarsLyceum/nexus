@@ -18,3 +18,4 @@ export * from './useSendMessages';
 export * from './useGifFrames';
 export * from './useGifPlayer';
 export * from './useFriendStatus';
+export * from './useIsComputer';

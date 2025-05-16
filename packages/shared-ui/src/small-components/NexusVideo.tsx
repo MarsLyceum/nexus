@@ -1,7 +1,12 @@
 // apps/mobile/src/components/NexusVideo.tsx
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { Platform, View, StyleProp, ViewStyle } from 'react-native';
-import Video, { OnLoadData, OnProgressData } from 'react-native-video';
+import Video, {
+    OnLoadData,
+    OnProgressData,
+    VideoRef,
+} from 'react-native-video';
+import { NativeGesture } from 'react-native-gesture-handler';
 import { MediaPlayerControls } from './MediaPlayerControls';
 
 type VideoProps = React.ComponentProps<typeof Video>;
@@ -16,6 +21,7 @@ export type NexusVideoProps = {
     paused?: boolean;
     contentFit?: 'contain' | 'cover' | 'fill';
     controls?: boolean;
+    sliderGesture?: NativeGesture;
 };
 
 export const NexusVideo: React.FC<NexusVideoProps> = ({
@@ -25,6 +31,7 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
     repeat = true,
     paused = true,
     contentFit = 'cover',
+    sliderGesture,
     controls = true,
 }) => {
     const isWeb = Platform.OS === 'web';
@@ -36,6 +43,7 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
     const [volume, setVolume] = useState(1);
     const [position, setPosition] = useState(0); // ms
     const [totalDuration, setTotalDuration] = useState(0); // ms
+    const nativeVideoRef = useRef<VideoRef>(null);
 
     // Handlers for MediaPlayerControls
     const togglePlay = useCallback(() => {
@@ -48,6 +56,7 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
 
     const onSeekStart = useCallback(() => {
         // optionally pause while dragging
+        setPlaying(false);
     }, []);
 
     const onSeek = useCallback((ms: number) => {
@@ -62,6 +71,9 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
                 const v = webRef.current!;
                 v.currentTime = ms / 1000;
                 if (playing) void v.play();
+            }
+            if (!isWeb && nativeVideoRef.current) {
+                nativeVideoRef.current.seek(ms / 1000);
             }
         },
         [playing, isWeb]
@@ -169,6 +181,7 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
                             onSlidingStart={onSeekStart}
                             onValueChange={onSeek}
                             onSlidingComplete={onSeekComplete}
+                            sliderGesture={sliderGesture}
                         />
                     </View>
                 )}
@@ -209,6 +222,7 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
                 onLoad={onLoad}
                 onProgress={onProgress}
                 onEnd={onEnd}
+                ref={nativeVideoRef}
             />
             {controls && (
                 <View

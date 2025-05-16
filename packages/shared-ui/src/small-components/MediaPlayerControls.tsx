@@ -9,6 +9,11 @@ import {
     useWindowDimensions,
 } from 'react-native';
 import Slider from '@react-native-community/slider';
+import {
+    Gesture,
+    GestureDetector,
+    NativeGesture,
+} from 'react-native-gesture-handler';
 import { useTheme, Theme } from '../theme';
 import { Play, Pause, Volume, VolumeMuted } from '../icons';
 
@@ -31,6 +36,7 @@ export type MediaPlayerControlsProps = {
     onValueChange: (val: number) => void;
     onSlidingComplete: (val: number) => void;
     onVolumeChange?: (v: number) => void;
+    sliderGesture?: NativeGesture;
 };
 
 // eslint-disable-next-line react/display-name
@@ -51,6 +57,7 @@ export const MediaPlayerControls = forwardRef<
             onSlidingStart,
             onValueChange,
             onSlidingComplete,
+            sliderGesture,
             ...viewProps
         }: MediaPlayerControlsProps & ViewProps,
         ref
@@ -89,17 +96,35 @@ export const MediaPlayerControls = forwardRef<
                 <TouchableOpacity onPress={onTogglePlay}>
                     {playing ? <Pause /> : <Play />}
                 </TouchableOpacity>
-                <Slider
-                    style={styles.slider}
-                    minimumValue={0}
-                    maximumValue={totalDuration}
-                    value={position}
-                    onSlidingStart={onSlidingStart}
-                    onValueChange={onValueChange}
-                    onSlidingComplete={onSlidingComplete}
-                    minimumTrackTintColor={theme.colors.ActiveText}
-                    thumbTintColor={theme.colors.ActiveText}
-                />
+                {sliderGesture ? (
+                    <GestureDetector gesture={sliderGesture}>
+                        <Slider
+                            style={styles.slider}
+                            minimumValue={0}
+                            maximumValue={totalDuration}
+                            value={position}
+                            onSlidingStart={onSlidingStart}
+                            onValueChange={onValueChange}
+                            onSlidingComplete={onSlidingComplete}
+                            minimumTrackTintColor={theme.colors.ActiveText}
+                            thumbTintColor={theme.colors.ActiveText}
+                            collapsable={false}
+                        />
+                    </GestureDetector>
+                ) : (
+                    <Slider
+                        style={styles.slider}
+                        minimumValue={0}
+                        maximumValue={totalDuration}
+                        value={position}
+                        onSlidingStart={onSlidingStart}
+                        onValueChange={onValueChange}
+                        onSlidingComplete={onSlidingComplete}
+                        minimumTrackTintColor={theme.colors.ActiveText}
+                        thumbTintColor={theme.colors.ActiveText}
+                        collapsable={false}
+                    />
+                )}
 
                 <Text style={[styles.time, { color: theme.colors.ActiveText }]}>
                     {isSmallScreen
@@ -255,16 +280,14 @@ function createStyles(theme: Theme) {
             paddingVertical: 8,
         },
         volumeSlider: {
-            width: 100, // slider’s “length”
-            height: 30, // slider’s “thickness”
+            width: 100, // slider length
+            height: 30, // slider thickness
         },
         volumeSliderWrapper: {
             width: 120, // slider length
             height: 30, // slider thickness
             transform: [{ rotate: '-90deg' }],
             // ensure rotation origin is the center
-            // transformOrigin: '50% 50%',
-
             transformOrigin: 'center center',
         },
     });

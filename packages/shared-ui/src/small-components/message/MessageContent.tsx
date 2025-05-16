@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { GestureDetector, NativeGesture } from 'react-native-gesture-handler';
 import { NexusImage } from '../NexusImage';
 import { LinkPreview } from '../LinkPreview';
 import { MarkdownRenderer } from '../MarkdownRenderer';
@@ -15,6 +16,8 @@ import type { MessageWithAvatar, DirectMessageWithAvatar } from '../../types';
 export type MessageContentProps = {
     message: MessageWithAvatar | DirectMessageWithAvatar;
     width: number;
+    videoGesture?: NativeGesture;
+    sliderGesture?: NativeGesture;
     onAttachmentPress: (attachments: string[], index: number) => void;
     // New props for selective rendering
     renderMessage?: boolean;
@@ -27,6 +30,8 @@ export const MessageContent: React.FC<MessageContentProps> = ({
     message,
     width,
     onAttachmentPress,
+    videoGesture,
+    sliderGesture,
     renderMessage = true,
     renderLinkPreview = true,
     renderAttachments = true,
@@ -132,32 +137,59 @@ export const MessageContent: React.FC<MessageContentProps> = ({
                             );
 
                             return (
-                                <View key={index}>
-                                    {info && info.type === 'video' ? (
-                                        <NexusVideo
-                                            source={{ uri: url }}
-                                            style={[
-                                                styles.messageAttachmentImage,
-                                                {
-                                                    width: computedSize.width,
-                                                    height: computedSize.height,
-                                                },
-                                            ]}
-                                            muted={false}
-                                            repeat
-                                            paused
-                                            contentFit="cover"
-                                        />
-                                    ) : info && info.type === 'image' ? (
-                                        <TouchableOpacity
-                                            onPress={() =>
-                                                onAttachmentPress(
-                                                    message.attachmentUrls ??
-                                                        [],
-                                                    index
-                                                )
-                                            }
-                                        >
+                                <TouchableOpacity
+                                    onPress={() =>
+                                        onAttachmentPress(
+                                            message.attachmentUrls ?? [],
+                                            index
+                                        )
+                                    }
+                                    key={index}
+                                >
+                                    <View>
+                                        {info && info.type === 'video' ? (
+                                            videoGesture ? (
+                                                <GestureDetector
+                                                    gesture={videoGesture}
+                                                >
+                                                    <NexusVideo
+                                                        source={{ uri: url }}
+                                                        style={[
+                                                            styles.messageAttachmentImage,
+                                                            {
+                                                                width: computedSize.width,
+                                                                height: computedSize.height,
+                                                            },
+                                                        ]}
+                                                        muted={false}
+                                                        repeat
+                                                        paused
+                                                        contentFit="cover"
+                                                        sliderGesture={
+                                                            sliderGesture
+                                                        }
+                                                    />
+                                                </GestureDetector>
+                                            ) : (
+                                                <NexusVideo
+                                                    source={{ uri: url }}
+                                                    style={[
+                                                        styles.messageAttachmentImage,
+                                                        {
+                                                            width: computedSize.width,
+                                                            height: computedSize.height,
+                                                        },
+                                                    ]}
+                                                    muted={false}
+                                                    repeat
+                                                    paused
+                                                    contentFit="cover"
+                                                    sliderGesture={
+                                                        sliderGesture
+                                                    }
+                                                />
+                                            )
+                                        ) : info && info.type === 'image' ? (
                                             <NexusImage
                                                 source={url}
                                                 style={{
@@ -168,9 +200,9 @@ export const MessageContent: React.FC<MessageContentProps> = ({
                                                 height={computedSize.height}
                                                 alt="Message attachment image"
                                             />
-                                        </TouchableOpacity>
-                                    ) : undefined}
-                                </View>
+                                        ) : undefined}
+                                    </View>
+                                </TouchableOpacity>
                             );
                         })}
                     </View>

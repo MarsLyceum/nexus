@@ -208,7 +208,7 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
         <View
             style={[
                 style as StyleProp<ViewStyle>,
-                { position: 'relative', overflow: 'visible' },
+                { position: 'relative', overflow: 'hidden', borderRadius: 8 },
             ]}
         >
             <Video

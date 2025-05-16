@@ -6,6 +6,7 @@ import {
     Text,
     StyleSheet,
     ViewProps,
+    useWindowDimensions,
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { useTheme, Theme } from '../theme';
@@ -57,6 +58,8 @@ export const MediaPlayerControls = forwardRef<
         const { theme } = useTheme();
         const [showVolumeSlider, setShowVolumeSlider] = useState(false);
         const styles = useMemo(() => createStyles(theme), [theme]);
+        const { width: screenWidth } = useWindowDimensions();
+        const isSmallScreen = screenWidth < 768;
 
         const SLIDER_HEIGHT = 120;
         const volDragging = useRef(false);
@@ -91,7 +94,6 @@ export const MediaPlayerControls = forwardRef<
                     minimumValue={0}
                     maximumValue={totalDuration}
                     value={position}
-                    step={1}
                     onSlidingStart={onSlidingStart}
                     onValueChange={onValueChange}
                     onSlidingComplete={onSlidingComplete}
@@ -100,15 +102,14 @@ export const MediaPlayerControls = forwardRef<
                 />
 
                 <Text style={[styles.time, { color: theme.colors.ActiveText }]}>
-                    {formatTime(position)} / {formatTime(totalDuration)}
+                    {isSmallScreen
+                        ? formatTime(position)
+                        : `${formatTime(position)} / ${formatTime(totalDuration)}`}
                 </Text>
                 <View
                     // on web: open on hover
                     onMouseEnter={() => setShowVolumeSlider(true)}
                     onMouseLeave={() => setShowVolumeSlider(false)}
-                    // on native: open on press-in, close on press-out
-                    onTouchStart={() => setShowVolumeSlider(true)}
-                    onTouchEnd={() => setShowVolumeSlider(false)}
                     style={styles.volumeWrapper}
                 >
                     <TouchableOpacity onPress={onToggleVolumeMuted}>
@@ -163,28 +164,10 @@ export const MediaPlayerControls = forwardRef<
                                     onDocMouseUp
                                 );
                             }}
-                            onTouchStart={(e: any) => {
-                                volDragging.current = true;
-                                startY.current = e.nativeEvent.pageY;
-                                startVol.current = volumeLevel;
-                                onSlidingStart();
-                            }}
                             // during drag
                             onMouseMove={(e: any) => {
                                 if (!volDragging.current) return;
                                 const dy = startY.current - e.clientY;
-                                const ratio = Math.max(
-                                    0,
-                                    Math.min(
-                                        1,
-                                        startVol.current + dy / SLIDER_HEIGHT
-                                    )
-                                );
-                                onVolumeChange?.(ratio);
-                            }}
-                            onTouchMove={(e: any) => {
-                                if (!volDragging.current) return;
-                                const dy = startY.current - e.nativeEvent.pageY;
                                 const ratio = Math.max(
                                     0,
                                     Math.min(
@@ -199,19 +182,6 @@ export const MediaPlayerControls = forwardRef<
                                 if (!volDragging.current) return;
                                 volDragging.current = false;
                                 const dy = startY.current - e.clientY;
-                                const ratio = Math.max(
-                                    0,
-                                    Math.min(
-                                        1,
-                                        startVol.current + dy / SLIDER_HEIGHT
-                                    )
-                                );
-                                onSlidingComplete(ratio);
-                            }}
-                            onTouchEnd={(e: any) => {
-                                if (!volDragging.current) return;
-                                volDragging.current = false;
-                                const dy = startY.current - e.nativeEvent.pageY;
                                 const ratio = Math.max(
                                     0,
                                     Math.min(

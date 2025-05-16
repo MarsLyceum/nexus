@@ -16,8 +16,9 @@ import { Pressable as RNGHPressable } from 'react-native-gesture-handler';
 
 import { useTheme, Theme } from '../theme';
 import { MessageContent, MessageEditor } from './message';
-import { formatDateForChat, isComputer } from '../utils';
+import { formatDateForChat } from '../utils';
 import type { MessageWithAvatar, DirectMessageWithAvatar } from '../types';
+import { useIsComputer } from '../hooks';
 
 import { MessageOptionsBottomSheet } from './MessageOptionsBottomSheet';
 import { MessageOptionsModal } from './MessageOptionsModal';
@@ -52,6 +53,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     onSaveEdit,
     onDeleteMessage,
 }) => {
+    const isComputer = useIsComputer();
     const [currentMessage, setCurrentMessage] = useState(message);
     const [optionsModalVisible, setOptionsModalVisible] = useState(false);
     const [bottomSheetVisible, setBottomSheetVisible] =
@@ -75,7 +77,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     );
     const containerRef = useRef<View>(null);
     const messageDate = getMessageDate(currentMessage);
-    const hideModalTimeoutRef = useRef<NodeJS.Timeout | undefined>();
+    const hideModalTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const [showMoreOptions, setShowMoreOptions] = useState(false);
     const [moreButtonAnchor, setMoreButtonAnchor] = useState<
         | {
@@ -106,8 +108,8 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     }, []);
 
     // Measure the container and set the anchor based on its top-right edge.
-    const showModal = () => {
-        if (isComputer() && containerRef.current) {
+    const showModal = useCallback(() => {
+        if (isComputer && containerRef.current) {
             const rect = (
                 containerRef.current as unknown as Element
             ).getBoundingClientRect();
@@ -122,12 +124,13 @@ export const MessageItem: React.FC<MessageItemProps> = ({
             setAnchorPosition(computedAnchor);
             setOptionsModalVisible(true);
         }
-    };
+    }, [isComputer]);
 
     const handleMouseEnter = () => {
         if (hideModalTimeoutRef.current) {
             clearTimeout(hideModalTimeoutRef.current);
-            hideModalTimeoutRef.current = undefined;
+            // eslint-disable-next-line unicorn/no-null
+            hideModalTimeoutRef.current = null;
         }
         setIsHovered(true);
         if (!isScrolling) showModal();
@@ -144,34 +147,36 @@ export const MessageItem: React.FC<MessageItemProps> = ({
 
     // eslint-disable-next-line consistent-return
     useEffect(() => {
-        if (isComputer()) {
-            const handleDocumentMouseMove = (e: MouseEvent) => {
-                if (containerRef.current) {
-                    const rect = (
-                        containerRef.current as unknown as Element
-                    ).getBoundingClientRect();
-                    const { clientX, clientY } = e;
-                    const isOverMessage =
-                        clientX >= rect.left &&
-                        clientX <= rect.right &&
-                        clientY >= rect.top &&
-                        clientY <= rect.bottom;
-                    if (!isOverMessage) {
-                        setOptionsModalVisible(false);
-                    }
+        const handleDocumentMouseMove = (e: MouseEvent) => {
+            if (containerRef.current) {
+                const rect = (
+                    containerRef.current as unknown as Element
+                ).getBoundingClientRect();
+                const { clientX, clientY } = e;
+                const isOverMessage =
+                    clientX >= rect.left &&
+                    clientX <= rect.right &&
+                    clientY >= rect.top &&
+                    clientY <= rect.bottom;
+
+                if (!isOverMessage) {
+                    setOptionsModalVisible(false);
                 }
-            };
+            }
+        };
+
+        // add listener only when we switch into "computer" mode
+        if (isComputer) {
             document.addEventListener('mousemove', handleDocumentMouseMove, {
                 passive: true,
             });
-            return () => {
-                document.removeEventListener(
-                    'mousemove',
-                    handleDocumentMouseMove
-                );
-            };
         }
-    }, []);
+
+        // ALWAYS remove the listener on cleanup (unmount or isComputer toggle)
+        return () => {
+            document.removeEventListener('mousemove', handleDocumentMouseMove);
+        };
+    }, [isComputer]);
 
     useEffect(() => {
         const scrollContainerComponent = scrollContainerRef.current;
@@ -244,7 +249,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
 
     return (
         <Pressable
-            {...(isComputer() ? {} : { onLongPress: handleLongPress })}
+            {...(isComputer ? {} : { onLongPress: handleLongPress })}
             onPressIn={() => setIsHovered(true)}
             onPressOut={() => setIsHovered(false)}
             onMouseEnter={handleMouseEnter}

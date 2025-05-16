@@ -9,7 +9,7 @@ import {
     Text,
 } from 'react-native';
 import { useApolloClient, useQuery } from '@apollo/client';
-import { useNexusRouter, createNexusParam } from '../hooks';
+import { useNexusRouter, createNexusParam, useIsComputer } from '../hooks';
 import {
     useAppDispatch,
     loadUser,
@@ -24,7 +24,7 @@ import {
 } from '../queries';
 import { PostItem, CommentsManager } from '../sections';
 import { CreateContentButton } from '../buttons';
-import { getRelativeTime, isComputer } from '../utils';
+import { getRelativeTime } from '../utils';
 import type { Post, PostData, User } from '../types';
 import { CurrentCommentContext } from '../providers';
 import {
@@ -151,7 +151,7 @@ export const PostScreen: React.FC<PostScreenProps> = (props) => {
     }, [setPostContent]);
 
     // Determine if device is computer (desktop) or mobile.
-    const isDesktop = isComputer();
+    const isComputer = useIsComputer();
     const BOTTOM_INPUT_HEIGHT = 60;
     const isWeb = Platform.OS === 'web';
 
@@ -169,12 +169,12 @@ export const PostScreen: React.FC<PostScreenProps> = (props) => {
                 mainContainer: {
                     flex: 1,
                     position: 'relative',
-                    ...(isDesktop
+                    ...(isComputer
                         ? {}
                         : { paddingBottom: BOTTOM_INPUT_HEIGHT }),
                 },
                 scrollSection: isWeb
-                    ? isDesktop
+                    ? isComputer
                         ? {
                               position: 'absolute',
                               top: 0,
@@ -196,7 +196,7 @@ export const PostScreen: React.FC<PostScreenProps> = (props) => {
                     paddingHorizontal: 15,
                     paddingBottom: 20,
                 },
-                createContentButtonContainer: isDesktop
+                createContentButtonContainer: isComputer
                     ? {}
                     : {
                           position: 'absolute',
@@ -206,7 +206,7 @@ export const PostScreen: React.FC<PostScreenProps> = (props) => {
                           height: BOTTOM_INPUT_HEIGHT,
                       },
             }),
-        [theme, isDesktop, isWeb]
+        [theme, isComputer, isWeb]
     );
 
     if (loading) {
@@ -279,7 +279,7 @@ export const PostScreen: React.FC<PostScreenProps> = (props) => {
                             variant="details"
                             group="My cool group"
                         />
-                        {isDesktop && (
+                        {isComputer && (
                             // Show inline CommentEditor on computer
                             <CommentEditor
                                 postId={postData.id}
@@ -301,7 +301,7 @@ export const PostScreen: React.FC<PostScreenProps> = (props) => {
                             parentCommentId={parentCommentId}
                         />
                     </ScrollView>
-                    {!isDesktop && (
+                    {!isComputer && (
                         // Show CreateContentButton on mobile; reset comment context before navigating.
                         <View
                             style={computedStyles.createContentButtonContainer}

@@ -2,9 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Modal, StyleSheet, View, Dimensions } from 'react-native';
 import Carousel from 'react-native-reanimated-carousel';
 
-import { isComputer as isComputerUtil } from '../utils';
 import { ImageCountOverlay, MediaRenderer } from '../small-components';
-import { useMediaTypes } from '../hooks';
+import { useMediaTypes, useIsComputer } from '../hooks';
 
 import { ArrowButton } from './ArrowButton';
 import { CarouselDots } from './CarouselDots';
@@ -22,7 +21,7 @@ export const ImageDetailsModal: React.FC<ImageDetailsModalProps> = ({
     initialIndex,
     onClose,
 }) => {
-    const isComputer = isComputerUtil();
+    const isComputer = useIsComputer();
     const mediaInfos = useMediaTypes(attachments);
     const mediaAttachments = attachments;
     const effectiveInitialIndex =

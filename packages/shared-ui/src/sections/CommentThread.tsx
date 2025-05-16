@@ -9,7 +9,7 @@ import {
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { useApolloClient } from '@apollo/client';
 
-import { useNexusRouter } from '../hooks';
+import { useNexusRouter, useIsComputer } from '../hooks';
 import { VoteActions } from './VoteActions';
 import { useTheme, Theme } from '../theme';
 import { CurrentCommentContext } from '../providers';
@@ -20,7 +20,7 @@ import {
     ActionButton,
     NexusImage,
 } from '../small-components';
-import { stripHtml, extractUrls, getRelativeTime, isComputer } from '../utils';
+import { stripHtml, extractUrls, getRelativeTime } from '../utils';
 // NEW: Import Apollo Client hook and comments query to allow refetching comments.
 import { FETCH_POST_COMMENTS_QUERY } from '../queries';
 // NEW: Import AttachmentImageGallery and ImageDetailsModal for rendering attachments in comments
@@ -138,7 +138,7 @@ type CommentThreadProps = {
     level?: number;
     opUser?: string;
     onContinueConversation: (parentCommentId: string) => void;
-    postId?: string; // <-- New prop to pass the post id for inline replies
+    postId?: string;
 };
 
 const CommentChildrenComponent = ({
@@ -185,7 +185,6 @@ const CommentThreadComponent = ({
     const { theme } = useTheme();
     const styles = useMemo(() => createStyles(theme), [theme]);
 
-    // NEW: State for attachment modal in comments
     const [modalVisible, setModalVisible] = useState(false);
     const [modalStartIndex, setModalStartIndex] = useState(0);
 
@@ -198,6 +197,7 @@ const CommentThreadComponent = ({
     } = useContext(CurrentCommentContext);
 
     const [containerWidth, setContainerWidth] = useState(0);
+    const isComputer = useIsComputer();
 
     const urlsInContent = extractUrls(comment.content);
     const plainContent = stripHtml(comment.content);
@@ -303,7 +303,7 @@ const CommentThreadComponent = ({
                             <View style={styles.actionsRow}>
                                 <ActionButton
                                     onPress={() => {
-                                        if (isComputer()) {
+                                        if (isComputer) {
                                             // On computer, show inline comment editor
                                             setShowInlineReply(true);
                                         } else {
@@ -339,7 +339,7 @@ const CommentThreadComponent = ({
                             </View>
                         </View>
                         {/* Render inline CommentEditor for computer devices */}
-                        {showInlineReply && isComputer() && (
+                        {showInlineReply && isComputer && (
                             <View style={styles.replyInputContainer}>
                                 <CommentEditor
                                     postId={postId || ''}

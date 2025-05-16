@@ -9,9 +9,10 @@ import {
     LayoutChangeEvent,
 } from 'react-native';
 
-import { extractUrls, isComputer } from '../../utils';
+import { extractUrls } from '../../utils';
 import { NexusButton } from '../../buttons';
 import { useTheme, Theme } from '../../theme';
+import { useIsComputer } from '../../hooks';
 
 import { MarkdownEditor } from '../MarkdownEditor';
 import { MarkdownRenderer } from '../MarkdownRenderer';
@@ -32,7 +33,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({
     onCancel,
 }) => {
     // Determine platform-specific behavior.
-    const isDesktop = isComputer();
+    const isComputer = useIsComputer();
 
     const [editedContent, setEditedContent] = useState(initialContent);
     const [editorHeight, setEditorHeight] = useState<number>(60);
@@ -123,7 +124,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({
     // Global key listener (desktop only).
     // eslint-disable-next-line consistent-return
     useEffect(() => {
-        if (isDesktop) {
+        if (isComputer) {
             const handleGlobalKeyDown = (e: KeyboardEvent) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
@@ -138,7 +139,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({
                 window.removeEventListener('keydown', handleGlobalKeyDown);
             };
         }
-    }, [onSave, onCancel, isDesktop]);
+    }, [onSave, onCancel, isComputer]);
 
     return (
         <View style={styles.editContainer}>
@@ -166,7 +167,7 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({
                 placeholder=""
                 width="100%"
                 height={`${Math.max(60, editorHeight)}px`}
-                onKeyDown={isDesktop ? handleKeyDown : undefined}
+                onKeyDown={isComputer ? handleKeyDown : undefined}
             />
             <View style={mobileStyles.mobileButtonContainer}>
                 <NexusButton

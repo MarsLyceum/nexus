@@ -152,23 +152,31 @@ export const MessageContent: React.FC<MessageContentProps> = ({
                                                 <GestureDetector
                                                     gesture={videoGesture}
                                                 >
-                                                    <NexusVideo
-                                                        source={{ uri: url }}
-                                                        style={[
-                                                            styles.messageAttachmentImage,
-                                                            {
-                                                                width: computedSize.width,
-                                                                height: computedSize.height,
-                                                            },
-                                                        ]}
-                                                        muted={false}
-                                                        repeat
-                                                        paused
-                                                        contentFit="cover"
-                                                        sliderGesture={
-                                                            sliderGesture
+                                                    <View
+                                                        style={
+                                                            styles.videoContainer
                                                         }
-                                                    />
+                                                    >
+                                                        <NexusVideo
+                                                            source={{
+                                                                uri: url,
+                                                            }}
+                                                            style={[
+                                                                styles.messageAttachmentImage,
+                                                                {
+                                                                    width: computedSize.width,
+                                                                    height: computedSize.height,
+                                                                },
+                                                            ]}
+                                                            muted={false}
+                                                            repeat
+                                                            paused
+                                                            contentFit="cover"
+                                                            sliderGesture={
+                                                                sliderGesture
+                                                            }
+                                                        />
+                                                    </View>
                                                 </GestureDetector>
                                             ) : (
                                                 <NexusVideo
@@ -215,6 +223,9 @@ const styles = StyleSheet.create({
     messageContent: {
         flex: 1,
         flexShrink: 1,
+    },
+    videoContainer: {
+        flex: 1,
     },
     messageAttachmentsContainer: {
         flexDirection: 'row',

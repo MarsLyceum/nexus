@@ -5,6 +5,7 @@ import Video, {
     OnLoadData,
     OnProgressData,
     VideoRef,
+    ViewType,
 } from 'react-native-video';
 import { NativeGesture } from 'react-native-gesture-handler';
 import { MediaPlayerControls } from './MediaPlayerControls';
@@ -207,10 +208,11 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
         <View
             style={[
                 style as StyleProp<ViewStyle>,
-                { position: 'relative', overflow: 'hidden' },
+                { position: 'relative', overflow: 'visible' },
             ]}
         >
             <Video
+                viewType={ViewType.TEXTURE}
                 source={source}
                 style={{ width: '100%', height: '100%' }}
                 volume={volume}
@@ -233,6 +235,8 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
                         right: 0,
                         alignItems: 'center',
                         paddingHorizontal: 16,
+                        zIndex: 999,
+                        elevation: 10,
                     }}
                 >
                     <MediaPlayerControls

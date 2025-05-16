@@ -102,7 +102,12 @@ export const ImageDetailsModal: React.FC<ImageDetailsModalProps> = ({
         >
             <View style={styles.modalOverlay}>
                 <View style={styles.centeredContent}>
-                    <View style={styles.contentWrapper}>
+                    <View
+                        style={[
+                            styles.contentWrapper,
+                            { width: containerWidth, height: containerHeight },
+                        ]}
+                    >
                         <View style={styles.carouselContainer}>
                             {mediaAttachments.length > 1 ? (
                                 <Carousel

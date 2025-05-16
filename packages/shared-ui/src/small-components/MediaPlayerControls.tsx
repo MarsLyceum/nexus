@@ -98,18 +98,23 @@ export const MediaPlayerControls = forwardRef<
                 </TouchableOpacity>
                 {sliderGesture ? (
                     <GestureDetector gesture={sliderGesture}>
-                        <Slider
-                            style={styles.slider}
-                            minimumValue={0}
-                            maximumValue={totalDuration}
-                            value={position}
-                            onSlidingStart={onSlidingStart}
-                            onValueChange={onValueChange}
-                            onSlidingComplete={onSlidingComplete}
-                            minimumTrackTintColor={theme.colors.ActiveText}
-                            thumbTintColor={theme.colors.ActiveText}
+                        <View
                             collapsable={false}
-                        />
+                            style={styles.sliderContainer}
+                        >
+                            <Slider
+                                style={styles.slider}
+                                minimumValue={0}
+                                maximumValue={totalDuration}
+                                value={position}
+                                onSlidingStart={onSlidingStart}
+                                onValueChange={onValueChange}
+                                onSlidingComplete={onSlidingComplete}
+                                minimumTrackTintColor={theme.colors.ActiveText}
+                                thumbTintColor={theme.colors.ActiveText}
+                                collapsable={false}
+                            />
+                        </View>
                     </GestureDetector>
                 ) : (
                     <Slider
@@ -250,8 +255,11 @@ function createStyles(theme: Theme) {
         },
         slider: {
             flex: 1,
-            marginHorizontal: 8,
             accentColor: theme.colors.ActiveText,
+        },
+        sliderContainer: {
+            flex: 1,
+            marginHorizontal: 8,
         },
         time: {
             fontSize: 14,

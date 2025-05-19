@@ -14,8 +14,6 @@ export const useIsComputer = (): boolean => {
         // handler reads directly from your existing util
         const update = () => {
             setComputer(isComputer());
-            // eslint-disable-next-line no-console
-            console.log('[useIsComputer] rechecked →', isComputer());
         };
 
         if (Platform.OS === 'web') {

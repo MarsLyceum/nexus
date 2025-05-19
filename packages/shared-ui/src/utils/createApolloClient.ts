@@ -8,6 +8,7 @@ import {
     split,
 } from '@apollo/client';
 import { onError } from '@apollo/client/link/error';
+import { RetryLink } from '@apollo/client/link/retry';
 import { setContext } from '@apollo/client/link/context';
 import { getMainDefinition, Observable } from '@apollo/client/utilities';
 import { Platform } from 'react-native';
@@ -196,10 +197,23 @@ export const createApolloClient = (serverCookie?: string) => {
         }
     );
 
+    const retryLink = new RetryLink({
+        attempts: {
+            max: 5,
+            retryIf: (error) => !!error,
+        },
+        delay: {
+            initial: 300,
+            max: 2000,
+            jitter: true,
+        },
+    });
+
     // Create an HTTP link using createUploadLink to support file uploads.
     const httpLink = from([
         authLink,
         errorLink,
+        retryLink,
         createUploadLink({
             uri: graphqlApiGatewayEndpointHttp,
             credentials: 'include', // Ensures cookies are sent with requests

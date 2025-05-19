@@ -1,10 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Modal, StyleSheet, View, Dimensions } from 'react-native';
 import Carousel from 'react-native-reanimated-carousel';
-import {
-    useSafeAreaInsets,
-    SafeAreaView,
-} from 'react-native-safe-area-context';
 
 import { ImageCountOverlay, MediaRenderer } from '../small-components';
 import { useMediaTypes, useIsComputer } from '../hooks';
@@ -25,7 +21,6 @@ export const ImageDetailsModal: React.FC<ImageDetailsModalProps> = ({
     initialIndex,
     onClose,
 }) => {
-    const insets = useSafeAreaInsets();
     const isComputer = useIsComputer();
     const mediaInfos = useMediaTypes(attachments);
     const mediaAttachments = attachments;
@@ -40,9 +35,7 @@ export const ImageDetailsModal: React.FC<ImageDetailsModalProps> = ({
     const deviceHeight = Dimensions.get('window').height;
     // For web, use 80% of the screen; for mobile, fill the screen.
     const containerWidth = isComputer ? deviceWidth * 0.8 : deviceWidth;
-    const containerHeight = isComputer
-        ? deviceHeight * 0.8
-        : deviceHeight - insets.top - insets.bottom;
+    const containerHeight = isComputer ? deviceHeight * 0.8 : deviceHeight;
 
     useEffect(() => {
         if (visible && carouselRef.current) {
@@ -108,96 +101,93 @@ export const ImageDetailsModal: React.FC<ImageDetailsModalProps> = ({
             onRequestClose={onClose}
             hardwareAccelerated
         >
-            <SafeAreaView
-                style={{
-                    flex: 1,
-                }}
-                edges={['top', 'left', 'right', 'bottom']}
-            >
-                <View style={styles.modalOverlay}>
-                    <View style={styles.centeredContent}>
-                        <View
-                            style={[
-                                styles.contentWrapper,
-                                {
-                                    width: containerWidth,
-                                },
-                            ]}
-                        >
-                            <View style={styles.carouselContainer}>
-                                {mediaAttachments.length > 1 ? (
-                                    <Carousel
-                                        ref={carouselRef}
-                                        data={mediaAttachments}
-                                        renderItem={renderItem}
-                                        width={containerWidth}
-                                        height={containerHeight}
-                                        defaultIndex={effectiveInitialIndex}
-                                        onSnapToItem={(index: number) =>
-                                            setCurrentIndex(index)
-                                        }
-                                    />
-                                ) : (
-                                    renderItem({ item: mediaAttachments[0] })
-                                )}
-                                <ImageCountOverlay
-                                    currentIndex={currentIndex}
-                                    total={mediaAttachments.length}
+            <View style={styles.modalOverlay}>
+                <View style={styles.centeredContent}>
+                    <View
+                        style={[
+                            styles.contentWrapper,
+                            {
+                                ...(!isComputer
+                                    ? {
+                                          width: containerWidth,
+                                      }
+                                    : {}),
+                            },
+                        ]}
+                    >
+                        <View style={styles.carouselContainer}>
+                            {mediaAttachments.length > 1 ? (
+                                <Carousel
+                                    ref={carouselRef}
+                                    data={mediaAttachments}
+                                    renderItem={renderItem}
+                                    width={containerWidth}
+                                    height={containerHeight}
+                                    defaultIndex={effectiveInitialIndex}
+                                    onSnapToItem={(index: number) =>
+                                        setCurrentIndex(index)
+                                    }
+                                />
+                            ) : (
+                                renderItem({ item: mediaAttachments[0] })
+                            )}
+                            <ImageCountOverlay
+                                currentIndex={currentIndex}
+                                total={mediaAttachments.length}
+                            />
+                        </View>
+                        {mediaAttachments.length > 1 && (
+                            <View
+                                style={styles.arrowsContainer}
+                                pointerEvents="box-none"
+                            >
+                                <ArrowButton
+                                    direction="left"
+                                    onPress={() =>
+                                        carouselRef?.current.scrollTo({
+                                            index: currentIndex - 1,
+                                            animated: true,
+                                        })
+                                    }
+                                    disabled={currentIndex === 0}
+                                    iconSize={30}
+                                    activeColor="#fff"
+                                    inactiveColor="#aaa"
+                                    style={styles.navButton}
+                                />
+                                <ArrowButton
+                                    direction="right"
+                                    onPress={() =>
+                                        carouselRef?.current.scrollTo({
+                                            index: currentIndex + 1,
+                                            animated: true,
+                                        })
+                                    }
+                                    disabled={
+                                        currentIndex ===
+                                        mediaAttachments.length - 1
+                                    }
+                                    iconSize={30}
+                                    activeColor="#fff"
+                                    inactiveColor="#aaa"
+                                    style={styles.navButton}
                                 />
                             </View>
-                            {mediaAttachments.length > 1 && (
-                                <View
-                                    style={styles.arrowsContainer}
-                                    pointerEvents="box-none"
-                                >
-                                    <ArrowButton
-                                        direction="left"
-                                        onPress={() =>
-                                            carouselRef?.current.scrollTo({
-                                                index: currentIndex - 1,
-                                                animated: true,
-                                            })
-                                        }
-                                        disabled={currentIndex === 0}
-                                        iconSize={30}
-                                        activeColor="#fff"
-                                        inactiveColor="#aaa"
-                                        style={styles.navButton}
-                                    />
-                                    <ArrowButton
-                                        direction="right"
-                                        onPress={() =>
-                                            carouselRef?.current.scrollTo({
-                                                index: currentIndex + 1,
-                                                animated: true,
-                                            })
-                                        }
-                                        disabled={
-                                            currentIndex ===
-                                            mediaAttachments.length - 1
-                                        }
-                                        iconSize={30}
-                                        activeColor="#fff"
-                                        inactiveColor="#aaa"
-                                        style={styles.navButton}
-                                    />
-                                </View>
-                            )}
-                            {mediaAttachments.length > 1 && (
-                                <View style={styles.dotsWrapper}>
-                                    <CarouselDots
-                                        totalItems={mediaAttachments.length}
-                                        currentIndex={currentIndex}
-                                        containerStyle={styles.dotsContainer}
-                                        dotStyle={styles.dot}
-                                        activeDotStyle={styles.activeDot}
-                                    />
-                                </View>
-                            )}
-                        </View>
+                        )}
+                        {mediaAttachments.length > 1 && (
+                            <View style={styles.dotsWrapper}>
+                                <CarouselDots
+                                    totalItems={mediaAttachments.length}
+                                    currentIndex={currentIndex}
+                                    containerStyle={styles.dotsContainer}
+                                    dotStyle={styles.dot}
+                                    activeDotStyle={styles.activeDot}
+                                />
+                            </View>
+                        )}
                     </View>
                 </View>
-            </SafeAreaView>
+            </View>
         </Modal>
     );
 };

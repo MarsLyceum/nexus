@@ -7,13 +7,10 @@ import {
     StyleSheet,
     ViewProps,
     useWindowDimensions,
+    Pressable,
 } from 'react-native';
 import Slider from '@react-native-community/slider';
-import {
-    Gesture,
-    GestureDetector,
-    NativeGesture,
-} from 'react-native-gesture-handler';
+import { GestureDetector, NativeGesture } from 'react-native-gesture-handler';
 import { useTheme, Theme } from '../theme';
 import { Play, Pause, Volume, VolumeMuted } from '../icons';
 
@@ -85,7 +82,7 @@ export const MediaPlayerControls = forwardRef<
             ) {
                 onToggleVolumeMuted();
             }
-        }, [volumeLevel, onToggleVolumeMuted, volumeMuted]);
+        }, [volumeLevel]);
 
         return (
             <View
@@ -141,12 +138,12 @@ export const MediaPlayerControls = forwardRef<
                     onMouseLeave={() => setShowVolumeSlider(false)}
                     style={styles.volumeWrapper}
                 >
-                    <TouchableOpacity
+                    <Pressable
                         onMouseEnter={() => setShowVolumeSlider(true)}
                         onPress={onToggleVolumeMuted}
                     >
                         {volumeMuted ? <VolumeMuted /> : <Volume />}
-                    </TouchableOpacity>
+                    </Pressable>
 
                     {showVolumeSlider && (
                         <View

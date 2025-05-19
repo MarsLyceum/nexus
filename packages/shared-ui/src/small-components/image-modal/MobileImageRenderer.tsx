@@ -181,6 +181,7 @@ export const MobileImageRenderer: React.FC<MobileImageRendererProps> = ({
                     onSlidingStart={onSlidingStart}
                     onValueChange={onValueChange}
                     onSlidingComplete={onSlidingComplete}
+                    isGif={isGif}
                     // @ts-expect-error ref
                     ref={controlsRef}
                     onLayout={handleLayoutControls}

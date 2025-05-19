@@ -237,6 +237,7 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
                         onSlidingStart={onSlidingStart}
                         onValueChange={onValueChange}
                         onSlidingComplete={onSlidingComplete}
+                        isGif={isGif}
                         // @ts-expect-error ref
                         ref={controlsRef}
                         onLayout={handleLayoutControls}
@@ -310,6 +311,7 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
                     onSlidingStart={onSlidingStart}
                     onValueChange={onValueChange}
                     onSlidingComplete={onSlidingComplete}
+                    isGif={isGif}
                     // @ts-expect-error ref
                     ref={controlsRef}
                     onLayout={handleLayoutControls}

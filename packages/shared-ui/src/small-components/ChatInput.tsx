@@ -222,6 +222,7 @@ function createStyles(theme: Theme) {
             color: theme.colors.ActiveText,
             fontSize: 16,
             fontWeight: 'bold',
+            fontFamily: 'Roboto_700Bold',
         },
         sendButton: {
             marginLeft: 10,

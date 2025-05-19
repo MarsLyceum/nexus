@@ -17,7 +17,7 @@ import { useFileUpload } from '../hooks';
 import { GiphyModal } from './GiphyModal';
 import { useTheme, Theme } from '../theme';
 import { Tooltip } from './Tooltip';
-import { FormattingOptions } from '../icons/FormattingOptions';
+import { FormattingOptions, Gif } from '../icons';
 
 // --- New imports for preview modal ---
 import { CustomPortalModal } from './CustomPortalModal';
@@ -358,6 +358,7 @@ function createStyles(theme: Theme) {
             color: theme.colors.ActiveText,
             fontSize: 16,
             fontWeight: 'bold',
+            fontFamily: 'Roboto_700Bold',
         },
         formatToggleButton: {
             marginLeft: 10,

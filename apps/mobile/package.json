@@ -18,7 +18,8 @@
         "typecheck": "tsc --noEmit",
         "run:android": "npx expo run:android",
         "build-eas-docker": "docker build -t eas-android-builder .",
-        "build-eas-local": "node scripts/build-eas-local.js"
+        "build-eas-local:android": "cross-env PLATFORM=android node scripts/build-eas-local.js",
+        "build-eas-local:ios": "cross-env PLATFORM=ios node scripts/build-eas-local.js"
     },
     "dependencies": {
         "react-native-video": "^6.14.0",

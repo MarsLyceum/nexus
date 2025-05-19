@@ -24,6 +24,7 @@ try {
 
 // Detect OS
 const isWindows = process.platform === 'win32';
+const requestedPlatform = process.env.PLATFORM ?? 'android';
 
 let result;
 if (isWindows) {
@@ -57,7 +58,7 @@ if (isWindows) {
         [
             'build',
             '--platform',
-            'android',
+            requestedPlatform,
             '--local',
             '--non-interactive',
             '--profile',

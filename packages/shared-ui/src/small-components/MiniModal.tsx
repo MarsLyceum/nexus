@@ -344,7 +344,10 @@ export const MiniModal: React.FC<MiniModalProps> = ({
         <Portal>
             <View
                 pointerEvents="box-none"
-                style={StyleSheet.absoluteFillObject}
+                style={[
+                    StyleSheet.absoluteFillObject,
+                    { zIndex: 10_001, elevation: 10_001 },
+                ]}
                 // we *don’t* claim the responder—just listen in capture phase
                 onStartShouldSetResponderCapture={(evt) => {
                     if (closeOnOutsideClick && modalLocation) {
@@ -370,7 +373,7 @@ export const MiniModal: React.FC<MiniModalProps> = ({
                     ref={modalRef}
                     style={[
                         computedContainerStyle,
-                        { pointerEvents: 'auto', zIndex: 100 },
+                        { pointerEvents: 'auto', zIndex: 10_001 },
                     ]}
                     onMouseEnter={onMouseEnter}
                     onMouseLeave={onMouseLeave}
@@ -417,7 +420,7 @@ function createStyles(theme: Theme) {
             right: 0,
             bottom: 0,
             backgroundColor: 'rgba(0, 0, 0, 0.7)',
-            zIndex: 50,
+            zIndex: 10_001,
         },
     });
 }

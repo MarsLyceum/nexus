@@ -17,7 +17,7 @@ import { useFileUpload } from '../hooks';
 import { GiphyModal } from './GiphyModal';
 import { useTheme, Theme } from '../theme';
 import { Tooltip } from './Tooltip';
-import { FormattingOptions, Gif } from '../icons';
+import { FormattingOptions } from '../icons';
 
 // --- New imports for preview modal ---
 import { CustomPortalModal } from './CustomPortalModal';

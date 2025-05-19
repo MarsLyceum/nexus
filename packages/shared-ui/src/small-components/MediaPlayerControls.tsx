@@ -138,11 +138,13 @@ export const MediaPlayerControls = forwardRef<
                 </Text>
                 <View
                     // on web: open on hover
-                    onMouseEnter={() => setShowVolumeSlider(true)}
                     onMouseLeave={() => setShowVolumeSlider(false)}
                     style={styles.volumeWrapper}
                 >
-                    <TouchableOpacity onPress={onToggleVolumeMuted}>
+                    <TouchableOpacity
+                        onMouseEnter={() => setShowVolumeSlider(true)}
+                        onPress={onToggleVolumeMuted}
+                    >
                         {volumeMuted ? <VolumeMuted /> : <Volume />}
                     </TouchableOpacity>
 

@@ -261,7 +261,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
 
     useSubscription(DM_ADDED, {
         variables: { conversationId: conversationState?.id || '' },
-        onSubscriptionData: ({ subscriptionData }) => {
+        onData: ({ data: subscriptionData }) => {
             const newMsg: Message | undefined = subscriptionData.data?.dmAdded;
             if (newMsg) {
                 setMessages((prev) => {

@@ -172,6 +172,7 @@ export const MessageContent: React.FC<MessageContentProps> = ({
                                                             repeat
                                                             paused
                                                             contentFit="cover"
+                                                            controls
                                                             sliderGesture={
                                                                 sliderGesture
                                                             }
@@ -191,6 +192,7 @@ export const MessageContent: React.FC<MessageContentProps> = ({
                                                     muted={false}
                                                     repeat
                                                     paused
+                                                    controls
                                                     contentFit="cover"
                                                     sliderGesture={
                                                         sliderGesture

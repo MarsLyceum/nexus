@@ -30,9 +30,6 @@ export const useMediaTypes = (urls: string[]): { [url: string]: MediaInfo } => {
                     const type: MediaType = contentType.startsWith('video')
                         ? 'video'
                         : 'image';
-                    console.log('url:', url);
-                    console.log('contentType:', contentType);
-                    console.log('response:', response);
 
                     // eslint-disable-next-line promise/always-return
                     if (type === 'image') {

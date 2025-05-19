@@ -19,13 +19,10 @@ function PatchedFlashListInner<T>(
     useImperativeHandle(ref, () => listRef.current!);
 
     useEffect(() => {
-        console.log(
-            `[PatchedFlashList] inverted=${inverted}, platform=${Platform.OS}`
-        );
         if (inverted && Platform.OS === 'web') {
-            const node = document.querySelector('#chat-items');
+            const node = document.querySelector('#patched-flash-list');
             if (!node) {
-                console.warn('[PatchedFlashList] no #chat-items found');
+                console.warn('[PatchedFlashList] no #patched-flash-list found');
                 return;
             }
 
@@ -57,7 +54,7 @@ function PatchedFlashListInner<T>(
             {...(props as FlashListProps<T>)}
             inverted={inverted}
             ref={listRef}
-            nativeID="chat-items"
+            nativeID="patched-flash-list"
         />
     );
 }

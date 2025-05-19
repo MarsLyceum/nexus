@@ -1,6 +1,7 @@
 // apps/mobile/src/components/NexusVideo.tsx
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { Platform, View, StyleProp, ViewStyle } from 'react-native';
+
 import Video, {
     OnLoadData,
     OnProgressData,
@@ -61,7 +62,6 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
     }, []);
 
     const onSeek = useCallback((ms: number) => {
-        console.log('setting position:', ms);
         setPosition(ms);
     }, []);
 
@@ -168,6 +168,7 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
                             right: 0,
                             alignItems: 'center',
                             paddingHorizontal: 16,
+                            height: 40,
                         }}
                     >
                         <MediaPlayerControls
@@ -214,7 +215,7 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
             <Video
                 viewType={ViewType.TEXTURE}
                 source={source}
-                style={{ width: '100%', height: '100%' }}
+                style={{ width: '100%', height: '100%', zIndex: 0 }}
                 volume={volume}
                 muted={volumeMuted}
                 repeat={repeat}
@@ -238,6 +239,8 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
                         zIndex: 999,
                         elevation: 10,
                     }}
+                    renderToHardwareTextureAndroid
+                    needsOffscreenAlphaCompositing
                 >
                     <MediaPlayerControls
                         playing={playing}

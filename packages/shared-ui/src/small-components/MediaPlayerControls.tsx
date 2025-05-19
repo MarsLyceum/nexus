@@ -250,12 +250,13 @@ function createStyles(theme: Theme) {
         container: {
             flexDirection: 'row',
             alignItems: 'flex-end',
-            marginTop: 8,
+            // marginBottom: 40,
+            // marginTop: 8,
             width: '100%',
+            height: 40,
         },
         slider: {
             flex: 1,
-            accentColor: theme.colors.ActiveText,
         },
         sliderContainer: {
             flex: 1,

@@ -22,10 +22,10 @@ export function useFriendStatus(userId?: string) {
     const handleData = useCallback(
         ({
             client,
-            subscriptionData,
+            data: subscriptionData,
         }: {
             client: import('@apollo/client').ApolloClient<unknown>;
-            subscriptionData: { data?: Payload };
+            data: { data?: Payload };
         }) => {
             const payload = subscriptionData.data?.friendStatusChanged;
             if (!payload) return;
@@ -64,7 +64,7 @@ export function useFriendStatus(userId?: string) {
         () => ({
             variables: { userId },
             skip: !userId,
-            onSubscriptionData: handleData,
+            onData: handleData,
         }),
         [userId, handleData]
     );

@@ -304,10 +304,8 @@ function createStyles(theme: Theme) {
         container: {
             flexDirection: 'row',
             alignItems: 'flex-end',
-            // marginBottom: 40,
-            // marginTop: 8,
             width: '100%',
-            height: 40,
+            height: 20,
         },
         slider: {
             flex: 1,

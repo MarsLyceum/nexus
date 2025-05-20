@@ -8,11 +8,17 @@ import {
     ViewProps,
     useWindowDimensions,
     Pressable,
+    Platform,
 } from 'react-native';
 import Slider from '@react-native-community/slider';
+import Animated, {
+    useAnimatedProps,
+    runOnJS,
+    SharedValue,
+} from 'react-native-reanimated';
 import { GestureDetector, NativeGesture } from 'react-native-gesture-handler';
 import { useTheme, Theme } from '../theme';
-import { Play, Pause, Volume, VolumeMuted, Gif } from '../icons';
+import { Play, Pause, Volume, VolumeMuted } from '../icons';
 
 const formatTime = (ms: number) => {
     const totalSeconds = Math.floor(ms / 1000);
@@ -21,12 +27,22 @@ const formatTime = (ms: number) => {
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 };
 
+const AnimatedSlider = Animated.createAnimatedComponent(Slider);
+
+// eslint-disable-next-line react/display-name
+const MemoSlider = React.memo((props: React.ComponentProps<typeof Slider>) => (
+    <Slider {...props} />
+));
+
+const SeekBarSlider = Platform.OS === 'web' ? MemoSlider : AnimatedSlider;
+
 export type MediaPlayerControlsProps = {
     playing: boolean;
     volumeMuted?: boolean;
     isGif?: boolean;
     volumeLevel?: number;
     position: number;
+    virtualPos?: SharedValue<number>;
     totalDuration: number;
     onTogglePlay: () => void;
     onToggleVolumeMuted?: () => void;
@@ -48,6 +64,7 @@ export const MediaPlayerControls = forwardRef<
             volumeMuted,
             volumeLevel,
             position,
+            virtualPos,
             totalDuration,
             isGif,
             onTogglePlay,
@@ -66,6 +83,13 @@ export const MediaPlayerControls = forwardRef<
         const styles = useMemo(() => createStyles(theme), [theme]);
         const { width: screenWidth } = useWindowDimensions();
         const isSmallScreen = screenWidth < 768;
+
+        const sliderAnimatedProps = useAnimatedProps(
+            () => ({
+                value: virtualPos ? virtualPos.value : position,
+            }),
+            [virtualPos, position]
+        );
 
         const SLIDER_HEIGHT = 120;
         const volDragging = useRef(false);
@@ -102,10 +126,17 @@ export const MediaPlayerControls = forwardRef<
                                 collapsable={false}
                                 style={styles.sliderContainer}
                             >
-                                <Slider
+                                <SeekBarSlider
+                                    step={1}
                                     style={styles.slider}
                                     minimumValue={0}
                                     maximumValue={totalDuration}
+                                    {...(Platform.OS === 'web'
+                                        ? { value: position }
+                                        : {
+                                              animatedProps:
+                                                  sliderAnimatedProps,
+                                          })}
                                     value={position}
                                     onSlidingStart={onSlidingStart}
                                     onValueChange={onValueChange}
@@ -119,11 +150,14 @@ export const MediaPlayerControls = forwardRef<
                             </View>
                         </GestureDetector>
                     ) : (
-                        <Slider
+                        <SeekBarSlider
+                            step={1}
                             style={styles.slider}
                             minimumValue={0}
                             maximumValue={totalDuration}
-                            value={position}
+                            {...(Platform.OS === 'web'
+                                ? { value: position }
+                                : { animatedProps: sliderAnimatedProps })}
                             onSlidingStart={onSlidingStart}
                             onValueChange={onValueChange}
                             onSlidingComplete={onSlidingComplete}

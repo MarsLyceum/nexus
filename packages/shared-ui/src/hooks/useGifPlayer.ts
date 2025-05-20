@@ -10,12 +10,14 @@ import {
     useDerivedValue,
     useAnimatedReaction,
     runOnJS,
+    SharedValue,
 } from 'react-native-reanimated';
 
 import { useGifFrames } from './useGifFrames';
 
 export type UseGifPlayerResult = {
     position: number;
+    virtualPos: SharedValue<number>;
     playing: boolean;
     totalDuration: number;
     togglePlay: () => void;
@@ -75,10 +77,12 @@ export function useGifPlayer(source: string): UseGifPlayerResult {
             lastTsRef.current = null;
 
             const step = (ts: number) => {
-                setPosition(
-                    (pos) =>
-                        (pos + (ts - (lastTsRef.current ?? ts))) % totalDuration
-                );
+                setPosition((pos) => {
+                    const next =
+                        (pos + (ts - (lastTsRef.current ?? ts))) %
+                        totalDuration;
+                    return Math.floor(next);
+                });
                 lastTsRef.current = ts;
                 rafRef.current = requestAnimationFrame(step);
             };
@@ -111,18 +115,21 @@ export function useGifPlayer(source: string): UseGifPlayerResult {
             : Math.min(Math.max(seekSV.value, 0), totalDuration);
     }, [totalDuration]);
 
-    // Mirror virtualPos back into React state (throttled to ~60fps):
     useAnimatedReaction(
         () => virtualPos.value,
         (value) => {
-            // Only call setPosition when there's a meaningful change
-            runOnJS(setPosition)(value);
+            'worklet';
+
+            if (Platform.OS !== 'web') {
+                runOnJS(setPosition)(Math.floor(value));
+            }
         },
         [virtualPos]
-    ); // responds to shared-value changes :contentReference[oaicite:1]{index=1}
+    );
 
     return {
         position,
+        virtualPos,
         playing,
         totalDuration,
         togglePlay,

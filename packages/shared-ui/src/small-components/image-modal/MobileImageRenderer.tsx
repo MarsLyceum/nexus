@@ -32,11 +32,12 @@ export const MobileImageRenderer: React.FC<MobileImageRendererProps> = ({
           }
         | undefined
     >();
-    const controlsRef = useRef<View | undefined>();
+    const controlsRef = useRef<View | null>(null);
 
     const isGif = useMemo(() => uri.toLowerCase().endsWith('.gif'), [uri]);
     const {
         position,
+        virtualPos,
         playing,
         totalDuration,
         togglePlay,
@@ -176,13 +177,13 @@ export const MobileImageRenderer: React.FC<MobileImageRendererProps> = ({
                 <MediaPlayerControls
                     playing={playing}
                     position={position}
+                    virtualPos={virtualPos}
                     totalDuration={totalDuration}
                     onTogglePlay={togglePlay}
                     onSlidingStart={onSlidingStart}
                     onValueChange={onValueChange}
                     onSlidingComplete={onSlidingComplete}
                     isGif={isGif}
-                    // @ts-expect-error ref
                     ref={controlsRef}
                     onLayout={handleLayoutControls}
                 />

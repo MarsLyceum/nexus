@@ -176,19 +176,27 @@ export const MobileImageRenderer: React.FC<MobileImageRendererProps> = ({
                 <View style={{ flex: 1 }} />
             )}
             {isGif && (
-                <MediaPlayerControls
-                    playing={playing}
-                    position={position}
-                    virtualPos={virtualPos}
-                    totalDuration={totalDuration}
-                    onTogglePlay={togglePlay}
-                    onSlidingStart={onSlidingStart}
-                    onValueChange={onValueChange}
-                    onSlidingComplete={onSlidingComplete}
-                    isGif={isGif}
-                    ref={controlsRef}
-                    onLayout={handleLayoutControls}
-                />
+                <View
+                    style={{
+                        marginLeft: 10,
+                        marginRight: 10,
+                        marginBottom: 10,
+                    }}
+                >
+                    <MediaPlayerControls
+                        playing={playing}
+                        position={position}
+                        virtualPos={virtualPos}
+                        totalDuration={totalDuration}
+                        onTogglePlay={togglePlay}
+                        onSlidingStart={onSlidingStart}
+                        onValueChange={onValueChange}
+                        onSlidingComplete={onSlidingComplete}
+                        isGif={isGif}
+                        ref={controlsRef}
+                        onLayout={handleLayoutControls}
+                    />
+                </View>
             )}
         </View>
     );

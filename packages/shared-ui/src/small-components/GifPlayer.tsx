@@ -9,6 +9,7 @@ import {
     ColorType,
     useClock,
 } from '@shopify/react-native-skia';
+
 import { useSharedValue, useDerivedValue } from 'react-native-reanimated';
 
 import { useGifFrames } from '../hooks';
@@ -42,6 +43,7 @@ export const GifPlayer: React.FC<GifPlayerProps> = ({
     const clock = useClock();
 
     const delays = useMemo(() => frames.map((f) => f.delay), [frames]);
+    // eslint-disable-next-line consistent-return
     const skiaImages = useMemo(() => {
         if (Platform.OS !== 'web') {
             return frames.map((frame) => {
@@ -96,14 +98,19 @@ export const GifPlayer: React.FC<GifPlayerProps> = ({
     const frameIndex = useDerivedValue(() => {
         'worklet';
         let acc = 0;
-        for (let i = 0; i < delays.length; i++) {
-            acc += delays[i];
+        for (const [i, delay] of delays.entries()) {
+            acc += delay;
             if (virtualPos.value < acc) {
                 return i;
             }
         }
         return delays.length - 1;
     }, [delays, totalDuration]);
+
+    const currentImage = useDerivedValue(
+        () => skiaImages[frameIndex.value],
+        [frameIndex, skiaImages]
+    );
 
     // draw the frame
     const draw = useCallback(
@@ -180,7 +187,7 @@ export const GifPlayer: React.FC<GifPlayerProps> = ({
                     skiaImages && (
                         <SkiaCanvas style={{ width, height }} opaque={false}>
                             <SkiaImage
-                                image={skiaImages[frameIndex.value]}
+                                image={currentImage}
                                 x={0}
                                 y={0}
                                 width={width}

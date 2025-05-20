@@ -80,6 +80,7 @@ export const GifPlayer: React.FC<GifPlayerProps> = ({
 
     const virtualPos = useDerivedValue(() => {
         'worklet';
+
         return playingSV.value
             ? clock.value % totalDuration
             : Math.min(Math.max(positionSV.value, 0), totalDuration);
@@ -97,6 +98,7 @@ export const GifPlayer: React.FC<GifPlayerProps> = ({
 
     const frameIndex = useDerivedValue(() => {
         'worklet';
+
         let acc = 0;
         for (const [i, delay] of delays.entries()) {
             acc += delay;
@@ -108,7 +110,7 @@ export const GifPlayer: React.FC<GifPlayerProps> = ({
     }, [delays, totalDuration]);
 
     const currentImage = useDerivedValue(
-        () => skiaImages[frameIndex.value],
+        () => (skiaImages ? skiaImages[frameIndex.value] : undefined),
         [frameIndex, skiaImages]
     );
 

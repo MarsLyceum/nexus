@@ -11,7 +11,7 @@ import {
 import { getDomainFromUrl, computeMediaSize } from '../utils';
 import { useTheme, Theme } from '../theme';
 import { PreviewData } from '../types';
-import { ImageDetailsModal } from '../sections'; // Large image modal
+import { MediaDetailsModal } from '../sections'; // Large image modal
 
 import { NexusImage } from './NexusImage';
 
@@ -113,7 +113,7 @@ export const RegularWebsitePreview: React.FC<RegularWebsitePreviewProps> = ({
             >
                 <Text style={styles.linkPreviewSite}>{siteToShow}</Text>
             </TouchableOpacity>
-            <ImageDetailsModal
+            <MediaDetailsModal
                 visible={modalVisible}
                 attachments={attachments}
                 initialIndex={0}

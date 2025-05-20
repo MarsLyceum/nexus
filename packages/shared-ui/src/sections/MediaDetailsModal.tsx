@@ -1,21 +1,23 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Modal, StyleSheet, View, Dimensions } from 'react-native';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { Modal, StyleSheet, View, Dimensions, Pressable } from 'react-native';
 import Carousel from 'react-native-reanimated-carousel';
 
+import { useTheme, Theme } from '../theme';
 import { ImageCountOverlay, MediaRenderer } from '../small-components';
 import { useMediaTypes, useIsComputer } from '../hooks';
+import { Cancel } from '../icons';
 
 import { ArrowButton } from './ArrowButton';
 import { CarouselDots } from './CarouselDots';
 
-export type ImageDetailsModalProps = {
+export type MediaDetailsModalProps = {
     visible: boolean;
     attachments: string[];
     initialIndex: number;
     onClose: () => void;
 };
 
-export const ImageDetailsModal: React.FC<ImageDetailsModalProps> = ({
+export const MediaDetailsModal: React.FC<MediaDetailsModalProps> = ({
     visible,
     attachments,
     initialIndex,
@@ -36,6 +38,8 @@ export const ImageDetailsModal: React.FC<ImageDetailsModalProps> = ({
     // For web, use 80% of the screen; for mobile, fill the screen.
     const containerWidth = isComputer ? deviceWidth * 0.8 : deviceWidth;
     const containerHeight = isComputer ? deviceHeight * 0.8 : deviceHeight;
+    const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
 
     useEffect(() => {
         if (visible && carouselRef.current) {
@@ -102,6 +106,11 @@ export const ImageDetailsModal: React.FC<ImageDetailsModalProps> = ({
             hardwareAccelerated
         >
             <View style={styles.modalOverlay}>
+                <View style={styles.cancelButtonContainer}>
+                    <Pressable onPress={onClose}>
+                        <Cancel color={theme.colors.ActiveText} />
+                    </Pressable>
+                </View>
                 <View style={styles.centeredContent}>
                     <View
                         style={[
@@ -192,54 +201,65 @@ export const ImageDetailsModal: React.FC<ImageDetailsModalProps> = ({
     );
 };
 
-const styles = StyleSheet.create({
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.9)',
-    },
-    centeredContent: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    contentWrapper: {
-        alignItems: 'center',
-    },
-    carouselContainer: {
-        width: '100%',
-        height: '100%',
-        position: 'relative',
-    },
-    arrowsContainer: {
-        position: 'absolute',
-        width: '90%',
-        top: '50%',
-        left: '5%',
-        right: '5%',
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        zIndex: 1,
-    },
-    navButton: {
-        padding: 10,
-    },
-    dotsWrapper: {
-        position: 'absolute',
-        bottom: 30,
-        alignSelf: 'center',
-    },
-    dotsContainer: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-    },
-    dot: {
-        width: 10,
-        height: 10,
-        borderRadius: 5,
-        backgroundColor: '#aaa',
-        marginHorizontal: 4,
-    },
-    activeDot: {
-        backgroundColor: '#fff',
-    },
-});
+function createStyles(theme: Theme) {
+    return StyleSheet.create({
+        modalOverlay: {
+            flex: 1,
+            backgroundColor: theme.colors.AppBackground,
+        },
+        cancelButtonContainer: {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            marginTop: 20,
+            marginLeft: 20,
+            zIndex: 20,
+            elevation: 20,
+        },
+        centeredContent: {
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        contentWrapper: {
+            alignItems: 'center',
+        },
+        carouselContainer: {
+            width: '100%',
+            height: '100%',
+            position: 'relative',
+        },
+        arrowsContainer: {
+            position: 'absolute',
+            width: '90%',
+            top: '50%',
+            left: '5%',
+            right: '5%',
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            zIndex: 1,
+        },
+        navButton: {
+            padding: 10,
+        },
+        dotsWrapper: {
+            position: 'absolute',
+            bottom: 30,
+            alignSelf: 'center',
+        },
+        dotsContainer: {
+            flexDirection: 'row',
+            justifyContent: 'center',
+        },
+        dot: {
+            width: 10,
+            height: 10,
+            borderRadius: 5,
+            backgroundColor: '#aaa',
+            marginHorizontal: 4,
+        },
+        activeDot: {
+            backgroundColor: '#fff',
+        },
+    });
+}

@@ -25,7 +25,12 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
     // Render based on media type.
     if (mediaInfo && mediaInfo.type === 'video') {
         return (
-            <View style={{ width: '100%', height: '100%' }}>
+            <View
+                style={{
+                    width: '100%',
+                    height: '100%',
+                }}
+            >
                 <NexusVideo
                     source={{ uri: item }}
                     // style={{ width: '100%', height: '100%' }}
@@ -40,7 +45,12 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
     }
     if (isComputer) {
         return (
-            <View style={{ width: '100%', height: '100%' }}>
+            <View
+                style={{
+                    width: '100%',
+                    height: '100%',
+                }}
+            >
                 <ComputerImageRenderer
                     uri={item}
                     containerWidth={containerWidth}

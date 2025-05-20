@@ -265,8 +265,10 @@ export const MessageItem: React.FC<MessageItemProps> = ({
         .requireExternalGestureToFail(videoGesture)
         .requireExternalGestureToFail(sliderGesture);
 
+    const OuterElement = Platform.OS === 'web' ? View : GestureDetector;
+
     return (
-        <GestureDetector
+        <OuterElement
             gesture={Gesture.Simultaneous(
                 videoGesture,
                 longPressGesture,
@@ -445,7 +447,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                     </View>
                 </Pressable>
             </View>
-        </GestureDetector>
+        </OuterElement>
     );
 };
 

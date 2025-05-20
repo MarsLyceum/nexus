@@ -54,7 +54,7 @@ import {
 } from '../types';
 import { getOnlineStatusDotColor } from '../utils';
 import { BackArrow } from '../buttons';
-import { ImageDetailsModal } from '../sections';
+import { MediaDetailsModal } from '../sections';
 import { useTheme, Theme } from '../theme';
 
 interface ChatScreenProps {
@@ -478,15 +478,6 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
                             <SkeletonMessageItem key={index} />
                         ))
                     ) : (
-                        // <FlatList
-                        //     ref={flatListRef}
-                        //     data={messages}
-                        //     inverted
-                        //     keyExtractor={(item) => item.id}
-                        //     renderItem={renderItem}
-                        //     onEndReached={handleLoadMore}
-                        //     onEndReachedThreshold={0.2}
-                        // />
                         <PatchedFlashList
                             ref={flatListRef}
                             data={messages}
@@ -517,7 +508,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
                         onAttachmentPreviewPress={handleAttachmentPreviewPress}
                     />
 
-                    <ImageDetailsModal
+                    <MediaDetailsModal
                         visible={modalVisible}
                         attachments={modalAttachments}
                         initialIndex={modalInitialIndex}

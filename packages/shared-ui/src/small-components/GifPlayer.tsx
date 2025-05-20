@@ -110,7 +110,8 @@ export const GifPlayer: React.FC<GifPlayerProps> = ({
     }, [delays, totalDuration]);
 
     const currentImage = useDerivedValue(
-        () => (skiaImages ? skiaImages[frameIndex.value] : undefined),
+        // eslint-disable-next-line unicorn/no-null
+        () => (skiaImages ? skiaImages[frameIndex.value] : null),
         [frameIndex, skiaImages]
     );
 

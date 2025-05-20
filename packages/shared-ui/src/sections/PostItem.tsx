@@ -14,7 +14,7 @@ import Toast from 'react-native-toast-message';
 import { VoteActions } from './VoteActions';
 import { BackArrow } from '../buttons';
 import { useTheme, Theme } from '../theme';
-import { ImageDetailsModal } from './ImageDetailsModal';
+import { MediaDetailsModal } from './MediaDetailsModal';
 import { AttachmentImageGallery } from './AttachmentImageGallery';
 import {
     LinkPreview,
@@ -358,7 +358,7 @@ export const PostItem: React.FC<PostItemProps> = ({
             ) : (
                 contentElement
             )}
-            <ImageDetailsModal
+            <MediaDetailsModal
                 visible={modalVisible}
                 attachments={attachmentUrls || []}
                 initialIndex={modalStartIndex}

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, Pressable } from 'react-native';
 
-import { ImageDetailsModal } from '../sections';
+import { MediaDetailsModal } from '../sections';
 import { computeMediaSize } from '../utils';
 
 import { NexusImage } from './NexusImage';
@@ -41,7 +41,7 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({
                     alt="Image preview"
                 />
             </Pressable>
-            <ImageDetailsModal
+            <MediaDetailsModal
                 visible={modalVisible}
                 attachments={[url]}
                 initialIndex={0}

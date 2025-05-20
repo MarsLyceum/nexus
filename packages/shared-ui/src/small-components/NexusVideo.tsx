@@ -168,7 +168,7 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
                             right: 0,
                             alignItems: 'center',
                             paddingHorizontal: 16,
-                            height: 40,
+                            height: 20,
                         }}
                     >
                         <MediaPlayerControls

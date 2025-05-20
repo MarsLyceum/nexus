@@ -1,10 +1,11 @@
 import React, { useRef, useCallback, useMemo, useState } from 'react';
-import { View, useWindowDimensions } from 'react-native';
+import { View, useWindowDimensions, StyleSheet } from 'react-native';
 import {
     ResumableZoom,
     type ResumableZoomType,
     useImageResolution,
 } from 'react-native-zoom-toolkit';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme } from '../../theme';
 import { useGifPlayer } from '../../hooks';
@@ -35,6 +36,7 @@ export const MobileImageRenderer: React.FC<MobileImageRendererProps> = ({
     >();
     const controlsRef = useRef<View | null>(null);
     const { theme } = useTheme();
+    const insets = useSafeAreaInsets();
 
     const isGif = useMemo(() => uri.toLowerCase().endsWith('.gif'), [uri]);
     const {
@@ -135,6 +137,7 @@ export const MobileImageRenderer: React.FC<MobileImageRendererProps> = ({
                 backgroundColor: theme.colors.AppBackground,
                 justifyContent: 'center',
                 alignItems: 'center',
+                position: 'relative',
             }}
         >
             {ready ? (
@@ -177,11 +180,15 @@ export const MobileImageRenderer: React.FC<MobileImageRendererProps> = ({
             )}
             {isGif && (
                 <View
-                    style={{
-                        marginLeft: 10,
-                        marginRight: 10,
-                        marginBottom: 10,
-                    }}
+                    style={[
+                        StyleSheet.absoluteFill,
+                        {
+                            justifyContent: 'flex-end',
+                            alignItems: 'center',
+                            paddingBottom: insets.bottom + 10,
+                            paddingHorizontal: 16,
+                        },
+                    ]}
                 >
                     <MediaPlayerControls
                         playing={playing}

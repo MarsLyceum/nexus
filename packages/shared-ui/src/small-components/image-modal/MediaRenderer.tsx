@@ -33,7 +33,7 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
             >
                 <NexusVideo
                     source={{ uri: item }}
-                    // style={{ width: '100%', height: '100%' }}
+                    style={{ width: '100%', height: '100%' }}
                     muted={false}
                     repeat
                     paused

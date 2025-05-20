@@ -9,11 +9,11 @@ import {
     useWindowDimensions,
     Pressable,
     Platform,
+    SafeAreaView,
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import Animated, {
     useAnimatedProps,
-    runOnJS,
     SharedValue,
 } from 'react-native-reanimated';
 import { GestureDetector, NativeGesture } from 'react-native-gesture-handler';
@@ -111,184 +111,199 @@ export const MediaPlayerControls = forwardRef<
         }, [volumeLevel]);
 
         return (
-            <View
-                style={styles.container}
-                ref={ref}
-                onLayout={viewProps.onLayout}
-            >
-                <TouchableOpacity onPress={onTogglePlay}>
-                    {playing ? <Pause /> : <Play />}
-                </TouchableOpacity>
-                <View style={styles.sliderOuterContainer}>
-                    {sliderGesture ? (
-                        <GestureDetector gesture={sliderGesture}>
-                            <View
-                                collapsable={false}
-                                style={styles.sliderContainer}
-                            >
-                                <SeekBarSlider
-                                    step={1}
-                                    style={styles.slider}
-                                    minimumValue={0}
-                                    maximumValue={totalDuration}
-                                    {...(Platform.OS === 'web'
-                                        ? { value: position }
-                                        : {
-                                              animatedProps:
-                                                  sliderAnimatedProps,
-                                          })}
-                                    value={position}
-                                    onSlidingStart={onSlidingStart}
-                                    onValueChange={onValueChange}
-                                    onSlidingComplete={onSlidingComplete}
-                                    minimumTrackTintColor={
-                                        theme.colors.ActiveText
-                                    }
-                                    thumbTintColor={theme.colors.ActiveText}
+            <SafeAreaView>
+                <View
+                    style={styles.container}
+                    ref={ref}
+                    onLayout={viewProps.onLayout}
+                >
+                    <TouchableOpacity onPress={onTogglePlay}>
+                        {playing ? <Pause /> : <Play />}
+                    </TouchableOpacity>
+                    <View style={styles.sliderOuterContainer}>
+                        {sliderGesture ? (
+                            <GestureDetector gesture={sliderGesture}>
+                                <View
                                     collapsable={false}
-                                />
-                            </View>
-                        </GestureDetector>
-                    ) : (
-                        <SeekBarSlider
-                            step={1}
-                            style={styles.slider}
-                            minimumValue={0}
-                            maximumValue={totalDuration}
-                            {...(Platform.OS === 'web'
-                                ? { value: position }
-                                : { animatedProps: sliderAnimatedProps })}
-                            onSlidingStart={onSlidingStart}
-                            onValueChange={onValueChange}
-                            onSlidingComplete={onSlidingComplete}
-                            minimumTrackTintColor={theme.colors.ActiveText}
-                            thumbTintColor={theme.colors.ActiveText}
-                            collapsable={false}
-                        />
-                    )}
-                </View>
-
-                <Text style={[styles.time, { color: theme.colors.ActiveText }]}>
-                    {isSmallScreen
-                        ? formatTime(position)
-                        : `${formatTime(position)} / ${formatTime(totalDuration)}`}
-                </Text>
-
-                {isGif ? (
-                    <Text style={styles.gifButtonText}>GIF</Text>
-                ) : (
-                    <View
-                        // on web: open on hover
-                        onMouseLeave={() => setShowVolumeSlider(false)}
-                        style={styles.volumeWrapper}
-                    >
-                        <Pressable
-                            onMouseEnter={() => setShowVolumeSlider(true)}
-                            onPress={onToggleVolumeMuted}
-                        >
-                            {volumeMuted ? <VolumeMuted /> : <Volume />}
-                        </Pressable>
-
-                        {showVolumeSlider && (
-                            <View
-                                style={styles.volumeSliderContainer}
-                                // start drag
-                                onMouseDown={(e: any) => {
-                                    // begin drag
-                                    volDragging.current = true;
-                                    startY.current = e.clientY;
-                                    startVol.current = volumeLevel ?? 0;
-                                    onSlidingStart();
-
-                                    // document‑level move & up
-                                    const onDocMouseMove = (ev: MouseEvent) => {
-                                        if (!volDragging.current) return;
-                                        const dy = startY.current - ev.clientY;
-                                        const r =
-                                            startVol.current +
-                                            dy / SLIDER_HEIGHT;
-                                        onVolumeChange?.(
-                                            Math.max(0, Math.min(1, r))
-                                        );
-                                    };
-                                    const onDocMouseUp = (ev: MouseEvent) => {
-                                        if (!volDragging.current) return;
-                                        volDragging.current = false;
-                                        document.removeEventListener(
-                                            'mousemove',
-                                            onDocMouseMove
-                                        );
-                                        document.removeEventListener(
-                                            'mouseup',
-                                            onDocMouseUp
-                                        );
-                                        const dy = startY.current - ev.clientY;
-                                        const r =
-                                            startVol.current +
-                                            dy / SLIDER_HEIGHT;
-                                        onSlidingComplete(
-                                            Math.max(0, Math.min(1, r))
-                                        );
-                                    };
-                                    document.addEventListener(
-                                        'mousemove',
-                                        onDocMouseMove
-                                    );
-                                    document.addEventListener(
-                                        'mouseup',
-                                        onDocMouseUp
-                                    );
-                                }}
-                                // during drag
-                                onMouseMove={(e: any) => {
-                                    if (!volDragging.current) return;
-                                    const dy = startY.current - e.clientY;
-                                    const ratio = Math.max(
-                                        0,
-                                        Math.min(
-                                            1,
-                                            startVol.current +
-                                                dy / SLIDER_HEIGHT
-                                        )
-                                    );
-                                    onVolumeChange?.(ratio);
-                                }}
-                                // end drag
-                                onMouseUp={(e: any) => {
-                                    if (!volDragging.current) return;
-                                    volDragging.current = false;
-                                    const dy = startY.current - e.clientY;
-                                    const ratio = Math.max(
-                                        0,
-                                        Math.min(
-                                            1,
-                                            startVol.current +
-                                                dy / SLIDER_HEIGHT
-                                        )
-                                    );
-                                    onSlidingComplete(ratio);
-                                }}
-                            >
-                                <View style={styles.volumeSliderWrapper}>
-                                    <Slider
-                                        style={styles.volumeSlider}
+                                    style={styles.sliderContainer}
+                                >
+                                    <SeekBarSlider
+                                        step={1}
+                                        style={styles.slider}
                                         minimumValue={0}
-                                        maximumValue={1}
-                                        step={0.01}
-                                        value={volumeLevel}
-                                        onValueChange={onVolumeChange}
+                                        maximumValue={totalDuration}
+                                        {...(Platform.OS === 'web'
+                                            ? { value: position }
+                                            : {
+                                                  animatedProps:
+                                                      sliderAnimatedProps,
+                                              })}
+                                        value={position}
+                                        onSlidingStart={onSlidingStart}
+                                        onValueChange={onValueChange}
+                                        onSlidingComplete={onSlidingComplete}
                                         minimumTrackTintColor={
                                             theme.colors.ActiveText
                                         }
                                         thumbTintColor={theme.colors.ActiveText}
-                                        pointerEvents="none"
+                                        collapsable={false}
                                     />
                                 </View>
-                            </View>
+                            </GestureDetector>
+                        ) : (
+                            <SeekBarSlider
+                                step={1}
+                                style={styles.slider}
+                                minimumValue={0}
+                                maximumValue={totalDuration}
+                                {...(Platform.OS === 'web'
+                                    ? { value: position }
+                                    : { animatedProps: sliderAnimatedProps })}
+                                onSlidingStart={onSlidingStart}
+                                onValueChange={onValueChange}
+                                onSlidingComplete={onSlidingComplete}
+                                minimumTrackTintColor={theme.colors.ActiveText}
+                                thumbTintColor={theme.colors.ActiveText}
+                                collapsable={false}
+                            />
                         )}
                     </View>
-                )}
-            </View>
+
+                    <Text
+                        style={[
+                            styles.time,
+                            { color: theme.colors.ActiveText },
+                        ]}
+                    >
+                        {isSmallScreen
+                            ? formatTime(position)
+                            : `${formatTime(position)} / ${formatTime(totalDuration)}`}
+                    </Text>
+
+                    {isGif ? (
+                        <Text style={styles.gifButtonText}>GIF</Text>
+                    ) : (
+                        <View
+                            // on web: open on hover
+                            onMouseLeave={() => setShowVolumeSlider(false)}
+                            style={styles.volumeWrapper}
+                        >
+                            <Pressable
+                                onMouseEnter={() => setShowVolumeSlider(true)}
+                                onPress={onToggleVolumeMuted}
+                            >
+                                {volumeMuted ? <VolumeMuted /> : <Volume />}
+                            </Pressable>
+
+                            {showVolumeSlider && (
+                                <View
+                                    style={styles.volumeSliderContainer}
+                                    // start drag
+                                    onMouseDown={(e: any) => {
+                                        // begin drag
+                                        volDragging.current = true;
+                                        startY.current = e.clientY;
+                                        startVol.current = volumeLevel ?? 0;
+                                        onSlidingStart();
+
+                                        // document‑level move & up
+                                        const onDocMouseMove = (
+                                            ev: MouseEvent
+                                        ) => {
+                                            if (!volDragging.current) return;
+                                            const dy =
+                                                startY.current - ev.clientY;
+                                            const r =
+                                                startVol.current +
+                                                dy / SLIDER_HEIGHT;
+                                            onVolumeChange?.(
+                                                Math.max(0, Math.min(1, r))
+                                            );
+                                        };
+                                        const onDocMouseUp = (
+                                            ev: MouseEvent
+                                        ) => {
+                                            if (!volDragging.current) return;
+                                            volDragging.current = false;
+                                            document.removeEventListener(
+                                                'mousemove',
+                                                onDocMouseMove
+                                            );
+                                            document.removeEventListener(
+                                                'mouseup',
+                                                onDocMouseUp
+                                            );
+                                            const dy =
+                                                startY.current - ev.clientY;
+                                            const r =
+                                                startVol.current +
+                                                dy / SLIDER_HEIGHT;
+                                            onSlidingComplete(
+                                                Math.max(0, Math.min(1, r))
+                                            );
+                                        };
+                                        document.addEventListener(
+                                            'mousemove',
+                                            onDocMouseMove
+                                        );
+                                        document.addEventListener(
+                                            'mouseup',
+                                            onDocMouseUp
+                                        );
+                                    }}
+                                    // during drag
+                                    onMouseMove={(e: any) => {
+                                        if (!volDragging.current) return;
+                                        const dy = startY.current - e.clientY;
+                                        const ratio = Math.max(
+                                            0,
+                                            Math.min(
+                                                1,
+                                                startVol.current +
+                                                    dy / SLIDER_HEIGHT
+                                            )
+                                        );
+                                        onVolumeChange?.(ratio);
+                                    }}
+                                    // end drag
+                                    onMouseUp={(e: any) => {
+                                        if (!volDragging.current) return;
+                                        volDragging.current = false;
+                                        const dy = startY.current - e.clientY;
+                                        const ratio = Math.max(
+                                            0,
+                                            Math.min(
+                                                1,
+                                                startVol.current +
+                                                    dy / SLIDER_HEIGHT
+                                            )
+                                        );
+                                        onSlidingComplete(ratio);
+                                    }}
+                                >
+                                    <View style={styles.volumeSliderWrapper}>
+                                        <Slider
+                                            style={styles.volumeSlider}
+                                            minimumValue={0}
+                                            maximumValue={1}
+                                            step={0.01}
+                                            value={volumeLevel}
+                                            onValueChange={onVolumeChange}
+                                            minimumTrackTintColor={
+                                                theme.colors.ActiveText
+                                            }
+                                            thumbTintColor={
+                                                theme.colors.ActiveText
+                                            }
+                                            pointerEvents="none"
+                                        />
+                                    </View>
+                                </View>
+                            )}
+                        </View>
+                    )}
+                </View>
+            </SafeAreaView>
         );
     }
 );

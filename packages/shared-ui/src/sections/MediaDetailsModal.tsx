@@ -40,6 +40,7 @@ export const MediaDetailsModal: React.FC<MediaDetailsModalProps> = ({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const carouselRef = useRef<any>(null);
     const { width: deviceWidth, height: deviceHeight } = useWindowDimensions();
+
     // For web, use 80% of the screen; for mobile, fill the screen.
     const containerWidth = isComputer ? deviceWidth * 0.8 : deviceWidth;
     const containerHeight = isComputer ? deviceHeight * 0.8 : deviceHeight;
@@ -89,7 +90,7 @@ export const MediaDetailsModal: React.FC<MediaDetailsModalProps> = ({
         // Use a unique key based on the item URI and its media type.
         const key = `${item}_${info ? info.type : 'unknown'}`;
         return (
-            <View key={key} style={{ width: '100%', height: '100%' }}>
+            <View key={key} style={{ flex: 1 }}>
                 <MediaRenderer
                     item={item}
                     isComputer={isComputer}
@@ -109,6 +110,12 @@ export const MediaDetailsModal: React.FC<MediaDetailsModalProps> = ({
             animationType="fade"
             onRequestClose={onClose}
             hardwareAccelerated
+            supportedOrientations={[
+                'portrait',
+                'landscape-left',
+                'landscape-right',
+                'portrait-upside-down',
+            ]}
         >
             <View style={styles.modalOverlay}>
                 <View style={styles.cancelButtonContainer}>

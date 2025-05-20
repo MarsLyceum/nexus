@@ -1,6 +1,6 @@
 // apps/mobile/src/components/NexusVideo.tsx
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { Platform, View, StyleProp, ViewStyle } from 'react-native';
+import { Platform, View, StyleProp, ViewStyle, StyleSheet } from 'react-native';
 
 import Video, {
     OnLoadData,
@@ -8,6 +8,7 @@ import Video, {
     VideoRef,
     ViewType,
 } from 'react-native-video';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeGesture } from 'react-native-gesture-handler';
 import { MediaPlayerControls } from './MediaPlayerControls';
 
@@ -38,6 +39,7 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
 }) => {
     const isWeb = Platform.OS === 'web';
     const webRef = useRef<HTMLVideoElement>(null);
+    const insets = useSafeAreaInsets();
 
     // internal playback state
     const [playing, setPlaying] = useState(!paused);
@@ -206,39 +208,47 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
     };
 
     return (
-        <View
-            style={[
-                style as StyleProp<ViewStyle>,
-                { position: 'relative', overflow: 'hidden', borderRadius: 8 },
-            ]}
-        >
-            <Video
-                viewType={ViewType.TEXTURE}
-                source={source}
-                style={{ width: '100%', height: '100%', zIndex: 0 }}
-                volume={volume}
-                muted={volumeMuted}
-                repeat={repeat}
-                paused={!playing}
-                resizeMode={resizeMode}
-                controls={false}
-                onLoad={onLoad}
-                onProgress={onProgress}
-                onEnd={onEnd}
-                ref={nativeVideoRef}
-            />
+        <View style={[style as StyleProp<ViewStyle>, { position: 'relative' }]}>
+            <View
+                style={[
+                    style as StyleProp<ViewStyle>,
+                    {
+                        position: 'relative',
+                        overflow: 'hidden',
+                        borderRadius: 8,
+                    },
+                ]}
+            >
+                <Video
+                    viewType={ViewType.TEXTURE}
+                    source={source}
+                    style={{ width: '100%', height: '100%', zIndex: 0 }}
+                    volume={volume}
+                    muted={volumeMuted}
+                    repeat={repeat}
+                    paused={!playing}
+                    resizeMode={resizeMode}
+                    controls={false}
+                    onLoad={onLoad}
+                    onProgress={onProgress}
+                    onEnd={onEnd}
+                    ref={nativeVideoRef}
+                />
+            </View>
+
             {controls && (
                 <View
-                    style={{
-                        position: 'absolute',
-                        bottom: 8,
-                        left: 0,
-                        right: 0,
-                        alignItems: 'center',
-                        paddingHorizontal: 16,
-                        zIndex: 999,
-                        elevation: 10,
-                    }}
+                    style={[
+                        StyleSheet.absoluteFill,
+                        {
+                            justifyContent: 'flex-end',
+                            alignItems: 'center',
+                            paddingBottom: insets.bottom + 8,
+                            paddingHorizontal: 16,
+                            zIndex: 999,
+                            elevation: 10,
+                        },
+                    ]}
                     renderToHardwareTextureAndroid
                     needsOffscreenAlphaCompositing
                 >

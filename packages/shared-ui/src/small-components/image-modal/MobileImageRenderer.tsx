@@ -6,6 +6,7 @@ import {
     useImageResolution,
 } from 'react-native-zoom-toolkit';
 
+import { useTheme } from '../../theme';
 import { useGifPlayer } from '../../hooks';
 import { GifPlayer } from '../GifPlayer';
 import { MediaPlayerControls } from '../MediaPlayerControls';
@@ -33,6 +34,7 @@ export const MobileImageRenderer: React.FC<MobileImageRendererProps> = ({
         | undefined
     >();
     const controlsRef = useRef<View | null>(null);
+    const { theme } = useTheme();
 
     const isGif = useMemo(() => uri.toLowerCase().endsWith('.gif'), [uri]);
     const {
@@ -130,7 +132,7 @@ export const MobileImageRenderer: React.FC<MobileImageRendererProps> = ({
         <View
             style={{
                 flex: 1,
-                backgroundColor: 'black',
+                backgroundColor: theme.colors.AppBackground,
                 justifyContent: 'center',
                 alignItems: 'center',
             }}

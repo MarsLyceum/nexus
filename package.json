@@ -8,6 +8,7 @@
         "lerna:build": "npx lerna run build"
     },
     "dependencies": {
+        "eslint-import-resolver-typescript": "^4.3.5",
         "@apollo/client": "^3.12.8",
         "@babel/plugin-transform-modules-commonjs": "^7.26.3",
         "@babel/plugin-transform-runtime": "^7.26.10",

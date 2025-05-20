@@ -12,6 +12,7 @@ module.exports = {
     extends: [
         'eslint:recommended',
         'plugin:import/recommended',
+        'plugin:import/typescript',
         'plugin:react/recommended',
         'plugin:react-hooks/recommended-legacy',
         'airbnb-base',
@@ -42,6 +43,24 @@ module.exports = {
         react: {
             version: 'detect',
         },
+        'import/parsers': {
+            '@typescript-eslint/parser': ['.ts', '.tsx'], // parse TS files
+        },
+        'import/resolver': {
+            node: {
+                extensions: ['.js', '.jsx', '.ts', '.tsx'], // look for these
+            },
+            typescript: {
+                alwaysTryTypes: true, // also resolve @types/* packages
+                project: [
+                    './tsconfig.json',
+                    './packages/shared-ui/tsconfig.json',
+                    './apps/mobile/tsconfig.json',
+                    './apps/web/tsconfig.json',
+                ],
+            },
+        },
+        react: { version: 'detect' },
     },
     rules: {
         'import/no-cycle': 'error',

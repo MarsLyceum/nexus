@@ -1,5 +1,11 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Modal, StyleSheet, View, Dimensions, Pressable } from 'react-native';
+import {
+    Modal,
+    StyleSheet,
+    View,
+    Pressable,
+    useWindowDimensions,
+} from 'react-native';
 import Carousel from 'react-native-reanimated-carousel';
 
 import { useTheme, Theme } from '../theme';
@@ -33,8 +39,7 @@ export const MediaDetailsModal: React.FC<MediaDetailsModalProps> = ({
     const [currentIndex, setCurrentIndex] = useState(effectiveInitialIndex);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const carouselRef = useRef<any>(null);
-    const deviceWidth = Dimensions.get('window').width;
-    const deviceHeight = Dimensions.get('window').height;
+    const { width: deviceWidth, height: deviceHeight } = useWindowDimensions();
     // For web, use 80% of the screen; for mobile, fill the screen.
     const containerWidth = isComputer ? deviceWidth * 0.8 : deviceWidth;
     const containerHeight = isComputer ? deviceHeight * 0.8 : deviceHeight;

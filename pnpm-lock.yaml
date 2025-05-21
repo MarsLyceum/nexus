@@ -846,6 +846,9 @@ importers:
       react-native-event-source:
         specifier: ^1.1.0
         version: 1.1.0
+      react-native-extra-dimensions-android:
+        specifier: ^1.2.5
+        version: 1.2.5
       react-native-geolocation-service:
         specifier: ^5.3.1
         version: 5.3.1

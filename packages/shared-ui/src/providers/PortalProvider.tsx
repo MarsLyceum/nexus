@@ -7,7 +7,13 @@ import React, {
     useEffect,
     ReactNode,
 } from 'react';
-import { View, StyleSheet, ViewStyle } from 'react-native';
+import {
+    View,
+    StyleSheet,
+    ViewStyle,
+    BackHandler,
+    Platform,
+} from 'react-native';
 
 /**
  * Context type for managing portals
@@ -71,10 +77,20 @@ export const PortalProvider: React.FC<{ children: ReactNode }> = ({
     );
 };
 
+export type PortalProps = {
+    children: ReactNode;
+    visible?: boolean;
+    onRequestClose?: () => void;
+};
+
 /**
  * Portal: use this component anywhere to render children into the host
  */
-export const Portal: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const Portal: React.FC<PortalProps> = ({
+    children,
+    onRequestClose,
+    visible = true,
+}) => {
     const context = useContext(PortalContext);
     if (!context) {
         throw new Error('Portal must be used within a PortalProvider');
@@ -82,19 +98,49 @@ export const Portal: React.FC<{ children: ReactNode }> = ({ children }) => {
     const { mount, update, unmount } = context;
     const keyRef = useRef<number | null>(null);
 
-    // Mount on first render
     useEffect(() => {
-        keyRef.current = mount(children);
-        return () => {
+        if (!visible) {
+            // if we're not visible, ensure unmounted
             if (keyRef.current !== null) {
                 unmount(keyRef.current);
+                keyRef.current = null;
+            }
+            return;
+        }
+
+        keyRef.current = mount(children);
+
+        // Hook the Android back button if they gave us onRequestClose
+        const backSub = onRequestClose
+            ? BackHandler.addEventListener('hardwareBackPress', () => {
+                  onRequestClose();
+                  return true;
+              })
+            : undefined;
+
+        let escListener: ((e: KeyboardEvent) => void) | undefined;
+        if (onRequestClose && Platform.OS === 'web') {
+            escListener = (e) => {
+                if (e.key === 'Escape') onRequestClose();
+            };
+            window.addEventListener('keydown', escListener);
+        }
+
+        // eslint-disable-next-line consistent-return
+        return () => {
+            if (backSub) backSub.remove();
+            if (escListener) window.removeEventListener('keydown', escListener);
+            if (keyRef.current !== null) {
+                unmount(keyRef.current);
+                // eslint-disable-next-line unicorn/no-null
+                keyRef.current = null;
             }
         };
-    }, []);
+    }, [visible]);
 
     // Update on children change
     useEffect(() => {
-        if (keyRef.current !== null) {
+        if (visible && keyRef.current !== null) {
             update(keyRef.current, children);
         }
     }, [children]);

@@ -1,17 +1,12 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import {
-    Modal,
-    StyleSheet,
-    View,
-    Pressable,
-    useWindowDimensions,
-} from 'react-native';
+import { StyleSheet, View, Pressable, useWindowDimensions } from 'react-native';
 import Carousel from 'react-native-reanimated-carousel';
 
 import { useTheme, Theme } from '../theme';
 import { ImageCountOverlay, MediaRenderer } from '../small-components';
 import { useMediaTypes, useIsComputer } from '../hooks';
 import { Cancel } from '../icons';
+import { Portal } from '../providers';
 
 import { ArrowButton } from './ArrowButton';
 import { CarouselDots } from './CarouselDots';
@@ -104,19 +99,7 @@ export const MediaDetailsModal: React.FC<MediaDetailsModalProps> = ({
     };
 
     return (
-        <Modal
-            visible={visible}
-            transparent
-            animationType="fade"
-            onRequestClose={onClose}
-            hardwareAccelerated
-            supportedOrientations={[
-                'portrait',
-                'landscape-left',
-                'landscape-right',
-                'portrait-upside-down',
-            ]}
-        >
+        <Portal visible={visible} onRequestClose={onClose}>
             <View style={styles.modalOverlay}>
                 <View style={styles.cancelButtonContainer}>
                     <Pressable onPress={onClose}>
@@ -209,7 +192,7 @@ export const MediaDetailsModal: React.FC<MediaDetailsModalProps> = ({
                     </View>
                 </View>
             </View>
-        </Modal>
+        </Portal>
     );
 };
 

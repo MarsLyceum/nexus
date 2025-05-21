@@ -20,6 +20,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeGesture } from 'react-native-gesture-handler';
 import { MediaPlayerControls } from './MediaPlayerControls';
 
+import { Portal } from '../providers';
+
 type VideoProps = React.ComponentProps<typeof Video>;
 type RNVideoResizeMode = VideoProps['resizeMode'];
 
@@ -252,17 +254,15 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
 
     if (isFullscreen && !isWeb) {
         return (
-            <Modal
-                visible
-                transparent
-                animationType="fade"
-                onRequestClose={handleToggleFullScreen}
-            >
+            <Portal onRequestClose={handleToggleFullScreen}>
                 <View
-                    style={{
-                        flex: 1,
-                        backgroundColor: 'black',
-                    }}
+                    style={[
+                        StyleSheet.absoluteFillObject,
+                        {
+                            flex: 1,
+                            backgroundColor: 'black',
+                        },
+                    ]}
                 >
                     <Video
                         ref={nativeVideoRef}
@@ -312,7 +312,7 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
                         />
                     </View>
                 </View>
-            </Modal>
+            </Portal>
         );
     }
 

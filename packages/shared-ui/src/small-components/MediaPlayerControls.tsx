@@ -318,7 +318,10 @@ export const MediaPlayerControls = forwardRef<
                     )}
 
                     {!isGif ? (
-                        <Pressable onPress={onToggleFullScreen}>
+                        <Pressable
+                            onPress={onToggleFullScreen}
+                            style={styles.fullScreen}
+                        >
                             <FullScreen />
                         </Pressable>
                     ) : undefined}
@@ -335,6 +338,9 @@ function createStyles(
     navBarHeight: number
 ) {
     return StyleSheet.create({
+        fullScreen: {
+            marginLeft: 4,
+        },
         gifButtonText: {
             color: theme.colors.ActiveText,
             fontSize: 16,
@@ -351,6 +357,8 @@ function createStyles(
             alignSelf: 'stretch',
             overflow: 'hidden',
             height: 20,
+            paddingLeft: 10,
+            paddingRight: 10,
             marginLeft:
                 isLandscape && Platform.OS !== 'web' ? statusBarHeight : 0,
             marginRight:
@@ -369,7 +377,7 @@ function createStyles(
         },
         time: {
             fontSize: 14,
-            marginRight: 8,
+            marginRight: 4,
             flexShrink: 1,
         },
         volumeWrapper: {

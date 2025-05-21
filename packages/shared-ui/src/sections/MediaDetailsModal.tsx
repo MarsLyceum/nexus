@@ -225,8 +225,8 @@ function createStyles(theme: Theme) {
             left: 0,
             marginTop: 20,
             marginLeft: 20,
-            zIndex: 20,
-            elevation: 20,
+            zIndex: 2000,
+            elevation: 2000,
         },
         centeredContent: {
             flex: 1,

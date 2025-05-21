@@ -60,6 +60,37 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
     const [position, setPosition] = useState(0); // ms
     const [totalDuration, setTotalDuration] = useState(0); // ms
     const nativeVideoRef = useRef<VideoRef>(null);
+    const [showControls, setShowControls] = useState(true);
+    const hideControlsTimeout = useRef<ReturnType<typeof setTimeout> | null>(
+        null
+    );
+
+    const resetControlsTimer = useCallback(() => {
+        setShowControls(true);
+        if (hideControlsTimeout.current) {
+            clearTimeout(hideControlsTimeout.current);
+        }
+        hideControlsTimeout.current = setTimeout(() => {
+            setShowControls(false);
+        }, 3000);
+    }, []);
+
+    useEffect(() => {
+        if (isFullscreen && playing) {
+            resetControlsTimer(); // only kick off when playing in full-screen
+        } else {
+            if (hideControlsTimeout.current) {
+                clearTimeout(hideControlsTimeout.current);
+            }
+            setShowControls(true); // always show controls if paused or not FS
+        }
+
+        return () => {
+            if (hideControlsTimeout.current) {
+                clearTimeout(hideControlsTimeout.current);
+            }
+        };
+    }, [isFullscreen, playing, resetControlsTimer]);
 
     // Handlers for MediaPlayerControls
     const togglePlay = useCallback(() => {
@@ -181,10 +212,17 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
 
         return (
             <View
+                onMouseMove={() => {
+                    if (isFullscreen && playing) resetControlsTimer();
+                }}
+                onClick={() => {
+                    if (isFullscreen && playing) resetControlsTimer();
+                }}
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 ref={wrapperRef as any}
                 style={[
                     style as StyleProp<ViewStyle>,
+                    // @ts-expect-error cursor
                     {
                         position: isFullscreen ? 'fixed' : 'relative',
                         top: 0,
@@ -193,6 +231,7 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
                         height: isFullscreen ? '100%' : undefined,
                         backgroundColor: isFullscreen ? 'black' : undefined,
                         overflow: 'hidden',
+                        cursor: showControls ? 'auto' : 'none',
                     },
                 ]}
             >
@@ -205,7 +244,7 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
                     }}
                     controls={false}
                 />
-                {controls && (
+                {showControls && controls && (
                     <View
                         style={{
                             position: 'absolute',
@@ -263,6 +302,8 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
                             backgroundColor: 'black',
                         },
                     ]}
+                    onStartShouldSetResponder={() => true}
+                    onResponderGrant={resetControlsTimer}
                 >
                     <Video
                         ref={nativeVideoRef}
@@ -285,32 +326,34 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
                         }
                         onEnd={() => setPlaying(false)}
                     />
-                    <View
-                        style={[
-                            StyleSheet.absoluteFill,
-                            {
-                                justifyContent: 'flex-end',
-                                alignItems: 'center',
-                                paddingBottom: insets.bottom + 8,
-                            },
-                        ]}
-                    >
-                        <MediaPlayerControls
-                            playing={playing}
-                            volumeMuted={volumeMuted}
-                            volumeLevel={volume}
-                            position={position}
-                            totalDuration={totalDuration}
-                            onTogglePlay={togglePlay}
-                            onToggleVolumeMuted={toggleVolumeMuted}
-                            onVolumeChange={setVolume}
-                            onSlidingStart={onSeekStart}
-                            onValueChange={onSeek}
-                            onSlidingComplete={onSeekComplete}
-                            onToggleFullScreen={handleToggleFullScreen}
-                            sliderGesture={sliderGesture}
-                        />
-                    </View>
+                    {showControls ? (
+                        <View
+                            style={[
+                                StyleSheet.absoluteFill,
+                                {
+                                    justifyContent: 'flex-end',
+                                    alignItems: 'center',
+                                    paddingBottom: insets.bottom + 8,
+                                },
+                            ]}
+                        >
+                            <MediaPlayerControls
+                                playing={playing}
+                                volumeMuted={volumeMuted}
+                                volumeLevel={volume}
+                                position={position}
+                                totalDuration={totalDuration}
+                                onTogglePlay={togglePlay}
+                                onToggleVolumeMuted={toggleVolumeMuted}
+                                onVolumeChange={setVolume}
+                                onSlidingStart={onSeekStart}
+                                onValueChange={onSeek}
+                                onSlidingComplete={onSeekComplete}
+                                onToggleFullScreen={handleToggleFullScreen}
+                                sliderGesture={sliderGesture}
+                            />
+                        </View>
+                    ) : undefined}
                 </View>
             </Portal>
         );

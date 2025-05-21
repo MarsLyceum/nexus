@@ -38,3 +38,4 @@ export * from './Play';
 export * from './Pause';
 export * from './Volume';
 export * from './VolumeMuted';
+export * from './FullScreen';

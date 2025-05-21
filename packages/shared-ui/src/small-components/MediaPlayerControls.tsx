@@ -19,7 +19,7 @@ import { GestureDetector, NativeGesture } from 'react-native-gesture-handler';
 
 import { useSystemBars } from '../hooks';
 import { useTheme, Theme } from '../theme';
-import { Play, Pause, Volume, VolumeMuted } from '../icons';
+import { Play, Pause, Volume, VolumeMuted, FullScreen } from '../icons';
 
 const formatTime = (ms: number) => {
     const totalSeconds = Math.floor(ms / 1000);
@@ -51,6 +51,7 @@ export type MediaPlayerControlsProps = {
     onValueChange: (val: number) => void;
     onSlidingComplete: (val: number) => void;
     onVolumeChange?: (v: number) => void;
+    onToggleFullScreen: () => void;
     sliderGesture?: NativeGesture;
 };
 
@@ -74,6 +75,7 @@ export const MediaPlayerControls = forwardRef<
             onSlidingStart,
             onValueChange,
             onSlidingComplete,
+            onToggleFullScreen,
             sliderGesture,
             ...viewProps
         }: MediaPlayerControlsProps & ViewProps,
@@ -314,6 +316,12 @@ export const MediaPlayerControls = forwardRef<
                             )}
                         </View>
                     )}
+
+                    {!isGif ? (
+                        <Pressable onPress={onToggleFullScreen}>
+                            <FullScreen />
+                        </Pressable>
+                    ) : undefined}
                 </View>
             </View>
         );

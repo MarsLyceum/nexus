@@ -1,6 +1,14 @@
 // apps/mobile/src/components/NexusVideo.tsx
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { Platform, View, StyleProp, ViewStyle, StyleSheet } from 'react-native';
+import {
+    Platform,
+    View,
+    StyleProp,
+    ViewStyle,
+    StyleSheet,
+    StatusBar,
+    Modal,
+} from 'react-native';
 
 import Video, {
     OnLoadData,
@@ -39,9 +47,11 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
 }) => {
     const isWeb = Platform.OS === 'web';
     const webRef = useRef<HTMLVideoElement>(null);
+    const wrapperRef = useRef<HTMLElement>(null);
     const insets = useSafeAreaInsets();
 
     // internal playback state
+    const [isFullscreen, setIsFullscreen] = useState(false);
     const [playing, setPlaying] = useState(!paused);
     const [volumeMuted, setVolumeMuted] = useState(muted);
     const [volume, setVolume] = useState(1);
@@ -66,6 +76,28 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
     const onSeek = useCallback((ms: number) => {
         setPosition(ms);
     }, []);
+
+    const handleToggleFullScreen = useCallback(() => {
+        if (isWeb) {
+            if (document.fullscreenElement) {
+                document.exitFullscreen().catch(() => {});
+            } else {
+                wrapperRef.current?.requestFullscreen().catch(() => {});
+            }
+        } else {
+            StatusBar.setHidden(!isFullscreen, 'fade');
+            setIsFullscreen((f) => !f);
+        }
+    }, [isWeb, isFullscreen]);
+
+    useEffect(() => {
+        if (!isWeb) return;
+        const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
+        document.addEventListener('fullscreenchange', onFsChange);
+        // eslint-disable-next-line consistent-return
+        return () =>
+            document.removeEventListener('fullscreenchange', onFsChange);
+    }, [isWeb]);
 
     const onSeekComplete = useCallback(
         (ms: number) => {
@@ -147,9 +179,19 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
 
         return (
             <View
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                ref={wrapperRef as any}
                 style={[
                     style as StyleProp<ViewStyle>,
-                    { position: 'relative', overflow: 'hidden' },
+                    {
+                        position: isFullscreen ? 'fixed' : 'relative',
+                        top: 0,
+                        left: 0,
+                        width: isFullscreen ? '100%' : undefined,
+                        height: isFullscreen ? '100%' : undefined,
+                        backgroundColor: isFullscreen ? 'black' : undefined,
+                        overflow: 'hidden',
+                    },
                 ]}
             >
                 <video
@@ -186,6 +228,7 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
                             onValueChange={onSeek}
                             onSlidingComplete={onSeekComplete}
                             sliderGesture={sliderGesture}
+                            onToggleFullScreen={handleToggleFullScreen}
                         />
                     </View>
                 )}
@@ -206,6 +249,72 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
     const onEnd = () => {
         setPlaying(false);
     };
+
+    if (isFullscreen && !isWeb) {
+        return (
+            <Modal
+                visible
+                transparent
+                animationType="fade"
+                onRequestClose={handleToggleFullScreen}
+            >
+                <View
+                    style={{
+                        flex: 1,
+                        backgroundColor: 'black',
+                    }}
+                >
+                    <Video
+                        ref={nativeVideoRef}
+                        source={source}
+                        style={StyleSheet.absoluteFill}
+                        volume={volume}
+                        muted={volumeMuted}
+                        repeat={repeat}
+                        paused={!playing}
+                        resizeMode={
+                            contentFit === 'fill'
+                                ? 'stretch'
+                                : (contentFit as any)
+                        }
+                        onLoad={({ duration }) =>
+                            setTotalDuration(duration * 1000)
+                        }
+                        onProgress={({ currentTime }) =>
+                            setPosition(currentTime * 1000)
+                        }
+                        onEnd={() => setPlaying(false)}
+                    />
+                    <View
+                        style={[
+                            StyleSheet.absoluteFill,
+                            {
+                                justifyContent: 'flex-end',
+                                alignItems: 'center',
+                                paddingBottom: insets.bottom + 8,
+                            },
+                        ]}
+                    >
+                        <MediaPlayerControls
+                            playing={playing}
+                            volumeMuted={volumeMuted}
+                            volumeLevel={volume}
+                            position={position}
+                            totalDuration={totalDuration}
+                            onTogglePlay={togglePlay}
+                            onToggleVolumeMuted={toggleVolumeMuted}
+                            onVolumeChange={setVolume}
+                            onSlidingStart={onSeekStart}
+                            onValueChange={onSeek}
+                            onSlidingComplete={onSeekComplete}
+                            onToggleFullScreen={handleToggleFullScreen}
+                            sliderGesture={sliderGesture}
+                        />
+                    </View>
+                </View>
+            </Modal>
+        );
+    }
 
     return (
         <View style={[style as StyleProp<ViewStyle>, { position: 'relative' }]}>
@@ -264,6 +373,7 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
                         onSlidingStart={onSeekStart}
                         onValueChange={onSeek}
                         onSlidingComplete={onSeekComplete}
+                        onToggleFullScreen={handleToggleFullScreen}
                     />
                 </View>
             )}

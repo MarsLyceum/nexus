@@ -7,9 +7,8 @@ import {
     ViewStyle,
     StyleSheet,
     StatusBar,
-    Modal,
 } from 'react-native';
-
+import * as ScreenOrientation from 'expo-screen-orientation';
 import Video, {
     OnLoadData,
     OnProgressData,
@@ -18,6 +17,7 @@ import Video, {
 } from 'react-native-video';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeGesture } from 'react-native-gesture-handler';
+
 import { MediaPlayerControls } from './MediaPlayerControls';
 
 import { Portal } from '../providers';
@@ -110,7 +110,7 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
         setPosition(ms);
     }, []);
 
-    const handleToggleFullScreen = useCallback(() => {
+    const handleToggleFullScreen = useCallback(async () => {
         if (isWeb) {
             if (document.fullscreenElement) {
                 document.exitFullscreen().catch(() => {});
@@ -118,7 +118,20 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
                 wrapperRef.current?.requestFullscreen().catch(() => {});
             }
         } else {
-            StatusBar.setHidden(!isFullscreen, 'fade');
+            if (!isFullscreen) {
+                // entering full-screen → lock to landscape
+                await ScreenOrientation.lockAsync(
+                    ScreenOrientation.OrientationLock.LANDSCAPE_RIGHT
+                );
+                StatusBar.setHidden(true, 'fade');
+            } else {
+                // exiting full-screen → unlock back to default (both portrait & landscape)
+                await ScreenOrientation.lockAsync(
+                    ScreenOrientation.OrientationLock.DEFAULT
+                );
+                StatusBar.setHidden(false, 'fade');
+            }
+
             setIsFullscreen((f) => !f);
         }
     }, [isWeb, isFullscreen]);

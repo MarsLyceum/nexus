@@ -94,7 +94,6 @@ export const MediaPlayerControls = forwardRef<
             [theme, isLandscape, statusBarHeight, navBarHeight]
         );
 
-        // alert('insets:' + JSON.stringify(insets));
         const isSmallScreen = screenWidth < 768;
 
         const sliderAnimatedProps = useAnimatedProps(
@@ -327,7 +326,6 @@ function createStyles(
     statusBarHeight: number,
     navBarHeight: number
 ) {
-    alert('navBarHeight:' + navBarHeight);
     return StyleSheet.create({
         gifButtonText: {
             color: theme.colors.ActiveText,

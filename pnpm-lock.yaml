@@ -1108,9 +1108,16 @@ importers:
       react-native:
         specifier: 0.79.2
         version: 0.79.2(@babel/core@7.27.1)(@types/react@19.0.10)(react@19.0.0)
+      react-native-extra-dimensions-android:
+        specifier: ^1.2.5
+        version: 1.2.5
       react-native-video:
         specifier: ^6.14.0
         version: 6.14.0(react-native@0.79.2(@babel/core@7.27.1)(@types/react@19.0.10)(react@19.0.0))(react@19.0.0)
+    devDependencies:
+      '@types/react-native-extra-dimensions-android':
+        specifier: ^1.2.3
+        version: 1.2.3
 
 packages:
 
@@ -3675,6 +3682,9 @@ packages:
 
   '@types/react-native-canvas@0.1.14':
     resolution: {integrity: sha512-LhbDgomSZXYYjTzd5I8SYoeiGK1dMZPmFIpAlzckC14xJbu8eNcibu0+9BcDZs4SUVojjS8sXlAjMz07M68Fow==}
+
+  '@types/react-native-extra-dimensions-android@1.2.3':
+    resolution: {integrity: sha512-g+Jkc+idhsqzUMWQZlcj132CUKdw/KG+NuGEoRAsWUwQDRVCnY/H4n0xdGxwf7GSdlSuoyjqb8ps7/quHihmRA==}
 
   '@types/react-native-vector-icons@6.4.18':
     resolution: {integrity: sha512-YGlNWb+k5laTBHd7+uZowB9DpIK3SXUneZqAiKQaj1jnJCZM0x71GDim5JCTMi4IFkhc9m8H/Gm28T5BjyivUw==}
@@ -8606,6 +8616,9 @@ packages:
 
   react-native-event-source@1.1.0:
     resolution: {integrity: sha512-CAs76IW8kTrdy0okfV2KPopm7E9TL0uNAR+SRrN7iZ/ii0zBeHWuhD4Q2F8gRKvmkrEtCZ6uwnfYL2TFmK0QZg==}
+
+  react-native-extra-dimensions-android@1.2.5:
+    resolution: {integrity: sha512-eorFo9X1vEqAWUkgcZ300yKBG1wtgNeE7tdWAH2CE+P50FGTniJg5Sr6l1iPWG8ZskQOuF+KeiSTFlDa4vLfMw==}
 
   react-native-fit-image@1.5.5:
     resolution: {integrity: sha512-Wl3Vq2DQzxgsWKuW4USfck9zS7YzhvLNPpkwUUCF90bL32e1a0zOVQ3WsJILJOwzmPdHfzZmWasiiAUNBkhNkg==}
@@ -14729,6 +14742,8 @@ snapshots:
       - react
       - supports-color
       - utf-8-validate
+
+  '@types/react-native-extra-dimensions-android@1.2.3': {}
 
   '@types/react-native-vector-icons@6.4.18':
     dependencies:
@@ -20955,6 +20970,8 @@ snapshots:
       - react-native
 
   react-native-event-source@1.1.0: {}
+
+  react-native-extra-dimensions-android@1.2.5: {}
 
   react-native-fit-image@1.5.5:
     dependencies:

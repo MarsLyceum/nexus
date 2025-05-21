@@ -9,7 +9,6 @@ import {
     useWindowDimensions,
     Pressable,
     Platform,
-    SafeAreaView,
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import Animated, {
@@ -17,6 +16,8 @@ import Animated, {
     SharedValue,
 } from 'react-native-reanimated';
 import { GestureDetector, NativeGesture } from 'react-native-gesture-handler';
+
+import { useSystemBars } from '../hooks';
 import { useTheme, Theme } from '../theme';
 import { Play, Pause, Volume, VolumeMuted } from '../icons';
 
@@ -79,9 +80,21 @@ export const MediaPlayerControls = forwardRef<
         ref
     ) => {
         const { theme } = useTheme();
+        const { statusBarHeight, navBarHeight } = useSystemBars();
+        const { width: screenWidth, height: screenHeight } =
+            useWindowDimensions();
+        const isLandscape = useMemo(
+            () => screenWidth > screenHeight,
+            [screenWidth, screenHeight]
+        );
         const [showVolumeSlider, setShowVolumeSlider] = useState(false);
-        const styles = useMemo(() => createStyles(theme), [theme]);
-        const { width: screenWidth } = useWindowDimensions();
+        const styles = useMemo(
+            () =>
+                createStyles(theme, isLandscape, statusBarHeight, navBarHeight),
+            [theme, isLandscape, statusBarHeight, navBarHeight]
+        );
+
+        // alert('insets:' + JSON.stringify(insets));
         const isSmallScreen = screenWidth < 768;
 
         const sliderAnimatedProps = useAnimatedProps(
@@ -111,7 +124,7 @@ export const MediaPlayerControls = forwardRef<
         }, [volumeLevel]);
 
         return (
-            <SafeAreaView>
+            <View style={styles.outerContainer}>
                 <View
                     style={styles.container}
                     ref={ref}
@@ -303,12 +316,18 @@ export const MediaPlayerControls = forwardRef<
                         </View>
                     )}
                 </View>
-            </SafeAreaView>
+            </View>
         );
     }
 );
 
-function createStyles(theme: Theme) {
+function createStyles(
+    theme: Theme,
+    isLandscape: boolean,
+    statusBarHeight: number,
+    navBarHeight: number
+) {
+    alert('navBarHeight:' + navBarHeight);
     return StyleSheet.create({
         gifButtonText: {
             color: theme.colors.ActiveText,
@@ -316,14 +335,24 @@ function createStyles(theme: Theme) {
             fontWeight: 'bold',
             fontFamily: 'Roboto_700Bold',
         },
+        outerContainer: {
+            width: '100%',
+        },
         container: {
             flexDirection: 'row',
             alignItems: 'flex-end',
-            width: '100%',
+            // width: isLandscape && Platform.OS !== 'web' ? '100%' : '100%',
+            alignSelf: 'stretch',
+            overflow: 'hidden',
             height: 20,
+            marginLeft:
+                isLandscape && Platform.OS !== 'web' ? statusBarHeight : 0,
+            marginRight:
+                isLandscape && Platform.OS !== 'web' ? navBarHeight : 0,
         },
         slider: {
             flex: 1,
+            minWidth: 0,
         },
         sliderOuterContainer: {
             marginHorizontal: 8,
@@ -335,6 +364,7 @@ function createStyles(theme: Theme) {
         time: {
             fontSize: 14,
             marginRight: 8,
+            flexShrink: 1,
         },
         volumeWrapper: {
             position: 'relative',

@@ -9,7 +9,6 @@ export type FeedPost = {
     content: string;
     time: string;
     thumbnail: string;
-    fromReddit?: boolean;
     attachmentUrls?: string[];
 };
 

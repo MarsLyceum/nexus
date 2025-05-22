@@ -1,8 +1,12 @@
 import { gql } from '@apollo/client';
 
-export const FETCH_POST_QUERY = gql`
-    query FetchPost($postId: String!) {
-        fetchPost(id: $postId) {
+export const GET_FEED_CHANNEL_POSTS_QUERY = gql`
+    query GetFeedChannelPosts($channelId: String!, $offset: Int, $limit: Int) {
+        getFeedChannelPosts: getFeedChannelPosts(
+            channelId: $channelId
+            offset: $offset
+            limit: $limit
+        ) {
             id
             content
             postedAt

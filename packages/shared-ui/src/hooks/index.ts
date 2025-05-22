@@ -1,6 +1,6 @@
 export * from './createNexusParam';
 export * from './useAsync';
-export * from './useChannelMessages';
+export * from './useTextChannelMessages';
 export * from './useCounter';
 export * from './useCreateComment';
 export * from './useCreatePost';

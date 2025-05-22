@@ -1,7 +1,7 @@
 import { Keyboard } from 'react-native';
 import { useApolloClient } from '@apollo/client';
 import { v4 as uuidv4 } from 'uuid';
-import { CREATE_GROUP_CHANNEL_MESSAGE_MUTATION } from '../queries';
+import { CREATE_TEXT_CHANNEL_MESSAGE_MUTATION } from '../queries';
 import { Attachment, MessageWithAvatar } from '../types';
 
 export const useSendMessage = (
@@ -33,7 +33,6 @@ export const useSendMessage = (
                 postedAt: new Date(), // Stored as Date for local state
                 avatar: 'https://picsum.photos/50?random=10',
                 edited: false,
-                messageType: 'message',
                 // Optionally include additional fields such as username if available.
             };
 
@@ -41,7 +40,7 @@ export const useSendMessage = (
             addMessage(optimisticMessage);
 
             await apolloClient.mutate({
-                mutation: CREATE_GROUP_CHANNEL_MESSAGE_MUTATION,
+                mutation: CREATE_TEXT_CHANNEL_MESSAGE_MUTATION,
                 variables: {
                     id: messageId,
                     postedByUserId: userId,
@@ -52,8 +51,8 @@ export const useSendMessage = (
                 // Provide an optimistic response for completeness.
                 optimisticResponse: {
                     __typename: 'Mutation',
-                    createGroupChannelMessage: {
-                        __typename: 'Message',
+                    createTextChannelMessage: {
+                        __typename: 'TextChannelMessage',
                         ...optimisticMessage,
                         postedAt: new Date().toISOString(),
                         attachmentUrls: attachmentsArray,
@@ -62,7 +61,7 @@ export const useSendMessage = (
                 // Removed Apollo cache update logic – local state is updated via addMessage.
                 context: {
                     headers: {
-                        'x-apollo-operation-name': 'CreateMessage',
+                        'x-apollo-operation-name': 'CreateTextChannelMessage',
                     },
                 },
             });

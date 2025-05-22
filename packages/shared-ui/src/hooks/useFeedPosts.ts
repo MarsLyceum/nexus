@@ -1,9 +1,9 @@
 // useFeedPosts.ts
 import { useState, useEffect, useRef } from 'react';
 import { useApolloClient } from '@apollo/client';
-import { FETCH_CHANNEL_POSTS_QUERY, FETCH_USER_QUERY } from '../queries';
+import { GET_FEED_CHANNEL_POSTS_QUERY, FETCH_USER_QUERY } from '../queries';
 import { getRelativeTime } from '../utils';
-import { GroupChannelPostMessage, User, FeedPost } from '../types';
+import { FeedChannelPost, User, FeedPost } from '../types';
 
 export const useFeedPosts = (channelId?: string) => {
     const apolloClient = useApolloClient();
@@ -19,15 +19,13 @@ export const useFeedPosts = (channelId?: string) => {
             try {
                 console.log('Starting to load feed:', new Date());
                 const { data } = await apolloClient.query<{
-                    fetchFeedPosts: GroupChannelPostMessage[];
+                    getFeedChannelPosts: FeedChannelPost[];
                 }>({
-                    query: FETCH_CHANNEL_POSTS_QUERY,
+                    query: GET_FEED_CHANNEL_POSTS_QUERY,
                     variables: { channelId, offset: 0, limit: 100 },
                 });
 
-                const postsData = data.fetchFeedPosts.filter(
-                    (msg) => msg.messageType === 'post'
-                );
+                const postsData = data.getFeedChannelPosts;
 
                 const posts: FeedPost[] = await Promise.all(
                     postsData.map(async (msg) => {
@@ -57,7 +55,6 @@ export const useFeedPosts = (channelId?: string) => {
                             thumbnail:
                                 msg.thumbnail ||
                                 `https://picsum.photos/seed/${username}/48`,
-                            fromReddit: Math.random() < 0.2, // ~20% chance to be true
                             attachmentUrls: msg.attachmentUrls,
                         } as FeedPost;
                     })

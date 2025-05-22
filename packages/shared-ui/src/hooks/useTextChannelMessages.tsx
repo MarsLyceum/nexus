@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { useApolloClient, useSubscription, useQuery } from '@apollo/client';
 import {
-    FETCH_CHANNEL_MESSAGES_QUERY,
+    GET_TEXT_CHANNEL_MESSAGES_QUERY,
     FETCH_USER_QUERY,
     MESSAGE_ADDED_SUBSCRIPTION,
 } from '../queries';
-import { GroupChannelMessage, User, MessageWithAvatar } from '../types';
+import { TextChannelMessage, User, MessageWithAvatar } from '../types';
 
-export const useChannelMessages = (channelId: string) => {
+export const useTextChannelMessages = (channelId: string) => {
     const apolloClient = useApolloClient();
     const [chatMessages, setChatMessages] = useState<MessageWithAvatar[]>([]);
     const [offset, setOffset] = useState(0);
@@ -52,26 +52,24 @@ export const useChannelMessages = (channelId: string) => {
 
     // Fetch messages (initial and paginated) with useQuery.
     const { data, loading } = useQuery<{
-        fetchChannelMessages: GroupChannelMessage[];
-    }>(FETCH_CHANNEL_MESSAGES_QUERY, {
+        getTextChannelMessages: TextChannelMessage[];
+    }>(GET_TEXT_CHANNEL_MESSAGES_QUERY, {
         variables: { channelId, offset, refreshTrigger, limit },
     });
 
     useEffect(() => {
         if (loading) return;
-        if (!data || !data.fetchChannelMessages) return;
+        if (!data || !data.getTextChannelMessages) return;
 
-        const messagesArray = data.fetchChannelMessages;
+        const messagesArray = data.getTextChannelMessages;
         if (!Array.isArray(messagesArray)) {
             console.error('Expected fetchChannelMessages to be an array.');
             return;
         }
 
         const processMessages = async () => {
-            // TODO: fix this by splitting up messages and posts in the backend
-            // @ts-expect-error message
             const newMessages: MessageWithAvatar[] = await Promise.all(
-                messagesArray.map(async (msg: GroupChannelMessage) => {
+                messagesArray.map(async (msg: TextChannelMessage) => {
                     const username = await fetchUsername(msg.postedByUserId);
                     return {
                         ...msg,

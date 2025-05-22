@@ -1,7 +1,7 @@
-import { GroupChannelRegularMessage } from './Group';
+import { TextChannelMessage } from './Group';
 import { Message } from './DirectMessages';
 
-export type MessageWithAvatar = GroupChannelRegularMessage & {
+export type MessageWithAvatar = TextChannelMessage & {
     avatar: string;
     username: string;
 };

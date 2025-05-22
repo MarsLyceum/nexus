@@ -8,7 +8,7 @@ import { useTheme } from '../theme';
 import { GroupChannel, Attachment } from '../types';
 import { MessageList, ChatInputContainer } from '../small-components';
 import {
-    useChannelMessages,
+    useTextChannelMessages,
     useSendMessage,
     useImageDetailsModal,
 } from '../hooks';
@@ -43,7 +43,7 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
         loadMoreMessages,
         refreshMessages,
         addMessage,
-    } = useChannelMessages(channel.id);
+    } = useTextChannelMessages(channel.id);
 
     // Custom hook to send messages
     const sendMsg = useSendMessage(addMessage);

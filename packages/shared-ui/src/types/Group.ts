@@ -1,5 +1,4 @@
-// Discriminated union for messages
-export type BaseGroupChannelMessage = {
+export type TextChannelMessage = {
     id: string;
     content: string;
     postedAt: Date;
@@ -11,12 +10,17 @@ export type BaseGroupChannelMessage = {
     attachmentUrls?: string[];
 };
 
-export type GroupChannelRegularMessage = BaseGroupChannelMessage & {
-    messageType: 'message'; // for regular messages
-};
+export type FeedChannelPost = {
+    id: string;
+    content: string;
+    postedAt: Date;
+    edited: boolean;
+    // eslint-disable-next-line no-use-before-define
+    channel?: GroupChannel;
+    channelId: string;
+    postedByUserId: string;
+    attachmentUrls?: string[];
 
-export type GroupChannelPostMessage = BaseGroupChannelMessage & {
-    messageType: 'post'; // discriminator value for posts
     title: string;
     flair?: string;
     domain?: string;
@@ -26,10 +30,6 @@ export type GroupChannelPostMessage = BaseGroupChannelMessage & {
     shareCount: number;
 };
 
-export type GroupChannelMessage =
-    | GroupChannelRegularMessage
-    | GroupChannelPostMessage;
-
 // New type for post comments (reflecting GroupChannelPostCommentEntity)
 export type GroupChannelPostComment = {
     id: string;
@@ -37,7 +37,7 @@ export type GroupChannelPostComment = {
     postedAt: Date;
     edited: boolean;
     postedByUserId: string;
-    // Reference to the parent post (GroupChannelPostMessage)
+    // Reference to the parent post (FeedChannelPost)
     postId: string;
     // For threaded replies, optional parent comment id
     parentCommentId?: string | null;
@@ -63,8 +63,6 @@ export type GroupChannel = {
     name: string;
     type: ChannelType;
     createdAt: Date;
-    // The messages on a channel can be either regular messages or posts.
-    messages: GroupChannelMessage[];
     groupId: string;
     // eslint-disable-next-line no-use-before-define
     group: Group;

@@ -1,19 +1,18 @@
 import { gql } from '@apollo/client';
 
-export const CREATE_GROUP_CHANNEL_MESSAGE_MUTATION = gql`
-    mutation CreateGroupChannelMessage(
-        $id: String
+export const CREATE_FEED_CHANNEL_POST_MUTATION = gql`
+    mutation CreateFeedChannelPost(
         $postedByUserId: String!
         $channelId: String!
         $content: String!
+        $title: String!
         $attachments: [Upload!]
     ) {
-        createGroupChannelMessage(
-            id: $id
+        createFeedChannelPost(
             postedByUserId: $postedByUserId
             channelId: $channelId
             content: $content
-            messageType: "message"
+            title: $title
             attachments: $attachments
         ) {
             content

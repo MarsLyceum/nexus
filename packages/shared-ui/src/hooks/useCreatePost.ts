@@ -1,8 +1,8 @@
 // useCreatePost.ts
 import { useMutation } from '@apollo/client';
 import {
-    CREATE_GROUP_CHANNEL_POST_MUTATION,
-    FETCH_CHANNEL_POSTS_QUERY,
+    CREATE_FEED_CHANNEL_POST_MUTATION,
+    GET_FEED_CHANNEL_POSTS_QUERY,
 } from '../queries';
 import { AttachmentFile } from '../types';
 
@@ -19,16 +19,16 @@ export const useCreatePost = (
     onCompletedCallback?: () => void
 ) => {
     const [createPostMutation, { loading: creatingPost }] = useMutation(
-        CREATE_GROUP_CHANNEL_POST_MUTATION,
+        CREATE_FEED_CHANNEL_POST_MUTATION,
         {
             context: {
                 headers: {
-                    'x-apollo-operation-name': 'CreateMessage',
+                    'x-apollo-operation-name': 'CreateFeedChannelPost',
                 },
             },
             refetchQueries: [
                 {
-                    query: FETCH_CHANNEL_POSTS_QUERY,
+                    query: GET_FEED_CHANNEL_POSTS_QUERY,
                     variables: { channelId, offset: 0, limit: 100 },
                 },
             ],

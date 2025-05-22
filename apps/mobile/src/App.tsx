@@ -182,7 +182,7 @@ const AppContent = () => {
                                                                 }
                                                             />
                                                             <RootStack.Screen
-                                                                name="CreateGroup"
+                                                                name="create-group"
                                                                 // @ts-expect-error navigator
                                                                 component={
                                                                     CreateGroupModalScreen

@@ -10,14 +10,70 @@ import {
     useNavigation,
     CommonActions,
     NavigationState,
+    NavigationProp,
 } from '@react-navigation/native';
+import { DrawerContentComponentProps } from '@react-navigation/drawer';
 import { Platform } from 'react-native';
 import { detectEnvironment, Environment } from '../utils';
+
+type DrawerNavigationProp = DrawerContentComponentProps['navigation'];
+
+type UseNavigationType = Omit<
+    NavigationProp<ReactNavigation.RootParamList>,
+    'getState'
+> & {
+    getState(): NavigationState | undefined;
+};
+
+export function findNavigatorFor(
+    startingNav: DrawerNavigationProp | UseNavigationType,
+    screenName: string
+): {
+    navigator: DrawerNavigationProp | UseNavigationType;
+    nestedParent?: string;
+} {
+    let nav: DrawerNavigationProp | UseNavigationType | undefined = startingNav;
+
+    while (nav) {
+        const state = nav.getState();
+
+        if (!state) {
+            nav = nav.getParent();
+            // eslint-disable-next-line no-continue
+            continue;
+        }
+
+        // a) direct hit at this level?
+        if (state.routeNames.includes(screenName)) {
+            return { navigator: nav };
+        }
+        if (state.routes) {
+            // b) any immediate child whose state knows the screen?
+            for (const route of state.routes) {
+                // route.state is the child navigator’s state if present
+                const childState =
+                    (route.state as NavigationState) || undefined;
+                if (childState?.routeNames?.includes(screenName)) {
+                    return { navigator: nav, nestedParent: route.name };
+                }
+            }
+        }
+        // c) climb up
+        nav = nav.getParent();
+    }
+
+    // fallback: give back where we started
+    return { navigator: startingNav };
+}
 
 // Define the type for our custom router API using types (not interfaces)
 export type NexusRouter = {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    push: (path: string, params?: Record<string, any>) => void;
+    push: (
+        path: string,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        params?: Record<string, any>
+    ) => void;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     replace: (path: string, params?: Record<string, any>) => void;
     goBack: () => void;
@@ -47,7 +103,9 @@ function buildUrlWithParams(
  * supporting both query params (for Next) and navigation params (for React Native)
  * in a unified API.
  */
-export function useNexusRouter(): NexusRouter {
+export function useNexusRouter(
+    drawerNavigator?: DrawerNavigationProp
+): NexusRouter {
     const environment: Environment = detectEnvironment();
 
     if (environment === 'nextjs-server') {
@@ -115,7 +173,9 @@ export function useNexusRouter(): NexusRouter {
         environment === 'react-native-web' ||
         environment === 'react-native-mobile'
     ) {
-        const navigation = useNavigation();
+        const navigationHook = useNavigation();
+        const navigation: DrawerNavigationProp | UseNavigationType =
+            drawerNavigator ?? navigationHook;
 
         // Define default root route for empty navigation.
         const DEFAULT_ROOT_ROUTE = 'dashboard';
@@ -154,14 +214,28 @@ export function useNexusRouter(): NexusRouter {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             push: (path: string, params?: Record<string, any>) => {
                 const normalizedPath = normalizePath(path);
-                const state = navigation.getState();
+                const { navigator, nestedParent } = findNavigatorFor(
+                    navigation,
+                    normalizedPath
+                );
+                const state = navigator.getState();
+
+                if (nestedParent) {
+                    // @ts-expect-error navigation
+                    navigator.navigate(nestedParent, {
+                        screen: normalizedPath,
+                        params,
+                    });
+                    return;
+                }
+
                 // Check for a stack navigator by inspecting the state type.
                 if (state?.type === 'stack') {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    (navigation as any).push(normalizedPath, params);
+                    (navigator as any).push(normalizedPath, params);
                 } else {
                     // @ts-expect-error navigation
-                    navigation.navigate(normalizedPath, params);
+                    navigator.navigate(normalizedPath, params);
                 }
             },
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -180,7 +254,10 @@ export function useNexusRouter(): NexusRouter {
                 }
 
                 // If in a browser environment, update the URL via the History API.
-                if (Platform.OS === 'web' && typeof globalThis !== 'undefined') {
+                if (
+                    Platform.OS === 'web' &&
+                    typeof globalThis !== 'undefined'
+                ) {
                     // Build full URL from the path and any params.
                     const url = buildUrlWithParams(path, params);
 

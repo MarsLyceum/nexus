@@ -4,6 +4,7 @@ import React, {
     useEffect,
     useLayoutEffect,
     useMemo,
+    useCallback,
 } from 'react';
 import { View, Animated, StyleSheet, ScrollView } from 'react-native';
 import { DrawerContentComponentProps } from '@react-navigation/drawer';
@@ -133,6 +134,7 @@ export const SidebarScreen = ({
         (state?.routeNames ? state.routeNames[state.index] : 'friends');
     const [selectedButton, setSelectedButton] = useState<string>(initialRoute);
     const { theme } = useTheme();
+    const router = useNexusRouter(navigation);
     const styles = useMemo(() => createStyles(theme), [theme]);
 
     // Update the selected button when currentRoute changes (if provided)
@@ -144,6 +146,19 @@ export const SidebarScreen = ({
 
     const user: UserType = useAppSelector(
         (stateInner: RootState) => stateInner.user.user
+    );
+
+    const handlePress = useCallback(
+        (routeName: string) => {
+            const normalizedRoute = routeName.toLowerCase();
+            // Update the local selected route if currentRoute prop is not provided.
+            if (!currentRoute) {
+                setSelectedButton(normalizedRoute);
+            }
+
+            router.push(`/${normalizedRoute}`);
+        },
+        [currentRoute, router]
     );
 
     // Manage groups: if not passed via props, we use local state.
@@ -274,24 +289,6 @@ export const SidebarScreen = ({
         }
     }, [selectedButton, highlightTop, highlightHeight, staticButtonRefs]);
 
-    const router = useNexusRouter();
-
-    // Navigation helper.
-    const handlePress = (routeName: string) => {
-        const normalizedRoute = routeName.toLowerCase();
-        // Update the local selected route if currentRoute prop is not provided.
-        if (!currentRoute) {
-            setSelectedButton(normalizedRoute);
-        }
-        const env: Environment = detectEnvironment();
-        if (env === 'nextjs-client' || env === 'nextjs-server') {
-            router.push(`/${normalizedRoute}`);
-        } else {
-            // Use normalizedRoute so it matches the DrawerNavigator screen names.
-            navigation.navigate(normalizedRoute);
-        }
-    };
-
     const SkeletonGroupButton = () => (
         <View style={styles.skeletonButton}>
             <View style={styles.skeletonAvatar} />
@@ -323,7 +320,7 @@ export const SidebarScreen = ({
                     style={styles.buttonContainer}
                 >
                     <SidebarButton
-                        onPress={() => handlePress('Friends')}
+                        onPress={() => handlePress('friends')}
                         icon={<Friends />}
                         text="Friends"
                     />
@@ -333,7 +330,7 @@ export const SidebarScreen = ({
                     style={styles.buttonContainer}
                 >
                     <SidebarButton
-                        onPress={() => handlePress('Messages')}
+                        onPress={() => handlePress('messages')}
                         icon={<Chat />}
                         text="Messages"
                     />
@@ -343,7 +340,7 @@ export const SidebarScreen = ({
                     style={styles.buttonContainer}
                 >
                     <SidebarButton
-                        onPress={() => handlePress('Events')}
+                        onPress={() => handlePress('events')}
                         icon={<Events />}
                         text="Events"
                     />
@@ -353,7 +350,7 @@ export const SidebarScreen = ({
                     style={styles.buttonContainer}
                 >
                     <SidebarButton
-                        onPress={() => handlePress('Search')}
+                        onPress={() => handlePress('search')}
                         icon={<Search />}
                         text="Search"
                     />
@@ -392,7 +389,7 @@ export const SidebarScreen = ({
                     style={styles.buttonContainer}
                 >
                     <SidebarButton
-                        onPress={() => handlePress('CreateGroup')}
+                        onPress={() => handlePress('create-group')}
                         icon={<Add />}
                         text="Create Group"
                     />

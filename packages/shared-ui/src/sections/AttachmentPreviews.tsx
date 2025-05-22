@@ -192,9 +192,10 @@ const SortableItem: React.FC<SortableItemProps> = ({
     };
     const isVideo = attachment.file?.type?.startsWith('video');
     return (
-        // @ts-expect-error ref
         <View
+            // @ts-expect-error ref
             ref={setNodeRef}
+            // @ts-expect-error ref
             style={[styles.draggableItem, style]}
             {...attributes}
             {...listeners}

@@ -155,7 +155,7 @@ export const GifPlayer: React.FC<GifPlayerProps> = ({
 
         if (Platform.OS === 'web') {
             // HTML canvas path
-            const html = canvas as HTMLCanvasElement;
+            const html = canvas;
             html.width = width;
             html.height = height;
         }
@@ -168,7 +168,7 @@ export const GifPlayer: React.FC<GifPlayerProps> = ({
 
         if (Platform.OS === 'web') {
             // HTML canvas path
-            const html = canvas as HTMLCanvasElement;
+            const html = canvas;
             const ctx = html.getContext('2d');
             if (ctx) {
                 void draw(ctx);

@@ -108,7 +108,7 @@ export const MediaPlayerControls = forwardRef<
         const SLIDER_HEIGHT = 120;
         const volDragging = useRef(false);
         const startY = useRef(0);
-        const startVol = useRef(volumeLevel);
+        const startVol = useRef(volumeLevel ?? 0);
 
         useEffect(() => {
             if (!volumeMuted && volumeLevel === 0 && onToggleVolumeMuted) {
@@ -213,6 +213,7 @@ export const MediaPlayerControls = forwardRef<
                                 <View
                                     style={styles.volumeSliderContainer}
                                     // start drag
+                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                     onMouseDown={(e: any) => {
                                         // begin drag
                                         volDragging.current = true;
@@ -266,6 +267,7 @@ export const MediaPlayerControls = forwardRef<
                                         );
                                     }}
                                     // during drag
+                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                     onMouseMove={(e: any) => {
                                         if (!volDragging.current) return;
                                         const dy = startY.current - e.clientY;
@@ -280,6 +282,7 @@ export const MediaPlayerControls = forwardRef<
                                         onVolumeChange?.(ratio);
                                     }}
                                     // end drag
+                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                     onMouseUp={(e: any) => {
                                         if (!volDragging.current) return;
                                         volDragging.current = false;

@@ -43,7 +43,7 @@ export function FacebookIcon({
     color?: string;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     style?: any;
-}): JSX.Element {
+}): React.JSX.Element {
     return (
         <Svg width={size} height={size} viewBox="0 0 512 512" style={style}>
             <Path

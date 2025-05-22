@@ -3,7 +3,10 @@ import { useEffect, useState } from 'react';
 import { parseGIF, decompressFrames } from 'gifuct-js';
 
 export type GifFrame = {
-    imageData: ImageData; // raw RGBA pixel data
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    imageData:
+        | ImageData
+        | { data: Uint8ClampedArray; width: number; height: number }; // raw RGBA pixel data
     delay: number; // in ms
 };
 

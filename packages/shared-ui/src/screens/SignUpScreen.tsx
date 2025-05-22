@@ -181,7 +181,7 @@ function createStyles(theme: Theme) {
     });
 }
 
-export function SignUpScreen(): JSX.Element {
+export function SignUpScreen(): React.JSX.Element {
     const dispatch = useAppDispatch();
     const router = useNexusRouter();
     const apolloClient = useApolloClient();

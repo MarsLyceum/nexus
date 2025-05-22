@@ -13,9 +13,9 @@ import {
     StyleSheet,
     useWindowDimensions,
     SafeAreaView,
-    FlatList,
     Platform,
 } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import {
     useQuery,
     useApolloClient,
@@ -107,7 +107,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
     }, [conversation]);
 
     // Create a ref for the FlatList scroll container.
-    const flatListRef = useRef<FlashList<Message>>(null);
+    const flashListRef = useRef<FlashList<Message>>(null);
 
     // Determine if the conversation is one-to-one.
     const isOneToOne =
@@ -441,7 +441,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
                 message={transformedMessage}
                 width={width}
                 onAttachmentPress={handleMessageItemAttachmentPress}
-                scrollContainerRef={flatListRef} // Pass the FlatList ref to each MessageItem.
+                scrollContainerRef={flashListRef}
                 onSaveEdit={handleSaveEdit}
                 onDeleteMessage={handleDeleteMessage}
             />
@@ -479,7 +479,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
                         ))
                     ) : (
                         <PatchedFlashList
-                            ref={flatListRef}
+                            ref={flashListRef}
                             data={messages}
                             inverted
                             keyExtractor={(item) => item.id}

@@ -1,9 +1,6 @@
 // NexusImage.tsx
 import React, { useLayoutEffect, useRef, useState, useEffect } from 'react';
 import { StyleSheet } from 'react-native';
-// Next.js Image import – no longer used in Next environments.
-// import NextImage from 'next/image';
-// Expo Image import – used for React Native.
 import {
     Image as ExpoImage,
     ImageContentFit,
@@ -35,7 +32,9 @@ export type NexusImageProps = {
  * A helper hook that measures a container's dimensions using its ref.
  * (For production, consider using a ResizeObserver so that the measurement updates on window/container resize.)
  */
-const useContainerDimensions = (ref: React.RefObject<HTMLDivElement>) => {
+const useContainerDimensions = (
+    ref: React.RefObject<HTMLDivElement | null>
+) => {
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
     useLayoutEffect(() => {
         if (ref.current) {
@@ -101,7 +100,7 @@ export const NexusImage = (props: NexusImageProps) => {
     } = props;
     const env: Environment = detectEnvironment();
 
-    const containerRef = useRef<HTMLDivElement>(null);
+    const containerRef = useRef<HTMLDivElement | null>(null);
     const { width: containerWidth, height: containerHeight } =
         useContainerDimensions(containerRef);
 
@@ -164,10 +163,10 @@ export const NexusImage = (props: NexusImageProps) => {
                         console.warn(
                             `[NexusImage] GET ${get.status} for ${originalUri}, falling back…`
                         );
-                    } catch (getErr) {
+                    } catch (error_) {
                         console.warn(
                             `[NexusImage] GET error for ${originalUri}:`,
-                            getErr
+                            error_
                         );
                         setImageUri(fallbackUri);
                         setDidFallback(true);
@@ -176,6 +175,7 @@ export const NexusImage = (props: NexusImageProps) => {
             }
         })();
 
+        // eslint-disable-next-line consistent-return
         return () => {
             stillMounted = false;
         };

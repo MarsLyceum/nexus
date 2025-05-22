@@ -112,8 +112,8 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
           }
         | undefined
     >();
-    const imageWrapperRef = useRef<View | undefined>();
-    const controlsRef = useRef<View | undefined>();
+    const imageWrapperRef = useRef<View | null>(null);
+    const controlsRef = useRef<View | null>(null);
 
     const handleLayout = useCallback(() => {
         if (
@@ -206,7 +206,6 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
                         height: nonZoomedSize.height,
                         cursor: 'zoom-in',
                     }}
-                    // @ts-expect-error ref
                     ref={imageWrapperRef}
                     onLayout={handleLayout}
                 >
@@ -238,7 +237,6 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
                         onValueChange={onValueChange}
                         onSlidingComplete={onSlidingComplete}
                         isGif={isGif}
-                        // @ts-expect-error ref
                         ref={controlsRef}
                         onLayout={handleLayoutControls}
                     />
@@ -250,14 +248,15 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
     // Zoomed state: render image inside a ScrollView (vertical scrolling enabled).
     return (
         <View>
-            {/* @ts-expect-error styles */}
             <View
+                // @ts-expect-error styles
                 style={{
                     cursor: 'zoom-out',
                     overflow: 'auto',
                     width: containerWidth,
                     height: containerHeight,
                 }}
+                // @ts-expect-error styles
                 ref={scrollRef}
             >
                 <View
@@ -271,7 +270,6 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
                 >
                     <Pressable
                         onPress={handleImagePress}
-                        // @ts-expect-error ref
                         ref={imageWrapperRef}
                         onLayout={handleLayout}
                         // @ts-expect-error styles
@@ -312,7 +310,6 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
                     onValueChange={onValueChange}
                     onSlidingComplete={onSlidingComplete}
                     isGif={isGif}
-                    // @ts-expect-error ref
                     ref={controlsRef}
                     onLayout={handleLayoutControls}
                 />

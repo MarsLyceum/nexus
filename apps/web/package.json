@@ -47,15 +47,15 @@
     "expo-video": "^2.1.8",
     "dotenv": "^16.4.7",
     "webpack": "^5.99.5",
-    "@babel/preset-typescript": "^7.27.0",
-    "babel-preset-expo": "^12.0.11",
+    "@babel/preset-typescript": "^7.27.1",
+    "babel-preset-expo": "^13.1.11",
     "@babel/plugin-transform-class-properties": "^7.25.9",
     "@babel/plugin-transform-private-methods": "^7.25.9",
     "@babel/plugin-transform-private-property-in-object": "^7.25.9",
     "babel-plugin-transform-inline-environment-variables": "^0.4.4"
   },
   "devDependencies": {
-    "typescript": "^5",
+    "typescript": "^5.8.3",
     "@types/node": "^20",
     "@types/react": "^19.0.10",
     "@types/react-dom": "18.3.1",

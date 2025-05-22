@@ -196,7 +196,7 @@ function createStyles(theme: Theme) {
     });
 }
 
-export function LoginScreen(): JSX.Element {
+export function LoginScreen(): React.JSX.Element {
     const dispatch = useAppDispatch();
     const apolloClient = useApolloClient();
     const router = useNexusRouter();

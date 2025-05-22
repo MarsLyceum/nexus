@@ -51,7 +51,7 @@ export type MediaPlayerControlsProps = {
     onValueChange: (val: number) => void;
     onSlidingComplete: (val: number) => void;
     onVolumeChange?: (v: number) => void;
-    onToggleFullScreen: () => void;
+    onToggleFullScreen?: () => void;
     sliderGesture?: NativeGesture;
 };
 

@@ -77,8 +77,13 @@ export const MobileImageRenderer: React.FC<MobileImageRendererProps> = ({
     const aspectRatio = ready ? resolution.width / resolution.height : 1;
 
     // Compute image dimensions: full screen width and height based on aspect ratio.
-    const imageWidth = screenWidth;
-    const imageHeight = screenWidth / aspectRatio;
+    let imageWidth = screenWidth;
+    let imageHeight = screenWidth / aspectRatio;
+
+    if (imageHeight > screenHeight) {
+        imageHeight = screenHeight;
+        imageWidth = screenHeight * aspectRatio;
+    }
 
     // Calculate vertical offset for centering the image.
     const offsetY = (screenHeight - imageHeight) / 2;

@@ -30,7 +30,6 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
 
     const {
         position,
-        virtualPos,
         playing,
         totalDuration,
         togglePlay,

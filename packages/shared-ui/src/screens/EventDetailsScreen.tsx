@@ -35,12 +35,12 @@ type EventDetails = {
 };
 
 type RootStackParamList = {
-    EventDetails: { event: EventDetails };
+    'event-details': { event: EventDetails };
 };
 
 type EventDetailsScreenProps = {
-    navigation: NavigationProp<RootStackParamList, 'EventDetails'>;
-    route: RouteProp<RootStackParamList, 'EventDetails'>;
+    navigation: NavigationProp<RootStackParamList, 'event-details'>;
+    route: RouteProp<RootStackParamList, 'event-details'>;
 };
 
 const BOTTOM_INPUT_HEIGHT = 60;

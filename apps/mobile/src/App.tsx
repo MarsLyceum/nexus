@@ -105,11 +105,7 @@ function MainStackScreen() {
             initialRouteName="welcome"
             screenOptions={{ headerShown: false }}
         >
-            <MainStack.Screen
-                name="welcome"
-                component={WelcomeScreen}
-                options={{ unmountOnBlur: true }}
-            />
+            <MainStack.Screen name="welcome" component={WelcomeScreen} />
             <MainStack.Screen name="login" component={LoginScreen} />
             <MainStack.Screen name="signup" component={SignUpScreen} />
             <MainStack.Screen name="dashboard" component={AppDrawerScreen} />

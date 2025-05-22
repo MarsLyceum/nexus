@@ -1,8 +1,9 @@
 // apps/mobile/scripts/build-eas-local.js
-import { spawnSync } from 'child_process';
-import { resolve } from 'path';
+import { spawnSync } from 'node:child_process';
+// eslint-disable-next-line unicorn/import-style
+import { resolve } from 'node:path';
 import { config as loadEnv } from 'dotenv';
-import { renameSync, rmSync, readdirSync } from 'fs';
+import { renameSync, rmSync, readdirSync } from 'node:fs';
 
 // Setup paths & env
 const projectDir = resolve(process.cwd());
@@ -17,8 +18,9 @@ const buildWorkspaceFile = resolve(projectDir, 'pnpm-workspace.yaml.build');
 try {
     renameSync(buildWorkspaceFile, workspaceFile);
     console.log(`✔️  Swapped in ${buildWorkspaceFile} → ${workspaceFile}`);
-} catch (err) {
-    console.error('❌  Failed to swap in workspace file:', err);
+} catch (error) {
+    console.error('❌  Failed to swap in workspace file:', error);
+    // eslint-disable-next-line unicorn/no-process-exit
     process.exit(1);
 }
 
@@ -72,8 +74,9 @@ if (isWindows) {
 try {
     renameSync(workspaceFile, buildWorkspaceFile);
     console.log(`✔️  Restored ${workspaceFile} → ${buildWorkspaceFile}`);
-} catch (err) {
-    console.error('❌  Failed to restore workspace file:', err);
+} catch (error) {
+    console.error('❌  Failed to restore workspace file:', error);
+    // eslint-disable-next-line unicorn/no-process-exit
     process.exit(1);
 }
 
@@ -103,11 +106,14 @@ try {
     });
     if (install.status !== 0) {
         console.error('❌  pnpm install failed');
+        // eslint-disable-next-line unicorn/no-process-exit
         process.exit(install.status);
     }
-} catch (err) {
-    console.error('❌  Error during cleanup/install:', err);
+} catch (error) {
+    console.error('❌  Error during cleanup/install:', error);
+    // eslint-disable-next-line unicorn/no-process-exit
     process.exit(1);
 }
 
+// eslint-disable-next-line unicorn/no-process-exit
 process.exit(result.status ?? 1);

@@ -6,5 +6,5 @@
             "shared-ui/*": ["../../packages/shared-ui/src/*"]
         }
     },
-    "include": ["src/**/*"]
+    "include": ["src/**/*", "scripts/**/*.js"]
 }

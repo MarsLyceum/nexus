@@ -11,7 +11,7 @@ import {
 import { getDomainFromUrl, computeMediaSize } from '../utils';
 import { useTheme, Theme } from '../theme';
 import { PreviewData } from '../types';
-import { MediaDetailsModal } from '../sections'; // Large image modal
+import { MediaDetailsModal } from '../sections/MediaDetailsModal';
 
 import { NexusImage } from './NexusImage';
 

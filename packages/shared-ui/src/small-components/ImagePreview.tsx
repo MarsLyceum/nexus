@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, Pressable } from 'react-native';
 
-import { MediaDetailsModal } from '../sections';
+import { MediaDetailsModal } from '../sections/MediaDetailsModal';
 import { computeMediaSize } from '../utils';
 
 import { NexusImage } from './NexusImage';

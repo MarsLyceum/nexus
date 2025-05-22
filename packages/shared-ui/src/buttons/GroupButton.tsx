@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { TouchableOpacity, StyleSheet, View, Text, Image } from 'react-native';
 
 import { useTheme, Theme } from '../theme';
-import { NexusImage } from '../small-components';
+import { NexusImage } from '../small-components/NexusImage';
 
 export const GroupButton = ({
     onPress,

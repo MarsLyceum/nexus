@@ -21,7 +21,8 @@ import { CSS } from '@dnd-kit/utilities';
 
 import { Cancel } from '../icons';
 import { Attachment } from '../types';
-import { NexusVideo, NexusImage } from '../small-components';
+import { NexusVideo } from '../small-components/NexusVideo';
+import { NexusImage } from '../small-components/NexusImage';
 import { useTheme, Theme } from '../theme';
 
 type AttachmentPreviewsProps = {

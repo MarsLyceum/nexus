@@ -10,7 +10,7 @@ import { Platform } from 'react-native';
 import { Theme, themesByCategory } from './themes';
 
 import { COLORS } from '../constants/colors';
-import { getItem, setItem } from '../utils';
+import { getItem, setItem } from '../utils/storageUtil';
 
 type ThemeContextValue = {
     theme: Theme;

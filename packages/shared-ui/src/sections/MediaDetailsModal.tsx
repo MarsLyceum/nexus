@@ -3,7 +3,8 @@ import { StyleSheet, View, Pressable, useWindowDimensions } from 'react-native';
 import Carousel from 'react-native-reanimated-carousel';
 
 import { useTheme, Theme } from '../theme';
-import { ImageCountOverlay, MediaRenderer } from '../small-components';
+import { ImageCountOverlay } from '../small-components/ImageCountOverlay';
+import { MediaRenderer } from '../small-components/image-modal/MediaRenderer';
 import { useMediaTypes, useIsComputer } from '../hooks';
 import { Cancel } from '../icons';
 import { Portal } from '../providers';

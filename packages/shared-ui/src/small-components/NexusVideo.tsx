@@ -327,9 +327,7 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
                         repeat={repeat}
                         paused={!playing}
                         resizeMode={
-                            contentFit === 'fill'
-                                ? 'stretch'
-                                : (contentFit as any)
+                            contentFit === 'fill' ? 'stretch' : contentFit
                         }
                         onLoad={({ duration }) =>
                             setTotalDuration(duration * 1000)

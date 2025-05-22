@@ -7,7 +7,9 @@ import {
     useWindowDimensions,
 } from 'react-native';
 
-import { ImageCountOverlay, NexusVideo, NexusImage } from '../small-components';
+import { NexusImage } from '../small-components/NexusImage';
+import { ImageCountOverlay } from '../small-components/ImageCountOverlay';
+import { NexusVideo } from '../small-components/NexusVideo';
 import { useMediaTypes } from '../hooks';
 import { computeMediaSize } from '../utils';
 

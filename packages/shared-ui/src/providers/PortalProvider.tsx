@@ -103,6 +103,7 @@ export const Portal: React.FC<PortalProps> = ({
             // if we're not visible, ensure unmounted
             if (keyRef.current !== null) {
                 unmount(keyRef.current);
+                // eslint-disable-next-line unicorn/no-null
                 keyRef.current = null;
             }
             return;
@@ -129,7 +130,8 @@ export const Portal: React.FC<PortalProps> = ({
         // eslint-disable-next-line consistent-return
         return () => {
             if (backSub) backSub.remove();
-            if (escListener) globalThis.removeEventListener('keydown', escListener);
+            if (escListener)
+                globalThis.removeEventListener('keydown', escListener);
             if (keyRef.current !== null) {
                 unmount(keyRef.current);
                 // eslint-disable-next-line unicorn/no-null

@@ -11,7 +11,8 @@ import Icon from 'react-native-vector-icons/FontAwesome5';
 
 import { NexusImage } from './NexusImage';
 import { MarkdownEditor } from './MarkdownEditor';
-import { RichTextEditor, AttachmentPreviews } from '../sections';
+import { AttachmentPreviews } from '../sections/AttachmentPreviews';
+import { RichTextEditor } from '../sections/RichTextEditor';
 import { Attachment } from '../types';
 import { useFileUpload } from '../hooks';
 import { GiphyModal } from './GiphyModal';

@@ -13,13 +13,11 @@ import { useNexusRouter, useIsComputer } from '../hooks';
 import { VoteActions } from './VoteActions';
 import { useTheme, Theme } from '../theme';
 import { CurrentCommentContext } from '../providers';
-import {
-    MarkdownRenderer,
-    LinkPreview,
-    CommentEditor,
-    ActionButton,
-    NexusImage,
-} from '../small-components';
+import { NexusImage } from '../small-components/NexusImage';
+import { MarkdownRenderer } from '../small-components/MarkdownRenderer';
+import { LinkPreview } from '../small-components/LinkPreview';
+import { CommentEditor } from '../small-components/CommentEditor';
+import { ActionButton } from '../small-components/ActionButton';
 import { stripHtml, extractUrls, getRelativeTime } from '../utils';
 // NEW: Import Apollo Client hook and comments query to allow refetching comments.
 import { FETCH_POST_COMMENTS_QUERY } from '../queries';

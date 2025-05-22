@@ -134,9 +134,9 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({
                     onCancel();
                 }
             };
-            window.addEventListener('keydown', handleGlobalKeyDown);
+            globalThis.addEventListener('keydown', handleGlobalKeyDown);
             return () => {
-                window.removeEventListener('keydown', handleGlobalKeyDown);
+                globalThis.removeEventListener('keydown', handleGlobalKeyDown);
             };
         }
     }, [onSave, onCancel, isComputer]);

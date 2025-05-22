@@ -224,8 +224,8 @@ export const PostItem: React.FC<PostItemProps> = ({
 
     const computedShareUrl =
         shareUrl ||
-        (Platform.OS === 'web' && typeof window !== 'undefined'
-            ? `${window.location.origin}/post/${id}`
+        (Platform.OS === 'web' && typeof globalThis !== 'undefined'
+            ? `${globalThis.location.origin}/post/${id}`
             : `nexus://post/${id}`);
 
     const urlsInContent = extractUrls(content);

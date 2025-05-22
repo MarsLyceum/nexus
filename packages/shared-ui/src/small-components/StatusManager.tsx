@@ -95,7 +95,7 @@ export const StatusManager: React.FC<{ children: ReactNode }> = ({
         };
 
         // Only add these listeners on web
-        if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        if (Platform.OS === 'web' && typeof globalThis !== 'undefined') {
             window.addEventListener('pagehide', handlePageHide);
             window.addEventListener('beforeunload', handlePageHide);
         }
@@ -106,7 +106,7 @@ export const StatusManager: React.FC<{ children: ReactNode }> = ({
             }
             subscription.remove();
             // Only remove these listeners on web
-            if (Platform.OS === 'web' && typeof window !== 'undefined') {
+            if (Platform.OS === 'web' && typeof globalThis !== 'undefined') {
                 window.removeEventListener('pagehide', handlePageHide);
                 window.removeEventListener('beforeunload', handlePageHide);
             }

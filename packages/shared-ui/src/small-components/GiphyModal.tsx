@@ -33,7 +33,7 @@ if (typeof File === 'undefined') {
         }
     }
     // @ts-expect-error file
-    global.File = RNFile;
+    globalThis.File = RNFile;
 }
 
 export type GiphyModalProps = {

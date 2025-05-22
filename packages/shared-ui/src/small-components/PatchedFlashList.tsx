@@ -31,7 +31,7 @@ function PatchedFlashListInner<T>(
                 e.preventDefault();
                 const deltaY = -e.deltaY;
                 if (!ticking) {
-                    window.requestAnimationFrame(() => {
+                    globalThis.requestAnimationFrame(() => {
                         node.scrollBy({ top: deltaY, behavior: 'auto' });
                         ticking = false;
                     });

@@ -163,11 +163,11 @@ export function useLinkPreview({ url }: UseLinkPreviewParams) {
                     try {
                         const parsedUrl = new URL(
                             url ?? '',
-                            window.location.origin
+                            globalThis.location.origin
                         );
                         if (
-                            parsedUrl.origin !== window.location.origin &&
-                            parsedUrl.hostname !== window.location.hostname
+                            parsedUrl.origin !== globalThis.location.origin &&
+                            parsedUrl.hostname !== globalThis.location.hostname
                         ) {
                             fetchUrl = `https://thingproxy.freeboard.io/fetch/${url}`;
                         }

@@ -123,13 +123,13 @@ export const Portal: React.FC<PortalProps> = ({
             escListener = (e) => {
                 if (e.key === 'Escape') onRequestClose();
             };
-            window.addEventListener('keydown', escListener);
+            globalThis.addEventListener('keydown', escListener);
         }
 
         // eslint-disable-next-line consistent-return
         return () => {
             if (backSub) backSub.remove();
-            if (escListener) window.removeEventListener('keydown', escListener);
+            if (escListener) globalThis.removeEventListener('keydown', escListener);
             if (keyRef.current !== null) {
                 unmount(keyRef.current);
                 // eslint-disable-next-line unicorn/no-null

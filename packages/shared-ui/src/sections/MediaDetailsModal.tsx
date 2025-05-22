@@ -73,9 +73,9 @@ export const MediaDetailsModal: React.FC<MediaDetailsModalProps> = ({
                 }
             }
         };
-        window.addEventListener('keydown', handleKeyDown);
+        globalThis.addEventListener('keydown', handleKeyDown);
         // eslint-disable-next-line consistent-return
-        return () => window.removeEventListener('keydown', handleKeyDown);
+        return () => globalThis.removeEventListener('keydown', handleKeyDown);
     }, [visible, mediaAttachments.length, currentIndex, isComputer]);
 
     if (mediaAttachments.length === 0) return undefined;

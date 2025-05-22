@@ -98,8 +98,8 @@ export function useNexusRouter(): NexusRouter {
             goBack: () => {
                 // If browser history length is greater than one, go back; otherwise, go to home.
                 if (
-                    typeof window !== 'undefined' &&
-                    window.history.length > 1
+                    typeof globalThis !== 'undefined' &&
+                    globalThis.history.length > 1
                 ) {
                     router.back();
                 } else {
@@ -180,12 +180,12 @@ export function useNexusRouter(): NexusRouter {
                 }
 
                 // If in a browser environment, update the URL via the History API.
-                if (Platform.OS === 'web' && typeof window !== 'undefined') {
+                if (Platform.OS === 'web' && typeof globalThis !== 'undefined') {
                     // Build full URL from the path and any params.
                     const url = buildUrlWithParams(path, params);
 
                     try {
-                        window.history.replaceState({}, '', url);
+                        globalThis.history.replaceState({}, '', url);
                     } catch (error) {
                         console.error(
                             'Error using window.history.replaceState:',

@@ -3,7 +3,7 @@
     "name": "Nexus",
     "slug": "nexus",
     "version": "1.0.2",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
@@ -52,24 +52,25 @@
     },
     "jsEngine": "hermes",
     "plugins": [
-      "expo-font",
-      "expo-secure-store",
-      [
-        "expo-build-properties",
-        {
-          "android": {
-            "kotlinVersion": "1.9.25",
-            "gradleProperties": {
-              "KOTLIN_COMPOSE_COMPILER_PLUGIN_EMBEDDABLE_VERSION": "1.9.25"
-            },
-            "extraGradleRepositories": [
-              "maven { url 'https://maven.pkg.jetbrains.space/public/p/compose/dev' }",
-              "maven { url 'https://maven.pkg.jetbrains.space/public/p/kotlin/dev' }"
-            ],
-            "extraGradleConfiguration": "configurations.all { resolutionStrategy { force 'org.jetbrains.kotlin:kotlin-compose-compiler-plugin-embeddable:1.9.25' } }"
-          }
-        }
-      ]
+      "expo-dev-client"
+      // "expo-font",
+      // "expo-secure-store",
+      // [
+      //   "expo-build-properties",
+      //   {
+      //     "android": {
+      //       "kotlinVersion": "1.9.25",
+      //       "gradleProperties": {
+      //         "KOTLIN_COMPOSE_COMPILER_PLUGIN_EMBEDDABLE_VERSION": "1.9.25"
+      //       },
+      //       "extraGradleRepositories": [
+      //         "maven { url 'https://maven.pkg.jetbrains.space/public/p/compose/dev' }",
+      //         "maven { url 'https://maven.pkg.jetbrains.space/public/p/kotlin/dev' }"
+      //       ],
+      //       "extraGradleConfiguration": "configurations.all { resolutionStrategy { force 'org.jetbrains.kotlin:kotlin-compose-compiler-plugin-embeddable:1.9.25' } }"
+      //     }
+      //   }
+      // ]
     ],
     "owner": "suerg"
   }

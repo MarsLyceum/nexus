@@ -12,5 +12,8 @@ export const GIPHY_API_KEY = 'x7H5rEtEkVkLocnLJsmZoLPBaGbMdEqC';
 export const SIDEBAR_WIDTH = 200;
 
 export const USER_KEY = 'user';
+export const ACCESS_TOKEN_KEY = 'access_token';
+export const REFRESH_TOKEN_KEY = 'refresh_token';
+export const REFRESH_TOKEN_EXPIRES_AT_KEY = 'refresh_token_expires_at';
 
 export * from './colors';

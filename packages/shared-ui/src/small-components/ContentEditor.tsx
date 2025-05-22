@@ -11,13 +11,14 @@ import Icon from 'react-native-vector-icons/FontAwesome5';
 
 import { NexusImage } from './NexusImage';
 import { MarkdownEditor } from './MarkdownEditor';
-import { RichTextEditor, AttachmentPreviews } from '../sections';
+import { AttachmentPreviews } from '../sections/AttachmentPreviews';
+import { RichTextEditor } from '../sections/RichTextEditor';
 import { Attachment } from '../types';
 import { useFileUpload } from '../hooks';
 import { GiphyModal } from './GiphyModal';
 import { useTheme, Theme } from '../theme';
 import { Tooltip } from './Tooltip';
-import { FormattingOptions } from '../icons/FormattingOptions';
+import { FormattingOptions } from '../icons';
 
 // --- New imports for preview modal ---
 import { CustomPortalModal } from './CustomPortalModal';
@@ -358,6 +359,7 @@ function createStyles(theme: Theme) {
             color: theme.colors.ActiveText,
             fontSize: 16,
             fontWeight: 'bold',
+            fontFamily: 'Roboto_700Bold',
         },
         formatToggleButton: {
             marginLeft: 10,

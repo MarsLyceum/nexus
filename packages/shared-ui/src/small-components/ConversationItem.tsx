@@ -177,19 +177,25 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
                 {groupUsers.slice(0, 3).map((user, index) => {
                     const avatarUrl = `https://picsum.photos/seed/${user?.username}/40`;
                     return (
-                        <NexusImage
+                        <View
                             key={user?.id}
-                            source={avatarUrl}
-                            alt="avatar"
-                            width={40}
-                            height={40}
-                            // @ts-expect-error web only
                             style={[
                                 styles.groupAvatar,
                                 { marginLeft: index === 0 ? 0 : -15 },
                             ]}
-                            contentFit="cover"
-                        />
+                        >
+                            <NexusImage
+                                source={avatarUrl}
+                                alt="avatar"
+                                width={30}
+                                height={30}
+                                style={{
+                                    width: 30,
+                                    height: 30,
+                                }}
+                                contentFit="cover"
+                            />
+                        </View>
                     );
                 })}
             </View>
@@ -248,6 +254,7 @@ function createStyles(theme: Theme) {
             width: 30,
             height: 30,
             borderRadius: 20,
+            overflow: 'hidden',
         },
         statusDot: {
             position: 'absolute',

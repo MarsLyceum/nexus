@@ -33,7 +33,7 @@ if (typeof File === 'undefined') {
         }
     }
     // @ts-expect-error file
-    global.File = RNFile;
+    globalThis.File = RNFile;
 }
 
 export type GiphyModalProps = {
@@ -130,7 +130,8 @@ export const GiphyModal: React.FC<GiphyModalProps> = ({
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.3,
         shadowRadius: 4,
-        elevation: 5,
+        zIndex: 10_001,
+        elevation: 10_001,
     };
 
     return (

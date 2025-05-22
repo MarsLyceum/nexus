@@ -44,7 +44,7 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
         if (finalLeft + dropdownLayout.width > windowWidth) {
             const potentialLeft =
                 rawRect.x + rawRect.width - dropdownLayout.width;
-            finalLeft = potentialLeft >= 0 ? potentialLeft : 0;
+            finalLeft = Math.max(potentialLeft, 0);
         }
         // Vertical adjustment:
         // If the dropdown overflows at the bottom, position it above the more button.

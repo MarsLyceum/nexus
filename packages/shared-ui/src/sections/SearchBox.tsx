@@ -27,6 +27,7 @@ export const SearchBox: React.FC<SearchBoxProps> = ({
         <View style={[styles.container, desktop && styles.desktopContainer]}>
             <Search style={styles.icon} />
             <TextInput
+                // @ts-expect-error outline
                 style={styles.input}
                 placeholder={placeholder}
                 placeholderTextColor="#999"

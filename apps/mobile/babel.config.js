@@ -11,6 +11,10 @@ module.exports = function (api) {
                 'babel-plugin-transform-inline-environment-variables',
                 { include: ['USE_REMOTE_GRAPHQL'] },
             ],
+
+            ['@babel/plugin-transform-class-properties', { loose: true }],
+            ['@babel/plugin-transform-private-methods', { loose: true }],
+
             // ...other plugins if any
             'react-native-reanimated/plugin', // IMPORTANT: must be last!
         ],

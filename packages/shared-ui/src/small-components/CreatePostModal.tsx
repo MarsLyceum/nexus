@@ -12,7 +12,7 @@ import {
 
 import { NexusImage } from './NexusImage';
 import { useTheme, Theme } from '../theme';
-import { AttachmentPreviews } from '../sections';
+import { AttachmentPreviews } from '../sections/AttachmentPreviews';
 import { Attachment } from '../types';
 import { CustomPortalModal } from './CustomPortalModal';
 import { ContentEditor } from './ContentEditor';

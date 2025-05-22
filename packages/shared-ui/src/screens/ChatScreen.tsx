@@ -13,9 +13,9 @@ import {
     StyleSheet,
     useWindowDimensions,
     SafeAreaView,
-    FlatList,
     Platform,
 } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import {
     useQuery,
     useApolloClient,
@@ -33,6 +33,7 @@ import {
     ChatInputContainer,
     NexusImage,
     MessageItem,
+    PatchedFlashList,
 } from '../small-components';
 import { useAppSelector, RootState, UserType } from '../redux';
 import {
@@ -53,7 +54,7 @@ import {
 } from '../types';
 import { getOnlineStatusDotColor } from '../utils';
 import { BackArrow } from '../buttons';
-import { ImageDetailsModal } from '../sections';
+import { MediaDetailsModal } from '../sections';
 import { useTheme, Theme } from '../theme';
 
 interface ChatScreenProps {
@@ -106,7 +107,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
     }, [conversation]);
 
     // Create a ref for the FlatList scroll container.
-    const flatListRef = useRef<FlatList>(null);
+    const flashListRef = useRef<FlashList<Message>>(null);
 
     // Determine if the conversation is one-to-one.
     const isOneToOne =
@@ -260,7 +261,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
 
     useSubscription(DM_ADDED, {
         variables: { conversationId: conversationState?.id || '' },
-        onSubscriptionData: ({ subscriptionData }) => {
+        onData: ({ data: subscriptionData }) => {
             const newMsg: Message | undefined = subscriptionData.data?.dmAdded;
             if (newMsg) {
                 setMessages((prev) => {
@@ -440,7 +441,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
                 message={transformedMessage}
                 width={width}
                 onAttachmentPress={handleMessageItemAttachmentPress}
-                scrollContainerRef={flatListRef} // Pass the FlatList ref to each MessageItem.
+                scrollContainerRef={flashListRef}
                 onSaveEdit={handleSaveEdit}
                 onDeleteMessage={handleDeleteMessage}
             />
@@ -477,8 +478,8 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
                             <SkeletonMessageItem key={index} />
                         ))
                     ) : (
-                        <FlatList
-                            ref={flatListRef}
+                        <PatchedFlashList
+                            ref={flashListRef}
                             data={messages}
                             inverted
                             keyExtractor={(item) => item.id}
@@ -507,7 +508,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
                         onAttachmentPreviewPress={handleAttachmentPreviewPress}
                     />
 
-                    <ImageDetailsModal
+                    <MediaDetailsModal
                         visible={modalVisible}
                         attachments={modalAttachments}
                         initialIndex={modalInitialIndex}

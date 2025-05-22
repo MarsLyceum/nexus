@@ -13,7 +13,7 @@ import Svg, { Path } from 'react-native-svg';
 
 import { Portal } from '../providers';
 import { useTheme, Theme } from '../theme';
-import { isComputer } from '../utils';
+import { useIsComputer } from '../hooks';
 
 export const Tooltip = ({
     text,
@@ -35,6 +35,7 @@ export const Tooltip = ({
     >();
     const { theme } = useTheme();
     const styles = useMemo(() => createStyles(theme), [theme]);
+    const isComputer = useIsComputer();
 
     // Dimensions for the tooltip bubble.
     const [bubbleWidth, setBubbleWidth] = useState(0);
@@ -164,7 +165,7 @@ export const Tooltip = ({
     );
 
     // If not on a computer, return the children without tooltip functionality.
-    if (!isComputer()) {
+    if (!isComputer) {
         return <>{children}</>;
     }
 

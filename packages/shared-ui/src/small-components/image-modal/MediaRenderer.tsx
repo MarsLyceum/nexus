@@ -5,7 +5,7 @@ import { NexusVideo } from '../NexusVideo';
 import { MobileImageRenderer } from './MobileImageRenderer';
 import { ComputerImageRenderer } from './ComputerImageRenderer';
 
-export type ItemRendererProps = {
+export type MediaRendererProps = {
     item: string;
     mediaInfo: { type: string } | undefined;
     containerWidth: number;
@@ -14,7 +14,7 @@ export type ItemRendererProps = {
     onClose: () => void;
 };
 
-export const ItemRenderer: React.FC<ItemRendererProps> = ({
+export const MediaRenderer: React.FC<MediaRendererProps> = ({
     item,
     mediaInfo,
     containerWidth,
@@ -25,7 +25,12 @@ export const ItemRenderer: React.FC<ItemRendererProps> = ({
     // Render based on media type.
     if (mediaInfo && mediaInfo.type === 'video') {
         return (
-            <View style={{ width: '100%', height: '100%' }}>
+            <View
+                style={{
+                    width: '100%',
+                    height: '100%',
+                }}
+            >
                 <NexusVideo
                     source={{ uri: item }}
                     style={{ width: '100%', height: '100%' }}
@@ -40,7 +45,12 @@ export const ItemRenderer: React.FC<ItemRendererProps> = ({
     }
     if (isComputer) {
         return (
-            <View style={{ width: '100%', height: '100%' }}>
+            <View
+                style={{
+                    width: '100%',
+                    height: '100%',
+                }}
+            >
                 <ComputerImageRenderer
                     uri={item}
                     containerWidth={containerWidth}

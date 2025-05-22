@@ -34,3 +34,8 @@ export * from './ThumbsDown';
 export * from './ThumbsUp';
 export * from './UpArrow';
 export * from './User';
+export * from './Play';
+export * from './Pause';
+export * from './Volume';
+export * from './VolumeMuted';
+export * from './FullScreen';

@@ -21,7 +21,8 @@ import { CSS } from '@dnd-kit/utilities';
 
 import { Cancel } from '../icons';
 import { Attachment } from '../types';
-import { NexusVideo, NexusImage } from '../small-components';
+import { NexusVideo } from '../small-components/NexusVideo';
+import { NexusImage } from '../small-components/NexusImage';
 import { useTheme, Theme } from '../theme';
 
 type AttachmentPreviewsProps = {
@@ -192,9 +193,10 @@ const SortableItem: React.FC<SortableItemProps> = ({
     };
     const isVideo = attachment.file?.type?.startsWith('video');
     return (
-        // @ts-expect-error ref
         <View
+            // @ts-expect-error ref
             ref={setNodeRef}
+            // @ts-expect-error ref
             style={[styles.draggableItem, style]}
             {...attributes}
             {...listeners}

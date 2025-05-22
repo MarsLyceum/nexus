@@ -1,14 +1,5 @@
 import React from 'react';
-import styled from 'styled-components/native';
-import { ViewStyle, Pressable, View, StyleSheet } from 'react-native';
-
-// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-const LinkText = styled.Text`
-    color: #a63fa3;
-    font-size: 14px;
-    font-weight: regular;
-    margin: 0 10px;
-`;
+import { ViewStyle, Pressable, View, StyleSheet, Text } from 'react-native';
 
 const styles = StyleSheet.create({
     container: {
@@ -22,10 +13,26 @@ const styles = StyleSheet.create({
 export const Footer = ({ style }: { style?: ViewStyle | ViewStyle[] }) => (
     <View style={[styles.container, style]}>
         <Pressable onPress={() => {}}>
-            <LinkText>Terms of Service</LinkText>
+            <Text
+                style={{
+                    color: '#a63fa3',
+                    fontSize: 14,
+                    fontWeight: 'regular',
+                }}
+            >
+                Terms of Service
+            </Text>
         </Pressable>
         <Pressable onPress={() => {}}>
-            <LinkText>Privacy Policy</LinkText>
+            <Text
+                style={{
+                    color: '#a63fa3',
+                    fontSize: 14,
+                    fontWeight: 'regular',
+                }}
+            >
+                Privacy Policy
+            </Text>
         </Pressable>
     </View>
 );

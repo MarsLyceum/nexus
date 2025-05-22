@@ -7,7 +7,6 @@ export type User = {
     firstName: string;
     lastName: string;
     phoneNumber: string;
-    token: string;
     groups: [Group] | [];
     status: 'online' | 'offline' | 'idle' | 'offline_dnd' | 'online_dnd';
 };

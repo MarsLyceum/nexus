@@ -13,6 +13,12 @@ import { useNexusRouter } from '../hooks';
 import { RootState, useAppSelector, useAppDispatch, loadUser } from '../redux';
 import { PeepsLogo } from '../images/PeepsLogo';
 import { PrimaryGradientButton, SecondaryButton } from '../buttons';
+import { getItemSecure, setItemSecure } from '../utils';
+import {
+    ACCESS_TOKEN_KEY,
+    REFRESH_TOKEN_EXPIRES_AT_KEY,
+    REFRESH_TOKEN_KEY,
+} from '../constants';
 import { Footer } from '..';
 import { useTheme, Theme } from '../theme';
 
@@ -62,10 +68,10 @@ function createStyles(theme: Theme) {
     });
 }
 
-export function WelcomeScreen(): JSX.Element {
+export function WelcomeScreen(): React.JSX.Element {
     const dispatch = useAppDispatch();
     const user = useAppSelector((state: RootState) => state.user.user);
-    const router = useNexusRouter();
+    const { isFocused, replace, getCurrentRoute, push } = useNexusRouter();
     const { theme } = useTheme();
     const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -74,11 +80,30 @@ export function WelcomeScreen(): JSX.Element {
     }, [dispatch]);
 
     useEffect(() => {
-        if (user) {
-            // If user is loaded, navigate to the matching screen
-            router.push('/');
-        }
-    }, [user, router]);
+        if (!isFocused('/welcome')) return;
+
+        void (async () => {
+            if (Platform.OS !== 'web') {
+                const raw = await getItemSecure(REFRESH_TOKEN_EXPIRES_AT_KEY);
+                const expiresAt = raw ? Number.parseInt(raw, 10) : 0;
+                if (!expiresAt || Date.now() / 1000 >= expiresAt) {
+                    await setItemSecure(ACCESS_TOKEN_KEY, '');
+                    await setItemSecure(REFRESH_TOKEN_KEY, '');
+                }
+
+                const token = (await getItemSecure(ACCESS_TOKEN_KEY)) || '';
+                if (!token && getCurrentRoute() !== '/login') {
+                    replace('/login');
+                    return;
+                }
+                if (user && token && getCurrentRoute() !== '/') {
+                    replace('/');
+                }
+            } else if (user && getCurrentRoute() !== '/') {
+                replace('/');
+            }
+        })();
+    }, [replace, isFocused, getCurrentRoute, user]);
 
     return (
         <SafeAreaView style={styles.outerContainer}>
@@ -92,12 +117,12 @@ export function WelcomeScreen(): JSX.Element {
                     <PrimaryGradientButton
                         style={styles.topButton}
                         title="Create an account"
-                        onPress={() => router.push('/signup')}
+                        onPress={() => push('/signup')}
                     />
                     <SecondaryButton
                         style={styles.bottomButton}
                         title="Log in"
-                        onPress={() => router.push('/login')}
+                        onPress={() => push('/login')}
                     />
                 </View>
                 <View style={styles.footerContainer}>

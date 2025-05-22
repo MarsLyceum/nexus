@@ -13,7 +13,7 @@ export interface MarkdownOverlayProps {
 export const renderHighlightedText = (
     text: string,
     styles: ReturnType<typeof createStyles>
-): JSX.Element[] => {
+): React.JSX.Element[] => {
     const lines = text.split('\n');
     const renderedLines = lines.map((line, index) => {
         if (/^>{1,3}\s+/.test(line)) {
@@ -31,7 +31,7 @@ export const renderHighlightedText = (
                 </Text>
             );
         }
-        const segments: JSX.Element[] = [];
+        const segments: React.JSX.Element[] = [];
         let lastIndex = 0;
         const regex =
             /(```([\S\s]+?)```)|(`([^`]+)`)|(__(.+?)__)|(\*\*\*([^*]+)\*\*\*)|(\*\*([^*]+)\*\*)|(\*([^*]+)\*)|(_([^_]+)_)|(~~(.*?)~~)|(>!(.*?)!<)|(\|\|([\S\s]+?)\|\|)|(\[([^\]]+)]\(([^)]+)\))|(!\[([^\]]*)]\(([^)]+)\))|(https?:\/\/\S+)/g;
@@ -206,7 +206,7 @@ export const renderHighlightedText = (
     return renderedLines.reduce((prev, curr, idx) => {
         if (idx === 0) return [curr];
         return [...prev, <Text key={`newline-${idx}`}>{'\n'}</Text>, curr];
-    }, [] as JSX.Element[]);
+    }, [] as React.JSX.Element[]);
 };
 
 const MarkdownOverlayComponent = (

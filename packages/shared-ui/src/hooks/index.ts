@@ -15,3 +15,8 @@ export * from './useNexusRouter';
 export * from './useScreenWidth';
 export * from './useSearchFilter';
 export * from './useSendMessages';
+export * from './useGifFrames';
+export * from './useGifPlayer';
+export * from './useFriendStatus';
+export * from './useIsComputer';
+export * from './useSystemBars';

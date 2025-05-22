@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
     View,
     Text,
@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useQuery, useMutation } from '@apollo/client';
 
-import { useNexusRouter } from '../hooks';
+import { useNexusRouter, useFriendStatus } from '../hooks';
 import { FriendItemData } from '../types';
 import {
     FriendItem,
@@ -18,12 +18,7 @@ import {
     RawRect,
     ConfirmRemoveFriendModal,
 } from '../small-components';
-import {
-    GET_FRIENDS,
-    REMOVE_FRIEND,
-    ACCEPT_FRIEND_REQUEST,
-    FRIEND_STATUS_CHANGED,
-} from '../queries';
+import { GET_FRIENDS, REMOVE_FRIEND, ACCEPT_FRIEND_REQUEST } from '../queries';
 import { useAppSelector, RootState } from '../redux';
 import { useTheme, Theme } from '../theme';
 
@@ -51,10 +46,11 @@ export const FriendsScreen: React.FC = () => {
 
     const user = useAppSelector((state: RootState) => state.user.user);
 
-    const { data, subscribeToMore } = useQuery(GET_FRIENDS, {
+    const { data } = useQuery(GET_FRIENDS, {
         variables: { userId: user?.id },
         skip: !user?.id,
     });
+    useFriendStatus(user?.id);
 
     const [removeFriendMutation] = useMutation(REMOVE_FRIEND, {
         refetchQueries: [
@@ -67,42 +63,6 @@ export const FriendsScreen: React.FC = () => {
             { query: GET_FRIENDS, variables: { userId: user?.id } },
         ],
     });
-
-    // Subscribe to friend status changes and update the GET_FRIENDS cache.
-    useEffect(() => {
-        if (!user?.id) return;
-        const unsubscribe = subscribeToMore({
-            document: FRIEND_STATUS_CHANGED,
-            variables: { userId: user.id },
-            updateQuery: (prev, { subscriptionData }) => {
-                if (!subscriptionData.data) return prev;
-                const { friendStatusChanged } = subscriptionData.data;
-                console.log(
-                    `Updating friend ${friendStatusChanged.friendUserId} status to ${friendStatusChanged.status}`
-                );
-                const updatedFriends = prev.getFriends.map(
-                    (friendItem: FriendItemData) => {
-                        if (
-                            friendItem.friend.id ===
-                            friendStatusChanged.friendUserId
-                        ) {
-                            return {
-                                ...friendItem,
-                                friend: {
-                                    ...friendItem.friend,
-                                    status: friendStatusChanged.status,
-                                },
-                            };
-                        }
-                        return friendItem;
-                    }
-                );
-                return { ...prev, getFriends: updatedFriends };
-            },
-        });
-        // eslint-disable-next-line consistent-return
-        return () => unsubscribe();
-    }, [user?.id, subscribeToMore]);
 
     // Dummy skeleton data for loading.
     const skeletonData: FriendItemData[] = Array.from({ length: 5 }).map(

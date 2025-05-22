@@ -239,7 +239,7 @@ export const SidebarScreen = ({
     // Measure the currently selected button.
     useLayoutEffect(() => {
         // eslint-disable-next-line unicorn/no-null
-        let buttonRef: React.RefObject<View> | null = null;
+        let buttonRef: React.RefObject<View | null> | null = null;
         if (staticButtonRefs[selectedButton as keyof typeof staticButtonRefs]) {
             buttonRef =
                 staticButtonRefs[

@@ -1,7 +1,16 @@
 // eslint-disable-next-line eslint-comments/disable-enable-pair
 /* eslint-disable react-hooks/rules-of-hooks */
-import { redirect, useRouter as useNextRouter } from 'next/navigation';
-import { useNavigation, StackActions } from '@react-navigation/native';
+import {
+    redirect,
+    useRouter as useNextRouter,
+    usePathname,
+    useSearchParams,
+} from 'next/navigation';
+import {
+    useNavigation,
+    CommonActions,
+    NavigationState,
+} from '@react-navigation/native';
 import { Platform } from 'react-native';
 import { detectEnvironment, Environment } from '../utils';
 
@@ -12,6 +21,8 @@ export type NexusRouter = {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     replace: (path: string, params?: Record<string, any>) => void;
     goBack: () => void;
+    getCurrentRoute: () => string;
+    isFocused: (path: string) => boolean;
 };
 
 // Helper to build a URL with query parameters for Next.js.
@@ -53,11 +64,28 @@ export function useNexusRouter(): NexusRouter {
             goBack: () => {
                 throw new Error('goBack is not supported on the server side.');
             },
+            getCurrentRoute: () => {
+                throw new Error(
+                    'getCurrentRoute is not supported on the server side.'
+                );
+            },
+            isFocused: () => true,
         };
     }
 
     if (environment === 'nextjs-client') {
         const router = useNextRouter();
+        const pathname = usePathname();
+        const searchParams = useSearchParams();
+
+        // rebuild the full URL
+        const asPath =
+            searchParams.toString().length > 0
+                ? `${pathname}?${searchParams.toString()}`
+                : pathname;
+
+        const getCurrentRoute = () => asPath;
+
         return {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             push: (path: string, params?: Record<string, any>) => {
@@ -70,14 +98,16 @@ export function useNexusRouter(): NexusRouter {
             goBack: () => {
                 // If browser history length is greater than one, go back; otherwise, go to home.
                 if (
-                    typeof window !== 'undefined' &&
-                    window.history.length > 1
+                    typeof globalThis !== 'undefined' &&
+                    globalThis.history.length > 1
                 ) {
                     router.back();
                 } else {
                     router.push('/');
                 }
             },
+            getCurrentRoute,
+            isFocused: (path: string) => getCurrentRoute() === path,
         };
     }
 
@@ -100,6 +130,26 @@ export function useNexusRouter(): NexusRouter {
             return normalized;
         };
 
+        const findActiveRouteName = (state: NavigationState): string => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const route = state.routes[state.index] as any;
+            // if there’s a nested state, dig in
+            if (route.state) {
+                return findActiveRouteName(route.state as NavigationState);
+            }
+            return route.name;
+        };
+
+        const getCurrentRoute = () => {
+            const state = navigation.getState();
+            if (state) {
+                const name = findActiveRouteName(state);
+                return name === DEFAULT_ROOT_ROUTE ? '/' : `/${name}`;
+            }
+
+            throw new Error('unknown route');
+        };
+
         return {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             push: (path: string, params?: Record<string, any>) => {
@@ -119,7 +169,10 @@ export function useNexusRouter(): NexusRouter {
                 const normalizedPath = normalizePath(path);
                 if (navigation.dispatch) {
                     navigation.dispatch(
-                        StackActions.replace(normalizedPath, params)
+                        CommonActions.reset({
+                            index: 0,
+                            routes: [{ name: normalizedPath, params }],
+                        })
                     );
                 } else {
                     // @ts-expect-error navigation
@@ -127,12 +180,12 @@ export function useNexusRouter(): NexusRouter {
                 }
 
                 // If in a browser environment, update the URL via the History API.
-                if (Platform.OS === 'web' && typeof window !== 'undefined') {
+                if (Platform.OS === 'web' && typeof globalThis !== 'undefined') {
                     // Build full URL from the path and any params.
                     const url = buildUrlWithParams(path, params);
 
                     try {
-                        window.history.replaceState({}, '', url);
+                        globalThis.history.replaceState({}, '', url);
                     } catch (error) {
                         console.error(
                             'Error using window.history.replaceState:',
@@ -150,6 +203,8 @@ export function useNexusRouter(): NexusRouter {
                     navigation.navigate('welcome');
                 }
             },
+            getCurrentRoute,
+            isFocused: (path: string) => getCurrentRoute() === path,
         };
     }
 

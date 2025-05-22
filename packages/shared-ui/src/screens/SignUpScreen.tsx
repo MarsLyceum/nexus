@@ -15,13 +15,18 @@ import { isEmail } from 'validator';
 import { FontAwesome } from '@expo/vector-icons';
 import { useApolloClient } from '@apollo/client';
 
+import {
+    REFRESH_TOKEN_KEY,
+    ACCESS_TOKEN_KEY,
+    REFRESH_TOKEN_EXPIRES_AT_KEY,
+} from '../constants';
 import { useNexusRouter } from '../hooks';
 import { REGISTER_USER_MUTATION } from '../queries';
 import { HorizontalLine } from '../images';
 import { GoogleLogo, UserIcon, Email, Phone, Lock } from '../icons';
 import { User } from '../types';
 import { loginUser, useAppDispatch } from '../redux';
-import { validatePassword } from '../utils';
+import { validatePassword, setItemSecure } from '../utils';
 import { PrimaryGradientButton } from '../buttons';
 import { useTheme, Theme } from '../theme';
 
@@ -176,7 +181,7 @@ function createStyles(theme: Theme) {
     });
 }
 
-export function SignUpScreen(): JSX.Element {
+export function SignUpScreen(): React.JSX.Element {
     const dispatch = useAppDispatch();
     const router = useNexusRouter();
     const apolloClient = useApolloClient();
@@ -221,7 +226,28 @@ export function SignUpScreen(): JSX.Element {
                     phoneNumber: values.phoneNumber,
                 },
             });
-            const user: User = result.data.registerUser;
+            const {
+                token,
+                accessToken,
+                refreshToken,
+                refreshTokenExpiresAt,
+                ...user
+            }: User & {
+                token: string;
+                accessToken: string;
+                refreshToken: string;
+                refreshTokenExpiresAt: string;
+            } = result.data.registerUser;
+
+            if (Platform.OS !== 'web') {
+                await setItemSecure(ACCESS_TOKEN_KEY, accessToken);
+                await setItemSecure(REFRESH_TOKEN_KEY, refreshToken);
+                await setItemSecure(
+                    REFRESH_TOKEN_EXPIRES_AT_KEY,
+                    refreshTokenExpiresAt
+                );
+            }
+
             updateUserData(user);
             router.push('/');
         } catch (error) {

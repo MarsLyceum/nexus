@@ -8,7 +8,10 @@ import React, {
 import { View, Pressable, Platform } from 'react-native';
 import { useImageResolution, fitContainer } from 'react-native-zoom-toolkit';
 
+import { useGifPlayer } from '../../hooks';
 import { NexusImage } from '../NexusImage';
+import { GifPlayer } from '../GifPlayer';
+import { MediaPlayerControls } from '../MediaPlayerControls';
 
 export type ComputerImageRendererProps = {
     uri: string;
@@ -25,6 +28,16 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
 }) => {
     const [zoomed, setZoomed] = useState(false);
 
+    const {
+        position,
+        playing,
+        totalDuration,
+        togglePlay,
+        onSlidingStart,
+        onValueChange,
+        onSlidingComplete,
+    } = useGifPlayer(uri);
+
     // Compute the aspect ratio using image resolution.
     const { resolution } = useImageResolution({ uri });
     const aspectRatio = useMemo(
@@ -34,6 +47,8 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
                 : 1,
         [resolution]
     );
+
+    const isGif = useMemo(() => uri.toLowerCase().endsWith('.gif'), [uri]);
 
     // Compute the non-zoomed (visible) image size.
     const nonZoomedSize = useMemo(
@@ -88,7 +103,17 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
           }
         | undefined
     >();
-    const imageWrapperRef = useRef<View | undefined>();
+    const [controlsRect, setControlsRect] = useState<
+        | {
+              left: number;
+              top: number;
+              right: number;
+              bottom: number;
+          }
+        | undefined
+    >();
+    const imageWrapperRef = useRef<View | null>(null);
+    const controlsRef = useRef<View | null>(null);
 
     const handleLayout = useCallback(() => {
         if (
@@ -106,9 +131,25 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
         }
     }, []);
 
+    const handleLayoutControls = useCallback(() => {
+        if (
+            controlsRef.current &&
+            typeof controlsRef.current.measure === 'function'
+        ) {
+            controlsRef.current.measure((fx, fy, width, height, px, py) => {
+                setControlsRect({
+                    left: px,
+                    top: py,
+                    right: px + width,
+                    bottom: py + height,
+                });
+            });
+        }
+    }, []);
+
     // Attach a document-level mousedown listener to dismiss the modal if clicking outside.
     useEffect(() => {
-        if (!visibleRect) return;
+        if (!visibleRect || (isGif && !controlsRect)) return;
         const handleDocumentClick = (event: MouseEvent) => {
             const { clientX, clientY } = event;
             if (
@@ -117,7 +158,19 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
                 clientY < visibleRect.top ||
                 clientY > visibleRect.bottom
             ) {
-                onClose();
+                if (
+                    isGif &&
+                    controlsRect &&
+                    (clientX < controlsRect.left ||
+                        clientX > controlsRect.right ||
+                        clientY < controlsRect.top ||
+                        clientY > controlsRect.bottom)
+                ) {
+                    onClose();
+                }
+                if (!isGif) {
+                    onClose();
+                }
             }
         };
         document.addEventListener('mousedown', handleDocumentClick);
@@ -125,7 +178,7 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
         return () => {
             document.removeEventListener('mousedown', handleDocumentClick);
         };
-    }, [visibleRect, onClose]);
+    }, [visibleRect, controlsRect, onClose]);
 
     // Toggle zoom state on image press.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -139,7 +192,8 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
         return (
             <View
                 style={{
-                    flex: 1,
+                    width: containerWidth,
+                    height: containerHeight,
                     justifyContent: 'center',
                     alignItems: 'center',
                 }}
@@ -152,59 +206,114 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
                         height: nonZoomedSize.height,
                         cursor: 'zoom-in',
                     }}
-                    // @ts-expect-error ref
                     ref={imageWrapperRef}
                     onLayout={handleLayout}
                 >
-                    <NexusImage
-                        source={uri}
-                        contentFit="cover"
-                        width={nonZoomedSize.width}
-                        height={nonZoomedSize.height}
-                        alt="Computer image preview"
-                    />
+                    {isGif ? (
+                        <GifPlayer
+                            source={uri}
+                            width={nonZoomedSize.width}
+                            height={nonZoomedSize.height}
+                            position={position}
+                            playing={playing}
+                        />
+                    ) : (
+                        <NexusImage
+                            source={uri}
+                            contentFit="cover"
+                            width={nonZoomedSize.width}
+                            height={nonZoomedSize.height}
+                            alt="Computer image preview"
+                        />
+                    )}
                 </Pressable>
+                {isGif && (
+                    <MediaPlayerControls
+                        playing={playing}
+                        position={position}
+                        totalDuration={totalDuration}
+                        onTogglePlay={togglePlay}
+                        onSlidingStart={onSlidingStart}
+                        onValueChange={onValueChange}
+                        onSlidingComplete={onSlidingComplete}
+                        isGif={isGif}
+                        ref={controlsRef}
+                        onLayout={handleLayoutControls}
+                    />
+                )}
             </View>
         );
     }
 
     // Zoomed state: render image inside a ScrollView (vertical scrolling enabled).
     return (
-        // @ts-expect-error styles
-        <View
-            style={{ flex: 1, cursor: 'zoom-out', overflow: 'auto' }}
-            ref={scrollRef}
-        >
+        <View>
             <View
+                // @ts-expect-error styles
                 style={{
-                    width: zoomedContainerWidth,
-                    height: zoomedContainerHeight,
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
+                    cursor: 'zoom-out',
+                    overflow: 'auto',
+                    width: containerWidth,
+                    height: containerHeight,
                 }}
+                // @ts-expect-error styles
+                ref={scrollRef}
             >
-                <Pressable
-                    onPress={handleImagePress}
-                    // @ts-expect-error ref
-                    ref={imageWrapperRef}
-                    onLayout={handleLayout}
-                    // @ts-expect-error styles
+                <View
                     style={{
-                        width: zoomedSize.width,
-                        height: zoomedSize.height,
-                        cursor: 'zoom-out',
+                        width: zoomedContainerWidth,
+                        height: zoomedContainerHeight,
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
                     }}
                 >
-                    <NexusImage
-                        source={uri}
-                        contentFit="cover"
-                        width={zoomedSize.width}
-                        height={zoomedSize.height}
-                        alt="Computer image preview zoomed"
-                    />
-                </Pressable>
+                    <Pressable
+                        onPress={handleImagePress}
+                        ref={imageWrapperRef}
+                        onLayout={handleLayout}
+                        // @ts-expect-error styles
+                        style={{
+                            width: zoomedSize.width,
+                            height: zoomedSize.height,
+                            cursor: 'zoom-out',
+                        }}
+                    >
+                        {isGif ? (
+                            <GifPlayer
+                                source={uri}
+                                width={zoomedSize.width}
+                                height={zoomedSize.height}
+                                position={position}
+                                playing={playing}
+                            />
+                        ) : (
+                            <NexusImage
+                                source={uri}
+                                contentFit="cover"
+                                width={zoomedSize.width}
+                                height={zoomedSize.height}
+                                alt="Computer image preview zoomed"
+                            />
+                        )}
+                    </Pressable>
+                </View>
             </View>
+
+            {isGif && (
+                <MediaPlayerControls
+                    playing={playing}
+                    position={position}
+                    totalDuration={totalDuration}
+                    onTogglePlay={togglePlay}
+                    onSlidingStart={onSlidingStart}
+                    onValueChange={onValueChange}
+                    onSlidingComplete={onSlidingComplete}
+                    isGif={isGif}
+                    ref={controlsRef}
+                    onLayout={handleLayoutControls}
+                />
+            )}
         </View>
     );
 };

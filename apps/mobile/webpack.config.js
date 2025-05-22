@@ -14,6 +14,28 @@ module.exports = async function (env, argv) {
     // Retrieve the default Expo webpack configuration
     const config = await createExpoWebpackConfigAsync(env, argv);
 
+    if (env.platform === 'web') {
+        config.devServer = {
+            ...config.devServer,
+
+            // 3) add your proxy rules
+            proxy: {
+                // any request that starts with /graphql
+                '/graphql': {
+                    target: 'http://localhost:4000', // your Nexus web service
+                    changeOrigin: true, // pretend the host matches
+                    secure: false, // skip SSL checks (we're on HTTP)
+                },
+            },
+
+            // (optional) see logs in your browser console
+            client: {
+                logging: 'info',
+                overlay: false,
+            },
+        };
+    }
+
     console.log(`Webpack mode: ${argv.mode}`); // Only for debugging during development.
 
     // Remove the default HtmlWebpackPlugin instance so we can inject our custom template.

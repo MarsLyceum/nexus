@@ -1,8 +1,11 @@
 import React, { useEffect, useRef, ReactNode, useCallback } from 'react';
 import { AppState, AppStateStatus, View, Platform } from 'react-native';
 import { useMutation } from '@apollo/client';
+
 import { useAppSelector, UserType, RootState } from '../redux';
 import { UPDATE_USER } from '../queries';
+import { getItemSecure } from '../utils';
+import { ACCESS_TOKEN_KEY } from '../constants';
 
 export const StatusManager: React.FC<{ children: ReactNode }> = ({
     children,
@@ -11,13 +14,20 @@ export const StatusManager: React.FC<{ children: ReactNode }> = ({
     const user: UserType = useAppSelector(
         (state: RootState) => state.user.user
     );
-    const idleTimeout = useRef<NodeJS.Timeout | null>(null);
+    const idleTimeout = useRef<number | null>(null);
     const currentStatus = useRef<string>('offline');
 
     // This function updates the user status using GraphQL
     const setStatus = useCallback(
         async (status: string) => {
-            if (!user) return;
+            if (Platform.OS !== 'web') {
+                const token =
+                    (await getItemSecure(ACCESS_TOKEN_KEY)) ?? undefined;
+                if (!token) {
+                    return;
+                }
+            }
+            if (!user || !user.id) return;
             // Determine effective status based on DND preference
             let effectiveStatus = status;
             if (
@@ -58,7 +68,7 @@ export const StatusManager: React.FC<{ children: ReactNode }> = ({
                 void setStatus('idle');
             },
             15 * 60 * 1000 // 15 minutes
-        );
+        ) as unknown as number;
     }, [setStatus]);
 
     useEffect(() => {
@@ -85,7 +95,7 @@ export const StatusManager: React.FC<{ children: ReactNode }> = ({
         };
 
         // Only add these listeners on web
-        if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        if (Platform.OS === 'web' && typeof globalThis !== 'undefined') {
             window.addEventListener('pagehide', handlePageHide);
             window.addEventListener('beforeunload', handlePageHide);
         }
@@ -96,7 +106,7 @@ export const StatusManager: React.FC<{ children: ReactNode }> = ({
             }
             subscription.remove();
             // Only remove these listeners on web
-            if (Platform.OS === 'web' && typeof window !== 'undefined') {
+            if (Platform.OS === 'web' && typeof globalThis !== 'undefined') {
                 window.removeEventListener('pagehide', handlePageHide);
                 window.removeEventListener('beforeunload', handlePageHide);
             }

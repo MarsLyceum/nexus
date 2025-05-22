@@ -24,17 +24,27 @@ export default async function DashboardLayout({
 }) {
     // Read the token cookie from the request headers
     const cookieStore = await cookies();
-    const tokenCookie = cookieStore.get('token')?.value;
-    const client = createApolloClient();
 
-    if (!tokenCookie) {
+    // pull both tokens
+    const accessToken = cookieStore.get('access_token')?.value;
+    const refreshToken = cookieStore.get('refresh_token')?.value;
+    if (!accessToken) {
         redirect('/login');
     }
+    // serialize exactly as the browser would send them
+    const cookieHeader = [
+        `access_token=${accessToken}`,
+        refreshToken && `refresh_token=${refreshToken}`,
+    ]
+        .filter(Boolean)
+        .join('; ');
+
+    const client = createApolloClient(cookieHeader);
 
     let decodedToken;
     try {
         // Verify and decode the token using your JWT secret
-        decodedToken = jwt.verify(tokenCookie, JWT_SECRET as string) as {
+        decodedToken = jwt.verify(accessToken, JWT_SECRET as string) as {
             id: string;
             email: string;
             // include additional claims if needed
@@ -53,7 +63,6 @@ export default async function DashboardLayout({
         firstName: '',
         lastName: '',
         phoneNumber: '',
-        token: '',
         groups: [],
         status: 'offline', // Default status; adjust as needed
     };

@@ -1,11 +1,16 @@
-import React, { useRef, useCallback } from 'react';
-import { View, useWindowDimensions } from 'react-native';
+import React, { useRef, useCallback, useMemo, useState } from 'react';
+import { View, useWindowDimensions, StyleSheet } from 'react-native';
 import {
     ResumableZoom,
     type ResumableZoomType,
     useImageResolution,
 } from 'react-native-zoom-toolkit';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useTheme } from '../../theme';
+import { useGifPlayer } from '../../hooks';
+import { GifPlayer } from '../GifPlayer';
+import { MediaPlayerControls } from '../MediaPlayerControls';
 import { NexusImage } from '../NexusImage';
 
 export type MobileImageRendererProps = {
@@ -20,6 +25,46 @@ export const MobileImageRenderer: React.FC<MobileImageRendererProps> = ({
     const { width: screenWidth, height: screenHeight } = useWindowDimensions();
     const { isFetching, resolution } = useImageResolution({ uri });
     const zoomRef = useRef<ResumableZoomType>(null);
+    const [controlsRect, setControlsRect] = useState<
+        | {
+              left: number;
+              top: number;
+              right: number;
+              bottom: number;
+          }
+        | undefined
+    >();
+    const controlsRef = useRef<View | null>(null);
+    const { theme } = useTheme();
+    const insets = useSafeAreaInsets();
+
+    const isGif = useMemo(() => uri.toLowerCase().endsWith('.gif'), [uri]);
+    const {
+        position,
+        virtualPos,
+        playing,
+        totalDuration,
+        togglePlay,
+        onSlidingStart,
+        onValueChange,
+        onSlidingComplete,
+    } = useGifPlayer(uri);
+
+    const handleLayoutControls = useCallback(() => {
+        if (
+            controlsRef.current &&
+            typeof controlsRef.current.measure === 'function'
+        ) {
+            controlsRef.current.measure((fx, fy, width, height, px, py) => {
+                setControlsRect({
+                    left: px,
+                    top: py,
+                    right: px + width,
+                    bottom: py + height,
+                });
+            });
+        }
+    }, []);
 
     // Ensure image is ready to be rendered.
     const ready =
@@ -32,8 +77,13 @@ export const MobileImageRenderer: React.FC<MobileImageRendererProps> = ({
     const aspectRatio = ready ? resolution.width / resolution.height : 1;
 
     // Compute image dimensions: full screen width and height based on aspect ratio.
-    const imageWidth = screenWidth;
-    const imageHeight = screenWidth / aspectRatio;
+    let imageWidth = screenWidth;
+    let imageHeight = screenWidth / aspectRatio;
+
+    if (imageHeight > screenHeight) {
+        imageHeight = screenHeight;
+        imageWidth = screenHeight * aspectRatio;
+    }
 
     // Calculate vertical offset for centering the image.
     const offsetY = (screenHeight - imageHeight) / 2;
@@ -58,8 +108,21 @@ export const MobileImageRenderer: React.FC<MobileImageRendererProps> = ({
                     localY < rect.y ||
                     localY > rect.y + rect.height
                 ) {
-                    e.stopPropagation?.();
-                    onClose();
+                    if (
+                        isGif &&
+                        controlsRect &&
+                        (localX < controlsRect.left ||
+                            localX > controlsRect.right ||
+                            localY < controlsRect.top ||
+                            localY > controlsRect.bottom)
+                    ) {
+                        e.stopPropagation?.();
+                        onClose();
+                    }
+                    if (!isGif) {
+                        e.stopPropagation?.();
+                        onClose();
+                    }
                 }
             } else if (
                 absoluteY < offsetY ||
@@ -69,16 +132,17 @@ export const MobileImageRenderer: React.FC<MobileImageRendererProps> = ({
                 onClose();
             }
         },
-        [onClose, offsetY, imageHeight]
+        [onClose, offsetY, imageHeight, controlsRect, isGif]
     );
 
     return (
         <View
             style={{
                 flex: 1,
-                backgroundColor: 'black',
+                backgroundColor: theme.colors.AppBackground,
                 justifyContent: 'center',
                 alignItems: 'center',
+                position: 'relative',
             }}
         >
             {ready ? (
@@ -97,17 +161,54 @@ export const MobileImageRenderer: React.FC<MobileImageRendererProps> = ({
                     }}
                     tapsEnabled
                 >
-                    <NexusImage
-                        source={uri}
-                        style={{ width: imageWidth, height: imageHeight }}
-                        contentFit="contain"
-                        width={imageWidth}
-                        height={imageHeight}
-                        alt="Mobile image preview"
-                    />
+                    {isGif ? (
+                        <GifPlayer
+                            source={uri}
+                            width={imageWidth}
+                            height={imageHeight}
+                            position={position}
+                            playing={playing}
+                        />
+                    ) : (
+                        <NexusImage
+                            source={uri}
+                            style={{ width: imageWidth, height: imageHeight }}
+                            contentFit="contain"
+                            width={imageWidth}
+                            height={imageHeight}
+                            alt="Mobile image preview"
+                        />
+                    )}
                 </ResumableZoom>
             ) : (
                 <View style={{ flex: 1 }} />
+            )}
+            {isGif && (
+                <View
+                    style={[
+                        StyleSheet.absoluteFill,
+                        {
+                            justifyContent: 'flex-end',
+                            alignItems: 'center',
+                            paddingBottom: insets.bottom + 10,
+                            paddingHorizontal: 16,
+                        },
+                    ]}
+                >
+                    <MediaPlayerControls
+                        playing={playing}
+                        position={position}
+                        virtualPos={virtualPos}
+                        totalDuration={totalDuration}
+                        onTogglePlay={togglePlay}
+                        onSlidingStart={onSlidingStart}
+                        onValueChange={onValueChange}
+                        onSlidingComplete={onSlidingComplete}
+                        isGif={isGif}
+                        ref={controlsRef}
+                        onLayout={handleLayoutControls}
+                    />
+                </View>
             )}
         </View>
     );

@@ -13,10 +13,15 @@ import Svg, { Path } from 'react-native-svg';
 import { isEmail } from 'validator';
 import { useApolloClient } from '@apollo/client';
 
+import {
+    REFRESH_TOKEN_KEY,
+    ACCESS_TOKEN_KEY,
+    REFRESH_TOKEN_EXPIRES_AT_KEY,
+} from '../constants';
 import { useNexusRouter } from '../hooks';
 import { loginUser, useAppDispatch } from '../redux';
 import { LOGIN_USER } from '../queries';
-import { validatePassword } from '../utils';
+import { validatePassword, setItemSecure } from '../utils';
 import { Email, Lock, GoogleLogo } from '../icons';
 import { HorizontalLine } from '../images';
 import { PrimaryGradientButton } from '../buttons';
@@ -38,7 +43,7 @@ export function FacebookIcon({
     color?: string;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     style?: any;
-}): JSX.Element {
+}): React.JSX.Element {
     return (
         <Svg width={size} height={size} viewBox="0 0 512 512" style={style}>
             <Path
@@ -191,7 +196,7 @@ function createStyles(theme: Theme) {
     });
 }
 
-export function LoginScreen(): JSX.Element {
+export function LoginScreen(): React.JSX.Element {
     const dispatch = useAppDispatch();
     const apolloClient = useApolloClient();
     const router = useNexusRouter();
@@ -231,12 +236,35 @@ export function LoginScreen(): JSX.Element {
         passwordInner: string
     ) => {
         try {
-            const result = await apolloClient.mutate<{ loginUser: User }>({
+            const result = await apolloClient.mutate<{
+                loginUser: User & {
+                    token: string;
+                    accessToken: string;
+                    refreshToken: string;
+                    refreshTokenExpiresAt: string;
+                };
+            }>({
                 mutation: LOGIN_USER,
                 variables: { email: emailInner, password: passwordInner },
             });
             if (result.data?.loginUser) {
-                const user = result.data.loginUser;
+                const {
+                    token,
+                    refreshToken,
+                    accessToken,
+                    refreshTokenExpiresAt,
+                    ...user
+                } = result.data.loginUser;
+
+                if (Platform.OS !== 'web') {
+                    await setItemSecure(ACCESS_TOKEN_KEY, accessToken);
+                    await setItemSecure(REFRESH_TOKEN_KEY, refreshToken);
+                    await setItemSecure(
+                        REFRESH_TOKEN_EXPIRES_AT_KEY,
+                        refreshTokenExpiresAt
+                    );
+                }
+
                 updateUserData(user);
                 // Navigate to AppDrawer screen
                 router.push('/');

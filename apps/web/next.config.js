@@ -87,6 +87,8 @@ const TRANSPILED_PACKAGES = [
     // 'styled-components/native',
     'formik',
     'react-virtualized',
+    '@shopify/react-native-skia',
+    '@react-native/assets-registry',
 ];
 
 const withTM = require('next-transpile-modules')([
@@ -107,25 +109,26 @@ const nextConfig = {
         ),
     },
 
-    async rewrites() {
-        const LOCAL = 'http://localhost:4000';
-        const REMOTE =
-            'https://nexus-web-service-197277044151.us-west1.run.app';
+    // async rewrites() {
+    //     const LOCAL = 'http://localhost:4000';
+    //     const REMOTE =
+    //         'https://nexus-web-service-197277044151.us-west1.run.app';
 
-        // if in production *or* you explicitly requested remote, use REMOTE
-        const forceRemote =
-            process.env.NODE_ENV === 'production' ||
-            process.env.USE_REMOTE_GRAPHQL === 'true';
+    //     // if in production *or* you explicitly requested remote, use REMOTE
+    //     const forceRemote =
+    //         (process.env.NODE_ENV === 'production' &&
+    //             !(process.env.LOCAL_BUILD === 'true')) ||
+    //         process.env.USE_REMOTE_GRAPHQL === 'true';
 
-        const target = forceRemote ? REMOTE : LOCAL;
+    //     const target = forceRemote ? REMOTE : LOCAL;
 
-        return [
-            {
-                source: '/graphql/:path*',
-                destination: `${target}/graphql/:path*`,
-            },
-        ];
-    },
+    //     return [
+    //         {
+    //             source: '/graphql/:path*',
+    //             destination: `${target}/graphql/:path*`,
+    //         },
+    //     ];
+    // },
 
     experimental: {
         esmExternals: true,
@@ -274,6 +277,29 @@ const nextConfig = {
             },
         });
 
+        // force @react-native/assets-registry through Babel so its `import type` lines get stripped
+        config.module.rules.unshift({
+            test: /\.js$/,
+            include: /node_modules[\\\/]@react-native[\\\/]assets-registry/,
+            use: {
+                loader: 'babel-loader',
+                options: {
+                    presets: [
+                        require.resolve('next/babel'),
+                        require.resolve('@babel/preset-typescript'),
+                    ],
+                    plugins: [
+                        require.resolve(
+                            '@babel/plugin-transform-flow-strip-types'
+                        ),
+                    ],
+                    cacheDirectory: true,
+                    babelrc: false,
+                    configFile: false,
+                },
+            },
+        });
+
         config.module.rules.push({
             test: /\.[jt]sx?$/,
             include: /node_modules[\\\/]@react-native[\\\/]assets-registry/,
@@ -365,6 +391,14 @@ const nextConfig = {
             ...(config.resolve.alias || {}),
             'react-native$': 'react-native-web',
             '@expo/vector-icons': 'react-native-vector-icons',
+            'react-native/Libraries/Image/AssetRegistry': path.resolve(
+                __dirname,
+                'stubs/AssetRegistryStub.js'
+            ),
+            '@react-native/assets-registry/registry': path.resolve(
+                __dirname,
+                'stubs/RegistryStub.js'
+            ),
         };
 
         config.resolve.modules = [

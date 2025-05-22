@@ -3,13 +3,15 @@
 import 'react-native-get-random-values';
 
 import React, { useEffect, useState } from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
+
 import { NavigationContainer } from '@react-navigation/native';
 import {
     createStackNavigator,
     TransitionPresets,
 } from '@react-navigation/stack';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { Platform, StatusBar } from 'react-native';
+import { Platform, StatusBar, View, Text, Button } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { ApolloProvider } from '@apollo/client';
 import { Provider as ReduxProvider } from 'react-redux';
@@ -230,6 +232,7 @@ export default function App() {
         Roboto_700Bold,
         Roboto_700Bold_Italic,
     });
+    const [stack, setStack] = useState<string | undefined>();
 
     useEffect(() => {
         if (fontsLoaded) {
@@ -241,9 +244,40 @@ export default function App() {
 
     if (appIsReady) {
         return (
-            <ThemeProvider>
-                <AppContent />
-            </ThemeProvider>
+            <ErrorBoundary
+                // 1. Log & stash the componentStack when the error fires
+                onError={(error, info) => {
+                    console.log('🚨 Component stack:', info.componentStack);
+                    setStack(info.componentStack ?? undefined);
+                }}
+                // 2. Render a fallback UI—only gets error + reset, not the stack
+                fallbackRender={({ error, resetErrorBoundary }) => (
+                    <View style={{ padding: 16 }}>
+                        <Text style={{ marginBottom: 8 }}>
+                            Error: {error.message}
+                        </Text>
+                        {stack && (
+                            <Text
+                                style={{
+                                    marginVertical: 8,
+                                    fontFamily: 'monospace',
+                                    fontSize: 12,
+                                }}
+                            >
+                                {stack}
+                            </Text>
+                        )}
+                        <Button
+                            title="Try Again"
+                            onPress={resetErrorBoundary}
+                        />
+                    </View>
+                )}
+            >
+                <ThemeProvider>
+                    <AppContent />
+                </ThemeProvider>
+            </ErrorBoundary>
         );
     }
 }

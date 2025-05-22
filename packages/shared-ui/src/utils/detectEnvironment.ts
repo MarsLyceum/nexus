@@ -28,6 +28,7 @@ export function detectEnvironment(): Environment {
     }
 
     // 2. Server-side detection
+    // eslint-disable-next-line unicorn/prefer-global-this
     if (typeof window === 'undefined') {
         if (process.env.NEXT_PHASE || process.env.NEXT_RUNTIME) {
             return 'nextjs-server';
@@ -45,7 +46,7 @@ export function detectEnvironment(): Environment {
             // eslint-disable-next-line no-underscore-dangle
             // @ts-expect-error next variable
             // eslint-disable-next-line no-underscore-dangle, unicorn/no-typeof-undefined
-            typeof window.__next_f !== 'undefined'
+            typeof globalThis.__next_f !== 'undefined'
         ) {
             return 'nextjs-client';
         }

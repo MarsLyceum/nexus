@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 
 import { useTheme, Theme } from '../theme';
-import { AttachmentPreviews } from '../sections';
+import { AttachmentPreviews } from '../sections/AttachmentPreviews';
 import { Attachment } from '../types';
 import { extractUrls } from '../utils';
 import { Cancel, ImageIcon, PaperPlane } from '../icons';
@@ -222,6 +222,7 @@ function createStyles(theme: Theme) {
             color: theme.colors.ActiveText,
             fontSize: 16,
             fontWeight: 'bold',
+            fontFamily: 'Roboto_700Bold',
         },
         sendButton: {
             marginLeft: 10,

@@ -1,9 +1,6 @@
 // NexusImage.tsx
 import React, { useLayoutEffect, useRef, useState, useEffect } from 'react';
 import { StyleSheet } from 'react-native';
-// Next.js Image import – no longer used in Next environments.
-// import NextImage from 'next/image';
-// Expo Image import – used for React Native.
 import {
     Image as ExpoImage,
     ImageContentFit,
@@ -35,7 +32,9 @@ export type NexusImageProps = {
  * A helper hook that measures a container's dimensions using its ref.
  * (For production, consider using a ResizeObserver so that the measurement updates on window/container resize.)
  */
-const useContainerDimensions = (ref: React.RefObject<HTMLDivElement>) => {
+const useContainerDimensions = (
+    ref: React.RefObject<HTMLDivElement | null>
+) => {
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
     useLayoutEffect(() => {
         if (ref.current) {
@@ -101,12 +100,14 @@ export const NexusImage = (props: NexusImageProps) => {
     } = props;
     const env: Environment = detectEnvironment();
 
-    const containerRef = useRef<HTMLDivElement>(null);
+    const containerRef = useRef<HTMLDivElement | null>(null);
     const { width: containerWidth, height: containerHeight } =
         useContainerDimensions(containerRef);
 
     const originalUri = typeof source === 'string' ? source : source.uri;
     const fallbackUri = `https://images.weserv.nl/?url=${encodeURIComponent(originalUri)}`;
+
+    const isGif = /\.gif$/i.test(originalUri);
 
     const [imageUri, setImageUri] = useState(originalUri);
     const [didFallback, setDidFallback] = useState(false);
@@ -123,12 +124,22 @@ export const NexusImage = (props: NexusImageProps) => {
 
     useEffect(() => {
         let stillMounted = true;
+
+        if (isGif) {
+            setDidFallback(false);
+            setImageUri(originalUri);
+            return;
+        }
+
         setDidFallback(false); // reset if originalUri ever changes
         setImageUri(originalUri); // start fresh
 
         void (async () => {
             try {
-                const res = await fetch(originalUri, { method: 'HEAD' });
+                const res = await fetch(originalUri, {
+                    method: 'HEAD',
+                    mode: 'no-cors',
+                });
                 if (stillMounted && !res.ok && !didFallback) {
                     console.warn(
                         `[NexusImage] HEAD ${res.status} for ${originalUri}, falling back…`
@@ -142,16 +153,33 @@ export const NexusImage = (props: NexusImageProps) => {
                         `[NexusImage] HEAD error for ${originalUri}:`,
                         error
                     );
-                    setImageUri(fallbackUri);
-                    setDidFallback(true);
+
+                    try {
+                        const get = await fetch(originalUri, {
+                            method: 'GET',
+                        });
+                        // if GET returns at least partial, we assume the image exists
+                        if (stillMounted && get.ok) return;
+                        console.warn(
+                            `[NexusImage] GET ${get.status} for ${originalUri}, falling back…`
+                        );
+                    } catch (error_) {
+                        console.warn(
+                            `[NexusImage] GET error for ${originalUri}:`,
+                            error_
+                        );
+                        setImageUri(fallbackUri);
+                        setDidFallback(true);
+                    }
                 }
             }
         })();
 
+        // eslint-disable-next-line consistent-return
         return () => {
             stillMounted = false;
         };
-    }, [originalUri, didFallback, fallbackUri]);
+    }, [originalUri, fallbackUri]);
 
     // --- React Native: use Expo Image ---
     if (env === 'react-native-mobile') {

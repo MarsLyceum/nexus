@@ -1,6 +1,7 @@
 const { getDefaultConfig } = require('expo/metro-config');
 const path = require('path');
 const exclusionList = require('metro-config/src/defaults/exclusionList');
+const { createProxyMiddleware } = require('http-proxy-middleware');
 
 const projectRoot = __dirname;
 const workspaceRoot = path.resolve(projectRoot, '../../');
@@ -86,5 +87,40 @@ config.resolver.nodeModulesPaths = [
 config.resolver.resolverMainFields = ['react-native', 'browser', 'main'];
 
 config.resolver.blacklistRE = exclusionList([/apps\/web\/.*/]);
+
+const LOCAL = 'http://localhost:4000';
+const REMOTE = 'https://nexus-web-service-197277044151.us-west1.run.app';
+
+// 2️⃣ Decide when to force remote
+const forceRemote =
+    process.env.NODE_ENV === 'production' ||
+    process.env.USE_REMOTE_GRAPHQL === 'true';
+
+// 3️⃣ Pick the target
+const GRAPHQL_TARGET = forceRemote ? REMOTE : LOCAL;
+
+config.server = {
+    ...config.server,
+    enhanceMiddleware: (metroMiddleware, server) => {
+        // 3️⃣ Create a proxy for /graphql
+        const proxy = createProxyMiddleware({
+            context: ['/graphql'], // which paths to proxy
+            target: GRAPHQL_TARGET, // your LOCAL or REMOTE
+            changeOrigin: true,
+            secure: false,
+            ws: true, // for WebSocket upgrades
+            logLevel: 'debug',
+        });
+
+        return (req, res, next) => {
+            if (req.url.startsWith('/graphql')) {
+                // 4️⃣ Proxy GraphQL requests
+                return proxy(req, res, next);
+            }
+            // 5️⃣ Fall back to Metro’s normal handling
+            return metroMiddleware(req, res, next);
+        };
+    },
+};
 
 module.exports = config;

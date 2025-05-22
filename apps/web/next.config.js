@@ -87,6 +87,8 @@ const TRANSPILED_PACKAGES = [
     // 'styled-components/native',
     'formik',
     'react-virtualized',
+    '@shopify/react-native-skia',
+    '@react-native/assets-registry',
 ];
 
 const withTM = require('next-transpile-modules')([
@@ -275,6 +277,29 @@ const nextConfig = {
             },
         });
 
+        // force @react-native/assets-registry through Babel so its `import type` lines get stripped
+        config.module.rules.unshift({
+            test: /\.js$/,
+            include: /node_modules[\\\/]@react-native[\\\/]assets-registry/,
+            use: {
+                loader: 'babel-loader',
+                options: {
+                    presets: [
+                        require.resolve('next/babel'),
+                        require.resolve('@babel/preset-typescript'),
+                    ],
+                    plugins: [
+                        require.resolve(
+                            '@babel/plugin-transform-flow-strip-types'
+                        ),
+                    ],
+                    cacheDirectory: true,
+                    babelrc: false,
+                    configFile: false,
+                },
+            },
+        });
+
         config.module.rules.push({
             test: /\.[jt]sx?$/,
             include: /node_modules[\\\/]@react-native[\\\/]assets-registry/,
@@ -366,6 +391,14 @@ const nextConfig = {
             ...(config.resolve.alias || {}),
             'react-native$': 'react-native-web',
             '@expo/vector-icons': 'react-native-vector-icons',
+            'react-native/Libraries/Image/AssetRegistry': path.resolve(
+                __dirname,
+                'stubs/AssetRegistryStub.js'
+            ),
+            '@react-native/assets-registry/registry': path.resolve(
+                __dirname,
+                'stubs/RegistryStub.js'
+            ),
         };
 
         config.resolve.modules = [

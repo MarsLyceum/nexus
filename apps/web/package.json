@@ -26,7 +26,7 @@
     "@expo/next-adapter": "^6.0.0",
     "solito": "^4.4.1",
     "react-native-web": "^0.20.0",
-    "next": "15.2.4",
+    "next": "^15.3.2",
     "shared-ui": "workspace:*",
     "file-loader": "^6.2.0",
     "babel-loader": "^10.0.0",

@@ -8,6 +8,7 @@
         "lerna:build": "npx lerna run build"
     },
     "dependencies": {
+        "expo-screen-orientation": "^8.1.6",
         "eslint-import-resolver-typescript": "^4.3.5",
         "@apollo/client": "^3.12.8",
         "@babel/plugin-transform-modules-commonjs": "^7.26.3",

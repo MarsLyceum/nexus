@@ -14,7 +14,7 @@ export function PostPageClient({
     post,
     user,
     parentCommentId,
-}: PostPageProps): JSX.Element {
+}: PostPageProps): React.JSX.Element {
     return (
         <PostScreen
             post={post} // pass the post object directly

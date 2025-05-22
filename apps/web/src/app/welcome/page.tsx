@@ -6,6 +6,6 @@ import '../../../polyfills/expo-polyfills.js';
 import React from 'react';
 import { WelcomeScreen } from 'shared-ui/screens';
 
-export default function Welcome(): JSX.Element {
+export default function Welcome(): React.JSX.Element {
     return <WelcomeScreen />;
 }

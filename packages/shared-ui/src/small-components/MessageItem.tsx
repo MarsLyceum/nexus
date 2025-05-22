@@ -81,7 +81,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     );
     const containerRef = useRef<View>(null);
     const messageDate = getMessageDate(currentMessage);
-    const hideModalTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const hideModalTimeoutRef = useRef<number | null>(null);
     const [showMoreOptions, setShowMoreOptions] = useState(false);
     const [moreButtonAnchor, setMoreButtonAnchor] = useState<
         | {
@@ -146,7 +146,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
             if (!modalHovered) {
                 setOptionsModalVisible(false);
             }
-        }, 300);
+        }, 300) as unknown as number;
     };
 
     // eslint-disable-next-line consistent-return

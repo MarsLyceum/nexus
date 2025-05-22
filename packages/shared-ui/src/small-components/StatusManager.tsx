@@ -14,7 +14,7 @@ export const StatusManager: React.FC<{ children: ReactNode }> = ({
     const user: UserType = useAppSelector(
         (state: RootState) => state.user.user
     );
-    const idleTimeout = useRef<NodeJS.Timeout | null>(null);
+    const idleTimeout = useRef<number | null>(null);
     const currentStatus = useRef<string>('offline');
 
     // This function updates the user status using GraphQL
@@ -68,7 +68,7 @@ export const StatusManager: React.FC<{ children: ReactNode }> = ({
                 void setStatus('idle');
             },
             15 * 60 * 1000 // 15 minutes
-        );
+        ) as unknown as number;
     }, [setStatus]);
 
     useEffect(() => {

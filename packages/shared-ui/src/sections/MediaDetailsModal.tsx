@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, {
+    useState,
+    useEffect,
+    useRef,
+    useMemo,
+    useCallback,
+} from 'react';
 import { StyleSheet, View, Pressable, useWindowDimensions } from 'react-native';
 import Carousel from 'react-native-reanimated-carousel';
 
@@ -42,6 +48,11 @@ export const MediaDetailsModal: React.FC<MediaDetailsModalProps> = ({
     const containerHeight = isComputer ? deviceHeight * 0.8 : deviceHeight;
     const { theme } = useTheme();
     const styles = useMemo(() => createStyles(theme), [theme]);
+    const [showControls, setShowControls] = useState(true);
+
+    const toggleControls = useCallback(() => {
+        setShowControls((showControls_) => !showControls_);
+    }, []);
 
     useEffect(() => {
         if (visible && carouselRef.current) {
@@ -101,12 +112,14 @@ export const MediaDetailsModal: React.FC<MediaDetailsModalProps> = ({
 
     return (
         <Portal visible={visible} onRequestClose={onClose}>
-            <View style={styles.modalOverlay}>
-                <View style={styles.cancelButtonContainer}>
-                    <Pressable onPress={onClose}>
-                        <Cancel color={theme.colors.ActiveText} />
-                    </Pressable>
-                </View>
+            <View style={styles.modalOverlay} onTouchEnd={toggleControls}>
+                {showControls && (
+                    <View style={styles.cancelButtonContainer}>
+                        <Pressable onPress={onClose}>
+                            <Cancel color={theme.colors.ActiveText} />
+                        </Pressable>
+                    </View>
+                )}
                 <View style={styles.centeredContent}>
                     <View
                         style={[

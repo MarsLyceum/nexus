@@ -9,7 +9,7 @@ import {
     isImageExtensionUrl,
     computeMediaSize,
 } from '../../utils';
-import { useMediaTypes, useLinkPreview } from '../../hooks';
+import { useMediaTypes, useLinkPreview, useIsComputer } from '../../hooks';
 import { NexusVideo } from '../NexusVideo';
 import type { MessageWithAvatar, DirectMessageWithAvatar } from '../../types';
 
@@ -38,6 +38,7 @@ export const MessageContent: React.FC<MessageContentProps> = ({
     contentOverride = undefined,
 }) => {
     const mediaInfos = useMediaTypes(message.attachmentUrls || []);
+    const isComputer = useIsComputer();
 
     // Use override content if provided, otherwise use message content
     const effectiveContent = contentOverride ?? message.content;
@@ -138,12 +139,18 @@ export const MessageContent: React.FC<MessageContentProps> = ({
 
                             return (
                                 <TouchableOpacity
-                                    onPress={() =>
-                                        onAttachmentPress(
-                                            message.attachmentUrls ?? [],
-                                            index
-                                        )
-                                    }
+                                    onPress={() => {
+                                        if (
+                                            info &&
+                                            (info.type !== 'video' ||
+                                                !isComputer)
+                                        ) {
+                                            onAttachmentPress(
+                                                message.attachmentUrls ?? [],
+                                                index
+                                            );
+                                        }
+                                    }}
                                     key={index}
                                 >
                                     <View>

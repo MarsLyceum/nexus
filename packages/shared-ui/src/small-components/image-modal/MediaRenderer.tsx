@@ -39,6 +39,7 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
                     paused
                     contentFit="contain"
                     controls
+                    isInDetailsModal
                 />
             </View>
         );

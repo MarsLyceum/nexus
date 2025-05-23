@@ -21,6 +21,7 @@ import { NativeGesture } from 'react-native-gesture-handler';
 import { MediaPlayerControls } from './MediaPlayerControls';
 
 import { Portal } from '../providers';
+import { useIsComputer } from '../hooks';
 
 type VideoProps = React.ComponentProps<typeof Video>;
 type RNVideoResizeMode = VideoProps['resizeMode'];
@@ -35,6 +36,7 @@ export type NexusVideoProps = {
     contentFit?: 'contain' | 'cover' | 'fill';
     controls?: boolean;
     sliderGesture?: NativeGesture;
+    isInDetailsModal?: boolean;
 };
 
 export const NexusVideo: React.FC<NexusVideoProps> = ({
@@ -46,11 +48,13 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
     contentFit = 'cover',
     sliderGesture,
     controls = true,
+    isInDetailsModal = false,
 }) => {
     const isWeb = Platform.OS === 'web';
     const webRef = useRef<HTMLVideoElement>(null);
     const wrapperRef = useRef<HTMLElement>(null);
     const insets = useSafeAreaInsets();
+    const isComputer = useIsComputer();
 
     // internal playback state
     const [isFullscreen, setIsFullscreen] = useState(false);
@@ -64,6 +68,10 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
     const hideControlsTimeout = useRef<ReturnType<typeof setTimeout> | null>(
         null
     );
+
+    const toggleControls = useCallback(() => {
+        setShowControls((showControls_) => !showControls_);
+    }, []);
 
     const resetControlsTimer = useCallback(() => {
         setShowControls(true);
@@ -229,7 +237,14 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
                     if (isFullscreen && playing) resetControlsTimer();
                 }}
                 onClick={() => {
-                    if (isFullscreen && playing) resetControlsTimer();
+                    if (isFullscreen && playing) {
+                        resetControlsTimer();
+                    }
+                    if (isComputer) {
+                        togglePlay();
+                    } else {
+                        toggleControls();
+                    }
                 }}
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 ref={wrapperRef as any}
@@ -316,7 +331,13 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
                         },
                     ]}
                     onStartShouldSetResponder={() => true}
-                    onResponderGrant={resetControlsTimer}
+                    onResponderGrant={() => {
+                        if (isFullscreen && playing) {
+                            resetControlsTimer();
+                        }
+
+                        toggleControls();
+                    }}
                 >
                     <Video
                         ref={nativeVideoRef}
@@ -371,7 +392,14 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
     }
 
     return (
-        <View style={[style as StyleProp<ViewStyle>, { position: 'relative' }]}>
+        <View
+            style={[style as StyleProp<ViewStyle>, { position: 'relative' }]}
+            onTouchEnd={() => {
+                if (isInDetailsModal) {
+                    toggleControls();
+                }
+            }}
+        >
             <View
                 style={[
                     style as StyleProp<ViewStyle>,
@@ -399,7 +427,7 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
                 />
             </View>
 
-            {controls && (
+            {showControls && controls && (
                 <View
                     style={[
                         StyleSheet.absoluteFill,

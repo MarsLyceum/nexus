@@ -130,6 +130,13 @@ export const MediaPlayerControls = forwardRef<
                     style={styles.container}
                     ref={ref}
                     onLayout={viewProps.onLayout}
+                    // claim the touch
+                    onStartShouldSetResponder={() => true}
+                    onResponderTerminationRequest={() => false}
+                    // …and stop it from bubbling up
+                    onTouchEnd={(e) => {
+                        e.stopPropagation();
+                    }}
                 >
                     <TouchableOpacity onPress={onTogglePlay}>
                         {playing ? <Pause /> : <Play />}

@@ -127,7 +127,6 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
                                             },
                                         ]}
                                         muted={false}
-                                        repeat
                                         paused
                                         contentFit="cover"
                                     />

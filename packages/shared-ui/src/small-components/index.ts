@@ -49,3 +49,4 @@ export * from './SkeletonPostItem';
 export * from './StatusManager';
 export * from './Tooltip';
 export * from './GifPlayer';
+export * from './ReplayButtonOverlay';

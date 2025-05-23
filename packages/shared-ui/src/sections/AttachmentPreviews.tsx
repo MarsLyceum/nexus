@@ -117,7 +117,6 @@ export const AttachmentPreviews: React.FC<AttachmentPreviewsProps> = ({
                                 source={{ uri: item.previewUri }}
                                 style={styles.attachmentImage}
                                 muted
-                                repeat
                                 contentFit="cover"
                                 paused
                                 controls={false}
@@ -208,7 +207,6 @@ const SortableItem: React.FC<SortableItemProps> = ({
                         source={{ uri: attachment.previewUri }}
                         style={styles.attachmentImage}
                         muted
-                        repeat
                         contentFit="cover"
                         paused
                         controls={false}

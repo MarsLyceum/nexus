@@ -39,3 +39,4 @@ export * from './Pause';
 export * from './Volume';
 export * from './VolumeMuted';
 export * from './FullScreen';
+export * from './Replay';

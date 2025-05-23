@@ -18,10 +18,11 @@ import Video, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeGesture } from 'react-native-gesture-handler';
 
-import { MediaPlayerControls } from './MediaPlayerControls';
-
 import { Portal } from '../providers';
 import { useIsComputer } from '../hooks';
+
+import { MediaPlayerControls } from './MediaPlayerControls';
+import { ReplayButtonOverlay } from './ReplayButtonOverlay';
 
 type VideoProps = React.ComponentProps<typeof Video>;
 type RNVideoResizeMode = VideoProps['resizeMode'];
@@ -43,7 +44,7 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
     source,
     style,
     muted = true,
-    repeat = true,
+    repeat = false,
     paused = true,
     contentFit = 'cover',
     sliderGesture,
@@ -68,6 +69,7 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
     const hideControlsTimeout = useRef<ReturnType<typeof setTimeout> | null>(
         null
     );
+    const [ended, setEnded] = useState(false);
 
     const toggleControls = useCallback(() => {
         setShowControls((showControls_) => !showControls_);
@@ -102,6 +104,7 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
 
     // Handlers for MediaPlayerControls
     const togglePlay = useCallback(() => {
+        setEnded(false);
         setPlaying((p) => !p);
     }, []);
 
@@ -144,6 +147,18 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
         }
     }, [isWeb, isFullscreen]);
 
+    const handleReplay = useCallback(() => {
+        // seek back to zero and resume
+        if (isWeb) {
+            webRef.current!.currentTime = 0;
+        } else {
+            nativeVideoRef.current!.seek(0);
+        }
+        setPosition(0);
+        setEnded(false);
+        setPlaying(true);
+    }, [isWeb]);
+
     useEffect(() => {
         if (!isWeb) return;
         const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
@@ -168,17 +183,33 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
         [playing, isWeb]
     );
 
-    // Sync props → <video> attributes
+    // Whenever the source (or repeat/paused) changes, re-load without touching ended
     useEffect(() => {
-        if (isWeb) {
-            const v = webRef.current!;
-            v.src = source.uri;
-            v.loop = repeat;
-            setPlaying(!paused);
-            if (paused) v.pause();
-            else void v.play();
+        if (!isWeb) {
+            return;
         }
-    }, [source.uri, repeat, paused, isWeb]);
+        const v = webRef.current!;
+        v.src = source.uri;
+        setPlaying(!paused);
+        if (paused) {
+            v.pause();
+        } else {
+            void v.play();
+        }
+    }, [source.uri, paused, isWeb]);
+
+    useEffect(() => {
+        if (!isWeb) {
+            return;
+        }
+        const v = webRef.current!;
+        v.loop = repeat;
+    }, [isWeb, repeat]);
+
+    // Reset ended only when the video source itself changes
+    useEffect(() => {
+        setEnded(false);
+    }, [source.uri]);
 
     useEffect(() => {
         if (!isWeb) return;
@@ -198,18 +229,22 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
             const v = webRef.current!;
             const onTimeUpdate = () => setPosition(v.currentTime * 1000);
             const onLoadedMeta = () => setTotalDuration(v.duration * 1000);
+
+            const onEnded = () => {
+                setPlaying(false);
+                setEnded(true);
+            };
+
             v.addEventListener('timeupdate', onTimeUpdate);
             v.addEventListener('loadedmetadata', onLoadedMeta);
-            v.addEventListener('ended', () => {
-                setPlaying(false);
-                if (!repeat) v.pause();
-            });
+            v.addEventListener('ended', onEnded);
             return () => {
                 v.removeEventListener('timeupdate', onTimeUpdate);
                 v.removeEventListener('loadedmetadata', onLoadedMeta);
+                v.removeEventListener('ended', onEnded);
             };
         }
-    }, [repeat, isWeb]);
+    }, [isWeb]);
 
     useEffect(() => {
         if (isWeb) {
@@ -272,6 +307,7 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
                     }}
                     controls={false}
                 />
+                {ended && <ReplayButtonOverlay onReplay={handleReplay} />}
                 {showControls && controls && (
                     <View
                         style={{
@@ -317,6 +353,7 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
     };
     const onEnd = () => {
         setPlaying(false);
+        setEnded(true);
     };
 
     if (isFullscreen && !isWeb) {
@@ -345,7 +382,7 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
                         style={StyleSheet.absoluteFill}
                         volume={volume}
                         muted={volumeMuted}
-                        repeat={repeat}
+                        repeat={repeat && !ended}
                         paused={!playing}
                         resizeMode={
                             contentFit === 'fill' ? 'stretch' : contentFit
@@ -356,8 +393,9 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
                         onProgress={({ currentTime }) =>
                             setPosition(currentTime * 1000)
                         }
-                        onEnd={() => setPlaying(false)}
+                        onEnd={onEnd}
                     />
+                    {ended && <ReplayButtonOverlay onReplay={handleReplay} />}
                     {showControls ? (
                         <View
                             style={[
@@ -425,6 +463,7 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
                     onEnd={onEnd}
                     ref={nativeVideoRef}
                 />
+                {ended && <ReplayButtonOverlay onReplay={handleReplay} />}
             </View>
 
             {showControls && controls && (

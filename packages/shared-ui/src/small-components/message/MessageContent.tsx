@@ -176,7 +176,6 @@ export const MessageContent: React.FC<MessageContentProps> = ({
                                                                 },
                                                             ]}
                                                             muted={false}
-                                                            repeat
                                                             paused
                                                             contentFit="cover"
                                                             controls
@@ -197,7 +196,6 @@ export const MessageContent: React.FC<MessageContentProps> = ({
                                                         },
                                                     ]}
                                                     muted={false}
-                                                    repeat
                                                     paused
                                                     controls
                                                     contentFit="cover"

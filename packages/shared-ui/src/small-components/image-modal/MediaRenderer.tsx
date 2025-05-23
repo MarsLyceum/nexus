@@ -35,7 +35,6 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
                     source={{ uri: item }}
                     style={{ width: '100%', height: '100%' }}
                     muted={false}
-                    repeat
                     paused
                     contentFit="contain"
                     controls

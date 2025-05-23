@@ -31,7 +31,7 @@ import {
 } from '../icons';
 import { FETCH_USER_GROUPS_QUERY } from '../queries';
 import { SIDEBAR_WIDTH } from '../constants';
-import { detectEnvironment, Environment, getItem, setItem } from '../utils';
+import { getItem, setItem } from '../utils';
 import { useTheme, Theme } from '../theme';
 
 // Enhanced helper function to merge groups from cache and fetched data.

@@ -35,37 +35,39 @@ export function useGifFrames(uri: string): UseGifFramesResult {
             return;
         }
 
-        fetch(uri)
-            .then((res) => res.arrayBuffer())
-            .then((buffer) => {
-                if (cancelled) return;
-                const gif = parseGIF(buffer);
-                const parsed = decompressFrames(gif, true);
-                const out: GifFrame[] = [];
-                let sum = 0;
-                for (const f of parsed) {
-                    const { delay } = f;
-                    const { width, height } = f.dims;
+        setTimeout(() => {
+            fetch(uri)
+                .then((res) => res.arrayBuffer())
+                .then((buffer) => {
+                    if (cancelled) return;
+                    const gif = parseGIF(buffer);
+                    const parsed = decompressFrames(gif, true);
+                    const out: GifFrame[] = [];
+                    let sum = 0;
+                    for (const f of parsed) {
+                        const { delay } = f;
+                        const { width, height } = f.dims;
 
-                    const imageData = {
-                        data: f.patch,
-                        width,
-                        height,
-                    } as ImageData;
+                        const imageData = {
+                            data: f.patch,
+                            width,
+                            height,
+                        } as ImageData;
 
-                    out.push({ imageData, delay });
-                    sum += delay;
-                }
-                // eslint-disable-next-line promise/always-return
-                if (!cancelled) {
-                    gifCache.set(uri, { frames: out, totalDuration: sum });
-                    setFrames(out);
-                    setTotalDuration(sum);
-                }
-            })
-            .catch((error_) => {
-                if (!cancelled) setError(error_);
-            });
+                        out.push({ imageData, delay });
+                        sum += delay;
+                    }
+                    // eslint-disable-next-line promise/always-return
+                    if (!cancelled) {
+                        gifCache.set(uri, { frames: out, totalDuration: sum });
+                        setFrames(out);
+                        setTotalDuration(sum);
+                    }
+                })
+                .catch((error_) => {
+                    if (!cancelled) setError(error_);
+                });
+        }, 0);
         // eslint-disable-next-line consistent-return
         return () => {
             cancelled = true;

@@ -4,9 +4,6 @@ import { Platform, View } from 'react-native';
 import {
     Canvas as SkiaCanvas,
     Image as SkiaImage,
-    Skia,
-    AlphaType,
-    ColorType,
     useClock,
 } from '@shopify/react-native-skia';
 
@@ -48,29 +45,9 @@ export const GifPlayer: React.FC<GifPlayerProps> = ({
     // eslint-disable-next-line consistent-return
     const skiaImages = useMemo(() => {
         if (Platform.OS !== 'web') {
-            return frames.map((frame) => {
-                const {
-                    data,
-                    width: w,
-                    height: h,
-                } = frame.imageData as {
-                    data: Uint8ClampedArray;
-                    width: number;
-                    height: number;
-                };
-                const skData = Skia.Data.fromBytes(new Uint8Array(data.buffer));
-                return Skia.Image.MakeImage(
-                    {
-                        width: w,
-                        height: h,
-                        alphaType: AlphaType.Premul,
-                        colorType: ColorType.RGBA_8888,
-                    },
-                    skData,
-                    w * 4
-                );
-            });
+            return frames.map((f) => f.skImage!);
         }
+        return []; // no SkiaImages on web
     }, [frames]);
 
     useEffect(() => {
@@ -87,16 +64,6 @@ export const GifPlayer: React.FC<GifPlayerProps> = ({
             ? clock.value % totalDuration
             : Math.min(Math.max(positionSV.value, 0), totalDuration);
     }, [totalDuration]);
-
-    // find current frame index by accumulating delays
-    const getFrameIndex = useCallback(() => {
-        let acc = 0;
-        for (const [i, frame] of frames.entries()) {
-            acc += frame.delay;
-            if (position < acc) return i;
-        }
-        return frames.length - 1;
-    }, [frames, position]);
 
     const frameIndex = useDerivedValue(() => {
         'worklet';

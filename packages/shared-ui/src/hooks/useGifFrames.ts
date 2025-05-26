@@ -1,10 +1,21 @@
 // useGifFrames.ts
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import { Platform } from 'react-native';
 import { parseGIF, decompressFrames } from 'gifuct-js';
+
+import {
+    Skia,
+    AlphaType,
+    ColorType,
+    ClipOp,
+    SkImage,
+} from '@shopify/react-native-skia';
+import { runOnUI, runOnJS } from 'react-native-reanimated';
 
 export type GifFrame = {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    imageData: ImageData;
+    imageData?: ImageData;
+    skImage?: SkImage;
     delay: number; // in ms
 };
 
@@ -22,6 +33,15 @@ export function useGifFrames(uri: string): UseGifFramesResult {
     const [totalDuration, setTotalDuration] = useState(0);
     const [error, setError] = useState<Error>();
 
+    const updateValues = useCallback(
+        (key: string, frames_: GifFrame[], tot: number) => {
+            gifCache.set(key, { frames: frames_, totalDuration: tot });
+            setFrames(frames_);
+            setTotalDuration(tot);
+        },
+        []
+    );
+
     useEffect(() => {
         let cancelled = false;
 
@@ -36,91 +56,155 @@ export function useGifFrames(uri: string): UseGifFramesResult {
         setTimeout(() => {
             fetch(uri)
                 .then((res) => res.arrayBuffer())
-                .then((buffer) => {
+                .then(async (buffer) => {
                     if (cancelled) return;
 
                     const gif = parseGIF(buffer);
-                    alert('gif:' + gif);
+
+                    // pull screen dims & global background color
                     const {
                         width: W,
                         height: H,
                         backgroundColorIndex: bgIdx,
                     } = gif.lsd;
-                    alert('bgIdx:' + bgIdx);
                     const [bgR, bgG, bgB] = gif.gct[bgIdx];
 
-                    // 2) Decode into RGBA “patches”
+                    // decode patches
                     const parsed = decompressFrames(
                         gif,
                         /* buildPatch= */ true
                     );
-                    alert('parsed:' + parsed);
 
-                    // 3) Create a running full‐canvas RGBA buffer
-                    const full = new Uint8ClampedArray(W * H * 4);
-                    for (let i = 0; i < full.length; i += 4) {
-                        full[i] = bgR;
-                        full[i + 1] = bgG;
-                        full[i + 2] = bgB;
-                        full[i + 3] = 255;
-                    }
-                    alert('created the full canvas buffer');
-
-                    // 4) Composite each frame with correct disposal + alpha blending
+                    // container for results
                     const out: GifFrame[] = [];
                     let sum = 0;
 
-                    for (const f of parsed) {
-                        const { dims, disposalType, patch, delay } = f;
+                    if (Platform.OS === 'web') {
+                        // —–– WEB PATH: OffscreenCanvas compositing + getImageData
+                        const off =
+                            typeof OffscreenCanvas !== 'undefined'
+                                ? new OffscreenCanvas(W, H)
+                                : document.createElement('canvas');
+                        off.width = W;
+                        off.height = H;
+                        const ctx = off.getContext('2d')!;
 
-                        // disposal=2 → restore that rectangle back to the background color
-                        if (disposalType === 2) {
-                            for (let y = 0; y < dims.height; y++) {
-                                const rowBase =
-                                    ((dims.top + y) * W + dims.left) * 4;
-                                for (let x = 0; x < dims.width; x++) {
-                                    const idx = rowBase + x * 4;
-                                    full[idx] = bgR;
-                                    full[idx + 1] = bgG;
-                                    full[idx + 2] = bgB;
-                                    full[idx + 3] = 255;
+                        // fill BG once
+                        ctx.fillStyle = `rgb(${bgR},${bgG},${bgB})`;
+                        ctx.fillRect(0, 0, W, H);
+
+                        for (const f of parsed) {
+                            const { dims, disposalType, patch, delay } = f;
+
+                            if (disposalType === 2) {
+                                // restore that rect to BG
+                                ctx.fillStyle = `rgb(${bgR},${bgG},${bgB})`;
+                                ctx.fillRect(
+                                    dims.left,
+                                    dims.top,
+                                    dims.width,
+                                    dims.height
+                                );
+                            }
+
+                            // draw this patch with alpha-blending
+                            const imgData = new ImageData(
+                                new Uint8ClampedArray(patch.buffer),
+                                dims.width,
+                                dims.height
+                            );
+                            // eslint-disable-next-line no-await-in-loop
+                            const bitmap = await createImageBitmap(imgData);
+                            ctx.drawImage(bitmap, dims.left, dims.top);
+
+                            // snapshot full frame
+                            const full = ctx.getImageData(0, 0, W, H);
+                            out.push({ imageData: full, delay });
+                            sum += delay;
+                        }
+                    } else {
+                        runOnUI(
+                            (
+                                parsedFrames: {
+                                    dims: {
+                                        left: number;
+                                        top: number;
+                                        width: number;
+                                        height: number;
+                                    };
+                                    disposalType: number;
+                                    patch: Uint8ClampedArray;
+                                    delay: number;
+                                }[],
+                                w: number,
+                                h: number,
+                                bgColor: string
+                            ) => {
+                                'worklet';
+
+                                const surf = Skia.Surface.MakeOffscreen(w, h)!;
+                                const c = surf.getCanvas();
+                                c.drawColor(Skia.Color(bgColor));
+
+                                const outNative: GifFrame[] = [];
+                                for (const f of parsedFrames) {
+                                    const { dims, disposalType, patch, delay } =
+                                        f;
+
+                                    if (disposalType === 2) {
+                                        c.save();
+                                        c.clipRect(
+                                            Skia.XYWHRect(
+                                                dims.left,
+                                                dims.top,
+                                                dims.width,
+                                                dims.height
+                                            ),
+                                            ClipOp.Intersect,
+                                            false
+                                        );
+                                        c.drawColor(Skia.Color(bgColor));
+                                        c.restore();
+                                    }
+
+                                    // reinterpret the Uint8ClampedArray as a Uint8Array view
+                                    const bytes = new Uint8Array(
+                                        patch.buffer,
+                                        patch.byteOffset,
+                                        patch.byteLength
+                                    );
+                                    const skData = Skia.Data.fromBytes(bytes);
+                                    const img = Skia.Image.MakeImage(
+                                        {
+                                            width: dims.width,
+                                            height: dims.height,
+                                            alphaType: AlphaType.Unpremul,
+                                            colorType: ColorType.RGBA_8888,
+                                        },
+                                        skData,
+                                        dims.width * 4
+                                    )!;
+                                    c.drawImage(img, dims.left, dims.top);
+
+                                    surf.flush();
+                                    const snap = surf.makeImageSnapshot();
+                                    outNative.push({ skImage: snap, delay });
+                                    sum += delay;
                                 }
+
+                                runOnJS(updateValues)(uri, outNative, sum);
                             }
-                        }
-
-                        // Alpha‐blend this patch onto the full buffer
-                        for (let y = 0; y < dims.height; y++) {
-                            for (let x = 0; x < dims.width; x++) {
-                                const srcBase = (y * dims.width + x) * 4;
-                                const dstBase =
-                                    ((dims.top + y) * W + (dims.left + x)) * 4;
-
-                                const rS = patch[srcBase];
-                                const gS = patch[srcBase + 1];
-                                const bS = patch[srcBase + 2];
-                                const aS = patch[srcBase + 3] / 255;
-
-                                full[dstBase] =
-                                    rS * aS + full[dstBase] * (1 - aS);
-                                full[dstBase + 1] =
-                                    gS * aS + full[dstBase + 1] * (1 - aS);
-                                full[dstBase + 2] =
-                                    bS * aS + full[dstBase + 2] * (1 - aS);
-                                full[dstBase + 3] = 255;
-                            }
-                        }
-                        alert('alpha blended this patch');
-
-                        // 5) Snapshot this frame into a fresh ImageData
-                        const snapshot = new Uint8ClampedArray(full);
-                        alert('snapshot:' + snapshot);
-                        const imageData = new ImageData(snapshot, W, H);
-                        alert('imageData' + imageData);
-                        out.push({
-                            imageData,
-                            delay,
-                        });
-                        sum += delay;
+                        )(
+                            parsed.map((f) => ({
+                                dims: f.dims,
+                                disposalType: f.disposalType,
+                                patch: f.patch,
+                                delay: f.delay,
+                            })),
+                            W,
+                            H,
+                            `rgb(${bgR},${bgG},${bgB})`
+                        );
                     }
 
                     // eslint-disable-next-line promise/always-return
@@ -131,6 +215,7 @@ export function useGifFrames(uri: string): UseGifFramesResult {
                     }
                 })
                 .catch((error_) => {
+                    alert('error:' + error_);
                     if (!cancelled) setError(error_);
                 });
         }, 0);

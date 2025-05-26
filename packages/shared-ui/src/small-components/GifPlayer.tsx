@@ -84,7 +84,7 @@ export const GifPlayer: React.FC<GifPlayerProps> = ({
         [frameIndex, skiaImages]
     );
 
-    const drawFrame = useCallback(() => {
+    const drawFrame = useCallback(async () => {
         if (Platform.OS === 'web') {
             if (!canvasRefWeb.current || frames.length === 0) return;
             const ctx = canvasRefWeb.current.getContext('2d')!;
@@ -98,8 +98,12 @@ export const GifPlayer: React.FC<GifPlayerProps> = ({
             canvasRefWeb.current.height = height;
             ctx.clearRect(0, 0, width, height);
 
-            // paint the full frame
-            ctx.putImageData(imageData, 0, 0);
+            if (imageData) {
+                const bmp = await createImageBitmap(imageData);
+
+                // draw it scaled to fill the entire canvas area
+                ctx.drawImage(bmp, 0, 0, width, height);
+            }
         }
     }, [frames, frameIndex, width, height]);
 

@@ -117,39 +117,24 @@ export const GifPlayer: React.FC<GifPlayerProps> = ({
         [frameIndex, skiaImages]
     );
 
-    // draw the frame
-    const draw = useCallback(
-        async (ctx: DOMCanvasCtx) => {
-            const idx = getFrameIndex();
-            const frame = frames[idx];
-            const targetW = width;
-            const targetH = height;
+    const drawFrame = useCallback(() => {
+        if (Platform.OS === 'web') {
+            if (!canvasRefWeb.current || frames.length === 0) return;
+            const ctx = canvasRefWeb.current.getContext('2d')!;
 
-            // 1) Clear previous frame
+            // pick the right frame
+            const i = frameIndex.value;
+            const { imageData } = frames[i];
+
+            // resize and clear
+            canvasRefWeb.current.width = width;
+            canvasRefWeb.current.height = height;
             ctx.clearRect(0, 0, width, height);
 
-            // 2) Draw new one
-            let imgData: ImageData;
-            // eslint-disable-next-line unicorn/prefer-ternary
-            if (frame.imageData instanceof ImageData) {
-                imgData = frame.imageData;
-            } else {
-                // frame.imageData.data: Uint8ClampedArray, plus width/height props
-                imgData = new ImageData(
-                    frame.imageData.data,
-                    frame.imageData.width,
-                    frame.imageData.height
-                );
-            }
-            if (Platform.OS === 'web') {
-                const bitmap = await createImageBitmap(imgData);
-
-                ctx.clearRect(0, 0, targetW, targetH);
-                ctx.drawImage(bitmap, 0, 0, targetW, targetH);
-            }
-        },
-        [frames, getFrameIndex, width, height]
-    );
+            // paint the full frame
+            ctx.putImageData(imageData, 0, 0);
+        }
+    }, [frames, frameIndex, width, height]);
 
     useEffect(() => {
         const canvas = Platform.OS === 'web' ? canvasRefWeb.current : undefined;
@@ -165,18 +150,11 @@ export const GifPlayer: React.FC<GifPlayerProps> = ({
 
     // whenever position or frames change, redraw
     useEffect(() => {
-        const canvas = Platform.OS === 'web' ? canvasRefWeb.current : undefined;
-        if (!canvas || frames.length === 0) return;
-
         if (Platform.OS === 'web') {
-            // HTML canvas path
-            const html = canvas;
-            const ctx = html.getContext('2d');
-            if (ctx) {
-                void draw(ctx);
-            }
+            if (!canvasRefWeb.current || frames.length === 0) return;
+            requestAnimationFrame(drawFrame);
         }
-    }, [position, frames, draw]);
+    }, [position, frames, drawFrame]);
 
     return (
         <View>

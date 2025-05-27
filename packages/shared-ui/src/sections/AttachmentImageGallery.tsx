@@ -33,7 +33,7 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
         containerWidth > 0 ? containerWidth : windowWidth || 300;
     const [clientWidth, setClientWidth] = useState<number>(initialWidth);
     const [currentAttachmentIndex, setCurrentAttachmentIndex] = useState(0);
-    const [imageAspectRatio, setImageAspectRatio] = useState(1); // Default to square
+    const [imageAspectRatio, setImageAspectRatio] = useState(1.777_777_8); // Default to 16:9
 
     const scrollViewRef = useRef<ScrollView>(null);
     const isComputer = useIsComputer();

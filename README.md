@@ -1,12 +1,12 @@
-# Peeps
+# Nexus
 
-An app that provides a way to meet new friends, do group activities, and connect with people you already know.
+Cross‑platform social networking app for organic, interest‑based communities with groups, text channels, feeds, and events.
 
-## Setup
+## Overview
 
-To get things working you need to set the `serverIp` variable in `App.tsx`
-to your computer's ip address. Furthermore, this must be on the same
-WiFi network as your phone.
+Nexus takes inspiration from Discord and Reddit the idea is to blend Discord style groups with Reddit style groups to
+allow for more dynamic groups than either Discord or Reddit allows on its own. Where you can make your group posts like
+on Reddit or Facebook Groups but then jump into a text channel to have a quick chat about something with someone.
 
 ## Reddit References
 
@@ -34,7 +34,3 @@ https://www.reddit.com/r/modguide/comments/lx1p8m/how_to_remove_a_moderator_or_e
     -   CocoaPods
 
 ## See [PROVISIONING](doc/PROVISIONING.md) for detailed setup instructions.
-
-### Future development
-
-See [ROADMAP.md](ROADMAP.md)

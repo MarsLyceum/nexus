@@ -10,7 +10,7 @@ import {
 import { NexusImage } from '../small-components/NexusImage';
 import { ImageCountOverlay } from '../small-components/ImageCountOverlay';
 import { NexusVideo } from '../small-components/NexusVideo';
-import { useMediaTypes } from '../hooks';
+import { useMediaTypes, useIsComputer } from '../hooks';
 import { computeMediaSize } from '../utils';
 
 import { CarouselDots } from './CarouselDots';
@@ -36,7 +36,7 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
     const [imageAspectRatio, setImageAspectRatio] = useState(1); // Default to square
 
     const scrollViewRef = useRef<ScrollView>(null);
-    const isDesktop = clientWidth > 768;
+    const isComputer = useIsComputer();
 
     // Compute dimensions based on clientWidth.
     const computedSize = computeMediaSize(imageAspectRatio, clientWidth);
@@ -152,7 +152,7 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
                     total={attachmentUrls.length}
                 />
 
-                {isDesktop && attachmentUrls.length > 1 && (
+                {isComputer && attachmentUrls.length > 1 && (
                     <>
                         <ArrowButton
                             direction="left"

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Platform, Dimensions } from 'react-native';
-import { isComputer } from '../utils';
+import { isComputer as isComputerUtil } from '../utils';
 
 /**
  * React hook that returns the latest `isComputer()` value,
@@ -8,12 +8,11 @@ import { isComputer } from '../utils';
  */
 export const useIsComputer = (): boolean => {
     // seed state with the current util value
-    const [computer, setComputer] = useState(() => isComputer());
+    const [isComputer, setIsComputer] = useState(() => isComputerUtil());
 
     useEffect(() => {
-        // handler reads directly from your existing util
         const update = () => {
-            setComputer(isComputer());
+            setIsComputer(isComputerUtil());
         };
 
         if (Platform.OS === 'web') {
@@ -27,5 +26,5 @@ export const useIsComputer = (): boolean => {
         return () => sub.remove();
     }, []);
 
-    return computer;
+    return isComputer;
 };

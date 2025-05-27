@@ -13,8 +13,6 @@ import { useGifFrames } from '../hooks';
 
 import { NexusImage } from './NexusImage';
 
-type DOMCanvasCtx = CanvasRenderingContext2D;
-
 export type GifPlayerProps = {
     source: string;
     width: number;
@@ -130,24 +128,31 @@ export const GifPlayer: React.FC<GifPlayerProps> = ({
     return (
         <View>
             <View style={{ width, height }}>
-                {Platform.OS === 'web' ? (
-                    <canvas
-                        ref={canvasRefWeb}
-                        width={width}
-                        height={height}
-                        style={{ width: '100%', height: '100%' }}
-                    />
-                ) : skiaImages && frames.length > 0 ? (
-                    <SkiaCanvas style={{ width, height }} opaque={false}>
-                        <SkiaImage
-                            image={currentImage}
-                            x={0}
-                            y={0}
+                {frames.length > 0 ? (
+                    Platform.OS === 'web' ? (
+                        <canvas
+                            ref={canvasRefWeb}
                             width={width}
                             height={height}
-                            fit="fill"
+                            style={{ width: '100%', height: '100%' }}
                         />
-                    </SkiaCanvas>
+                    ) : (
+                        skiaImages && (
+                            <SkiaCanvas
+                                style={{ width, height }}
+                                opaque={false}
+                            >
+                                <SkiaImage
+                                    image={currentImage}
+                                    x={0}
+                                    y={0}
+                                    width={width}
+                                    height={height}
+                                    fit="fill"
+                                />
+                            </SkiaCanvas>
+                        )
+                    )
                 ) : (
                     <NexusImage
                         source={source}

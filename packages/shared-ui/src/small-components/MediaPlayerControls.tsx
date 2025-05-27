@@ -363,9 +363,8 @@ function createStyles(
         container: {
             flexDirection: 'row',
             alignItems: 'flex-end',
-            // width: isLandscape && Platform.OS !== 'web' ? '100%' : '100%',
             alignSelf: 'stretch',
-            overflow: 'hidden',
+            overflow: 'visible',
             height: 20,
             paddingLeft: 10,
             paddingRight: 10,

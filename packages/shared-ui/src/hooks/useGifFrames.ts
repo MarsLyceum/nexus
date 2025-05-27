@@ -90,7 +90,9 @@ export function useGifFrames(uri: string): UseGifFramesResult {
                         const ctx = off.getContext('2d')!;
 
                         // fill BG once
-                        ctx.fillStyle = `rgb(${bgR},${bgG},${bgB})`;
+                        if (ctx.fillStyle) {
+                            ctx.fillStyle = `rgb(${bgR},${bgG},${bgB})`;
+                        }
                         ctx.fillRect(0, 0, W, H);
 
                         for (const f of parsed) {
@@ -142,7 +144,10 @@ export function useGifFrames(uri: string): UseGifFramesResult {
                             ) => {
                                 'worklet';
 
-                                const surf = Skia.Surface.MakeOffscreen(w, h)!;
+                                const surf = Skia.Surface.MakeOffscreen(w, h);
+                                if (!surf) {
+                                    return;
+                                }
                                 const c = surf.getCanvas();
                                 c.drawColor(Skia.Color(bgColor));
 
@@ -215,7 +220,6 @@ export function useGifFrames(uri: string): UseGifFramesResult {
                     }
                 })
                 .catch((error_) => {
-                    alert('error:' + error_);
                     if (!cancelled) setError(error_);
                 });
         }, 0);
@@ -223,7 +227,7 @@ export function useGifFrames(uri: string): UseGifFramesResult {
         return () => {
             cancelled = true;
         };
-    }, [uri]);
+    }, [uri, updateValues]);
 
     return { frames, totalDuration, error };
 }

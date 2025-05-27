@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Platform, Dimensions } from 'react-native';
-import { isComputer as isComputerUtil } from '../utils';
+import { isComputer as isComputerUtil, getSafeWindow } from '../utils';
 
 /**
  * React hook that returns the latest `isComputer()` value,
@@ -14,11 +14,12 @@ export const useIsComputer = (): boolean => {
         const update = () => {
             setIsComputer(isComputerUtil());
         };
+        const safeWindow = getSafeWindow();
 
-        if (Platform.OS === 'web') {
+        if (Platform.OS === 'web' && safeWindow) {
             // on web, listen to window resize
-            window.addEventListener('resize', update);
-            return () => window.removeEventListener('resize', update);
+            safeWindow.addEventListener('resize', update);
+            return () => safeWindow.removeEventListener('resize', update);
         }
 
         // on native, listen to dimension/orientation changes

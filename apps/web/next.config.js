@@ -1,5 +1,3 @@
-const { withExpo } = require('@expo/next-adapter');
-
 const path = require('path');
 const webpack = require('webpack');
 // const DirectoryNamedWebpackPlugin = require('directory-named-webpack-plugin');
@@ -7,10 +5,11 @@ const webpack = require('webpack');
 const ReplaceUseLayoutEffectPlugin = require('./plugins/ReplaceUseLayoutEffectPlugin');
 const ReportParseErrorPlugin = require('./plugins/ReportParseErrorPlugin');
 
+const { withExpo } = require('./expo-next-adapter.cjs');
+
 const TRANSPILED_PACKAGES = [
     // Expo & related modules
     '@expo-google-fonts',
-    '@expo/vector-icons',
     // '@react-native/assets-registry',
     'expo',
     // 'expo-asset',
@@ -129,10 +128,10 @@ const nextConfig = {
     //         },
     //     ];
     // },
-
     experimental: {
         esmExternals: true,
         forceSwcTransforms: true,
+        serverSourceMaps: true,
     },
     eslint: {
         ignoreDuringBuilds: true,
@@ -180,12 +179,32 @@ const nextConfig = {
     // Rerun the script to regenerate this list from NPM
     // Keep transpilePackages if you need (next-transpile-modules should handle these)
     transpilePackages: TRANSPILED_PACKAGES,
+    productionBrowserSourceMaps: true,
 
     webpack: (
         config,
 
-        { isServer }
+        { isServer, dev }
     ) => {
+        // if (!dev && isServer) {
+        //     config.devtool = 'inline-source-map';
+        // }
+
+        // if (isServer) {
+        //     // disable the built-in devtool so our plugin takes over
+        //     config.devtool = false;
+
+        //     // use the source‐map plugin rather than devtool, so nothing gets clobbered
+        //     config.plugins.push(
+        //         new webpack.SourceMapDevToolPlugin({
+        //             filename: '[file].map',
+        //             test: /\.(js|cjs|mjs)$/, // match all server chunk types
+        //         })
+        //     );
+        // }
+
+        config.devtool = 'eval-source-map';
+
         const transpilePackagesRegex = new RegExp(
             `[/\\\\]node_modules[/\\\\](${TRANSPILED_PACKAGES?.map((p) => p.replace(/\//g, '[/\\\\]')).join('|')})[/\\\\]`
         );
@@ -390,7 +409,6 @@ const nextConfig = {
         config.resolve.alias = {
             ...(config.resolve.alias || {}),
             'react-native$': 'react-native-web',
-            '@expo/vector-icons': 'react-native-vector-icons',
             'react-native/Libraries/Image/AssetRegistry': path.resolve(
                 __dirname,
                 'stubs/AssetRegistryStub.js'

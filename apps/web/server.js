@@ -1,4 +1,5 @@
 // server.js
+require('source-map-support/register');
 const express = require('express');
 const next = require('next');
 const os = require('os');

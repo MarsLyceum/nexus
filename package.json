@@ -8,6 +8,7 @@
         "lerna:build": "npx lerna run build"
     },
     "dependencies": {
+        "react-native-extra-dimensions-android": "^1.2.5",
         "expo-screen-orientation": "^8.1.6",
         "eslint-import-resolver-typescript": "^4.3.5",
         "@apollo/client": "^3.12.8",
@@ -21,7 +22,6 @@
         "@expo-google-fonts/roboto": "^0.2.3",
         "@expo/metro-config": "^0.20.14",
         "@expo/metro-runtime": "^5.0.4",
-        "@expo/vector-icons": "^14.0.4",
         "@gorhom/bottom-sheet": "^5.1.2",
         "@next/eslint-plugin-next": "^15.2.4",
         "@react-native-async-storage/async-storage": "^2.1.2",
@@ -153,7 +153,8 @@
         "url": "^0.11.4",
         "util": "^0.12.5",
         "uuid": "^11.1.0",
-        "validator": "^13.12.0"
+        "validator": "^13.12.0",
+        "@babel/preset-env": "^7.27.2"
     },
     "devDependencies": {
         "@babel/core": "^7.26.7",

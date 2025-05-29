@@ -6,6 +6,7 @@
     "debug": "node server.js",
     "dev": "next dev",
     "build": "cross-env NODE_ENV=production next build",
+    "build-prod": "cross-env NODE_ENV=production next build",
     "build-dev": "cross-env LOCAL_BUILD=true NODE_ENV=production next build",
     "deploy": "python deploy.py",
     "start": "next start",
@@ -14,6 +15,7 @@
     "run-docker-container": "docker run -it --rm -p 8080:8080 gcr.io/hephaestus-418809/next-server:latest"
   },
   "dependencies": {
+    "source-map-support": "^0.5.21",
     "eslint": "^8.57.1",
     "expo-font": "^13.3.1",
     "expo-modules-core": "^2.3.12",
@@ -23,7 +25,6 @@
     "react-native": "^0.79.2",
     "react": "19.0.0",
     "react-dom": "19.0.0",
-    "@expo/next-adapter": "^6.0.0",
     "solito": "^4.4.1",
     "react-native-web": "^0.20.0",
     "next": "^15.3.2",

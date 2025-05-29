@@ -56,6 +56,7 @@ WORKDIR /app
 COPY --from=builder /app/apps/web/.next ./.next
 COPY --from=builder /app/apps/web/public ./public
 COPY --from=builder /app/apps/web/next.config.js ./
+COPY --from=builder /app/apps/web/expo-next-adapter.cjs ./
 COPY --from=builder /app/apps/web/plugins ./plugins
 COPY --from=builder /app/apps/web/stubs    ./stubs
 COPY --from=builder /app/apps/web/polyfills ./polyfills
@@ -75,10 +76,12 @@ USER nonroot
 # Expose port and set environment
 EXPOSE 8080
 ENV PORT=8080
+ENV NODE_OPTIONS="--enable-source-maps"
 
 # Optional healthcheck
 HEALTHCHECK --interval=30s --timeout=5s \
     CMD ["wget","--quiet","--tries=1","--spider","http://localhost:8080/_next/static/health"] || exit 1
 
 # Start the Next.js server
-CMD ["node_modules/next/dist/bin/next", "start", "-p", "8080"]
+# the script is run with node on distroless
+CMD ["--enable-source-maps", "./node_modules/next/dist/bin/next", "start", "-p", "8080"]

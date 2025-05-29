@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 
+import { ChevronLeft, ChevronRight } from '../icons';
 import { useTheme, Theme } from '../theme';
 
 type ArrowButtonProps = {
@@ -32,11 +32,17 @@ export const ArrowButton: React.FC<ArrowButtonProps> = ({
             disabled={disabled}
             style={[styles.arrowButton, style]}
         >
-            <MaterialCommunityIcons
-                name={direction === 'left' ? 'chevron-left' : 'chevron-right'}
-                size={iconSize}
-                color={disabled ? inactiveColor : activeColor}
-            />
+            {direction === 'left' ? (
+                <ChevronLeft
+                    color={disabled ? inactiveColor : activeColor}
+                    size={iconSize}
+                />
+            ) : (
+                <ChevronRight
+                    color={disabled ? inactiveColor : activeColor}
+                    size={iconSize}
+                />
+            )}
         </TouchableOpacity>
     );
 };

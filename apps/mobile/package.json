@@ -53,7 +53,6 @@
         "@expo-google-fonts/roboto": "^0.2.3",
         "@expo/metro-config": "^0.20.14",
         "@expo/metro-runtime": "^5.0.4",
-        "@expo/vector-icons": "^14.0.4",
         "@react-native-async-storage/async-storage": "^2.1.2",
         "@react-native-google-signin/google-signin": "^10.1.2",
         "@react-native-picker/picker": "^2.11.0",

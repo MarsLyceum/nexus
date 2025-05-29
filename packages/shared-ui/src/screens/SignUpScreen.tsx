@@ -12,7 +12,6 @@ import {
 import React, { useCallback, useMemo } from 'react';
 import { Formik } from 'formik';
 import { isEmail } from 'validator';
-import { FontAwesome } from '@expo/vector-icons';
 import { useApolloClient } from '@apollo/client';
 
 import {
@@ -404,11 +403,11 @@ export function SignUpScreen(): React.JSX.Element {
 
                             <View style={styles.socialContainer}>
                                 <Pressable style={styles.socialButton}>
-                                    <FontAwesome
+                                    {/* <FontAwesome
                                         name="facebook"
                                         size={24}
                                         color="#4267B2"
-                                    />
+                                    /> */}
                                 </Pressable>
                                 <Pressable style={styles.socialButton}>
                                     <GoogleLogo />

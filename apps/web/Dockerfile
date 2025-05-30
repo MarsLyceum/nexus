@@ -56,6 +56,7 @@ WORKDIR /app
 COPY --from=builder /app/apps/web/.next ./.next
 COPY --from=builder /app/apps/web/public ./public
 COPY --from=builder /app/apps/web/next.config.js ./
+COPY --from=builder /app/apps/web/error-mapper.js ./
 COPY --from=builder /app/apps/web/expo-next-adapter.cjs ./
 COPY --from=builder /app/apps/web/plugins ./plugins
 COPY --from=builder /app/apps/web/stubs    ./stubs

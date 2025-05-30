@@ -73,3 +73,28 @@
   "url": "build phase",
   "method": "N/A"
 }
+{
+  "message": "Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id",
+  "rawStack": "Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id\n    at setupFsCheck (C:\\Users\\david\\src\\nexus\\node_modules\\.pnpm\\next@15.3.2_@babel+core@7.2_779ed0850b03e649bfcf2a817b1ecc4b\\node_modules\\next\\dist\\server\\lib\\router-utils\\filesystem.js:148:41)\n    at async initialize (C:\\Users\\david\\src\\nexus\\node_modules\\.pnpm\\next@15.3.2_@babel+core@7.2_779ed0850b03e649bfcf2a817b1ecc4b\\node_modules\\next\\dist\\server\\lib\\router-server.js:110:23)\n    at async NextCustomServer.prepare (C:\\Users\\david\\src\\nexus\\node_modules\\.pnpm\\next@15.3.2_@babel+core@7.2_779ed0850b03e649bfcf2a817b1ecc4b\\node_modules\\next\\dist\\server\\next.js:276:28)",
+  "parsedStack": [],
+  "phase": "Runtime (Page Rendering)",
+  "envInfo": {
+    "os": "win32 10.0.26100",
+    "nodeVersion": "v22.14.0",
+    "workingDirectory": "C:\\Users\\david\\src\\nexus\\apps\\web"
+  },
+  "processInfo": {
+    "commandLine": "C:\\Program Files\\nodejs\\node.exe C:\\Users\\david\\src\\nexus\\apps\\web\\server.js --stacktrace",
+    "NODE_OPTIONS": "Not set",
+    "DEBUG": "Not set"
+  },
+  "configInfo": {
+    "tsconfig.json": "{\n    \"extends\": \"../../tsconfig.json\",\n    \"compilerOptions\": {\n        \"sourceMap\": true,\n        \"outDir\": \"build\",\n        \"baseUrl\": \".\",\n        \"paths\": {\n            \"@/*\": [\"./src/*\"],\n            \"shared-ui/*\": [\"../../packages/shared-ui/src/*\"]\n        },\n        \"incremental\": true,\n    ...",
+    "babel.config.js": "// babel.config.js\n\nconst dotenv = require('dotenv');\n\ndotenv.config({ path: '.env' });\ndotenv.config({ path: '../../.env.local' });\n\nmodule.exports = function (api) {\n    // Detect web usage (for Next.js)\n    const isWeb = api.caller(\n        (caller) =>\n            caller &&\n            (caller.na...",
+    ".babelrc": "Not found or unreadable",
+    "package.json": "{\n  \"name\": \"nexus-web\",\n  \"version\": \"0.1.0\",\n  \"private\": true,\n  \"scripts\": {\n    \"debug\": \"node server.js --debug --stacktrace\",\n    \"dev\": \"next dev\",\n    \"build\": \"cross-env NODE_ENV=production next build\",\n    \"build-prod\": \"cross-env NODE_ENV=production next build\",\n    \"build-dev\": \"cross-e..."
+  },
+  "moduleFiles": [],
+  "url": "build phase",
+  "method": "N/A"
+}

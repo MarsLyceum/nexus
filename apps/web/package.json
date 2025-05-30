@@ -3,13 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "debug": "node server.js",
+    "debug": "node server.js --debug --stacktrace",
     "dev": "next dev",
     "build": "cross-env NODE_ENV=production next build",
     "build-prod": "cross-env NODE_ENV=production next build",
     "build-dev": "cross-env LOCAL_BUILD=true NODE_ENV=production next build",
     "deploy": "python deploy.py",
-    "start": "next start",
+    "start": "node server.js --stacktrace",
+    "start-original": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "run-docker-container": "docker run -it --rm -p 8080:8080 gcr.io/hephaestus-418809/next-server:latest"

@@ -1,28 +1,47 @@
 // server.js
-require('source-map-support/register');
+
+// detect flags
+const isDebug = process.argv.includes('--debug');
+const isStacktrace = process.argv.includes('--stacktrace');
+
+// only load error-mapping and source maps when explicitly asked
+if (isStacktrace) {
+    require('./error-mapper');
+    require('source-map-support').install();
+}
+
+// make NODE_ENV match the chosen mode
+process.env.NODE_ENV = isDebug ? 'development' : 'production';
+
 const express = require('express');
 const next = require('next');
 const os = require('os');
 const fs = require('fs');
 const path = require('path');
-const process = require('process');
+const processModule = process;
 
-const dev = process.env.NODE_ENV !== 'production';
+// dev=true builds on the fly; dev=false serves from .next
+const dev = isDebug;
 const app = next({ dev });
 const handle = app.getRequestHandler();
 
-// Global error handlers for uncaught exceptions and unhandled rejections.
-process.on('uncaughtException', (err) => {
+// startup banner
+console.log(
+    `Starting server in ${dev ? 'DEBUG' : 'PRODUCTION'} mode` +
+        (isStacktrace ? ' with STACKTRACE support' : '')
+);
+
+// catch any uncaught exceptions/rejections
+processModule.on('uncaughtException', (err) => {
     console.error('Uncaught Exception:', err);
-    process.exit(1);
+    processModule.exit(1);
 });
-
-process.on('unhandledRejection', (reason, promise) => {
+processModule.on('unhandledRejection', (reason) => {
     console.error('Unhandled Rejection:', reason);
-    process.exit(1);
+    processModule.exit(1);
 });
 
-// Helper: Parse a single stack trace line.
+// parse a single "at ..." stack line
 function parseStackLine(line) {
     const regex =
         /at\s+(?:(?<func>[\w\.$<>]+)\s+\()?(?<file>[^():]+):(?<line>\d+):(?<column>\d+)\)?/;
@@ -38,34 +57,34 @@ function parseStackLine(line) {
     return null;
 }
 
-// Helper: Parse full stack trace into structured data.
+// turn an Error.stack into structured entries
 function parseFullStackTrace(stack) {
     if (!stack) return [];
-    const lines = stack
+    return stack
         .split('\n')
-        .filter((line) => line.trim().startsWith('at '));
-    return lines.map(parseStackLine).filter((x) => x !== null);
+        .filter((l) => l.trim().startsWith('at '))
+        .map(parseStackLine)
+        .filter((x) => x !== null);
 }
 
-// Gather environment information.
+// gather some runtime info
 function getEnvironmentInfo() {
     return {
         os: os.platform() + ' ' + os.release(),
-        nodeVersion: process.version,
-        workingDirectory: process.cwd(),
+        nodeVersion: processModule.version,
+        workingDirectory: processModule.cwd(),
     };
 }
 
-// Gather process information.
 function getProcessInfo() {
     return {
-        commandLine: process.argv.join(' '),
-        NODE_OPTIONS: process.env.NODE_OPTIONS || 'Not set',
-        DEBUG: process.env.DEBUG || 'Not set',
+        commandLine: processModule.argv.join(' '),
+        NODE_OPTIONS: processModule.env.NODE_OPTIONS || 'Not set',
+        DEBUG: processModule.env.DEBUG || 'Not set',
     };
 }
 
-// Gather key configuration files (example: package.json).
+// read up to 300 chars of key config files
 function getConfigFilesInfo() {
     const configFiles = [
         'tsconfig.json',
@@ -73,37 +92,36 @@ function getConfigFilesInfo() {
         '.babelrc',
         'package.json',
     ];
-    const configInfo = {};
-    configFiles.forEach((filename) => {
+    const info = {};
+    configFiles.forEach((f) => {
         try {
-            const filePath = path.join(process.cwd(), filename);
-            const content = fs.readFileSync(filePath, 'utf8');
-            configInfo[filename] =
-                content.length > 300
-                    ? content.substring(0, 300) + '...'
-                    : content;
-        } catch (e) {
-            configInfo[filename] = 'Not found or unreadable';
+            const content = fs.readFileSync(
+                path.join(processModule.cwd(), f),
+                'utf8'
+            );
+            info[f] =
+                content.length > 300 ? content.slice(0, 300) + '...' : content;
+        } catch {
+            info[f] = 'Not found or unreadable';
         }
     });
-    return configInfo;
+    return info;
 }
 
-// Search for module files matching a keyword.
+// find files matching a keyword
 function getModuleFilesInfo(keyword) {
     const glob = require('glob');
     return glob.sync(`**/*${keyword}*`, { nodir: true });
 }
 
-// Infer build or runtime phase based on the request URL.
+// decide if we’re in build/asset phase or page render
 function inferPhase(reqUrl) {
-    if (reqUrl.includes('/_next/')) {
-        return 'Next.js Internal (Static Assets/Compilation)';
-    }
-    return 'Runtime (Page Rendering)';
+    return reqUrl.includes('/_next/')
+        ? 'Next.js Internal (Static Assets/Compilation)'
+        : 'Runtime (Page Rendering)';
 }
 
-// Gather detailed error info.
+// assemble the full detailed error object
 function getDetailedErrorInfo(err, req) {
     const envInfo = getEnvironmentInfo();
     const processInfo = getProcessInfo();
@@ -113,10 +131,7 @@ function getDetailedErrorInfo(err, req) {
     let moduleFiles = [];
     if (err.message) {
         const match = err.message.match(/page:\s*['"]\/([\w\-]+)['"]/);
-        if (match) {
-            const keyword = match[1];
-            moduleFiles = getModuleFilesInfo(keyword);
-        }
+        if (match) moduleFiles = getModuleFilesInfo(match[1]);
     }
     return {
         message: err.message,
@@ -132,58 +147,61 @@ function getDetailedErrorInfo(err, req) {
     };
 }
 
-// Wrap app.prepare() to catch build-time errors.
+// prepare the Next app
 app.prepare()
     .catch((err) => {
         console.error('Error during Next.js prepare:', err);
-        const detailedError = getDetailedErrorInfo(err, {
-            url: 'build phase',
-            method: 'N/A',
-        });
-        const logPath = path.join(process.cwd(), 'detailed-errors.log');
-        fs.appendFileSync(
-            logPath,
-            JSON.stringify(detailedError, null, 2) + '\n'
-        );
-        console.error(
-            'Detailed Build Error Report:\n',
-            JSON.stringify(detailedError, null, 2)
-        );
-        process.exit(1);
+        if (isStacktrace) {
+            const detailed = getDetailedErrorInfo(err, {
+                url: 'build phase',
+                method: 'N/A',
+            });
+            fs.appendFileSync(
+                path.join(processModule.cwd(), 'detailed-errors.log'),
+                JSON.stringify(detailed, null, 2) + '\n'
+            );
+            console.error(
+                'Detailed Build Error Report:\n',
+                JSON.stringify(detailed, null, 2)
+            );
+        }
+        processModule.exit(1);
     })
     .then(() => {
         const server = express();
 
-        // Main request handler.
-        server.all('*', (req, res, nextMiddleware) => {
-            handle(req, res).catch(nextMiddleware);
-        });
-
-        // Error-handling middleware.
-        server.use((err, req, res, nextMiddleware) => {
-            const detailedError = getDetailedErrorInfo(err, req);
-            const logPath = path.join(process.cwd(), 'detailed-errors.log');
-            fs.appendFileSync(
-                logPath,
-                JSON.stringify(detailedError, null, 2) + '\n'
-            );
-            console.error(
-                'Detailed Error Report:\n',
-                JSON.stringify(detailedError, null, 2)
-            );
-            res.status(err.status || 500).send(`
-      <div style="padding: 20px; font-family: sans-serif;">
-        <h1>Error: ${err.status || 500}</h1>
-        <p><strong>Message:</strong> ${err.message}</p>
-        <p><strong>URL:</strong> ${req.url}</p>
-        <p><strong>Phase:</strong> ${detailedError.phase}</p>
-        <h2>Detailed Error Report:</h2>
-        <pre style="background: #fdd; padding: 10px; white-space: pre-wrap;">
-${JSON.stringify(detailedError, null, 2)}
-        </pre>
-      </div>
-    `);
-        });
+        if (isStacktrace) {
+            // catch errors and run our custom reporter
+            server.all('*', (req, res, next) => {
+                handle(req, res).catch(next);
+            });
+            server.use((err, req, res) => {
+                const detailed = getDetailedErrorInfo(err, req);
+                fs.appendFileSync(
+                    path.join(processModule.cwd(), 'detailed-errors.log'),
+                    JSON.stringify(detailed, null, 2) + '\n'
+                );
+                console.error(
+                    'Detailed Error Report:\n',
+                    JSON.stringify(detailed, null, 2)
+                );
+                res.status(err.status || 500).send(`
+          <div style="padding:20px;font-family:sans-serif;">
+            <h1>Error: ${err.status || 500}</h1>
+            <p><strong>Message:</strong> ${err.message}</p>
+            <p><strong>URL:</strong> ${req.url}</p>
+            <p><strong>Phase:</strong> ${detailed.phase}</p>
+            <h2>Detailed Error Report:</h2>
+            <pre style="background:#fdd;padding:10px;white-space:pre-wrap;">
+${JSON.stringify(detailed, null, 2)}
+            </pre>
+          </div>
+        `);
+            });
+        } else {
+            // vanilla next start behavior
+            server.all('*', (req, res) => handle(req, res));
+        }
 
         server.listen(3000, (err) => {
             if (err) throw err;

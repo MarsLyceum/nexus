@@ -211,8 +211,8 @@ const nextConfig = {
 
         if (isServer) {
             // ensure devtool generates maps
-            // config.devtool = 'source-map';
-            config.devtool = false;
+            config.devtool = 'source-map';
+            // config.devtool = false;
 
             // config.module.rules.unshift({
             //     test: /\.[jt]sx?$/,

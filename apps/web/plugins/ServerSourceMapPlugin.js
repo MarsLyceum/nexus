@@ -6,7 +6,6 @@ const { SourceMapGenerator, SourceMapConsumer } = require('source-map');
 module.exports = class ServerSourceMapPlugin {
     constructor(options = {}) {
         this.options = options;
-
         // track which maps & JS files we've already emitted/updated
         this.emittedMaps = new Set();
         this.updatedJs = new Set();
@@ -87,6 +86,7 @@ module.exports = class ServerSourceMapPlugin {
                                     if (map) {
                                         const consumer =
                                             await new SourceMapConsumer(map);
+
                                         consumer.eachMapping((m) => {
                                             mapGen.addMapping({
                                                 generated: {
@@ -103,6 +103,7 @@ module.exports = class ServerSourceMapPlugin {
                                                 name: m.name,
                                             });
                                         });
+
                                         for (const src of consumer.sources) {
                                             const content =
                                                 consumer.sourceContentFor(
@@ -116,7 +117,14 @@ module.exports = class ServerSourceMapPlugin {
                                                 );
                                             }
                                         }
-                                        consumer.destroy();
+
+                                        // ← only destroy if available
+                                        if (
+                                            typeof consumer.destroy ===
+                                            'function'
+                                        ) {
+                                            consumer.destroy();
+                                        }
                                     }
 
                                     lineOffset += srcText.split('\n').length;
@@ -138,10 +146,6 @@ module.exports = class ServerSourceMapPlugin {
                                         )
                                     );
                                     this.updatedJs.add(file);
-                                } else {
-                                    console.log(
-                                        `[ServerSourceMapPlugin] skipping duplicate JS update for ${file}`
-                                    );
                                 }
 
                                 // 2d) **Emit** the .map only once
@@ -151,10 +155,6 @@ module.exports = class ServerSourceMapPlugin {
                                         new RawSource(mapJson)
                                     );
                                     this.emittedMaps.add(mapName);
-                                } else {
-                                    console.log(
-                                        `[ServerSourceMapPlugin] skipping duplicate map emit for ${mapName}`
-                                    );
                                 }
 
                                 // 2e) Also write both to disk (once each)
@@ -162,31 +162,27 @@ module.exports = class ServerSourceMapPlugin {
                                     [file, compilation.assets[file].source()],
                                     [mapName, mapJson],
                                 ]) {
-                                    if (
+                                    const shouldWrite =
                                         (fname.endsWith('.js') &&
                                             this.updatedJs.has(fname)) ||
                                         (fname.endsWith('.map') &&
-                                            this.emittedMaps.has(fname))
-                                    ) {
-                                        const full = path.join(outDir, fname);
-                                        try {
-                                            fs.mkdirSync(path.dirname(full), {
-                                                recursive: true,
-                                            });
-                                            fs.writeFileSync(
-                                                full,
-                                                content,
-                                                'utf8'
-                                            );
-                                            console.log(
-                                                `[ServerSourceMapPlugin] wrote ${full}`
-                                            );
-                                        } catch (err) {
-                                            console.warn(
-                                                `[ServerSourceMapPlugin] failed to write ${full}:`,
-                                                err
-                                            );
-                                        }
+                                            this.emittedMaps.has(fname));
+
+                                    if (!shouldWrite) continue;
+                                    const full = path.join(outDir, fname);
+                                    try {
+                                        fs.mkdirSync(path.dirname(full), {
+                                            recursive: true,
+                                        });
+                                        fs.writeFileSync(full, content, 'utf8');
+                                        console.log(
+                                            `[ServerSourceMapPlugin] wrote ${full}`
+                                        );
+                                    } catch (err) {
+                                        console.warn(
+                                            `[ServerSourceMapPlugin] failed to write ${full}:`,
+                                            err
+                                        );
                                     }
                                 }
                             }

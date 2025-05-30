@@ -1,6 +1,10 @@
 import { StatusBar, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import ExtraDimensions from 'react-native-extra-dimensions-android';
+
+let ExtraDimensions: { get: (arg0: string) => any };
+if (Platform.OS !== 'web') {
+    ExtraDimensions = require('react-native-extra-dimensions-android');
+}
 
 export type SystemBarHeights = {
     statusBarHeight: number;

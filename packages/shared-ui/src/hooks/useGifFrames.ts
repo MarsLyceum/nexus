@@ -3,19 +3,64 @@ import { useEffect, useState, useCallback } from 'react';
 import { Platform } from 'react-native';
 import { parseGIF, decompressFrames } from 'gifuct-js';
 
-import {
-    Skia,
-    AlphaType,
-    ColorType,
-    ClipOp,
-    SkImage,
-} from '@shopify/react-native-skia';
+// import {
+//     Skia,
+//     AlphaType,
+//     ColorType,
+//     ClipOp,
+//     SkImage,
+// } from '@shopify/react-native-skia';
 import { runOnUI, runOnJS } from 'react-native-reanimated';
+
+let Skia: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    Surface: { MakeOffscreen: (arg0: number, arg1: number) => any };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    Color: (arg0: string) => any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    XYWHRect: (arg0: number, arg1: number, arg2: number, arg3: number) => any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    Data: { fromBytes: (arg0: Uint8Array<ArrayBufferLike>) => any };
+    Image: {
+        MakeImage: (
+            arg0: {
+                width: number;
+                height: number;
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                alphaType: any;
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                colorType: any;
+            },
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            arg1: any,
+            arg2: number
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ) => any;
+    };
+};
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let AlphaType: { Unpremul: any };
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let ColorType: { RGBA_8888: any };
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let ClipOp: { Intersect: any };
+
+if (Platform.OS !== 'web') {
+    // eslint-disable-next-line global-require, unicorn/prefer-module, @typescript-eslint/no-var-requires
+    const RNSkia = require('@shopify/react-native-skia');
+
+    Skia = RNSkia.Skia;
+    AlphaType = RNSkia.AlphaType;
+    ColorType = RNSkia.ColorType;
+    ClipOp = RNSkia.ClipOp;
+}
 
 export type GifFrame = {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     imageData?: ImageData;
-    skImage?: SkImage;
+    // skImage?: SkImage;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    skImage?: any;
     delay: number; // in ms
 };
 

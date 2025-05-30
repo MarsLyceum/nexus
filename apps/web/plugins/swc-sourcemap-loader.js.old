@@ -1,0 +1,75 @@
+// plugins/swc-sourcemap-loader.js
+const { transformSync } = require('@swc/core');
+const path = require('path');
+
+module.exports = function swcSourcemapLoader(source, inputSourceMap) {
+    const callback = this.async();
+    const filename = this.resourcePath;
+    // rootContext is the project root (so we can emit maps into matching sub-paths)
+    const rootContext = this.rootContext || process.cwd();
+
+    // skip everything in node_modules or non-ts/js files
+    if (filename.includes('node_modules') || !/\.[jt]sx?$/.test(filename)) {
+        return callback(null, source, inputSourceMap);
+    }
+
+    const relPath = path.relative(rootContext, filename).replace(/\\/g, '/');
+    console.log(`[swc-sourcemap-loader] Compiling ${relPath}`);
+
+    let result;
+    try {
+        result = transformSync(source, {
+            filename,
+            sourceMaps: true,
+            inlineSourcesContent: true,
+            jsc: {
+                parser: {
+                    syntax: 'typescript',
+                    tsx: filename.endsWith('.tsx'),
+                    decorators: true,
+                },
+                target: 'es2020',
+            },
+            module: { type: 'commonjs' },
+        });
+    } catch (err) {
+        console.error(
+            `[swc-sourcemap-loader] SWC transform error in ${relPath}:`,
+            err
+        );
+        return callback(err);
+    }
+
+    // parse SWC's JSON-string map into an object
+    let mapObject = null;
+    if (result.map) {
+        try {
+            mapObject =
+                typeof result.map === 'string'
+                    ? JSON.parse(result.map)
+                    : result.map;
+        } catch (e) {
+            console.error(
+                `[swc-sourcemap-loader] Failed to parse sourcemap for ${relPath}:`,
+                e
+            );
+        }
+    }
+
+    if (mapObject) {
+        // emit into a matching nested path instead of basename only
+        // e.g. "src/app/login/page.tsx" → "src/app/login/page.js.map"
+        const mapFilename = relPath.replace(/\.[jt]sx?$/, '.js.map');
+        this.emitFile(mapFilename, JSON.stringify(mapObject));
+        console.log(
+            `[swc-sourcemap-loader] Emitted map asset → ${mapFilename}`
+        );
+    } else {
+        console.warn(
+            `[swc-sourcemap-loader] No sourcemap to emit for ${relPath}`
+        );
+    }
+
+    // hand both code and the parsed map back to Webpack
+    callback(null, result.code, mapObject);
+};

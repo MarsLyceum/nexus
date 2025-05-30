@@ -4,6 +4,7 @@ const webpack = require('webpack');
 
 const ReplaceUseLayoutEffectPlugin = require('./plugins/ReplaceUseLayoutEffectPlugin');
 const ReportParseErrorPlugin = require('./plugins/ReportParseErrorPlugin');
+const ServerSourceMapPlugin = require('./plugins/ServerSourceMapPlugin');
 
 const { withExpo } = require('./expo-next-adapter.cjs');
 
@@ -88,6 +89,11 @@ const TRANSPILED_PACKAGES = [
     'react-virtualized',
     '@shopify/react-native-skia',
     '@react-native/assets-registry',
+    'gifuct-js',
+    '@react-native-community/slider',
+    'react-native-extra-dimensions-android',
+    'expo-screen-orientation',
+    'react-native-video',
 ];
 
 const withTM = require('next-transpile-modules')([
@@ -203,7 +209,43 @@ const nextConfig = {
         //     );
         // }
 
-        config.devtool = 'eval-source-map';
+        if (isServer) {
+            // ensure devtool generates maps
+            // config.devtool = 'source-map';
+            config.devtool = false;
+
+            // config.module.rules.unshift({
+            //     test: /\.[jt]sx?$/,
+            //     enforce: 'pre',
+            //     use: [
+            //         {
+            //             loader: path.resolve(
+            //                 __dirname,
+            //                 'plugins/swc-sourcemap-loader.js'
+            //             ),
+            //         },
+            //     ],
+            // });
+
+            config.module.rules.push({
+                test: /\.[jt]sx?$/,
+                enforce: 'post', // <<— important
+                exclude: /node_modules/,
+                use: require.resolve('./plugins/swc-sourcemap-loader.js'),
+            });
+
+            config.output = {
+                ...config.output,
+                sourceMapFilename: '[name].js.map',
+            };
+
+            // plug in our generator
+            config.plugins.push(
+                new ServerSourceMapPlugin({ filename: '[name].js.map' })
+            );
+        }
+
+        // config.devtool = 'eval-source-map';
 
         const transpilePackagesRegex = new RegExp(
             `[/\\\\]node_modules[/\\\\](${TRANSPILED_PACKAGES?.map((p) => p.replace(/\//g, '[/\\\\]')).join('|')})[/\\\\]`

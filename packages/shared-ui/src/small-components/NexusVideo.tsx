@@ -8,13 +8,6 @@ import {
     StyleSheet,
     StatusBar,
 } from 'react-native';
-import * as ScreenOrientation from 'expo-screen-orientation';
-import Video, {
-    OnLoadData,
-    OnProgressData,
-    VideoRef,
-    ViewType,
-} from 'react-native-video';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeGesture } from 'react-native-gesture-handler';
 
@@ -24,8 +17,23 @@ import { useIsComputer } from '../hooks';
 import { MediaPlayerControls } from './MediaPlayerControls';
 import { ReplayButtonOverlay } from './ReplayButtonOverlay';
 
+let Video: any;
+let ViewType: { TEXTURE: any };
+if (Platform.OS !== 'web') {
+    Video = require('react-native-video');
+    ViewType = Video.ViewType;
+}
+
 type VideoProps = React.ComponentProps<typeof Video>;
 type RNVideoResizeMode = VideoProps['resizeMode'];
+
+let ScreenOrientation: {
+    lockAsync: (arg0: any) => any;
+    OrientationLock: { LANDSCAPE_RIGHT: any; DEFAULT: any };
+};
+if (Platform.OS !== 'web') {
+    ScreenOrientation = require('expo-screen-orientation');
+}
 
 export type NexusVideoProps = {
     source: { uri: string };
@@ -64,7 +72,7 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
     const [volume, setVolume] = useState(1);
     const [position, setPosition] = useState(0); // ms
     const [totalDuration, setTotalDuration] = useState(0); // ms
-    const nativeVideoRef = useRef<VideoRef>(null);
+    const nativeVideoRef = useRef<any>(null);
     const [showControls, setShowControls] = useState(true);
     const hideControlsTimeout = useRef<ReturnType<typeof setTimeout> | null>(
         null
@@ -345,10 +353,10 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
     const resizeMode: RNVideoResizeMode =
         contentFit === 'fill' ? 'stretch' : (contentFit as RNVideoResizeMode);
 
-    const onLoad = (data: OnLoadData) => {
+    const onLoad = (data: any) => {
         setTotalDuration(data.duration * 1000);
     };
-    const onProgress = (data: OnProgressData) => {
+    const onProgress = (data: any) => {
         setPosition(data.currentTime * 1000);
     };
     const onEnd = () => {
@@ -387,12 +395,14 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
                         resizeMode={
                             contentFit === 'fill' ? 'stretch' : contentFit
                         }
-                        onLoad={({ duration }) =>
+                        onLoad={({ duration }: { duration: number }) =>
                             setTotalDuration(duration * 1000)
                         }
-                        onProgress={({ currentTime }) =>
-                            setPosition(currentTime * 1000)
-                        }
+                        onProgress={({
+                            currentTime,
+                        }: {
+                            currentTime: number;
+                        }) => setPosition(currentTime * 1000)}
                         onEnd={onEnd}
                     />
                     {ended && <ReplayButtonOverlay onReplay={handleReplay} />}

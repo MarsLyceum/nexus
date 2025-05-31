@@ -4,6 +4,7 @@
 # At some point I'd like to come back to this one and get it working but not
 # right now.
 # TODO: fix the cause of this error in the Dockerfile
+# This commit originally caused the issue: https://github.com/MarsLyceum/nexus/commit/194ffde394f20082490a0a8c8ae6ea9f1fe71cb3#diff-179bbaeea9e8295a4abee862073776f87f7dc3c78066c787b8fcdb8be71d5d83
 
 # syntax=docker/dockerfile:1
 ARG NODE_VERSION=22-alpine

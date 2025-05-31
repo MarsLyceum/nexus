@@ -56,6 +56,7 @@ WORKDIR /app
 COPY --from=builder /app/apps/web/.next ./.next
 COPY --from=builder /app/apps/web/public ./public
 COPY --from=builder /app/apps/web/next.config.js ./
+COPY --from=builder /app/apps/web/server.js ./
 COPY --from=builder /app/apps/web/error-mapper.js ./
 COPY --from=builder /app/apps/web/expo-next-adapter.cjs ./
 COPY --from=builder /app/apps/web/plugins ./plugins
@@ -85,4 +86,4 @@ HEALTHCHECK --interval=30s --timeout=5s \
 
 # Start the Next.js server
 # the script is run with node on distroless
-CMD ["--enable-source-maps", "./node_modules/next/dist/bin/next", "start", "-p", "8080"]
+CMD ["--enable-source-maps", "server.js", "-p", "8080", "--stacktrace"]

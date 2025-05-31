@@ -138,6 +138,7 @@ const nextConfig = {
         esmExternals: true,
         forceSwcTransforms: true,
         serverSourceMaps: true,
+        serverMinification: false,
     },
     eslint: {
         ignoreDuringBuilds: true,
@@ -213,6 +214,9 @@ const nextConfig = {
             // ensure devtool generates maps
             config.devtool = 'source-map';
             // config.devtool = false;
+
+            config.optimization.minimize = false;
+            config.optimization.minimizer = [];
 
             // config.module.rules.unshift({
             //     test: /\.[jt]sx?$/,

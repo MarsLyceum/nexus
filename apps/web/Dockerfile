@@ -1,89 +1,37 @@
 # syntax=docker/dockerfile:1
 ARG NODE_VERSION=22-alpine
 
-#################################
-# Stage 1: Builder (dev deps + build)
-#################################
-FROM node:${NODE_VERSION} AS builder
-WORKDIR /app
+FROM node:${NODE_VERSION} AS main
 
-# Install pnpm
+# 1) Install pnpm
 RUN npm install -g pnpm
 
-# Copy monorepo manifests, patches, workspace packages, and app code
+# 2) Set up our monorepo root
+WORKDIR /app
+
+# 3) Copy root manifest files and tsconfig (needed for workspace resolution)
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml tsconfig.json ./
 COPY .npmrc ./
+
+# 4) Copy any patches and all workspace packages (shared-ui, etc.)
 COPY patches ./patches
 COPY packages ./packages
+
+# 5) Copy the entire `apps/web` folder
 COPY apps/web ./apps/web
 
-# Install all deps (prod + dev) for the web app
+# 6) Install all dependencies (prod + dev) for the whole workspace
 RUN pnpm install --frozen-lockfile -r
 
-# Build the Next.js app
+# 7) Build the Next.js app inside apps/web
 WORKDIR /app/apps/web
 RUN pnpm run build
 
-#################################
-# Stage 2: Deps (prod deps only)
-#################################
-FROM node:${NODE_VERSION} AS deps
-WORKDIR /app
-
-# Install pnpm
-RUN npm install -g pnpm
-
-# Copy manifests and patches
-COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
-COPY patches ./patches
-COPY packages ./packages
-COPY apps/web/package.json ./apps/web/
-COPY .npmrc ./
-
-# Make tsconfig.json available to Next.js
-COPY tsconfig.json ./apps/web/tsconfig.json
-
-# Install only production deps for the web app
-RUN pnpm install --frozen-lockfile --prod --filter ./apps/web...
-
-#################################
-# Stage 3: Distroless Production
-#################################
-FROM gcr.io/distroless/nodejs22-debian12 AS production
-WORKDIR /app
-
-# Copy built output
-COPY --from=builder /app/apps/web/.next ./.next
-COPY --from=builder /app/apps/web/public ./public
-COPY --from=builder /app/apps/web/next.config.js ./
-COPY --from=builder /app/apps/web/server.js ./
-COPY --from=builder /app/apps/web/error-mapper.js ./
-COPY --from=builder /app/apps/web/expo-next-adapter.cjs ./
-COPY --from=builder /app/apps/web/plugins ./plugins
-COPY --from=builder /app/apps/web/stubs    ./stubs
-COPY --from=builder /app/apps/web/polyfills ./polyfills
-
-
-# Copy production node_modules
-COPY --from=deps /app/node_modules ./node_modules
-
-COPY --from=builder /app/packages/shared-ui ./node_modules/shared-ui
-
-# Copy package.json for metadata
-COPY --from=builder /app/apps/web/package.json ./
-
-# Use a non-root user
-USER nonroot
-
-# Expose port and set environment
-EXPOSE 8080
+# 8) Expose port and set production‐mode environment variables
+ENV NODE_ENV=production
 ENV PORT=8080
 ENV NODE_OPTIONS="--enable-source-maps"
+EXPOSE 8080
 
-# Optional healthcheck
-HEALTHCHECK --interval=30s --timeout=5s \
-    CMD ["wget","--quiet","--tries=1","--spider","http://localhost:8080/_next/static/health"] || exit 1
-
-# Start the Next.js server
-# the script is run with node on distroless
-CMD ["--enable-source-maps", "server.js", "-p", "8080", "--stacktrace"]
+# 9) Start the custom server (with source maps + stacktrace support)
+CMD ["node", "--enable-source-maps", "server.js", "-p", "8080", "--stacktrace"]

@@ -1,3 +1,10 @@
+# This Dockerfile has an error where when you run Next with it you get
+# the error: ⨯ [TypeError: l is not a function] and a 500 page
+# Something is wrong in this build so I made another dockerfile which works
+# At some point I'd like to come back to this one and get it working but not
+# right now.
+# TODO: fix the cause of this error in the Dockerfile
+
 # syntax=docker/dockerfile:1
 ARG NODE_VERSION=22-alpine
 

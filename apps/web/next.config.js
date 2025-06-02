@@ -192,44 +192,13 @@ const nextConfig = {
 
         { isServer, dev }
     ) => {
-        // if (!dev && isServer) {
-        //     config.devtool = 'inline-source-map';
-        // }
-
-        // if (isServer) {
-        //     // disable the built-in devtool so our plugin takes over
-        //     config.devtool = false;
-
-        //     // use the source‐map plugin rather than devtool, so nothing gets clobbered
-        //     config.plugins.push(
-        //         new webpack.SourceMapDevToolPlugin({
-        //             filename: '[file].map',
-        //             test: /\.(js|cjs|mjs)$/, // match all server chunk types
-        //         })
-        //     );
-        // }
-
         if (isServer) {
             // ensure devtool generates maps
             config.devtool = 'source-map';
-            // config.devtool = false;
-
-            // config.module.rules.unshift({
-            //     test: /\.[jt]sx?$/,
-            //     enforce: 'pre',
-            //     use: [
-            //         {
-            //             loader: path.resolve(
-            //                 __dirname,
-            //                 'plugins/swc-sourcemap-loader.js'
-            //             ),
-            //         },
-            //     ],
-            // });
 
             config.module.rules.push({
                 test: /\.[jt]sx?$/,
-                enforce: 'post', // <<— important
+                enforce: 'post',
                 exclude: /node_modules/,
                 use: require.resolve('./plugins/swc-sourcemap-loader.js'),
             });
@@ -244,8 +213,6 @@ const nextConfig = {
                 new ServerSourceMapPlugin({ filename: '[name].js.map' })
             );
         }
-
-        // config.devtool = 'eval-source-map';
 
         const transpilePackagesRegex = new RegExp(
             `[/\\\\]node_modules[/\\\\](${TRANSPILED_PACKAGES?.map((p) => p.replace(/\//g, '[/\\\\]')).join('|')})[/\\\\]`

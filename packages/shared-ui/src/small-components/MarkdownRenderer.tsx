@@ -326,7 +326,7 @@ export const MarkdownRenderer: React.FC<{
         () => ({
             div: styles.document,
             p: {
-                color: theme.colors.ActiveText, // Ensure paragraphs render with white text
+                color: theme.colors.ActiveText,
                 fontSize: 16,
                 lineHeight: 22,
                 fontFamily: 'Roboto_400Regular',
@@ -336,7 +336,13 @@ export const MarkdownRenderer: React.FC<{
             blockquote: styles.blockquote,
             h1: styles.heading1,
         }),
-        []
+        [
+            styles.blockquote,
+            styles.code_inline,
+            styles.document,
+            styles.heading1,
+            theme.colors.ActiveText,
+        ]
     );
     const baseStyle = useMemo(() => ({ marginTop: 0, paddingTop: 0 }), []);
     const defaultTextProps = useMemo(() => ({ selectable: true }), []);

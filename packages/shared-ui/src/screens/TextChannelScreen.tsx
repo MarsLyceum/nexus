@@ -43,6 +43,7 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
         loadMoreMessages,
         refreshMessages,
         addMessage,
+        deleteMessage,
     } = useTextChannelMessages(channel.id);
 
     // Custom hook to send messages
@@ -77,6 +78,7 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
                     width={width}
                     loadMoreMessages={loadMoreMessages}
                     onAttachmentPress={handleMessageItemAttachmentPress}
+                    onDeleteMessage={deleteMessage}
                 />
             </View>
 

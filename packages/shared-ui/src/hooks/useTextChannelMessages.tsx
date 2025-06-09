@@ -179,12 +179,19 @@ export const useTextChannelMessages = (channelId: string) => {
         setRefreshTrigger((prev) => prev + 1);
     };
 
+    const deleteMessage = (message: MessageWithAvatar) => {
+        setChatMessages((prevMessages) =>
+            prevMessages.filter((msg) => msg.id !== message.id)
+        );
+    };
+
     return {
         chatMessages,
         loadingMessages,
         loadingMore,
         loadMoreMessages,
         refreshMessages,
-        addMessage, // Expose the addMessage function for optimistic updates.
+        addMessage,
+        deleteMessage,
     };
 };

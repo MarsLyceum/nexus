@@ -9,3 +9,4 @@ export * from './FETCH_POST_QUERY';
 export * from './FETCH_USER_GROUPS_QUERY';
 export * from './MESSAGE_ADDED_SUBSCRIPTION';
 export * from './UPDATE_TEXT_CHANNEL_MESSAGE';
+export * from './DELETE_TEXT_CHANNEL_MESSAGE';

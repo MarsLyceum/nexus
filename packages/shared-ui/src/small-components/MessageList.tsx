@@ -3,7 +3,10 @@ import { StyleSheet, FlatList } from 'react-native';
 import { useMutation } from '@apollo/client';
 
 import { MessageWithAvatar, DirectMessageWithAvatar } from '../types';
-import { UPDATE_TEXT_CHANNEL_MESSAGE } from '../queries';
+import {
+    UPDATE_TEXT_CHANNEL_MESSAGE,
+    DELETE_TEXT_CHANNEL_MESSAGE,
+} from '../queries';
 import { useAppSelector, RootState, UserType } from '../redux';
 
 import { MessageItemSkeleton } from './MessageItemSkeleton';
@@ -15,6 +18,7 @@ export type MessageListProps = {
     width: number;
     loadMoreMessages: () => void;
     onAttachmentPress: (attachments: string[], index: number) => void;
+    onDeleteMessage: (message: MessageWithAvatar) => void;
 };
 
 export const MessageList: React.FC<MessageListProps> = ({
@@ -23,10 +27,12 @@ export const MessageList: React.FC<MessageListProps> = ({
     width,
     loadMoreMessages,
     onAttachmentPress,
+    onDeleteMessage,
 }) => {
     // Create a ref for the FlatList scroll container.
     const flatListRef = useRef<FlatList>(null);
     const [updateTextChannelMessage] = useMutation(UPDATE_TEXT_CHANNEL_MESSAGE);
+    const [deleteTextChannelMessage] = useMutation(DELETE_TEXT_CHANNEL_MESSAGE);
     const activeUser: UserType = useAppSelector(
         (state: RootState) => state.user.user
     );
@@ -53,6 +59,22 @@ export const MessageList: React.FC<MessageListProps> = ({
         [activeUser?.id, updateTextChannelMessage]
     );
 
+    const handleDeleteMessage = useCallback(
+        (message: DirectMessageWithAvatar | MessageWithAvatar) => {
+            // Optimistically update the UI by removing the message from the local state.
+            onDeleteMessage(message as MessageWithAvatar);
+
+            deleteTextChannelMessage({
+                variables: {
+                    id: message.id,
+                },
+            }).catch((error) => {
+                console.error('Error deleting message:', error);
+            });
+        },
+        [deleteTextChannelMessage, onDeleteMessage]
+    );
+
     if (loadingMessages) {
         return (
             <FlatList
@@ -77,7 +99,7 @@ export const MessageList: React.FC<MessageListProps> = ({
                     onAttachmentPress={onAttachmentPress}
                     scrollContainerRef={flatListRef}
                     onSaveEdit={handleSaveEdit}
-                    onDeleteMessage={() => {}}
+                    onDeleteMessage={handleDeleteMessage}
                 />
             )}
             style={styles.container}

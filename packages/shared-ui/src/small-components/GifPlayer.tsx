@@ -1,32 +1,17 @@
 // GifPlayer.tsx
 import React, { useRef, useEffect, useCallback, useMemo } from 'react';
 import { Platform, View } from 'react-native';
-// import {
-//     Canvas as SkiaCanvas,
-//     Image as SkiaImage,
-//     useClock,
-// } from '@shopify/react-native-skia';
+import {
+    Canvas as SkiaCanvas,
+    Image as SkiaImage,
+    useClock,
+} from '@shopify/react-native-skia';
 
 import { useSharedValue, useDerivedValue } from 'react-native-reanimated';
 
 import { useGifFrames } from '../hooks';
 
 import { NexusImage } from './NexusImage';
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let SkiaCanvas: ({ children }: any) => React.JSX.Element;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let SkiaImage: ({ children }: any) => React.JSX.Element;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let useClock: () => any;
-if (Platform.OS !== 'web') {
-    // eslint-disable-next-line unicorn/prefer-module, @typescript-eslint/no-var-requires, global-require
-    const RNSkia = require('@shopify/react-native-skia');
-
-    SkiaCanvas = RNSkia.Canvas;
-    SkiaImage = RNSkia.Image;
-    useClock = RNSkia.useClock;
-}
 
 export type GifPlayerProps = {
     source: string;

@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { Platform } from 'react-native';
 
 // Skia & Reanimated imports for native playback
-// import { useClock } from '@shopify/react-native-skia';
+import { useClock } from '@shopify/react-native-skia';
 import {
     useSharedValue,
     useDerivedValue,
@@ -14,14 +14,6 @@ import {
 } from 'react-native-reanimated';
 
 import { useGifFrames } from './useGifFrames';
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let useClock: () => any;
-if (Platform.OS !== 'web') {
-    // eslint-disable-next-line unicorn/prefer-module, global-require, @typescript-eslint/no-var-requires
-    const RNSkia = require('@shopify/react-native-skia');
-    useClock = RNSkia.useClock;
-}
 
 export type UseGifPlayerResult = {
     position: number;

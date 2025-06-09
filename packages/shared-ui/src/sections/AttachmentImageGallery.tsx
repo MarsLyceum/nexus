@@ -106,7 +106,6 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
 
                         // Check if the media is a video.
                         const isVideo = info && info.type === 'video';
-                        console.log('info:', info);
                         return (
                             info && (
                                 <TouchableOpacity

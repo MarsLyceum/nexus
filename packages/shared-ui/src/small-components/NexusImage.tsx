@@ -7,6 +7,7 @@ import {
     ImageContentPosition,
 } from 'expo-image';
 
+import { useTheme } from 'shared-ui/theme';
 import { detectEnvironment, Environment } from '../utils';
 
 // Define the prop types for NexusImage.
@@ -99,6 +100,7 @@ export const NexusImage = (props: NexusImageProps) => {
         ...rest
     } = props;
     const env: Environment = detectEnvironment();
+    const { theme } = useTheme();
 
     const containerRef = useRef<HTMLDivElement | null>(null);
     const { width: containerWidth, height: containerHeight } =
@@ -253,6 +255,7 @@ export const NexusImage = (props: NexusImageProps) => {
                             'center center',
                         width: '100%',
                         height: '100%',
+                        color: theme.colors.ActiveText,
                     }}
                     onError={handleError}
                     {...rest}
@@ -277,6 +280,7 @@ export const NexusImage = (props: NexusImageProps) => {
                 objectFit: contentFit ?? style.objectFit,
                 objectPosition:
                     contentPositionToCss(contentPosition) ?? 'center center',
+                color: theme.colors.ActiveText,
             }}
             onError={handleError}
             {...rest}

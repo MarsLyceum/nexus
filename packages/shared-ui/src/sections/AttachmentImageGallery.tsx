@@ -106,43 +106,46 @@ export const AttachmentImageGallery: React.FC<AttachmentImageGalleryProps> = ({
 
                         // Check if the media is a video.
                         const isVideo = info && info.type === 'video';
+                        console.log('info:', info);
                         return (
-                            <TouchableOpacity
-                                key={index}
-                                onPress={
-                                    !isVideo
-                                        ? () => onImagePress(index)
-                                        : undefined
-                                }
-                                activeOpacity={!isVideo ? 0.8 : 1}
-                            >
-                                {isVideo ? (
-                                    <NexusVideo
-                                        source={{ uri: url }}
-                                        style={[
-                                            styles.galleryImage,
-                                            {
-                                                width: computedSize.width,
-                                                height: attachmentHeight,
-                                            },
-                                        ]}
-                                        muted={false}
-                                        paused
-                                        contentFit="cover"
-                                    />
-                                ) : (
-                                    <NexusImage
-                                        source={url}
-                                        width={computedSize.width}
-                                        height={attachmentHeight}
-                                        alt="attachment image"
-                                        style={{
-                                            ...styles.galleryImage,
-                                        }}
-                                        contentFit="cover"
-                                    />
-                                )}
-                            </TouchableOpacity>
+                            info && (
+                                <TouchableOpacity
+                                    key={index}
+                                    onPress={
+                                        !isVideo
+                                            ? () => onImagePress(index)
+                                            : undefined
+                                    }
+                                    activeOpacity={!isVideo ? 0.8 : 1}
+                                >
+                                    {isVideo ? (
+                                        <NexusVideo
+                                            source={{ uri: url }}
+                                            style={[
+                                                styles.galleryImage,
+                                                {
+                                                    width: computedSize.width,
+                                                    height: attachmentHeight,
+                                                },
+                                            ]}
+                                            muted={false}
+                                            paused
+                                            contentFit="cover"
+                                        />
+                                    ) : (
+                                        <NexusImage
+                                            source={url}
+                                            width={computedSize.width}
+                                            height={attachmentHeight}
+                                            alt="attachment image"
+                                            style={{
+                                                ...styles.galleryImage,
+                                            }}
+                                            contentFit="cover"
+                                        />
+                                    )}
+                                </TouchableOpacity>
+                            )
                         );
                     })}
                 </ScrollView>

@@ -185,16 +185,12 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
                             content={item.content}
                             preview
                             variant="feed"
-                            // Navigate using the push function from useRouter
                             onPress={() => {
-                                if (
-                                    detectEnvironment() === 'nextjs-client' ||
-                                    detectEnvironment() === 'nextjs-server'
-                                ) {
-                                    push(`/post/${item.id}`);
-                                } else {
-                                    push('post', { id: item.id });
-                                }
+                                push(
+                                    '/post',
+                                    { id: item.id },
+                                    { pathParams: ['id'] }
+                                );
                             }}
                             attachmentUrls={item.attachmentUrls}
                         />

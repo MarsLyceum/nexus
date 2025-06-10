@@ -2,9 +2,9 @@
 
 import '../../../polyfills/expo-polyfills.js';
 import React from 'react';
-import { cookies } from 'next/headers';
 import jwt from 'jsonwebtoken';
 import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 
 import { createApolloClient } from 'shared-ui/utils';
 import { FETCH_USER_GROUPS_QUERY } from 'shared-ui/queries';
@@ -27,19 +27,10 @@ export default async function DashboardLayout({
 
     // pull both tokens
     const accessToken = cookieStore.get('access_token')?.value;
-    const refreshToken = cookieStore.get('refresh_token')?.value;
     if (!accessToken) {
         redirect('/login');
     }
-    // serialize exactly as the browser would send them
-    const cookieHeader = [
-        `access_token=${accessToken}`,
-        refreshToken && `refresh_token=${refreshToken}`,
-    ]
-        .filter(Boolean)
-        .join('; ');
-
-    const client = createApolloClient(cookieHeader);
+    const client = createApolloClient();
 
     let decodedToken;
     try {

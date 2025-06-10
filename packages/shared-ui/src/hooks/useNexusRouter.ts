@@ -72,10 +72,16 @@ export type NexusRouter = {
     push: (
         path: string,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        params?: Record<string, any>
+        params?: Record<string, any>,
+        opts?: { pathParams?: string[] }
     ) => void;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    replace: (path: string, params?: Record<string, any>) => void;
+    replace: (
+        path: string,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        params?: Record<string, any>,
+        opts?: { pathParams?: string[] }
+    ) => void;
     goBack: () => void;
     getCurrentRoute: () => string;
     isFocused: (path: string) => boolean;
@@ -85,15 +91,30 @@ export type NexusRouter = {
 function buildUrlWithParams(
     path: string,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    params?: Record<string, any>
+    params?: Record<string, any>,
+    pathParams: string[] = []
 ): string {
-    if (params && Object.keys(params).length > 0) {
-        // Check if the path already contains a query string.
-        const separator = path.includes('?') ? '&' : '?';
-        const queryString = new URLSearchParams(params).toString();
-        return `${path}${separator}${queryString}`;
+    let built = path;
+
+    // first add the path params
+    for (const key of pathParams) {
+        if (params && params[key] !== undefined) {
+            built = `${built}/${encodeURIComponent(params[key])}`;
+            // eslint-disable-next-line no-param-reassign
+            delete params[key];
+        }
     }
-    return path;
+
+    // if anything remains turn them into query params
+    if (params) {
+        const keys = Object.keys(params);
+        if (keys.length > 0) {
+            const sep = built.includes('?') ? '&' : '?';
+            built = built + sep + new URLSearchParams(params).toString();
+        }
+    }
+
+    return built;
 }
 
 /**
@@ -112,12 +133,22 @@ export function useNexusRouter(
         // Server-side: use redirect for both push and replace.
         return {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            push: (path: string, params?: Record<string, any>) => {
-                redirect(buildUrlWithParams(path, params));
+            push: (
+                path: string,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                params?: Record<string, any>,
+                opts?: { pathParams?: string[] }
+            ) => {
+                redirect(buildUrlWithParams(path, params, opts?.pathParams));
             },
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            replace: (path: string, params?: Record<string, any>) => {
-                redirect(buildUrlWithParams(path, params));
+            replace: (
+                path: string,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                params?: Record<string, any>,
+                opts?: { pathParams?: string[] }
+            ) => {
+                redirect(buildUrlWithParams(path, params, opts?.pathParams));
             },
             goBack: () => {
                 throw new Error('goBack is not supported on the server side.');
@@ -145,13 +176,23 @@ export function useNexusRouter(
         const getCurrentRoute = () => asPath;
 
         return {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            push: (path: string, params?: Record<string, any>) => {
-                router.push(buildUrlWithParams(path, params));
+            push: (
+                path: string,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                params?: Record<string, any>,
+                opts?: { pathParams?: string[] }
+            ) => {
+                router.push(buildUrlWithParams(path, params, opts?.pathParams));
             },
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            replace: (path: string, params?: Record<string, any>) => {
-                router.replace(buildUrlWithParams(path, params));
+            replace: (
+                path: string,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                params?: Record<string, any>,
+                opts?: { pathParams?: string[] }
+            ) => {
+                router.replace(
+                    buildUrlWithParams(path, params, opts?.pathParams)
+                );
             },
             goBack: () => {
                 // If browser history length is greater than one, go back; otherwise, go to home.

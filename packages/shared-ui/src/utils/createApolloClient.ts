@@ -73,6 +73,20 @@ export const createApolloClient = (serverCookie?: string) => {
     let client!: ApolloClient<unknown>;
 
     const authLink = setContext(async (_, { headers }) => {
+        let cookieHeader = serverCookie;
+
+        if (!cookieHeader && environment === 'nextjs-server') {
+            // dynamic-import so Metro/bundlers won’t choke
+            const { cookies } = await import('next/headers');
+            const store = await cookies();
+            const parts: string[] = [];
+            const access = store.get(ACCESS_TOKEN_KEY)?.value;
+            if (access) parts.push(`${ACCESS_TOKEN_KEY}=${access}`);
+            const refresh = store.get(REFRESH_TOKEN_KEY)?.value;
+            if (refresh) parts.push(`${REFRESH_TOKEN_KEY}=${refresh}`);
+            cookieHeader = parts.join('; ');
+        }
+
         // on web we rely on cookies; mobile gets header
         let token: string | undefined;
         if (Platform.OS !== 'web') {
@@ -83,7 +97,7 @@ export const createApolloClient = (serverCookie?: string) => {
             headers: {
                 ...headers,
                 ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                ...(serverCookie ? { cookie: serverCookie } : {}),
+                ...(cookieHeader ? { cookie: cookieHeader } : {}),
             },
         };
     });

@@ -57,7 +57,6 @@ if (isStacktrace) {
 process.env.NODE_ENV = isDebug ? 'development' : 'production';
 
 const express = require('express');
-const { createProxyMiddleware } = require('http-proxy-middleware');
 const next = require('next');
 const os = require('os');
 const fs = require('fs');
@@ -182,17 +181,6 @@ processModule.on('unhandledRejection', (reason) => {
     processModule.exit(1);
 });
 
-function getSafeWindow() {
-    if (
-        typeof globalThis !== 'undefined' &&
-        // eslint-disable-next-line unicorn/no-typeof-undefined
-        typeof globalThis.window !== 'undefined'
-    ) {
-        return globalThis.window;
-    }
-    return undefined;
-}
-
 app.prepare()
     .catch((err) => {
         console.error('Error during Next.js prepare:', err);
@@ -221,38 +209,6 @@ app.prepare()
                 return next();
             });
         }
-
-        const isCloudRun =
-            typeof process !== 'undefined' &&
-            process.env.K_SERVICE !== undefined;
-
-        // Detect if running on the frontend domain dev.my-nexus.net.
-        const isDevDomain =
-            getSafeWindow() &&
-            getSafeWindow()?.location &&
-            getSafeWindow()?.location.hostname === 'dev.my-nexus.net';
-
-        // Use local server only if NOT running in Cloud Run or on the dev.my-nexus.net domain.
-        const onRemoteServer = isCloudRun || isDevDomain;
-
-        const GQL_BACKEND =
-            onRemoteServer || process.env.USE_REMOTE_GRAPHQL === 'true'
-                ? 'https://dev.my-nexus.net'
-                : 'http://localhost:4000';
-
-        server.use(
-            '/graphql',
-            createProxyMiddleware({
-                target: GQL_BACKEND, // http://localhost:4000 or prod
-                changeOrigin: true,
-                logLevel: 'warn',
-                ws: false, // explicitly no WS here
-                pathRewrite: (path, req) => {
-                    // `path` here is req.url _after_ Express stripped "/graphql"
-                    return '/graphql' + path;
-                },
-            })
-        );
 
         server.get('/__/hosting/verification', (req, res) => {
             // If you need to return a specific token or file for Firebase Hosting,

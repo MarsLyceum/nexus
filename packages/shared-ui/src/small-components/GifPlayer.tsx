@@ -21,6 +21,17 @@ export type GifPlayerProps = {
     playing: boolean;
 };
 
+function findFrameIndex(cumulative: number[], t: number): number {
+    let low = 0;
+    let high = cumulative.length - 1;
+    while (low < high) {
+        const mid = Math.floor((low + high) / 2);
+        if (t < cumulative[mid]) high = mid;
+        else low = mid + 1;
+    }
+    return low;
+}
+
 export const GifPlayer: React.FC<GifPlayerProps> = ({
     source,
     width,
@@ -40,6 +51,18 @@ export const GifPlayer: React.FC<GifPlayerProps> = ({
     const clock = useClock();
 
     const delays = useMemo(() => frames.map((f) => f.delay), [frames]);
+
+    const cumulativeDelays = useMemo<number[]>(() => {
+        const out: number[] = [];
+        // eslint-disable-next-line unicorn/no-array-reduce
+        delays.reduce((sum, d, i) => {
+            const next = sum + d;
+            out[i] = next;
+            return next;
+        }, 0);
+        return out;
+    }, [delays]);
+
     // eslint-disable-next-line consistent-return
     const skiaImages = useMemo(() => {
         if (Platform.OS !== 'web') {
@@ -87,15 +110,8 @@ export const GifPlayer: React.FC<GifPlayerProps> = ({
             if (!canvasRefWeb.current || frames.length === 0) return;
             const ctx = canvasRefWeb.current.getContext('2d')!;
 
-            let acc = 0;
-            let idx = 0;
-            for (const [j, delay] of delays.entries()) {
-                acc += delay;
-                if (position < acc) {
-                    idx = j;
-                    break;
-                }
-            }
+            const idx = findFrameIndex(cumulativeDelays, position);
+
             // pick the right frame
             const { imageData } = frames[idx];
 
@@ -111,7 +127,7 @@ export const GifPlayer: React.FC<GifPlayerProps> = ({
                 ctx.drawImage(bmp, 0, 0, width, height);
             }
         }
-    }, [frames, width, height, delays, position]);
+    }, [frames, width, height, position, cumulativeDelays]);
 
     useEffect(() => {
         const canvas = Platform.OS === 'web' ? canvasRefWeb.current : undefined;

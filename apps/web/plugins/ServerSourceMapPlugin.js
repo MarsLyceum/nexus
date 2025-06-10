@@ -71,7 +71,9 @@ module.exports = class ServerSourceMapPlugin {
                                 let lineOffset = 0;
                                 const mapGen = new SourceMapGenerator({ file });
 
-                                for (const module of chunk.modulesIterable) {
+                                for (const module of compilation.chunkGraph.getChunkModules(
+                                    chunk
+                                )) {
                                     const orig = module.originalSource?.();
                                     if (!orig?.sourceAndMap) continue;
 

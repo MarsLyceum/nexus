@@ -63,11 +63,11 @@ const graphqlApiGatewayEndpointHttp =
 const graphqlApiGatewayEndpointWs =
     !onRemoteServer && !useRemoteGraphql
         ? isNext
-            ? 'ws://localhost:3000/graphql'
+            ? 'ws://localhost:4000/graphql'
             : isReactNativeWeb
               ? 'ws://localhost:4000/graphql'
               : 'ws://192.168.1.48:4000/graphql'
-        : 'wss://dev.my-nexus.net/graphql';
+        : 'wss://nexus-web-service-197277044151.us-west1.run.app';
 
 export const createApolloClient = (serverCookie?: string) => {
     let client!: ApolloClient<unknown>;

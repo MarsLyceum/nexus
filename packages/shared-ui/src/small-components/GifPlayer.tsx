@@ -87,9 +87,17 @@ export const GifPlayer: React.FC<GifPlayerProps> = ({
             if (!canvasRefWeb.current || frames.length === 0) return;
             const ctx = canvasRefWeb.current.getContext('2d')!;
 
+            let acc = 0;
+            let idx = 0;
+            for (const [j, delay] of delays.entries()) {
+                acc += delay;
+                if (position < acc) {
+                    idx = j;
+                    break;
+                }
+            }
             // pick the right frame
-            const i = frameIndex.value;
-            const { imageData } = frames[i];
+            const { imageData } = frames[idx];
 
             // resize and clear
             canvasRefWeb.current.width = width;
@@ -103,7 +111,7 @@ export const GifPlayer: React.FC<GifPlayerProps> = ({
                 ctx.drawImage(bmp, 0, 0, width, height);
             }
         }
-    }, [frames, frameIndex, width, height]);
+    }, [frames, width, height, delays, position]);
 
     useEffect(() => {
         const canvas = Platform.OS === 'web' ? canvasRefWeb.current : undefined;

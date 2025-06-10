@@ -112,12 +112,13 @@ export const Portal: React.FC<PortalProps> = ({
         keyRef.current = mount(children);
 
         // Hook the Android back button if they gave us onRequestClose
-        const backSub = onRequestClose
-            ? BackHandler.addEventListener('hardwareBackPress', () => {
-                  onRequestClose();
-                  return true;
-              })
-            : undefined;
+        const backSub =
+            onRequestClose && Platform.OS !== 'web'
+                ? BackHandler.addEventListener('hardwareBackPress', () => {
+                      onRequestClose();
+                      return true;
+                  })
+                : undefined;
 
         let escListener: ((e: KeyboardEvent) => void) | undefined;
         if (onRequestClose && Platform.OS === 'web') {

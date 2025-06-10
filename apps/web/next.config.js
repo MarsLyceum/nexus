@@ -129,6 +129,10 @@ const nextConfig = {
 
     //     return [
     //         {
+    //             source: '/graphql',
+    //             destination: `${target}/graphql`,
+    //         },
+    //         {
     //             source: '/graphql/:path*',
     //             destination: `${target}/graphql/:path*`,
     //         },

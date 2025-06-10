@@ -26,9 +26,11 @@ function createStyles(theme: Theme) {
 export const Header = ({
     isLargeScreen,
     headerText,
+    children, // extra content
 }: {
     isLargeScreen: boolean;
     headerText: string;
+    children?: React.JSX.Element;
 }) => {
     const { goBack } = useNexusRouter();
     const { theme } = useTheme();
@@ -38,6 +40,7 @@ export const Header = ({
         <View style={styles.header}>
             {!isLargeScreen && <BackArrow onPress={goBack} />}
             <Text style={styles.channelName}>{headerText}</Text>
+            {children}
         </View>
     );
 };

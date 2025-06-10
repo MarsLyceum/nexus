@@ -7,26 +7,17 @@ import {
     useWindowDimensions,
     Platform,
     View,
+    Text,
 } from 'react-native';
 
 import { useTheme, Theme } from '../theme';
 import { Header, PostItem } from '../sections';
-import { CreateContentButton } from '../buttons';
 import { useAppSelector, RootState, UserType } from '../redux';
 import { FeedPost, Attachment, GroupChannel } from '../types';
-import {
-    useFeedPosts,
-    useCreatePost,
-    useNexusRouter,
-    // createNexusParam,
-} from '../hooks';
-import { CreatePostModal } from '../small-components';
+import { useFeedPosts, useCreatePost, useNexusRouter } from '../hooks';
+import { CreatePostModal, ActionButton } from '../small-components';
 import { detectEnvironment } from '../utils';
-
-// Create a hook to read our screen parameters.
-// const { useParam } = createNexusParam<{ channelId: string }>();
-
-const BOTTOM_INPUT_HEIGHT = 60;
+import { Add } from '../icons';
 
 function createStyles(theme: Theme) {
     return StyleSheet.create({
@@ -37,7 +28,6 @@ function createStyles(theme: Theme) {
         },
         feedList: {
             padding: 15,
-            paddingBottom: BOTTOM_INPUT_HEIGHT,
         },
         skeletonContainer: {
             backgroundColor: theme.colors.PrimaryBackground,
@@ -80,10 +70,7 @@ function createStyles(theme: Theme) {
         },
         createContentButtonContainer: {
             position: 'absolute',
-            bottom: 0,
-            left: 0,
             right: 0,
-            height: BOTTOM_INPUT_HEIGHT,
         },
     });
 }
@@ -155,13 +142,23 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
     );
 
     return (
-        <SafeAreaView
-            style={[styles.container, isDesktop ? { paddingBottom: 60 } : {}]}
-        >
+        <SafeAreaView style={styles.container}>
             <Header
                 isLargeScreen={width > 768}
                 headerText={channel?.name ?? ''}
-            />
+            >
+                <View style={styles.createContentButtonContainer}>
+                    <ActionButton
+                        onPress={() => setModalVisible(true)}
+                        transparent
+                    >
+                        <Add style={{ marginRight: 10 }} />
+                        <Text style={{ color: theme.colors.ActiveText }}>
+                            Create new post
+                        </Text>
+                    </ActionButton>
+                </View>
+            </Header>
 
             {loadingFeed ? (
                 <FlatList
@@ -205,13 +202,6 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
                     contentContainerStyle={[styles.feedList]}
                 />
             )}
-
-            <View style={styles.createContentButtonContainer}>
-                <CreateContentButton
-                    buttonText="Create a new post"
-                    onPress={() => setModalVisible(true)}
-                />
-            </View>
 
             <CreatePostModal
                 modalVisible={modalVisible}

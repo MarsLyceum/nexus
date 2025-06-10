@@ -54,8 +54,10 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
 function createStyles(theme: Theme) {
     return StyleSheet.create({
         iconButton: {
-            width: 45,
-            height: 45,
+            paddingHorizontal: 12,
+            paddingVertical: 8,
+            minWidth: 45,
+            minHeight: 45,
             borderRadius: 23,
             backgroundColor: theme.colors.AppBackground,
             justifyContent: 'center',
@@ -75,6 +77,7 @@ function createStyles(theme: Theme) {
             flex: 1,
             justifyContent: 'center',
             alignItems: 'center',
+            flexDirection: 'row',
         },
     });
 }

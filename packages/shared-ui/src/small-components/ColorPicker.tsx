@@ -186,6 +186,45 @@ export function ColorPicker({ color, onChange }: ColorPickerProps) {
     const [hsv, setHsv] = useState(() => hexToHsv(color));
     const [hsl, setHsl] = useState(() => rgbToHsl(rgb.r, rgb.g, rgb.b));
 
+    const [rgbInput, setRgbInput] = useState<string>(
+        `${rgb.r}, ${rgb.g}, ${rgb.b}`
+    );
+    const [cmykInput, setCmykInput] = useState<string>(
+        `${Math.round(cmyk.c * 100)}%, ${Math.round(cmyk.m * 100)}%, ${Math.round(
+            cmyk.y * 100
+        )}%, ${Math.round(cmyk.k * 100)}%`
+    );
+    const [hsvInput, setHsvInput] = useState<string>(
+        `${Math.round(hsv.h)}°, ${Math.round(hsv.s * 100)}%, ${Math.round(hsv.v * 100)}%`
+    );
+    const [hslInput, setHslInput] = useState<string>(
+        `${Math.round(hsl.h)}°, ${Math.round(hsl.s * 100)}%, ${Math.round(hsl.l * 100)}%`
+    );
+
+    useEffect(() => {
+        setRgbInput(`${rgb.r}, ${rgb.g}, ${rgb.b}`);
+    }, [rgb]);
+
+    useEffect(() => {
+        setCmykInput(
+            `${Math.round(cmyk.c * 100)}%, ${Math.round(cmyk.m * 100)}%, ${Math.round(
+                cmyk.y * 100
+            )}%, ${Math.round(cmyk.k * 100)}%`
+        );
+    }, [cmyk]);
+
+    useEffect(() => {
+        setHsvInput(
+            `${Math.round(hsv.h)}°, ${Math.round(hsv.s * 100)}%, ${Math.round(hsv.v * 100)}%`
+        );
+    }, [hsv]);
+
+    useEffect(() => {
+        setHslInput(
+            `${Math.round(hsl.h)}°, ${Math.round(hsl.s * 100)}%, ${Math.round(hsl.l * 100)}%`
+        );
+    }, [hsl]);
+
     // sync when prop changes
     useEffect(() => {
         if (color === hex) {
@@ -446,26 +485,26 @@ export function ColorPicker({ color, onChange }: ColorPickerProps) {
             />
             <FieldRow
                 label="RGB"
-                value={`${rgb.r}, ${rgb.g}, ${rgb.b}`}
-                onChangeText={() => {}}
+                value={rgbInput}
+                onChangeText={setRgbInput}
                 onBlur={(e) => onRgbBlur(e.nativeEvent.text)}
             />
             <FieldRow
                 label="CMYK"
-                value={`${Math.round(cmyk.c * 100)}%, ${Math.round(cmyk.m * 100)}%, ${Math.round(cmyk.y * 100)}%, ${Math.round(cmyk.k * 100)}%`}
-                onChangeText={() => {}}
+                value={cmykInput}
+                onChangeText={setCmykInput}
                 onBlur={(e) => onCmykBlur(e.nativeEvent.text)}
             />
             <FieldRow
                 label="HSV"
-                value={`${Math.round(hsv.h)}°, ${Math.round(hsv.s * 100)}%, ${Math.round(hsv.v * 100)}%`}
-                onChangeText={() => {}}
+                value={hsvInput}
+                onChangeText={setHsvInput}
                 onBlur={(e) => onHsvBlur(e.nativeEvent.text)}
             />
             <FieldRow
                 label="HSL"
-                value={`${Math.round(hsl.h)}°, ${Math.round(hsl.s * 100)}%, ${Math.round(hsl.l * 100)}%`}
-                onChangeText={() => {}}
+                value={hslInput}
+                onChangeText={setHslInput}
                 onBlur={(e) => onHslBlur(e.nativeEvent.text)}
             />
         </View>

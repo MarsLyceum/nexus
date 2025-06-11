@@ -10,12 +10,13 @@ import {
 } from 'react-native';
 import { useTheme, themesByCategory, ColorKey } from '../theme';
 import { useScreenWidth } from '../hooks';
-import { ColorPicker } from '../small-components';
+import { ColorPicker, ActionButton } from '../small-components';
+import { ChevronDown, ChevronUp } from '../icons';
 
 // split CamelCase → Title Case
 function toTitleCase(key: string) {
     return key
-        .replace(/([a-z])([A-Z])/g, '$1 $2')
+        .replaceAll(/([a-z])([A-Z])/g, '$1 $2')
         .replace(/^./, (c) => c.toUpperCase());
 }
 
@@ -30,6 +31,7 @@ export const ThemeScreen: React.FC = () => {
     } = useTheme();
 
     const [open, setOpen] = useState<Partial<Record<ColorKey, boolean>>>({});
+    const [customThemeOpen, setCustomThemeOpen] = useState(false);
 
     const screenWidth = useScreenWidth(1920);
     const cols = screenWidth > 1000 ? 6 : screenWidth > 600 ? 5 : 4;
@@ -53,104 +55,134 @@ export const ThemeScreen: React.FC = () => {
 
             {/* —— Customize Theme Button + Editor —— */}
             <View style={styles.section}>
-                <TouchableOpacity
-                    style={[
-                        styles.customBtn,
-                        { borderColor: theme.colors.SecondaryBackground },
-                    ]}
-                    onPress={applyCustom}
-                >
-                    <Text
-                        style={[
-                            styles.customBtnText,
-                            { color: theme.colors.Primary },
-                        ]}
+                <View style={styles.customHeader}>
+                    <ActionButton
+                        onPress={() => setCustomThemeOpen((prev) => !prev)}
+                        transparent
                     >
-                        Customize Theme
-                    </Text>
-                </TouchableOpacity>
-
-                <View style={styles.nameRow}>
-                    <Text
+                        {customThemeOpen ? <ChevronUp /> : <ChevronDown />}
+                    </ActionButton>
+                    <TouchableOpacity
                         style={[
-                            styles.nameLabel,
-                            { color: theme.colors.MainText },
+                            styles.customBtn,
+                            { borderColor: theme.colors.SecondaryBackground },
                         ]}
+                        onPress={() => {
+                            applyCustom();
+                            setCustomThemeOpen(true);
+                        }}
                     >
-                        Theme Name
-                    </Text>
-                    <TextInput
-                        style={[
-                            styles.nameInput,
-                            {
-                                borderColor: theme.colors.SecondaryBackground,
-                                color: theme.colors.MainText,
-                            },
-                        ]}
-                        value={customTheme.name}
-                        onChangeText={updateCustomThemeName}
-                        placeholder="Custom Theme"
-                        placeholderTextColor={theme.colors.InactiveText}
-                    />
+                        <Text
+                            style={[
+                                styles.customBtnText,
+                                { color: theme.colors.Primary },
+                            ]}
+                        >
+                            Customize Theme
+                        </Text>
+                    </TouchableOpacity>
                 </View>
 
-                {(Object.keys(customTheme.colors) as ColorKey[]).map((key) => {
-                    const friendly = toTitleCase(key);
-                    const val = customTheme.colors[key];
-                    return (
-                        <View key={key} style={styles.colorRow}>
+                {customThemeOpen && (
+                    <View>
+                        <View style={styles.nameRow}>
                             <Text
                                 style={[
-                                    styles.colorLabel,
+                                    styles.nameLabel,
                                     { color: theme.colors.MainText },
                                 ]}
                             >
-                                {friendly}
+                                Theme Name
                             </Text>
-                            <View
-                                style={[
-                                    styles.miniSwatch,
-                                    { backgroundColor: val },
-                                ]}
-                            />
                             <TextInput
                                 style={[
-                                    styles.hexInput,
+                                    styles.nameInput,
                                     {
                                         borderColor:
                                             theme.colors.SecondaryBackground,
                                         color: theme.colors.MainText,
                                     },
                                 ]}
-                                value={val}
-                                onChangeText={(t) =>
-                                    updateCustomThemeColor(key, t)
-                                }
+                                value={customTheme.name}
+                                onChangeText={updateCustomThemeName}
+                                placeholder="Custom Theme"
+                                placeholderTextColor={theme.colors.InactiveText}
                             />
-                            <TouchableOpacity
-                                onPress={() =>
-                                    setOpen((o) => ({
-                                        ...o,
-                                        [key]: !o[key],
-                                    }))
-                                }
-                            >
-                                <Text style={{ color: theme.colors.Primary }}>
-                                    ✏️
-                                </Text>
-                            </TouchableOpacity>
-
-                            {open[key] && (
-                                <ColorPicker
-                                    color={val}
-                                    onChange={(hex) =>
-                                        updateCustomThemeColor(key, hex)
-                                    }
-                                />
-                            )}
                         </View>
-                    );
-                })}
+
+                        {(Object.keys(customTheme.colors) as ColorKey[]).map(
+                            (key) => {
+                                const friendly = toTitleCase(key);
+                                const val = customTheme.colors[key];
+                                return (
+                                    <View key={key} style={styles.colorRow}>
+                                        <Text
+                                            style={[
+                                                styles.colorLabel,
+                                                {
+                                                    color: theme.colors
+                                                        .MainText,
+                                                },
+                                            ]}
+                                        >
+                                            {friendly}
+                                        </Text>
+                                        <View
+                                            style={[
+                                                styles.miniSwatch,
+                                                { backgroundColor: val },
+                                            ]}
+                                        />
+                                        <TextInput
+                                            style={[
+                                                styles.hexInput,
+                                                {
+                                                    borderColor:
+                                                        theme.colors
+                                                            .SecondaryBackground,
+                                                    color: theme.colors
+                                                        .MainText,
+                                                },
+                                            ]}
+                                            value={val}
+                                            onChangeText={(t) =>
+                                                updateCustomThemeColor(key, t)
+                                            }
+                                        />
+                                        <TouchableOpacity
+                                            onPress={() =>
+                                                setOpen((o) => ({
+                                                    ...o,
+                                                    [key]: !o[key],
+                                                }))
+                                            }
+                                        >
+                                            <Text
+                                                style={{
+                                                    color: theme.colors.Primary,
+                                                }}
+                                            >
+                                                ✏️
+                                            </Text>
+                                        </TouchableOpacity>
+
+                                        {open[key] && (
+                                            <ColorPicker
+                                                color={val}
+                                                onChange={(hex) =>
+                                                    updateCustomThemeColor(
+                                                        key,
+                                                        hex
+                                                    )
+                                                }
+                                            />
+                                        )}
+                                    </View>
+                                );
+                            }
+                        )}
+                    </View>
+                )}
             </View>
 
             {/* —— Built-in Themes Grid —— */}
@@ -279,13 +311,17 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     section: { marginBottom: 24 },
+    customHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 16,
+        justifyContent: 'center',
+    },
     customBtn: {
-        alignSelf: 'center',
         borderWidth: 1,
         borderRadius: 6,
         paddingHorizontal: 16,
         paddingVertical: 8,
-        marginBottom: 16,
     },
     customBtnText: { fontSize: 14, fontWeight: '600' },
     nameRow: {

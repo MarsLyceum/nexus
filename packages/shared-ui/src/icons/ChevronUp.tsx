@@ -4,7 +4,7 @@ import { ViewStyle } from 'react-native';
 
 import { useTheme } from '../theme';
 
-export const ChevronDown = ({
+export const ChevronUp = ({
     style,
     color,
     size = 18,
@@ -24,17 +24,17 @@ export const ChevronDown = ({
             fill="none"
             style={style}
         >
-            <G clipPath="url(#clip0_546_2)">
+            <G clipPath="url(#clip0_546_5)">
                 <Path
-                    d="M1.92 4.267L9 11.347l7.08-7.08a1.125 1.125 0 111.59 1.591l-7.874 7.875a1.125 1.125 0 01-1.591 0L.33 5.858a1.125 1.125 0 011.59-1.59z"
+                    d="M16.08 13.733L9 6.653l-7.08 7.08a1.125 1.125 0 11-1.59-1.591l7.874-7.875a1.125 1.125 0 011.591 0l7.875 7.875a1.125 1.125 0 01-1.59 1.591z"
                     fill={fillColor}
                 />
             </G>
             <Defs>
-                <ClipPath id="clip0_546_2">
+                <ClipPath id="clip0_546_5">
                     <Path
                         fill={fillColor}
-                        transform="rotate(-90 9 9)"
+                        transform="rotate(90 9 9)"
                         d="M0 0H18V18H0z"
                     />
                 </ClipPath>

@@ -74,8 +74,8 @@ export const DarkThemes: Theme[] = [
             // Use pure black for the shell, then very dark grays to separate layers
             AppBackground: '#000000',
             PrimaryBackground: '#050505',
-            SecondaryBackground: '#0A0A0A',
-            TertiaryBackground: '#151515',
+            SecondaryBackground: '#1a1a1a',
+            TertiaryBackground: '#262626',
 
             TextInput: '#121212', // nearly black input background
 

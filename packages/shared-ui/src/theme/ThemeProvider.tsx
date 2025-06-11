@@ -17,7 +17,7 @@ type ThemeContextValue = {
     setThemeByName: (name: string) => void;
 };
 
-const defaultTheme: Theme = { name: 'Default', colors: COLORS };
+const defaultTheme: Theme = { name: 'Nexus Original', colors: COLORS };
 
 export const ThemeContext = createContext<ThemeContextValue>({
     theme: defaultTheme,

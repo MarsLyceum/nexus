@@ -11,7 +11,7 @@ import {
 import { useTheme, themesByCategory, ColorKey } from '../theme';
 import { useScreenWidth } from '../hooks';
 import { ColorPicker, ActionButton } from '../small-components';
-import { ChevronDown, ChevronUp } from '../icons';
+import { CheckMark, ChevronDown, ChevronUp, Edit } from '../icons';
 
 // split CamelCase → Title Case
 function toTitleCase(key: string) {
@@ -157,13 +157,7 @@ export const ThemeScreen: React.FC = () => {
                                                 }))
                                             }
                                         >
-                                            <Text
-                                                style={{
-                                                    color: theme.colors.Primary,
-                                                }}
-                                            >
-                                                ✏️
-                                            </Text>
+                                            <Edit />
                                         </TouchableOpacity>
 
                                         {open[key] && (
@@ -282,14 +276,10 @@ export const ThemeScreen: React.FC = () => {
                                             },
                                         ]}
                                     >
-                                        <Text
-                                            style={[
-                                                styles.checkMark,
-                                                { color: theme.colors.Primary },
-                                            ]}
-                                        >
-                                            ✓
-                                        </Text>
+                                        <CheckMark
+                                            color={theme.colors.Primary}
+                                            size={14}
+                                        />
                                     </View>
                                 )}
                             </TouchableOpacity>
@@ -403,5 +393,4 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
-    checkMark: { fontSize: 11, fontWeight: 'bold', lineHeight: 18 },
 });

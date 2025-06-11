@@ -1,5 +1,7 @@
+// eslint-disable-next-line eslint-comments/disable-enable-pair
+/* eslint-disable max-lines */
 // src/components/ColorPicker.tsx
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
     View,
     Text,
@@ -7,21 +9,21 @@ import {
     StyleSheet,
     PanResponder,
     GestureResponderEvent,
-    PanResponderGestureState,
     LayoutChangeEvent,
 } from 'react-native';
+// @ts-expect-error gradient
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../theme';
 
-/** Helpers to convert between color spaces **/
 function hexToRgb(hex: string) {
-    const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(3, 5), 16);
-    const b = parseInt(hex.slice(5, 7), 16);
+    const r = Number.parseInt(hex.slice(1, 3), 16);
+    const g = Number.parseInt(hex.slice(3, 5), 16);
+    const b = Number.parseInt(hex.slice(5, 7), 16);
     return { r, g, b };
 }
 
 function rgbToHex(r: number, g: number, b: number) {
+    // eslint-disable-next-line unicorn/consistent-function-scoping
     const toHex = (v: number) => {
         const c = Math.max(0, Math.min(255, Math.round(v)));
         const h = c.toString(16);
@@ -57,11 +59,7 @@ function rgbToHsl(r: number, g: number, b: number) {
     const l = (max + min) / 2;
     if (max !== min) {
         const d = max - min;
-        if (l > 0.5) {
-            s = d / (2 - max - min);
-        } else {
-            s = d / (max + min);
-        }
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
         if (max === rr) {
             h = (gg - bb) / d + (gg < bb ? 6 : 0);
         } else if (max === gg) {
@@ -69,7 +67,7 @@ function rgbToHsl(r: number, g: number, b: number) {
         } else {
             h = (rr - gg) / d + 4;
         }
-        h = h / 6;
+        h /= 6;
     }
     return { h: h * 360, s, l };
 }
@@ -78,9 +76,9 @@ function hslToRgb(h: number, s: number, l: number) {
     const c = (1 - Math.abs(2 * l - 1)) * s;
     const hh = h / 60;
     const x = c * (1 - Math.abs((hh % 2) - 1));
-    let r1 = 0,
-        g1 = 0,
-        b1 = 0;
+    let r1 = 0;
+    let g1 = 0;
+    let b1 = 0;
     if (hh >= 0 && hh < 1) {
         r1 = c;
         g1 = x;
@@ -130,7 +128,7 @@ function hexToHsv(hex: string) {
         } else {
             h = (rr - gg) / d + 4;
         }
-        h = h / 6;
+        h /= 6;
     }
     const s = max === 0 ? 0 : d / max;
     const v = max;
@@ -141,9 +139,9 @@ function hsvToHex(h: number, s: number, v: number) {
     const hh = h / 60;
     const c = v * s;
     const x = c * (1 - Math.abs((hh % 2) - 1));
-    let r1 = 0,
-        g1 = 0,
-        b1 = 0;
+    let r1 = 0;
+    let g1 = 0;
+    let b1 = 0;
     if (hh >= 0 && hh < 1) {
         r1 = c;
         g1 = x;
@@ -206,26 +204,32 @@ export function ColorPicker({ color, onChange }: ColorPickerProps) {
     const [hueLayout, setHueLayout] = useState({ width: 0 });
 
     // SV drag
-    const handleSv = (evt: GestureResponderEvent) => {
-        const { locationX, locationY } = evt.nativeEvent;
-        const { width, height } = svLayout;
-        const newS = Math.max(0, Math.min(1, locationX / width));
-        const newV = Math.max(0, Math.min(1, 1 - locationY / height));
-        const newHex = hsvToHex(hsv.h, newS, newV);
-        setHsv({ h: hsv.h, s: newS, v: newV });
-        setHex(newHex);
-    };
+    const handleSv = useCallback(
+        (evt: GestureResponderEvent) => {
+            const { locationX, locationY } = evt.nativeEvent;
+            const { width, height } = svLayout;
+            const newS = Math.max(0, Math.min(1, locationX / width));
+            const newV = Math.max(0, Math.min(1, 1 - locationY / height));
+            const newHex = hsvToHex(hsv.h, newS, newV);
+            setHsv({ h: hsv.h, s: newS, v: newV });
+            setHex(newHex);
+        },
+        [hsv.h, svLayout]
+    );
 
     // Hue drag
-    const handleHue = (evt: GestureResponderEvent) => {
-        const { locationX } = evt.nativeEvent;
-        const { width } = hueLayout;
-        const pct = Math.max(0, Math.min(1, locationX / width));
-        const newH = pct * 360;
-        const newHex = hsvToHex(newH, hsv.s, hsv.v);
-        setHsv({ h: newH, s: hsv.s, v: hsv.v });
-        setHex(newHex);
-    };
+    const handleHue = useCallback(
+        (evt: GestureResponderEvent) => {
+            const { locationX } = evt.nativeEvent;
+            const { width } = hueLayout;
+            const pct = Math.max(0, Math.min(1, locationX / width));
+            const newH = pct * 360;
+            const newHex = hsvToHex(newH, hsv.s, hsv.v);
+            setHsv({ h: newH, s: hsv.s, v: hsv.v });
+            setHex(newHex);
+        },
+        [hsv.s, hsv.v, hueLayout]
+    );
 
     // PanResponders
     const svPan = useMemo(
@@ -268,7 +272,9 @@ export function ColorPicker({ color, onChange }: ColorPickerProps) {
     }
 
     function onRgbBlur(input: string) {
-        const parts = input.split(',').map((s) => parseInt(s.trim(), 10));
+        const parts = input
+            .split(',')
+            .map((s) => Number.parseInt(s.trim(), 10));
         if (parts.length === 3 && parts.every((v) => v >= 0 && v <= 255)) {
             const newHex = rgbToHex(parts[0], parts[1], parts[2]);
             setHex(newHex);
@@ -284,14 +290,14 @@ export function ColorPicker({ color, onChange }: ColorPickerProps) {
     function onCmykBlur(input: string) {
         const nums = input
             .split('%')
-            .map((s) => parseFloat(s.trim()))
-            .filter((v) => !isNaN(v));
+            .map((s) => Number.parseFloat(s.trim()))
+            .filter((v) => !Number.isNaN(v));
         if (nums.length === 4) {
             const nc = nums[0] / 100;
             const nm = nums[1] / 100;
             const ny = nums[2] / 100;
             const nk = nums[3] / 100;
-            const { r: nr, g: ng, b: nb } = hslToRgb(hsv.h, hsv.s, hsv.v); // fallback
+            hslToRgb(hsv.h, hsv.s, hsv.v); // fallback
             const rVal = Math.round((1 - nc) * (1 - nk) * 255);
             const gVal = Math.round((1 - nm) * (1 - nk) * 255);
             const bVal = Math.round((1 - ny) * (1 - nk) * 255);
@@ -308,9 +314,9 @@ export function ColorPicker({ color, onChange }: ColorPickerProps) {
 
     function onHsvBlur(input: string) {
         const parts = input
-            .replace(/[°%]/g, '')
+            .replaceAll(/[°%]/g, '')
             .split(',')
-            .map((s) => parseFloat(s.trim()));
+            .map((s) => Number.parseFloat(s.trim()));
         if (parts.length === 3) {
             const nh = parts[0];
             const ns = parts[1] / 100;
@@ -329,9 +335,9 @@ export function ColorPicker({ color, onChange }: ColorPickerProps) {
 
     function onHslBlur(input: string) {
         const parts = input
-            .replace(/[°%]/g, '')
+            .replaceAll(/[°%]/g, '')
             .split(',')
-            .map((s) => parseFloat(s.trim()));
+            .map((s) => Number.parseFloat(s.trim()));
         if (parts.length === 3) {
             const nh = parts[0];
             const ns = parts[1] / 100;
@@ -365,7 +371,7 @@ export function ColorPicker({ color, onChange }: ColorPickerProps) {
                     style={styles.svBox}
                     {...svPan.panHandlers}
                     onLayout={(e: LayoutChangeEvent) => {
-                        const { x, y, width, height } = e.nativeEvent.layout;
+                        const { width, height } = e.nativeEvent.layout;
 
                         setSvLayout({ width, height });
                     }}
@@ -401,7 +407,7 @@ export function ColorPicker({ color, onChange }: ColorPickerProps) {
                 style={styles.hueSlider}
                 {...huePan.panHandlers}
                 onLayout={(e) => {
-                    const { x, width } = e.nativeEvent.layout;
+                    const { width } = e.nativeEvent.layout;
                     setHueLayout({ width });
                 }}
             >

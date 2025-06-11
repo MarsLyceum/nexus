@@ -50,3 +50,4 @@ export * from './StatusManager';
 export * from './Tooltip';
 export * from './GifPlayer';
 export * from './ReplayButtonOverlay';
+export * from './ColorPicker';

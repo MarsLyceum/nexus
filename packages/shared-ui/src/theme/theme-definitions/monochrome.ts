@@ -23,7 +23,7 @@ export const Monochrome: Theme[] = [
             TextInput: '#4A1212',
             ActiveText: '#FFFFFF',
             MainText: '#F0F0F0',
-            InactiveText: '#989898', // Updated: Neutral grey
+            InactiveText: '#989898',
         },
     },
     {
@@ -40,24 +40,24 @@ export const Monochrome: Theme[] = [
             TextInput: '#663300',
             ActiveText: '#FFFFFF',
             MainText: '#EFEFEF',
-            InactiveText: '#989898', // Updated: Neutral grey
+            InactiveText: '#989898',
         },
     },
     {
         name: 'Yellow Glow',
         colors: {
             ...DefaultColors,
-            Primary: '#FFEE33',
+            Primary: '#ffea00',
             Secondary: '#E6C800',
             Tertiary: '#FFF5B2',
-            PrimaryBackground: '#6b5d01',
-            SecondaryBackground: '#968102',
-            TertiaryBackground: '#c2aa02',
-            AppBackground: '#332C00',
+            PrimaryBackground: '#a08d13',
+            SecondaryBackground: '#c8ab04',
+            TertiaryBackground: '#e2c803',
+            AppBackground: '#998200',
             TextInput: '#665800',
             ActiveText: '#000000',
             MainText: '#222222',
-            InactiveText: '#989898',
+            InactiveText: '#595959',
         },
     },
     {
@@ -74,7 +74,7 @@ export const Monochrome: Theme[] = [
             TextInput: '#284628',
             ActiveText: '#FFFFFF',
             MainText: '#DDFFDD',
-            InactiveText: '#989898', // Updated: Neutral grey
+            InactiveText: '#989898',
         },
     },
     {
@@ -91,7 +91,7 @@ export const Monochrome: Theme[] = [
             TextInput: '#265455',
             ActiveText: '#FFFFFF',
             MainText: '#E0FFFF',
-            InactiveText: '#989898', // Updated: Neutral grey
+            InactiveText: '#989898',
         },
     },
     {
@@ -108,7 +108,7 @@ export const Monochrome: Theme[] = [
             TextInput: '#24244D',
             ActiveText: '#FFFFFF',
             MainText: '#DEE8FF',
-            InactiveText: '#989898', // Updated: Neutral grey
+            InactiveText: '#989898',
         },
     },
 ];

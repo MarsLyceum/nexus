@@ -98,8 +98,6 @@ export const PostScreen: React.FC<PostScreenProps> = (props) => {
         [userData?.fetchUser?.username, userProp?.username]
     );
 
-    console.log('resolvedUsername:', resolvedUsername);
-
     const postData: FeedPost = useMemo(
         () => ({
             id: feedPost?.id ?? '',

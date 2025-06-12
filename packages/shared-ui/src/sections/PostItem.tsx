@@ -30,22 +30,12 @@ import { FeedPost } from '../types';
 
 export type PostItemProps = {
     post: FeedPost;
-    // id: string;
-    // username: string;
     group?: string;
-    // time: string;
-    // title: string;
-    // content: string;
-    // upvotes: number;
-    // commentsCount: number;
-    // flair?: string;
-    // thumbnail?: string;
     preview?: boolean;
     onBackPress?: () => void;
     onPress?: () => void;
     variant?: 'feed' | 'default' | 'details';
     shareUrl?: string;
-    // attachmentUrls?: string[];
 };
 
 function getUserAvatarUri(username: string, thumbnail?: string): string {
@@ -126,6 +116,7 @@ export const PostItem: React.FC<PostItemProps> = ({
         headerElement = (
             <Text style={styles.subText}>
                 {currentPost.username} • {currentPost.time}
+                {currentPost.edited ? ` • Edited` : ''}
             </Text>
         );
     } else if (variant === 'details') {
@@ -138,6 +129,7 @@ export const PostItem: React.FC<PostItemProps> = ({
                 <Text style={styles.groupText}>{group}</Text>
                 <Text style={styles.subText}>
                     {currentPost.username} • {currentPost.time}
+                    {currentPost.edited ? ` • Edited` : ''}
                 </Text>
             </View>
         );
@@ -148,6 +140,7 @@ export const PostItem: React.FC<PostItemProps> = ({
                 <Text style={styles.groupText}>{group}</Text>
                 <Text style={styles.subText}>
                     {currentPost.username} • {currentPost.time}
+                    {currentPost.edited ? ` • Edited` : ''}
                 </Text>
             </View>
         );

@@ -5,7 +5,6 @@ import {
     FlatList,
     StyleSheet,
     useWindowDimensions,
-    Platform,
     View,
     Text,
 } from 'react-native';
@@ -16,7 +15,6 @@ import { useAppSelector, RootState, UserType } from '../redux';
 import { FeedPost, Attachment, GroupChannel } from '../types';
 import { useFeedPosts, useCreatePost, useNexusRouter } from '../hooks';
 import { CreatePostModal, ActionButton } from '../small-components';
-import { detectEnvironment } from '../utils';
 import { Add } from '../icons';
 
 function createStyles(theme: Theme) {
@@ -121,9 +119,6 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
             attachments: postAttachments.map((att) => att.file),
         });
     };
-
-    // Determine if we're on desktop (web)
-    const isDesktop = Platform.OS === 'web' && width > 768;
 
     const SkeletonPostItem: React.FC = () => (
         <View style={styles.skeletonContainer}>

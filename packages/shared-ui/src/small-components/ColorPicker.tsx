@@ -11,7 +11,6 @@ import {
     GestureResponderEvent,
     LayoutChangeEvent,
 } from 'react-native';
-// @ts-expect-error gradient
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../theme';
 

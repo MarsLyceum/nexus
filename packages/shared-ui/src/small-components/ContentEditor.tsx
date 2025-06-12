@@ -130,16 +130,16 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
 
     const renderExpandedEditor = () => (
         <>
-            <Pressable
-                onPress={() => setUseMarkdown((prev) => !prev)}
+            <NexusButton
                 style={styles.toggleButton}
-            >
-                <Text style={styles.toggleButtonText}>
-                    {useMarkdown
+                label={
+                    useMarkdown
                         ? 'Switch to Rich Text Editor'
-                        : 'Switch to Markdown Editor'}
-                </Text>
-            </Pressable>
+                        : 'Switch to Markdown Editor'
+                }
+                onPress={() => setUseMarkdown((prev) => !prev)}
+                variant="text"
+            />
             <View style={styles.editorContainer}>
                 {useMarkdown ? (
                     <MarkdownEditor
@@ -321,15 +321,6 @@ function createStyles(theme: Theme) {
         },
         toggleButton: {
             alignSelf: 'flex-end',
-            marginBottom: 8,
-            paddingVertical: 4,
-            paddingHorizontal: 8,
-            borderRadius: 4,
-            backgroundColor: theme.colors.Primary,
-        },
-        toggleButtonText: {
-            color: theme.colors.ActiveText,
-            fontWeight: '600',
         },
         editorContainer: {
             marginBottom: 10,

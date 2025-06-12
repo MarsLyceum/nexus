@@ -83,11 +83,7 @@ export const PostScreen: React.FC<PostScreenProps> = (props) => {
 
     const feedPost: Post | undefined = postObj || data?.fetchPost;
     const computedUserId =
-        feedPost?.postedByUserId ||
-        feedPost?.username ||
-        data?.fetchPost?.postedByUserId ||
-        data?.fetchPost?.user ||
-        '';
+        feedPost?.postedByUserId || data?.fetchPost?.postedByUserId || '';
 
     // Fetch the user details if needed.
     const { data: userData } = useQuery(FETCH_USER_QUERY, {
@@ -97,10 +93,13 @@ export const PostScreen: React.FC<PostScreenProps> = (props) => {
 
     const rawTime = feedPost?.postedAt || feedPost?.time || '';
     const formattedTime = rawTime ? getRelativeTime(rawTime) : 'Unknown time';
-    const resolvedUsername =
-        userProp?.username || userData?.fetchUser?.username || 'Username';
+    const resolvedUsername = useMemo(
+        () => userProp?.username || userData?.fetchUser?.username || 'Username',
+        [userData?.fetchUser?.username, userProp?.username]
+    );
 
-    // Memoize postData to prevent unnecessary re-creations that could trigger an update loop.
+    console.log('resolvedUsername:', resolvedUsername);
+
     const postData: FeedPost = useMemo(
         () => ({
             id: feedPost?.id ?? '',
@@ -282,6 +281,7 @@ export const PostScreen: React.FC<PostScreenProps> = (props) => {
                         scrollEventThrottle={16}
                     >
                         <PostItem
+                            key={`${postData.id}-${postData.username}`}
                             post={postData}
                             onBackPress={() => {
                                 goBack();

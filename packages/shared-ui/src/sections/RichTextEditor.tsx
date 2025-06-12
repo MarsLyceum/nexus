@@ -11,10 +11,11 @@ export const RichTextEditor: React.FC<{
     onChange: (markdown: string) => void;
     onFocus?: () => void;
     showToolbar?: boolean;
+    showScrollbars?: boolean;
     width?: string;
     height?: string;
-    borderRadius?: string; // <-- new prop for border radius
-    backgroundColor?: string; // <-- new prop for editor background color
+    borderRadius?: string;
+    backgroundColor?: string;
     updateContent?: number;
 }> = ({
     placeholder = '',
@@ -24,9 +25,10 @@ export const RichTextEditor: React.FC<{
     showToolbar = true,
     height = '150px',
     width = '100%',
-    borderRadius = '20px', // <-- default value
+    borderRadius = '20px',
     backgroundColor: backgroundColorProp,
     updateContent = false,
+    showScrollbars = true,
 }) => {
     const { theme } = useTheme();
     const isWeb = Platform.OS === 'web';
@@ -35,16 +37,17 @@ export const RichTextEditor: React.FC<{
 
     const webSrcDoc = useMemo(
         () =>
-            getRichTextEditorHtml(
+            getRichTextEditorHtml({
                 theme,
                 backgroundColor,
                 placeholder,
                 initialContent,
                 showToolbar,
+                showScrollbars,
                 height,
                 width,
-                borderRadius
-            ),
+                borderRadius,
+            }),
         [
             placeholder,
             showToolbar,
@@ -53,22 +56,34 @@ export const RichTextEditor: React.FC<{
             borderRadius,
             backgroundColor,
             updateContent,
+            showScrollbars,
+            theme,
         ]
     );
 
     const mobileHtml = useMemo(
         () =>
-            getRichTextEditorHtml(
+            getRichTextEditorHtml({
                 theme,
                 backgroundColor,
                 placeholder,
                 initialContent,
                 showToolbar,
+                showScrollbars,
                 height,
                 width,
-                borderRadius // pass custom border radius
-            ),
-        [placeholder, showToolbar, height, width, borderRadius, backgroundColor]
+                borderRadius,
+            }),
+        [
+            placeholder,
+            showToolbar,
+            height,
+            width,
+            borderRadius,
+            backgroundColor,
+            showScrollbars,
+            theme,
+        ]
     );
 
     const iframeRef = useRef<HTMLIFrameElement>(null);

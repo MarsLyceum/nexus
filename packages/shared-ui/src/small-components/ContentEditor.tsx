@@ -293,6 +293,7 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
                     initialContent={value}
                     onChange={onChange}
                     showToolbar={false}
+                    showScrollbars={false}
                     height="40px"
                     onFocus={onExpand}
                     backgroundColor={editorBackgroundColor}

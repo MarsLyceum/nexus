@@ -134,6 +134,7 @@ export const RichTextAndMarkdownEditor: React.FC<
                     initialContent={value}
                     onChange={onChange}
                     showToolbar={false}
+                    showScrollbars={false}
                     height="40px"
                     onFocus={onExpand}
                     backgroundColor={editorBackgroundColor}

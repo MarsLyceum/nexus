@@ -47,16 +47,29 @@ const spoilerExtension = {
 
 marked.use({ extensions: [spoilerExtension] });
 
-export function getRichTextEditorHtml(
-    theme: Theme,
-    backgroundColorProp?: string,
-    placeholder: string = 'Start typing...',
-    initialContent: string = '',
-    showToolbar: boolean = true,
-    height: string = '80vh',
-    width: string = '100%',
-    borderRadius: string = '5px'
-): string {
+type GetRichTextEditorHtmlProps = {
+    theme: Theme;
+    backgroundColor?: string;
+    placeholder?: string;
+    initialContent?: string;
+    showToolbar?: boolean;
+    showScrollbars?: boolean;
+    height?: string;
+    width?: string;
+    borderRadius?: string;
+};
+
+export function getRichTextEditorHtml({
+    theme,
+    backgroundColor: backgroundColorProp,
+    placeholder = 'Start typing...',
+    initialContent = '',
+    showToolbar = true,
+    showScrollbars = true,
+    height = '80vh',
+    width = '100%',
+    borderRadius = '5px',
+}: GetRichTextEditorHtmlProps): string {
     const backgroundColor =
         backgroundColorProp ?? theme.colors.SecondaryBackground;
     const editorHeight = height;
@@ -84,6 +97,22 @@ export function getRichTextEditorHtml(
         font-family: 'Roboto', sans-serif !important;
         font-size: 14px !important;
       }
+        ${
+            !showScrollbars
+                ? `
+  html, body {
+    overflow: hidden !important;
+  }
+  .ql-editor {
+    -ms-overflow-style: none !important;    /* IE/Edge */
+    scrollbar-width: none !important;       /* Firefox */
+  }
+  .ql-editor::-webkit-scrollbar {
+    display: none !important;               /* Chrome/Safari */
+  }
+  `
+                : ''
+        }
       .quill-wrapper {
         border: 1px solid ${theme.colors.TextInput} !important;
         border-radius: ${borderRadius} !important;

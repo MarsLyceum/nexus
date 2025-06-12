@@ -16,7 +16,7 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#1F1524"
+      "backgroundColor": "#170925"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -31,7 +31,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#1F1524"
+        "backgroundColor": "#170925"
       },
       "package": "com.marslyceum.nexus",
       "permissions": [
@@ -41,8 +41,8 @@
     },
     "web": {
       "favicon": "./assets/favicon.png",
-      "backgroundColor": "#1F1524",
-      "themeColor": "#1F1524",
+      "backgroundColor": "#170925",
+      "themeColor": "#170925",
       "output": "single"
     },
     "extra": {

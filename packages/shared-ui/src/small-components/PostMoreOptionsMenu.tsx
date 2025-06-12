@@ -1,4 +1,4 @@
-// MoreOptionsMenu.tsx
+// PostMoreOptionsMenu.tsx
 import React, { useMemo } from 'react';
 import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
@@ -13,7 +13,7 @@ import { MiniModal } from './MiniModal';
    the correct coordinates for your actual SVGs. */
 
 // Example: Reply
-export const ReplyIcon = ({ theme }: { theme: Theme }) => (
+export const ReplyIconPost = ({ theme }: { theme: Theme }) => (
     <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
         <Path
             d="M2 12l8-7v4h6c3.31 0 6 2.69 6 6v5l-3.5-3.5c-.88-.88-2.06-1.4-3.5-1.4H10v4l-8-7z"
@@ -23,7 +23,7 @@ export const ReplyIcon = ({ theme }: { theme: Theme }) => (
 );
 
 // Example: Forward
-export const ForwardIcon = ({ theme }: { theme: Theme }) => (
+export const ForwardIconPost = ({ theme }: { theme: Theme }) => (
     <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
         <Path
             d="M22 12l-8 7v-4h-6c-3.31 0-6-2.69-6-6V4l3.5 3.5c.88.88 2.06 1.4 3.5 1.4h5v-4l8 7z"
@@ -33,7 +33,7 @@ export const ForwardIcon = ({ theme }: { theme: Theme }) => (
 );
 
 // Example: Thread
-export const ThreadIcon = ({ theme }: { theme: Theme }) => (
+export const ThreadIconPost = ({ theme }: { theme: Theme }) => (
     <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
         <Path
             d="M4 4h16v10H5.17L4 15.17V4zM2 2v16l4-4h14c1.1 0 2-.9 2-2V2H2z"
@@ -43,7 +43,7 @@ export const ThreadIcon = ({ theme }: { theme: Theme }) => (
 );
 
 // Example: Copy Text
-export const CopyTextIcon = ({ theme }: { theme: Theme }) => (
+export const CopyTextIconPost = ({ theme }: { theme: Theme }) => (
     <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
         <Path
             d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zM19 5H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2z"
@@ -53,7 +53,7 @@ export const CopyTextIcon = ({ theme }: { theme: Theme }) => (
 );
 
 // Example: Pin Message
-export const PinMessageIcon = ({ theme }: { theme: Theme }) => (
+export const PinMessageIconPost = ({ theme }: { theme: Theme }) => (
     <Svg width={18} height={18} viewBox="0 0 512 512" fill="none">
         <Path
             d="M128 128l256 0 0 128 64-64-128 128v64l-64-64-128 0 0-192z"
@@ -63,7 +63,7 @@ export const PinMessageIcon = ({ theme }: { theme: Theme }) => (
 );
 
 // Example: Mark Unread
-export const MarkUnreadIcon = ({ theme }: { theme: Theme }) => (
+export const MarkUnreadIconPost = ({ theme }: { theme: Theme }) => (
     <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
         <Path
             d="M18 8V6H2v12h14v-2H4V8h14zM20 4h-2v6l-2.5-2.5-1.42 1.42L18 13.84l4.5-4.92-1.42-1.4L20 10V4z"
@@ -73,7 +73,7 @@ export const MarkUnreadIcon = ({ theme }: { theme: Theme }) => (
 );
 
 // Example: Copy Message Link
-export const CopyLinkIcon = ({ theme }: { theme: Theme }) => (
+export const CopyLinkIconPost = ({ theme }: { theme: Theme }) => (
     <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
         <Path
             d="M3.9 12c0-1.16.94-2.1 2.1-2.1h4V8H6c-2.16 0-3.9 1.74-3.9 3.9v0c0 2.16 1.74 3.9 3.9 3.9h4v-1.9H6c-1.16 0-2.1-.94-2.1-2.1zm8.1 0v0c0-1.16.94-2.1 2.1-2.1h4V8h-4c-2.16 0-3.9 1.74-3.9 3.9v0c0 2.16 1.74 3.9 3.9 3.9h4v-1.9h-4c-1.16 0-2.1-.94-2.1-2.1z"
@@ -83,7 +83,7 @@ export const CopyLinkIcon = ({ theme }: { theme: Theme }) => (
 );
 
 /* We define this type to ensure we stay with TypeScript (not an interface). */
-export type MoreOptionsMenuProps = {
+export type PostMoreOptionsMenuProps = {
     visible: boolean;
     onClose: () => void;
     anchorPosition?: { x: number; y: number; width: number; height: number };
@@ -99,7 +99,7 @@ export type MoreOptionsMenuProps = {
     onDeleteMessage: () => void;
 };
 
-export function MoreOptionsMenu({
+export function PostMoreOptionsMenu({
     visible,
     onClose,
     anchorPosition,
@@ -113,7 +113,7 @@ export function MoreOptionsMenu({
     onMarkUnread,
     onCopyMessageLink,
     onDeleteMessage,
-}: MoreOptionsMenuProps) {
+}: PostMoreOptionsMenuProps) {
     const { theme } = useTheme();
     const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -143,13 +143,13 @@ export function MoreOptionsMenu({
 
                 {/* Reply */}
                 <TouchableOpacity style={styles.menuItem} onPress={onReply}>
-                    <ReplyIcon theme={theme} />
+                    <ReplyIconPost theme={theme} />
                     <Text style={styles.menuItemText}>Reply</Text>
                 </TouchableOpacity>
 
                 {/* Forward */}
                 <TouchableOpacity style={styles.menuItem} onPress={onForward}>
-                    <ForwardIcon theme={theme} />
+                    <ForwardIconPost theme={theme} />
                     <Text style={styles.menuItemText}>Forward</Text>
                 </TouchableOpacity>
 
@@ -158,13 +158,13 @@ export function MoreOptionsMenu({
                     style={styles.menuItem}
                     onPress={onCreateThread}
                 >
-                    <ThreadIcon theme={theme} />
+                    <ThreadIconPost theme={theme} />
                     <Text style={styles.menuItemText}>Create Thread</Text>
                 </TouchableOpacity>
 
                 {/* Copy Text */}
                 <TouchableOpacity style={styles.menuItem} onPress={onCopyText}>
-                    <CopyTextIcon theme={theme} />
+                    <CopyTextIconPost theme={theme} />
                     <Text style={styles.menuItemText}>Copy Text</Text>
                 </TouchableOpacity>
 
@@ -173,7 +173,7 @@ export function MoreOptionsMenu({
                     style={styles.menuItem}
                     onPress={onPinMessage}
                 >
-                    <PinMessageIcon theme={theme} />
+                    <PinMessageIconPost theme={theme} />
                     <Text style={styles.menuItemText}>Pin Message</Text>
                 </TouchableOpacity>
 
@@ -182,7 +182,7 @@ export function MoreOptionsMenu({
                     style={styles.menuItem}
                     onPress={onMarkUnread}
                 >
-                    <MarkUnreadIcon theme={theme} />
+                    <MarkUnreadIconPost theme={theme} />
                     <Text style={styles.menuItemText}>Mark Unread</Text>
                 </TouchableOpacity>
 
@@ -191,7 +191,7 @@ export function MoreOptionsMenu({
                     style={styles.menuItem}
                     onPress={onCopyMessageLink}
                 >
-                    <CopyLinkIcon theme={theme} />
+                    <CopyLinkIconPost theme={theme} />
                     <Text style={styles.menuItemText}>Copy Message Link</Text>
                 </TouchableOpacity>
 

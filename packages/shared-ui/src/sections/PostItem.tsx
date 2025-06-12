@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import {
     View,
     Text,
@@ -21,9 +21,10 @@ import {
     MarkdownRenderer,
     ActionButton,
     NexusImage,
+    PostMoreOptionsMenu,
 } from '../small-components';
 import { stripHtml, extractUrls } from '../utils';
-import { Share as ShareIcon } from '../icons';
+import { Share as ShareIcon, MoreHorizontal } from '../icons';
 
 function createStyles(theme: Theme) {
     return StyleSheet.create({
@@ -37,6 +38,10 @@ function createStyles(theme: Theme) {
             flexDirection: 'row',
             alignItems: 'center',
             marginBottom: 10,
+        },
+        moreButton: {
+            position: 'absolute',
+            right: 0,
         },
         backArrow: {
             marginRight: 10,
@@ -175,6 +180,16 @@ export const PostItem: React.FC<PostItemProps> = ({
     const [shareCount, setShareCount] = useState(0);
     const [modalVisible, setModalVisible] = useState(false);
     const [modalStartIndex, setModalStartIndex] = useState(0);
+    const [moreButtonAnchor, setMoreButtonAnchor] = useState<
+        | {
+              x: number;
+              y: number;
+              width: number;
+              height: number;
+          }
+        | undefined
+    >();
+    const moreButtonRef = useRef<View>(null);
 
     // New state to store the measured container width
     const [containerWidth, setContainerWidth] = useState<number>(0);
@@ -183,6 +198,7 @@ export const PostItem: React.FC<PostItemProps> = ({
     const onDownvote = () => setVoteCount((prev) => prev - 1);
     const { theme } = useTheme();
     const styles = useMemo(() => createStyles(theme), [theme]);
+    const [showMoreOptions, setShowMoreOptions] = useState(false);
 
     // Compute inner width based on measured container width with a fallback
     const innerWidth =
@@ -269,6 +285,10 @@ export const PostItem: React.FC<PostItemProps> = ({
         setModalVisible(true);
     };
 
+    function handleCloseMoreOptions() {
+        setShowMoreOptions(false);
+    }
+
     const attachmentsElement = attachmentUrls && attachmentUrls.length > 0 && (
         <AttachmentImageGallery
             attachmentUrls={attachmentUrls}
@@ -303,6 +323,34 @@ export const PostItem: React.FC<PostItemProps> = ({
                     }
                 />
                 {headerElement}
+                <View style={styles.moreButton} ref={moreButtonRef}>
+                    <ActionButton
+                        onPress={() => {
+                            if (moreButtonRef.current) {
+                                moreButtonRef.current.measureInWindow(
+                                    (
+                                        x: number,
+                                        y: number,
+                                        width: number,
+                                        height: number
+                                    ) => {
+                                        setMoreButtonAnchor({
+                                            x,
+                                            y,
+                                            width,
+                                            height,
+                                        });
+                                        setShowMoreOptions(true);
+                                    }
+                                );
+                            }
+                        }}
+                        transparent
+                        tooltipText="More"
+                    >
+                        <MoreHorizontal />
+                    </ActionButton>
+                </View>
             </View>
             <Text style={styles.postTitle}>{title}</Text>
             {flair && (
@@ -363,6 +411,21 @@ export const PostItem: React.FC<PostItemProps> = ({
                 attachments={attachmentUrls || []}
                 initialIndex={modalStartIndex}
                 onClose={() => setModalVisible(false)}
+            />
+            <PostMoreOptionsMenu
+                anchorPosition={moreButtonAnchor}
+                visible={showMoreOptions}
+                onClose={handleCloseMoreOptions}
+                onEdit={() => {}}
+                onReply={() => {}}
+                onForward={() => {}}
+                onCreateThread={() => {}}
+                onAddReaction={() => {}}
+                onCopyText={() => {}}
+                onPinMessage={() => {}}
+                onMarkUnread={() => {}}
+                onCopyMessageLink={() => {}}
+                onDeleteMessage={() => {}}
             />
         </>
     );

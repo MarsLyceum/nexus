@@ -26,7 +26,7 @@ import { useIsComputer } from '../hooks';
 
 import { MessageOptionsBottomSheet } from './MessageOptionsBottomSheet';
 import { MessageOptionsModal } from './MessageOptionsModal';
-import { MoreOptionsMenu } from './MoreOptionsMenu';
+import { MessageMoreOptionsMenu } from './MessageMoreOptionsMenu';
 import { DeleteMessageConfirmationModal } from './DeleteMessageConfirmationModal';
 import { NexusImage } from './NexusImage';
 
@@ -417,7 +417,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                             />
                         )}
 
-                        <MoreOptionsMenu
+                        <MessageMoreOptionsMenu
                             anchorPosition={moreButtonAnchor}
                             visible={showMoreOptions}
                             onClose={handleCloseMoreOptions}

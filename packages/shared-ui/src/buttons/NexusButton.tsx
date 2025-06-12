@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, Pressable, StyleSheet } from 'react-native';
+import { Text, Pressable, StyleSheet, ViewStyle } from 'react-native';
 import { useTheme } from '../theme';
 
 /**
@@ -29,14 +29,15 @@ function darkenColor(hexColor: string, amount: number): string {
 
 export type NexusButtonProps = {
     label: string;
-    onPress: () => void;
+    onPress?: () => void;
     /**
      * Variant determines the style:
      * - 'filled' shows a solid background (for Save).
      * - 'outline' shows a transparent background with a border (for Cancel).
      */
-    variant?: 'filled' | 'outline';
+    variant?: 'filled' | 'outline' | 'text';
     disabled?: boolean;
+    style?: ViewStyle | ViewStyle[];
 };
 
 /**
@@ -50,6 +51,7 @@ export const NexusButton: React.FC<NexusButtonProps> = ({
     onPress,
     variant = 'filled',
     disabled = false,
+    style,
 }) => {
     const { theme } = useTheme();
 
@@ -75,6 +77,14 @@ export const NexusButton: React.FC<NexusButtonProps> = ({
             return {
                 backgroundColor: bgColor,
                 borderColor: bgColor,
+                borderWidth: 2,
+                borderRadius: 12,
+            };
+        }
+        if (variant === 'text') {
+            return {
+                backgroundColor: 'transparent',
+                borderColor: 'transparent',
                 borderWidth: 2,
                 borderRadius: 12,
             };
@@ -109,6 +119,7 @@ export const NexusButton: React.FC<NexusButtonProps> = ({
             style={({ pressed }) => [
                 styles.nexusButtonBase,
                 getButtonStyles(pressed),
+                style,
             ]}
             disabled={disabled}
         >

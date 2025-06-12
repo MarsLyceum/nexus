@@ -271,11 +271,11 @@ function createStyles(theme: Theme) {
         },
         inputTextOverlay: {
             fontSize: 14,
-            color: theme.colors.ActiveText,
+            color: theme.colors.MainText,
             lineHeight: 20,
         },
         plainText: {
-            color: theme.colors.ActiveText,
+            color: theme.colors.MainText,
             fontFamily: 'Roboto_400Regular',
             fontSize: 14,
             lineHeight: 20,
@@ -292,33 +292,33 @@ function createStyles(theme: Theme) {
         },
         boldText: {
             fontWeight: 'bold',
-            color: theme.colors.ActiveText,
+            color: theme.colors.MainText,
             fontFamily: 'Roboto_700Bold',
         },
         italicText: {
             fontStyle: 'italic',
-            color: theme.colors.ActiveText,
+            color: theme.colors.MainText,
             fontFamily: 'Roboto_400Regular_Italic',
         },
         boldItalicText: {
             fontWeight: 'bold',
             fontStyle: 'italic',
-            color: theme.colors.ActiveText,
+            color: theme.colors.MainText,
             fontFamily: 'Roboto_700Bold_Italic',
         },
         underlineText: {
             textDecorationLine: 'underline',
-            color: theme.colors.ActiveText,
+            color: theme.colors.MainText,
             fontFamily: 'Roboto_400Regular',
         },
         strikethroughText: {
             textDecorationLine: 'line-through',
-            color: theme.colors.ActiveText,
+            color: theme.colors.MainText,
             fontFamily: 'Roboto_400Regular',
         },
         spoilerTextInline: {
             backgroundColor: 'grey',
-            color: theme.colors.ActiveText,
+            color: theme.colors.MainText,
             fontFamily: 'Roboto_400Regular',
         },
         blockquoteText: {
@@ -330,7 +330,7 @@ function createStyles(theme: Theme) {
             fontFamily: 'Roboto_400Regular',
         },
         listText: {
-            color: theme.colors.ActiveText,
+            color: theme.colors.MainText,
             fontFamily: 'Roboto_400Regular',
         },
         linkText: {
@@ -339,7 +339,7 @@ function createStyles(theme: Theme) {
             fontFamily: 'Roboto_400Regular',
         },
         imageText: {
-            color: '#f3a14e',
+            color: theme.colors.MainText,
             fontFamily: 'Roboto_400Regular',
         },
     });

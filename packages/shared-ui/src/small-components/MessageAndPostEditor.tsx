@@ -9,30 +9,32 @@ import {
     LayoutChangeEvent,
 } from 'react-native';
 
-import { extractUrls } from '../../utils';
-import { NexusButton } from '../../buttons';
-import { useTheme, Theme } from '../../theme';
-import { useIsComputer } from '../../hooks';
+import { extractUrls } from '../utils';
+import { NexusButton } from '../buttons';
+import { useTheme, Theme } from '../theme';
+import { useIsComputer } from '../hooks';
 
-import { MarkdownEditor } from '../MarkdownEditor';
-import { MarkdownRenderer } from '../MarkdownRenderer';
+import { MarkdownEditor } from './MarkdownEditor';
+import { MarkdownRenderer } from './MarkdownRenderer';
+import { RichTextAndMarkdownEditor } from './RichTextAndMarkdownEditor';
 
-export type MessageEditorProps = {
+export type MessageAndPostEditorProps = {
     initialContent: string;
     width: number;
     onChange: (newContent: string) => void;
     onSave: () => void;
     onCancel: () => void;
+    isPost?: boolean;
 };
 
-export const MessageEditor: React.FC<MessageEditorProps> = ({
+export const MessageAndPostEditor: React.FC<MessageAndPostEditorProps> = ({
     initialContent,
     width,
     onChange,
     onSave,
     onCancel,
+    isPost,
 }) => {
-    // Determine platform-specific behavior.
     const isComputer = useIsComputer();
 
     const [editedContent, setEditedContent] = useState(initialContent);
@@ -158,17 +160,30 @@ export const MessageEditor: React.FC<MessageEditorProps> = ({
                     <MarkdownRenderer text={editedContent} />
                 </View>
             )}
-            <MarkdownEditor
-                value={editedContent}
-                onChangeText={(text) => {
-                    setEditedContent(text);
-                    onChange(text);
-                }}
-                placeholder=""
-                width="100%"
-                height={`${Math.max(60, editorHeight)}px`}
-                onKeyDown={isComputer ? handleKeyDown : undefined}
-            />
+            {isPost ? (
+                <RichTextAndMarkdownEditor
+                    value={editedContent}
+                    onChange={(text) => {
+                        setEditedContent(text);
+                        onChange(text);
+                    }}
+                    placeholder=""
+                    editorBackgroundColor={theme.colors.PrimaryBackground}
+                    showFormattingToggle
+                />
+            ) : (
+                <MarkdownEditor
+                    value={editedContent}
+                    onChangeText={(text) => {
+                        setEditedContent(text);
+                        onChange(text);
+                    }}
+                    placeholder=""
+                    width="100%"
+                    height={`${Math.max(60, editorHeight)}px`}
+                    onKeyDown={isComputer ? handleKeyDown : undefined}
+                />
+            )}
             <View style={mobileStyles.mobileButtonContainer}>
                 <NexusButton
                     label="Cancel"

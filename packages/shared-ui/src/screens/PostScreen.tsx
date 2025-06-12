@@ -25,7 +25,7 @@ import {
 import { PostItem, CommentsManager } from '../sections';
 import { CreateContentButton } from '../buttons';
 import { getRelativeTime } from '../utils';
-import type { Post, PostData, User } from '../types';
+import type { Post, FeedPost, User } from '../types';
 import { CurrentCommentContext } from '../providers';
 import {
     SkeletonPostItem,
@@ -84,7 +84,7 @@ export const PostScreen: React.FC<PostScreenProps> = (props) => {
     const feedPost: Post | undefined = postObj || data?.fetchPost;
     const computedUserId =
         feedPost?.postedByUserId ||
-        feedPost?.user ||
+        feedPost?.username ||
         data?.fetchPost?.postedByUserId ||
         data?.fetchPost?.user ||
         '';
@@ -101,10 +101,10 @@ export const PostScreen: React.FC<PostScreenProps> = (props) => {
         userProp?.username || userData?.fetchUser?.username || 'Username';
 
     // Memoize postData to prevent unnecessary re-creations that could trigger an update loop.
-    const postData: PostData = useMemo(
+    const postData: FeedPost = useMemo(
         () => ({
             id: feedPost?.id ?? '',
-            user: resolvedUsername,
+            username: resolvedUsername,
             time: formattedTime,
             title: feedPost?.title ?? '',
             flair: feedPost?.flair || '',
@@ -112,8 +112,26 @@ export const PostScreen: React.FC<PostScreenProps> = (props) => {
             commentsCount: feedPost?.commentsCount ?? 0,
             content: feedPost?.content ?? '',
             attachmentUrls: feedPost?.attachmentUrls || [],
+            thumbnail:
+                feedPost?.thumbnail ||
+                `https://picsum.photos/seed/${resolvedUsername}/48`,
+            domain: feedPost?.domain ?? '',
+            shareCount: feedPost?.shareCount ?? 0,
         }),
-        [JSON.stringify(feedPost), resolvedUsername, formattedTime]
+        [
+            feedPost?.id,
+            feedPost?.title,
+            feedPost?.flair,
+            feedPost?.upvotes,
+            feedPost?.commentsCount,
+            feedPost?.content,
+            feedPost?.attachmentUrls,
+            feedPost?.thumbnail,
+            feedPost?.domain,
+            feedPost?.shareCount,
+            resolvedUsername,
+            formattedTime,
+        ]
     );
 
     const {
@@ -127,21 +145,21 @@ export const PostScreen: React.FC<PostScreenProps> = (props) => {
     // Wrap the update logic in a useCallback so that it only runs when dependencies change.
     const setPostContent = useCallback(() => {
         if (postData?.id) setPostId(postData.id);
-        if (postData?.user) setParentUser(postData.user);
+        if (postData?.username) setParentUser(postData.username);
         if (postData?.content) setParentContent(postData.content);
         if (feedPost?.postedAt) setParentDate(feedPost.postedAt);
         if (postData?.attachmentUrls) {
             setParentAttachmentUrls(postData.attachmentUrls);
         }
     }, [
-        postData?.id,
-        JSON.stringify(postData?.user),
-        postData?.content,
-        feedPost?.postedAt,
-        postData?.attachmentUrls,
+        postData.id,
+        postData.username,
+        postData.content,
+        postData.attachmentUrls,
         setPostId,
         setParentUser,
         setParentContent,
+        feedPost?.postedAt,
         setParentDate,
         setParentAttachmentUrls,
     ]);
@@ -264,15 +282,7 @@ export const PostScreen: React.FC<PostScreenProps> = (props) => {
                         scrollEventThrottle={16}
                     >
                         <PostItem
-                            id={postData.id}
-                            username={postData.user}
-                            time={postData.time}
-                            title={postData.title}
-                            content={postData.content}
-                            upvotes={postData.upvotes}
-                            commentsCount={postData.commentsCount}
-                            flair={postData.flair}
-                            attachmentUrls={postData.attachmentUrls}
+                            post={postData}
                             onBackPress={() => {
                                 goBack();
                             }}

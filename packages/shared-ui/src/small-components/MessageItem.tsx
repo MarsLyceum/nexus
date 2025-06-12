@@ -19,7 +19,8 @@ import {
 } from 'react-native-gesture-handler';
 
 import { useTheme, Theme } from '../theme';
-import { MessageContent, MessageEditor } from './message';
+import { MessageEditor } from './MessageEditor';
+import { MessageContent } from './MessageContent';
 import { formatDateForChat } from '../utils';
 import type { MessageWithAvatar, DirectMessageWithAvatar } from '../types';
 import { useIsComputer } from '../hooks';

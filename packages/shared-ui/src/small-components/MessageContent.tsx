@@ -1,17 +1,13 @@
 import React, { useState } from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { GestureDetector, NativeGesture } from 'react-native-gesture-handler';
-import { NexusImage } from '../NexusImage';
-import { LinkPreview } from '../LinkPreview';
-import { MarkdownRenderer } from '../MarkdownRenderer';
-import {
-    extractUrls,
-    isImageExtensionUrl,
-    computeMediaSize,
-} from '../../utils';
-import { useMediaTypes, useLinkPreview, useIsComputer } from '../../hooks';
-import { NexusVideo } from '../NexusVideo';
-import type { MessageWithAvatar, DirectMessageWithAvatar } from '../../types';
+import { NexusImage } from './NexusImage';
+import { LinkPreview } from './LinkPreview';
+import { MarkdownRenderer } from './MarkdownRenderer';
+import { extractUrls, isImageExtensionUrl, computeMediaSize } from '../utils';
+import { useMediaTypes, useLinkPreview, useIsComputer } from '../hooks';
+import { NexusVideo } from './NexusVideo';
+import type { MessageWithAvatar, DirectMessageWithAvatar } from '../types';
 
 export type MessageContentProps = {
     message: MessageWithAvatar | DirectMessageWithAvatar;

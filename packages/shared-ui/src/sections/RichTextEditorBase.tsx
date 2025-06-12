@@ -70,12 +70,19 @@ export function getRichTextEditorHtml(
     <title>Quill Editor Iframe</title>
     <!-- Quill CSS -->
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <!-- load Roboto 400 -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400&display=swap"
+      rel="stylesheet"
+    >
     <style>
-      html, body { 
+      html, body {
         margin: 0;
         padding: 0;
         height: ${editorHeight} !important;
         width: ${editorWidth} !important;
+        font-family: 'Roboto', sans-serif !important;
+        font-size: 14px !important;
       }
       .quill-wrapper {
         border: 1px solid ${theme.colors.TextInput} !important;
@@ -119,21 +126,24 @@ export function getRichTextEditorHtml(
         box-sizing: border-box;
         color: ${theme.colors.MainText} !important;
         overflow-y: auto;
+        font-family: 'Roboto', sans-serif !important;
+        font-size: 14px !important;
       }
-      .ql-editor.ql-blank::before { 
+      .ql-editor.ql-blank::before {
         color: ${theme.colors.MainText} !important;
+        font-style: normal !important;
       }
       .ql-toolbar button {
         color: ${theme.colors.MainText} !important;
       }
-      .ql-toolbar button svg { 
+      .ql-toolbar button svg {
         stroke: ${theme.colors.MainText} !important;
         fill: ${theme.colors.MainText} !important;
       }
-      .ql-stroke { 
+      .ql-stroke {
         stroke: ${theme.colors.MainText} !important;
       }
-      .ql-fill { 
+      .ql-fill {
         fill: ${theme.colors.MainText} !important;
       }
       .ql-toolbar button:hover svg,

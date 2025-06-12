@@ -44,16 +44,14 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
     width,
     height,
     backgroundColor,
-    onKeyDown, // Destructure onKeyDown here
+    onKeyDown,
     ...rest
 }) => {
     const { theme } = useTheme();
     const styles = useMemo(() => createStyles(theme), [theme]);
 
     const overlayScrollRef = useRef<ScrollView>(null);
-    // <-- Create a ref for the EmojiPicker
     const emojiPickerRef = useRef<EmojiPickerHandle>(null);
-    // <-- Add a ref for the TextInput
     const textInputRef = useRef<TextInput>(null);
 
     // Scroll syncing functions remain unchanged
@@ -205,7 +203,7 @@ function createStyles(theme: Theme) {
         },
         input: {
             flex: 1,
-            color: theme.colors.ActiveText,
+            color: theme.colors.MainText,
             fontSize: 14,
             fontFamily: 'Roboto_400Regular',
             textAlignVertical: 'top',

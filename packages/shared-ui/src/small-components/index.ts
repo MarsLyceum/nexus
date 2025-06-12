@@ -1,7 +1,7 @@
 // eslint-disable-next-line import/export
 export * from './image-modal';
-// eslint-disable-next-line import/export
-export * from './message';
+export * from './MessageContent';
+export * from './MessageEditor';
 export * from './ActionButton';
 export * from './BottomSheet';
 export * from './ChatInput';
@@ -52,3 +52,5 @@ export * from './GifPlayer';
 export * from './ReplayButtonOverlay';
 export * from './ColorPicker';
 export * from './PostMoreOptionsMenu';
+export * from './MessageAndPostEditor';
+export * from './RichTextAndMarkdownEditor';

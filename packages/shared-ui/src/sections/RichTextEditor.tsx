@@ -43,7 +43,7 @@ export const RichTextEditor: React.FC<{
                 showToolbar,
                 height,
                 width,
-                borderRadius // pass custom border radius
+                borderRadius
             ),
         [
             placeholder,

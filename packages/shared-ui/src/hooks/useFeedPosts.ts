@@ -17,7 +17,6 @@ export const useFeedPosts = (channelId?: string) => {
 
         const fetchPosts = async () => {
             try {
-                console.log('Starting to load feed:', new Date());
                 const { data } = await apolloClient.query<{
                     getFeedChannelPosts: FeedChannelPost[];
                 }>({
@@ -28,34 +27,36 @@ export const useFeedPosts = (channelId?: string) => {
                 const postsData = data.getFeedChannelPosts;
 
                 const posts: FeedPost[] = await Promise.all(
-                    postsData.map(async (msg) => {
+                    postsData.map(async (post) => {
                         let username: string;
-                        if (userCacheRef.current[msg.postedByUserId]) {
-                            username = userCacheRef.current[msg.postedByUserId];
+                        if (userCacheRef.current[post.postedByUserId]) {
+                            username =
+                                userCacheRef.current[post.postedByUserId];
                         } else {
                             const userResult = await apolloClient.query<{
                                 fetchUser: User;
                             }>({
                                 query: FETCH_USER_QUERY,
-                                variables: { userId: msg.postedByUserId },
+                                variables: { userId: post.postedByUserId },
                             });
                             username = userResult.data.fetchUser.username;
-                            userCacheRef.current[msg.postedByUserId] = username;
+                            userCacheRef.current[post.postedByUserId] =
+                                username;
                         }
                         return {
-                            id: msg.id,
-                            user: username,
-                            domain: msg.domain || '',
-                            title: msg.title,
-                            upvotes: msg.upvotes,
-                            commentsCount: msg.commentsCount,
-                            shareCount: msg.shareCount,
-                            content: msg.content,
-                            time: getRelativeTime(new Date(msg.postedAt)),
+                            id: post.id,
+                            username,
+                            domain: post.domain || '',
+                            title: post.title,
+                            upvotes: post.upvotes,
+                            commentsCount: post.commentsCount,
+                            shareCount: post.shareCount,
+                            content: post.content,
+                            time: getRelativeTime(new Date(post.postedAt)),
                             thumbnail:
-                                msg.thumbnail ||
+                                post.thumbnail ||
                                 `https://picsum.photos/seed/${username}/48`,
-                            attachmentUrls: msg.attachmentUrls,
+                            attachmentUrls: post.attachmentUrls,
                         } as FeedPost;
                     })
                 );

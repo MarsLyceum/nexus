@@ -170,14 +170,7 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
                     keyExtractor={(item: FeedPost) => item.id}
                     renderItem={({ item }: { item: FeedPost }) => (
                         <PostItem
-                            id={item.id}
-                            username={item.user}
-                            time={item.time}
-                            title={item.title}
-                            upvotes={item.upvotes}
-                            commentsCount={item.commentsCount}
-                            thumbnail={item.thumbnail}
-                            content={item.content}
+                            post={item}
                             preview
                             variant="feed"
                             onPress={() => {
@@ -187,7 +180,6 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
                                     { pathParams: ['id'] }
                                 );
                             }}
-                            attachmentUrls={item.attachmentUrls}
                         />
                     )}
                     contentContainerStyle={[styles.feedList]}

@@ -1,6 +1,7 @@
 export type FeedPost = {
     id: string;
-    user: string;
+    username: string;
+    group?: string;
     domain: string;
     title: string;
     upvotes: number;
@@ -10,11 +11,13 @@ export type FeedPost = {
     time: string;
     thumbnail: string;
     attachmentUrls?: string[];
+    flair?: string;
+    edited?: boolean;
 };
 
 export type Post = {
     id: string;
-    user?: string;
+    username?: string;
     time?: string;
     title: string;
     flair?: string;
@@ -24,16 +27,7 @@ export type Post = {
     postedByUserId?: string;
     postedAt?: string;
     attachmentUrls?: string[];
-};
-
-export type PostData = {
-    id: string;
-    user: string;
-    time: string;
-    title: string;
-    flair: string;
-    upvotes: number;
-    commentsCount: number;
-    content: string;
-    attachmentUrls: string[];
+    domain: string;
+    shareCount: number;
+    thumbnail: string;
 };

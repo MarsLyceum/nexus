@@ -19,8 +19,8 @@ import { GiphyModal } from './GiphyModal';
 import { useTheme, Theme } from '../theme';
 import { Tooltip } from './Tooltip';
 import { FormattingOptions } from '../icons';
+import { NexusButton } from '../buttons';
 
-// --- New imports for preview modal ---
 import { CustomPortalModal } from './CustomPortalModal';
 
 export type ContentEditorProps = {
@@ -208,7 +208,6 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
                     </Tooltip>
                 )}
             </View>
-            {/* --- Updated: Pass onAttachmentPress to AttachmentPreviews --- */}
             <AttachmentPreviews
                 attachments={attachments}
                 onAttachmentPress={(attachment: Attachment) => {
@@ -222,16 +221,16 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
                 <Text style={styles.errorMessage}>{errorMessage}</Text>
             ) : undefined}
             <View style={styles.buttonRow}>
-                {onCancel && (
-                    <Pressable style={styles.cancelButton} onPress={onCancel}>
-                        <Text style={styles.cancelButtonText}>Cancel</Text>
-                    </Pressable>
-                )}
-                <Pressable style={styles.submitButton} onPress={onSubmit}>
-                    <Text style={styles.submitButtonText}>
-                        {submitButtonText || 'Submit'}
-                    </Text>
-                </Pressable>
+                <NexusButton
+                    label="Cancel"
+                    onPress={onCancel}
+                    variant="outline"
+                />
+                <NexusButton
+                    label={submitButtonText || 'Submit'}
+                    onPress={onSubmit}
+                    variant="filled"
+                />
             </View>
             <GiphyModal
                 variant={giphyVariant}
@@ -370,8 +369,8 @@ function createStyles(theme: Theme) {
         },
         buttonRow: {
             flexDirection: 'row',
-            justifyContent: 'flex-end',
-            marginTop: 5,
+            justifyContent: 'space-around',
+            marginTop: 8,
         },
         cancelButton: {
             marginRight: 10,

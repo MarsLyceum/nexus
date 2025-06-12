@@ -13,27 +13,21 @@ import { SearchBox, PostItem } from '../sections';
 import { useSearchFilter, useNexusRouter } from '../hooks';
 import { SearchContext } from '../providers';
 import { ChevronDown } from '../icons';
+import { FeedPost } from '../types';
 
-type SearchResult = {
-    id: string;
-    group: string;
-    username: string;
-    time: string;
-    title: string;
-    upvotes: string;
-    comments: string;
-    attachmentUrls?: string[]; // <-- Added attachmentUrls field
-};
-
-const MOCK_RESULTS: SearchResult[] = [
+const MOCK_RESULTS: FeedPost[] = [
     {
         id: '1',
         group: 'r/gaming',
         username: 'gamer1',
         time: '1y',
         title: "I think it's time to slowly step away from PC gaming",
-        upvotes: '0',
-        comments: '275',
+        upvotes: 0,
+        commentsCount: 275,
+        domain: '',
+        shareCount: 0,
+        content: '',
+        thumbnail: `https://picsum.photos/seed/gamer1/48`,
     },
     {
         id: '2',
@@ -41,8 +35,12 @@ const MOCK_RESULTS: SearchResult[] = [
         username: 'dramaKing',
         time: '5y',
         title: '/r/pcgaming reacts to the /r/Games shutdown',
-        upvotes: '7.6k',
-        comments: '3.0k',
+        upvotes: 76_000,
+        commentsCount: 3000,
+        domain: '',
+        shareCount: 0,
+        content: '',
+        thumbnail: `https://picsum.photos/seed/dramaKing/48`,
     },
     {
         id: '3',
@@ -50,8 +48,12 @@ const MOCK_RESULTS: SearchResult[] = [
         username: 'elitegamer',
         time: '1y',
         title: 'Is pc gaming no longer affordable?',
-        upvotes: '2.0k',
-        comments: '1.6k',
+        upvotes: 2000,
+        commentsCount: 1600,
+        domain: '',
+        shareCount: 0,
+        content: '',
+        thumbnail: `https://picsum.photos/seed/elitegamer/48`,
     },
     {
         id: '4',
@@ -59,8 +61,12 @@ const MOCK_RESULTS: SearchResult[] = [
         username: 'pcfanatic',
         time: '7d',
         title: 'Hot take: PC gaming kinda sucks right now',
-        upvotes: '0',
-        comments: '59',
+        upvotes: 0,
+        commentsCount: 59,
+        domain: '',
+        shareCount: 0,
+        content: '',
+        thumbnail: `https://picsum.photos/seed/pcfanatic/48`,
     },
     {
         id: '5',
@@ -68,18 +74,14 @@ const MOCK_RESULTS: SearchResult[] = [
         username: 'techguru',
         time: '1y',
         title: 'When and why did PC gaming become so incredibly popular (again)?',
-        upvotes: '0',
-        comments: '78',
+        upvotes: 0,
+        commentsCount: 78,
+        domain: '',
+        shareCount: 0,
+        content: '',
+        thumbnail: `https://picsum.photos/seed/techguru/48`,
     },
 ];
-
-// Helper: Convert string counts (e.g., "7.6k") to numbers.
-const parseCount = (count: string): number => {
-    if (count.toLowerCase().endsWith('k')) {
-        return Math.round(Number.parseFloat(count) * 1000);
-    }
-    return Number.parseInt(count, 10);
-};
 
 export const SearchScreen = () => {
     const { searchText, setSearchText } = useContext(SearchContext);
@@ -87,7 +89,7 @@ export const SearchScreen = () => {
     const { theme } = useTheme();
     const styles = useMemo(() => createStyles(theme), [theme]);
 
-    const filteredResults = useSearchFilter<SearchResult>(
+    const filteredResults = useSearchFilter<FeedPost>(
         MOCK_RESULTS,
         searchText,
         ['title', 'group', 'username']
@@ -129,22 +131,14 @@ export const SearchScreen = () => {
             <ScrollView style={styles.resultsContainer}>
                 {filteredResults.map((item) => (
                     <PostItem
-                        id={item.id}
                         key={item.id}
-                        username={item.username}
-                        group={item.group}
-                        time={item.time}
-                        title={item.title}
-                        content="" // No additional content for search results.
-                        upvotes={parseCount(item.upvotes)}
-                        commentsCount={parseCount(item.comments)}
+                        post={item}
                         preview
                         variant="default" // Use default variant: shows group & username with group avatar.
                         onPress={() => {
                             // Consider logging user interaction in production
                             console.log('Tapped:', item.title);
                         }}
-                        attachmentUrls={item.attachmentUrls || []} // <-- Pass attachments (or an empty array)
                     />
                 ))}
 

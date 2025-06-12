@@ -104,7 +104,7 @@ function createStyles(theme: Theme) {
         },
         activeInputWrapper: {
             borderWidth: 1,
-            borderColor: theme.colors.ActiveText,
+            borderColor: theme.colors.MainText,
         },
         inputTextOverlay: {
             position: 'absolute',
@@ -112,7 +112,7 @@ function createStyles(theme: Theme) {
             left: 0,
             right: 0,
             fontSize: 14,
-            color: theme.colors.ActiveText,
+            color: theme.colors.MainText,
             lineHeight: 20,
             fontFamily: 'Roboto_400Regular',
             zIndex: 1,

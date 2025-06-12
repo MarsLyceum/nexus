@@ -10,7 +10,7 @@ import {
 
 import { useTheme, Theme } from '../theme';
 import { MessageWithAvatar, DirectMessageWithAvatar } from '../types';
-import { MessageContent } from './message';
+import { MessageContent } from './MessageContent';
 import { formatDateForChat } from '../utils';
 
 import { NexusImage } from './NexusImage'; // So we can show the avatar

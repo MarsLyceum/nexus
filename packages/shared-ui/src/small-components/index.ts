@@ -7,7 +7,6 @@ export * from './ChatInput';
 export * from './ChatInputContainer';
 export * from './CommentEditor';
 export * from './ConfirmRemoveFriendModal';
-export * from './ContentCreator';
 export * from './ConversationItem';
 export * from './ConversationSkeleton';
 export * from './CreateEventCommentModal';

@@ -1,6 +1,13 @@
 // ContentCreator.tsx
-import React, { useState, useMemo } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import React, { useState, useMemo, useEffect } from 'react';
+import {
+    View,
+    Text,
+    Pressable,
+    StyleSheet,
+    NativeSyntheticEvent,
+    TextInputContentSizeChangeEventData,
+} from 'react-native';
 
 import { MarkdownEditor } from './MarkdownEditor';
 import { RichTextEditor } from '../sections/RichTextEditor';
@@ -12,6 +19,7 @@ import { NexusButton } from '../buttons';
 export type RichTextAndMarkdownEditorProps = {
     value: string;
     onChange: (text: string) => void;
+    useRichTextEditor?: boolean;
     placeholder: string;
     errorMessage?: string;
     isExpanded?: boolean;
@@ -19,11 +27,19 @@ export type RichTextAndMarkdownEditorProps = {
     editorBackgroundColor?: string;
     showFormattingToggle?: boolean;
     updateContent?: number;
+    showToolbar?: boolean;
+    height?: string;
+    onContentSizeChange?: (
+        e: NativeSyntheticEvent<TextInputContentSizeChangeEventData>
+    ) => void;
+    expandedHeight?: number;
+    collapsedHeight?: number;
 };
 
 export const RichTextAndMarkdownEditor: React.FC<
     RichTextAndMarkdownEditorProps
 > = ({
+    useRichTextEditor = false,
     value,
     onChange,
     placeholder,
@@ -33,6 +49,10 @@ export const RichTextAndMarkdownEditor: React.FC<
     editorBackgroundColor: editorBackgroundColorProp,
     showFormattingToggle = false,
     updateContent,
+    height,
+    onContentSizeChange,
+    expandedHeight,
+    collapsedHeight,
 }) => {
     const { theme } = useTheme();
     const styles = useMemo(() => createStyles(theme), [theme]);
@@ -40,47 +60,34 @@ export const RichTextAndMarkdownEditor: React.FC<
     const editorBackgroundColor =
         editorBackgroundColorProp ?? theme.colors.PrimaryBackground;
 
-    const [useMarkdown, setUseMarkdown] = useState(false);
+    const [useMarkdown, setUseMarkdown] = useState(!useRichTextEditor);
     const [showFormattingOptions, setShowFormattingOptions] = useState(false);
+    const [measuredHeightIncludingToolbar, setMeasuredHeightIncludingToolbar] =
+        useState(height ?? `${collapsedHeight ?? 40}px`);
+
+    useEffect(() => {
+        if (showFormattingOptions && !useMarkdown && isExpanded && height) {
+            const TOOLBAR_HEIGHT = showFormattingToggle ? 40 : 0;
+            const parsedHeight = Number.parseInt(height, 10);
+            setMeasuredHeightIncludingToolbar(
+                `${TOOLBAR_HEIGHT + parsedHeight}px`
+            );
+        } else {
+            setMeasuredHeightIncludingToolbar(
+                height ?? `${collapsedHeight ?? 40}px`
+            );
+        }
+    }, [
+        height,
+        isExpanded,
+        showFormattingOptions,
+        showFormattingToggle,
+        useMarkdown,
+    ]);
 
     const renderExpandedEditor = () => (
         <>
-            <NexusButton
-                style={styles.toggleButton}
-                label={
-                    useMarkdown
-                        ? 'Switch to Rich Text Editor'
-                        : 'Switch to Markdown Editor'
-                }
-                onPress={() => setUseMarkdown((prev) => !prev)}
-                variant="text"
-            />
-            <View style={styles.editorContainer}>
-                {useMarkdown ? (
-                    <MarkdownEditor
-                        placeholder={placeholder}
-                        value={value}
-                        onChangeText={onChange}
-                        height="150px"
-                        backgroundColor={editorBackgroundColor}
-                    />
-                ) : (
-                    <RichTextEditor
-                        placeholder={placeholder}
-                        initialContent={value}
-                        onChange={onChange}
-                        height="150px"
-                        backgroundColor={editorBackgroundColor}
-                        {...(updateContent !== undefined
-                            ? { updateContent }
-                            : {})}
-                        {...(showFormattingToggle
-                            ? { showToolbar: showFormattingOptions }
-                            : {})}
-                    />
-                )}
-            </View>
-            <View style={styles.formatAndAttachContainer}>
+            <View style={styles.formatContainer}>
                 {!useMarkdown && showFormattingToggle && (
                     <Tooltip
                         text={
@@ -109,6 +116,52 @@ export const RichTextAndMarkdownEditor: React.FC<
                         </Pressable>
                     </Tooltip>
                 )}
+                {useRichTextEditor && (
+                    <NexusButton
+                        style={styles.toggleButton}
+                        label={
+                            useMarkdown
+                                ? 'Switch to Rich Text Editor'
+                                : 'Switch to Markdown Editor'
+                        }
+                        onPress={() => setUseMarkdown((prev) => !prev)}
+                        variant="text"
+                    />
+                )}
+            </View>
+            <View style={styles.editorContainer}>
+                {useMarkdown ? (
+                    <MarkdownEditor
+                        placeholder={placeholder}
+                        value={value}
+                        onChangeText={onChange}
+                        height={
+                            expandedHeight
+                                ? `${expandedHeight}px`
+                                : measuredHeightIncludingToolbar
+                        }
+                        backgroundColor={editorBackgroundColor}
+                        onContentSizeChange={onContentSizeChange}
+                    />
+                ) : (
+                    <RichTextEditor
+                        placeholder={placeholder}
+                        initialContent={value}
+                        onChange={onChange}
+                        height={
+                            expandedHeight
+                                ? `${expandedHeight}px`
+                                : measuredHeightIncludingToolbar
+                        }
+                        backgroundColor={editorBackgroundColor}
+                        {...(updateContent !== undefined
+                            ? { updateContent }
+                            : {})}
+                        {...(showFormattingToggle
+                            ? { showToolbar: showFormattingOptions }
+                            : {})}
+                    />
+                )}
             </View>
             {errorMessage ? (
                 <Text style={styles.errorMessage}>{errorMessage}</Text>
@@ -123,10 +176,11 @@ export const RichTextAndMarkdownEditor: React.FC<
                     placeholder={placeholder}
                     value={value}
                     onChangeText={onChange}
-                    height="40px"
+                    height={`${collapsedHeight ?? 40}px`}
                     editable
                     onFocus={onExpand}
                     backgroundColor={editorBackgroundColor}
+                    onContentSizeChange={onContentSizeChange}
                 />
             ) : (
                 <RichTextEditor
@@ -135,7 +189,7 @@ export const RichTextAndMarkdownEditor: React.FC<
                     onChange={onChange}
                     showToolbar={false}
                     showScrollbars={false}
-                    height="40px"
+                    height={`${collapsedHeight ?? 40}px`}
                     onFocus={onExpand}
                     backgroundColor={editorBackgroundColor}
                 />
@@ -166,10 +220,9 @@ function createStyles(theme: Theme) {
         editorContainer: {
             marginBottom: 10,
         },
-        formatAndAttachContainer: {
+        formatContainer: {
+            alignSelf: 'flex-end',
             flexDirection: 'row',
-            alignItems: 'center',
-            marginBottom: 10,
         },
         formatToggleButton: {
             marginLeft: 10,

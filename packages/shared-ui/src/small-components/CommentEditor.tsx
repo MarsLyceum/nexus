@@ -1,13 +1,13 @@
 // CommentEditor.tsx
 import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Dimensions } from 'react-native';
 
 import { useAppSelector, RootState, UserType } from '../redux';
 import { useTheme } from '../theme';
 import { Attachment } from '../types';
 import { useCreateComment } from '../hooks';
 
-import { ContentCreator } from './ContentCreator';
+import { ContentEditor } from './ContentEditor';
 
 export type CommentEditorProps = {
     postId: string;
@@ -68,6 +68,7 @@ export const CommentEditor: React.FC<CommentEditorProps> = ({
     };
 
     const handleExpand = () => {
+        console.log('expanding');
         setIsExpanded(true);
     };
 
@@ -81,8 +82,13 @@ export const CommentEditor: React.FC<CommentEditorProps> = ({
 
     return (
         <View style={styles.container}>
-            <ContentCreator
+            <ContentEditor
+                useRichTextEditor
+                showImageButton
+                showGifButton
+                editMode={false}
                 value={newCommentContent}
+                width={Dimensions.get('window').width}
                 onChange={(text) => {
                     setNewCommentContent(text);
                     if (errorMessage) setErrorMessage('');

@@ -1,8 +1,24 @@
-import React, { useEffect, useMemo, useRef } from 'react';
-import { View, StyleSheet, Platform, Pressable } from 'react-native';
+import React, {
+    useEffect,
+    useMemo,
+    useRef,
+    useLayoutEffect,
+    useCallback,
+} from 'react';
+import {
+    View,
+    StyleSheet,
+    Platform,
+    Pressable,
+    NativeSyntheticEvent,
+    TextInputContentSizeChangeEventData,
+} from 'react-native';
 import { WebView } from 'react-native-webview';
 import { getRichTextEditorHtml } from './RichTextEditorBase';
-import { convertDeltaToMarkdownWithFencesAndFormatting } from '../utils';
+import {
+    convertDeltaToMarkdownWithFencesAndFormatting,
+    getSafeWindow,
+} from '../utils';
 import { useTheme } from '../theme';
 
 export const RichTextEditor: React.FC<{
@@ -17,6 +33,9 @@ export const RichTextEditor: React.FC<{
     borderRadius?: string;
     backgroundColor?: string;
     updateContent?: number;
+    onContentSizeChange?: (
+        e: NativeSyntheticEvent<TextInputContentSizeChangeEventData>
+    ) => void;
 }> = ({
     placeholder = '',
     initialContent = '',
@@ -29,11 +48,13 @@ export const RichTextEditor: React.FC<{
     backgroundColor: backgroundColorProp,
     updateContent = false,
     showScrollbars = true,
+    onContentSizeChange,
 }) => {
     const { theme } = useTheme();
     const isWeb = Platform.OS === 'web';
     const backgroundColor =
         backgroundColorProp ?? theme.colors.PrimaryBackground;
+    const lastHeightRef = useRef<number>(0);
 
     const webSrcDoc = useMemo(
         () =>
@@ -88,58 +109,65 @@ export const RichTextEditor: React.FC<{
 
     const iframeRef = useRef<HTMLIFrameElement>(null);
 
-    useEffect(() => {
-        if (!isWeb) return;
-        const messageHandler = (event: MessageEvent) => {
-            if (event.data && typeof event.data === 'string') {
-                try {
-                    const parsed = JSON.parse(event.data);
-                    if (parsed.type === 'iframe-init') {
-                        console.log(parsed.message);
-                        return;
-                    }
-                    if (parsed.type === 'focus') {
-                        if (onFocus) onFocus();
-                        return;
-                    }
-                    if (parsed.type === 'text-change') {
-                        const { delta } = parsed;
-                        const markdown =
-                            convertDeltaToMarkdownWithFencesAndFormatting(
-                                delta.ops
-                            );
-                        onChange(markdown);
-                    }
-                } catch (error) {
-                    console.error('Failed to parse message:', error);
+    const handleMessage = useCallback(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (event: any) => {
+            const { data } = event.nativeEvent ?? event;
+            try {
+                const parsed = JSON.parse(data);
+                // if (parsed.type === 'iframe-init') {
+                //     console.log(parsed.message);
+                //     return;
+                // }
+                if (parsed.type === 'focus') {
+                    // bubbles up to your parent’s onExpand
+                    onFocus?.();
+                    return;
                 }
-            }
-        };
-        window.addEventListener('message', messageHandler);
-        // eslint-disable-next-line consistent-return
-        return () => window.removeEventListener('message', messageHandler);
-    }, [isWeb, onChange, onFocus]);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const handleMessage = (event: any) => {
-        const { data } = event.nativeEvent;
-        try {
-            const parsed = JSON.parse(data);
-            if (parsed.type === 'iframe-init') {
-                console.log(parsed.message);
-                return;
+                if (parsed.type === 'text-change') {
+                    const { delta } = parsed;
+                    const markdown =
+                        convertDeltaToMarkdownWithFencesAndFormatting(
+                            delta.ops
+                        );
+                    onChange(markdown);
+                }
+                if (parsed.type === 'content-height' && onContentSizeChange) {
+                    const { height: contentHeight } = parsed;
+
+                    if (
+                        contentHeight > 0 &&
+                        contentHeight !== lastHeightRef.current
+                    ) {
+                        lastHeightRef.current = contentHeight;
+                        onContentSizeChange({
+                            nativeEvent: {
+                                contentSize: {
+                                    height: contentHeight,
+                                    width: Number.parseInt(width, 10),
+                                },
+                            },
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        } as any);
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to parse message from Quill:', error);
             }
-            if (parsed.type === 'text-change') {
-                const { delta } = parsed;
-                const markdown = convertDeltaToMarkdownWithFencesAndFormatting(
-                    delta.ops
-                );
-                onChange(markdown);
-            }
-        } catch (error) {
-            console.error('Failed to parse message from WebView:', error);
+        },
+        [onChange, onContentSizeChange, width]
+    );
+
+    // eslint-disable-next-line consistent-return
+    useLayoutEffect(() => {
+        const safeWindow = getSafeWindow();
+        if (Platform.OS === 'web' && safeWindow) {
+            safeWindow.addEventListener('message', handleMessage);
+            return () =>
+                safeWindow.removeEventListener('message', handleMessage);
         }
-    };
+    }, [handleMessage]);
 
     if (isWeb) {
         return (

@@ -8,6 +8,7 @@ import {
     SafeAreaView,
     ScrollView,
     TouchableOpacity,
+    Dimensions,
 } from 'react-native';
 
 import { NexusImage } from './NexusImage';
@@ -15,7 +16,7 @@ import { useTheme, Theme } from '../theme';
 import { AttachmentPreviews } from '../sections/AttachmentPreviews';
 import { Attachment } from '../types';
 import { CustomPortalModal } from './CustomPortalModal';
-import { ContentCreator } from './ContentCreator';
+import { ContentEditor } from './ContentEditor';
 
 type CreatePostModalProps = {
     modalVisible: boolean;
@@ -52,7 +53,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
     setAttachments,
     enableImageAttachments = false,
 }) => {
-    // These states are used only when not using the ContentCreator.
+    // These states are used only when not using the ContentEditor.
     const [previewModalVisible, setPreviewModalVisible] = useState(false);
     const [selectedAttachment, setSelectedAttachment] = useState<
         Attachment | undefined
@@ -94,7 +95,13 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
                         />
                         {/* Second field: Content */}
                         {multilineSecondField ? (
-                            <ContentCreator
+                            <ContentEditor
+                                useRichTextEditor
+                                showImageButton
+                                showGifButton
+                                editMode={false}
+                                width={Dimensions.get('window').width}
+                                height={150}
                                 value={secondContentText}
                                 onChange={setSecondContentText}
                                 placeholder={placeholderText2}
@@ -104,7 +111,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
                                 onCancel={() => setModalVisible(false)}
                                 submitButtonText="Create"
                                 editorBackgroundColor={
-                                    theme.colors.PrimaryBackground
+                                    theme.colors.SecondaryBackground
                                 }
                                 giphyVariant="download"
                                 showFormattingToggle
@@ -125,11 +132,11 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
 
                         {enableImageAttachments && !multilineSecondField && (
                             <View style={styles.buttonRow}>
-                                {/* Attachments are handled here only when not using ContentCreator */}
+                                {/* Attachments are handled here only when not using ContentEditor */}
                             </View>
                         )}
 
-                        {/* --- Conditionally render attachment previews only when NOT using ContentCreator --- */}
+                        {/* --- Conditionally render attachment previews only when NOT using ContentEditor --- */}
                         {!multilineSecondField && (
                             <>
                                 <AttachmentPreviews

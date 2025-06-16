@@ -138,7 +138,7 @@ export function PostMoreOptionsMenu({
                 {/* Edit Message */}
                 <TouchableOpacity style={styles.menuItem} onPress={onEdit}>
                     <Edit />
-                    <Text style={styles.menuItemText}>Edit Message</Text>
+                    <Text style={styles.menuItemText}>Edit Post</Text>
                 </TouchableOpacity>
 
                 {/* Reply */}

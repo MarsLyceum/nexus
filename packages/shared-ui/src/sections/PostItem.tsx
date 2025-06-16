@@ -3,7 +3,7 @@ import {
     View,
     Text,
     StyleSheet,
-    TouchableOpacity,
+    Pressable,
     Share,
     Platform,
     Alert,
@@ -23,7 +23,6 @@ import {
     NexusImage,
     PostMoreOptionsMenu,
     ContentEditor,
-    MarkdownTextInput,
 } from '../small-components';
 import { stripHtml, extractUrls } from '../utils';
 import { Share as ShareIcon, MoreHorizontal } from '../icons';
@@ -253,24 +252,29 @@ export const PostItem: React.FC<PostItemProps> = ({
                 <View style={styles.moreButton} ref={moreButtonRef}>
                     <ActionButton
                         onPress={() => {
-                            if (moreButtonRef.current) {
-                                moreButtonRef.current.measureInWindow(
-                                    (
-                                        x: number,
-                                        y: number,
-                                        width: number,
-                                        height: number
-                                    ) => {
-                                        setMoreButtonAnchor({
-                                            x,
-                                            y,
-                                            width,
-                                            height,
-                                        });
-                                        setShowMoreOptions(true);
-                                    }
-                                );
-                            }
+                            // measure right now, then open
+                            moreButtonRef.current?.measureInWindow(
+                                (
+                                    x: number,
+                                    y: number,
+                                    width: number,
+                                    height: number
+                                ) => {
+                                    setMoreButtonAnchor({
+                                        x,
+                                        y,
+                                        width,
+                                        height,
+                                    });
+                                    setShowMoreOptions(true);
+                                    console.log('measured & opening at', {
+                                        x,
+                                        y,
+                                        width,
+                                        height,
+                                    });
+                                }
+                            );
                         }}
                         transparent
                         tooltipText="More"
@@ -284,10 +288,10 @@ export const PostItem: React.FC<PostItemProps> = ({
             </View>
             <View style={isEditing ? styles.visible : styles.hidden}>
                 <ContentEditor
-                    initialContent={editedTitle}
+                    value={editedTitle}
                     width={innerWidth}
                     onChange={setEditedTitle}
-                    onSave={handleSaveEdit}
+                    onSubmit={handleSaveEdit}
                     onCancel={handleCancelEdit}
                     showButtonsEditButtons={false}
                 />
@@ -316,12 +320,13 @@ export const PostItem: React.FC<PostItemProps> = ({
                     ))}
                     <View style={isEditing ? styles.visible : styles.hidden}>
                         <ContentEditor
-                            initialContent={editedContent}
+                            value={editedContent}
                             width={innerWidth}
                             onChange={setEditedContent}
-                            onSave={handleSaveEdit}
+                            onSubmit={handleSaveEdit}
                             onCancel={handleCancelEdit}
                             useRichTextEditor
+                            submitButtonText="Save"
                         />
                     </View>
                 </>
@@ -354,9 +359,7 @@ export const PostItem: React.FC<PostItemProps> = ({
     return (
         <>
             {onPress ? (
-                <TouchableOpacity onPress={onPress}>
-                    {contentElement}
-                </TouchableOpacity>
+                <Pressable onPress={onPress}>{contentElement}</Pressable>
             ) : (
                 contentElement
             )}

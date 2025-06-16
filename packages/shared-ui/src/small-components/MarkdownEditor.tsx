@@ -15,8 +15,8 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
     style,
     width = '100%',
     height = '250px',
-    onFocus, // Destructure onFocus from props
-    onBlur, // Destructure onBlur from props
+    onFocus,
+    onBlur,
     ...rest
 }) => {
     // State to track focus.

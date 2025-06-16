@@ -332,11 +332,12 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                                 ]}
                             >
                                 <ContentEditor
-                                    initialContent={editedContent}
+                                    value={editedContent}
                                     width={width}
                                     onChange={setEditedContent}
-                                    onSave={handleSaveEdit}
+                                    onSubmit={handleSaveEdit}
                                     onCancel={handleCancelEdit}
+                                    submitButtonText="Save"
                                 />
 
                                 {/* Link previews with live updates */}

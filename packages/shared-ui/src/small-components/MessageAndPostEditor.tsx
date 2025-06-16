@@ -25,6 +25,7 @@ export type MessageAndPostEditorProps = {
     onSave: () => void;
     onCancel: () => void;
     isPost?: boolean;
+    showButtons?: boolean;
 };
 
 export const MessageAndPostEditor: React.FC<MessageAndPostEditorProps> = ({
@@ -34,6 +35,7 @@ export const MessageAndPostEditor: React.FC<MessageAndPostEditorProps> = ({
     onSave,
     onCancel,
     isPost,
+    showButtons = true,
 }) => {
     const isComputer = useIsComputer();
 
@@ -184,14 +186,20 @@ export const MessageAndPostEditor: React.FC<MessageAndPostEditorProps> = ({
                     onKeyDown={isComputer ? handleKeyDown : undefined}
                 />
             )}
-            <View style={mobileStyles.mobileButtonContainer}>
-                <NexusButton
-                    label="Cancel"
-                    onPress={onCancel}
-                    variant="outline"
-                />
-                <NexusButton label="Save" onPress={onSave} variant="filled" />
-            </View>
+            {showButtons && (
+                <View style={mobileStyles.mobileButtonContainer}>
+                    <NexusButton
+                        label="Cancel"
+                        onPress={onCancel}
+                        variant="outline"
+                    />
+                    <NexusButton
+                        label="Save"
+                        onPress={onSave}
+                        variant="filled"
+                    />
+                </View>
+            )}
             {isOnlyUrl &&
                 avgCharWidth === undefined &&
                 measuredLineHeight === undefined && (

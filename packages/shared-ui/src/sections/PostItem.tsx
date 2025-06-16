@@ -23,6 +23,7 @@ import {
     NexusImage,
     PostMoreOptionsMenu,
     MessageAndPostEditor,
+    MarkdownTextInput,
 } from '../small-components';
 import { stripHtml, extractUrls } from '../utils';
 import { Share as ShareIcon, MoreHorizontal } from '../icons';
@@ -90,9 +91,8 @@ export const PostItem: React.FC<PostItemProps> = ({
     const { theme } = useTheme();
     const styles = useMemo(() => createStyles(theme), [theme]);
     const [showMoreOptions, setShowMoreOptions] = useState(false);
-    const [editedContent, setEditedContent] = useState(
-        currentPost.content ?? ''
-    );
+    const [editedTitle, setEditedTitle] = useState(currentPost.title);
+    const [editedContent, setEditedContent] = useState(currentPost.content);
 
     const handleEdit = () => {
         setShowMoreOptions(false);
@@ -201,6 +201,7 @@ export const PostItem: React.FC<PostItemProps> = ({
         const updatedPost: FeedPost = {
             ...currentPost,
             content: editedContent,
+            title: editedTitle,
             edited: true,
         };
 
@@ -210,6 +211,7 @@ export const PostItem: React.FC<PostItemProps> = ({
 
     const handleCancelEdit = () => {
         setEditedContent(currentPost.content ?? '');
+        setEditedTitle(currentPost.title);
         setIsEditing(false);
     };
 
@@ -277,7 +279,19 @@ export const PostItem: React.FC<PostItemProps> = ({
                     </ActionButton>
                 </View>
             </View>
-            <Text style={styles.postTitle}>{currentPost.title}</Text>
+            <View style={isEditing ? styles.hidden : styles.visible}>
+                <Text style={styles.postTitle}>{currentPost.title}</Text>
+            </View>
+            <View style={isEditing ? styles.visible : styles.hidden}>
+                <MessageAndPostEditor
+                    initialContent={editedTitle}
+                    width={innerWidth}
+                    onChange={setEditedTitle}
+                    onSave={handleSaveEdit}
+                    onCancel={handleCancelEdit}
+                    showButtons={false}
+                />
+            </View>
             {currentPost.flair && (
                 <View style={styles.flairContainer}>
                     <Text style={styles.flairText}>{currentPost.flair}</Text>

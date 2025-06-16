@@ -321,7 +321,7 @@ export const PostItem: React.FC<PostItemProps> = ({
                             onChange={setEditedContent}
                             onSave={handleSaveEdit}
                             onCancel={handleCancelEdit}
-                            isPostContent
+                            useRichTextEditor
                         />
                     </View>
                 </>

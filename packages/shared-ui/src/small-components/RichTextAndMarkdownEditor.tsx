@@ -1,4 +1,4 @@
-// ContentEditor.tsx
+// ContentCreator.tsx
 import React, { useState, useMemo } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 

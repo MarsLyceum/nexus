@@ -19,7 +19,7 @@ import {
 } from 'react-native-gesture-handler';
 
 import { useTheme, Theme } from '../theme';
-import { MessageEditor } from './MessageEditor';
+import { ContentEditor } from './ContentEditor';
 import { MessageContent } from './MessageContent';
 import { formatDateForChat } from '../utils';
 import type { MessageWithAvatar, DirectMessageWithAvatar } from '../types';
@@ -331,8 +331,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                                     isEditing ? styles.visible : styles.hidden,
                                 ]}
                             >
-                                {/* Text editor */}
-                                <MessageEditor
+                                <ContentEditor
                                     initialContent={editedContent}
                                     width={width}
                                     onChange={setEditedContent}

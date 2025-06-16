@@ -7,7 +7,7 @@ import { useTheme } from '../theme';
 import { Attachment } from '../types';
 import { useCreateComment } from '../hooks';
 
-import { ContentEditor } from './ContentEditor';
+import { ContentCreator } from './ContentCreator';
 
 export type CommentEditorProps = {
     postId: string;
@@ -81,7 +81,7 @@ export const CommentEditor: React.FC<CommentEditorProps> = ({
 
     return (
         <View style={styles.container}>
-            <ContentEditor
+            <ContentCreator
                 value={newCommentContent}
                 onChange={(text) => {
                     setNewCommentContent(text);

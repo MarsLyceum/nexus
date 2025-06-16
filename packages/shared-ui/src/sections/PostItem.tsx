@@ -22,7 +22,7 @@ import {
     ActionButton,
     NexusImage,
     PostMoreOptionsMenu,
-    MessageAndPostEditor,
+    ContentEditor,
     MarkdownTextInput,
 } from '../small-components';
 import { stripHtml, extractUrls } from '../utils';
@@ -283,13 +283,13 @@ export const PostItem: React.FC<PostItemProps> = ({
                 <Text style={styles.postTitle}>{currentPost.title}</Text>
             </View>
             <View style={isEditing ? styles.visible : styles.hidden}>
-                <MessageAndPostEditor
+                <ContentEditor
                     initialContent={editedTitle}
                     width={innerWidth}
                     onChange={setEditedTitle}
                     onSave={handleSaveEdit}
                     onCancel={handleCancelEdit}
-                    showButtons={false}
+                    showButtonsEditButtons={false}
                 />
             </View>
             {currentPost.flair && (
@@ -315,7 +315,7 @@ export const PostItem: React.FC<PostItemProps> = ({
                         />
                     ))}
                     <View style={isEditing ? styles.visible : styles.hidden}>
-                        <MessageAndPostEditor
+                        <ContentEditor
                             initialContent={editedContent}
                             width={innerWidth}
                             onChange={setEditedContent}

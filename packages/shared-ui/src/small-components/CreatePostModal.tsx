@@ -15,7 +15,7 @@ import { useTheme, Theme } from '../theme';
 import { AttachmentPreviews } from '../sections/AttachmentPreviews';
 import { Attachment } from '../types';
 import { CustomPortalModal } from './CustomPortalModal';
-import { ContentEditor } from './ContentEditor';
+import { ContentCreator } from './ContentCreator';
 
 type CreatePostModalProps = {
     modalVisible: boolean;
@@ -52,7 +52,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
     setAttachments,
     enableImageAttachments = false,
 }) => {
-    // These states are used only when not using the ContentEditor.
+    // These states are used only when not using the ContentCreator.
     const [previewModalVisible, setPreviewModalVisible] = useState(false);
     const [selectedAttachment, setSelectedAttachment] = useState<
         Attachment | undefined
@@ -94,7 +94,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
                         />
                         {/* Second field: Content */}
                         {multilineSecondField ? (
-                            <ContentEditor
+                            <ContentCreator
                                 value={secondContentText}
                                 onChange={setSecondContentText}
                                 placeholder={placeholderText2}
@@ -125,11 +125,11 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
 
                         {enableImageAttachments && !multilineSecondField && (
                             <View style={styles.buttonRow}>
-                                {/* Attachments are handled here only when not using ContentEditor */}
+                                {/* Attachments are handled here only when not using ContentCreator */}
                             </View>
                         )}
 
-                        {/* --- Conditionally render attachment previews only when NOT using ContentEditor --- */}
+                        {/* --- Conditionally render attachment previews only when NOT using ContentCreator --- */}
                         {!multilineSecondField && (
                             <>
                                 <AttachmentPreviews

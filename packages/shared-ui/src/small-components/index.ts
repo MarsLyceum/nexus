@@ -1,14 +1,13 @@
 // eslint-disable-next-line import/export
 export * from './image-modal';
 export * from './MessageContent';
-export * from './MessageEditor';
 export * from './ActionButton';
 export * from './BottomSheet';
 export * from './ChatInput';
 export * from './ChatInputContainer';
 export * from './CommentEditor';
 export * from './ConfirmRemoveFriendModal';
-export * from './ContentEditor';
+export * from './ContentCreator';
 export * from './ConversationItem';
 export * from './ConversationSkeleton';
 export * from './CreateEventCommentModal';
@@ -52,5 +51,5 @@ export * from './GifPlayer';
 export * from './ReplayButtonOverlay';
 export * from './ColorPicker';
 export * from './PostMoreOptionsMenu';
-export * from './MessageAndPostEditor';
+export * from './ContentEditor';
 export * from './RichTextAndMarkdownEditor';

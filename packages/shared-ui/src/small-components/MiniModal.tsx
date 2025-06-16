@@ -49,8 +49,8 @@ export const MiniModal: React.FC<MiniModalProps> = ({
     gap = 5,
 }) => {
     const modalRef = useRef<View>(null);
-    const [measuredHeight, setMeasuredHeight] = useState<number>();
-    const [measuredWidth, setMeasuredWidth] = useState<number>();
+    const [measuredHeight, setMeasuredHeight] = useState<number | undefined>();
+    const [measuredWidth, setMeasuredWidth] = useState<number | undefined>();
     const { theme } = useTheme();
     const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -66,27 +66,12 @@ export const MiniModal: React.FC<MiniModalProps> = ({
 
     const flattenedContainerStyle = StyleSheet.flatten(containerStyle);
 
-    /* -------------------------- outside click ----------------------- */
     useEffect(() => {
-        if (!visible || !closeOnOutsideClick) return;
-        if (Platform.OS === 'web') {
-            const handleOutsideClick = (e: MouseEvent) => {
-                if (
-                    modalRef.current &&
-                    !(modalRef.current as unknown as Element).contains(
-                        e.target as Node
-                    )
-                )
-                    onClose();
-            };
-            document.addEventListener('mousedown', handleOutsideClick, {
-                passive: true,
-            });
-            // eslint-disable-next-line consistent-return
-            return () =>
-                document.removeEventListener('mousedown', handleOutsideClick);
+        if (!visible) {
+            setMeasuredHeight(undefined);
+            setMeasuredWidth(undefined);
         }
-    }, [visible, closeOnOutsideClick, onClose]);
+    }, [visible]);
 
     if (!visible) return undefined;
 
@@ -340,6 +325,40 @@ export const MiniModal: React.FC<MiniModalProps> = ({
     /* ------------------------------------------------------------------ */
     /*                               Render                               */
     /* ------------------------------------------------------------------ */
+    if (
+        visible &&
+        (measuredHeight === undefined || measuredWidth === undefined)
+    ) {
+        return (
+            <Portal>
+                <View
+                    pointerEvents="none"
+                    style={StyleSheet.absoluteFillObject}
+                >
+                    <View
+                        ref={modalRef}
+                        style={{
+                            position: 'absolute',
+                            left: 0,
+                            top: 0,
+                            opacity: 0,
+                        }}
+                        onLayout={(e) => {
+                            const { width, height } = e.nativeEvent.layout;
+                            setMeasuredWidth(width);
+                            setMeasuredHeight(height);
+                        }}
+                    >
+                        {children}
+                    </View>
+                </View>
+            </Portal>
+        );
+    }
+    if (!visible) {
+        return undefined;
+    }
+
     return (
         <Portal>
             <View
@@ -350,19 +369,21 @@ export const MiniModal: React.FC<MiniModalProps> = ({
                 ]}
                 // we *don’t* claim the responder—just listen in capture phase
                 onStartShouldSetResponderCapture={(evt) => {
-                    if (closeOnOutsideClick && modalLocation) {
-                        const { pageX, pageY } = evt.nativeEvent;
-                        const { x, y, width, height } = modalLocation;
+                    if (!closeOnOutsideClick || !modalLocation) {
+                        return false;
+                    }
 
-                        // if tap is *outside* the modal’s rectangle...
-                        if (
-                            pageX < x ||
-                            pageX > x + width ||
-                            pageY < y ||
-                            pageY > y + height
-                        ) {
-                            onClose();
-                        }
+                    const { pageX, pageY } = evt.nativeEvent;
+                    const { x, y, width, height } = modalLocation;
+
+                    // if tap is *outside* the modal’s rectangle...
+                    if (
+                        pageX < x ||
+                        pageX > x + width ||
+                        pageY < y ||
+                        pageY > y + height
+                    ) {
+                        onClose();
                     }
                     // return false so we never become “the” responder
                     return false;

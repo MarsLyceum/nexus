@@ -24,7 +24,7 @@ export type MessageAndPostEditorProps = {
     onChange: (newContent: string) => void;
     onSave: () => void;
     onCancel: () => void;
-    isPost?: boolean;
+    isPostContent?: boolean;
     showButtons?: boolean;
 };
 
@@ -34,7 +34,7 @@ export const MessageAndPostEditor: React.FC<MessageAndPostEditorProps> = ({
     onChange,
     onSave,
     onCancel,
-    isPost,
+    isPostContent,
     showButtons = true,
 }) => {
     const isComputer = useIsComputer();
@@ -162,7 +162,7 @@ export const MessageAndPostEditor: React.FC<MessageAndPostEditorProps> = ({
                     <MarkdownRenderer text={editedContent} />
                 </View>
             )}
-            {isPost ? (
+            {isPostContent ? (
                 <RichTextAndMarkdownEditor
                     value={editedContent}
                     onChange={(text) => {

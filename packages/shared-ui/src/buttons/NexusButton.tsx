@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Text, Pressable, StyleSheet, ViewStyle } from 'react-native';
-import { useTheme } from '../theme';
+import { useTheme, Theme } from '../theme';
+import { Tooltip } from '../small-components/Tooltip';
 
 /**
  * Utility function: darkenColor
@@ -37,7 +38,10 @@ export type NexusButtonProps = {
      */
     variant?: 'filled' | 'outline' | 'text';
     disabled?: boolean;
+    wideButton?: boolean;
     style?: ViewStyle | ViewStyle[];
+    children?: React.JSX.Element;
+    tooltipText?: string;
 };
 
 /**
@@ -52,8 +56,15 @@ export const NexusButton: React.FC<NexusButtonProps> = ({
     variant = 'filled',
     disabled = false,
     style,
+    children,
+    tooltipText,
+    wideButton = true,
 }) => {
     const { theme } = useTheme();
+    const styles = useMemo(
+        () => createStyles(theme, wideButton),
+        [theme, wideButton]
+    );
 
     // Determine the button container style based on whether it is pressed.
     const getButtonStyles = (isPressed: boolean) => {
@@ -113,46 +124,57 @@ export const NexusButton: React.FC<NexusButtonProps> = ({
             : theme.colors.Primary;
     };
 
+    const Wrapper =
+        tooltipText && tooltipText.length > 0 ? Tooltip : React.Fragment;
+
     return (
-        <Pressable
-            onPress={onPress}
-            style={({ pressed }) => [
-                styles.nexusButtonBase,
-                getButtonStyles(pressed),
-                style,
-            ]}
-            disabled={disabled}
-        >
-            {({ pressed }) => (
-                <Text
-                    style={[
-                        styles.buttonTextBase,
-                        { color: getTextColor(pressed) },
-                    ]}
-                >
-                    {label}
-                </Text>
-            )}
-        </Pressable>
+        <Wrapper text={tooltipText ?? ''}>
+            <Pressable
+                onPress={onPress}
+                style={({ pressed }) => [
+                    styles.nexusButtonBase,
+                    getButtonStyles(pressed),
+                    style,
+                ]}
+                disabled={disabled}
+            >
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                {({ pressed }: { pressed: any }) => (
+                    <>
+                        <Text
+                            style={[
+                                styles.buttonTextBase,
+                                { color: getTextColor(pressed) },
+                            ]}
+                        >
+                            {label}
+                        </Text>
+                        {children}
+                    </>
+                )}
+            </Pressable>
+        </Wrapper>
     );
 };
 
-const styles = StyleSheet.create({
-    nexusButtonBase: {
-        paddingHorizontal: 20,
-        paddingVertical: 8,
-        // Optional shadow on iOS.
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 2,
-        // Optional elevation on Android.
-        elevation: 2,
-    },
-    buttonTextBase: {
-        fontWeight: '700',
-        textAlign: 'center',
-        fontFamily: 'Roboto_700Bold',
-        fontSize: 14,
-    },
-});
+function createStyles(theme: Theme, wideButton?: boolean) {
+    return StyleSheet.create({
+        nexusButtonBase: {
+            paddingHorizontal: wideButton ? 20 : 10,
+            paddingVertical: 8,
+            // Optional shadow on iOS.
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.2,
+            shadowRadius: 2,
+            // Optional elevation on Android.
+            elevation: 2,
+        },
+        buttonTextBase: {
+            fontWeight: '700',
+            textAlign: 'center',
+            fontFamily: 'Roboto_700Bold',
+            fontSize: 14,
+        },
+    });
+}

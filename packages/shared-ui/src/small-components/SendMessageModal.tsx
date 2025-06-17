@@ -12,7 +12,7 @@ import {
 
 import { useTheme, Theme } from '../theme';
 import { Friend } from '../types';
-import { NexusButton } from '../buttons';
+import { NexusButton } from '../buttons/NexusButton';
 import { CheckMark } from '../icons';
 import { getOnlineStatusDotColor } from '../utils';
 

@@ -13,7 +13,7 @@ import { MarkdownEditor } from './MarkdownEditor';
 import { RichTextEditor } from '../sections/RichTextEditor';
 import { useTheme, Theme } from '../theme';
 import { Tooltip } from './Tooltip';
-import { FormattingOptions } from '../icons';
+import { FormattingOptions, LatexLogo } from '../icons';
 import { NexusButton } from '../buttons';
 
 export type RichTextAndMarkdownEditorProps = {
@@ -61,6 +61,7 @@ export const RichTextAndMarkdownEditor: React.FC<
         editorBackgroundColorProp ?? theme.colors.PrimaryBackground;
 
     const [useMarkdown, setUseMarkdown] = useState(!useRichTextEditor);
+    const [useLatex, setUseLatex] = useState(false);
     const [showFormattingOptions, setShowFormattingOptions] = useState(false);
     const [measuredHeightIncludingToolbar, setMeasuredHeightIncludingToolbar] =
         useState<string>(height ?? `${collapsedHeight ?? 40}px`);
@@ -96,32 +97,47 @@ export const RichTextAndMarkdownEditor: React.FC<
             {isExpanded && (
                 <View style={styles.formatContainer}>
                     {!useMarkdown && showFormattingToggle && (
-                        <Tooltip
-                            text={
-                                showFormattingOptions
-                                    ? 'Hide formatting options'
-                                    : 'Show formatting options'
-                            }
-                        >
-                            <Pressable
-                                style={[
-                                    styles.formatToggleButton,
-                                    {
-                                        backgroundColor: showFormattingOptions
-                                            ? theme.colors.Primary
-                                            : 'transparent',
-                                    },
-                                ]}
+                        <>
+                            <NexusButton
+                                style={styles.toggleButton}
+                                label=""
                                 onPress={() =>
                                     setShowFormattingOptions((prev) => !prev)
                                 }
+                                variant="text"
+                                tooltipText={
+                                    showFormattingOptions
+                                        ? 'Hide formatting options'
+                                        : 'Show formatting options'
+                                }
+                                wideButton={false}
                             >
                                 <FormattingOptions
                                     size={18}
-                                    color={theme.colors.ActiveText}
+                                    color={
+                                        showFormattingOptions
+                                            ? theme.colors.Primary
+                                            : theme.colors.ActiveText
+                                    }
                                 />
-                            </Pressable>
-                        </Tooltip>
+                            </NexusButton>
+                            <NexusButton
+                                style={styles.toggleButton}
+                                label=""
+                                onPress={() => setUseLatex((prev) => !prev)}
+                                variant="text"
+                                tooltipText="Toggle Latex Mode"
+                                wideButton={false}
+                            >
+                                <LatexLogo
+                                    color={
+                                        useLatex
+                                            ? theme.colors.Primary
+                                            : theme.colors.ActiveText
+                                    }
+                                />
+                            </NexusButton>
+                        </>
                     )}
                     {useRichTextEditor && (
                         <NexusButton

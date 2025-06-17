@@ -13,7 +13,7 @@ import { MarkdownEditor } from './MarkdownEditor';
 import { RichTextEditor } from '../sections/RichTextEditor';
 import { useTheme, Theme } from '../theme';
 import { Tooltip } from './Tooltip';
-import { FormattingOptions, LatexLogo } from '../icons';
+import { FormattingOptions, LaTeXLogo } from '../icons';
 import { NexusButton } from '../buttons';
 
 export type RichTextAndMarkdownEditorProps = {
@@ -126,10 +126,10 @@ export const RichTextAndMarkdownEditor: React.FC<
                                 label=""
                                 onPress={() => setUseLatex((prev) => !prev)}
                                 variant="text"
-                                tooltipText="Toggle Latex Mode"
+                                tooltipText="Toggle LaTeX Mode"
                                 wideButton={false}
                             >
-                                <LatexLogo
+                                <LaTeXLogo
                                     color={
                                         useLatex
                                             ? theme.colors.Primary

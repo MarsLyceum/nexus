@@ -4,7 +4,7 @@ import { ViewStyle } from 'react-native';
 
 import { useTheme } from '../theme';
 
-export const LatexLogo = ({
+export const LaTeXLogo = ({
     style,
     color,
     size = 18,

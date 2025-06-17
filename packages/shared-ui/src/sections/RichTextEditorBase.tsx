@@ -117,6 +117,7 @@ export function getRichTextEditorHtml({
                         --editor-width: ${editorWidth};
                         --editor-bg-color: ${backgroundColor};
                         --editor-border-radius: ${borderRadius};
+                        --editor-border-color: var(--ActiveText);
                         --editor-overflow: ${showScrollbars
                         ? 'auto'
                         : 'hidden'};
@@ -148,13 +149,19 @@ export function getRichTextEditorHtml({
                     }
 
                     .quill-wrapper {
-                        border: 1px solid var(--TextInput) !important;
+                        border: 1px solid transparent; /* initially invisible */
                         border-radius: var(--editor-border-radius) !important;
                         width: var(--editor-width);
                         height: var(--editor-height);
                         background-color: var(--editor-bg-color) !important;
                         overflow: hidden;
                         box-sizing: border-box;
+                        transition: border-color 0.15s ease;
+                    }
+                    /* Focus ring visible only when an element inside gains focus */
+                    .quill-wrapper:focus-within,
+                    .quill-wrapper.focused {
+                        border: 1px solid var(--editor-border-color) !important;
                     }
 
                     #toolbar-placeholder {
@@ -167,14 +174,16 @@ export function getRichTextEditorHtml({
                         ) !important;
                     }
 
+                    /* Remove Quill’s default borders so the wrapper border is continuous */
                     .ql-container,
                     .ql-container.ql-snow {
                         height: var(--editor-height);
+                        border: none !important;
                     }
 
                     .ql-toolbar {
                         display: var(--editor-toolbar-display) !important;
-                        border: none;
+                        border: none !important;
                         border-top-left-radius: var(
                             --editor-border-radius
                         ) !important;
@@ -418,6 +427,26 @@ export function getRichTextEditorHtml({
                         var quill = new Quill('#editor', quillOptions);
                         window.quill = quill;
 
+                        setTimeout(() => {
+                            const root = quill.root; // this is now .ql-editor (contentEditable)
+                            const wrapper =
+                                document.querySelector('.quill-wrapper');
+
+                            if (!root || !wrapper) return;
+
+                            // keep outline up while the editor has DOM focus
+                            root.addEventListener('focus', () =>
+                                wrapper.classList.add('focused')
+                            );
+                            root.addEventListener('blur', () =>
+                                wrapper.classList.remove('focused')
+                            );
+
+                            // ensure border shows immediately when the iframe first gains focus
+                            if (document.activeElement === root)
+                                wrapper.classList.add('focused');
+                        }, 0);
+
                         const generatedToolbar =
                             quill.container.parentNode.querySelector(
                                 '.ql-toolbar'
@@ -514,7 +543,6 @@ export function getRichTextEditorHtml({
                                                 props.backgroundColor ===
                                                 undefined
                                             ) {
-                                                // keep editor-bg-color in sync with new SecondaryBackground
                                                 if (
                                                     colors.SecondaryBackground
                                                 ) {

@@ -361,7 +361,7 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
                 />
             )}
 
-            {showButtonsEditButtons && (
+            {isExpanded && showButtonsEditButtons && (
                 <View style={styles.buttonRow}>
                     <NexusButton
                         label="Cancel"

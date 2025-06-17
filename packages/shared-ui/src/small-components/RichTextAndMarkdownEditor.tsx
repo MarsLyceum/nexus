@@ -1,5 +1,5 @@
-// ContentCreator.tsx
-import React, { useState, useMemo, useEffect } from 'react';
+// RichTextAndMarkdownEditor.tsx
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
     View,
     Text,
@@ -63,7 +63,7 @@ export const RichTextAndMarkdownEditor: React.FC<
     const [useMarkdown, setUseMarkdown] = useState(!useRichTextEditor);
     const [showFormattingOptions, setShowFormattingOptions] = useState(false);
     const [measuredHeightIncludingToolbar, setMeasuredHeightIncludingToolbar] =
-        useState(height ?? `${collapsedHeight ?? 40}px`);
+        useState<string>(height ?? `${collapsedHeight ?? 40}px`);
 
     useEffect(() => {
         if (showFormattingOptions && !useMarkdown && isExpanded && height) {
@@ -85,121 +85,101 @@ export const RichTextAndMarkdownEditor: React.FC<
         useMarkdown,
     ]);
 
-    const renderExpandedEditor = () => (
-        <>
-            <View style={styles.formatContainer}>
-                {!useMarkdown && showFormattingToggle && (
-                    <Tooltip
-                        text={
-                            showFormattingOptions
-                                ? 'Hide formatting options'
-                                : 'Show formatting options'
-                        }
-                    >
-                        <Pressable
-                            style={[
-                                styles.formatToggleButton,
-                                {
-                                    backgroundColor: showFormattingOptions
-                                        ? theme.colors.Primary
-                                        : 'transparent',
-                                },
-                            ]}
-                            onPress={() =>
-                                setShowFormattingOptions((prev) => !prev)
+    const computedHeight = isExpanded
+        ? expandedHeight
+            ? `${expandedHeight}px`
+            : measuredHeightIncludingToolbar
+        : `${collapsedHeight ?? 40}px`;
+
+    return (
+        <View style={styles.container}>
+            {isExpanded && (
+                <View style={styles.formatContainer}>
+                    {!useMarkdown && showFormattingToggle && (
+                        <Tooltip
+                            text={
+                                showFormattingOptions
+                                    ? 'Hide formatting options'
+                                    : 'Show formatting options'
                             }
                         >
-                            <FormattingOptions
-                                size={18}
-                                color={theme.colors.ActiveText}
-                            />
-                        </Pressable>
-                    </Tooltip>
-                )}
-                {useRichTextEditor && (
-                    <NexusButton
-                        style={styles.toggleButton}
-                        label={
-                            useMarkdown
-                                ? 'Switch to Rich Text Editor'
-                                : 'Switch to Markdown Editor'
-                        }
-                        onPress={() => setUseMarkdown((prev) => !prev)}
-                        variant="text"
-                    />
-                )}
-            </View>
+                            <Pressable
+                                style={[
+                                    styles.formatToggleButton,
+                                    {
+                                        backgroundColor: showFormattingOptions
+                                            ? theme.colors.Primary
+                                            : 'transparent',
+                                    },
+                                ]}
+                                onPress={() =>
+                                    setShowFormattingOptions((prev) => !prev)
+                                }
+                            >
+                                <FormattingOptions
+                                    size={18}
+                                    color={theme.colors.ActiveText}
+                                />
+                            </Pressable>
+                        </Tooltip>
+                    )}
+                    {useRichTextEditor && (
+                        <NexusButton
+                            style={styles.toggleButton}
+                            label={
+                                useMarkdown
+                                    ? 'Switch to Rich Text Editor'
+                                    : 'Switch to Markdown Editor'
+                            }
+                            onPress={() => setUseMarkdown((prev) => !prev)}
+                            variant="text"
+                        />
+                    )}
+                </View>
+            )}
+
             <View style={styles.editorContainer}>
                 {useMarkdown ? (
                     <MarkdownEditor
                         placeholder={placeholder}
                         value={value}
                         onChangeText={onChange}
-                        height={
-                            expandedHeight
-                                ? `${expandedHeight}px`
-                                : measuredHeightIncludingToolbar
-                        }
+                        height={computedHeight}
                         backgroundColor={editorBackgroundColor}
                         onContentSizeChange={onContentSizeChange}
+                        {...(!isExpanded
+                            ? { editable: true, onFocus: onExpand }
+                            : {})}
                     />
                 ) : (
                     <RichTextEditor
                         placeholder={placeholder}
                         initialContent={value}
                         onChange={onChange}
-                        height={
-                            expandedHeight
-                                ? `${expandedHeight}px`
-                                : measuredHeightIncludingToolbar
-                        }
+                        height={computedHeight}
                         backgroundColor={editorBackgroundColor}
-                        {...(updateContent !== undefined
-                            ? { updateContent }
-                            : {})}
-                        {...(showFormattingToggle
-                            ? { showToolbar: showFormattingOptions }
-                            : {})}
+                        onContentSizeChange={onContentSizeChange}
+                        {...(isExpanded
+                            ? {
+                                  ...(updateContent !== undefined
+                                      ? { updateContent }
+                                      : {}),
+                                  ...(showFormattingToggle
+                                      ? { showToolbar: showFormattingOptions }
+                                      : {}),
+                              }
+                            : {
+                                  showToolbar: false,
+                                  showScrollbars: false,
+                                  onFocus: onExpand,
+                              })}
                     />
                 )}
             </View>
+
             {errorMessage ? (
                 <Text style={styles.errorMessage}>{errorMessage}</Text>
             ) : undefined}
-        </>
-    );
-
-    const renderCollapsedEditor = () => (
-        <>
-            {useMarkdown ? (
-                <MarkdownEditor
-                    placeholder={placeholder}
-                    value={value}
-                    onChangeText={onChange}
-                    height={`${collapsedHeight ?? 40}px`}
-                    editable
-                    onFocus={onExpand}
-                    backgroundColor={editorBackgroundColor}
-                    onContentSizeChange={onContentSizeChange}
-                />
-            ) : (
-                <RichTextEditor
-                    placeholder={placeholder}
-                    initialContent={value}
-                    onChange={onChange}
-                    showToolbar={false}
-                    showScrollbars={false}
-                    height={`${collapsedHeight ?? 40}px`}
-                    onFocus={onExpand}
-                    backgroundColor={editorBackgroundColor}
-                />
-            )}
-        </>
-    );
-
-    return (
-        <View style={styles.container}>
-            {isExpanded ? renderExpandedEditor() : renderCollapsedEditor()}
         </View>
     );
 };

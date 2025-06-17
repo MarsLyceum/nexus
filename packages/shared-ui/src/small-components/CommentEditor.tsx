@@ -68,7 +68,6 @@ export const CommentEditor: React.FC<CommentEditorProps> = ({
     };
 
     const handleExpand = () => {
-        console.log('expanding');
         setIsExpanded(true);
     };
 

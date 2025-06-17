@@ -1,10 +1,5 @@
-import React, {
-    useEffect,
-    useMemo,
-    useRef,
-    useLayoutEffect,
-    useCallback,
-} from 'react';
+// src/small-components/RichTextEditor.tsx
+import React, { useEffect, useRef, useLayoutEffect, useCallback } from 'react';
 import {
     View,
     StyleSheet,
@@ -14,6 +9,7 @@ import {
     TextInputContentSizeChangeEventData,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
+import { marked } from 'marked';
 import { getRichTextEditorHtml } from './RichTextEditorBase';
 import {
     convertDeltaToMarkdownWithFencesAndFormatting,
@@ -21,7 +17,11 @@ import {
 } from '../utils';
 import { useTheme } from '../theme';
 
-export const RichTextEditor: React.FC<{
+export type RichTextEditorHandle = {
+    focus(): void;
+};
+
+export type RichTextEditorProps = {
     placeholder?: string;
     initialContent?: string;
     onChange: (markdown: string) => void;
@@ -36,7 +36,9 @@ export const RichTextEditor: React.FC<{
     onContentSizeChange?: (
         e: NativeSyntheticEvent<TextInputContentSizeChangeEventData>
     ) => void;
-}> = ({
+};
+
+export const RichTextEditor = ({
     placeholder = '',
     initialContent = '',
     onChange,
@@ -46,68 +48,95 @@ export const RichTextEditor: React.FC<{
     width = '100%',
     borderRadius = '20px',
     backgroundColor: backgroundColorProp,
-    updateContent = false,
+    updateContent = 0,
     showScrollbars = true,
     onContentSizeChange,
-}) => {
+}: RichTextEditorProps) => {
     const { theme } = useTheme();
     const isWeb = Platform.OS === 'web';
     const backgroundColor =
         backgroundColorProp ?? theme.colors.PrimaryBackground;
     const lastHeightRef = useRef<number>(0);
 
-    const webSrcDoc = useMemo(
-        () =>
-            getRichTextEditorHtml({
-                theme,
-                backgroundColor,
-                placeholder,
-                initialContent,
-                showToolbar,
-                showScrollbars,
-                height,
-                width,
-                borderRadius,
-            }),
-        [
-            placeholder,
-            showToolbar,
-            height,
-            width,
-            borderRadius,
-            backgroundColor,
-            updateContent,
-            showScrollbars,
-            theme,
-        ]
-    );
-
-    const mobileHtml = useMemo(
-        () =>
-            getRichTextEditorHtml({
-                theme,
-                backgroundColor,
-                placeholder,
-                initialContent,
-                showToolbar,
-                showScrollbars,
-                height,
-                width,
-                borderRadius,
-            }),
-        [
-            placeholder,
-            showToolbar,
-            height,
-            width,
-            borderRadius,
-            backgroundColor,
-            showScrollbars,
-            theme,
-        ]
-    );
-
     const iframeRef = useRef<HTMLIFrameElement>(null);
+    const webviewRef = useRef<WebView>(null);
+
+    // build initial HTML only once
+    const initialHtmlRef = useRef(
+        getRichTextEditorHtml({
+            theme,
+            backgroundColor,
+            placeholder,
+            initialContent,
+            showToolbar,
+            showScrollbars,
+            height,
+            width,
+            borderRadius,
+        })
+    );
+
+    // helper to message into iframe or WebView
+    const sendMessage = useCallback(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (msg: Record<string, any>) => {
+            const json = JSON.stringify(msg);
+            if (isWeb) {
+                iframeRef.current?.contentWindow?.postMessage(json, '*');
+            } else {
+                // inject a window.postMessage so the iframe script picks it up
+                webviewRef.current?.injectJavaScript(
+                    `window.postMessage(${JSON.stringify(json)}, '*'); true;`
+                );
+            }
+        },
+        [isWeb]
+    );
+
+    // when any visual prop changes, update editor in-place
+    useEffect(() => {
+        console.log('updating props:', {
+            placeholder,
+            showToolbar,
+            showScrollbars,
+            width,
+            height,
+            borderRadius,
+            backgroundColor,
+        });
+        sendMessage({
+            type: 'update-props',
+            props: {
+                placeholder,
+                showToolbar,
+                showScrollbars,
+                width,
+                height,
+                borderRadius,
+                backgroundColor,
+                theme,
+            },
+        });
+    }, [
+        placeholder,
+        showToolbar,
+        showScrollbars,
+        width,
+        height,
+        borderRadius,
+        backgroundColor,
+        sendMessage,
+        theme,
+    ]);
+
+    // when updateContent increments, re-set the content
+    useEffect(() => {
+        const html = marked(initialContent || '');
+        sendMessage({
+            type: 'update-content',
+            initialHTML: html,
+        });
+    }, [updateContent, sendMessage]);
 
     const handleMessage = useCallback(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -115,16 +144,10 @@ export const RichTextEditor: React.FC<{
             const { data } = event.nativeEvent ?? event;
             try {
                 const parsed = JSON.parse(data);
-                // if (parsed.type === 'iframe-init') {
-                //     console.log(parsed.message);
-                //     return;
-                // }
                 if (parsed.type === 'focus') {
-                    // bubbles up to your parent’s onExpand
                     onFocus?.();
                     return;
                 }
-
                 if (parsed.type === 'text-change') {
                     const { delta } = parsed;
                     const markdown =
@@ -135,7 +158,6 @@ export const RichTextEditor: React.FC<{
                 }
                 if (parsed.type === 'content-height' && onContentSizeChange) {
                     const { height: contentHeight } = parsed;
-
                     if (
                         contentHeight > 0 &&
                         contentHeight !== lastHeightRef.current
@@ -156,18 +178,19 @@ export const RichTextEditor: React.FC<{
                 console.error('Failed to parse message from Quill:', error);
             }
         },
-        [onChange, onContentSizeChange, width]
+        [onChange, onContentSizeChange, onFocus, width]
     );
 
+    // hook up web postMessage listener
     // eslint-disable-next-line consistent-return
     useLayoutEffect(() => {
         const safeWindow = getSafeWindow();
-        if (Platform.OS === 'web' && safeWindow) {
+        if (isWeb && safeWindow) {
             safeWindow.addEventListener('message', handleMessage);
             return () =>
                 safeWindow.removeEventListener('message', handleMessage);
         }
-    }, [handleMessage]);
+    }, [handleMessage, isWeb]);
 
     if (isWeb) {
         return (
@@ -185,7 +208,7 @@ export const RichTextEditor: React.FC<{
                         ref={iframeRef}
                         className="my-editor-iframe"
                         title="Rich Text Editor Iframe"
-                        srcDoc={webSrcDoc}
+                        srcDoc={initialHtmlRef.current}
                         style={webStyles.webEditor}
                         onFocus={onFocus}
                     />
@@ -194,7 +217,7 @@ export const RichTextEditor: React.FC<{
         );
     }
 
-    // For mobile, convert width and height if provided as "px"
+    // convert px strings to numbers for RN layout
     let containerWidth: string | number = width;
     if (typeof width === 'string' && width.endsWith('px')) {
         containerWidth = Number.parseInt(width, 10);
@@ -206,7 +229,8 @@ export const RichTextEditor: React.FC<{
 
     const webViewComponent = (
         <WebView
-            source={{ html: mobileHtml }}
+            ref={webviewRef}
+            source={{ html: initialHtmlRef.current }}
             onMessage={handleMessage}
             style={mobileStyles.webview}
             javaScriptEnabled

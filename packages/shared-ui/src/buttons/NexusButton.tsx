@@ -141,6 +141,7 @@ export const NexusButton: React.FC<NexusButtonProps> = ({
                 {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 {({ pressed }: { pressed: any }) => (
                     <>
+                        {children}
                         <Text
                             style={[
                                 styles.buttonTextBase,
@@ -149,7 +150,6 @@ export const NexusButton: React.FC<NexusButtonProps> = ({
                         >
                             {label}
                         </Text>
-                        {children}
                     </>
                 )}
             </Pressable>

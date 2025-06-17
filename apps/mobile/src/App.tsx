@@ -253,7 +253,7 @@ export default function App() {
                 // 2. Render a fallback UI—only gets error + reset, not the stack
                 fallbackRender={({ error, resetErrorBoundary }) => (
                     <View style={{ padding: 16 }}>
-                        <Text style={{ marginBottom: 8 }}>
+                        <Text style={{ marginBottom: 8, color: 'white' }}>
                             Error: {error.message}
                         </Text>
                         {stack && (
@@ -262,6 +262,7 @@ export default function App() {
                                     marginVertical: 8,
                                     fontFamily: 'monospace',
                                     fontSize: 12,
+                                    color: 'white',
                                 }}
                             >
                                 {stack}

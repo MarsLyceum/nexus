@@ -166,6 +166,7 @@ export const RichTextAndMarkdownEditor: React.FC<
                                             showToolbar: showFormattingOptions,
                                         }
                                       : {}),
+                                  showScrollbars: true,
                               }
                             : {
                                   showToolbar: false,

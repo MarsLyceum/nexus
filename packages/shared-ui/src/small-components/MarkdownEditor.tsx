@@ -23,13 +23,15 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
     const [isFocused, setIsFocused] = React.useState(false);
     const { theme } = useTheme();
     const styles = useMemo(() => createStyles(theme), [theme]);
+    const autoMode = height === 'auto' || height === undefined;
 
     // Convert height to a number if it is a string ending with "px" on non-web platforms.
     let parsedHeight: string | number = height;
     if (
         typeof height === 'string' &&
         height.endsWith('px') &&
-        Platform.OS !== 'web'
+        Platform.OS !== 'web' &&
+        !autoMode
     ) {
         parsedHeight = Number.parseInt(height, 10);
     }
@@ -46,7 +48,8 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
 
     const containerStyle: object = {
         ...(parsedWidth ? { width: parsedWidth } : {}),
-        ...(parsedHeight ? { height: parsedHeight } : {}),
+        ...(autoMode ? {} : { height: parsedHeight }),
+        ...(autoMode ? { minHeight: 40 } : {}), // keep a sensible floor
     };
 
     // Internal focus handler that also calls parent's onFocus if provided.
@@ -94,7 +97,6 @@ function createStyles(theme: Theme) {
             flexDirection: 'column',
         },
         inputWrapper: {
-            flex: 1,
             position: 'relative',
             backgroundColor: theme.colors.PrimaryBackground,
             borderRadius: 20,

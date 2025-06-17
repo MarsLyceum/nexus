@@ -80,7 +80,8 @@ export function getRichTextEditorHtml({
 }: GetRichTextEditorHtmlProps): string {
     const backgroundColor =
         backgroundColorProp ?? theme.colors.SecondaryBackground;
-    const autoMode = height === '0px' || height === '0';
+    const autoMode = height === 'auto' || height === '0px' || height === '0';
+
     const cssHeight = autoMode ? 'auto' : height;
     const editorWidth = width;
     const initialHTML = initialContent ? marked(initialContent) : '<p><br></p>';
@@ -204,7 +205,6 @@ export function getRichTextEditorHtml({
                     }
 
                     .ql-editor {
-                        height: calc(var(--editor-height) - var(--editor-toolbar-height)) !important;
                         padding: 10px !important;
                         box-sizing: border-box;
                         color: var(--MainText) !important;

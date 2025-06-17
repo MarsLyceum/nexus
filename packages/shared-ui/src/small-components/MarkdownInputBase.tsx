@@ -1,5 +1,5 @@
 // MarkdownInputBase.tsx
-import React, { useRef, useEffect, useMemo } from 'react';
+import React, { useRef, useEffect, useMemo, useCallback } from 'react';
 import {
     ScrollView,
     View,
@@ -9,6 +9,7 @@ import {
     NativeSyntheticEvent,
     TextInputScrollEventData,
     Platform,
+    TextInputContentSizeChangeEventData,
 } from 'react-native';
 
 import { useTheme, Theme } from '../theme';
@@ -78,13 +79,20 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
     const handleKeyPressInternal = (e: any) => {
         emojiPickerRef.current?.handleKeyDown(e);
     };
+    const autoMode = height === 'auto' || height === undefined;
+    console.log('autoMode:', autoMode);
+
+    const [contentHeight, setContentHeight] = React.useState<number>(0);
+
+    console.log('contentHeight:', contentHeight);
 
     // Convert height to a number if it's a string ending with "px" on mobile.
     let parsedHeight: string | number = height as string;
     if (
         typeof height === 'string' &&
         height.endsWith('px') &&
-        Platform.OS !== 'web'
+        Platform.OS !== 'web' &&
+        !autoMode
     ) {
         parsedHeight = Number.parseInt(height, 10);
     }
@@ -100,30 +108,55 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
     }
 
     // Only add width, height, and backgroundColor if they are provided
-    const containerStyle: object = {
-        ...(parsedWidth ? { width: parsedWidth } : {}),
-        ...(parsedHeight ? { height: parsedHeight } : {}),
-        ...(backgroundColor ? { backgroundColor } : {}), // applied to container
-    };
+    const containerStyle: object = useMemo(
+        () => ({
+            ...(parsedWidth ? { width: parsedWidth } : {}),
+            ...(autoMode
+                ? { height: contentHeight }
+                : { height: parsedHeight }),
+            ...(backgroundColor ? { backgroundColor } : {}), // applied to container
+        }),
+        [autoMode, backgroundColor, contentHeight, parsedHeight, parsedWidth]
+    );
 
     // Also apply backgroundColor to the overlay and input styles
     const overlayCombinedStyle = [
         {
             width: '100%',
-            height: '100%',
+            ...(autoMode ? {} : { height: '100%', flex: 1 }),
             backgroundColor: backgroundColor || 'transparent',
         },
         overlayStyle,
     ];
     const inputCombinedStyle = [
         styles.input,
-        {
-            width: '100%',
-            height: '100%',
-            backgroundColor: backgroundColor || 'transparent',
-        },
+        autoMode
+            ? {
+                  flex: 0,
+                  width: '100%',
+                  backgroundColor: backgroundColor || 'transparent',
+              }
+            : {
+                  width: '100%',
+                  height: '100%',
+                  backgroundColor: backgroundColor || 'transparent',
+              },
+
         inputStyle,
     ];
+
+    const handleContentSizeChange = useCallback(
+        (e: NativeSyntheticEvent<TextInputContentSizeChangeEventData>) => {
+            console.log(' in handleContentSizeChange e:', e);
+            const { height: innerHeight } = e.nativeEvent.contentSize;
+            if (innerHeight !== contentHeight) {
+                setContentHeight(e.nativeEvent.contentSize.height);
+            }
+            // bubble up if the caller passed one
+            rest.onContentSizeChange?.(e);
+        },
+        [rest, contentHeight]
+    );
 
     // For web: Attach native keydown listener to capture keys like "Escape"
     // eslint-disable-next-line consistent-return
@@ -183,6 +216,11 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
                 // @ts-expect-error scroll
                 scrollEventThrottle={16}
                 {...rest}
+                onContentSizeChange={
+                    autoMode
+                        ? handleContentSizeChange
+                        : rest.onContentSizeChange
+                }
             />
             {/* Render the EmojiPicker here so it overlays the text input */}
             <EmojiPicker

@@ -251,11 +251,7 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleContentSizeChange = (e: any) => {
         const newHeight = e.nativeEvent.contentSize.height;
-        console.log('Markdown size:', newHeight);
         setEditorHeight(newHeight);
-        if (updateContent === undefined) {
-            setInternalUpdateCount((c) => c + 1);
-        }
     };
 
     return (
@@ -319,7 +315,7 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
                 editorBackgroundColor={backgroundColor}
                 showFormattingToggle={showFormattingToggle}
                 updateContent={resolvedUpdateContent}
-                height={`${editorHeight}px`}
+                height={editMode ? 'auto' : `${editorHeight}px`}
                 expandedHeight={editMode ? undefined : 150}
                 collapsedHeight={editMode ? undefined : 40}
                 onContentSizeChange={handleContentSizeChange}

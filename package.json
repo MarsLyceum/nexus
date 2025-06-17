@@ -8,13 +8,10 @@
         "lerna:build": "npx lerna run build"
     },
     "dependencies": {
-        "react-native-video": "^6.14.1",
-        "react-native-extra-dimensions-android": "^1.2.5",
-        "expo-screen-orientation": "^8.1.6",
-        "eslint-import-resolver-typescript": "^4.3.5",
         "@apollo/client": "^3.12.8",
         "@babel/plugin-transform-modules-commonjs": "^7.26.3",
         "@babel/plugin-transform-runtime": "^7.26.10",
+        "@babel/preset-env": "^7.27.2",
         "@babel/runtime": "^7.26.7",
         "@dnd-kit/core": "^6.3.1",
         "@dnd-kit/sortable": "^10.0.0",
@@ -64,6 +61,7 @@
         "eslint-config-airbnb-typescript": "^18.0.0",
         "eslint-config-next": "^15.3.2",
         "eslint-config-prettier": "^10.1.5",
+        "eslint-import-resolver-typescript": "^4.3.5",
         "eslint-plugin-eslint-comments": "^3.2.0",
         "eslint-plugin-import": "^2.31.0",
         "eslint-plugin-jest": "^28.11.0",
@@ -83,7 +81,9 @@
         "expo-font": "^13.3.1",
         "expo-image": "^2.1.7",
         "expo-image-picker": "^16.1.4",
+        "expo-linear-gradient": "^14.1.5",
         "expo-location": "^18.1.4",
+        "expo-screen-orientation": "^8.1.6",
         "expo-secure-store": "^14.2.3",
         "expo-splash-screen": "^0.30.8",
         "expo-status-bar": "^2.2.3",
@@ -119,6 +119,7 @@
         "react-native-draggable-flatlist": "^4.0.1",
         "react-native-elements": "^3.4.3",
         "react-native-event-source": "^1.1.0",
+        "react-native-extra-dimensions-android": "^1.2.5",
         "react-native-geolocation-service": "^5.3.1",
         "react-native-gesture-handler": "^2.25.0",
         "react-native-get-random-values": "^1.11.0",
@@ -134,6 +135,7 @@
         "react-native-svg-transformer": "^1.5.0",
         "react-native-toast-message": "^2.2.1",
         "react-native-vector-icons": "^10.2.0",
+        "react-native-video": "^6.14.1",
         "react-native-web": "^0.20.0",
         "react-native-webview": "^13.13.5",
         "react-native-zoom-toolkit": "^4.0.1",
@@ -154,9 +156,7 @@
         "url": "^0.11.4",
         "util": "^0.12.5",
         "uuid": "^11.1.0",
-        "validator": "^13.12.0",
-        "@babel/preset-env": "^7.27.2",
-        "expo-linear-gradient": "^14.1.5"
+        "validator": "^13.12.0"
     },
     "devDependencies": {
         "@babel/core": "^7.26.7",
@@ -173,12 +173,12 @@
     "private": true,
     "pnpm": {
         "patchedDependencies": {
-            "react-native-render-html": "patches/react-native-render-html+6.3.4.patch",
-            "react-native-web": "patches/react-native-web.patch",
-            "expo-image": "patches/expo-image.patch",
-            "expo-modules-core": "patches/expo-modules-core.patch",
-            "expo@53.0.9": "patches/expo@53.0.9.patch",
-            "@react-native-community/slider@4.5.6": "patches/@react-native-community__slider@4.5.6.patch"
+            "react-native-render-html": "C:\\Users\\david\\src\\nexus\\patches\\react-native-render-html+6.3.4.patch",
+            "react-native-web": "C:\\Users\\david\\src\\nexus\\patches\\react-native-web.patch",
+            "expo-image": "C:\\Users\\david\\src\\nexus\\patches\\expo-image.patch",
+            "expo-modules-core": "C:\\Users\\david\\src\\nexus\\patches\\expo-modules-core.patch",
+            "expo@53.0.9": "C:\\Users\\david\\src\\nexus\\patches\\expo@53.0.9.patch",
+            "@react-native-community/slider@4.5.6": "C:\\Users\\david\\src\\nexus\\patches\\@react-native-community__slider@4.5.6.patch"
         },
         "overrides": {
             "@types/react": "19.0.10",

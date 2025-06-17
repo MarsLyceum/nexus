@@ -1,9 +1,8 @@
 // RichTextAndMarkdownEditor.tsx
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
     View,
     Text,
-    Pressable,
     StyleSheet,
     NativeSyntheticEvent,
     TextInputContentSizeChangeEventData,
@@ -12,8 +11,7 @@ import {
 import { MarkdownEditor } from './MarkdownEditor';
 import { RichTextEditor } from '../sections/RichTextEditor';
 import { useTheme, Theme } from '../theme';
-import { Tooltip } from './Tooltip';
-import { FormattingOptions, LaTeXLogo } from '../icons';
+import { FormattingOptions } from '../icons';
 import { NexusButton } from '../buttons';
 
 export type RichTextAndMarkdownEditorProps = {
@@ -61,7 +59,6 @@ export const RichTextAndMarkdownEditor: React.FC<
         editorBackgroundColorProp ?? theme.colors.PrimaryBackground;
 
     const [useMarkdown, setUseMarkdown] = useState(!useRichTextEditor);
-    const [useLatex, setUseLatex] = useState(false);
     const [showFormattingOptions, setShowFormattingOptions] = useState(false);
     const [measuredHeightIncludingToolbar, setMeasuredHeightIncludingToolbar] =
         useState<string>(height ?? `${collapsedHeight ?? 40}px`);
@@ -121,22 +118,6 @@ export const RichTextAndMarkdownEditor: React.FC<
                                     }
                                 />
                             </NexusButton>
-                            <NexusButton
-                                style={styles.toggleButton}
-                                label=""
-                                onPress={() => setUseLatex((prev) => !prev)}
-                                variant="text"
-                                tooltipText="Toggle LaTeX Mode"
-                                wideButton={false}
-                            >
-                                <LaTeXLogo
-                                    color={
-                                        useLatex
-                                            ? theme.colors.Primary
-                                            : theme.colors.ActiveText
-                                    }
-                                />
-                            </NexusButton>
                         </>
                     )}
                     {useRichTextEditor && (
@@ -181,7 +162,9 @@ export const RichTextAndMarkdownEditor: React.FC<
                                       ? { updateContent }
                                       : {}),
                                   ...(showFormattingToggle
-                                      ? { showToolbar: showFormattingOptions }
+                                      ? {
+                                            showToolbar: showFormattingOptions,
+                                        }
                                       : {}),
                               }
                             : {

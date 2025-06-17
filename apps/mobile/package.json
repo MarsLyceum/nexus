@@ -174,5 +174,6 @@
         "expo-build-properties": "^0.14.6",
         "react-native-reanimated": "^3.17.5",
         "react-native-reanimated-carousel": "^4.0.2"
-    }
+    },
+    "devDependencies": {}
 }

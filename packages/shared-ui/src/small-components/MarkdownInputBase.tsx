@@ -34,6 +34,9 @@ export interface MarkdownInputBaseProps extends TextInputProps {
     onKeyDown?: (e: any) => void;
 }
 
+const VERTICAL_PADDING = 10;
+const NATIVE_INSET_Y = Platform.select({ ios: 6, android: 4, default: 0 });
+
 export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
     value,
     onChangeText,
@@ -80,11 +83,8 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
         emojiPickerRef.current?.handleKeyDown(e);
     };
     const autoMode = height === 'auto' || height === undefined;
-    console.log('autoMode:', autoMode);
 
     const [contentHeight, setContentHeight] = React.useState<number>(0);
-
-    console.log('contentHeight:', contentHeight);
 
     // Convert height to a number if it's a string ending with "px" on mobile.
     let parsedHeight: string | number = height as string;
@@ -112,7 +112,7 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
         () => ({
             ...(parsedWidth ? { width: parsedWidth } : {}),
             ...(autoMode
-                ? { height: contentHeight }
+                ? { height: Math.max(contentHeight, 40) }
                 : { height: parsedHeight }),
             ...(backgroundColor ? { backgroundColor } : {}), // applied to container
         }),
@@ -130,28 +130,19 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
     ];
     const inputCombinedStyle = [
         styles.input,
-        autoMode
-            ? {
-                  flex: 0,
-                  width: '100%',
-                  backgroundColor: backgroundColor || 'transparent',
-              }
-            : {
-                  width: '100%',
-                  height: '100%',
-                  backgroundColor: backgroundColor || 'transparent',
-              },
-
+        {
+            width: '100%',
+            ...(autoMode ? {} : { height: '100%' }),
+            backgroundColor: backgroundColor || 'transparent',
+        },
         inputStyle,
     ];
 
     const handleContentSizeChange = useCallback(
         (e: NativeSyntheticEvent<TextInputContentSizeChangeEventData>) => {
-            console.log(' in handleContentSizeChange e:', e);
-            const { height: innerHeight } = e.nativeEvent.contentSize;
-            if (innerHeight !== contentHeight) {
-                setContentHeight(e.nativeEvent.contentSize.height);
-            }
+            const raw = e.nativeEvent.contentSize.height; // includes everything
+            const visual = raw - VERTICAL_PADDING - NATIVE_INSET_Y; // and the platform inset
+            if (visual !== contentHeight) setContentHeight(visual);
             // bubble up if the caller passed one
             rest.onContentSizeChange?.(e);
         },

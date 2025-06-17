@@ -204,7 +204,7 @@ export function getRichTextEditorHtml({
                     }
 
                     .ql-editor {
-                        height: var(--editor-height);
+                        height: calc(var(--editor-height) - var(--editor-toolbar-height)) !important;
                         padding: 10px !important;
                         box-sizing: border-box;
                         color: var(--MainText) !important;

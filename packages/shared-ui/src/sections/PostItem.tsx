@@ -284,7 +284,12 @@ export const PostItem: React.FC<PostItemProps> = ({
                 </View>
             </View>
             <View style={isEditing ? styles.hidden : styles.visible}>
-                <Text style={styles.postTitle}>{currentPost.title}</Text>
+                <MarkdownRenderer
+                    // make all titles bold
+                    text={currentPost.title}
+                    preview={false}
+                    isTitle
+                />
             </View>
             <View style={isEditing ? styles.visible : styles.hidden}>
                 <ContentEditor
@@ -301,6 +306,9 @@ export const PostItem: React.FC<PostItemProps> = ({
                     <Text style={styles.flairText}>{currentPost.flair}</Text>
                 </View>
             )}
+
+            {attachmentsElement}
+
             {currentPost.content !== '' && (
                 <>
                     <View style={isEditing ? styles.hidden : styles.visible}>
@@ -318,20 +326,20 @@ export const PostItem: React.FC<PostItemProps> = ({
                             containerWidth={innerWidth}
                         />
                     ))}
-                    <View style={isEditing ? styles.visible : styles.hidden}>
-                        <ContentEditor
-                            value={editedContent}
-                            width={innerWidth}
-                            onChange={setEditedContent}
-                            onSubmit={handleSaveEdit}
-                            onCancel={handleCancelEdit}
-                            useRichTextEditor
-                            submitButtonText="Save"
-                        />
-                    </View>
                 </>
             )}
-            {attachmentsElement}
+            <View style={isEditing ? styles.visible : styles.hidden}>
+                <ContentEditor
+                    value={editedContent}
+                    width={innerWidth}
+                    onChange={setEditedContent}
+                    onSubmit={handleSaveEdit}
+                    onCancel={handleCancelEdit}
+                    useRichTextEditor
+                    submitButtonText="Save"
+                />
+            </View>
+
             <View style={styles.actionsContainer}>
                 <VoteActions
                     voteCount={voteCount}
@@ -431,12 +439,6 @@ function createStyles(theme: Theme) {
         subText: {
             color: theme.colors.InactiveText,
             fontSize: 12,
-        },
-        postTitle: {
-            color: theme.colors.ActiveText,
-            fontSize: 16,
-            fontWeight: 'bold',
-            marginBottom: 10,
         },
         flairContainer: {
             alignSelf: 'flex-start',

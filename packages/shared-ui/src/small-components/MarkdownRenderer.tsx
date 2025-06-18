@@ -276,20 +276,22 @@ const customHTMLElementModels = {
     ...defaultHTMLElementModels,
 };
 
-// ---------------------
-// Constants for preview mode
-// ---------------------
 const PREVIEW_MAX_HEIGHT = 200;
 const ELLIPSIS_HEIGHT = 30;
 
-// ---------------------
-// Main MarkdownRenderer Component
-// ---------------------
-export const MarkdownRenderer: React.FC<{
+export type MarkdownRendererProps = {
     text: string;
     preview?: boolean;
     isEdited?: boolean;
-}> = ({ text, preview, isEdited }) => {
+    isTitle?: boolean;
+};
+
+export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
+    text,
+    preview,
+    isEdited,
+    isTitle,
+}) => {
     const contentWidth = Dimensions.get('window').width;
     const [contentHeight, setContentHeight] = React.useState(0);
     const [expanded, setExpanded] = React.useState(false);
@@ -322,8 +324,8 @@ export const MarkdownRenderer: React.FC<{
     }, []);
 
     // Define tagsStyles to include paragraph styling.
-    const tagsStyles = useMemo(
-        () => ({
+    const tagsStyles = useMemo(() => {
+        const base = {
             div: styles.document,
             p: {
                 color: theme.colors.ActiveText,
@@ -335,15 +337,34 @@ export const MarkdownRenderer: React.FC<{
             code: styles.code_inline,
             blockquote: styles.blockquote,
             h1: styles.heading1,
-        }),
-        [
-            styles.blockquote,
-            styles.code_inline,
-            styles.document,
-            styles.heading1,
-            theme.colors.ActiveText,
-        ]
-    );
+        };
+
+        if (isTitle) {
+            // make all body text bold
+            base.div = {
+                ...base.div,
+                // @ts-expect-error font family
+                fontFamily: 'Roboto_700Bold',
+                fontWeight: 'bold',
+            };
+            base.p = {
+                ...base.p,
+                fontFamily: 'Roboto_700Bold',
+                // @ts-expect-error font weight
+                fontWeight: 'bold',
+            };
+        }
+
+        return base;
+    }, [
+        styles.blockquote,
+        styles.code_inline,
+        styles.document,
+        styles.heading1,
+        theme.colors.ActiveText,
+        isTitle,
+    ]);
+
     const baseStyle = useMemo(() => ({ marginTop: 0, paddingTop: 0 }), []);
     const defaultTextProps = useMemo(() => ({ selectable: true }), []);
 

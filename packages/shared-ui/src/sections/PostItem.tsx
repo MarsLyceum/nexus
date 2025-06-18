@@ -285,7 +285,6 @@ export const PostItem: React.FC<PostItemProps> = ({
             </View>
             <View style={isEditing ? styles.hidden : styles.visible}>
                 <MarkdownRenderer
-                    // make all titles bold
                     text={currentPost.title}
                     preview={false}
                     isTitle

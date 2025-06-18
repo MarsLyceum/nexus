@@ -18,7 +18,7 @@ const spoilerExtension = {
         const discordIndex = src.indexOf('||');
         const redditIndex = src.indexOf('>!');
         if (discordIndex === -1) return redditIndex;
-        if (redditIndex === -1) return discordIndex;
+        if (redditIndex === -1) return redditIndex;
         return Math.min(discordIndex, redditIndex);
     },
     // eslint-disable-next-line consistent-return
@@ -105,7 +105,7 @@ export function getRichTextEditorHtml({
                     href="https://cdn.quilljs.com/1.3.6/quill.snow.css"
                     rel="stylesheet"
                 />
-                <!-- load Roboto 400 -->
+                <!-- Roboto 400 -->
                 <link
                     href="https://fonts.googleapis.com/css2?family=Roboto:wght@400&display=swap"
                     rel="stylesheet"
@@ -122,6 +122,12 @@ export function getRichTextEditorHtml({
                         --editor-overflow: ${showScrollbars
                         ? 'auto'
                         : 'hidden'};
+                        --scrollbar-width: ${showScrollbars
+                        ? 'auto'
+                        : 'none'};   /* IE / Firefox keyword */
+                        --scrollbar-display: ${showScrollbars
+                        ? 'initial'
+                        : 'none'}; /* WebKit keyword */
                         --editor-toolbar-display: ${showToolbar
                         ? 'block'
                         : 'none'};
@@ -140,26 +146,38 @@ export function getRichTextEditorHtml({
                         overflow: var(--editor-overflow) !important;
                     }
 
-                    /* hide native scrollbars when disabled */
+                    /* Overflow logic lives on both container & editor */
+                    .ql-container,
                     .ql-editor {
-                        -ms-overflow-style: none !important; /* IE/Edge */
-                        scrollbar-width: none !important; /* Firefox */
+                        overflow-y: var(--editor-overflow) !important;
+                    }
+
+                    /* hide / show native scrollbars */
+                    .ql-editor {
+                        -ms-overflow-style: var(
+                            --scrollbar-width
+                        ) !important; /* IE / Edge Legacy */
+                        scrollbar-width: var(
+                            --scrollbar-width
+                        ) !important; /* Firefox */
                     }
                     .ql-editor::-webkit-scrollbar {
-                        display: none !important; /* Chrome/Safari */
+                        display: var(
+                            --scrollbar-display
+                        ) !important; /* Chrome / Safari */
                     }
 
                     .quill-wrapper {
-                        border: 1px solid transparent; /* initially invisible */
+                        border: 1px solid transparent;
                         border-radius: var(--editor-border-radius) !important;
                         width: var(--editor-width);
                         height: var(--editor-height);
                         background-color: var(--editor-bg-color) !important;
+                        /* overflow: var(--editor-overflow) !important; */
                         overflow: hidden;
                         box-sizing: border-box;
                         transition: border-color 0.15s ease;
                     }
-                    /* Focus ring visible only when an element inside gains focus */
                     .quill-wrapper:focus-within,
                     .quill-wrapper.focused {
                         border: 1px solid var(--editor-border-color) !important;
@@ -178,8 +196,10 @@ export function getRichTextEditorHtml({
                     /* Remove Quill’s default borders so the wrapper border is continuous */
                     .ql-container,
                     .ql-container.ql-snow {
-                        height: var(--editor-height);
+                        /* height: var(--editor-height); */
+                        height: 100%;
                         border: none !important;
+                        overflow: var(--editor-overflow) !important;
                     }
 
                     .ql-toolbar {
@@ -208,9 +228,9 @@ export function getRichTextEditorHtml({
                         padding: 10px !important;
                         box-sizing: border-box;
                         color: var(--MainText) !important;
-                        overflow-y: auto;
                         font-family: 'Roboto', sans-serif !important;
                         font-size: 14px !important;
+                        overflow: var(--editor-overflow) !important;
                     }
 
                     .ql-editor.ql-blank::before {
@@ -360,7 +380,7 @@ export function getRichTextEditorHtml({
 
                         var icons = Quill.import('ui/icons');
                         icons['spoiler'] =
-                            '<svg class="ql-spoiler-icon" viewBox="0 0 24 24" width="16" height="16" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M12 4.5c-4.97 0-9.27 3.11-11 7.5 1.73 4.39 6.03 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6.03-7.5-11-7.5zm0 13c-3.31 0-6-2.69-6-6 0-.89.22-1.73.61-2.46l8.85 8.85C13.73 17.78 12.89 18 12 18zm4.39-2.03l-8.85-8.85c.73-.39 1.57-.61 2.46-.61 3.31 0 6 2.69 6 6 0 .89-.22 1.73-.61 2.46z"/><line x1="1" y1="1" x2="23" y2="23" stroke="currentColor" stroke-width="2"/></svg>';
+                            '<svg class="ql-spoiler-icon" viewBox="0 0 24 24" width="16" height="16" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M12 4.5c-4.97 0-9.27 3.11-11 7.5 1.73 4.39 6.03 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6.03-7.50-11-7.5zm0 13c-3.31 0-6-2.69-6-6 0-.89.22-1.73.61-2.46l8.85 8.85C13.73 17.78 12.89 18 12 18zm4.39-2.03l-8.85-8.85c.73-.39 1.57-.61 2.46-.61 3.31 0 6 2.69 6 6 0 .89-.22 1.73-.61 2.46z"/><line x1="1" y1="1" x2="23" y2="23" stroke="currentColor" stroke-width="2"/></svg>';
 
                         var toolbarHandlers = {
                             spoiler: function () {
@@ -428,13 +448,11 @@ export function getRichTextEditorHtml({
                         window.quill = quill;
 
                         setTimeout(() => {
-                            const root = quill.root; // this is now .ql-editor (contentEditable)
+                            const root = quill.root;
                             const wrapper =
                                 document.querySelector('.quill-wrapper');
-
                             if (!root || !wrapper) return;
 
-                            // keep outline up while the editor has DOM focus
                             root.addEventListener('focus', () =>
                                 wrapper.classList.add('focused')
                             );
@@ -442,7 +460,6 @@ export function getRichTextEditorHtml({
                                 wrapper.classList.remove('focused')
                             );
 
-                            // ensure border shows immediately when the iframe first gains focus
                             if (document.activeElement === root)
                                 wrapper.classList.add('focused');
                         }, 0);
@@ -458,7 +475,7 @@ export function getRichTextEditorHtml({
                             toolbarPlaceholder.appendChild(generatedToolbar);
                         }
 
-                        // Listen for commands from React parent (iframe or WebView)
+                        // message listener
                         window.addEventListener('message', (e) => {
                             try {
                                 const msg = JSON.parse(e.data);
@@ -509,6 +526,18 @@ export function getRichTextEditorHtml({
                                                     ? 'auto'
                                                     : 'hidden'
                                             );
+                                            document.documentElement.style.setProperty(
+                                                '--scrollbar-width',
+                                                props.showScrollbars
+                                                    ? 'auto'
+                                                    : 'none'
+                                            );
+                                            document.documentElement.style.setProperty(
+                                                '--scrollbar-display',
+                                                props.showScrollbars
+                                                    ? 'initial'
+                                                    : 'none'
+                                            );
                                         }
                                         if (props.showToolbar !== undefined) {
                                             document.documentElement.style.setProperty(
@@ -541,21 +570,17 @@ export function getRichTextEditorHtml({
                                             );
                                             if (
                                                 props.backgroundColor ===
-                                                undefined
+                                                    undefined &&
+                                                colors.SecondaryBackground
                                             ) {
-                                                if (
+                                                document.documentElement.style.setProperty(
+                                                    '--editor-bg-color',
                                                     colors.SecondaryBackground
-                                                ) {
-                                                    document.documentElement.style.setProperty(
-                                                        '--editor-bg-color',
-                                                        colors.SecondaryBackground
-                                                    );
-                                                }
+                                                );
                                             }
                                         }
                                         break;
                                     default:
-                                        // unknown message
                                         break;
                                 }
                             } catch (err) {

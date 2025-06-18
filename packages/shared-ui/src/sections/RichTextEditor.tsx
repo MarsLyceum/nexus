@@ -60,6 +60,7 @@ export const RichTextEditor = ({
 
     const iframeRef = useRef<HTMLIFrameElement>(null);
     const webviewRef = useRef<WebView>(null);
+    console.log('showScrollbars:', showScrollbars);
 
     // build initial HTML only once
     const initialHtmlRef = useRef(

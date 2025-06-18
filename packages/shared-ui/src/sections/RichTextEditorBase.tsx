@@ -475,6 +475,34 @@ export function getRichTextEditorHtml({
                         var quill = new Quill('#editor', quillOptions);
                         window.quill = quill;
 
+                        const TOOLBAR_HEIGHT =
+                            parseInt(
+                                getComputedStyle(
+                                    document.documentElement
+                                ).getPropertyValue('--editor-toolbar-height') ||
+                                    '0',
+                                10
+                            ) || 0;
+
+                        let lastHeight = 0;
+
+                        function postHeight(force = false) {
+                            const fullHeight =
+                                quill.root.scrollHeight + TOOLBAR_HEIGHT + 2; // +2 for wrapper border
+                            if (
+                                (force && lastHeight === 0) ||
+                                fullHeight > lastHeight
+                            ) {
+                                lastHeight = fullHeight;
+                                postMessageFn(
+                                    JSON.stringify({
+                                        type: 'content-height',
+                                        height: fullHeight,
+                                    })
+                                );
+                            }
+                        }
+
                         setTimeout(() => {
                             const root = quill.root;
                             const wrapper =
@@ -607,6 +635,7 @@ export function getRichTextEditorHtml({
                                                 );
                                             }
                                         }
+                                        postHeight();
                                         break;
                                     default:
                                         break;
@@ -695,22 +724,17 @@ export function getRichTextEditorHtml({
                             }
                         }
 
-                        if (window.ResizeObserver) {
-                            const ro = new ResizeObserver((entries) => {
-                                for (const { contentRect } of entries) {
-                                    postMessageFn(
-                                        JSON.stringify({
-                                            type: 'content-height',
-                                            height: Math.ceil(
-                                                contentRect.height + 2
-                                            ),
-                                        })
-                                    );
-                                }
-                            });
-                            const wrapper =
-                                document.querySelector('.quill-wrapper');
-                            if (wrapper) ro.observe(wrapper);
+                        postHeight(true);
+
+                        // grow on text edits or selection changes
+                        quill.on('text-change', () => postHeight());
+                        quill.on('selection-change', () => postHeight());
+
+                        // grow when images (or any async content) alter layout
+                        if ('ResizeObserver' in window) {
+                            new ResizeObserver(() => postHeight()).observe(
+                                quill.root
+                            );
                         }
                     }
 

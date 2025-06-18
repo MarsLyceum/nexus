@@ -132,7 +132,7 @@ export const RichTextEditor = ({
 
     // when updateContent increments, re-set the content
     useEffect(() => {
-        const html = marked(initialContent || '');
+        const html = marked(initialContent || '', { gfm: true, breaks: true });
         sendMessage({
             type: 'update-content',
             initialHTML: html,

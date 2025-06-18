@@ -84,7 +84,9 @@ export function getRichTextEditorHtml({
 
     const cssHeight = autoMode ? 'auto' : height;
     const editorWidth = width;
-    const initialHTML = initialContent ? marked(initialContent) : '<p><br></p>';
+    const initialHTML = initialContent
+        ? marked(initialContent, { gfm: true, breaks: true })
+        : '<p><br></p>';
 
     // Build CSS variable declarations from theme.colors
     const colorVars = Object.entries(theme.colors)

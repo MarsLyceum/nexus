@@ -60,7 +60,7 @@ export const RichTextEditor = ({
 
     const iframeRef = useRef<HTMLIFrameElement>(null);
     const webviewRef = useRef<WebView>(null);
-    console.log('showScrollbars:', showScrollbars);
+    const [autoHeight, setAutoHeight] = React.useState<string | null>(null);
 
     // build initial HTML only once
     const initialHtmlRef = useRef(
@@ -157,22 +157,26 @@ export const RichTextEditor = ({
                         );
                     onChange(markdown);
                 }
-                if (parsed.type === 'content-height' && onContentSizeChange) {
+                if (parsed.type === 'content-height' && height === 'auto') {
                     const { height: contentHeight } = parsed;
                     if (
                         contentHeight > 0 &&
                         contentHeight !== lastHeightRef.current
                     ) {
                         lastHeightRef.current = contentHeight;
-                        onContentSizeChange({
-                            nativeEvent: {
-                                contentSize: {
-                                    height: contentHeight,
-                                    width: Number.parseInt(width, 10),
+                        if (onContentSizeChange) {
+                            onContentSizeChange({
+                                nativeEvent: {
+                                    contentSize: {
+                                        height: contentHeight,
+                                        width: Number.parseInt(width, 10),
+                                    },
                                 },
-                            },
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        } as any);
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            } as any);
+                        }
+                        const heightString = `${contentHeight}px`;
+                        setAutoHeight(heightString);
                     }
                 }
             } catch (error) {
@@ -195,7 +199,17 @@ export const RichTextEditor = ({
 
     if (isWeb) {
         return (
-            <View style={[webStyles.container, { width, height }]}>
+            <View
+                style={[
+                    webStyles.container,
+                    {
+                        width,
+                        height:
+                            autoHeight ?? // once we know the real size
+                            (height !== 'auto' ? height : undefined),
+                    },
+                ]}
+            >
                 <style>{`
                     .my-editor-iframe {
                         width: 100% !important;

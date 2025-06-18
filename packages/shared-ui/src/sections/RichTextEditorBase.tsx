@@ -117,6 +117,7 @@ export function getRichTextEditorHtml({
                     :root {
                         ${colorVars}
                         --editor-height: ${cssHeight};
+                        --editor-max-height: ${autoMode ? 'none' : height};
                         --editor-width: ${editorWidth};
                         --editor-bg-color: ${backgroundColor};
                         --editor-border-radius: ${borderRadius};
@@ -136,6 +137,7 @@ export function getRichTextEditorHtml({
                         --editor-toolbar-height: ${showToolbar
                         ? '40px'
                         : '0px'};
+                        --editor-flex: ${!autoMode ? '1 1 auto' : 'none'};
                     }
 
                     html,
@@ -187,6 +189,9 @@ export function getRichTextEditorHtml({
                     }
 
                     .quill-wrapper {
+                        display: flex;
+                        flex-direction: column;
+
                         border: 1px solid transparent;
                         border-radius: var(--editor-border-radius) !important;
                         width: var(--editor-width);
@@ -207,18 +212,21 @@ export function getRichTextEditorHtml({
 
                     #editor {
                         width: 100%;
-                        height: calc(
+                        /* height: calc(
                             var(--editor-height) - var(--editor-toolbar-height)
-                        ) !important;
+                        ) !important; */
+
+                        flex: var(--editor-flex);
+                        min-height: 40px;      /* still usable in collapsed mode     */
+                        overflow: var(--editor-overflow) !important;
+
                     }
 
                     /* Remove Quill’s default borders so the wrapper border is continuous */
                     .ql-container,
                     .ql-container.ql-snow {
-                        /* height: var(--editor-height); */
-                        height: 100%;
+                        max-height: var(--editor-max-height);
                         border: none !important;
-                        /* overflow: var(--editor-overflow) !important; */
                     }
 
                     .ql-toolbar {
@@ -700,7 +708,9 @@ export function getRichTextEditorHtml({
                                     );
                                 }
                             });
-                            ro.observe(quill.root);
+                            const wrapper =
+                                document.querySelector('.quill-wrapper');
+                            if (wrapper) ro.observe(wrapper);
                         }
                     }
 

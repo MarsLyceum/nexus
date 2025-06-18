@@ -1,5 +1,5 @@
 // RichTextAndMarkdownEditor.tsx
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
     View,
     Text,
@@ -26,7 +26,6 @@ export type RichTextAndMarkdownEditorProps = {
     showFormattingToggle?: boolean;
     updateContent?: number;
     showToolbar?: boolean;
-    height?: string;
     onContentSizeChange?: (
         e: NativeSyntheticEvent<TextInputContentSizeChangeEventData>
     ) => void;
@@ -47,7 +46,6 @@ export const RichTextAndMarkdownEditor: React.FC<
     editorBackgroundColor: editorBackgroundColorProp,
     showFormattingToggle = false,
     updateContent,
-    height,
     onContentSizeChange,
     expandedHeight,
     collapsedHeight,
@@ -60,34 +58,14 @@ export const RichTextAndMarkdownEditor: React.FC<
 
     const [useMarkdown, setUseMarkdown] = useState(!useRichTextEditor);
     const [showFormattingOptions, setShowFormattingOptions] = useState(false);
-    const [measuredHeightIncludingToolbar, setMeasuredHeightIncludingToolbar] =
-        useState<string>(height ?? `${collapsedHeight ?? 40}px`);
-
-    useEffect(() => {
-        if (showFormattingOptions && !useMarkdown && isExpanded && height) {
-            const TOOLBAR_HEIGHT = showFormattingToggle ? 40 : 0;
-            const parsedHeight = Number.parseInt(height, 10);
-            setMeasuredHeightIncludingToolbar(
-                `${TOOLBAR_HEIGHT + parsedHeight}px`
-            );
-        } else {
-            setMeasuredHeightIncludingToolbar(
-                height ?? `${collapsedHeight ?? 40}px`
-            );
-        }
-    }, [
-        height,
-        isExpanded,
-        showFormattingOptions,
-        showFormattingToggle,
-        useMarkdown,
-    ]);
 
     const computedHeight = isExpanded
         ? expandedHeight
             ? `${expandedHeight}px`
-            : measuredHeightIncludingToolbar
+            : 'auto'
         : `${collapsedHeight ?? 40}px`;
+
+    console.log('computedHeight:', computedHeight);
 
     return (
         <View style={styles.container}>

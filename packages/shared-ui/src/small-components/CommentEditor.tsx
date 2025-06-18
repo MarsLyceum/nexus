@@ -87,7 +87,6 @@ export const CommentEditor: React.FC<CommentEditorProps> = ({
                 showGifButton
                 editMode={false}
                 value={newCommentContent}
-                width={Dimensions.get('window').width}
                 onChange={(text) => {
                     setNewCommentContent(text);
                     if (errorMessage) setErrorMessage('');

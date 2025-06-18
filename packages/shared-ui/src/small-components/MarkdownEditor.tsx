@@ -24,6 +24,7 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
     const { theme } = useTheme();
     const styles = useMemo(() => createStyles(theme), [theme]);
     const autoMode = height === 'auto' || height === undefined;
+    console.log('MarkdownEditor. autoMode:', autoMode, ' height:', height);
 
     // Convert height to a number if it is a string ending with "px" on non-web platforms.
     let parsedHeight: string | number = height;
@@ -76,6 +77,7 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
                 value={value}
                 onChangeText={onChangeText}
                 placeholder={placeholder}
+                height={height}
                 {...rest}
                 onFocus={handleFocus}
                 onBlur={handleBlur}

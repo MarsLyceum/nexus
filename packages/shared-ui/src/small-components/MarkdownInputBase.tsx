@@ -83,6 +83,7 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
         emojiPickerRef.current?.handleKeyDown(e);
     };
     const autoMode = height === 'auto' || height === undefined;
+    console.log('autoMode:', autoMode, ' height:', height);
 
     const [contentHeight, setContentHeight] = React.useState<number>(0);
 
@@ -138,11 +139,16 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
         inputStyle,
     ];
 
+    const PIXEL_EPSILON = 1.5;
+
     const handleContentSizeChange = useCallback(
         (e: NativeSyntheticEvent<TextInputContentSizeChangeEventData>) => {
             const raw = e.nativeEvent.contentSize.height; // includes everything
             const visual = raw - VERTICAL_PADDING - NATIVE_INSET_Y; // and the platform inset
-            if (visual !== contentHeight) setContentHeight(visual);
+
+            if (Math.abs(visual - contentHeight) > PIXEL_EPSILON) {
+                setContentHeight(visual);
+            }
             // bubble up if the caller passed one
             rest.onContentSizeChange?.(e);
         },

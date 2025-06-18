@@ -57,14 +57,12 @@ export type ContentEditorProps = {
 export const ContentEditor: React.FC<ContentEditorProps> = ({
     value,
     onChange,
-    width,
     onSubmit = () => {},
     onCancel = () => {},
     useRichTextEditor = false,
     showButtonsEditButtons = true,
     editMode = true,
 
-    height = 40,
     placeholder = '',
     attachments = [],
     setAttachments = () => {},
@@ -94,75 +92,8 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
     const [editedContent, setEditedContent] = useState(value);
     useEffect(() => setEditedContent(value), [value]);
 
-    const [editorHeight, setEditorHeight] = useState(height);
-    const [avgCharWidth, setAvgCharWidth] = useState<number>();
-    const [measuredLineHeight, setMeasuredLineHeight] = useState<number>();
-
-    const isOnlyUrl =
-        extractUrls(editedContent).length === 1 &&
-        editedContent.trim() === extractUrls(editedContent)[0];
-
     const backgroundColor =
         editorBackgroundColorProp ?? theme.colors.PrimaryBackground;
-
-    const estimateHeightForUrl = (
-        text: string,
-        containerWidth: number,
-        avgWidth: number,
-        lineHeight: number,
-        horizPad: number,
-        vertPad: number
-        // eslint-disable-next-line unicorn/consistent-function-scoping
-    ) => {
-        if (!text.trim()) return 60;
-        const effW = containerWidth - horizPad;
-        const charsPerLine = Math.max(1, Math.floor(effW / avgWidth));
-        const lines = Math.ceil(text.length / charsPerLine);
-        return lines * lineHeight + vertPad;
-    };
-
-    useEffect(() => {
-        if (!editedContent.trim()) {
-            setEditorHeight(height);
-            return;
-        }
-        if (
-            isOnlyUrl &&
-            avgCharWidth &&
-            measuredLineHeight &&
-            typeof width === 'number'
-        ) {
-            const flat: StyleProp<TextStyle> =
-                RNStyleSheet.flatten(styles.urlText) || {};
-            const horiz =
-                flat.paddingHorizontal ??
-                (typeof flat.padding === 'number' ? flat.padding * 2 : 0);
-            const vert =
-                flat.paddingVertical ??
-                (typeof flat.padding === 'number' ? flat.padding * 2 : 0);
-            const h = estimateHeightForUrl(
-                editedContent,
-                width,
-                avgCharWidth,
-                measuredLineHeight,
-                horiz as number,
-                vert as number
-            );
-            setEditorHeight(Math.max(height, h));
-        }
-    }, [
-        editedContent,
-        isOnlyUrl,
-        avgCharWidth,
-        measuredLineHeight,
-        width,
-        styles.urlText,
-    ]);
-
-    const handleHiddenLayout = (e: LayoutChangeEvent) => {
-        const { height: eventHeight } = e.nativeEvent.layout;
-        setEditorHeight(Math.max(height, eventHeight));
-    };
 
     const { pickFile } = useFileUpload();
     const [showGiphy, setShowGiphy] = useState(false);
@@ -248,59 +179,8 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
         height: 0,
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const handleContentSizeChange = (e: any) => {
-        const newHeight = e.nativeEvent.contentSize.height;
-        setEditorHeight(newHeight);
-    };
-
     return (
         <View style={styles.container}>
-            {!isOnlyUrl && (
-                <View
-                    style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        opacity: 0,
-                        width,
-                    }}
-                    onLayout={handleHiddenLayout}
-                >
-                    <MarkdownEditor
-                        placeholder={placeholder}
-                        value={editedContent}
-                        onChangeText={onChange}
-                        height={`${editorHeight ?? 150}px`}
-                        onContentSizeChange={handleContentSizeChange}
-                    />
-                </View>
-            )}
-
-            {isOnlyUrl &&
-                avgCharWidth === undefined &&
-                measuredLineHeight === undefined && (
-                    <Text
-                        style={[
-                            styles.urlText,
-                            {
-                                position: 'absolute',
-                                top: 0,
-                                left: 0,
-                                opacity: 0,
-                            },
-                        ]}
-                        onLayout={(e) => {
-                            const { width: innerWidth, height: innerHeight } =
-                                e.nativeEvent.layout;
-                            setAvgCharWidth(innerWidth);
-                            setMeasuredLineHeight(innerHeight);
-                        }}
-                    >
-                        M
-                    </Text>
-                )}
-
             <RichTextAndMarkdownEditor
                 useRichTextEditor={useRichTextEditor}
                 value={editedContent}
@@ -315,10 +195,8 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
                 editorBackgroundColor={backgroundColor}
                 showFormattingToggle={showFormattingToggle}
                 updateContent={resolvedUpdateContent}
-                height={editMode ? 'auto' : `${editorHeight}px`}
                 expandedHeight={editMode ? undefined : 150}
                 collapsedHeight={editMode ? undefined : 40}
-                onContentSizeChange={handleContentSizeChange}
             />
 
             {isExpanded && (showImageButton || showGifButton) && (

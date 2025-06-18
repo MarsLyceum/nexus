@@ -65,8 +65,6 @@ export const RichTextAndMarkdownEditor: React.FC<
             : 'auto'
         : `${collapsedHeight ?? 40}px`;
 
-    console.log('computedHeight:', computedHeight);
-
     return (
         <View style={styles.container}>
             {isExpanded && (

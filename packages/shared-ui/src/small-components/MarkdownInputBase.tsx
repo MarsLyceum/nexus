@@ -83,7 +83,6 @@ export const MarkdownInputBase: React.FC<MarkdownInputBaseProps> = ({
         emojiPickerRef.current?.handleKeyDown(e);
     };
     const autoMode = height === 'auto' || height === undefined;
-    console.log('autoMode:', autoMode, ' height:', height);
 
     const [contentHeight, setContentHeight] = React.useState<number>(0);
 

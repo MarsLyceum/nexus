@@ -124,36 +124,39 @@ export const NexusButton: React.FC<NexusButtonProps> = ({
             : theme.colors.Primary;
     };
 
-    const Wrapper =
-        tooltipText && tooltipText.length > 0 ? Tooltip : React.Fragment;
+    const Button = () => (
+        <Pressable
+            onPress={onPress}
+            style={({ pressed }) => [
+                styles.nexusButtonBase,
+                getButtonStyles(pressed),
+                style,
+            ]}
+            disabled={disabled}
+        >
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            {({ pressed }: { pressed: any }) => (
+                <>
+                    {children}
+                    <Text
+                        style={[
+                            styles.buttonTextBase,
+                            { color: getTextColor(pressed) },
+                        ]}
+                    >
+                        {label}
+                    </Text>
+                </>
+            )}
+        </Pressable>
+    );
 
-    return (
-        <Wrapper text={tooltipText ?? ''}>
-            <Pressable
-                onPress={onPress}
-                style={({ pressed }) => [
-                    styles.nexusButtonBase,
-                    getButtonStyles(pressed),
-                    style,
-                ]}
-                disabled={disabled}
-            >
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                {({ pressed }: { pressed: any }) => (
-                    <>
-                        {children}
-                        <Text
-                            style={[
-                                styles.buttonTextBase,
-                                { color: getTextColor(pressed) },
-                            ]}
-                        >
-                            {label}
-                        </Text>
-                    </>
-                )}
-            </Pressable>
-        </Wrapper>
+    return tooltipText && tooltipText.length > 0 ? (
+        <Tooltip text={tooltipText ?? ''}>
+            <Button />
+        </Tooltip>
+    ) : (
+        <Button />
     );
 };
 

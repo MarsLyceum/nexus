@@ -96,15 +96,6 @@ export const RichTextEditor = ({
 
     // when any visual prop changes, update editor in-place
     useEffect(() => {
-        console.log('updating props:', {
-            placeholder,
-            showToolbar,
-            showScrollbars,
-            width,
-            height,
-            borderRadius,
-            backgroundColor,
-        });
         sendMessage({
             type: 'update-props',
             props: {

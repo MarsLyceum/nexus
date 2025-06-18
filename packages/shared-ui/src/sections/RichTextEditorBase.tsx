@@ -702,7 +702,7 @@ export function getRichTextEditorHtml({
                                         JSON.stringify({
                                             type: 'content-height',
                                             height: Math.ceil(
-                                                contentRect.height
+                                                contentRect.height + 2
                                             ),
                                         })
                                     );

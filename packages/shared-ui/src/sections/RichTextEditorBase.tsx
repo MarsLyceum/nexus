@@ -123,10 +123,10 @@ export function getRichTextEditorHtml({
                         ? 'auto'
                         : 'hidden'};
                         --scrollbar-width: ${showScrollbars
-                        ? 'auto'
-                        : 'none'};   /* IE / Firefox keyword */
+                        ? '8px'
+                        : '0'};   /* IE / Firefox keyword */
                         --scrollbar-display: ${showScrollbars
-                        ? 'initial'
+                        ? 'block'
                         : 'none'}; /* WebKit keyword */
                         --editor-toolbar-display: ${showToolbar
                         ? 'block'
@@ -143,12 +143,14 @@ export function getRichTextEditorHtml({
                         width: var(--editor-width) !important;
                         font-family: 'Roboto', sans-serif !important;
                         font-size: 14px !important;
-                        overflow: var(--editor-overflow) !important;
+                        /* overflow: var(--editor-overflow) !important; */
+                        overflow: hidden
                     }
 
                     /* Overflow logic lives on both container & editor */
                     .ql-container,
-                    .ql-editor {
+                    /* .ql-editor */
+                     {
                         overflow-y: var(--editor-overflow) !important;
                     }
 
@@ -162,9 +164,24 @@ export function getRichTextEditorHtml({
                         ) !important; /* Firefox */
                     }
                     .ql-editor::-webkit-scrollbar {
-                        display: var(
+                        /* display: var(
                             --scrollbar-display
-                        ) !important; /* Chrome / Safari */
+                        ) !important; Chrome / Safari */
+                        width: var(--scrollbar-width) !important;                /* 0 ⇒ invisible */
+                        height: var(--scrollbar-width) !important;
+                    }
+                    .ql-editor::-webkit-scrollbar-track {
+                        background: var(--PrimaryBackground);   /* rail colour */
+                    }
+
+                    .ql-editor::-webkit-scrollbar-thumb {
+                        background: var(--TextInput);           /* thumb colour */
+                        border-radius: 999px;                   /* fully-rounded ends */
+                    }
+
+                    .ql-editor {
+                        scrollbar-width: thin;                                    /* “auto”, “thin”, or “none” */
+                        scrollbar-color: var(--TextInput) var(--PrimaryBackground);  /* thumb   track */
                     }
 
                     .quill-wrapper {
@@ -199,7 +216,7 @@ export function getRichTextEditorHtml({
                         /* height: var(--editor-height); */
                         height: 100%;
                         border: none !important;
-                        overflow: var(--editor-overflow) !important;
+                        /* overflow: var(--editor-overflow) !important; */
                     }
 
                     .ql-toolbar {
@@ -230,6 +247,7 @@ export function getRichTextEditorHtml({
                         color: var(--MainText) !important;
                         font-family: 'Roboto', sans-serif !important;
                         font-size: 14px !important;
+                        height: 100% !important;
                         overflow: var(--editor-overflow) !important;
                     }
 
@@ -529,13 +547,13 @@ export function getRichTextEditorHtml({
                                             document.documentElement.style.setProperty(
                                                 '--scrollbar-width',
                                                 props.showScrollbars
-                                                    ? 'auto'
-                                                    : 'none'
+                                                    ? '8px'
+                                                    : '0'
                                             );
                                             document.documentElement.style.setProperty(
                                                 '--scrollbar-display',
                                                 props.showScrollbars
-                                                    ? 'initial'
+                                                    ? 'block'
                                                     : 'none'
                                             );
                                         }

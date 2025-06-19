@@ -1,24 +1,12 @@
 // src/small-components/ContentEditor.tsx
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    StyleProp,
-    TextStyle,
-    StyleSheet as RNStyleSheet,
-    LayoutChangeEvent,
-    TouchableOpacity,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 
-import { extractUrls } from '../utils';
 import { NexusButton } from '../buttons';
 import { useTheme, Theme } from '../theme';
-import { RichTextEditor } from '../sections';
 import { useFileUpload, useIsComputer } from '../hooks';
 
-import { MarkdownEditor } from './MarkdownEditor';
 import { RichTextAndMarkdownEditor } from './RichTextAndMarkdownEditor';
 
 import { GiphyModal } from './GiphyModal';

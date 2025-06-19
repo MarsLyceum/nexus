@@ -26,7 +26,8 @@ import {
 } from '../small-components';
 import { stripHtml, extractUrls } from '../utils';
 import { Share as ShareIcon, MoreHorizontal } from '../icons';
-import { FeedPost } from '../types';
+import { FeedPost, FeedChannelPost } from '../types';
+import { useUpdatePost } from '../hooks';
 
 export type PostItemProps = {
     post: FeedPost;
@@ -54,6 +55,46 @@ function getGroupAvatarUri(group: string, thumbnail?: string): string {
             group.replaceAll(/\W/g, '')
         )}/48`
     );
+}
+
+function convertFeedPostToFeedChannelPost(feedPost: FeedPost): FeedChannelPost {
+    const {
+        id,
+        content,
+        postedAt,
+        edited,
+        channel,
+        channelId,
+        postedByUserId,
+        attachmentUrls,
+
+        title,
+        flair,
+        domain,
+        thumbnail,
+        upvotes,
+        commentsCount,
+        shareCount,
+    } = feedPost;
+
+    return {
+        id,
+        content,
+        postedAt,
+        edited,
+        channel,
+        channelId,
+        postedByUserId,
+        attachmentUrls,
+
+        title,
+        flair,
+        domain,
+        thumbnail,
+        upvotes,
+        commentsCount,
+        shareCount,
+    };
 }
 
 export const PostItem: React.FC<PostItemProps> = ({
@@ -92,6 +133,7 @@ export const PostItem: React.FC<PostItemProps> = ({
     const [showMoreOptions, setShowMoreOptions] = useState(false);
     const [editedTitle, setEditedTitle] = useState(currentPost.title);
     const [editedContent, setEditedContent] = useState(currentPost.content);
+    const { updatePost } = useUpdatePost(currentPost.channelId);
 
     const handleEdit = () => {
         setShowMoreOptions(false);
@@ -204,6 +246,14 @@ export const PostItem: React.FC<PostItemProps> = ({
             edited: true,
         };
 
+        void updatePost({
+            id: updatedPost.id,
+            postedByUserId: updatedPost.postedByUserId,
+            channelId: updatedPost.channelId,
+            content: updatedPost.content,
+            title: updatedPost.title,
+        });
+
         setCurrentPost(updatedPost);
         setIsEditing(false);
     };
@@ -267,12 +317,6 @@ export const PostItem: React.FC<PostItemProps> = ({
                                         height,
                                     });
                                     setShowMoreOptions(true);
-                                    console.log('measured & opening at', {
-                                        x,
-                                        y,
-                                        width,
-                                        height,
-                                    });
                                 }
                             );
                         }}

@@ -491,7 +491,7 @@ export function getRichTextEditorHtml({
                                 quill.root.scrollHeight + TOOLBAR_HEIGHT + 2; // +2 for wrapper border
                             if (
                                 (force && lastHeight === 0) ||
-                                fullHeight > lastHeight
+                                fullHeight !== lastHeight
                             ) {
                                 lastHeight = fullHeight;
                                 postMessageFn(

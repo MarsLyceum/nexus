@@ -92,10 +92,8 @@ export const FeedChannelScreen: React.FC<FeedChannelScreenProps> = ({
     const { width } = useWindowDimensions();
     const { push } = useNexusRouter(); // Use router push for navigation
 
-    // Fetch feed posts using a custom hook
     const { feedPosts, loadingFeed } = useFeedPosts(channel?.id);
 
-    // Local UI state for creating a post
     const [modalVisible, setModalVisible] = useState(false);
     const [newPostTitle, setNewPostTitle] = useState('');
     const [newPostContent, setNewPostContent] = useState('');

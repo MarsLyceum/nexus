@@ -20,3 +20,4 @@ export * from './useGifPlayer';
 export * from './useFriendStatus';
 export * from './useIsComputer';
 export * from './useSystemBars';
+export * from './useUpdatePost';

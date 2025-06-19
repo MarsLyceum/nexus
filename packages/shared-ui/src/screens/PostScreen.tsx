@@ -102,6 +102,12 @@ export const PostScreen: React.FC<PostScreenProps> = (props) => {
         () => ({
             id: feedPost?.id ?? '',
             username: resolvedUsername,
+            postedByUserId: feedPost?.postedByUserId ?? '',
+            postedAt: feedPost?.postedAt
+                ? new Date(feedPost?.postedAt)
+                : new Date(),
+            channelId: feedPost?.channelId ?? '',
+            edited: feedPost?.edited ?? false,
             time: formattedTime,
             title: feedPost?.title ?? '',
             flair: feedPost?.flair || '',

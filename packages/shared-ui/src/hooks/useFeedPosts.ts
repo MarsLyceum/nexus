@@ -46,6 +46,10 @@ export const useFeedPosts = (channelId?: string) => {
                         return {
                             id: post.id,
                             username,
+                            postedByUserId: post.postedByUserId,
+                            postedAt: post.postedAt,
+                            channelId: post.channelId,
+                            channel: post.channel,
                             domain: post.domain || '',
                             title: post.title,
                             upvotes: post.upvotes,

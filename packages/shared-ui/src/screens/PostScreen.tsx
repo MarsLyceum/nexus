@@ -82,6 +82,7 @@ export const PostScreen: React.FC<PostScreenProps> = (props) => {
     });
 
     const feedPost: Post | undefined = postObj || data?.fetchPost;
+
     const computedUserId =
         feedPost?.postedByUserId || data?.fetchPost?.postedByUserId || '';
 

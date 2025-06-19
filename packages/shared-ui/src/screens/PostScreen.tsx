@@ -258,6 +258,7 @@ export const PostScreen: React.FC<PostScreenProps> = (props) => {
                         flex: 1,
                         justifyContent: 'center',
                         alignItems: 'center',
+                        color: theme.colors.ActiveText,
                     }}
                 >
                     <Text>Error loading post: {error.message}</Text>

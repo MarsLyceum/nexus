@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
-import { Edit, Delete } from '../icons';
+import { Edit, Delete, Flair, NSFW, Spoiler } from '../icons';
 import { useTheme, Theme } from '../theme';
 
 import { MiniModal } from './MiniModal';
@@ -32,41 +32,11 @@ export const ForwardIconPost = ({ theme }: { theme: Theme }) => (
     </Svg>
 );
 
-// Example: Thread
-export const ThreadIconPost = ({ theme }: { theme: Theme }) => (
-    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-        <Path
-            d="M4 4h16v10H5.17L4 15.17V4zM2 2v16l4-4h14c1.1 0 2-.9 2-2V2H2z"
-            fill={theme.colors.ActiveText}
-        />
-    </Svg>
-);
-
 // Example: Copy Text
 export const CopyTextIconPost = ({ theme }: { theme: Theme }) => (
     <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
         <Path
             d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zM19 5H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2z"
-            fill={theme.colors.ActiveText}
-        />
-    </Svg>
-);
-
-// Example: Pin Message
-export const PinMessageIconPost = ({ theme }: { theme: Theme }) => (
-    <Svg width={18} height={18} viewBox="0 0 512 512" fill="none">
-        <Path
-            d="M128 128l256 0 0 128 64-64-128 128v64l-64-64-128 0 0-192z"
-            fill={theme.colors.ActiveText}
-        />
-    </Svg>
-);
-
-// Example: Mark Unread
-export const MarkUnreadIconPost = ({ theme }: { theme: Theme }) => (
-    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-        <Path
-            d="M18 8V6H2v12h14v-2H4V8h14zM20 4h-2v6l-2.5-2.5-1.42 1.42L18 13.84l4.5-4.92-1.42-1.4L20 10V4z"
             fill={theme.colors.ActiveText}
         />
     </Svg>
@@ -82,6 +52,36 @@ export const CopyLinkIconPost = ({ theme }: { theme: Theme }) => (
     </Svg>
 );
 
+export const SaveIconPost = ({ theme }: { theme: Theme }) => (
+    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+        <Path
+            d="M6 4h12l2 2v14l-2 2H6l-2-2V6l2-2z"
+            fill={theme.colors.ActiveText}
+        />
+    </Svg>
+);
+export const HideIconPost = ({ theme }: { theme: Theme }) => (
+    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+        <Path
+            d="M12 4c-7 0-10 8-10 8s3 8 10 8 10-8 10-8-3-8-10-8zm0 14a6 6 0 1 1 0-12 6 6 0 0 1 0 12z"
+            fill={theme.colors.ActiveText}
+        />
+    </Svg>
+);
+export const AffiliateIconPost = ({ theme }: { theme: Theme }) => (
+    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+        <Path d="M12 2l4 20-8 0 4-20z" fill={theme.colors.ActiveText} />
+    </Svg>
+);
+export const BellOffIconPost = ({ theme }: { theme: Theme }) => (
+    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+        <Path
+            d="M18 8a6 6 0 0 0-12 0v4H4l1 1h14l1-1h-2V8zM6 20h12v-2H6v2zm12-2h2v-2h-2v2z"
+            fill={theme.colors.ActiveText}
+        />
+    </Svg>
+);
+
 /* We define this type to ensure we stay with TypeScript (not an interface). */
 export type PostMoreOptionsMenuProps = {
     visible: boolean;
@@ -90,13 +90,18 @@ export type PostMoreOptionsMenuProps = {
     onEdit: () => void;
     onReply: () => void;
     onForward: () => void;
-    onCreateThread: () => void;
     onAddReaction: () => void;
     onCopyText: () => void;
-    onPinMessage: () => void;
-    onMarkUnread: () => void;
     onCopyMessageLink: () => void;
     onDeleteMessage: () => void;
+
+    onEditFlair: () => void;
+    onSave: () => void;
+    onHide: () => void;
+    onAddSpoilerTag: () => void;
+    onAddNSFWTag: () => void;
+    onMarkBrandAffiliate: () => void;
+    onToggleReplyNotifications: () => void;
 };
 
 export function PostMoreOptionsMenu({
@@ -106,13 +111,17 @@ export function PostMoreOptionsMenu({
     onEdit,
     onReply,
     onForward,
-    onCreateThread,
     onAddReaction,
     onCopyText,
-    onPinMessage,
-    onMarkUnread,
     onCopyMessageLink,
     onDeleteMessage,
+    onEditFlair,
+    onSave,
+    onHide,
+    onAddSpoilerTag,
+    onAddNSFWTag,
+    onMarkBrandAffiliate,
+    onToggleReplyNotifications,
 }: PostMoreOptionsMenuProps) {
     const { theme } = useTheme();
     const styles = useMemo(() => createStyles(theme), [theme]);
@@ -137,7 +146,7 @@ export function PostMoreOptionsMenu({
 
                 {/* Edit Message */}
                 <TouchableOpacity style={styles.menuItem} onPress={onEdit}>
-                    <Edit />
+                    <Edit size={22} />
                     <Text style={styles.menuItemText}>Edit Post</Text>
                 </TouchableOpacity>
 
@@ -153,37 +162,10 @@ export function PostMoreOptionsMenu({
                     <Text style={styles.menuItemText}>Forward</Text>
                 </TouchableOpacity>
 
-                {/* Create Thread */}
-                <TouchableOpacity
-                    style={styles.menuItem}
-                    onPress={onCreateThread}
-                >
-                    <ThreadIconPost theme={theme} />
-                    <Text style={styles.menuItemText}>Create Thread</Text>
-                </TouchableOpacity>
-
                 {/* Copy Text */}
                 <TouchableOpacity style={styles.menuItem} onPress={onCopyText}>
                     <CopyTextIconPost theme={theme} />
                     <Text style={styles.menuItemText}>Copy Text</Text>
-                </TouchableOpacity>
-
-                {/* Pin Message */}
-                <TouchableOpacity
-                    style={styles.menuItem}
-                    onPress={onPinMessage}
-                >
-                    <PinMessageIconPost theme={theme} />
-                    <Text style={styles.menuItemText}>Pin Message</Text>
-                </TouchableOpacity>
-
-                {/* Mark Unread */}
-                <TouchableOpacity
-                    style={styles.menuItem}
-                    onPress={onMarkUnread}
-                >
-                    <MarkUnreadIconPost theme={theme} />
-                    <Text style={styles.menuItemText}>Mark Unread</Text>
                 </TouchableOpacity>
 
                 {/* Copy Message Link */}
@@ -195,12 +177,70 @@ export function PostMoreOptionsMenu({
                     <Text style={styles.menuItemText}>Copy Message Link</Text>
                 </TouchableOpacity>
 
+                {/* Edit Post Flair */}
+                <TouchableOpacity style={styles.menuItem} onPress={onEditFlair}>
+                    <Flair size={22} />
+                    <Text style={styles.menuItemText}>Edit Post Flair</Text>
+                </TouchableOpacity>
+
+                {/* Save */}
+                <TouchableOpacity style={styles.menuItem} onPress={onSave}>
+                    <SaveIconPost theme={theme} />
+                    <Text style={styles.menuItemText}>Save</Text>
+                </TouchableOpacity>
+
+                {/* Hide */}
+                <TouchableOpacity style={styles.menuItem} onPress={onHide}>
+                    <HideIconPost theme={theme} />
+                    <Text style={styles.menuItemText}>Hide</Text>
+                </TouchableOpacity>
+
+                {/* Add Spoiler Tag */}
+                <TouchableOpacity
+                    style={styles.menuItem}
+                    onPress={onAddSpoilerTag}
+                >
+                    <Spoiler size={22} />
+                    <Text style={styles.menuItemText}>Add Spoiler Tag</Text>
+                </TouchableOpacity>
+
+                {/* Add NSFW Tag */}
+                <TouchableOpacity
+                    style={styles.menuItem}
+                    onPress={onAddNSFWTag}
+                >
+                    <NSFW size={22} />
+                    <Text style={styles.menuItemText}>Add NSFW Tag</Text>
+                </TouchableOpacity>
+
+                {/* Mark as Brand Affiliate */}
+                <TouchableOpacity
+                    style={styles.menuItem}
+                    onPress={onMarkBrandAffiliate}
+                >
+                    <AffiliateIconPost theme={theme} />
+                    <Text style={styles.menuItemText}>
+                        Mark as Brand Affiliate
+                    </Text>
+                </TouchableOpacity>
+
+                {/* Turn Off Reply Notifications */}
+                <TouchableOpacity
+                    style={styles.menuItem}
+                    onPress={onToggleReplyNotifications}
+                >
+                    <BellOffIconPost theme={theme} />
+                    <Text style={styles.menuItemText}>
+                        Turn Off Reply Notifications
+                    </Text>
+                </TouchableOpacity>
+
                 {/* Delete Message */}
                 <TouchableOpacity
                     style={styles.menuItemDelete}
                     onPress={onDeleteMessage}
                 >
-                    <Delete />
+                    <Delete size={24} />
                     <Text style={[styles.menuItemText, styles.deleteText]}>
                         Delete Message
                     </Text>

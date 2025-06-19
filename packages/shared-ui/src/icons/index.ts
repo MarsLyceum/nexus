@@ -43,3 +43,6 @@ export * from './Replay';
 export * from './ChevronLeft';
 export * from './ChevronRight';
 export * from './ChevronUp';
+export * from './Flair';
+export * from './NSFW';
+export * from './Spoiler';

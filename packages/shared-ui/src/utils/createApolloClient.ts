@@ -122,7 +122,11 @@ export const createApolloClient = (serverCookie?: string) => {
                 (e: { extensions: { code: string } }) =>
                     e.extensions?.code === 'UNAUTHENTICATED'
             );
-            if (authError) {
+
+            const { retried } = operation.getContext();
+
+            if (authError && !retried) {
+                operation.setContext({ retried: true });
                 return new Observable((observer) => {
                     // only try once per operation
                     if (hasRefreshed) {

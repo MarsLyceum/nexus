@@ -427,13 +427,17 @@ export const PostItem: React.FC<PostItemProps> = ({
                 onEdit={handleEdit}
                 onReply={() => {}}
                 onForward={() => {}}
-                onCreateThread={() => {}}
                 onAddReaction={() => {}}
                 onCopyText={() => {}}
-                onPinMessage={() => {}}
-                onMarkUnread={() => {}}
                 onCopyMessageLink={() => {}}
                 onDeleteMessage={() => {}}
+                onEditFlair={() => {}}
+                onSave={() => {}}
+                onHide={() => {}}
+                onAddSpoilerTag={() => {}}
+                onAddNSFWTag={() => {}}
+                onMarkBrandAffiliate={() => {}}
+                onToggleReplyNotifications={() => {}}
             />
         </>
     );

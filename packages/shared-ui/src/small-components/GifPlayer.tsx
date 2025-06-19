@@ -1,5 +1,11 @@
 // GifPlayer.tsx
-import React, { useRef, useEffect, useCallback, useMemo } from 'react';
+import React, {
+    useRef,
+    useEffect,
+    useCallback,
+    useMemo,
+    useState,
+} from 'react';
 import { Platform, View } from 'react-native';
 import {
     Canvas as SkiaCanvas,
@@ -46,6 +52,8 @@ export const GifPlayer: React.FC<GifPlayerProps> = ({
     const positionSV = useSharedValue(position);
     const playingSV = useSharedValue(playing);
 
+    const [canvasReady, setCanvasReady] = useState(false);
+
     const totalDuration = frames.reduce((sum, f) => sum + f.delay, 0);
 
     const clock = useClock();
@@ -69,6 +77,19 @@ export const GifPlayer: React.FC<GifPlayerProps> = ({
             return frames.map((f) => f.skImage!);
         }
         return []; // no SkiaImages on web
+    }, [frames]);
+
+    const firstFrameDataUrl = useMemo(() => {
+        if (frames.length > 0 && frames[0].imageData) {
+            const img = frames[0].imageData;
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d')!;
+            ctx.putImageData(img, 0, 0);
+            return canvas.toDataURL();
+        }
+        return undefined;
     }, [frames]);
 
     useEffect(() => {
@@ -126,8 +147,12 @@ export const GifPlayer: React.FC<GifPlayerProps> = ({
                 // draw it scaled to fill the entire canvas area
                 ctx.drawImage(bmp, 0, 0, width, height);
             }
+
+            if (!canvasReady) {
+                setCanvasReady(true);
+            }
         }
-    }, [frames, width, height, position, cumulativeDelays]);
+    }, [frames, width, height, position, cumulativeDelays, canvasReady]);
 
     useEffect(() => {
         const canvas = Platform.OS === 'web' ? canvasRefWeb.current : undefined;
@@ -149,42 +174,73 @@ export const GifPlayer: React.FC<GifPlayerProps> = ({
         }
     }, [position, frames, drawFrame]);
 
+    useEffect(() => {
+        if (Platform.OS !== 'web' && skiaImages.length > 0 && !canvasReady) {
+            setCanvasReady(true);
+        }
+    }, [skiaImages, canvasReady]);
+
     return (
         <View>
-            <View style={{ width, height }}>
-                {frames.length > 0 ? (
-                    Platform.OS === 'web' ? (
-                        <canvas
-                            ref={canvasRefWeb}
-                            width={width}
-                            height={height}
-                            style={{ width: '100%', height: '100%' }}
-                        />
-                    ) : (
-                        skiaImages && (
-                            <SkiaCanvas
-                                style={{ width, height }}
-                                opaque={false}
-                            >
-                                <SkiaImage
-                                    image={currentImage}
-                                    x={0}
-                                    y={0}
-                                    width={width}
-                                    height={height}
-                                    fit="fill"
-                                />
-                            </SkiaCanvas>
-                        )
-                    )
-                ) : (
-                    <NexusImage
-                        source={source}
+            <View style={{ width, height, position: 'relative' }}>
+                {Platform.OS === 'web' ? (
+                    <canvas
+                        ref={canvasRefWeb}
                         width={width}
                         height={height}
-                        alt="Gif"
+                        style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                            visibility: canvasReady ? 'visible' : 'hidden',
+                            zIndex: 1,
+                        }}
                     />
+                ) : (
+                    skiaImages && (
+                        <SkiaCanvas
+                            style={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                width: '100%',
+                                height: '100%',
+                                visibility: canvasReady ? 'visible' : 'hidden',
+                                zIndex: 1,
+                            }}
+                            opaque={false}
+                        >
+                            <SkiaImage
+                                image={currentImage}
+                                x={0}
+                                y={0}
+                                width={width}
+                                height={height}
+                                fit="fill"
+                            />
+                        </SkiaCanvas>
+                    )
                 )}
+                {(!frames || frames.length <= 0 || !canvasReady) &&
+                    firstFrameDataUrl && (
+                        <NexusImage
+                            source={firstFrameDataUrl}
+                            width={width}
+                            height={height}
+                            alt="Gif"
+                            style={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                width: '100%',
+                                height: '100%',
+                                visibility: canvasReady ? 'hidden' : 'visible',
+                                zIndex: 0,
+                            }}
+                        />
+                    )}
             </View>
         </View>
     );

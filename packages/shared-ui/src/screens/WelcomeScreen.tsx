@@ -10,7 +10,13 @@ import {
 import React, { useEffect, useMemo } from 'react';
 
 import { useNexusRouter } from '../hooks';
-import { RootState, useAppSelector, useAppDispatch, loadUser } from '../redux';
+import {
+    RootState,
+    useAppSelector,
+    useAppDispatch,
+    loadUser,
+    logoutUser,
+} from '../redux';
 import { PeepsLogo } from '../images/PeepsLogo';
 import { PrimaryGradientButton, SecondaryButton } from '../buttons';
 import { getItemSecure, setItemSecure } from '../utils';
@@ -86,9 +92,10 @@ export function WelcomeScreen(): React.JSX.Element {
             if (Platform.OS !== 'web') {
                 const raw = await getItemSecure(REFRESH_TOKEN_EXPIRES_AT_KEY);
                 const expiresAt = raw ? Number.parseInt(raw, 10) : 0;
-                if (!expiresAt || Date.now() / 1000 >= expiresAt) {
+                if (!expiresAt || Date.now() >= expiresAt) {
                     await setItemSecure(ACCESS_TOKEN_KEY, '');
                     await setItemSecure(REFRESH_TOKEN_KEY, '');
+                    dispatch(logoutUser);
                 }
 
                 const token = (await getItemSecure(ACCESS_TOKEN_KEY)) || '';

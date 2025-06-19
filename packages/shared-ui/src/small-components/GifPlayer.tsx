@@ -223,7 +223,8 @@ export const GifPlayer: React.FC<GifPlayerProps> = ({
                         </SkiaCanvas>
                     )
                 )}
-                {(!frames || frames.length <= 0 || !canvasReady) &&
+                {Platform.OS === 'web' &&
+                    (!frames || frames.length <= 0 || !canvasReady) &&
                     firstFrameDataUrl && (
                         <NexusImage
                             source={firstFrameDataUrl}
@@ -241,6 +242,23 @@ export const GifPlayer: React.FC<GifPlayerProps> = ({
                             }}
                         />
                     )}
+                {Platform.OS !== 'web' && (
+                    <NexusImage
+                        source={source}
+                        width={width}
+                        height={height}
+                        alt="Gif"
+                        style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                            visibility: canvasReady ? 'hidden' : 'visible',
+                            zIndex: 0,
+                        }}
+                    />
+                )}
             </View>
         </View>
     );

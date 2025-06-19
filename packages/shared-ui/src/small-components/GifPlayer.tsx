@@ -80,7 +80,12 @@ export const GifPlayer: React.FC<GifPlayerProps> = ({
     }, [frames]);
 
     const firstFrameDataUrl = useMemo(() => {
-        if (frames.length > 0 && frames[0].imageData) {
+        if (
+            Platform.OS === 'web' &&
+            document &&
+            frames.length > 0 &&
+            frames[0].imageData
+        ) {
             const img = frames[0].imageData;
             const canvas = document.createElement('canvas');
             canvas.width = img.width;

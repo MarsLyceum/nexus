@@ -100,7 +100,6 @@ export type PostMoreOptionsMenuProps = {
     onHide: () => void;
     onAddSpoilerTag: () => void;
     onAddNSFWTag: () => void;
-    onMarkBrandAffiliate: () => void;
     onToggleReplyNotifications: () => void;
 };
 
@@ -120,7 +119,6 @@ export function PostMoreOptionsMenu({
     onHide,
     onAddSpoilerTag,
     onAddNSFWTag,
-    onMarkBrandAffiliate,
     onToggleReplyNotifications,
 }: PostMoreOptionsMenuProps) {
     const { theme } = useTheme();
@@ -211,17 +209,6 @@ export function PostMoreOptionsMenu({
                 >
                     <NSFW size={22} />
                     <Text style={styles.menuItemText}>Add NSFW Tag</Text>
-                </TouchableOpacity>
-
-                {/* Mark as Brand Affiliate */}
-                <TouchableOpacity
-                    style={styles.menuItem}
-                    onPress={onMarkBrandAffiliate}
-                >
-                    <AffiliateIconPost theme={theme} />
-                    <Text style={styles.menuItemText}>
-                        Mark as Brand Affiliate
-                    </Text>
                 </TouchableOpacity>
 
                 {/* Turn Off Reply Notifications */}

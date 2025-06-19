@@ -436,7 +436,6 @@ export const PostItem: React.FC<PostItemProps> = ({
                 onHide={() => {}}
                 onAddSpoilerTag={() => {}}
                 onAddNSFWTag={() => {}}
-                onMarkBrandAffiliate={() => {}}
                 onToggleReplyNotifications={() => {}}
             />
         </>

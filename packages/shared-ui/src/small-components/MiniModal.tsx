@@ -64,6 +64,27 @@ export const MiniModal: React.FC<MiniModalProps> = ({
         | undefined
     >();
 
+    useEffect(() => {
+        if (!visible || !closeOnOutsideClick) return;
+        if (Platform.OS === 'web') {
+            const handleOutsideClick = (e: MouseEvent) => {
+                if (
+                    modalRef.current &&
+                    !(modalRef.current as unknown as Element).contains(
+                        e.target as Node
+                    )
+                )
+                    onClose();
+            };
+            document.addEventListener('mousedown', handleOutsideClick, {
+                passive: true,
+            });
+            // eslint-disable-next-line consistent-return
+            return () =>
+                document.removeEventListener('mousedown', handleOutsideClick);
+        }
+    }, [visible, closeOnOutsideClick, onClose]);
+
     const flattenedContainerStyle = StyleSheet.flatten(containerStyle);
 
     useEffect(() => {

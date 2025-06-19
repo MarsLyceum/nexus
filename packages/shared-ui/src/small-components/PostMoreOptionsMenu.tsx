@@ -229,7 +229,7 @@ export function PostMoreOptionsMenu({
                 >
                     <Delete size={24} />
                     <Text style={[styles.menuItemText, styles.deleteText]}>
-                        Delete Message
+                        Delete Post
                     </Text>
                 </TouchableOpacity>
             </View>

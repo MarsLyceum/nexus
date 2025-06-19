@@ -6,7 +6,7 @@ export const COLORS = {
     SecondaryBackground: '#311452',
     TertiaryBackground: '#491e7b',
     AppBackground: '#160925',
-    InactiveText: '#989898',
+    InactiveText: '#BBBBBB',
     ActiveText: '#FFFFFF',
     MainText: '#C5C5C5',
     TextInput: '#3A2A4A',

@@ -126,10 +126,6 @@ export const createApolloClient = (serverCookie?: string) => {
             if (authError && !retried) {
                 operation.setContext({ retried: true });
                 return new Observable((observer) => {
-                    // only try once per operation
-                    console.warn('[auth] already retried refresh, giving up');
-                    observer.error(authError);
-
                     void (async () => {
                         if (Platform.OS !== 'web') {
                             const rawExpiresAt = await getItemSecure(

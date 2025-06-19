@@ -102,8 +102,6 @@ export const createApolloClient = (serverCookie?: string) => {
         };
     });
 
-    let hasRefreshed = false;
-
     // eslint-disable-next-line consistent-return
     const errorLink = onError(
         (errorResponse: {
@@ -129,15 +127,8 @@ export const createApolloClient = (serverCookie?: string) => {
                 operation.setContext({ retried: true });
                 return new Observable((observer) => {
                     // only try once per operation
-                    if (hasRefreshed) {
-                        console.warn(
-                            '[auth] already retried refresh, giving up'
-                        );
-                        observer.error(authError);
-                        return;
-                    }
-
-                    hasRefreshed = true;
+                    console.warn('[auth] already retried refresh, giving up');
+                    observer.error(authError);
 
                     void (async () => {
                         if (Platform.OS !== 'web') {

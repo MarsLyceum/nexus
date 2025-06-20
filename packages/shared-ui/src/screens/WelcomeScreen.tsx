@@ -93,6 +93,8 @@ export function WelcomeScreen(): React.JSX.Element {
                 const raw = await getItemSecure(REFRESH_TOKEN_EXPIRES_AT_KEY);
                 const expiresAt = raw ? Number.parseInt(raw, 10) : 0;
 
+                alert('expires at' + expiresAt);
+                alert('expires at' + new Date(expiresAt).toString());
                 if (!expiresAt || Date.now() >= expiresAt) {
                     await setItemSecure(ACCESS_TOKEN_KEY, '');
                     await setItemSecure(REFRESH_TOKEN_KEY, '');

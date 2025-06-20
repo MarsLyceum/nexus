@@ -12,6 +12,8 @@ export type MediaRendererProps = {
     containerHeight: number;
     isComputer: boolean;
     onClose: () => void;
+    showControls?: boolean;
+    onSetShowControls?: (value: React.SetStateAction<boolean>) => void;
 };
 
 export const MediaRenderer: React.FC<MediaRendererProps> = ({
@@ -21,6 +23,8 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
     containerHeight,
     isComputer,
     onClose,
+    showControls,
+    onSetShowControls = () => {},
 }) => {
     // Render based on media type.
     if (mediaInfo && mediaInfo.type === 'video') {
@@ -39,6 +43,8 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
                     contentFit="contain"
                     controls
                     isInDetailsModal
+                    onSetShowControls={onSetShowControls}
+                    showControls={showControls}
                 />
             </View>
         );

@@ -20,8 +20,9 @@ import { ReplayButtonOverlay } from './ReplayButtonOverlay';
 let Video: any;
 let ViewType: { TEXTURE: any };
 if (Platform.OS !== 'web') {
-    Video = require('react-native-video');
-    ViewType = Video.ViewType;
+    const module = require('react-native-video');
+    Video = require('react-native-video').default;
+    ViewType = module.ViewType;
 }
 
 type VideoProps = React.ComponentProps<typeof Video>;
@@ -46,7 +47,11 @@ export type NexusVideoProps = {
     controls?: boolean;
     sliderGesture?: NativeGesture;
     isInDetailsModal?: boolean;
+    showControls?: boolean;
+    onSetShowControls?: (value: React.SetStateAction<boolean>) => void;
 };
+
+const NOOP = () => {};
 
 export const NexusVideo: React.FC<NexusVideoProps> = ({
     source,
@@ -58,6 +63,8 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
     sliderGesture,
     controls = true,
     isInDetailsModal = false,
+    showControls: showControlsProp,
+    onSetShowControls = NOOP,
 }) => {
     const isWeb = Platform.OS === 'web';
     const webRef = useRef<HTMLVideoElement>(null);
@@ -73,34 +80,61 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
     const [position, setPosition] = useState(0); // ms
     const [totalDuration, setTotalDuration] = useState(0); // ms
     const nativeVideoRef = useRef<any>(null);
-    const [showControls, setShowControls] = useState(true);
+    const [internalShowControls, setInternalShowControls] = useState(true);
+
     const hideControlsTimeout = useRef<ReturnType<typeof setTimeout> | null>(
         null
     );
     const [ended, setEnded] = useState(false);
 
-    const toggleControls = useCallback(() => {
-        setShowControls((showControls_) => !showControls_);
-    }, []);
+    const isControlled = showControlsProp !== undefined;
+    const showControlsEffective = isControlled
+        ? showControlsProp
+        : internalShowControls;
 
-    const resetControlsTimer = useCallback(() => {
-        setShowControls(true);
-        if (hideControlsTimeout.current) {
-            clearTimeout(hideControlsTimeout.current);
+    const setShowControlsEffective = useCallback(
+        (value: React.SetStateAction<boolean>) => {
+            if (isControlled) {
+                onSetShowControls(value);
+            } else {
+                setInternalShowControls(value);
+            }
+        },
+        []
+    );
+
+    const toggleControlsInternal = useCallback(() => {
+        setShowControlsEffective((s) => !s);
+    }, [setShowControlsEffective]);
+
+    const resetControlsTimerInternal = useCallback(() => {
+        if (isControlled) {
+            onSetShowControls(true);
+            if (hideControlsTimeout.current)
+                clearTimeout(hideControlsTimeout.current);
+            hideControlsTimeout.current = setTimeout(
+                () => onSetShowControls(false),
+                3000
+            );
+        } else {
+            setInternalShowControls(true);
+            if (hideControlsTimeout.current)
+                clearTimeout(hideControlsTimeout.current);
+            hideControlsTimeout.current = setTimeout(
+                () => setInternalShowControls(false),
+                3000
+            );
         }
-        hideControlsTimeout.current = setTimeout(() => {
-            setShowControls(false);
-        }, 3000);
-    }, []);
+    }, [isControlled]);
 
     useEffect(() => {
-        if (isFullscreen && playing) {
-            resetControlsTimer(); // only kick off when playing in full-screen
+        if (playing) {
+            resetControlsTimerInternal(); // only kick off when playing in full-screen
         } else {
             if (hideControlsTimeout.current) {
                 clearTimeout(hideControlsTimeout.current);
             }
-            setShowControls(true); // always show controls if paused or not FS
+            setShowControlsEffective(true); // always show controls if paused or not FS
         }
 
         return () => {
@@ -108,12 +142,26 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
                 clearTimeout(hideControlsTimeout.current);
             }
         };
-    }, [isFullscreen, playing, resetControlsTimer]);
+    }, [
+        isFullscreen,
+        playing,
+        resetControlsTimerInternal,
+        setShowControlsEffective,
+    ]);
 
     // Handlers for MediaPlayerControls
     const togglePlay = useCallback(() => {
         setEnded(false);
-        setPlaying((p) => !p);
+        setPlaying((p) => {
+            const nowPlaying = !p;
+
+            // if we’re starting playback, restart the 3s hide timer
+            if (nowPlaying) {
+                resetControlsTimerInternal();
+            }
+
+            return nowPlaying;
+        });
     }, []);
 
     const toggleVolumeMuted = useCallback(() => {
@@ -277,16 +325,13 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
         return (
             <View
                 onMouseMove={() => {
-                    if (isFullscreen && playing) resetControlsTimer();
+                    if (playing) resetControlsTimerInternal();
                 }}
                 onClick={() => {
-                    if (isFullscreen && playing) {
-                        resetControlsTimer();
-                    }
                     if (isComputer) {
                         togglePlay();
                     } else {
-                        toggleControls();
+                        toggleControlsInternal();
                     }
                 }}
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -302,7 +347,11 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
                         height: isFullscreen ? '100%' : undefined,
                         backgroundColor: isFullscreen ? 'black' : undefined,
                         overflow: 'hidden',
-                        cursor: showControls ? 'auto' : 'none',
+                        cursor: showControlsEffective
+                            ? 'auto'
+                            : isFullscreen
+                              ? 'none'
+                              : 'auto',
                     },
                 ]}
             >
@@ -316,7 +365,7 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
                     controls={false}
                 />
                 {ended && <ReplayButtonOverlay onReplay={handleReplay} />}
-                {showControls && controls && (
+                {showControlsEffective && controls && (
                     <View
                         style={{
                             position: 'absolute',
@@ -378,10 +427,10 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
                     onStartShouldSetResponder={() => true}
                     onResponderGrant={() => {
                         if (isFullscreen && playing) {
-                            resetControlsTimer();
+                            resetControlsTimerInternal();
                         }
 
-                        toggleControls();
+                        toggleControlsInternal();
                     }}
                 >
                     <Video
@@ -406,7 +455,7 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
                         onEnd={onEnd}
                     />
                     {ended && <ReplayButtonOverlay onReplay={handleReplay} />}
-                    {showControls ? (
+                    {showControlsEffective ? (
                         <View
                             style={[
                                 StyleSheet.absoluteFill,
@@ -442,9 +491,10 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
     return (
         <View
             style={[style as StyleProp<ViewStyle>, { position: 'relative' }]}
-            onTouchEnd={() => {
+            onTouchEnd={(e) => {
+                e.stopPropagation();
                 if (isInDetailsModal) {
-                    toggleControls();
+                    toggleControlsInternal();
                 }
             }}
         >
@@ -476,7 +526,7 @@ export const NexusVideo: React.FC<NexusVideoProps> = ({
                 {ended && <ReplayButtonOverlay onReplay={handleReplay} />}
             </View>
 
-            {showControls && controls && (
+            {showControlsEffective && controls && (
                 <View
                     style={[
                         StyleSheet.absoluteFill,

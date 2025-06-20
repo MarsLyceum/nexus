@@ -80,8 +80,7 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
     const [editedContent, setEditedContent] = useState(value);
     useEffect(() => setEditedContent(value), [value]);
 
-    const backgroundColor =
-        editorBackgroundColorProp ?? theme.colors.PrimaryBackground;
+    const backgroundColor = editorBackgroundColorProp ?? theme.colors.TextInput;
 
     const { pickFile } = useFileUpload();
     const [showGiphy, setShowGiphy] = useState(false);

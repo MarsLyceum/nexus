@@ -105,6 +105,8 @@ export const MediaDetailsModal: React.FC<MediaDetailsModalProps> = ({
                     containerWidth={containerWidth}
                     containerHeight={containerHeight}
                     onClose={onClose}
+                    showControls={showControls}
+                    onSetShowControls={setShowControls}
                 />
             </View>
         );

@@ -361,6 +361,7 @@ function createStyles(
         },
         outerContainer: {
             width: '100%',
+            marginTop: 10,
         },
         container: {
             flexDirection: 'row',

@@ -133,6 +133,9 @@ export const MediaPlayerControls = forwardRef<
                     // claim the touch
                     onStartShouldSetResponder={() => true}
                     onResponderTerminationRequest={() => false}
+                    onClick={(e: React.MouseEvent) => {
+                        e.stopPropagation();
+                    }}
                     // …and stop it from bubbling up
                     onTouchEnd={(e) => {
                         e.stopPropagation();
@@ -226,7 +229,6 @@ export const MediaPlayerControls = forwardRef<
                                         volDragging.current = true;
                                         startY.current = e.clientY;
                                         startVol.current = volumeLevel ?? 0;
-                                        onSlidingStart();
 
                                         // document‑level move & up
                                         const onDocMouseMove = (
@@ -260,7 +262,7 @@ export const MediaPlayerControls = forwardRef<
                                             const r =
                                                 startVol.current +
                                                 dy / SLIDER_HEIGHT;
-                                            onSlidingComplete(
+                                            onVolumeChange?.(
                                                 Math.max(0, Math.min(1, r))
                                             );
                                         };
@@ -302,7 +304,7 @@ export const MediaPlayerControls = forwardRef<
                                                     dy / SLIDER_HEIGHT
                                             )
                                         );
-                                        onSlidingComplete(ratio);
+                                        onVolumeChange?.(ratio);
                                     }}
                                 >
                                     <View style={styles.volumeSliderWrapper}>

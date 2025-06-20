@@ -239,6 +239,7 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
                         isGif={isGif}
                         ref={controlsRef}
                         onLayout={handleLayoutControls}
+                        style={{ marginTop: 10 }}
                     />
                 )}
             </View>
@@ -312,6 +313,7 @@ export const ComputerImageRenderer: React.FC<ComputerImageRendererProps> = ({
                     isGif={isGif}
                     ref={controlsRef}
                     onLayout={handleLayoutControls}
+                    style={{ marginTop: 10 }}
                 />
             )}
         </View>

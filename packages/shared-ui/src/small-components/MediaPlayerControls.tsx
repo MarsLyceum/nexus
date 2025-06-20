@@ -9,6 +9,7 @@ import {
     useWindowDimensions,
     Pressable,
     Platform,
+    ViewStyle,
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import Animated, {
@@ -53,6 +54,7 @@ export type MediaPlayerControlsProps = {
     onVolumeChange?: (v: number) => void;
     onToggleFullScreen?: () => void;
     sliderGesture?: NativeGesture;
+    style?: ViewStyle | ViewStyle[];
 };
 
 // eslint-disable-next-line react/display-name
@@ -77,6 +79,7 @@ export const MediaPlayerControls = forwardRef<
             onSlidingComplete,
             onToggleFullScreen,
             sliderGesture,
+            style,
             ...viewProps
         }: MediaPlayerControlsProps & ViewProps,
         ref
@@ -125,7 +128,7 @@ export const MediaPlayerControls = forwardRef<
         }, [volumeLevel]);
 
         return (
-            <View style={styles.outerContainer}>
+            <View style={[styles.outerContainer, style]}>
                 <View
                     style={styles.container}
                     ref={ref}
@@ -361,7 +364,6 @@ function createStyles(
         },
         outerContainer: {
             width: '100%',
-            marginTop: 10,
         },
         container: {
             flexDirection: 'row',

@@ -83,6 +83,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     const containerRef = useRef<View>(null);
     const messageDate = getMessageDate(currentMessage);
     const hideModalTimeoutRef = useRef<number | null>(null);
+    const scrollEndTimeoutRef = useRef<number | null>(null);
     const [showMoreOptions, setShowMoreOptions] = useState(false);
     const [moreButtonAnchor, setMoreButtonAnchor] = useState<
         | {
@@ -200,29 +201,44 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     useEffect(() => {
         const scrollContainerComponent = scrollContainerRef.current;
         if (!scrollContainerComponent) return;
-        const scrollContainer = scrollContainerComponent.getScrollableNode
-            ? scrollContainerComponent.getScrollableNode()
-            : scrollContainerComponent;
-        if (
-            !scrollContainer ||
-            typeof scrollContainer.addEventListener !== 'function'
-        )
+
+        const scrollNode =
+            'getScrollableNode' in scrollContainerComponent
+                ? scrollContainerComponent.getScrollableNode()
+                : scrollContainerComponent;
+        if (!scrollNode || typeof scrollNode.addEventListener !== 'function')
             return;
+
         const handleScroll = () => {
+            // any scroll: hide immediately
             setIsScrolling(true);
             setOptionsModalVisible(false);
-            setTimeout(() => {
+
+            // clear pending “scroll end” callback
+            if (scrollEndTimeoutRef.current) {
+                clearTimeout(scrollEndTimeoutRef.current);
+            }
+
+            // debounce: 300ms after the *last* scroll event
+            scrollEndTimeoutRef.current = globalThis.setTimeout(() => {
                 setIsScrolling(false);
-            }, 1000);
+                // if the mouse is still over the message, re-open
+                if (isHovered) {
+                    showModal();
+                }
+            }, 300) as unknown as number;
         };
-        scrollContainer.addEventListener('scroll', handleScroll, {
-            passive: true,
-        });
+
+        scrollNode.addEventListener('scroll', handleScroll, { passive: true });
+
         // eslint-disable-next-line consistent-return
         return () => {
-            scrollContainer.removeEventListener('scroll', handleScroll);
+            scrollNode.removeEventListener('scroll', handleScroll);
+            if (scrollEndTimeoutRef.current) {
+                clearTimeout(scrollEndTimeoutRef.current);
+            }
         };
-    }, [scrollContainerRef]);
+    }, [scrollContainerRef, isHovered, showModal]);
 
     const handleEdit = () => {
         setOptionsModalVisible(false);

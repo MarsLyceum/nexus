@@ -61,6 +61,13 @@ export const GiphyModal: React.FC<GiphyModalProps> = ({
     const windowWidth = Dimensions.get('window').width;
 
     useEffect(() => {
+        if (visible) {
+            setGiphyQuery('');
+            setGiphyResults([]);
+        }
+    }, [visible]);
+
+    useEffect(() => {
         const fetchTrending = async () => {
             try {
                 const response = await fetch(

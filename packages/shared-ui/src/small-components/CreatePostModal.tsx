@@ -100,7 +100,6 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
                                 showImageButton
                                 showGifButton
                                 editMode={false}
-                                width={Dimensions.get('window').width}
                                 value={secondContentText}
                                 onChange={setSecondContentText}
                                 placeholder={placeholderText2}

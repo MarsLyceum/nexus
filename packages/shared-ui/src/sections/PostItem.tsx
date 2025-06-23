@@ -335,7 +335,6 @@ export const PostItem: React.FC<PostItemProps> = ({
             <View style={isEditing ? styles.visible : styles.hidden}>
                 <ContentEditor
                     value={editedTitle}
-                    width={innerWidth}
                     onChange={setEditedTitle}
                     onSubmit={handleSaveEdit}
                     onCancel={handleCancelEdit}
@@ -372,7 +371,6 @@ export const PostItem: React.FC<PostItemProps> = ({
             <View style={isEditing ? styles.visible : styles.hidden}>
                 <ContentEditor
                     value={editedContent}
-                    width={innerWidth}
                     onChange={setEditedContent}
                     onSubmit={handleSaveEdit}
                     onCancel={handleCancelEdit}

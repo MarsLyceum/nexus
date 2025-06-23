@@ -37,7 +37,6 @@ export const CommentEditor: React.FC<CommentEditorProps> = ({
 
     const [attachments, setAttachments] = useState<Attachment[]>([]);
     const [newCommentContent, setNewCommentContent] = useState('');
-    const [updateContent, setUpdateContent] = useState(0);
     const [isExpanded, setIsExpanded] = useState(expandedByDefault);
     const [errorMessage, setErrorMessage] = useState('');
 
@@ -102,13 +101,17 @@ export const CommentEditor: React.FC<CommentEditorProps> = ({
                 onExpand={handleExpand}
                 editorBackgroundColor={editorBackgroundColor}
                 giphyVariant="uri"
-                onGifSelect={(attachment) => {
-                    // @ts-expect-error file
-                    setNewCommentContent(attachment.file.uri);
-                    setUpdateContent((prev) => prev + 1);
-                }}
+                // onGifSelect={(attachment) => {
+                //     setNewCommentContent((prev) =>
+                //         prev
+                //             ? // @ts-expect-error file
+                //               `${prev}\n![GIF](${attachment.file.uri})`
+                //             : // @ts-expect-error file
+                //               `![GIF](${attachment.file.uri})`
+                //     );
+                //     setUpdateContent((prev) => prev + 1);
+                // }}
                 showFormattingToggle
-                updateContent={updateContent}
             />
         </View>
     );

@@ -1,5 +1,11 @@
 // src/small-components/ContentEditor.tsx
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, {
+    useState,
+    useEffect,
+    useMemo,
+    useRef,
+    useCallback,
+} from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 
@@ -73,11 +79,11 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
     );
 
     const [internalUpdateCount, setInternalUpdateCount] = useState(0);
-    const resolvedUpdateContent =
-        updateContent !== undefined ? updateContent : internalUpdateCount;
-
-    const [editedContent, setEditedContent] = useState(value);
-    useEffect(() => setEditedContent(value), [value]);
+    const resolvedUpdateContent = useMemo(
+        () =>
+            updateContent !== undefined ? updateContent : internalUpdateCount,
+        [internalUpdateCount, updateContent]
+    );
 
     const backgroundColor = editorBackgroundColorProp ?? theme.colors.TextInput;
 
@@ -118,25 +124,37 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
         }
     };
 
-    const handleGifSelect = (att: Attachment) => {
-        if (onGifSelect) {
-            onGifSelect(att);
-        }
-        if (giphyVariant === 'uri') {
-            // @ts-expect-error attachment
-            const { uri } = att.file;
-            const newContent = `${editedContent}\n![GIF](${uri})`;
-            setEditedContent(newContent);
-            onChange(newContent);
-            if (updateContent === undefined) {
-                setInternalUpdateCount((c) => c + 1);
+    const handleGifSelect = useCallback(
+        (att: Attachment) => {
+            console.log('att:', att);
+            if (onGifSelect) {
+                onGifSelect(att);
             }
-        } else if (giphyVariant === 'download') {
-            // @ts-expect-error attachments
-            setAttachments((atts: Attachment[]) => [...atts, att]);
-        }
-        setShowGiphy(false);
-    };
+            if (giphyVariant === 'uri') {
+                // @ts-expect-error attachment
+                const { uri } = att.file;
+                const newContent = value
+                    ? `${value}\n![GIF](${uri})`
+                    : `![GIF](${uri})`;
+                onChange(newContent);
+                if (updateContent === undefined) {
+                    setInternalUpdateCount((c) => c + 1);
+                }
+            } else if (giphyVariant === 'download') {
+                // @ts-expect-error attachments
+                setAttachments((atts: Attachment[]) => [...atts, att]);
+            }
+            setShowGiphy(false);
+        },
+        [
+            giphyVariant,
+            onChange,
+            onGifSelect,
+            setAttachments,
+            updateContent,
+            value,
+        ]
+    );
 
     const handleKeyDown = (e: KeyboardEvent) => {
         if (e.key === 'Enter' && !e.shiftKey) {
@@ -169,9 +187,8 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
         <View style={styles.container}>
             <RichTextAndMarkdownEditor
                 useRichTextEditor={useRichTextEditor}
-                value={editedContent}
+                value={value}
                 onChange={(t) => {
-                    setEditedContent(t);
                     onChange(t);
                 }}
                 placeholder={placeholder}

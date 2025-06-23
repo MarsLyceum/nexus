@@ -333,7 +333,6 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                             >
                                 <ContentEditor
                                     value={editedContent}
-                                    width={width}
                                     onChange={setEditedContent}
                                     onSubmit={handleSaveEdit}
                                     onCancel={handleCancelEdit}

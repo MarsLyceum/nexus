@@ -413,6 +413,9 @@ export const MiniModal: React.FC<MiniModalProps> = ({
                 {centered && <View style={styles.modalOverlay} />}
                 <View
                     ref={modalRef}
+                    onMouseDown={(e) => {
+                        e.stopPropagation();
+                    }}
                     style={[
                         computedContainerStyle,
                         { pointerEvents: 'auto', zIndex: 10_001 },

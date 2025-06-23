@@ -216,6 +216,7 @@ function redditSpoilerPlugin(md: MarkdownIt) {
     }
     md.inline.ruler.before('text', 'redditSpoiler', tokenize);
 }
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function spoilerPostProcessor(state: any) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -267,6 +268,7 @@ function spoilerRenderer(tokens: any, idx: number) {
 }
 mdInstance.use(inlineSpoilerPlugin);
 mdInstance.use(redditSpoilerPlugin);
+
 mdInstance.renderer.rules.spoiler = spoilerRenderer;
 mdInstance.core.ruler.after(
     'inline',
@@ -400,7 +402,16 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
     const customRenderers = useMemo(
         () => ({
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            a: ({ tnode }: any) => <InlineLink tnode={tnode} />,
+            a: ({ tnode }: { tnode: any }) => {
+                const href = (tnode.attributes?.href ?? '') as string;
+                // if it ends in .png/.jpg/.gif/.webp/.svg (with optional query/hash), treat as image
+                if (/\.(?:png|jpe?g|gif|webp|svg)(?:[?#].*)?$/i.test(href)) {
+                    return (
+                        <LinkPreview url={href} containerWidth={contentWidth} />
+                    );
+                }
+                return <InlineLink tnode={tnode} />;
+            },
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             img: ({ tnode }: any) => {
                 const src = tnode.attributes?.src as string;

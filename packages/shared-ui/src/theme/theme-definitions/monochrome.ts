@@ -517,6 +517,7 @@ export const Monochrome: Theme[] = [
             ActiveText: '#FFFFFF',
             MainText: '#ededed',
             InactiveText: '#BBBBBB',
+            Link: '#6e8bd4',
         },
     },
     {

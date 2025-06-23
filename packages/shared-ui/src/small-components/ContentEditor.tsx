@@ -18,7 +18,6 @@ import { Attachment } from '../types';
 export type ContentEditorProps = {
     value: string;
     onChange: (text: string) => void;
-    width: number;
     onSubmit?: () => void;
     onCancel?: () => void;
     useRichTextEditor?: boolean;
@@ -126,7 +125,7 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
         if (giphyVariant === 'uri') {
             // @ts-expect-error attachment
             const { uri } = att.file;
-            const newContent = `${editedContent}\n![](${uri})`;
+            const newContent = `${editedContent}\n![GIF](${uri})`;
             setEditedContent(newContent);
             onChange(newContent);
             if (updateContent === undefined) {

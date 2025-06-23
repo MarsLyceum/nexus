@@ -113,262 +113,270 @@ export function getRichTextEditorHtml({
                     rel="stylesheet"
                 />
                 <style>
-                    /* drive ALL props via CSS variables */
-                    :root {
-                        ${colorVars}
-                        --editor-height: ${cssHeight};
-                        --editor-max-height: ${autoMode ? 'none' : height};
-                        --editor-width: ${editorWidth};
-                        --editor-bg-color: ${backgroundColor};
-                        --editor-border-radius: ${borderRadius};
-                        --editor-border-color: var(--ActiveText);
-                        --editor-overflow: ${showScrollbars
+                     /* drive ALL props via CSS variables */
+                     :root {
+                         ${colorVars}
+                         --editor-height: ${cssHeight};
+                         --editor-max-height: ${autoMode ? 'none' : height};
+                         --editor-width: ${editorWidth};
+                         --editor-bg-color: ${backgroundColor};
+                         --editor-border-radius: ${borderRadius};
+                         --editor-border-color: var(--ActiveText);
+                         --editor-overflow: ${showScrollbars
                         ? 'auto'
                         : 'hidden'};
-                        --scrollbar-width: ${showScrollbars
+                         --scrollbar-width: ${showScrollbars
                         ? '8px'
                         : '0'};   /* IE / Firefox keyword */
-                        --scrollbar-display: ${showScrollbars
+                         --scrollbar-display: ${showScrollbars
                         ? 'block'
                         : 'none'}; /* WebKit keyword */
-                        --editor-toolbar-display: ${showToolbar
+                         --editor-toolbar-display: ${showToolbar
                         ? 'block'
                         : 'none'};
-                        --editor-toolbar-height: ${showToolbar
+                         --editor-toolbar-height: ${showToolbar
                         ? '40px'
                         : '0px'};
-                        --editor-flex: ${!autoMode ? '1 1 auto' : 'none'};
-                    }
+                         --editor-flex: ${!autoMode ? '1 1 auto' : 'none'};
+                     }
 
-                    html,
-                    body {
-                        margin: 0;
-                        padding: 0;
-                        width: var(--editor-width) !important;
-                        font-family: 'Roboto', sans-serif !important;
-                        font-size: 14px !important;
-                        /* overflow: var(--editor-overflow) !important; */
-                        overflow: hidden
-                    }
+                     html,
+                     body {
+                         margin: 0;
+                         padding: 0;
+                         width: var(--editor-width) !important;
+                         font-family: 'Roboto', sans-serif !important;
+                         font-size: 14px !important;
+                         /* overflow: var(--editor-overflow) !important; */
+                         overflow: hidden;
+                     }
 
-                    /* Overflow logic lives on both container & editor */
-                    .ql-container,
-                    /* .ql-editor */
-                     {
-                        overflow-y: var(--editor-overflow) !important;
-                    }
-
-                    /* hide / show native scrollbars */
-                    .ql-editor {
-                        -ms-overflow-style: var(
-                            --scrollbar-width
-                        ) !important; /* IE / Edge Legacy */
-                        scrollbar-width: var(
-                            --scrollbar-width
-                        ) !important; /* Firefox */
-                    }
-                    .ql-editor::-webkit-scrollbar {
-                        /* display: var(
-                            --scrollbar-display
-                        ) !important; Chrome / Safari */
-                        width: var(--scrollbar-width) !important;                /* 0 ⇒ invisible */
-                        height: var(--scrollbar-width) !important;
-                    }
-                    .ql-editor::-webkit-scrollbar-track {
-                        background: var(--PrimaryBackground);   /* rail colour */
-                    }
-
-                    .ql-editor::-webkit-scrollbar-thumb {
-                        background: var(--TextInput);           /* thumb colour */
-                        border-radius: 999px;                   /* fully-rounded ends */
-                    }
-
-                    .ql-editor {
-                        scrollbar-width: thin;                                    /* “auto”, “thin”, or “none” */
-                        scrollbar-color: var(--TextInput) var(--PrimaryBackground);  /* thumb   track */
-                    }
-
-                    .quill-wrapper {
-                        display: flex;
-                        flex-direction: column;
-
-                        border: 1px solid transparent;
-                        border-radius: var(--editor-border-radius) !important;
-                        width: var(--editor-width);
+                    .ql-editor img {
                         height: var(--editor-height);
-                        background-color: var(--editor-bg-color) !important;
-                        /* overflow: var(--editor-overflow) !important; */
-                        overflow: hidden;
-                        box-sizing: border-box;
-                        transition: border-color 0.15s ease;
-                    }
-                    .quill-wrapper:focus-within,
-                    .quill-wrapper.focused {
-                        border: 1px solid var(--editor-border-color) !important;
+                        width: auto !important;
                     }
 
-                    #toolbar-placeholder {
-                    }
+                     /* Overflow logic lives on both container & editor */
+                     .ql-container,
+                     .ql-editor
+                      {
+                         overflow-y: var(--editor-overflow) !important;
+                     }
 
-                    #editor {
-                        width: 100%;
-                        /* height: calc(
-                            var(--editor-height) - var(--editor-toolbar-height)
-                        ) !important; */
+                     /* hide / show native scrollbars */
+                     .ql-editor {
+                         -ms-overflow-style: var(
+                             --scrollbar-width
+                         ) !important; /* IE / Edge Legacy */
+                         scrollbar-width: var(
+                             --scrollbar-width
+                         ) !important; /* Firefox */
+                     }
+                     .ql-editor::-webkit-scrollbar {
+                         /* display: var(
+                             --scrollbar-display
+                         ) !important; Chrome / Safari */
+                         width: var(--scrollbar-width) !important;                /* 0 ⇒ invisible */
+                         height: var(--scrollbar-width) !important;
+                     }
+                     .ql-editor::-webkit-scrollbar-track {
+                         background: var(--PrimaryBackground);   /* rail colour */
+                     }
 
-                        flex: var(--editor-flex);
-                        min-height: 40px;      /* still usable in collapsed mode     */
-                        overflow: var(--editor-overflow) !important;
+                     .ql-editor::-webkit-scrollbar-thumb {
+                         background: var(--TextInput);           /* thumb colour */
+                         border-radius: 999px;                   /* fully-rounded ends */
+                     }
 
-                    }
+                     .ql-editor {
+                         scrollbar-width: thin;                                    /* “auto”, “thin”, or “none” */
+                         scrollbar-color: var(--TextInput) var(--PrimaryBackground);  /* thumb   track */
+                     }
 
-                    /* Remove Quill’s default borders so the wrapper border is continuous */
-                    .ql-container,
-                    .ql-container.ql-snow {
-                        max-height: var(--editor-max-height);
-                        border: none !important;
-                    }
+                     .quill-wrapper {
+                         display: flex;
+                         flex-direction: column;
 
-                    .ql-toolbar {
-                        display: var(--editor-toolbar-display) !important;
-                        border: none !important;
-                        border-top-left-radius: var(
-                            --editor-border-radius
-                        ) !important;
-                        border-top-right-radius: var(
-                            --editor-border-radius
-                        ) !important;
-                        background-color: var(--editor-bg-color) !important;
-                    }
+                         border: 1px solid transparent;
+                         border-radius: var(--editor-border-radius) !important;
+                         width: var(--editor-width);
+                         height: var(--editor-height);
+                         background-color: var(--editor-bg-color) !important;
+                         /* overflow: var(--editor-overflow) !important; */
+                         overflow: hidden;
+                         box-sizing: border-box;
+                         transition: border-color 0.15s ease;
+                     }
+                     .quill-wrapper:focus-within,
+                     .quill-wrapper.focused {
+                         border: 1px solid var(--editor-border-color) !important;
+                     }
 
-                    .ql-container.ql-snow {
-                        border-bottom-left-radius: var(
-                            --editor-border-radius
-                        ) !important;
-                        border-bottom-right-radius: var(
-                            --editor-border-radius
-                        ) !important;
-                        background-color: var(--editor-bg-color) !important;
-                    }
+                     #toolbar-placeholder {
+                     }
 
-                    .ql-editor {
-                        padding: 10px !important;
-                        box-sizing: border-box;
-                        color: var(--MainText) !important;
-                        font-family: 'Roboto', sans-serif !important;
-                        font-size: 14px !important;
-                        height: 100% !important;
-                        overflow: var(--editor-overflow) !important;
-                    }
+                     #editor {
+                         width: 100%;
+                         min-height: calc(
+                             var(--editor-height) - var(--editor-toolbar-height)
+                         ) !important;
 
-                    .ql-editor.ql-blank::before {
-                        color: var(--MainText) !important;
-                        font-style: normal !important;
-                    }
+                         flex: var(--editor-flex);
+                         min-height: 40px;      /* still usable in collapsed mode     */
+                         overflow: var(--editor-overflow) !important;
 
-                    .ql-toolbar button {
-                        color: var(--MainText) !important;
-                    }
+                     }
 
-                    .ql-toolbar button svg {
-                        stroke: var(--MainText) !important;
-                        fill: var(--MainText) !important;
-                    }
+                     /* Remove Quill’s default borders so the wrapper border is continuous */
+                     .ql-container,
+                     .ql-container.ql-snow {
+                         max-height: var(--editor-max-height);
+                         border: none !important;
+                     }
 
-                    .ql-stroke {
-                        stroke: var(--MainText) !important;
-                    }
+                     .ql-toolbar {
+                         display: var(--editor-toolbar-display) !important;
+                         border: none !important;
+                         border-top-left-radius: var(
+                             --editor-border-radius
+                         ) !important;
+                         border-top-right-radius: var(
+                             --editor-border-radius
+                         ) !important;
+                         background-color: var(--editor-bg-color) !important;
+                     }
 
-                    .ql-fill {
-                        fill: var(--MainText) !important;
-                    }
+                     .ql-container.ql-snow {
+                         border-bottom-left-radius: var(
+                             --editor-border-radius
+                         ) !important;
+                         border-bottom-right-radius: var(
+                             --editor-border-radius
+                         ) !important;
+                         background-color: var(--editor-bg-color) !important;
+                     }
 
-                    .ql-toolbar button:hover svg,
-                    .ql-toolbar button.ql-active svg {
-                        stroke: var(--Secondary) !important;
-                        fill: var(--Secondary) !important;
-                    }
+                     .ql-editor {
+                         padding: 10px !important;
+                         box-sizing: border-box;
+                         color: var(--MainText) !important;
+                         font-family: 'Roboto', sans-serif !important;
+                         font-size: 14px !important;
+                         /* height: 100% !important; */
+                         height: calc(
+                             var(--editor-height) - var(--editor-toolbar-height)
+                         ) !important;
+                         overflow: var(--editor-overflow) !important;
+                     }
 
-                    .ql-toolbar button:hover .ql-stroke,
-                    .ql-toolbar button.ql-active .ql-stroke {
-                        stroke: var(--Secondary) !important;
-                    }
+                     .ql-editor.ql-blank::before {
+                         color: var(--MainText) !important;
+                         font-style: normal !important;
+                     }
 
-                    .ql-toolbar button:hover .ql-fill,
-                    .ql-toolbar button.ql-active .ql-fill {
-                        fill: var(--Secondary) !important;
-                    }
+                     .ql-toolbar button {
+                         color: var(--MainText) !important;
+                     }
 
-                    .ql-toolbar .ql-picker-label,
-                    .ql-toolbar .ql-picker-item {
-                        color: var(--MainText) !important;
-                    }
+                     .ql-toolbar button svg {
+                         stroke: var(--MainText) !important;
+                         fill: var(--MainText) !important;
+                     }
 
-                    .ql-toolbar .ql-picker-label:hover,
-                    .ql-toolbar .ql-picker-item:hover,
-                    .ql-toolbar .ql-picker-label.ql-active,
-                    .ql-toolbar .ql-picker-item.ql-selected {
-                        color: var(--Secondary) !important;
-                    }
+                     .ql-stroke {
+                         stroke: var(--MainText) !important;
+                     }
 
-                    .ql-picker-options {
-                        background-color: var(--AppBackground) !important;
-                    }
+                     .ql-fill {
+                         fill: var(--MainText) !important;
+                     }
 
-                    .ql-tooltip {
-                        background-color: var(--editor-bg-color) !important;
-                        border: 1px solid var(--TextInput) !important;
-                        color: var(--MainText) !important;
-                        border-radius: 5px !important;
-                        transform: translate(10%, 10%) !important;
-                        z-index: 1000;
-                    }
+                     .ql-toolbar button:hover svg,
+                     .ql-toolbar button.ql-active svg {
+                         stroke: var(--Secondary) !important;
+                         fill: var(--Secondary) !important;
+                     }
 
-                    .ql-tooltip input {
-                        background-color: var(--SecondaryBackground) !important;
-                        color: var(--MainText) !important;
-                        border: 1px solid var(--TextInput) !important;
-                        border-radius: 3px !important;
-                        padding: 5px;
-                    }
+                     .ql-toolbar button:hover .ql-stroke,
+                     .ql-toolbar button.ql-active .ql-stroke {
+                         stroke: var(--Secondary) !important;
+                     }
 
-                    .ql-tooltip .ql-action {
-                        color: var(--Secondary) !important;
-                    }
+                     .ql-toolbar button:hover .ql-fill,
+                     .ql-toolbar button.ql-active .ql-fill {
+                         fill: var(--Secondary) !important;
+                     }
 
-                    .spoiler {
-                        background-color: var(--InactiveText) !important;
-                        color: var(--ActiveText) !important;
-                        border-radius: 3px;
-                        padding: 2px 6px;
-                    }
+                     .ql-toolbar .ql-picker-label,
+                     .ql-toolbar .ql-picker-item {
+                         color: var(--MainText) !important;
+                     }
 
-                    .ql-editor table,
-                    .ql-editor table th,
-                    .ql-editor table td {
-                        border: 1px solid var(--ActiveText) !important;
-                    }
+                     .ql-toolbar .ql-picker-label:hover,
+                     .ql-toolbar .ql-picker-item:hover,
+                     .ql-toolbar .ql-picker-label.ql-active,
+                     .ql-toolbar .ql-picker-item.ql-selected {
+                         color: var(--Secondary) !important;
+                     }
 
-                    .custom-bullet {
-                        display: inline-block;
-                        width: 1em;
-                        margin-right: 0.2em;
-                        color: var(--Secondary) !important;
-                    }
+                     .ql-picker-options {
+                         background-color: var(--AppBackground) !important;
+                     }
 
-                    .ql-toolbar button svg.ql-spoiler-icon line {
-                        stroke: currentColor !important;
-                    }
+                     .ql-tooltip {
+                         background-color: var(--editor-bg-color) !important;
+                         border: 1px solid var(--TextInput) !important;
+                         color: var(--MainText) !important;
+                         border-radius: 5px !important;
+                         transform: translate(10%, 10%) !important;
+                         z-index: 1000;
+                     }
 
-                    .ql-toolbar button:hover svg.ql-spoiler-icon line,
-                    .ql-toolbar button.ql-active svg.ql-spoiler-icon line {
-                        stroke: var(--Secondary) !important;
-                    }
+                     .ql-tooltip input {
+                         background-color: var(--SecondaryBackground) !important;
+                         color: var(--MainText) !important;
+                         border: 1px solid var(--TextInput) !important;
+                         border-radius: 3px !important;
+                         padding: 5px;
+                     }
 
-                    .ql-toolbar button:hover svg.ql-spoiler-icon,
-                    .ql-toolbar button.ql-active svg.ql-spoiler-icon {
-                        color: var(--Secondary) !important;
-                    }
+                     .ql-tooltip .ql-action {
+                         color: var(--Secondary) !important;
+                     }
+
+                     .spoiler {
+                         background-color: var(--InactiveText) !important;
+                         color: var(--ActiveText) !important;
+                         border-radius: 3px;
+                         padding: 2px 6px;
+                     }
+
+                     .ql-editor table,
+                     .ql-editor table th,
+                     .ql-editor table td {
+                         border: 1px solid var(--ActiveText) !important;
+                     }
+
+                     .custom-bullet {
+                         display: inline-block;
+                         width: 1em;
+                         margin-right: 0.2em;
+                         color: var(--Secondary) !important;
+                     }
+
+                     .ql-toolbar button svg.ql-spoiler-icon line {
+                         stroke: currentColor !important;
+                     }
+
+                     .ql-toolbar button:hover svg.ql-spoiler-icon line,
+                     .ql-toolbar button.ql-active svg.ql-spoiler-icon line {
+                         stroke: var(--Secondary) !important;
+                     }
+
+                     .ql-toolbar button:hover svg.ql-spoiler-icon,
+                     .ql-toolbar button.ql-active svg.ql-spoiler-icon {
+                         color: var(--Secondary) !important;
+                     }
                 </style>
             </head>
             <body>

@@ -179,9 +179,14 @@ export const renderHighlightedText = (
                     </Text>
                 );
             } else if (match[24]) {
+                const alt = match[25];
+                const url = match[26];
+
                 segments.push(
-                    <Text key={key++} style={styles.imageText}>
-                        {match[25]}
+                    <Text key={key++}>
+                        <Text style={styles.imageText}>{`![${alt}](`}</Text>
+                        <Text style={styles.linkText}>{url}</Text>
+                        <Text style={styles.imageText}>{`)`}</Text>
                     </Text>
                 );
             } else if (match[27]) {

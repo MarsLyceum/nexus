@@ -9,11 +9,13 @@ import { LinkPreviewSkeleton } from './LinkPreviewSkeleton';
 export type LinkPreviewProps = {
     url?: string;
     containerWidth?: number;
+    renderImages?: boolean;
 };
 
 export const LinkPreview: React.FC<LinkPreviewProps> = ({
     url,
     containerWidth,
+    renderImages = true,
 }) => {
     const { previewData, loading, isImage, imageDimensions } = useLinkPreview({
         url,
@@ -26,7 +28,11 @@ export const LinkPreview: React.FC<LinkPreviewProps> = ({
     // Use the passed url prop if available, otherwise fallback to previewData.url.
     const effectiveUrl = url || previewData.url || '';
 
-    if (isImage) {
+    if (!renderImages && isImage) {
+        return undefined;
+    }
+
+    if (renderImages && isImage) {
         return (
             <View style={styles.container}>
                 <ImagePreview

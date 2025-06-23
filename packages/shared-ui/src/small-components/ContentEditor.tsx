@@ -126,7 +126,6 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
 
     const handleGifSelect = useCallback(
         (att: Attachment) => {
-            console.log('att:', att);
             if (onGifSelect) {
                 onGifSelect(att);
             }

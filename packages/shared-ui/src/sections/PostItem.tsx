@@ -352,18 +352,17 @@ export const PostItem: React.FC<PostItemProps> = ({
             {currentPost.content !== '' && (
                 <>
                     <View style={isEditing ? styles.hidden : styles.visible}>
-                        {!isJustLink && (
-                            <MarkdownRenderer
-                                text={currentPost.content}
-                                preview={preview}
-                            />
-                        )}
+                        <MarkdownRenderer
+                            text={currentPost.content}
+                            preview={preview}
+                        />
                     </View>
                     {urlsInContent.map((url, index) => (
                         <LinkPreview
                             key={index}
                             url={url}
                             containerWidth={innerWidth}
+                            renderImages={false}
                         />
                     ))}
                 </>

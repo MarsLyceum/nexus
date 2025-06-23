@@ -44,38 +44,24 @@ export const MessageContent: React.FC<MessageContentProps> = ({
     // Use override content if provided, otherwise use message content
     const effectiveContent = contentOverride ?? message.content;
 
-    // Determine if the effective content is just a link.
-    const trimmedContent = effectiveContent?.trim();
-    const urls = extractUrls(trimmedContent ?? '');
-    const { previewData, isImage } = useLinkPreview({
-        url: urls[0],
-    });
-    const isJustImageOrEmbeddLink =
-        isJustLink(trimmedContent) && (isImage || previewData.embedHtml);
-
     // Helper to render the message text using MarkdownRenderer.
     // Updated to pass the isEdited prop.
-    const renderMessageText = (content: string, isEdited: boolean) => (
-        <MarkdownRenderer text={content} isEdited={isEdited} />
+    const renderMessageText = (
+        content: string,
+        isEdited: boolean,
+        messageWidth: number
+    ) => (
+        <MarkdownRenderer
+            text={content}
+            isEdited={isEdited}
+            containerWidth={messageWidth - 32}
+        />
     );
 
     // Helper to render link previews based on content URLs or previewData
     const renderLinkPreviews = (content: string, messageWidth: number) => {
         const trimmedContentInner = content.trim();
         const urlsInner = extractUrls(trimmedContentInner);
-
-        if (
-            urlsInner.length === 1 &&
-            trimmedContentInner === urlsInner[0] &&
-            isImageExtensionUrl(urlsInner[0])
-        ) {
-            return (
-                <LinkPreview
-                    url={urlsInner[0]}
-                    containerWidth={messageWidth - 32}
-                />
-            );
-        }
 
         if (urlsInner.length > 0) {
             return (
@@ -85,6 +71,7 @@ export const MessageContent: React.FC<MessageContentProps> = ({
                             key={index}
                             url={url}
                             containerWidth={messageWidth - 32}
+                            renderImages={false}
                         />
                     ))}
                 </>
@@ -102,8 +89,11 @@ export const MessageContent: React.FC<MessageContentProps> = ({
             {effectiveContent ? (
                 <>
                     {renderMessage &&
-                        !isJustImageOrEmbeddLink &&
-                        renderMessageText(effectiveContent, message.edited)}
+                        renderMessageText(
+                            effectiveContent,
+                            message.edited,
+                            width
+                        )}
 
                     {renderLinkPreview &&
                         renderLinkPreviews(effectiveContent, width)}

@@ -45,10 +45,6 @@ export const CreateCommentScreen: React.FC<CreateCommentScreenProps> = ({
 
     // Compute parent content details for link preview logic
     const urlsInParentContent = extractUrls(parentContent);
-    const plainParentContent = stripHtml(parentContent);
-    const isParentContentJustLink =
-        urlsInParentContent.length === 1 &&
-        plainParentContent === urlsInParentContent[0];
 
     // State to track parent's content container width for LinkPreview
     const [parentContainerWidth, setParentContainerWidth] = useState(0);
@@ -82,17 +78,13 @@ export const CreateCommentScreen: React.FC<CreateCommentScreenProps> = ({
                         onLayout={handleParentLayout}
                     >
                         <>
-                            {!isParentContentJustLink && (
-                                <MarkdownRenderer
-                                    text={parentContent}
-                                    preview
-                                />
-                            )}
+                            <MarkdownRenderer text={parentContent} preview />
                             {urlsInParentContent.map((url, index) => (
                                 <LinkPreview
                                     key={index}
                                     url={url}
                                     containerWidth={parentContainerWidth}
+                                    renderImages={false}
                                 />
                             ))}
                             {parentAttachmentUrls &&

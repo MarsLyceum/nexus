@@ -13,6 +13,8 @@ import RenderHTML, { defaultHTMLElementModels } from 'react-native-render-html';
 
 import { useTheme, Theme } from '../theme';
 
+import { LinkPreview } from './LinkPreview';
+
 function createStyles(theme: Theme) {
     return StyleSheet.create({
         // Use white for paragraph text as desired.
@@ -284,6 +286,7 @@ export type MarkdownRendererProps = {
     preview?: boolean;
     isEdited?: boolean;
     isTitle?: boolean;
+    containerWidth?: number;
 };
 
 export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
@@ -291,8 +294,12 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
     preview,
     isEdited,
     isTitle,
+    containerWidth,
 }) => {
-    const contentWidth = Dimensions.get('window').width;
+    const contentWidth = useMemo(
+        () => containerWidth ?? Dimensions.get('window').width,
+        [containerWidth]
+    );
     const [contentHeight, setContentHeight] = React.useState(0);
     const [expanded, setExpanded] = React.useState(false);
     const { theme } = useTheme();
@@ -394,9 +401,14 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
         () => ({
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             a: ({ tnode }: any) => <InlineLink tnode={tnode} />,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            img: ({ tnode }: any) => {
+                const src = tnode.attributes?.src as string;
+                return <LinkPreview url={src} containerWidth={contentWidth} />;
+            },
             span: customSpanRenderer,
         }),
-        [customSpanRenderer]
+        [contentWidth, customSpanRenderer]
     );
 
     const fullContent = (

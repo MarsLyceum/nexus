@@ -164,7 +164,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 anchorPosition={gifButtonLayout || undefined}
                 onSelectGif={(attachment) => {
                     // @ts-expect-error attachment
-                    sendMessageHandler(attachment.file.uri);
+                    sendMessageHandler(`![GIF](${attachment.file.uri})`);
                 }}
             />
         </View>

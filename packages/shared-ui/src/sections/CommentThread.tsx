@@ -18,11 +18,7 @@ import { MarkdownRenderer } from '../small-components/MarkdownRenderer';
 import { LinkPreview } from '../small-components/LinkPreview';
 import { CommentEditor } from '../small-components/CommentEditor';
 import { ActionButton } from '../small-components/ActionButton';
-import {
-    extractUrls,
-    getRelativeTime,
-    isJustLink as isJustLinkUtil,
-} from '../utils';
+import { extractUrls, getRelativeTime } from '../utils';
 // NEW: Import Apollo Client hook and comments query to allow refetching comments.
 import { FETCH_POST_COMMENTS_QUERY } from '../queries';
 // NEW: Import AttachmentImageGallery and MediaDetailsModal for rendering attachments in comments
@@ -202,7 +198,6 @@ const CommentThreadComponent = ({
     const isComputer = useIsComputer();
 
     const urlsInContent = extractUrls(comment.content);
-    const isJustLink = isJustLinkUtil(comment.content);
 
     const onUpvote = () => setVoteCount((prev) => prev + 1);
     const onDownvote = () => setVoteCount((prev) => prev - 1);
@@ -273,16 +268,13 @@ const CommentThreadComponent = ({
                         <View style={styles.commentContentWrapper}>
                             {comment.content !== '' && (
                                 <>
-                                    {!isJustLink && (
-                                        <MarkdownRenderer
-                                            text={comment.content}
-                                        />
-                                    )}
+                                    <MarkdownRenderer text={comment.content} />
                                     {urlsInContent.map((url, index) => (
                                         <LinkPreview
                                             key={index}
                                             url={url}
                                             containerWidth={containerWidth}
+                                            renderImages={false}
                                         />
                                     ))}
                                 </>

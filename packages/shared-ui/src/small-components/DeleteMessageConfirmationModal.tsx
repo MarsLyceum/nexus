@@ -6,6 +6,7 @@ import {
     TouchableOpacity,
     StyleSheet,
     useWindowDimensions,
+    ScrollView,
 } from 'react-native';
 
 import { useTheme, Theme } from '../theme';
@@ -36,7 +37,8 @@ export type DeleteMessageModalProps = {
 export const DeleteMessageConfirmationModal: React.FC<
     DeleteMessageModalProps
 > = ({ visible, onClose, onConfirmDelete, message, onAttachmentPress }) => {
-    const { width: viewportWidth } = useWindowDimensions();
+    const { width: viewportWidth, height: viewportHeight } =
+        useWindowDimensions();
     const { theme } = useTheme();
     const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -55,6 +57,10 @@ export const DeleteMessageConfirmationModal: React.FC<
         : // @ts-expect-error messag
           new Date(message.createdAt);
     const formattedTime = formatDateForChat(messageDate);
+    const previewMaxHeight = useMemo(
+        () => Math.min(viewportHeight * 0.5, 300),
+        [viewportHeight]
+    );
 
     return (
         <MiniModal
@@ -74,7 +80,13 @@ export const DeleteMessageConfirmationModal: React.FC<
                 </Text>
 
                 {/* Discord-style preview of the message */}
-                <View style={styles.messagePreview}>
+                <ScrollView
+                    style={[
+                        styles.messagePreview,
+                        { maxHeight: previewMaxHeight },
+                    ]}
+                    contentContainerStyle={{ flexGrow: 1 }}
+                >
                     <View style={styles.authorRow}>
                         {/* Avatar */}
                         <NexusImage
@@ -104,7 +116,7 @@ export const DeleteMessageConfirmationModal: React.FC<
                             renderAttachments
                         />
                     </View>
-                </View>
+                </ScrollView>
             </View>
 
             <View style={styles.footer}>

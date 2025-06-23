@@ -115,21 +115,30 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     // Measure the container and set the anchor based on its top-right edge.
     const showModal = useCallback(() => {
         if (isComputer && containerRef.current) {
-            const rect = (
+            const msgRect = (
                 containerRef.current as unknown as Element
             ).getBoundingClientRect();
+
+            const scrollNode = scrollContainerRef.current.getScrollableNode
+                ? scrollContainerRef.current.getScrollableNode()
+                : scrollContainerRef.current;
+            const scrollEl = scrollNode as Element;
+            const scrollRect = scrollEl.getBoundingClientRect();
+
             const margin = 10;
+            const visibleTop = Math.max(msgRect.top, scrollRect.top);
+
             // Compute the anchor as the top-right of the message (with a slight inset)
             const computedAnchor = {
-                x: rect.right - margin,
-                y: rect.top + margin,
-                width: rect.width,
-                height: rect.height,
+                x: msgRect.right - margin,
+                y: visibleTop + margin,
+                width: msgRect.width,
+                height: msgRect.height,
             };
             setAnchorPosition(computedAnchor);
             setOptionsModalVisible(true);
         }
-    }, [isComputer]);
+    }, [isComputer, scrollContainerRef]);
 
     const handleMouseEnter = () => {
         if (hideModalTimeoutRef.current) {

@@ -13,3 +13,4 @@ export * from './linkPreviewUtils';
 export * from './storageUtil';
 export * from './stripHtml';
 export * from './validatePassword';
+export * from './isJustLink';

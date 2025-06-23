@@ -18,7 +18,11 @@ import { MarkdownRenderer } from '../small-components/MarkdownRenderer';
 import { LinkPreview } from '../small-components/LinkPreview';
 import { CommentEditor } from '../small-components/CommentEditor';
 import { ActionButton } from '../small-components/ActionButton';
-import { stripHtml, extractUrls, getRelativeTime } from '../utils';
+import {
+    extractUrls,
+    getRelativeTime,
+    isJustLink as isJustLinkUtil,
+} from '../utils';
 // NEW: Import Apollo Client hook and comments query to allow refetching comments.
 import { FETCH_POST_COMMENTS_QUERY } from '../queries';
 // NEW: Import AttachmentImageGallery and MediaDetailsModal for rendering attachments in comments
@@ -198,9 +202,7 @@ const CommentThreadComponent = ({
     const isComputer = useIsComputer();
 
     const urlsInContent = extractUrls(comment.content);
-    const plainContent = stripHtml(comment.content);
-    const isJustLink =
-        urlsInContent.length === 1 && plainContent === urlsInContent[0];
+    const isJustLink = isJustLinkUtil(comment.content);
 
     const onUpvote = () => setVoteCount((prev) => prev + 1);
     const onDownvote = () => setVoteCount((prev) => prev - 1);

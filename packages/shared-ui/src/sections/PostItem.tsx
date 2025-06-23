@@ -24,7 +24,7 @@ import {
     PostMoreOptionsMenu,
     ContentEditor,
 } from '../small-components';
-import { stripHtml, extractUrls } from '../utils';
+import { extractUrls, isJustLink as isJustLinkUtil } from '../utils';
 import { Share as ShareIcon, MoreHorizontal } from '../icons';
 import { FeedPost, FeedChannelPost } from '../types';
 import { useUpdatePost } from '../hooks';
@@ -273,9 +273,7 @@ export const PostItem: React.FC<PostItemProps> = ({
             />
         );
 
-    const plainContent = stripHtml(currentPost.content);
-    const isJustLink =
-        urlsInContent.length === 1 && plainContent === urlsInContent[0];
+    const isJustLink = isJustLinkUtil(currentPost.content);
 
     const contentElement = (
         // Added onLayout to measure the container's width

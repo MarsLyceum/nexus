@@ -67,12 +67,13 @@ export const MessageList: React.FC<MessageListProps> = ({
             deleteTextChannelMessage({
                 variables: {
                     id: message.id,
+                    postedByUserId: activeUser?.id,
                 },
             }).catch((error) => {
                 console.error('Error deleting message:', error);
             });
         },
-        [deleteTextChannelMessage, onDeleteMessage]
+        [activeUser?.id, deleteTextChannelMessage, onDeleteMessage]
     );
 
     if (loadingMessages) {

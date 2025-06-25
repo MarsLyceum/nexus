@@ -52,3 +52,4 @@ export * from './ColorPicker';
 export * from './PostMoreOptionsMenu';
 export * from './ContentEditor';
 export * from './RichTextAndMarkdownEditor';
+export * from './DeletePostConfirmationModal';

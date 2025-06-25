@@ -289,9 +289,8 @@ export const PostScreen: React.FC<PostScreenProps> = (props) => {
                         <PostItem
                             key={`${postData.id}-${postData.username}`}
                             post={postData}
-                            onBackPress={() => {
-                                goBack();
-                            }}
+                            onBackPress={goBack}
+                            onDeletePost={goBack}
                             variant="details"
                             group="My cool group"
                         />

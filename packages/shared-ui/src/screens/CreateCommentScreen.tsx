@@ -16,7 +16,7 @@ import {
     MarkdownRenderer,
     CommentEditor,
 } from '../small-components';
-import { getRelativeTime, extractUrls, stripHtml } from '../utils';
+import { getRelativeTime, extractUrls } from '../utils';
 import { CurrentCommentContext } from '../providers';
 import { useTheme, Theme } from '../theme';
 

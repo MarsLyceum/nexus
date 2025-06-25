@@ -11,3 +11,4 @@ export * from './MESSAGE_ADDED_SUBSCRIPTION';
 export * from './UPDATE_TEXT_CHANNEL_MESSAGE';
 export * from './DELETE_TEXT_CHANNEL_MESSAGE';
 export * from './UPDATE_FEED_CHANNEL_POST';
+export * from './DELETE_FEED_CHANNEL_POST';

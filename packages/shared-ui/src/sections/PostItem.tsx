@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useCallback } from 'react';
 import {
     View,
     Text,
@@ -10,6 +10,7 @@ import {
     Dimensions,
 } from 'react-native';
 import Toast from 'react-native-toast-message';
+import { useMutation } from '@apollo/client';
 
 import { VoteActions } from './VoteActions';
 import { BackArrow } from '../buttons';
@@ -23,11 +24,14 @@ import {
     NexusImage,
     PostMoreOptionsMenu,
     ContentEditor,
+    DeletePostConfirmationModal,
 } from '../small-components';
-import { extractUrls, isJustLink as isJustLinkUtil } from '../utils';
+import { extractUrls } from '../utils';
 import { Share as ShareIcon, MoreHorizontal } from '../icons';
-import { FeedPost, FeedChannelPost } from '../types';
+import { FeedPost } from '../types';
 import { useUpdatePost } from '../hooks';
+import { DELETE_FEED_CHANNEL_POST } from '../queries';
+import { useAppSelector, RootState, UserType } from '../redux';
 
 export type PostItemProps = {
     post: FeedPost;
@@ -35,6 +39,7 @@ export type PostItemProps = {
     preview?: boolean;
     onBackPress?: () => void;
     onPress?: () => void;
+    onDeletePost?: () => void;
     variant?: 'feed' | 'default' | 'details';
     shareUrl?: string;
 };
@@ -57,46 +62,6 @@ function getGroupAvatarUri(group: string, thumbnail?: string): string {
     );
 }
 
-function convertFeedPostToFeedChannelPost(feedPost: FeedPost): FeedChannelPost {
-    const {
-        id,
-        content,
-        postedAt,
-        edited,
-        channel,
-        channelId,
-        postedByUserId,
-        attachmentUrls,
-
-        title,
-        flair,
-        domain,
-        thumbnail,
-        upvotes,
-        commentsCount,
-        shareCount,
-    } = feedPost;
-
-    return {
-        id,
-        content,
-        postedAt,
-        edited,
-        channel,
-        channelId,
-        postedByUserId,
-        attachmentUrls,
-
-        title,
-        flair,
-        domain,
-        thumbnail,
-        upvotes,
-        commentsCount,
-        shareCount,
-    };
-}
-
 export const PostItem: React.FC<PostItemProps> = ({
     post,
     group = '',
@@ -105,6 +70,7 @@ export const PostItem: React.FC<PostItemProps> = ({
     onPress,
     variant = 'default',
     shareUrl,
+    onDeletePost,
 }) => {
     const [currentPost, setCurrentPost] = useState(post);
     const [voteCount, setVoteCount] = useState(currentPost.upvotes);
@@ -134,11 +100,38 @@ export const PostItem: React.FC<PostItemProps> = ({
     const [editedTitle, setEditedTitle] = useState(currentPost.title);
     const [editedContent, setEditedContent] = useState(currentPost.content);
     const { updatePost } = useUpdatePost(currentPost.channelId);
+    const [deleteFeedChannelPost] = useMutation(DELETE_FEED_CHANNEL_POST);
+    const activeUser: UserType = useAppSelector(
+        (state: RootState) => state.user.user
+    );
+    const [showDeleteConfirmationModal, setShowDeleteConfirmationModal] =
+        useState(false);
 
     const handleEdit = () => {
         setShowMoreOptions(false);
         setIsEditing(true);
     };
+
+    const handleDeletePost = useCallback(() => {
+        setShowDeleteConfirmationModal(true);
+    }, []);
+
+    const handleDeletePostConfirm = useCallback(() => {
+        deleteFeedChannelPost({
+            variables: {
+                id: currentPost.id,
+                postedByUserId: activeUser?.id,
+            },
+        }).catch((error) => {
+            console.error('Error deleting message:', error);
+        });
+
+        setShowDeleteConfirmationModal(false);
+
+        if (onDeletePost) {
+            onDeletePost();
+        }
+    }, [activeUser?.id, currentPost.id, deleteFeedChannelPost]);
 
     // Compute inner width based on measured container width with a fallback
     const innerWidth =
@@ -272,8 +265,6 @@ export const PostItem: React.FC<PostItemProps> = ({
                 containerWidth={innerWidth}
             />
         );
-
-    const isJustLink = isJustLinkUtil(currentPost.content);
 
     const contentElement = (
         // Added onLayout to measure the container's width
@@ -425,7 +416,7 @@ export const PostItem: React.FC<PostItemProps> = ({
                 onAddReaction={() => {}}
                 onCopyText={() => {}}
                 onCopyMessageLink={() => {}}
-                onDeleteMessage={() => {}}
+                onDeleteMessage={handleDeletePost}
                 onEditFlair={() => {}}
                 onSave={() => {}}
                 onHide={() => {}}
@@ -433,6 +424,16 @@ export const PostItem: React.FC<PostItemProps> = ({
                 onAddNSFWTag={() => {}}
                 onToggleReplyNotifications={() => {}}
             />
+
+            {showDeleteConfirmationModal && (
+                <DeletePostConfirmationModal
+                    visible={showDeleteConfirmationModal}
+                    onClose={() => setShowDeleteConfirmationModal(false)}
+                    onConfirmDelete={handleDeletePostConfirm}
+                    post={currentPost}
+                    onAttachmentPress={handleImagePress}
+                />
+            )}
         </>
     );
 };

@@ -1,22 +1,28 @@
-// Discriminated union for messages
-export type BaseGroupChannelMessage = {
+// eslint-disable-next-line eslint-comments/disable-enable-pair
+/* eslint-disable no-use-before-define */
+
+export type TextChannelMessage = {
     id: string;
     content: string;
     postedAt: Date;
     edited: boolean;
-    // eslint-disable-next-line no-use-before-define
     channel?: GroupChannel;
     channelId: string;
     postedByUserId: string;
     attachmentUrls?: string[];
+    isDraft?: boolean;
 };
 
-export type GroupChannelRegularMessage = BaseGroupChannelMessage & {
-    messageType: 'message'; // for regular messages
-};
+export type FeedChannelPost = {
+    id: string;
+    content: string;
+    postedAt: Date;
+    edited: boolean;
+    channel?: GroupChannel;
+    channelId: string;
+    postedByUserId: string;
+    attachmentUrls?: string[];
 
-export type GroupChannelPostMessage = BaseGroupChannelMessage & {
-    messageType: 'post'; // discriminator value for posts
     title: string;
     flair?: string;
     domain?: string;
@@ -26,24 +32,17 @@ export type GroupChannelPostMessage = BaseGroupChannelMessage & {
     shareCount: number;
 };
 
-export type GroupChannelMessage =
-    | GroupChannelRegularMessage
-    | GroupChannelPostMessage;
-
-// New type for post comments (reflecting GroupChannelPostCommentEntity)
-export type GroupChannelPostComment = {
+export type FeedChannelPostComment = {
     id: string;
     content: string;
     postedAt: Date;
     edited: boolean;
     postedByUserId: string;
-    // Reference to the parent post (GroupChannelPostMessage)
     postId: string;
-    // For threaded replies, optional parent comment id
     parentCommentId?: string | null;
-    // Nested replies
-    children?: GroupChannelPostComment[];
+    children?: FeedChannelPostComment[];
     upvotes: number;
+    attachmentUrls?: string[];
 };
 
 export type GroupRole = 'owner' | 'admin' | 'moderator' | 'member';
@@ -54,7 +53,6 @@ export type GroupMember = {
     groupId: string;
     role: GroupRole;
     joinedAt: Date;
-    // eslint-disable-next-line no-use-before-define
     group: Group;
 };
 
@@ -63,11 +61,9 @@ export type GroupChannel = {
     name: string;
     type: ChannelType;
     createdAt: Date;
-    // The messages on a channel can be either regular messages or posts.
-    messages: GroupChannelMessage[];
     groupId: string;
-    // eslint-disable-next-line no-use-before-define
     group: Group;
+    orderIndex: number;
 };
 
 export type Group = {
@@ -79,4 +75,5 @@ export type Group = {
     channels: GroupChannel[];
     description?: string;
     avatarUrl?: string;
+    publicGroup?: boolean;
 };

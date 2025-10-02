@@ -16,6 +16,8 @@ import { AttachmentPreviews } from '../sections/AttachmentPreviews';
 import { Attachment } from '../types';
 import { CustomPortalModal } from './CustomPortalModal';
 import { ContentEditor } from './ContentEditor';
+import { Spacing, BorderRadius, Typography } from '../constants/designSystem';
+import { toRgba } from '../utils';
 
 type CreatePostModalProps = {
     modalVisible: boolean;
@@ -195,36 +197,39 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
 function createStyles(theme: Theme) {
     return StyleSheet.create({
         modalContentContainer: {
-            padding: 20,
+            padding: Spacing.XXL,
             flexGrow: 1,
         },
         modalTitle: {
-            fontSize: 18,
-            fontWeight: '600',
-            marginBottom: 15,
+            ...Typography.SectionHeading,
+            fontFamily: theme.fonts.primary?.semibold,
+            marginBottom: Spacing.LG,
             color: theme.colors.ActiveText,
         },
         textInput: {
             borderWidth: 1,
-            borderColor: theme.colors.InactiveText,
-            borderRadius: 5,
-            padding: 10,
-            marginBottom: 15,
+            borderColor: toRgba(theme.colors.ActiveText, 0.08),
+            borderRadius: BorderRadius.ExtraSmall,
+            padding: Spacing.MD,
+            marginBottom: Spacing.LG,
             color: theme.colors.ActiveText,
+            ...Typography.Body,
+            fontFamily: theme.fonts.primary?.regular,
         },
         buttonRow: {
             flexDirection: 'row',
-            marginBottom: 15,
+            marginBottom: Spacing.LG,
         },
         previewModalOverlay: {
             flex: 1,
-            backgroundColor: 'rgba(0,0,0,0.9)',
+            backgroundColor: toRgba('#000', 0.9),
             justifyContent: 'center',
             alignItems: 'center',
         },
         previewModalImage: {
             borderWidth: 2,
-            borderColor: 'white',
+            borderColor: theme.colors.AppBackground,
+            borderRadius: BorderRadius.Medium,
         },
     });
 }

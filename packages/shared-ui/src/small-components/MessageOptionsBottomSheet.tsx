@@ -5,6 +5,13 @@ import Svg, { Path } from 'react-native-svg';
 
 import { useTheme, Theme } from '../theme';
 import { Edit, Delete, Cancel } from '../icons';
+import {
+    Spacing,
+    BorderRadius,
+    Typography,
+    Opacity,
+} from '../constants/designSystem';
+import { toRgba } from '../utils';
 
 import { BottomSheet } from './BottomSheet';
 
@@ -353,42 +360,37 @@ function createStyles(theme: Theme) {
         reactionsRow: {
             flexDirection: 'row',
             alignItems: 'center',
-            marginBottom: 12,
-            paddingHorizontal: 16,
+            marginBottom: Spacing.LG,
+            paddingHorizontal: Spacing.XL,
         },
         reactionButton: {
-            marginRight: 12,
+            marginRight: Spacing.MD,
         },
         reactionText: {
-            fontSize: 20,
+            ...Typography.SectionHeading,
+            fontFamily: theme.fonts.primary?.regular,
             color: theme.colors.ActiveText,
         },
         sectionTop: {
-            marginHorizontal: 16,
+            marginHorizontal: Spacing.XL,
             backgroundColor: theme.colors.SecondaryBackground,
-            borderTopLeftRadius: 12,
-            borderTopRightRadius: 12,
-            borderBottomLeftRadius: 12,
-            borderBottomRightRadius: 12,
+            borderRadius: BorderRadius.Small,
             overflow: 'hidden',
         },
         sectionMiddle: {
-            marginHorizontal: 16,
-            marginTop: 32,
+            marginHorizontal: Spacing.XL,
+            marginTop: Spacing.XXXL,
             backgroundColor: theme.colors.SecondaryBackground,
-            borderTopLeftRadius: 12,
-            borderTopRightRadius: 12,
-            borderBottomLeftRadius: 12,
-            borderBottomRightRadius: 12,
+            borderRadius: BorderRadius.Small,
             overflow: 'hidden',
         },
         sectionBottom: {
-            marginHorizontal: 16,
-            marginTop: 32,
+            marginHorizontal: Spacing.XL,
+            marginTop: Spacing.XXXL,
             backgroundColor: theme.colors.SecondaryBackground,
-            borderRadius: 12,
+            borderRadius: BorderRadius.Small,
             overflow: 'hidden',
-            marginBottom: 32,
+            marginBottom: Spacing.XXXL,
         },
     });
 }
@@ -398,19 +400,23 @@ function createMenuItemStyles(theme: Theme, destructive: boolean) {
         itemContainer: {
             flexDirection: 'row',
             alignItems: 'center',
-            paddingVertical: 12,
-            paddingHorizontal: 16,
+            paddingVertical: Spacing.MD,
+            paddingHorizontal: Spacing.XL,
             backgroundColor: 'transparent',
             borderBottomWidth: StyleSheet.hairlineWidth,
-            borderBottomColor: theme.colors.InactiveText,
+            borderBottomColor: toRgba(
+                theme.colors.ActiveText,
+                Opacity.BorderSubtle
+            ),
         },
         iconContainer: {
-            width: 24,
+            width: Spacing.XXL,
             alignItems: 'center',
-            marginRight: 12,
+            marginRight: Spacing.MD,
         },
         labelText: {
-            fontSize: 15,
+            ...Typography.BodySmall,
+            fontFamily: theme.fonts.primary?.regular,
             color: destructive ? theme.colors.Error : theme.colors.ActiveText,
         },
     });

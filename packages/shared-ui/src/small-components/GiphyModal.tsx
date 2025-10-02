@@ -15,6 +15,8 @@ import { GIPHY_API_KEY } from '../constants';
 import { useTheme, Theme } from '../theme';
 import { Attachment } from '../types';
 import { MiniModal } from './MiniModal';
+import { getShadowStyle, toRgba } from '../utils';
+import { Spacing, BorderRadius, Typography } from '../constants/designSystem';
 
 if (typeof File === 'undefined') {
     class RNFile extends Blob {
@@ -124,15 +126,14 @@ export const GiphyModal: React.FC<GiphyModalProps> = ({
         width: windowWidth < 768 ? 300 : 400,
         maxHeight: 400,
         backgroundColor: theme.colors.PrimaryBackground,
-        borderRadius: 8,
-        padding: 20,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
+        borderRadius: BorderRadius.Medium,
+        padding: Spacing.XXL,
         zIndex: 10_001,
         elevation: 10_001,
-    };
+        borderWidth: 1,
+        borderColor: toRgba(theme.colors.ActiveText, 0.05),
+        ...getShadowStyle('medium'),
+    } as const;
 
     return (
         <MiniModal
@@ -180,23 +181,24 @@ export const GiphyModal: React.FC<GiphyModalProps> = ({
 function createStyles(theme: Theme) {
     return StyleSheet.create({
         modalTitle: {
-            fontSize: 18,
+            ...Typography.SectionHeading,
+            fontFamily: theme.fonts.primary?.semibold,
             color: theme.colors.ActiveText,
-            marginBottom: 15,
+            marginBottom: Spacing.LG,
         },
         giphySearchInput: {
-            height: 40,
+            height: Spacing.XXL,
             width: '100%',
             backgroundColor: theme.colors.TextInput,
-            borderRadius: 5,
-            paddingHorizontal: 10,
-            paddingVertical: 5,
-            marginBottom: 10,
+            borderRadius: BorderRadius.ExtraSmall,
+            paddingHorizontal: Spacing.MD,
+            paddingVertical: Spacing.XS,
+            marginBottom: Spacing.LG,
             color: theme.colors.MainText,
         },
         giphyResultsContainer: {
             flex: 1,
-            marginBottom: 15,
+            marginBottom: Spacing.LG,
         },
         giphyGridContainer: {
             flexDirection: 'row',
@@ -205,10 +207,10 @@ function createStyles(theme: Theme) {
         },
         giphyResultItem: {
             width: '48%',
-            marginBottom: 10,
+            marginBottom: Spacing.MD,
         },
         giphyResultImage: {
-            borderRadius: 6,
+            borderRadius: BorderRadius.ExtraSmall,
         },
     });
 }

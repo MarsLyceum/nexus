@@ -1,5 +1,11 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { StyleSheet, View, Pressable, useWindowDimensions } from 'react-native';
+import {
+    StyleSheet,
+    View,
+    Pressable,
+    useWindowDimensions,
+    Platform,
+} from 'react-native';
 import Carousel from 'react-native-reanimated-carousel';
 
 import { useTheme, Theme } from '../theme';
@@ -143,8 +149,19 @@ export const MediaDetailsModal: React.FC<MediaDetailsModalProps> = ({
                         </View>
                         {mediaAttachments.length > 1 && (
                             <View
-                                style={styles.arrowsContainer}
-                                pointerEvents="box-none"
+                                style={
+                                    Platform.OS === 'web'
+                                        ? {
+                                              ...styles.arrowsContainer,
+                                              pointerEvents: 'box-none',
+                                          }
+                                        : styles.arrowsContainer
+                                }
+                                pointerEvents={
+                                    Platform.OS === 'web'
+                                        ? undefined
+                                        : 'box-none'
+                                }
                             >
                                 <ArrowButton
                                     direction="left"

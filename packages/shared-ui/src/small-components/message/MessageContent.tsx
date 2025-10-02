@@ -1,14 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { GestureDetector, NativeGesture } from 'react-native-gesture-handler';
 import { NexusImage } from '../NexusImage';
 import { LinkPreview } from '../LinkPreview';
 import { MarkdownRenderer } from '../MarkdownRenderer';
-import {
-    extractUrls,
-    isImageExtensionUrl,
-    computeMediaSize,
-} from '../../utils';
+import { extractUrls, computeMediaSize } from '../../utils';
 import { useMediaTypes, useLinkPreview } from '../../hooks';
 import { NexusVideo } from '../NexusVideo';
 import type { MessageWithAvatar, DirectMessageWithAvatar } from '../../types';
@@ -26,7 +22,7 @@ export type MessageContentProps = {
     contentOverride?: string; // For live preview during editing
 };
 
-export const MessageContent: React.FC<MessageContentProps> = ({
+function MessageContentComponent({
     message,
     width,
     onAttachmentPress,
@@ -36,7 +32,7 @@ export const MessageContent: React.FC<MessageContentProps> = ({
     renderLinkPreview = true,
     renderAttachments = true,
     contentOverride = undefined,
-}) => {
+}: Readonly<MessageContentProps>) {
     const mediaInfos = useMediaTypes(message.attachmentUrls || []);
 
     // Use override content if provided, otherwise use message content
@@ -48,65 +44,95 @@ export const MessageContent: React.FC<MessageContentProps> = ({
     const { previewData, isImage } = useLinkPreview({
         url: urls[0],
     });
+    const isMarkdownPreview = message.isDraft === true;
     const isJustImageOrEmbeddLink =
         urls.length === 1 &&
         trimmedContent === urls[0] &&
         (isImage || previewData.embedHtml);
 
-    // Helper to render the message text using MarkdownRenderer.
-    // Updated to pass the isEdited prop.
-    const renderMessageText = (content: string, isEdited: boolean) => (
-        <MarkdownRenderer text={content} isEdited={isEdited} />
-    );
-
-    // Helper to render link previews based on content URLs or previewData
-    const renderLinkPreviews = (content: string, messageWidth: number) => {
-        const trimmedContentInner = content.trim();
-        const urlsInner = extractUrls(trimmedContentInner);
-
-        if (
-            urlsInner.length === 1 &&
-            trimmedContentInner === urlsInner[0] &&
-            isImageExtensionUrl(urlsInner[0])
-        ) {
-            return (
-                <LinkPreview
-                    url={urlsInner[0]}
-                    containerWidth={messageWidth - 32}
-                />
-            );
-        }
-
-        if (urlsInner.length > 0) {
-            return (
-                <>
-                    {urlsInner.map((url, index) => (
-                        <LinkPreview
-                            key={index}
-                            url={url}
-                            containerWidth={messageWidth - 32}
-                        />
-                    ))}
-                </>
-            );
-        }
-
-        return undefined;
-    };
-
     const [attachmentContainerWidth, setAttachmentContainerWidth] =
         useState<number>(300);
+
+    const renderMedia = useCallback(
+        (
+            url: string,
+            info: { type: string; aspectRatio?: number } | undefined,
+            computedSize: { width: number; height: number }
+        ) => {
+            if (!info) return undefined;
+
+            if (info.type === 'video') {
+                const videoElement = (
+                    <NexusVideo
+                        source={{ uri: url }}
+                        style={[
+                            styles.messageAttachmentImage,
+                            {
+                                width: computedSize.width,
+                                height: computedSize.height,
+                            },
+                        ]}
+                        muted={false}
+                        repeat
+                        paused
+                        controls
+                        contentFit="cover"
+                        sliderGesture={sliderGesture}
+                    />
+                );
+
+                return videoGesture ? (
+                    <GestureDetector gesture={videoGesture}>
+                        <View style={styles.videoContainer}>
+                            {videoElement}
+                        </View>
+                    </GestureDetector>
+                ) : (
+                    videoElement
+                );
+            }
+
+            if (info.type === 'image') {
+                return (
+                    <NexusImage
+                        source={url}
+                        style={styles.messageAttachmentImage}
+                        contentFit="cover"
+                        width={computedSize.width}
+                        height={computedSize.height}
+                        alt="Message attachment image"
+                    />
+                );
+            }
+
+            return undefined;
+        },
+        [videoGesture, sliderGesture]
+    );
 
     return (
         <View style={styles.messageContent}>
             {effectiveContent ? (
                 <>
-                    {renderMessage &&
-                        !isJustImageOrEmbeddLink &&
-                        renderMessageText(effectiveContent, message.edited)}
+                    {renderMessage && !isJustImageOrEmbeddLink && (
+                        <MarkdownRenderer
+                            text={effectiveContent}
+                            preview={isMarkdownPreview}
+                            isEdited={message.edited}
+                        />
+                    )}
 
-                    {renderLinkPreview &&
-                        renderLinkPreviews(effectiveContent, width)}
+                    {renderLinkPreview && urls.length > 0 && (
+                        <>
+                            {urls.map((url, index) => (
+                                <LinkPreview
+                                    key={index}
+                                    url={url}
+                                    containerWidth={width - 32}
+                                />
+                            ))}
+                        </>
+                    )}
                 </>
             ) : (
                 <></>
@@ -147,70 +173,7 @@ export const MessageContent: React.FC<MessageContentProps> = ({
                                     key={index}
                                 >
                                     <View>
-                                        {info && info.type === 'video' ? (
-                                            videoGesture ? (
-                                                <GestureDetector
-                                                    gesture={videoGesture}
-                                                >
-                                                    <View
-                                                        style={
-                                                            styles.videoContainer
-                                                        }
-                                                    >
-                                                        <NexusVideo
-                                                            source={{
-                                                                uri: url,
-                                                            }}
-                                                            style={[
-                                                                styles.messageAttachmentImage,
-                                                                {
-                                                                    width: computedSize.width,
-                                                                    height: computedSize.height,
-                                                                },
-                                                            ]}
-                                                            muted={false}
-                                                            repeat
-                                                            paused
-                                                            contentFit="cover"
-                                                            controls
-                                                            sliderGesture={
-                                                                sliderGesture
-                                                            }
-                                                        />
-                                                    </View>
-                                                </GestureDetector>
-                                            ) : (
-                                                <NexusVideo
-                                                    source={{ uri: url }}
-                                                    style={[
-                                                        styles.messageAttachmentImage,
-                                                        {
-                                                            width: computedSize.width,
-                                                            height: computedSize.height,
-                                                        },
-                                                    ]}
-                                                    muted={false}
-                                                    repeat
-                                                    paused
-                                                    controls
-                                                    contentFit="cover"
-                                                    sliderGesture={
-                                                        sliderGesture
-                                                    }
-                                                />
-                                            )
-                                        ) : info && info.type === 'image' ? (
-                                            <NexusImage
-                                                source={url}
-                                                style={{
-                                                    ...styles.messageAttachmentImage,
-                                                }}
-                                                contentFit="cover"
-                                                width={computedSize.width}
-                                                height={computedSize.height}
-                                                alt="Message attachment image"
-                                            />
-                                        ) : undefined}
+                                        {renderMedia(url, info, computedSize)}
                                     </View>
                                 </TouchableOpacity>
                             );
@@ -219,7 +182,29 @@ export const MessageContent: React.FC<MessageContentProps> = ({
                 )}
         </View>
     );
+}
+
+const arePropsEqual = (
+    prev: Readonly<MessageContentProps>,
+    next: Readonly<MessageContentProps>
+): boolean => {
+    const messageEqual =
+        prev.message.id === next.message.id &&
+        prev.message.content === next.message.content &&
+        prev.message.edited === next.message.edited &&
+        prev.message.attachmentUrls === next.message.attachmentUrls;
+
+    const otherPropsEqual =
+        prev.width === next.width &&
+        prev.contentOverride === next.contentOverride;
+
+    return messageEqual && otherPropsEqual;
 };
+
+export const MessageContent = React.memo(
+    MessageContentComponent,
+    arePropsEqual
+);
 
 const styles = StyleSheet.create({
     messageContent: {

@@ -19,100 +19,103 @@ import { LinkPreview } from '../small-components/LinkPreview';
 import { CommentEditor } from '../small-components/CommentEditor';
 import { ActionButton } from '../small-components/ActionButton';
 import { stripHtml, extractUrls, getRelativeTime } from '../utils';
-// NEW: Import Apollo Client hook and comments query to allow refetching comments.
 import { FETCH_POST_COMMENTS_QUERY } from '../queries';
-// NEW: Import AttachmentImageGallery and MediaDetailsModal for rendering attachments in comments
 import { AttachmentImageGallery } from './AttachmentImageGallery';
 import { MediaDetailsModal } from './MediaDetailsModal';
+import { BorderRadius, Spacing, Typography } from '../constants/designSystem';
 
 function createStyles(theme: Theme) {
     return StyleSheet.create({
         commentContainer: {
             borderLeftWidth: 3,
             borderLeftColor: theme.colors.TextInput,
-            marginBottom: 15,
+            marginBottom: Spacing.LG,
         },
         singleComment: {
             backgroundColor: theme.colors.PrimaryBackground,
-            borderRadius: 6,
-            paddingLeft: 2,
-            paddingTop: 15,
-            paddingBottom: 15,
+            borderRadius: BorderRadius.ExtraSmall - 2,
+            paddingLeft: Spacing.XS / 2,
+            paddingTop: Spacing.LG,
+            paddingBottom: Spacing.LG,
         },
         commentHeader: {
             flexDirection: 'row',
             alignItems: 'center',
-            marginBottom: 6,
+            marginBottom: Spacing.XS + 2,
         },
         collapseIcon: {
-            marginRight: 8,
+            marginRight: Spacing.SM,
         },
         commentUserPic: {
             width: 28,
             height: 28,
-            borderRadius: 14,
-            marginRight: 8,
+            borderRadius: BorderRadius.Small + 2,
+            marginRight: Spacing.SM,
         },
         commentUser: {
+            ...Typography.BodySmall,
+            fontFamily: theme.fonts.primary?.semibold,
             color: theme.colors.ActiveText,
-            fontWeight: '600',
-            marginRight: 6,
+            marginRight: Spacing.XS + 2,
         },
         opBadge: {
+            ...Typography.Eyebrow,
+            fontFamily: theme.fonts.secondary?.semibold,
             backgroundColor: theme.colors.Primary,
             color: theme.colors.ActiveText,
-            fontSize: 10,
-            fontWeight: 'bold',
-            paddingHorizontal: 4,
-            paddingVertical: 2,
-            borderRadius: 4,
-            marginRight: 6,
+            paddingHorizontal: Spacing.XS,
+            paddingVertical: Spacing.XS / 2,
+            borderRadius: BorderRadius.ExtraSmall - 4,
+            marginRight: Spacing.XS + 2,
         },
         commentTime: {
+            ...Typography.Caption,
+            fontFamily: theme.fonts.secondary?.regular,
             color: theme.colors.InactiveText,
-            fontSize: 12,
         },
         collapsedCommentText: {
+            ...Typography.Caption,
+            fontFamily: theme.fonts.primary?.regular,
             color: theme.colors.InactiveText,
-            fontSize: 12,
-            marginLeft: 12,
+            marginLeft: Spacing.MD,
             flex: 1,
         },
         commentContentWrapper: {
             alignSelf: 'stretch',
             flex: 1,
             maxWidth: '100%',
-            paddingLeft: 10,
-            marginTop: 4,
+            paddingLeft: Spacing.MD,
+            marginTop: Spacing.XS,
         },
         commentText: {
+            ...Typography.Code,
+            fontFamily: theme.fonts.primary?.regular,
             color: theme.colors.ActiveText,
-            fontSize: 14,
-            lineHeight: 20,
         },
         actionsRow: {
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'flex-end',
-            marginTop: 8,
+            marginTop: Spacing.SM,
         },
         replyIcon: {
-            marginRight: 12,
+            marginRight: Spacing.MD,
         },
         voteActionsContainer: {},
         replyInputContainer: {
-            marginTop: 10,
+            marginTop: Spacing.MD,
         },
         continueConversationButton: {
-            marginTop: 10,
-            padding: 8,
+            marginTop: Spacing.MD,
+            padding: Spacing.SM,
             backgroundColor: theme.colors.Primary,
-            borderRadius: 4,
+            borderRadius: BorderRadius.ExtraSmall - 4,
             alignSelf: 'center',
         },
         continueConversationText: {
+            ...Typography.Code,
+            fontFamily: theme.fonts.primary?.semibold,
             color: theme.colors.ActiveText,
-            fontSize: 14,
         },
     });
 }
@@ -216,13 +219,13 @@ const CommentThreadComponent = ({
                 styles.commentContainer,
                 level === 0
                     ? { borderLeftWidth: 0, paddingLeft: 0 }
-                    : { marginTop: 16, paddingLeft: 10 },
+                    : { marginTop: Spacing.LG, paddingLeft: Spacing.MD },
             ]}
         >
             <View
                 style={[
                     styles.singleComment,
-                    level === 0 && { paddingLeft: 10 },
+                    level === 0 && { paddingLeft: Spacing.MD },
                 ]}
                 onLayout={(event: LayoutChangeEvent) => {
                     const { width } = event.nativeEvent.layout;

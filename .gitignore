@@ -45,3 +45,7 @@ yarn-error.*
 
 # JetBrains
 .idea/
+
+# Rust build artifacts
+target/
+scripts/metro-clean/target/

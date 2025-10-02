@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Image as RNImage, Platform } from 'react-native';
 import { createVideoPlayer } from 'expo-video';
+import { getProxyUrl } from '../utils';
 
 export type MediaType = 'video' | 'image';
 
@@ -11,237 +12,275 @@ export type MediaInfo = {
     aspectRatio: number;
 };
 
-export const useMediaTypes = (urls: string[]): { [url: string]: MediaInfo } => {
-    const [mediaInfo, setMediaInfo] = useState<{ [url: string]: MediaInfo }>(
-        {}
-    );
+export type MediaInfoByUrl = Record<string, MediaInfo>;
+export type MediaDimensions = Partial<Pick<MediaInfo, 'width' | 'height'>>;
+
+export const useMediaTypes = (urls: string[]): MediaInfoByUrl => {
+    const [mediaInfo, setMediaInfo] = useState<MediaInfoByUrl>({});
+    const mediaInfoRef = useRef<MediaInfoByUrl>({});
+
+    const defaultVideoWidth = 300;
+    const defaultVideoAspect = 16 / 9;
+    const defaultVideoHeight = defaultVideoWidth / defaultVideoAspect;
+
+    const ensureMediaInfo = (
+        type: MediaType,
+        dimensions: MediaDimensions
+    ): MediaInfo => {
+        const width = dimensions.width ?? defaultVideoWidth;
+        const height = dimensions.height ?? defaultVideoHeight;
+        const aspectRatio =
+            dimensions.width && dimensions.height
+                ? dimensions.width / dimensions.height
+                : defaultVideoAspect;
+
+        return { type, width, height, aspectRatio } satisfies MediaInfo;
+    };
+
+    const writeInfo = (url: string, info: MediaInfo) =>
+        setMediaInfo((current) => {
+            if (current[url]) {
+                mediaInfoRef.current = current;
+                return current;
+            }
+            const next = {
+                ...current,
+                [url]: info,
+            } satisfies MediaInfoByUrl;
+            mediaInfoRef.current = next;
+            return next;
+        });
 
     useEffect(() => {
-        // eslint-disable-next-line @typescript-eslint/no-misused-promises
-        urls.forEach(async (url) => {
-            // Only process URLs that haven't been handled yet.
-            if (!mediaInfo[url]) {
-                const originalUri = url;
-                const fallbackUri = `https://images.weserv.nl/?url=${encodeURIComponent(originalUri)}`;
+        mediaInfoRef.current = mediaInfo;
+    }, [mediaInfo]);
 
-                const handleFetch = (response: Response) => {
-                    const contentType =
-                        response.headers.get('content-type') || '';
-                    const type: MediaType = contentType.startsWith('video')
-                        ? 'video'
-                        : 'image';
+    useEffect(() => {
+        let cancelled = false;
+        const abortControllers: AbortController[] = [];
+        const trackedVideos: Array<{
+            video: HTMLVideoElement;
+            cleanup: () => void;
+        }> = [];
 
-                    // eslint-disable-next-line promise/always-return
-                    if (type === 'image') {
-                        // For images, use RNImage.getSize.
-                        RNImage.getSize(
-                            url,
-                            (width, height) =>
-                                setMediaInfo((prev) => ({
-                                    ...prev,
-                                    [url]: {
-                                        type,
-                                        width,
-                                        height,
-                                        aspectRatio: width / height,
-                                    },
-                                })),
-                            (error) => {
-                                console.error(
-                                    'Failed to get image dimensions for',
-                                    url,
-                                    error
-                                );
-                                const defaultWidth = 300;
-                                setMediaInfo((prev) => ({
-                                    ...prev,
-                                    [url]: {
-                                        type,
-                                        width: defaultWidth,
-                                        height: defaultWidth,
-                                        aspectRatio: 1,
-                                    },
-                                }));
-                            }
-                        );
-                    } else {
-                        // For videos:
-                        // eslint-disable-next-line no-lonely-if
-                        if (Platform.OS === 'web') {
-                            // Use an HTMLVideoElement on web.
-                            const video = document.createElement('video');
-                            video.src = url;
-                            video.addEventListener('loadedmetadata', () => {
-                                const width = video.videoWidth;
-                                const height = video.videoHeight;
-                                if (width && height) {
-                                    setMediaInfo((prev) => ({
-                                        ...prev,
-                                        [url]: {
-                                            type,
-                                            width,
-                                            height,
-                                            aspectRatio: width / height,
-                                        },
-                                    }));
-                                } else {
-                                    // Fallback if dimensions are zero.
-                                    const defaultWidth = 300;
-                                    const defaultAspect = 16 / 9;
-                                    setMediaInfo((prev) => ({
-                                        ...prev,
-                                        [url]: {
-                                            type,
-                                            width: defaultWidth,
-                                            height:
-                                                defaultWidth / defaultAspect,
-                                            aspectRatio: defaultAspect,
-                                        },
-                                    }));
-                                }
+        const safeWrite = (url: string, info: MediaInfo) => {
+            if (cancelled) return;
+            writeInfo(url, info);
+        };
+
+        const safeWriteDimensions = (
+            url: string,
+            type: MediaType,
+            dimensions: MediaDimensions
+        ) => safeWrite(url, ensureMediaInfo(type, dimensions));
+
+        const safeFetch = (input: RequestInfo, init?: RequestInit) => {
+            const controller = new AbortController();
+            abortControllers.push(controller);
+            return fetch(input, {
+                ...init,
+                signal: controller.signal,
+            });
+        };
+
+        const unhandledUrls = urls.filter(
+            (url) => mediaInfoRef.current[url] === undefined
+        );
+
+        unhandledUrls.forEach((url) => {
+            const originalUri = url;
+            const proxyUri = getProxyUrl(originalUri);
+            const fallbackUri = `https://images.weserv.nl/?url=${encodeURIComponent(originalUri)}`;
+
+            const handleFetch = (response: Response) => {
+                const contentType = response.headers.get('content-type') ?? '';
+                const detectedType: MediaType = contentType.startsWith('video')
+                    ? 'video'
+                    : 'image';
+
+                if (detectedType === 'image') {
+                    RNImage.getSize(
+                        originalUri,
+                        (width, height) =>
+                            safeWrite(originalUri, {
+                                type: detectedType,
+                                width,
+                                height,
+                                aspectRatio: width / height,
+                            }),
+                        (error) => {
+                            console.error(
+                                'Failed to get image dimensions for',
+                                originalUri,
+                                error
+                            );
+                            safeWrite(originalUri, {
+                                type: detectedType,
+                                width: defaultVideoWidth,
+                                height: defaultVideoWidth,
+                                aspectRatio: 1,
                             });
-                            video.addEventListener('error', (error) => {
-                                console.error(
-                                    'Error loading video metadata for',
-                                    url,
-                                    error
-                                );
-                                const defaultWidth = 300;
-                                const defaultAspect = 16 / 9;
-                                setMediaInfo((prev) => ({
-                                    ...prev,
-                                    [url]: {
-                                        type,
-                                        width: defaultWidth,
-                                        height: defaultWidth / defaultAspect,
-                                        aspectRatio: defaultAspect,
-                                    },
-                                }));
-                            });
-                        } else {
-                            // For native, use expo-video's generateThumbnailsAsync.
-                            const player = createVideoPlayer(url);
-                            player
-                                .generateThumbnailsAsync([0])
-                                .then((thumbnails) => {
-                                    // eslint-disable-next-line promise/always-return
-                                    if (thumbnails && thumbnails.length > 0) {
-                                        const thumbnail = thumbnails[0];
-                                        const { width, height } = thumbnail;
-                                        if (width && height) {
-                                            setMediaInfo((prev) => ({
-                                                ...prev,
-                                                [url]: {
-                                                    type,
-                                                    width,
-                                                    height,
-                                                    aspectRatio: width / height,
-                                                },
-                                            }));
-                                        } else {
-                                            const defaultWidth = 300;
-                                            const defaultAspect = 16 / 9;
-                                            setMediaInfo((prev) => ({
-                                                ...prev,
-                                                [url]: {
-                                                    type,
-                                                    width: defaultWidth,
-                                                    height:
-                                                        defaultWidth /
-                                                        defaultAspect,
-                                                    aspectRatio: defaultAspect,
-                                                },
-                                            }));
-                                        }
-                                    } else {
-                                        const defaultWidth = 300;
-                                        const defaultAspect = 16 / 9;
-                                        setMediaInfo((prev) => ({
-                                            ...prev,
-                                            [url]: {
-                                                type,
-                                                width: defaultWidth,
-                                                height:
-                                                    defaultWidth /
-                                                    defaultAspect,
-                                                aspectRatio: defaultAspect,
-                                            },
-                                        }));
-                                    }
-                                    // Optionally, release the player: player.release();
-                                })
-                                .catch((error) => {
-                                    console.error(
-                                        'Failed to generate thumbnail for video',
-                                        url,
-                                        error
-                                    );
-                                    const defaultWidth = 300;
-                                    const defaultAspect = 16 / 9;
-                                    setMediaInfo((prev) => ({
-                                        ...prev,
-                                        [url]: {
-                                            type,
-                                            width: defaultWidth,
-                                            height:
-                                                defaultWidth / defaultAspect,
-                                            aspectRatio: defaultAspect,
-                                        },
-                                    }));
-                                });
                         }
-                    }
-                };
+                    );
+                    return;
+                }
 
-                // Fetch HEAD to determine the content type.
-                try {
-                    const response = await fetch(originalUri, {
-                        method: 'HEAD',
+                if (Platform.OS === 'web') {
+                    const videoElement = document.createElement('video');
+                    videoElement.src = originalUri;
+
+                    const handleLoaded = () => {
+                        safeWriteDimensions(originalUri, detectedType, {
+                            width: videoElement.videoWidth,
+                            height: videoElement.videoHeight,
+                        });
+                        videoElement.removeEventListener(
+                            'loadedmetadata',
+                            handleLoaded
+                        );
+                        videoElement.removeEventListener('error', handleError);
+                    };
+
+                    const handleError = (event: Event) => {
+                        console.error(
+                            'Error loading video metadata for',
+                            originalUri,
+                            event
+                        );
+                        safeWriteDimensions(originalUri, detectedType, {});
+                        videoElement.removeEventListener(
+                            'loadedmetadata',
+                            handleLoaded
+                        );
+                        videoElement.removeEventListener('error', handleError);
+                    };
+
+                    videoElement.addEventListener(
+                        'loadedmetadata',
+                        handleLoaded
+                    );
+                    videoElement.addEventListener('error', handleError);
+
+                    trackedVideos.push({
+                        video: videoElement,
+                        cleanup: () => {
+                            videoElement.removeEventListener(
+                                'loadedmetadata',
+                                handleLoaded
+                            );
+                            videoElement.removeEventListener(
+                                'error',
+                                handleError
+                            );
+                        },
                     });
-                    handleFetch(response);
-                } catch (error) {
+
+                    return;
+                }
+
+                const player = createVideoPlayer(originalUri);
+                void player
+                    .generateThumbnailsAsync([0])
+                    .then((thumbnails) => {
+                        if (thumbnails?.length) {
+                            const [{ width, height }] = thumbnails;
+                            safeWriteDimensions(originalUri, detectedType, {
+                                width,
+                                height,
+                            });
+                            return;
+                        }
+
+                        safeWriteDimensions(originalUri, detectedType, {});
+                        throw new Error('Missing thumbnails');
+                    })
+                    .catch((error) => {
+                        console.error(
+                            'Failed to generate thumbnail for video',
+                            originalUri,
+                            error
+                        );
+                        safeWriteDimensions(originalUri, detectedType, {});
+                        return undefined;
+                    })
+                    .finally(() => {
+                        player.release?.();
+                    });
+            };
+
+            const fetchWithFallbacks = async () => {
+                try {
+                    handleFetch(await safeFetch(proxyUri, { method: 'HEAD' }));
+                    return;
+                } catch (headError) {
+                    if (
+                        headError instanceof Error &&
+                        headError.name === 'AbortError'
+                    ) {
+                        return;
+                    }
                     console.error(
                         'Failed to fetch HEAD for',
-                        originalUri,
-                        error
+                        proxyUri,
+                        headError
                     );
-                    try {
-                        const response = await fetch(originalUri, {
-                            method: 'GET',
-                        });
-                        handleFetch(response);
-                    } catch (error_) {
-                        console.error(
-                            'Failed to fetch GET for',
-                            originalUri,
-                            error_
-                        );
-                        try {
-                            const response = await fetch(fallbackUri, {
-                                method: 'HEAD',
-                            });
-                            handleFetch(response);
-                        } catch (error__) {
-                            console.error(
-                                'Failed to fetch HEAD for',
-                                fallbackUri,
-                                error__
-                            );
-                            setMediaInfo((prev) => ({
-                                ...prev,
-                                [url]: {
-                                    type: 'image',
-                                    width: 300,
-                                    height: 300,
-                                    aspectRatio: 1,
-                                },
-                            }));
-                        }
-                    }
                 }
-            }
+
+                try {
+                    handleFetch(await safeFetch(proxyUri, { method: 'GET' }));
+                    return;
+                } catch (getError) {
+                    if (
+                        getError instanceof Error &&
+                        getError.name === 'AbortError'
+                    ) {
+                        return;
+                    }
+                    console.error(
+                        'Failed to fetch GET for',
+                        proxyUri,
+                        getError
+                    );
+                }
+
+                try {
+                    handleFetch(
+                        await safeFetch(fallbackUri, { method: 'HEAD' })
+                    );
+                    return;
+                } catch (fallbackError) {
+                    if (
+                        fallbackError instanceof Error &&
+                        fallbackError.name === 'AbortError'
+                    ) {
+                        return;
+                    }
+                    console.error(
+                        'Failed to fetch HEAD for',
+                        fallbackUri,
+                        fallbackError
+                    );
+                }
+
+                safeWrite(originalUri, {
+                    type: 'image',
+                    width: defaultVideoWidth,
+                    height: defaultVideoWidth,
+                    aspectRatio: 1,
+                });
+            };
+
+            void fetchWithFallbacks();
         });
-    }, [urls, mediaInfo]);
+
+        return () => {
+            cancelled = true;
+            abortControllers.forEach((controller) => {
+                controller.abort();
+            });
+            trackedVideos.forEach(({ cleanup }) => cleanup());
+        };
+    }, [urls]);
 
     return mediaInfo;
 };

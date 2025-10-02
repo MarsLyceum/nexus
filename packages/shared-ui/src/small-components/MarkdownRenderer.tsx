@@ -7,66 +7,72 @@ import {
     View,
     TouchableOpacity,
     Platform,
+    LayoutChangeEvent,
 } from 'react-native';
 import MarkdownIt from 'markdown-it';
 import RenderHTML, { defaultHTMLElementModels } from 'react-native-render-html';
 
 import { useTheme, Theme } from '../theme';
+import { Spacing, Typography } from '../constants/designSystem';
+import { toRgba } from '../utils';
 
 function createStyles(theme: Theme) {
     return StyleSheet.create({
-        // Use white for paragraph text as desired.
         document: {
-            fontSize: 16,
-            lineHeight: 22,
-            fontFamily: 'Roboto_400Regular',
+            ...Typography.Body,
+            fontFamily: theme.fonts.primary?.regular,
         },
         code_inline: {
-            fontFamily: 'monospace',
-            backgroundColor: '#2f3136',
-            color: '#c7c7c7',
-            paddingHorizontal: 4,
-            paddingVertical: 2,
+            ...Typography.Code,
+            fontFamily:
+                theme.fonts.monospace?.regular ??
+                Platform.select({
+                    web: 'monospace',
+                    default: 'Courier',
+                }),
+            backgroundColor: toRgba(theme.colors.AppBackground, 0.8),
+            color: theme.colors.MainText,
+            paddingHorizontal: Spacing.XS,
+            paddingVertical: Spacing.XS / 2,
         },
         blockquote: {
             backgroundColor: theme.colors.AppBackground,
-            padding: 10,
-            borderLeftColor: '#4ea1f3',
+            padding: Spacing.MD,
+            borderLeftColor: theme.colors.Primary,
             borderLeftWidth: 4,
-            marginVertical: 8,
+            marginVertical: Spacing.SM,
         },
         spoilerText: {
-            fontSize: 16,
+            ...Typography.Body,
+            fontFamily: theme.fonts.primary?.regular,
         },
         linkText: {
+            ...Typography.Body,
+            fontFamily: theme.fonts.primary?.regular,
             color: theme.colors.Link,
             textDecorationLine: 'underline',
-            fontSize: 16,
-            fontFamily: 'Roboto_400Regular',
         },
         heading1: {
-            fontSize: 32,
-            fontWeight: 'bold',
-            marginTop: 8,
-            marginBottom: 8,
+            ...Typography.H1,
+            fontFamily: theme.fonts.primary?.bold,
+            marginTop: Spacing.SM,
+            marginBottom: Spacing.SM,
             color: theme.colors.ActiveText,
-            fontFamily: 'Roboto_700Bold',
-            lineHeight: 40,
         },
         ellipsisText: {
+            ...Typography.SectionHeading,
+            fontFamily: theme.fonts.primary?.semibold,
             color: theme.colors.ActiveText,
-            fontSize: 18,
         },
         emojiLarge: {
             fontSize: 64,
+            fontFamily: theme.fonts.primary?.regular,
             textAlign: 'left',
-            fontFamily: 'Roboto_400Regular',
         },
-        // The edited tag should be smaller and styled (using a lighter gray per your palette).
         editedTag: {
-            fontSize: 12,
-            color: theme.colors.InactiveText, // e.g., "#989898"
-            fontFamily: 'Roboto_400Regular',
+            ...Typography.Caption,
+            fontFamily: theme.fonts.secondary?.regular,
+            color: theme.colors.InactiveText,
         },
     });
 }
@@ -94,38 +100,53 @@ const isOnlyEmojis = (text: string): boolean => {
 // ---------------------
 // Inline Spoiler Component
 // ---------------------
-const InlineSpoiler: React.FC<{ children: React.ReactNode }> = ({
+const InlineSpoilerBase: React.FC<{ children: React.ReactNode }> = ({
     children,
 }) => {
     const [revealed, setRevealed] = React.useState(false);
     const { theme } = useTheme();
     const styles = useMemo(() => createStyles(theme), [theme]);
 
+    const toggleRevealed = useCallback(() => {
+        setRevealed((prev) => !prev);
+    }, []);
+
+    const spoilerStyle = useMemo(
+        () => [
+            styles.spoilerText,
+            {
+                backgroundColor: revealed
+                    ? theme.colors.AppBackground
+                    : theme.colors.ActiveText,
+                color: theme.colors.ActiveText,
+                alignSelf: 'flex-start' as const,
+            },
+        ],
+        [
+            styles.spoilerText,
+            revealed,
+            theme.colors.AppBackground,
+            theme.colors.ActiveText,
+        ]
+    );
+
     return (
         <Text
-            onPress={() => setRevealed((prev) => !prev)}
+            onPress={toggleRevealed}
             selectable={revealed}
-            style={[
-                styles.spoilerText,
-                {
-                    backgroundColor: revealed
-                        ? theme.colors.AppBackground
-                        : theme.colors.ActiveText,
-                    color: theme.colors.ActiveText,
-                    alignSelf: 'flex-start',
-                },
-            ]}
+            style={spoilerStyle}
         >
             {children}
         </Text>
     );
 };
+const InlineSpoiler = React.memo(InlineSpoilerBase);
 
 // ---------------------
 // Custom Inline Link Component
 // ---------------------
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const InlineLink: React.FC<{ tnode: any }> = ({ tnode }) => {
+const InlineLinkBase: React.FC<{ tnode: any }> = ({ tnode }) => {
     let href = tnode.attributes?.href || '';
     if (!/^https?:\/\//.test(href)) {
         href = `http://${href}`;
@@ -136,13 +157,26 @@ const InlineLink: React.FC<{ tnode: any }> = ({ tnode }) => {
     const { theme } = useTheme();
     const styles = useMemo(() => createStyles(theme), [theme]);
 
-    if (Platform.OS === 'web') {
-        const webStyle = {
+    const webStyle = useMemo(
+        () => ({
             color: styles.linkText.color,
             textDecoration: styles.linkText.textDecorationLine,
             fontSize: styles.linkText.fontSize,
             fontFamily: styles.linkText.fontFamily,
-        };
+        }),
+        [styles.linkText]
+    );
+
+    const handlePress = useCallback(() => {
+        if (href) void Linking.openURL(href);
+    }, [href]);
+
+    const nativeStyle = useMemo(
+        () => [styles.linkText, { alignSelf: 'flex-start' as const }],
+        [styles.linkText]
+    );
+
+    if (Platform.OS === 'web') {
         return (
             <a
                 href={href}
@@ -155,17 +189,12 @@ const InlineLink: React.FC<{ tnode: any }> = ({ tnode }) => {
         );
     }
     return (
-        <Text
-            onPress={() => {
-                if (href) void Linking.openURL(href);
-            }}
-            selectable
-            style={[styles.linkText, { alignSelf: 'flex-start' }]}
-        >
+        <Text onPress={handlePress} selectable style={nativeStyle}>
             {content}
         </Text>
     );
 };
+const InlineLink = React.memo(InlineLinkBase);
 
 // ---------------------
 // Markdown-It Setup
@@ -285,21 +314,30 @@ const ELLIPSIS_HEIGHT = 30;
 // ---------------------
 // Main MarkdownRenderer Component
 // ---------------------
-export const MarkdownRenderer: React.FC<{
+function MarkdownRendererComponent({
+    text,
+    preview,
+    isEdited,
+}: Readonly<{
     text: string;
     preview?: boolean;
     isEdited?: boolean;
-}> = ({ text, preview, isEdited }) => {
-    const contentWidth = Dimensions.get('window').width;
+}>) {
     const [contentHeight, setContentHeight] = React.useState(0);
+    const hasMeasuredRef = React.useRef(false);
+    const measuredContentRef = React.useRef<string | null>(null);
     const [expanded, setExpanded] = React.useState(false);
     const { theme } = useTheme();
     const styles = useMemo(() => createStyles(theme), [theme]);
 
+    const contentWidth = useMemo(() => Dimensions.get('window').width, []);
+
     // Convert Markdown to HTML.
     // If isEdited is true, insert the edited tag inline at the end of the last paragraph.
     const finalHtmlContent = useMemo(() => {
-        let rendered = mdInstance.render(text).trim();
+        const trimmedText = text.trim();
+        const renderableText = trimmedText.length > 0 ? trimmedText : '&nbsp;';
+        let rendered = mdInstance.render(renderableText).trim();
         if (isEdited) {
             if (rendered.includes('</p>')) {
                 // Replace the last occurrence of </p> with the edited tag before it.
@@ -316,10 +354,46 @@ export const MarkdownRenderer: React.FC<{
 
     const htmlContent = useMemo(() => finalHtmlContent, [finalHtmlContent]);
 
+    const source = useMemo(() => ({ html: htmlContent }), [htmlContent]);
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const handleOnLayout = useCallback((event: any) => {
-        setContentHeight(event.nativeEvent.layout.height);
-    }, []);
+    const shouldMeasureContent = preview === true && !expanded;
+
+    React.useEffect(() => {
+        if (!shouldMeasureContent) {
+            if (hasMeasuredRef.current) {
+                hasMeasuredRef.current = false;
+            }
+            if (measuredContentRef.current !== null) {
+                measuredContentRef.current = null;
+            }
+            if (contentHeight !== 0) {
+                setContentHeight(0);
+            }
+            return;
+        }
+
+        if (measuredContentRef.current !== finalHtmlContent) {
+            measuredContentRef.current = finalHtmlContent;
+            hasMeasuredRef.current = false;
+            if (contentHeight !== 0) {
+                setContentHeight(0);
+            }
+        }
+    }, [contentHeight, finalHtmlContent, shouldMeasureContent]);
+
+    const handleOnLayout = useCallback(
+        (event: LayoutChangeEvent) => {
+            if (!shouldMeasureContent) return;
+            const nextHeight = event.nativeEvent.layout.height;
+            const hasMeasured = hasMeasuredRef.current;
+            if (!hasMeasured || Math.abs(nextHeight - contentHeight) > 0.5) {
+                hasMeasuredRef.current = true;
+                setContentHeight(nextHeight);
+            }
+        },
+        [contentHeight, shouldMeasureContent]
+    );
 
     // Define tagsStyles to include paragraph styling.
     const tagsStyles = useMemo(
@@ -336,10 +410,16 @@ export const MarkdownRenderer: React.FC<{
             blockquote: styles.blockquote,
             h1: styles.heading1,
         }),
-        []
+        [styles, theme.colors.ActiveText]
     );
     const baseStyle = useMemo(() => ({ marginTop: 0, paddingTop: 0 }), []);
     const defaultTextProps = useMemo(() => ({ selectable: true }), []);
+
+    const customLinkRenderer = useCallback(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ({ tnode }: any) => <InlineLink tnode={tnode} />,
+        []
+    );
 
     const customSpanRenderer = useCallback(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -365,18 +445,17 @@ export const MarkdownRenderer: React.FC<{
 
     const customRenderers = useMemo(
         () => ({
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            a: ({ tnode }: any) => <InlineLink tnode={tnode} />,
+            a: customLinkRenderer,
             span: customSpanRenderer,
         }),
-        [customSpanRenderer]
+        [customLinkRenderer, customSpanRenderer]
     );
 
     const fullContent = (
         <View onLayout={handleOnLayout}>
             <RenderHTML
                 contentWidth={contentWidth}
-                source={{ html: htmlContent }}
+                source={source}
                 renderers={customRenderers}
                 customHTMLElementModels={customHTMLElementModels}
                 baseStyle={baseStyle}
@@ -413,12 +492,12 @@ export const MarkdownRenderer: React.FC<{
             >
                 <RenderHTML
                     contentWidth={contentWidth}
-                    source={{ html: htmlContent }}
+                    source={source}
                     renderers={customRenderers}
                     customHTMLElementModels={customHTMLElementModels}
-                    baseStyle={{ marginTop: 0, paddingTop: 0 }}
+                    baseStyle={baseStyle}
                     tagsStyles={tagsStyles}
-                    defaultTextProps={{ selectable: true }}
+                    defaultTextProps={defaultTextProps}
                 />
             </View>
             <TouchableOpacity
@@ -433,4 +512,6 @@ export const MarkdownRenderer: React.FC<{
             </TouchableOpacity>
         </View>
     );
-};
+}
+
+export const MarkdownRenderer = React.memo(MarkdownRendererComponent);

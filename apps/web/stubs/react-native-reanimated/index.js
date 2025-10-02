@@ -243,6 +243,8 @@ export function useAnimatedGestureHandler(handlers) {
 }
 
 // Animation functions that immediately return the provided value.
+export function cancelAnimation() {}
+
 export function withTiming(value, config, callback) {
     if (callback) {
         callback(true);
@@ -251,6 +253,13 @@ export function withTiming(value, config, callback) {
 }
 
 export function withSpring(value, config, callback) {
+    if (callback) {
+        callback(true);
+    }
+    return value;
+}
+
+export function withDecay(value, config, callback) {
     if (callback) {
         callback(true);
     }
@@ -281,9 +290,18 @@ export function useAnimatedRef() {
     return { current: null };
 }
 
+// A stub for animated props.
+export function useAnimatedProps(factory, deps) {
+    return typeof factory === 'function' ? factory() : {};
+}
+
 // Stub for measuring layouts.
 export function measure() {
     return { x: 0, y: 0, width: 0, height: 0 };
+}
+
+export function useAnimatedScrollHandler(handler) {
+    return () => {};
 }
 
 //
@@ -420,15 +438,19 @@ export default {
     useAnimatedStyle,
     useSharedValue,
     useAnimatedGestureHandler,
+    cancelAnimation,
     withTiming,
     withSpring,
+    withDecay,
     Easing,
     runOnJS,
     runOnUI,
     interpolate,
     clamp,
     useAnimatedRef,
+    useAnimatedProps,
     measure,
     useDerivedValue,
     useAnimatedReaction,
+    useAnimatedScrollHandler,
 };

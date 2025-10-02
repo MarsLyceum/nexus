@@ -7,6 +7,14 @@ const projectRoot = __dirname;
 const workspaceRoot = path.resolve(projectRoot, '../../');
 
 const config = getDefaultConfig(projectRoot);
+const { assetExts, sourceExts } = config.resolver;
+config.resolver.assetExts = assetExts.filter((ext) => ext !== 'wgsl');
+config.resolver.sourceExts = [...sourceExts, 'wgsl'];
+
+config.transformer = {
+    ...config.transformer,
+    babelTransformerPath: require.resolve('metro-wgsl-transformer'),
+};
 
 // Watch the entire monorepo.
 config.watchFolders = [workspaceRoot];

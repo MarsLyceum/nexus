@@ -1,0 +1,10 @@
+[package]
+name = "metro-clean"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0"
+dirs = "5.0"
+walkdir = "2.5"
+which = "6.0"

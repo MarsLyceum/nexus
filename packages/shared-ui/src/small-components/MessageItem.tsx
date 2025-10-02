@@ -5,12 +5,16 @@ import React, {
     useCallback,
     useMemo,
 } from 'react';
+import type { MouseEvent as ReactMouseEvent } from 'react';
 import {
     View,
     Text,
     StyleSheet,
     Pressable as RNPressable,
     Platform,
+    LayoutChangeEvent,
+    Animated,
+    Easing,
 } from 'react-native';
 import {
     Pressable as RNGHPressable,
@@ -20,9 +24,15 @@ import {
 
 import { useTheme, Theme } from '../theme';
 import { MessageContent, MessageEditor } from './message';
-import { formatDateForChat } from '../utils';
+import { formatDateForChat, toRgba } from '../utils';
 import type { MessageWithAvatar, DirectMessageWithAvatar } from '../types';
-import { useIsComputer } from '../hooks';
+import { useIsComputer, useStableHover } from '../hooks';
+import {
+    BorderRadius,
+    Spacing,
+    Typography,
+    Opacity,
+} from '../constants/designSystem';
 
 import { MessageOptionsBottomSheet } from './MessageOptionsBottomSheet';
 import { MessageOptionsModal } from './MessageOptionsModal';
@@ -42,6 +52,8 @@ export type MessageItemProps = {
     onDeleteMessage: (
         message: DirectMessageWithAvatar | MessageWithAvatar
     ) => void;
+    onLayout?: (event: LayoutChangeEvent) => void;
+    contentHeight?: number;
 };
 
 const getMessageDate = (
@@ -56,6 +68,8 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     scrollContainerRef,
     onSaveEdit,
     onDeleteMessage,
+    onLayout,
+    contentHeight,
 }) => {
     const isComputer = useIsComputer();
     const [currentMessage, setCurrentMessage] = useState(message);
@@ -73,15 +87,34 @@ export const MessageItem: React.FC<MessageItemProps> = ({
         | undefined
     >(undefined);
     const [modalHovered, setModalHovered] = useState(false);
-    const [isHovered, setIsHovered] = useState(false);
-    const [isScrolling, setIsScrolling] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [editedContent, setEditedContent] = useState(
         currentMessage.content ?? ''
     );
+    const pressableRef = useRef<View>(null);
     const containerRef = useRef<View>(null);
     const messageDate = getMessageDate(currentMessage);
-    const hideModalTimeoutRef = useRef<number | null>(null);
+    const entranceProgress = useRef(new Animated.Value(0)).current;
+    const hoverProgress = useRef(new Animated.Value(0)).current;
+    const {
+        handlers: hoverHandlers,
+        isHovering,
+        registerBounds,
+        debugLabel,
+    } = useStableHover({
+        closeDelayMs: 320,
+        onEnter: () => {
+            animateHover(1);
+            setOptionsModalVisible(true);
+        },
+        onLeave: () => {
+            if (!modalHovered) {
+                animateHover(0);
+                setOptionsModalVisible(false);
+            }
+        },
+        debugLabel: `message-${message.id}`,
+    });
     const [showMoreOptions, setShowMoreOptions] = useState(false);
     const [moreButtonAnchor, setMoreButtonAnchor] = useState<
         | {
@@ -130,62 +163,110 @@ export const MessageItem: React.FC<MessageItemProps> = ({
         }
     }, [isComputer]);
 
-    const handleMouseEnter = () => {
-        if (hideModalTimeoutRef.current) {
-            clearTimeout(hideModalTimeoutRef.current);
-            // eslint-disable-next-line unicorn/no-null
-            hideModalTimeoutRef.current = null;
-        }
-        setIsHovered(true);
-        if (!isScrolling) showModal();
-    };
+    const animateHover = useCallback(
+        (toValue: number) => {
+            Animated.timing(hoverProgress, {
+                toValue,
+                duration: 180,
+                easing: Easing.out(Easing.cubic),
+                useNativeDriver: false,
+            }).start();
+        },
+        [hoverProgress]
+    );
 
-    const handleMouseLeave = () => {
-        setIsHovered(false);
-        hideModalTimeoutRef.current = setTimeout(() => {
-            if (!modalHovered) {
-                setOptionsModalVisible(false);
-            }
-        }, 300) as unknown as number;
-    };
-
-    // eslint-disable-next-line consistent-return
-    useEffect(() => {
-        const handleDocumentMouseMove = (e: MouseEvent) => {
-            if (containerRef.current) {
-                const rect = (
-                    containerRef.current as unknown as Element
-                ).getBoundingClientRect();
-                const { clientX, clientY } = e;
-                const isOverMessage =
-                    clientX >= rect.left &&
-                    clientX <= rect.right &&
-                    clientY >= rect.top &&
-                    clientY <= rect.bottom;
-
-                if (!isOverMessage) {
-                    setOptionsModalVisible(false);
-                }
-            }
-        };
-
-        // add listener only when we switch into "computer" mode
-        if (isComputer && Platform.OS === 'web') {
-            document.addEventListener('mousemove', handleDocumentMouseMove, {
-                passive: true,
+    const handleHoverIn = useCallback(() => {
+        if (__DEV__) {
+            // eslint-disable-next-line no-console
+            console.log(`[MessageItem:${message.id}] hover-in`, {
+                isHovering,
+                modalHovered,
             });
         }
+        hoverHandlers.onPointerEnter();
+        showModal();
+    }, [hoverHandlers, isHovering, modalHovered, message.id, showModal]);
 
-        // ALWAYS remove the listener on cleanup (unmount or isComputer toggle)
-        return () => {
-            if (Platform.OS === 'web') {
-                document.removeEventListener(
-                    'mousemove',
-                    handleDocumentMouseMove
-                );
+    const handleScrollerLeave = useCallback(() => {
+        hoverHandlers.onPointerLeave();
+        setOptionsModalVisible(false);
+    }, [hoverHandlers]);
+
+    const handleMouseLeave = useCallback(
+        (event: ReactMouseEvent<View>) => {
+            const nextTarget = event.relatedTarget as Node | null;
+            const currentTarget = event.currentTarget as unknown as Node | null;
+            if (
+                currentTarget &&
+                nextTarget &&
+                currentTarget.contains(nextTarget)
+            ) {
+                return;
             }
-        };
-    }, [isComputer]);
+
+            const rect = currentTarget?.getBoundingClientRect() ?? null;
+            const { clientX, clientY } = event;
+            if (
+                rect &&
+                clientX >= rect.left &&
+                clientX <= rect.right &&
+                clientY >= rect.top &&
+                clientY <= rect.bottom
+            ) {
+                return;
+            }
+
+            if (__DEV__) {
+                // eslint-disable-next-line no-console
+                console.log(`[MessageItem:${message.id}] mouse-leave`, {
+                    clientX,
+                    clientY,
+                });
+            }
+            hoverHandlers.onPointerLeave();
+        },
+        [hoverHandlers, message.id]
+    );
+
+    const hoverBindings = useMemo(() => {
+        if (Platform.OS === 'web') {
+            return {
+                onMouseEnter: handleHoverIn,
+                onMouseLeave: handleMouseLeave,
+            } as const;
+        }
+        return {
+            onHoverIn: handleHoverIn,
+            onHoverOut: handleScrollerLeave,
+        } as const;
+    }, [handleHoverIn, handleMouseLeave, handleScrollerLeave]);
+
+    useEffect(() => {
+        if (!isComputer) {
+            return undefined;
+        }
+
+        registerBounds(() => {
+            if (Platform.OS !== 'web') {
+                return undefined;
+            }
+            const element = (pressableRef.current ??
+                containerRef.current) as unknown as Element | undefined;
+            if (!element) {
+                return undefined;
+            }
+            return element.getBoundingClientRect();
+        });
+
+        return undefined;
+    }, [isComputer, registerBounds]);
+
+    useEffect(() => {
+        if (!isHovering && !modalHovered) {
+            animateHover(0);
+            setOptionsModalVisible(false);
+        }
+    }, [animateHover, isHovering, modalHovered]);
 
     useEffect(() => {
         const scrollContainerComponent = scrollContainerRef.current;
@@ -198,21 +279,14 @@ export const MessageItem: React.FC<MessageItemProps> = ({
             typeof scrollContainer.addEventListener !== 'function'
         )
             return;
-        const handleScroll = () => {
-            setIsScrolling(true);
-            setOptionsModalVisible(false);
-            setTimeout(() => {
-                setIsScrolling(false);
-            }, 1000);
-        };
-        scrollContainer.addEventListener('scroll', handleScroll, {
+        scrollContainer.addEventListener('scroll', handleScrollerLeave, {
             passive: true,
         });
         // eslint-disable-next-line consistent-return
         return () => {
-            scrollContainer.removeEventListener('scroll', handleScroll);
+            scrollContainer.removeEventListener('scroll', handleScrollerLeave);
         };
-    }, [scrollContainerRef]);
+    }, [handleScrollerLeave, scrollContainerRef]);
 
     const handleEdit = () => {
         setOptionsModalVisible(false);
@@ -267,6 +341,18 @@ export const MessageItem: React.FC<MessageItemProps> = ({
 
     const OuterElement = Platform.OS === 'web' ? View : GestureDetector;
 
+    useEffect(() => {
+        entranceProgress.stopAnimation();
+        entranceProgress.setValue(0);
+        Animated.spring(entranceProgress, {
+            toValue: 1,
+            damping: 18,
+            stiffness: 210,
+            mass: 0.8,
+            useNativeDriver: true,
+        }).start();
+    }, [entranceProgress, message.id]);
+
     return (
         <OuterElement
             gesture={Gesture.Simultaneous(
@@ -275,18 +361,75 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                 sliderGesture
             )}
         >
-            <View collapsable={false} style={styles.pressableContainer}>
+            <Animated.View
+                collapsable={false}
+                style={[
+                    styles.pressableContainer,
+                    {
+                        opacity: entranceProgress,
+                        transform: [
+                            {
+                                translateY: entranceProgress.interpolate({
+                                    inputRange: [0, 1],
+                                    outputRange: [16, 0],
+                                }),
+                            },
+                        ],
+                    },
+                ]}
+            >
                 <Pressable
-                    onPressIn={() => setIsHovered(true)}
-                    onPressOut={() => setIsHovered(false)}
-                    onMouseEnter={handleMouseEnter}
-                    onMouseLeave={handleMouseLeave}
+                    ref={pressableRef}
+                    {...hoverBindings}
+                    onLayout={onLayout}
+                    style={
+                        contentHeight ? { minHeight: contentHeight } : undefined
+                    }
+                    className="message-item__pressable"
                 >
-                    <View
+                    <Animated.View
                         ref={containerRef}
                         style={[
                             styles.messageContainer,
-                            isHovered && styles.hovered,
+                            {
+                                borderWidth: hoverProgress.interpolate({
+                                    inputRange: [0, 1],
+                                    outputRange: [1, 1.5],
+                                }),
+                                borderColor: hoverProgress.interpolate({
+                                    inputRange: [0, 1],
+                                    outputRange: [
+                                        toRgba(
+                                            theme.colors.ActiveText,
+                                            Opacity.BorderSubtle
+                                        ),
+                                        toRgba(
+                                            theme.colors.Primary,
+                                            Opacity.BorderMedium
+                                        ),
+                                    ],
+                                }),
+                                backgroundColor: hoverProgress.interpolate({
+                                    inputRange: [0, 1],
+                                    outputRange: [
+                                        'transparent',
+                                        toRgba(
+                                            theme.colors.TertiaryBackground,
+                                            0.92
+                                        ),
+                                    ],
+                                }),
+                                transform: [
+                                    {
+                                        translateY: hoverProgress.interpolate({
+                                            inputRange: [0, 1],
+                                            outputRange: [0, -2],
+                                        }),
+                                    },
+                                ],
+                                marginHorizontal: -Spacing.XS,
+                                marginVertical: -Spacing.XS,
+                            },
                         ]}
                     >
                         <NexusImage
@@ -355,7 +498,10 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                                 {/* Attachments section */}
                                 {hasAttachments && (
                                     <View
-                                        style={styles.attachmentsWhileEditing}
+                                        style={[
+                                            styles.attachmentsWhileEditing,
+                                            styles.clippedSection,
+                                        ]}
                                     >
                                         <MessageContent
                                             message={currentMessage}
@@ -385,12 +531,13 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                                         anchorPosition={anchorPosition}
                                         onEdit={handleEdit}
                                         onMore={handleMore}
-                                        onMouseEnterModal={() =>
-                                            setModalHovered(true)
-                                        }
+                                        onMouseEnterModal={() => {
+                                            setModalHovered(true);
+                                            hoverHandlers.onPointerEnter();
+                                        }}
                                         onMouseLeaveModal={() => {
                                             setModalHovered(false);
-                                            setOptionsModalVisible(false);
+                                            hoverHandlers.onPointerLeave();
                                         }}
                                     />
                                 </View>
@@ -444,9 +591,9 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                                 onAttachmentPress={onAttachmentPress}
                             />
                         )}
-                    </View>
+                    </Animated.View>
                 </Pressable>
-            </View>
+            </Animated.View>
         </OuterElement>
     );
 };
@@ -456,37 +603,41 @@ function createStyles(theme: Theme) {
         messageContainer: {
             flexDirection: 'row',
             alignItems: 'flex-start',
-            padding: 15,
+            padding: Spacing.MD,
             width: '100%',
             position: 'relative',
             overflow: 'visible',
+            borderRadius: BorderRadius.Medium,
+            borderWidth: 1,
+            borderColor: toRgba(theme.colors.ActiveText, Opacity.BorderSubtle),
         },
         pressableContainer: {
             flex: 1,
-        },
-        hovered: {
-            backgroundColor: theme.colors.TertiaryBackground,
+            borderRadius: BorderRadius.Medium,
+            backgroundColor: toRgba(theme.colors.SecondaryBackground, 0.68),
+            marginVertical: Spacing.XS,
+            overflow: 'hidden',
+            paddingHorizontal: Spacing.XS,
+            paddingVertical: Spacing.XS,
         },
         avatar: {
             width: 40,
             height: 40,
-            borderRadius: 20,
-            marginRight: 10,
+            borderRadius: BorderRadius.Pill,
+            marginRight: Spacing.SM,
         },
         innerContainer: {
             flex: 1,
             flexShrink: 1,
         },
         userName: {
-            fontSize: 14,
-            fontWeight: 'bold',
+            fontSize: Typography.BodySmall.fontSize,
+            fontWeight: '700' as const,
             color: theme.colors.ActiveText,
-            fontFamily: 'Roboto_700Bold',
         },
         time: {
-            fontSize: 12,
-            color: theme.colors.InactiveText,
-            fontFamily: 'Roboto_400Regular',
+            fontSize: Typography.Eyebrow.fontSize,
+            color: toRgba(theme.colors.InactiveText, 0.7),
         },
         viewContainer: {
             // Container for normal viewing mode
@@ -495,10 +646,14 @@ function createStyles(theme: Theme) {
             // Container for edit mode components
         },
         linkPreviewsWhileEditing: {
-            marginTop: 10,
+            marginTop: Spacing.SM,
         },
         attachmentsWhileEditing: {
-            marginTop: 10,
+            marginTop: Spacing.SM,
+        },
+        clippedSection: {
+            overflow: 'hidden',
+            borderRadius: BorderRadius.Small,
         },
         optionsModalContainer: {
             position: 'absolute',

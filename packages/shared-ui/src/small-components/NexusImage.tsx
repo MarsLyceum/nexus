@@ -7,7 +7,7 @@ import {
     ImageContentPosition,
 } from 'expo-image';
 
-import { detectEnvironment, Environment } from '../utils';
+import { detectEnvironment, Environment, getProxyUrl } from '../utils';
 
 // Define the prop types for NexusImage.
 // The API mimics Expo Image: it accepts a `source` (string or {uri: string}),
@@ -37,10 +37,20 @@ const useContainerDimensions = (
 ) => {
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
     useLayoutEffect(() => {
-        if (ref.current) {
-            const rect = ref.current.getBoundingClientRect();
-            setDimensions({ width: rect.width, height: rect.height });
+        if (!ref.current || typeof ResizeObserver === 'undefined') {
+            return undefined;
         }
+        const node = ref.current;
+        const updateDimensions = () => {
+            const rect = node.getBoundingClientRect();
+            setDimensions({ width: rect.width, height: rect.height });
+        };
+        updateDimensions();
+        const observer = new ResizeObserver(updateDimensions);
+        observer.observe(node);
+        return () => {
+            observer.disconnect();
+        };
     }, [ref]);
     return dimensions;
 };
@@ -105,11 +115,10 @@ export const NexusImage = (props: NexusImageProps) => {
         useContainerDimensions(containerRef);
 
     const originalUri = typeof source === 'string' ? source : source.uri;
+    const proxyUri = getProxyUrl(originalUri);
     const fallbackUri = `https://images.weserv.nl/?url=${encodeURIComponent(originalUri)}`;
 
-    const isGif = /\.gif$/i.test(originalUri);
-
-    const [imageUri, setImageUri] = useState(originalUri);
+    const [imageUri, setImageUri] = useState(proxyUri);
     const [didFallback, setDidFallback] = useState(false);
 
     const handleError = () => {
@@ -123,63 +132,9 @@ export const NexusImage = (props: NexusImageProps) => {
     };
 
     useEffect(() => {
-        let stillMounted = true;
-
-        if (isGif) {
-            setDidFallback(false);
-            setImageUri(originalUri);
-            return;
-        }
-
-        setDidFallback(false); // reset if originalUri ever changes
-        setImageUri(originalUri); // start fresh
-
-        void (async () => {
-            try {
-                const res = await fetch(originalUri, {
-                    method: 'HEAD',
-                    mode: 'no-cors',
-                });
-                if (stillMounted && !res.ok && !didFallback) {
-                    console.warn(
-                        `[NexusImage] HEAD ${res.status} for ${originalUri}, falling back…`
-                    );
-                    setImageUri(fallbackUri);
-                    setDidFallback(true);
-                }
-            } catch (error) {
-                if (stillMounted && !didFallback) {
-                    console.warn(
-                        `[NexusImage] HEAD error for ${originalUri}:`,
-                        error
-                    );
-
-                    try {
-                        const get = await fetch(originalUri, {
-                            method: 'GET',
-                        });
-                        // if GET returns at least partial, we assume the image exists
-                        if (stillMounted && get.ok) return;
-                        console.warn(
-                            `[NexusImage] GET ${get.status} for ${originalUri}, falling back…`
-                        );
-                    } catch (error_) {
-                        console.warn(
-                            `[NexusImage] GET error for ${originalUri}:`,
-                            error_
-                        );
-                        setImageUri(fallbackUri);
-                        setDidFallback(true);
-                    }
-                }
-            }
-        })();
-
-        // eslint-disable-next-line consistent-return
-        return () => {
-            stillMounted = false;
-        };
-    }, [originalUri, fallbackUri]);
+        setDidFallback(false);
+        setImageUri(proxyUri);
+    }, [proxyUri]);
 
     // --- React Native: use Expo Image ---
     if (env === 'react-native-mobile') {

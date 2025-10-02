@@ -5,9 +5,11 @@
     "scripts": {
         "lerna:lint": "npx lerna run lint",
         "lerna:typecheck": "npx lerna run typecheck",
-        "lerna:build": "npx lerna run build"
+        "lerna:build": "npx lerna run build",
+        "metro:clean": "cargo run --package metro-clean"
     },
     "dependencies": {
+        "expo-updates": "^29.0.12",
         "expo-screen-orientation": "^8.1.6",
         "eslint-import-resolver-typescript": "^4.3.5",
         "@apollo/client": "^3.12.8",
@@ -21,7 +23,6 @@
         "@expo-google-fonts/roboto": "^0.2.3",
         "@expo/metro-config": "^0.20.14",
         "@expo/metro-runtime": "^5.0.4",
-        "@expo/vector-icons": "^14.0.4",
         "@gorhom/bottom-sheet": "^5.1.2",
         "@next/eslint-plugin-next": "^15.2.4",
         "@react-native-async-storage/async-storage": "^2.1.2",
@@ -37,7 +38,7 @@
         "@react-navigation/native-stack": "^7.3.10",
         "@react-navigation/stack": "^7.2.10",
         "@reduxjs/toolkit": "^2.5.1",
-        "@shopify/flash-list": "^1.8.0",
+        "@shopify/flash-list": "^1.8.3",
         "@shopify/react-native-skia": "^2.0.0",
         "@supabase/supabase-js": "^2.48.1",
         "@turf/turf": "^7.2.0",

@@ -1,6 +1,6 @@
 // TextChannelScreen.tsx
-import React from 'react';
-import { View, useWindowDimensions } from 'react-native';
+import React, { useMemo } from 'react';
+import { View, useWindowDimensions, StyleSheet } from 'react-native';
 
 import { useAppSelector, RootState, UserType } from '../redux';
 import { Header, MediaDetailsModal } from '../sections';
@@ -35,6 +35,7 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
         handleMessageItemAttachmentPress,
     } = useImageDetailsModal();
     const { theme } = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
 
     // Custom hook to fetch messages
     const {
@@ -61,16 +62,10 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
     };
 
     return (
-        <View
-            style={{
-                flex: 1,
-                flexBasis: 0,
-                backgroundColor: theme.colors.SecondaryBackground,
-            }}
-        >
+        <View style={styles.container}>
             <Header isLargeScreen={isLargeScreen} headerText={channel.name} />
 
-            <View style={{ flex: 1 }}>
+            <View style={styles.messageListContainer}>
                 <MessageList
                     chatMessages={chatMessages}
                     loadingMessages={loadingMessages}
@@ -96,3 +91,16 @@ export const TextChannelScreen: React.FC<TextChannelScreenProps> = ({
         </View>
     );
 };
+
+function createStyles(theme: ReturnType<typeof useTheme>['theme']) {
+    return StyleSheet.create({
+        container: {
+            flex: 1,
+            flexBasis: 0,
+            backgroundColor: theme.colors.SecondaryBackground,
+        },
+        messageListContainer: {
+            flex: 1,
+        },
+    });
+}

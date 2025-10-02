@@ -17,6 +17,8 @@ import { CREATE_GROUP_MUTATION } from '../queries';
 import { useAppSelector, RootState, UserType } from '../redux';
 import { useFileUpload } from '../hooks';
 import { useTheme, Theme } from '../theme';
+import { BorderRadius, Spacing, Typography } from '../constants/designSystem';
+import { toRgba } from '../utils';
 
 type RootStackParamList = {
     CreateGroup: undefined;
@@ -186,28 +188,30 @@ function createStyles(theme: Theme) {
     return StyleSheet.create({
         modalOverlay: {
             flex: 1,
-            backgroundColor: 'rgba(0,0,0,0.5)',
+            backgroundColor: toRgba('#000', 0.5),
             justifyContent: 'center',
             alignItems: 'center',
         },
         modalContainer: {
             width: '85%',
             backgroundColor: theme.colors.AppBackground,
-            borderRadius: 8,
-            padding: 20,
+            borderRadius: BorderRadius.ExtraSmall,
+            padding: Spacing.XL,
         },
         modalTitle: {
-            fontSize: 18,
-            fontWeight: '600',
-            marginBottom: 15,
+            ...Typography.SectionHeading,
+            fontFamily: theme.fonts.primary?.semibold,
+            marginBottom: Spacing.LG,
             color: theme.colors.ActiveText,
         },
         textInput: {
+            ...Typography.Body,
+            fontFamily: theme.fonts.primary?.regular,
             borderWidth: 1,
             borderColor: theme.colors.InactiveText,
-            borderRadius: 5,
-            padding: 10,
-            marginBottom: 15,
+            borderRadius: BorderRadius.ExtraSmall,
+            padding: Spacing.MD,
+            marginBottom: Spacing.LG,
             color: theme.colors.ActiveText,
             backgroundColor: theme.colors.TextInput,
         },
@@ -216,54 +220,59 @@ function createStyles(theme: Theme) {
             justifyContent: 'flex-end',
         },
         modalButton: {
-            marginLeft: 10,
-            paddingVertical: 8,
-            paddingHorizontal: 15,
-            borderRadius: 5,
+            marginLeft: Spacing.MD,
+            paddingVertical: Spacing.SM,
+            paddingHorizontal: Spacing.LG,
+            borderRadius: BorderRadius.ExtraSmall,
             backgroundColor: theme.colors.Primary,
         },
         modalButtonText: {
+            ...Typography.Button,
+            fontFamily: theme.fonts.primary?.semibold,
             color: theme.colors.ActiveText,
-            fontWeight: '600',
         },
         groupAvatarContainer: {
             alignItems: 'center',
-            marginBottom: 15,
+            marginBottom: Spacing.LG,
         },
         groupAvatar: {
             width: 80,
             height: 80,
-            borderRadius: 40,
+            borderRadius: BorderRadius.Pill,
         },
         placeholderAvatar: {
             width: 80,
             height: 80,
-            borderRadius: 40,
+            borderRadius: BorderRadius.Pill,
             backgroundColor: theme.colors.InactiveText,
             justifyContent: 'center',
             alignItems: 'center',
         },
         placeholderAvatarText: {
+            ...Typography.Body,
+            fontFamily: theme.fonts.primary?.regular,
             color: theme.colors.ActiveText,
         },
         uploadButton: {
-            marginTop: 10,
-            paddingVertical: 5,
-            paddingHorizontal: 10,
-            borderRadius: 5,
+            marginTop: Spacing.MD,
+            paddingVertical: Spacing.XS,
+            paddingHorizontal: Spacing.MD,
+            borderRadius: BorderRadius.ExtraSmall,
             backgroundColor: theme.colors.Primary,
         },
         uploadButtonText: {
+            ...Typography.BodySmall,
+            fontFamily: theme.fonts.primary?.semibold,
             color: theme.colors.ActiveText,
         },
         privacyContainer: {
-            marginBottom: 15,
+            marginBottom: Spacing.LG,
         },
         privacyLabel: {
-            fontSize: 16,
-            fontWeight: '600',
+            ...Typography.Body,
+            fontFamily: theme.fonts.primary?.semibold,
             color: theme.colors.ActiveText,
-            marginBottom: 5,
+            marginBottom: Spacing.XS,
         },
         privacyOptions: {
             flexDirection: 'row',
@@ -271,9 +280,9 @@ function createStyles(theme: Theme) {
         },
         privacyOption: {
             flex: 1,
-            paddingVertical: 8,
-            marginHorizontal: 5,
-            borderRadius: 5,
+            paddingVertical: Spacing.SM,
+            marginHorizontal: Spacing.XS,
+            borderRadius: BorderRadius.ExtraSmall,
             borderWidth: 1,
             borderColor: theme.colors.InactiveText,
             alignItems: 'center',
@@ -282,8 +291,9 @@ function createStyles(theme: Theme) {
             backgroundColor: theme.colors.Primary,
         },
         privacyOptionText: {
+            ...Typography.BodySmall,
+            fontFamily: theme.fonts.primary?.semibold,
             color: theme.colors.ActiveText,
-            fontWeight: '600',
         },
     });
 }

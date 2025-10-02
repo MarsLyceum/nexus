@@ -18,6 +18,7 @@ import { Header } from '../sections';
 import { useAppSelector, RootState, UserType } from '../redux';
 import { Event } from '../types';
 import { useTheme, Theme } from '../theme';
+import { BorderRadius, Spacing, Typography } from '../constants/designSystem';
 
 const initialEvents: Event[] = [
     {
@@ -117,6 +118,8 @@ export const GroupEventsScreen = () => {
             <TouchableOpacity
                 style={styles.fab}
                 onPress={() => setModalVisible(true)}
+                accessibilityRole="button"
+                accessibilityLabel="Create event"
             >
                 <Text style={styles.fabIcon}>+</Text>
             </TouchableOpacity>
@@ -201,56 +204,59 @@ function createStyles(theme: Theme) {
         },
         fab: {
             position: 'absolute',
-            bottom: 20,
-            right: 20,
+            bottom: Spacing.XXXL,
+            right: Spacing.XXXL,
             backgroundColor: theme.colors.Primary,
-            width: 60,
-            height: 60,
-            borderRadius: 30,
+            width: Spacing.XXXL + Spacing.XXL,
+            height: Spacing.XXXL + Spacing.XXL,
+            borderRadius: BorderRadius.Pill,
             alignItems: 'center',
             justifyContent: 'center',
             elevation: 5,
         },
         fabIcon: {
-            fontSize: 30,
+            ...Typography.H2,
+            fontFamily: theme.fonts.primary?.bold,
             color: theme.colors.ActiveText,
         },
         modalOverlay: {
             flex: 1,
-            backgroundColor: 'rgba(0,0,0,0.5)',
+            backgroundColor: theme.colors.Overlay,
             justifyContent: 'center',
             alignItems: 'center',
         },
         modalContainer: {
             width: '80%',
             backgroundColor: theme.colors.AppBackground,
-            padding: 20,
-            borderRadius: 10,
+            padding: Spacing.XXL,
+            borderRadius: BorderRadius.Medium,
             elevation: 10,
         },
         modalTitle: {
-            fontSize: 20,
-            fontWeight: 'bold',
-            marginBottom: 20,
+            ...Typography.H3,
+            fontFamily: theme.fonts.primary?.bold,
+            marginBottom: Spacing.XL,
             textAlign: 'center',
             color: theme.colors.ActiveText,
         },
         input: {
-            height: 40,
+            height: Spacing.XXL,
             backgroundColor: theme.colors.TextInput,
             borderColor: theme.colors.Primary,
             borderWidth: 1,
-            borderRadius: 5,
-            marginBottom: 15,
-            paddingHorizontal: 10,
+            borderRadius: BorderRadius.ExtraSmall,
+            marginBottom: Spacing.LG,
+            paddingHorizontal: Spacing.MD,
             color: theme.colors.ActiveText,
         },
         buttonContainer: {
             flexDirection: 'row',
             justifyContent: 'space-between',
+            marginTop: Spacing.LG,
         },
         eventList: {
-            padding: 15,
+            padding: Spacing.XL,
+            gap: Spacing.LG,
         },
     });
 }

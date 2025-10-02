@@ -5,9 +5,15 @@ import { NexusImage } from './NexusImage';
 import { MoreVertical, CheckMark, Cancel, Chat } from '../icons';
 import { useTheme, Theme } from '../theme';
 import { ActionButton } from './ActionButton';
-import { getOnlineStatusDotColor } from '../utils';
+import { getOnlineStatusDotColor, toRgba } from '../utils';
 import { useNexusRouter } from '../hooks';
 import { Friend, FriendItemData } from '../types';
+import {
+    BorderRadius,
+    Spacing,
+    Opacity,
+    Typography,
+} from '../constants/designSystem';
 
 type FriendItemProps = {
     item: FriendItemData;
@@ -184,27 +190,29 @@ function createStyles(theme: Theme) {
             flexDirection: 'row',
             alignItems: 'center',
             backgroundColor: theme.colors.SecondaryBackground,
-            marginVertical: 4,
-            borderRadius: 4,
-            padding: 12,
+            marginVertical: Spacing.XS,
+            borderRadius: BorderRadius.ExtraSmall,
+            padding: Spacing.MD,
+            borderWidth: 1,
+            borderColor: toRgba(theme.colors.ActiveText, Opacity.Border),
         },
         avatarAndDot: {
             position: 'relative',
-            marginRight: 8,
+            marginRight: Spacing.SM,
         },
         avatar: {
             width: 32,
             height: 32,
-            borderRadius: 16,
-            marginRight: 8,
+            borderRadius: BorderRadius.Pill,
+            marginRight: Spacing.SM,
         },
         statusDot: {
             position: 'absolute',
             bottom: 0,
-            right: 5,
-            width: 15,
-            height: 15,
-            borderRadius: 7,
+            right: Spacing.XS + 1,
+            width: Spacing.LG - 1,
+            height: Spacing.LG - 1,
+            borderRadius: BorderRadius.Pill,
             borderWidth: 2,
             borderColor: theme.colors.SecondaryBackground,
         },
@@ -213,31 +221,32 @@ function createStyles(theme: Theme) {
             justifyContent: 'center',
         },
         friendName: {
-            fontWeight: 'bold',
-            fontFamily: 'Roboto_700Bold',
+            ...Typography.BodySmall,
+            fontFamily: theme.fonts.primary?.bold,
             color: theme.colors.ActiveText,
-            marginBottom: 2,
+            marginBottom: Spacing.XS / 2,
         },
         friendStatus: {
+            ...Typography.Caption,
+            fontFamily: theme.fonts.secondary?.regular,
             color: theme.colors.InactiveText,
-            fontSize: 12,
         },
         friendAction: {
             display: 'flex',
             flexDirection: 'row',
-            marginLeft: 8,
+            marginLeft: Spacing.SM,
             position: 'relative',
         },
         messageButton: {
-            paddingRight: 8,
+            paddingRight: Spacing.SM,
         },
         pendingActions: {
             flexDirection: 'row',
             alignItems: 'center',
-            marginLeft: 8,
+            marginLeft: Spacing.SM,
         },
         acceptButton: {
-            marginRight: 8,
+            marginRight: Spacing.SM,
         },
     });
 }

@@ -1,5 +1,11 @@
 // Tooltip.tsx
-import React, { useState, useRef, useMemo } from 'react';
+import React, {
+    useRef,
+    useMemo,
+    useCallback,
+    useEffect,
+    useState,
+} from 'react';
 import {
     Text,
     View,
@@ -8,12 +14,21 @@ import {
     View as RNView,
     LayoutChangeEvent,
     Dimensions,
+    Platform,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import { Portal } from '../providers';
 import { useTheme, Theme } from '../theme';
 import { useIsComputer } from '../hooks';
+import { toRgba, getShadowStyle } from '../utils';
+import {
+    Spacing,
+    BorderRadius,
+    Typography,
+    Opacity,
+} from '../constants/designSystem';
+import { useStableHover } from '../hooks/useStableHover';
 
 export const Tooltip = ({
     text,
@@ -22,8 +37,6 @@ export const Tooltip = ({
     text: string;
     children?: React.ReactNode;
 }) => {
-    // Otherwise, on computer devices, use the tooltip functionality.
-    const [open, setOpen] = useState(false);
     const [triggerPos, setTriggerPos] = useState<
         | {
               x: number;
@@ -34,48 +47,68 @@ export const Tooltip = ({
         | undefined
     >();
     const { theme } = useTheme();
-    const styles = useMemo(() => createStyles(theme), [theme]);
+    const triangleHeight = Spacing.SM - Spacing.XS;
+    const styles = useMemo(
+        () => createStyles(theme, triangleHeight),
+        [theme, triangleHeight]
+    );
     const isComputer = useIsComputer();
 
-    // Dimensions for the tooltip bubble.
     const [bubbleWidth, setBubbleWidth] = useState(0);
     const [bubbleHeight, setBubbleHeight] = useState(0);
-    const triangleHeight = 6; // Height of the arrow indicator.
-    const verticalOffset = 4; // Extra vertical offset.
-    const horizontalMargin = 8;
-    const verticalMargin = 8;
+    const verticalOffset = Spacing.XS;
+    const horizontalMargin = Spacing.SM;
+    const verticalMargin = Spacing.SM;
 
     const triggerWrapperRef = useRef<RNView>(null);
 
-    // Show tooltip: measure trigger position and set tooltip open.
-    const showTooltip = () => {
+    const measureTrigger = useCallback(() => {
         if (triggerWrapperRef.current) {
             triggerWrapperRef.current.measureInWindow((x, y, width, height) => {
                 setTriggerPos({ x, y, width, height });
             });
         }
-        setOpen(true);
-    };
+    }, []);
 
-    // Hide tooltip.
-    const hideTooltip = () => {
-        setOpen(false);
-    };
+    const {
+        handlers: hoverHandlers,
+        isHovering,
+        registerBounds,
+    } = useStableHover({
+        closeDelayMs: 240,
+        onEnter: measureTrigger,
+        onLeave: () => {
+            setTriggerPos(undefined);
+        },
+    });
 
-    // Use onMouseEnter and onMouseLeave for computers.
+    useEffect(() => {
+        if (!isComputer) {
+            return undefined;
+        }
+
+        registerBounds(() => {
+            if (Platform.OS !== 'web' || !triggerWrapperRef.current) {
+                return undefined;
+            }
+            const element = triggerWrapperRef.current as unknown as Element;
+            return element.getBoundingClientRect();
+        });
+
+        return undefined;
+    }, [isComputer, registerBounds]);
+
     const triggerProps = {
-        onMouseEnter: showTooltip,
-        onMouseLeave: hideTooltip,
+        onMouseEnter: hoverHandlers.onPointerEnter,
+        onMouseLeave: hoverHandlers.onPointerLeave,
     };
 
-    // Capture tooltip bubble dimensions.
     const onBubbleLayout = (e: LayoutChangeEvent) => {
         const { width, height } = e.nativeEvent.layout;
         setBubbleWidth(width);
         setBubbleHeight(height);
     };
 
-    // Get screen dimensions.
     const { width: screenWidth, height: screenHeight } =
         Dimensions.get('window');
 
@@ -86,9 +119,7 @@ export const Tooltip = ({
     let arrowLeft = 0;
 
     if (triggerPos) {
-        // Compute the center of the trigger.
         triggerCenter = triggerPos.x + triggerPos.width / 2;
-        // Center the tooltip bubble on the trigger.
         computedLeft = triggerCenter - bubbleWidth / 2;
         if (computedLeft < horizontalMargin) {
             computedLeft = horizontalMargin;
@@ -98,7 +129,7 @@ export const Tooltip = ({
         ) {
             computedLeft = screenWidth - bubbleWidth - horizontalMargin;
         }
-        // Position the tooltip above the trigger.
+
         computedTop =
             triggerPos.y - bubbleHeight - triangleHeight - verticalOffset;
         if (computedTop < verticalMargin) {
@@ -112,51 +143,59 @@ export const Tooltip = ({
                 computedTop = screenHeight - bubbleHeight - verticalMargin;
             }
         }
-        // Calculate the arrow's horizontal offset within the bubble.
-        arrowLeft = triggerCenter - computedLeft - 6;
+
+        arrowLeft = triggerCenter - computedLeft - triangleHeight;
         if (arrowLeft < 0) arrowLeft = 0;
-        if (arrowLeft > bubbleWidth - 12) arrowLeft = bubbleWidth - 12;
+        if (arrowLeft > bubbleWidth - triangleHeight * 2) {
+            arrowLeft = bubbleWidth - triangleHeight * 2;
+        }
     }
 
-    // Tooltip content: bubble with arrow. Set pointerEvents="none" so it doesn't intercept touches.
     const tooltipContent = (
-        <View style={styles.bubbleContainer} pointerEvents="none">
-            {/* Render arrow above bubble if tooltip is below the trigger */}
+        <View
+            style={{ ...styles.bubbleContainer, pointerEvents: 'none' }}
+            pointerEvents={Platform.OS === 'web' ? undefined : 'none'}
+        >
             {!isTooltipAbove && (
                 <View
-                    style={[
-                        styles.arrow,
-                        {
-                            left: arrowLeft,
-                            top: -triangleHeight,
-                            transform: [{ rotate: '180deg' }],
-                        },
-                    ]}
-                    pointerEvents="none"
+                    style={{
+                        ...StyleSheet.flatten([
+                            styles.arrow,
+                            {
+                                left: arrowLeft,
+                                top: -triangleHeight,
+                                transform: [{ rotate: '180deg' }],
+                            },
+                        ]),
+                        pointerEvents: 'none',
+                    }}
+                    pointerEvents={Platform.OS === 'web' ? undefined : 'none'}
                 >
                     <RoundedTriangle color={theme.colors.AppBackground} />
                 </View>
             )}
             <View
-                style={styles.tooltipBubble}
+                style={{ ...styles.tooltipBubble, pointerEvents: 'none' }}
                 onLayout={onBubbleLayout}
-                pointerEvents="none"
+                pointerEvents={Platform.OS === 'web' ? undefined : 'none'}
             >
                 <Text style={styles.tooltipText} numberOfLines={1}>
                     {text}
                 </Text>
             </View>
-            {/* Render arrow below bubble if tooltip is above the trigger */}
             {isTooltipAbove && (
                 <View
-                    style={[
-                        styles.arrow,
-                        {
-                            left: arrowLeft,
-                            top: bubbleHeight - 1,
-                        },
-                    ]}
-                    pointerEvents="none"
+                    style={{
+                        ...StyleSheet.flatten([
+                            styles.arrow,
+                            {
+                                left: arrowLeft,
+                                top: bubbleHeight - 1,
+                            },
+                        ]),
+                        pointerEvents: 'none',
+                    }}
+                    pointerEvents={Platform.OS === 'web' ? undefined : 'none'}
                 >
                     <RoundedTriangle color={theme.colors.AppBackground} />
                 </View>
@@ -164,28 +203,39 @@ export const Tooltip = ({
         </View>
     );
 
-    // If not on a computer, return the children without tooltip functionality.
     if (!isComputer) {
         return <>{children}</>;
     }
 
     return (
         <View style={styles.tooltipContainer}>
-            {/* Wrap trigger element to capture measurements */}
             <View ref={triggerWrapperRef}>
                 <Pressable {...triggerProps}>
                     {children ?? <Text>{text}</Text>}
                 </Pressable>
             </View>
-            {open && triggerPos && (
+            {isHovering && triggerPos && (
                 <Portal>
-                    <View style={styles.fullScreenWrapper} pointerEvents="none">
+                    <View
+                        style={{
+                            ...styles.fullScreenWrapper,
+                            pointerEvents: 'none',
+                        }}
+                        pointerEvents={
+                            Platform.OS === 'web' ? undefined : 'none'
+                        }
+                    >
                         <View
-                            style={[
-                                styles.portalContainer,
-                                { top: computedTop, left: computedLeft },
-                            ]}
-                            pointerEvents="none"
+                            style={{
+                                ...StyleSheet.flatten([
+                                    styles.portalContainer,
+                                    { top: computedTop, left: computedLeft },
+                                ]),
+                                pointerEvents: 'none',
+                            }}
+                            pointerEvents={
+                                Platform.OS === 'web' ? undefined : 'none'
+                            }
                         >
                             {tooltipContent}
                         </View>
@@ -208,7 +258,7 @@ export const RoundedTriangle = ({
     </Svg>
 );
 
-function createStyles(theme: Theme) {
+function createStyles(theme: Theme, triangleHeight: number) {
     return StyleSheet.create({
         tooltipContainer: {
             position: 'relative',
@@ -228,24 +278,24 @@ function createStyles(theme: Theme) {
             position: 'relative',
         },
         tooltipBubble: {
-            paddingHorizontal: 8,
-            paddingVertical: 4,
-            borderRadius: 4,
+            paddingHorizontal: Spacing.SM,
+            paddingVertical: Spacing.XS,
+            borderRadius: BorderRadius.ExtraSmall,
             backgroundColor: theme.colors.AppBackground,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.3,
-            shadowRadius: 2,
-            elevation: 2,
+            borderWidth: 1,
+            borderColor: toRgba(theme.colors.ActiveText, Opacity.BorderSubtle),
+            ...getShadowStyle('light'),
         },
         tooltipText: {
             color: theme.colors.ActiveText,
-            fontSize: 14,
+            ...Typography.Caption,
+            fontFamily: theme.fonts.secondary?.regular,
+            textTransform: 'none',
         },
         arrow: {
             position: 'absolute',
-            width: 12,
-            height: 6,
+            width: Spacing.SM * 1.5,
+            height: triangleHeight,
         },
     });
 }

@@ -2,7 +2,6 @@ import React, { useState, useMemo } from 'react';
 import {
     SafeAreaView,
     View,
-    ScrollView,
     StyleSheet,
     KeyboardAvoidingView,
     Platform,
@@ -19,6 +18,8 @@ import { Attachment } from '../types';
 import { CommentThread, CommentNode } from '../sections';
 import { useAppSelector, RootState, UserType } from '../redux';
 import { CreateEventCommentModal } from '../small-components';
+import { BorderRadius, Spacing, Typography } from '../constants/designSystem';
+import { NexusScrollView } from '../styles';
 
 type EventDetails = {
     id: string;
@@ -60,7 +61,7 @@ function createStyles(theme: Theme) {
         safeContainer: {
             flex: 1,
             backgroundColor: theme.colors.SecondaryBackground,
-            paddingTop: 15,
+            paddingTop: Spacing.LG,
             ...(isWeb && { height: '100vh', display: 'flex' }),
         },
         container: {
@@ -80,19 +81,19 @@ function createStyles(theme: Theme) {
               }
             : { flex: 1 },
         scrollView: {
-            paddingHorizontal: 15,
-            paddingBottom: 20,
+            paddingHorizontal: Spacing.XL,
+            paddingBottom: Spacing.XL,
         },
         descriptionContainer: {
             backgroundColor: theme.colors.PrimaryBackground,
-            borderRadius: 8,
-            padding: 15,
-            marginVertical: 10,
+            borderRadius: BorderRadius.ExtraSmall,
+            padding: Spacing.XL,
+            marginVertical: Spacing.LG,
         },
         descriptionText: {
             color: theme.colors.ActiveText,
-            fontSize: 14,
-            lineHeight: 20,
+            ...Typography.Body,
+            fontFamily: theme.fonts.primary?.regular,
         },
         createContentButtonContainer: {
             position: 'absolute',
@@ -156,9 +157,19 @@ export const EventDetailsScreen: React.FC<EventDetailsScreenProps> = ({
         <SafeAreaView style={styles.safeContainer}>
             <ContainerComponent {...containerProps}>
                 <View style={styles.mainContainer}>
-                    <ScrollView
-                        style={styles.scrollSection}
-                        contentContainerStyle={styles.scrollView}
+                    <NexusScrollView
+                        style={
+                            styles.scrollSection as unknown as Record<
+                                string,
+                                unknown
+                            >
+                        }
+                        contentContainerStyle={
+                            styles.scrollView as unknown as Record<
+                                string,
+                                unknown
+                            >
+                        }
                         keyboardShouldPersistTaps="handled"
                     >
                         <EventCard
@@ -186,7 +197,7 @@ export const EventDetailsScreen: React.FC<EventDetailsScreenProps> = ({
                                 onContinueConversation={() => {}}
                             />
                         ))}
-                    </ScrollView>
+                    </NexusScrollView>
                     <View style={styles.createContentButtonContainer}>
                         <CreateContentButton
                             buttonText="Write a comment..."

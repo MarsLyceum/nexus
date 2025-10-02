@@ -22,36 +22,39 @@ import {
     ActionButton,
     NexusImage,
 } from '../small-components';
-import { stripHtml, extractUrls } from '../utils';
+import { stripHtml, extractUrls, toRgba } from '../utils';
 import { Share as ShareIcon } from '../icons';
+import { BorderRadius, Spacing, Opacity } from '../constants/designSystem';
 
 function createStyles(theme: Theme) {
     return StyleSheet.create({
         postContainer: {
-            backgroundColor: theme.colors.PrimaryBackground,
-            borderRadius: 8,
-            padding: 15,
-            marginVertical: 10,
+            backgroundColor: theme.colors.SecondaryBackground,
+            borderRadius: BorderRadius.Medium,
+            padding: Spacing.LG,
+            marginVertical: Spacing.SM,
+            borderWidth: 1,
+            borderColor: toRgba(theme.colors.ActiveText, Opacity.Border),
         },
         postRow: {
             flexDirection: 'row',
             alignItems: 'center',
-            marginBottom: 10,
+            marginBottom: Spacing.SM,
         },
         backArrow: {
-            marginRight: 10,
+            marginRight: Spacing.SM,
         },
         userPic: {
             width: 36,
             height: 36,
-            borderRadius: 18,
-            marginRight: 10,
+            borderRadius: BorderRadius.Pill,
+            marginRight: Spacing.SM,
         },
         groupPic: {
             width: 36,
             height: 36,
-            borderRadius: 18,
-            marginRight: 10,
+            borderRadius: BorderRadius.Pill,
+            marginRight: Spacing.SM,
         },
         headerTextContainer: {
             flexDirection: 'column',
@@ -69,15 +72,15 @@ function createStyles(theme: Theme) {
             color: theme.colors.ActiveText,
             fontSize: 16,
             fontWeight: 'bold',
-            marginBottom: 10,
+            marginBottom: Spacing.SM,
         },
         flairContainer: {
             alignSelf: 'flex-start',
-            paddingHorizontal: 10,
-            paddingVertical: 10,
-            borderRadius: 12,
+            paddingHorizontal: Spacing.SM,
+            paddingVertical: Spacing.SM,
+            borderRadius: BorderRadius.Small,
             backgroundColor: theme.colors.Primary,
-            marginBottom: 10,
+            marginBottom: Spacing.SM,
         },
         flairText: {
             color: theme.colors.ActiveText,
@@ -86,32 +89,30 @@ function createStyles(theme: Theme) {
         contentText: {
             color: theme.colors.ActiveText,
             fontSize: 14,
-            marginBottom: 10,
+            marginBottom: Spacing.SM,
         },
         actionsContainer: {
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'flex-start',
-            marginTop: 10,
+            marginTop: Spacing.SM,
         },
-        // Container for grouping the share button and its count.
         buttonGroup: {
             flexDirection: 'row',
             alignItems: 'center',
-            marginLeft: 10,
+            marginLeft: Spacing.SM,
         },
-        // Share button style matching the vote actions.
         shareButton: {
             width: 45,
             height: 45,
-            borderRadius: 23,
+            borderRadius: BorderRadius.Pill,
             justifyContent: 'center',
             alignItems: 'center',
         },
         shareCountText: {
             color: theme.colors.ActiveText,
             fontSize: 12,
-            marginLeft: 4,
+            marginLeft: Spacing.XS,
         },
     });
 }

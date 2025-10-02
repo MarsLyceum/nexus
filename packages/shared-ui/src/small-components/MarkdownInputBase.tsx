@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 
 import { useTheme, Theme } from '../theme';
+import { toRgba } from '../utils';
 
 import { MarkdownOverlay } from './MarkdownOverlay';
 import { EmojiPicker, EmojiPickerHandle } from './EmojiPicker';
@@ -201,7 +202,8 @@ function createStyles(theme: Theme) {
         inputWrapper: {
             position: 'relative',
             borderWidth: 1,
-            borderColor: theme.colors.InactiveText,
+            borderColor: toRgba(theme.colors.ActiveText, 0.08),
+            borderRadius: 16,
         },
         input: {
             flex: 1,

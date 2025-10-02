@@ -10,8 +10,14 @@ import {
 import { useTheme, Theme } from '../theme';
 import { AttachmentPreviews } from '../sections/AttachmentPreviews';
 import { Attachment } from '../types';
-import { extractUrls } from '../utils';
+import { extractUrls, toRgba } from '../utils';
 import { Cancel, ImageIcon, PaperPlane } from '../icons';
+import {
+    BorderRadius,
+    Spacing,
+    Opacity,
+    Typography,
+} from '../constants/designSystem';
 
 import { MarkdownTextInput } from './MarkdownTextInput';
 import { NexusImage } from './NexusImage';
@@ -57,8 +63,9 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     const gifButtonRef = useRef<View>(null);
 
     // Extract inline image URLs from the message text.
+    const imageUrlRegex = /\.(jpeg|jpg|gif|png)$/i;
     const inlineImageUrls = extractUrls(messageText).filter((url) =>
-        url.match(/\.(jpeg|jpg|gif|png)$/i)
+        imageUrlRegex.exec(url)
     );
 
     const handleSubmitEditing = () => {
@@ -175,58 +182,60 @@ function createStyles(theme: Theme) {
     return StyleSheet.create({
         inputBorderLine: {
             height: 1,
-            backgroundColor: '#4A3A5A',
+            backgroundColor: toRgba(
+                theme.colors.ActiveText,
+                Opacity.BorderMedium
+            ),
             width: '100%',
         },
         inlineAttachmentContainer: {
-            paddingVertical: 10,
-            paddingHorizontal: 10,
+            paddingVertical: Spacing.SM,
+            paddingHorizontal: Spacing.SM,
             flexDirection: 'row',
             alignItems: 'center',
         },
         attachmentPreview: {
             position: 'relative',
-            marginRight: 10,
+            marginRight: Spacing.SM,
         },
         attachmentImage: {
             width: 80,
             height: 80,
-            borderRadius: 10,
+            borderRadius: BorderRadius.SM,
         },
         removeAttachmentButton: {
             position: 'absolute',
-            top: 4,
-            right: 4,
+            top: Spacing.XS,
+            right: Spacing.XS,
             backgroundColor: theme.colors.AppBackground,
-            width: 24,
-            height: 24,
-            borderRadius: 12,
+            width: Spacing.XXL,
+            height: Spacing.XXL,
+            borderRadius: BorderRadius.Pill,
             justifyContent: 'center',
             alignItems: 'center',
         },
         inputContainerNoBorder: {
             flexDirection: 'row',
             alignItems: 'center',
-            padding: 10,
+            padding: Spacing.SM,
             backgroundColor: theme.colors.SecondaryBackground,
         },
         imageButton: {
-            marginRight: 10,
-            padding: 8,
+            marginRight: Spacing.SM,
+            padding: Spacing.SM,
         },
         gifButton: {
-            marginHorizontal: 10,
-            padding: 8,
+            marginHorizontal: Spacing.SM,
+            padding: Spacing.SM,
         },
         gifButtonText: {
+            ...Typography.Body,
+            fontFamily: theme.fonts.primary?.semibold,
             color: theme.colors.ActiveText,
-            fontSize: 16,
-            fontWeight: 'bold',
-            fontFamily: 'Roboto_700Bold',
         },
         sendButton: {
-            marginLeft: 10,
-            padding: 8,
+            marginLeft: Spacing.SM,
+            padding: Spacing.SM,
         },
     });
 }

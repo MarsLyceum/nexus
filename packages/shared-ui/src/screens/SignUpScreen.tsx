@@ -12,7 +12,7 @@ import {
 import React, { useCallback, useMemo } from 'react';
 import { Formik } from 'formik';
 import { isEmail } from 'validator';
-import { FontAwesome } from '@expo/vector-icons';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { useApolloClient } from '@apollo/client';
 
 import {
@@ -29,6 +29,7 @@ import { loginUser, useAppDispatch } from '../redux';
 import { validatePassword, setItemSecure } from '../utils';
 import { PrimaryGradientButton } from '../buttons';
 import { useTheme, Theme } from '../theme';
+import { BorderRadius, Spacing, Typography } from '../constants/designSystem';
 
 const isWeb = Platform.OS === 'web';
 
@@ -53,58 +54,60 @@ const initialFormValues: FormValues = {
 function createStyles(theme: Theme) {
     return StyleSheet.create({
         topButton: {
-            marginTop: 38,
+            marginTop: Spacing.XXXL + Spacing.SM,
         },
         outerContainer: {
             flex: 1,
             backgroundColor: theme.colors.AppBackground,
         },
         container: {
-            paddingHorizontal: 20,
+            paddingHorizontal: Spacing.XL,
             backgroundColor: theme.colors.PrimaryBackground,
             alignItems: 'center',
-            paddingBottom: 40, // extra bottom padding to ensure scrollability
+            paddingBottom: Spacing.XXXL + Spacing.SM,
         },
         image: {
             width: 100,
             height: 100,
-            marginBottom: 20,
+            marginBottom: Spacing.XL,
         },
         title: {
-            fontSize: 32,
-            fontWeight: 'bold',
+            ...Typography.H1,
+            fontFamily: theme.fonts.primary?.bold,
             color: theme.colors.MainText,
-            marginTop: 20,
+            marginTop: Spacing.XL,
             textAlign: 'center',
         },
         subtitle: {
-            fontSize: 16,
+            ...Typography.Body,
+            fontFamily: theme.fonts.primary?.regular,
             color: theme.colors.InactiveText,
-            marginBottom: 20,
+            marginBottom: Spacing.XL,
             textAlign: 'center',
         },
         inputContainer: {
             width: '100%',
-            marginBottom: 15,
+            marginBottom: Spacing.LG,
             height: 50,
             alignItems: 'center',
         },
         input: {
             height: 45,
             flex: 1,
-            fontSize: 16,
-            marginRight: 5,
+            ...Typography.Body,
+            fontFamily: theme.fonts.primary?.regular,
             backgroundColor: theme.colors.TextInput,
             color: theme.colors.ActiveText,
-            paddingHorizontal: 10,
+            paddingHorizontal: Spacing.MD,
         },
         orText: {
-            fontSize: 16,
+            ...Typography.Body,
+            fontFamily: theme.fonts.primary?.regular,
             color: theme.colors.InactiveText,
-            marginVertical: 15,
+            marginVertical: Spacing.LG,
             textAlign: 'center',
-            marginLeft: 20,
-            marginRight: 20,
+            marginLeft: Spacing.XL,
+            marginRight: Spacing.XL,
         },
         socialContainer: {
             flexDirection: 'row',
@@ -117,9 +120,9 @@ function createStyles(theme: Theme) {
             height: 50,
             justifyContent: 'center',
             alignItems: 'center',
-            borderRadius: 25,
+            borderRadius: BorderRadius.Pill,
             backgroundColor: theme.colors.ActiveText,
-            marginHorizontal: 10,
+            marginHorizontal: Spacing.MD,
         },
         button: {
             width: '100%',
@@ -127,24 +130,25 @@ function createStyles(theme: Theme) {
             backgroundColor: theme.colors.Primary,
             justifyContent: 'center',
             alignItems: 'center',
-            borderRadius: 25,
-            marginBottom: 15,
+            borderRadius: BorderRadius.Pill,
+            marginBottom: Spacing.LG,
         },
         buttonText: {
+            ...Typography.Button,
+            fontFamily: theme.fonts.primary?.semibold,
             color: theme.colors.ActiveText,
-            fontSize: 16,
-            fontWeight: 'bold',
         },
         loginText: {
-            fontSize: 16,
+            ...Typography.Body,
+            fontFamily: theme.fonts.primary?.regular,
             color: theme.colors.InactiveText,
-            marginTop: 30,
-            marginBottom: 34,
+            marginTop: Spacing.XXXL,
+            marginBottom: Spacing.XXXL + Spacing.SM,
             textAlign: 'center',
         },
         loginLink: {
+            fontFamily: theme.fonts.primary?.bold,
             color: theme.colors.Link,
-            fontWeight: 'bold',
         },
         orContainer: {
             flexDirection: 'row',
@@ -153,7 +157,7 @@ function createStyles(theme: Theme) {
             justifyContent: 'center',
         },
         inputIcon: {
-            marginRight: 10,
+            marginRight: Spacing.MD,
         },
         inputWrapper: {
             flexDirection: 'row',
@@ -161,12 +165,11 @@ function createStyles(theme: Theme) {
             width: 285,
             borderColor: theme.colors.Secondary,
             borderWidth: 1,
-            borderRadius: 25,
-            paddingHorizontal: 10,
+            borderRadius: BorderRadius.Pill,
+            paddingHorizontal: Spacing.MD,
             backgroundColor: theme.colors.TextInput,
             height: 50,
             flex: 1,
-            fontSize: 16,
         },
         scrollSection: isWeb
             ? {

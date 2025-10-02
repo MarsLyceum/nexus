@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { View, StyleSheet } from 'react-native';
 
 import { useTheme, Theme } from '../theme';
+import { toRgba } from '../utils';
 
 export type LinkPreviewSkeletonProps = {
     containerWidth?: number;
@@ -43,29 +44,29 @@ function createStyles(theme: Theme) {
         skeletonImage: {
             width: '100%',
             height: 150,
-            borderRadius: 4,
-            backgroundColor: 'rgba(255, 255, 255, 0.2)',
+            borderRadius: 8,
+            backgroundColor: toRgba(theme.colors.InactiveText, 0.2),
             marginBottom: 5,
         },
         skeletonTitle: {
             width: '70%',
             height: 16,
-            borderRadius: 4,
-            backgroundColor: 'rgba(255, 255, 255, 0.2)',
+            borderRadius: 8,
+            backgroundColor: toRgba(theme.colors.InactiveText, 0.2),
             marginBottom: 3,
         },
         skeletonDescription: {
             width: '100%',
             height: 14,
-            borderRadius: 4,
-            backgroundColor: 'rgba(255, 255, 255, 0.2)',
+            borderRadius: 8,
+            backgroundColor: toRgba(theme.colors.InactiveText, 0.2),
             marginBottom: 2,
         },
         skeletonSite: {
             width: '50%',
             height: 12,
-            borderRadius: 4,
-            backgroundColor: 'rgba(255, 255, 255, 0.2)',
+            borderRadius: 8,
+            backgroundColor: toRgba(theme.colors.InactiveText, 0.2),
             marginTop: 5,
         },
     });

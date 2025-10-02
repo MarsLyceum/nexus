@@ -5,6 +5,7 @@ export type Message = {
     createdAt: string;
     edited: boolean;
     attachmentUrls?: string[];
+    isDraft?: boolean;
 };
 
 // Conversation type coming from the GraphQL query.

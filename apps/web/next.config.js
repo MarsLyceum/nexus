@@ -10,7 +10,6 @@ const ReportParseErrorPlugin = require('./plugins/ReportParseErrorPlugin');
 const TRANSPILED_PACKAGES = [
     // Expo & related modules
     '@expo-google-fonts',
-    '@expo/vector-icons',
     // '@react-native/assets-registry',
     'expo',
     // 'expo-asset',
@@ -399,6 +398,11 @@ const nextConfig = {
                 __dirname,
                 'stubs/RegistryStub.js'
             ),
+            'expo-video': path.resolve(__dirname, 'stubs/expo-video.js'),
+            '@shopify/react-native-skia': path.resolve(
+                __dirname,
+                'stubs/react-native-skia.js'
+            ),
         };
 
         config.resolve.modules = [
@@ -425,8 +429,9 @@ const nextConfig = {
                 'stubs/expo-modules-core_browser.web.js'
             );
 
-            config.resolve.alias['react-native-reanimated'] = require.resolve(
-                './stubs/react-native-reanimated.js'
+            config.resolve.alias['react-native-reanimated'] = path.resolve(
+                __dirname,
+                'stubs/react-native-reanimated/index.js'
             );
 
             config.resolve.alias[

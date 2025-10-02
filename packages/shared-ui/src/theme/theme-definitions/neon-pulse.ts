@@ -1,5 +1,6 @@
 // src/theme/neon-pulse.ts
 import { COLORS as DefaultColors } from '../../constants/colors';
+import { defaultFontConfig } from '../../constants/fonts';
 import type { Theme } from '../themes';
 
 export const NeonPulse: Theme[] = [
@@ -19,6 +20,7 @@ export const NeonPulse: Theme[] = [
             MainText: '#E0E0E0',
             InactiveText: '#989898',
         },
+        fonts: defaultFontConfig,
     },
     {
         name: 'Neon Pink',
@@ -36,6 +38,7 @@ export const NeonPulse: Theme[] = [
             MainText: '#E0E0E0',
             InactiveText: '#989898',
         },
+        fonts: defaultFontConfig,
     },
     {
         name: 'Lime Shock',
@@ -53,6 +56,7 @@ export const NeonPulse: Theme[] = [
             MainText: '#E0E0E0',
             InactiveText: '#989898',
         },
+        fonts: defaultFontConfig,
     },
     {
         name: 'Vibrant Violet',
@@ -70,6 +74,7 @@ export const NeonPulse: Theme[] = [
             MainText: '#E0E0E0',
             InactiveText: '#989898',
         },
+        fonts: defaultFontConfig,
     },
     {
         name: 'Laser Green',
@@ -87,6 +92,7 @@ export const NeonPulse: Theme[] = [
             MainText: '#E0E0E0',
             InactiveText: '#989898',
         },
+        fonts: defaultFontConfig,
     },
     {
         name: 'Hot Coral',
@@ -104,6 +110,7 @@ export const NeonPulse: Theme[] = [
             MainText: '#E0E0E0',
             InactiveText: '#989898',
         },
+        fonts: defaultFontConfig,
     },
     {
         name: 'Cyber Yellow',
@@ -121,6 +128,7 @@ export const NeonPulse: Theme[] = [
             MainText: '#E0E0E0',
             InactiveText: '#989898',
         },
+        fonts: defaultFontConfig,
     },
     {
         name: 'Fluorescent Red',
@@ -138,6 +146,7 @@ export const NeonPulse: Theme[] = [
             MainText: '#E0E0E0',
             InactiveText: '#989898',
         },
+        fonts: defaultFontConfig,
     },
     {
         name: 'Ultra Aqua',
@@ -155,6 +164,7 @@ export const NeonPulse: Theme[] = [
             MainText: '#E0E0E0',
             InactiveText: '#989898',
         },
+        fonts: defaultFontConfig,
     },
     {
         name: 'Radical Magenta',
@@ -172,5 +182,6 @@ export const NeonPulse: Theme[] = [
             MainText: '#E0E0E0',
             InactiveText: '#989898',
         },
+        fonts: defaultFontConfig,
     },
 ];

@@ -3,6 +3,8 @@ import React, { useMemo } from 'react';
 import { View, StyleSheet } from 'react-native';
 
 import { useTheme, Theme } from '../theme';
+import { toRgba } from '../utils';
+import { BorderRadius, Spacing, Typography } from '../constants/designSystem';
 
 export type MessageItemSkeletonProps = {
     width: number;
@@ -42,15 +44,15 @@ function createStyles(theme: Theme) {
         container: {
             flexDirection: 'row',
             alignItems: 'flex-start',
-            padding: 15,
+            padding: Spacing.LG,
             width: '100%',
         },
         avatarSkeleton: {
             width: 40,
             height: 40,
-            borderRadius: 20,
-            backgroundColor: theme.colors.InactiveText,
-            marginRight: 10,
+            borderRadius: BorderRadius.XL,
+            backgroundColor: toRgba(theme.colors.InactiveText, 0.3),
+            marginRight: Spacing.SM,
         },
         contentSkeleton: {
             flex: 1,
@@ -58,32 +60,32 @@ function createStyles(theme: Theme) {
         headerSkeleton: {
             flexDirection: 'row',
             alignItems: 'center',
-            marginBottom: 8,
+            marginBottom: Spacing.SM,
         },
         usernameSkeleton: {
-            height: 14,
-            borderRadius: 4,
-            backgroundColor: theme.colors.InactiveText,
-            marginRight: 8,
+            height: Typography.BodySmall.fontSize,
+            borderRadius: BorderRadius.ExtraSmall,
+            backgroundColor: toRgba(theme.colors.InactiveText, 0.3),
+            marginRight: Spacing.SM,
         },
         timeSkeleton: {
             width: 50,
-            height: 12,
-            borderRadius: 4,
-            backgroundColor: theme.colors.InactiveText,
+            height: Typography.Eyebrow.fontSize,
+            borderRadius: BorderRadius.ExtraSmall,
+            backgroundColor: toRgba(theme.colors.InactiveText, 0.3),
         },
         textSkeleton: {
             width: '100%',
-            height: 14,
-            borderRadius: 4,
-            backgroundColor: theme.colors.InactiveText,
-            marginBottom: 4,
+            height: Typography.BodySmall.fontSize,
+            borderRadius: BorderRadius.ExtraSmall,
+            backgroundColor: toRgba(theme.colors.InactiveText, 0.3),
+            marginBottom: Spacing.XS,
         },
         textSkeletonShort: {
             width: '60%',
-            height: 14,
-            borderRadius: 4,
-            backgroundColor: theme.colors.InactiveText,
+            height: Typography.BodySmall.fontSize,
+            borderRadius: BorderRadius.ExtraSmall,
+            backgroundColor: toRgba(theme.colors.InactiveText, 0.3),
         },
     });
 }

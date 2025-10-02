@@ -5,15 +5,25 @@ import {
     TouchableOpacity,
     StyleSheet,
     Pressable,
+    Animated,
+    Platform,
 } from 'react-native';
 import { useQuery, useApolloClient } from '@apollo/client';
 
 import { useTheme, Theme } from '../theme';
+import { toRgba, getOnlineStatusDotColor } from '../utils';
+import { useAnimatedGlow } from '../hooks';
+import { GlowKeyframes } from '../components/GlowKeyframes';
 import { FETCH_USER_QUERY } from '../queries';
 import { UserType } from '../redux';
-import { getOnlineStatusDotColor } from '../utils';
 import { Conversation } from '../types';
 import { Cancel } from '../icons';
+import {
+    BorderRadius,
+    Spacing,
+    Opacity,
+    Typography,
+} from '../constants/designSystem';
 
 import { NexusImage } from './NexusImage';
 import { ConversationSkeleton } from './ConversationSkeleton';
@@ -34,6 +44,12 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
     onClose,
 }) => {
     const client = useApolloClient();
+    const { theme } = useTheme();
+    const { webAnimationStyle, createNativeShadowStyle } = useAnimatedGlow(
+        0.08,
+        0.28,
+        2500
+    );
     const [groupUsers, setGroupUsers] = useState<UserType[]>([]);
     const otherParticipantIds = useMemo(
         () =>
@@ -46,8 +62,8 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
         useState<boolean>(false);
     const [conversationHovered, setConversationHovered] =
         useState<boolean>(false);
-    const { theme } = useTheme();
     const styles = useMemo(() => createStyles(theme), [theme]);
+    const primaryColor = theme.colors.Primary;
 
     // --- ONE-TO-ONE CONVERSATION ---
     if (otherParticipantIds.length === 1) {
@@ -160,72 +176,98 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
     const groupUsernames = groupUsers.map((u) => u?.username).join(', ');
     const totalMembers = conversation.participantsUserIds.length;
 
+    const WrapperComponent =
+        Platform.OS === 'web' && selected ? View : Animated.View;
+
+    const getWrapperStyle = () => {
+        if (Platform.OS === 'web' && selected) {
+            return [styles.selectedConversationItemWrapper, webAnimationStyle];
+        }
+        if (selected) {
+            return [
+                styles.selectedConversationItemWrapper,
+                createNativeShadowStyle(primaryColor),
+            ];
+        }
+        return undefined;
+    };
+    const wrapperStyle = getWrapperStyle();
+
     return (
-        <Pressable
-            style={[
-                styles.conversationItem,
-                selected && styles.selectedConversationItem,
-                conversationHovered && {
-                    backgroundColor: theme.colors.SecondaryBackground,
-                },
-            ]}
-            onPress={() => onPress(conversation)}
-            onMouseEnter={() => setConversationHovered(true)}
-            onMouseLeave={() => setConversationHovered(false)}
-        >
-            <View style={styles.avatarGroup}>
-                {groupUsers.slice(0, 3).map((user, index) => {
-                    const avatarUrl = `https://picsum.photos/seed/${user?.username}/40`;
-                    return (
-                        <View
-                            key={user?.id}
-                            style={[
-                                styles.groupAvatar,
-                                { marginLeft: index === 0 ? 0 : -15 },
-                            ]}
-                        >
-                            <NexusImage
-                                source={avatarUrl}
-                                alt="avatar"
-                                width={30}
-                                height={30}
-                                style={{
-                                    width: 30,
-                                    height: 30,
-                                }}
-                                contentFit="cover"
-                            />
-                        </View>
-                    );
-                })}
-            </View>
-            <View style={styles.conversationTextContainer}>
-                <Text style={styles.conversationTitle}>
-                    {groupUsernames || 'Group Chat'}
-                </Text>
-                <Text style={styles.membersCount}>{totalMembers} Members</Text>
-            </View>
-            {conversationHovered && (
-                <TouchableOpacity
-                    style={styles.closeButton}
-                    onPress={() => onClose(conversation)}
+        <>
+            {selected && <GlowKeyframes color={primaryColor} />}
+            <WrapperComponent style={wrapperStyle}>
+                <Pressable
+                    style={[
+                        styles.conversationItem,
+                        selected && styles.selectedConversationItem,
+                        conversationHovered && {
+                            backgroundColor: theme.colors.SecondaryBackground,
+                        },
+                    ]}
+                    onPress={() => onPress(conversation)}
+                    onMouseEnter={() => setConversationHovered(true)}
+                    onMouseLeave={() => setConversationHovered(false)}
                 >
-                    <View
-                        onMouseEnter={() => setCloseButtonHovered(true)}
-                        onMouseLeave={() => setCloseButtonHovered(false)}
-                    >
-                        <Cancel
-                            size={14}
-                            color={
-                                closeButtonHovered
-                                    ? theme.colors.ActiveText
-                                    : theme.colors.InactiveText
-                            }
-                        />
+                    <View style={styles.avatarGroup}>
+                        {groupUsers.slice(0, 3).map((user, index) => {
+                            const avatarUrl = `https://picsum.photos/seed/${user?.username}/40`;
+                            return (
+                                <View
+                                    key={user?.id}
+                                    style={[
+                                        styles.groupAvatar,
+                                        { marginLeft: index === 0 ? 0 : -15 },
+                                    ]}
+                                >
+                                    <NexusImage
+                                        source={avatarUrl}
+                                        alt="avatar"
+                                        width={30}
+                                        height={30}
+                                        style={{
+                                            width: 30,
+                                            height: 30,
+                                        }}
+                                        contentFit="cover"
+                                    />
+                                </View>
+                            );
+                        })}
                     </View>
-                </TouchableOpacity>
-            )}
-        </Pressable>
+                    <View style={styles.conversationTextContainer}>
+                        <Text style={styles.conversationTitle}>
+                            {groupUsernames || 'Group Chat'}
+                        </Text>
+                        <Text style={styles.membersCount}>
+                            {totalMembers} Members
+                        </Text>
+                    </View>
+                    {conversationHovered && (
+                        <TouchableOpacity
+                            style={styles.closeButton}
+                            onPress={() => onClose(conversation)}
+                        >
+                            <View
+                                onMouseEnter={() => setCloseButtonHovered(true)}
+                                onMouseLeave={() =>
+                                    setCloseButtonHovered(false)
+                                }
+                            >
+                                <Cancel
+                                    size={14}
+                                    color={
+                                        closeButtonHovered
+                                            ? theme.colors.ActiveText
+                                            : theme.colors.InactiveText
+                                    }
+                                />
+                            </View>
+                        </TouchableOpacity>
+                    )}
+                </Pressable>
+            </WrapperComponent>
+        </>
     );
 };
 
@@ -234,52 +276,59 @@ function createStyles(theme: Theme) {
         conversationItem: {
             flexDirection: 'row',
             alignItems: 'center',
-            paddingVertical: 10,
-            paddingHorizontal: 15,
+            paddingVertical: Spacing.SM,
+            paddingHorizontal: Spacing.LG,
+            borderRadius: BorderRadius.Medium,
+        },
+        selectedConversationItemWrapper: {
+            borderRadius: BorderRadius.Medium,
         },
         selectedConversationItem: {
-            backgroundColor: theme.colors.TertiaryBackground,
-            borderRadius: 5,
+            backgroundColor: theme.colors.SecondaryBackground,
+            borderWidth: 1,
+            borderColor: toRgba(theme.colors.ActiveText, Opacity.BorderMedium),
+            borderRadius: BorderRadius.Medium,
         },
         avatarAndDot: {
             position: 'relative',
-            marginRight: 10,
+            marginRight: Spacing.SM,
         },
         avatar: {
             width: 40,
             height: 40,
-            borderRadius: 20,
+            borderRadius: BorderRadius.Pill,
         },
         groupAvatar: {
             width: 30,
             height: 30,
-            borderRadius: 20,
+            borderRadius: BorderRadius.Pill,
             overflow: 'hidden',
         },
         statusDot: {
             position: 'absolute',
             bottom: 0,
-            right: 5,
-            width: 15,
-            height: 15,
-            borderRadius: 7,
+            right: Spacing.XS + 1,
+            width: Spacing.LG - 1,
+            height: Spacing.LG - 1,
+            borderRadius: BorderRadius.Pill,
             borderWidth: 2,
             borderColor: theme.colors.SecondaryBackground,
         },
         avatarGroup: {
             flexDirection: 'row',
-            marginRight: 10,
+            marginRight: Spacing.MD,
         },
         conversationTextContainer: {
             flex: 1,
         },
         conversationTitle: {
-            fontSize: 14,
+            ...Typography.Code,
+            fontFamily: theme.fonts.primary?.bold,
             color: theme.colors.ActiveText,
-            fontWeight: 'bold',
         },
         membersCount: {
-            fontSize: 12,
+            ...Typography.Caption,
+            fontFamily: theme.fonts.secondary?.regular,
             color: theme.colors.InactiveText,
         },
         closeButton: {},

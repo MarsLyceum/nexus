@@ -18,8 +18,10 @@ import Animated, {
 import { GestureDetector, NativeGesture } from 'react-native-gesture-handler';
 
 import { useSystemBars } from '../hooks';
+import { toRgba } from '../utils';
 import { useTheme, Theme } from '../theme';
 import { Play, Pause, Volume, VolumeMuted, FullScreen } from '../icons';
+import { Spacing, BorderRadius, Typography } from '../constants/designSystem';
 
 const formatTime = (ms: number) => {
     const totalSeconds = Math.floor(ms / 1000);
@@ -36,6 +38,8 @@ const MemoSlider = React.memo((props: React.ComponentProps<typeof Slider>) => (
 ));
 
 const SeekBarSlider = Platform.OS === 'web' ? MemoSlider : AnimatedSlider;
+
+const SLIDER_HEIGHT = 120;
 
 export type MediaPlayerControlsProps = {
     playing: boolean;
@@ -105,7 +109,9 @@ export const MediaPlayerControls = forwardRef<
             [virtualPos, position]
         );
 
-        const SLIDER_HEIGHT = 120;
+        const VOLUME_MIN = 0;
+        const VOLUME_MAX = 1;
+
         const volDragging = useRef(false);
         const startY = useRef(0);
         const startVol = useRef(volumeLevel ?? 0);
@@ -231,9 +237,11 @@ export const MediaPlayerControls = forwardRef<
                                             const r =
                                                 startVol.current +
                                                 dy / SLIDER_HEIGHT;
-                                            onVolumeChange?.(
-                                                Math.max(0, Math.min(1, r))
+                                            const nextVolume = Math.max(
+                                                VOLUME_MIN,
+                                                Math.min(VOLUME_MAX, r)
                                             );
+                                            onVolumeChange?.(nextVolume);
                                         };
                                         const onDocMouseUp = (
                                             ev: MouseEvent
@@ -253,9 +261,11 @@ export const MediaPlayerControls = forwardRef<
                                             const r =
                                                 startVol.current +
                                                 dy / SLIDER_HEIGHT;
-                                            onSlidingComplete(
-                                                Math.max(0, Math.min(1, r))
+                                            const nextVolume = Math.max(
+                                                VOLUME_MIN,
+                                                Math.min(VOLUME_MAX, r)
                                             );
+                                            onSlidingComplete(nextVolume);
                                         };
                                         document.addEventListener(
                                             'mousemove',
@@ -272,9 +282,9 @@ export const MediaPlayerControls = forwardRef<
                                         if (!volDragging.current) return;
                                         const dy = startY.current - e.clientY;
                                         const ratio = Math.max(
-                                            0,
+                                            VOLUME_MIN,
                                             Math.min(
-                                                1,
+                                                VOLUME_MAX,
                                                 startVol.current +
                                                     dy / SLIDER_HEIGHT
                                             )
@@ -288,9 +298,9 @@ export const MediaPlayerControls = forwardRef<
                                         volDragging.current = false;
                                         const dy = startY.current - e.clientY;
                                         const ratio = Math.max(
-                                            0,
+                                            VOLUME_MIN,
                                             Math.min(
-                                                1,
+                                                VOLUME_MAX,
                                                 startVol.current +
                                                     dy / SLIDER_HEIGHT
                                             )
@@ -300,7 +310,12 @@ export const MediaPlayerControls = forwardRef<
                                 >
                                     <View style={styles.volumeSliderWrapper}>
                                         <Slider
-                                            style={styles.volumeSlider}
+                                            style={StyleSheet.flatten([
+                                                styles.volumeSlider,
+                                                Platform.OS === 'web'
+                                                    ? { pointerEvents: 'none' }
+                                                    : undefined,
+                                            ])}
                                             minimumValue={0}
                                             maximumValue={1}
                                             step={0.01}
@@ -312,7 +327,11 @@ export const MediaPlayerControls = forwardRef<
                                             thumbTintColor={
                                                 theme.colors.ActiveText
                                             }
-                                            pointerEvents="none"
+                                            pointerEvents={
+                                                Platform.OS === 'web'
+                                                    ? undefined
+                                                    : 'none'
+                                            }
                                         />
                                     </View>
                                 </View>
@@ -342,13 +361,12 @@ function createStyles(
 ) {
     return StyleSheet.create({
         fullScreen: {
-            marginLeft: 4,
+            marginLeft: Spacing.SM,
         },
         gifButtonText: {
             color: theme.colors.ActiveText,
-            fontSize: 16,
-            fontWeight: 'bold',
-            fontFamily: 'Roboto_700Bold',
+            ...Typography.Body,
+            fontFamily: theme.fonts.primary?.bold,
         },
         outerContainer: {
             width: '100%',
@@ -359,9 +377,9 @@ function createStyles(
             // width: isLandscape && Platform.OS !== 'web' ? '100%' : '100%',
             alignSelf: 'stretch',
             overflow: 'hidden',
-            height: 20,
-            paddingLeft: 10,
-            paddingRight: 10,
+            height: Spacing.LG + Spacing.SM,
+            paddingLeft: Spacing.SM,
+            paddingRight: Spacing.SM,
             marginLeft:
                 isLandscape && Platform.OS !== 'web' ? statusBarHeight : 0,
             marginRight:
@@ -372,46 +390,49 @@ function createStyles(
             minWidth: 0,
         },
         sliderOuterContainer: {
-            marginHorizontal: 8,
+            marginHorizontal: Spacing.SM,
             flex: 1,
         },
         sliderContainer: {
             flex: 1,
         },
         time: {
-            fontSize: 14,
-            marginRight: 4,
+            ...Typography.Caption,
+            fontFamily: theme.fonts.secondary?.regular,
+            marginRight: Spacing.XS,
             flexShrink: 1,
         },
         volumeWrapper: {
             position: 'relative',
-            marginLeft: 8,
-            width: 40, // same as your volumeSliderContainer width
-            height: 120 + 32, // slider height (120) + bottom offset (32)
+            marginLeft: Spacing.SM,
+            width: Spacing.XXXL + Spacing.SM, // same as volumeSliderContainer width
+            height: SLIDER_HEIGHT + Spacing.XXL, // slider height + bottom offset
             justifyContent: 'flex-end', // push the icon down to where it was
             alignItems: 'center',
             overflow: 'visible', // still allow the slider to overflow up
         },
         volumeSliderContainer: {
             position: 'absolute',
-            bottom: 32, // lifts it above the icon
+            bottom: Spacing.XXL, // lifts it above the icon
             left: '50%', // center‑over icon
-            transform: [{ translateX: -20 }],
-            width: 40,
-            height: 120,
-            backgroundColor: 'rgba(0,0,0,0.6)',
-            borderRadius: 4,
+            transform: [{ translateX: -(Spacing.XXXL + Spacing.SM) / 2 }],
+            width: Spacing.XXXL + Spacing.SM,
+            height: SLIDER_HEIGHT,
+            backgroundColor: toRgba(theme.colors.AppBackground, 0.9),
+            borderRadius: BorderRadius.ExtraSmall,
+            borderWidth: 1,
+            borderColor: toRgba(theme.colors.ActiveText, 0.05),
             justifyContent: 'center',
             alignItems: 'center',
-            paddingVertical: 8,
+            paddingVertical: Spacing.SM,
         },
         volumeSlider: {
-            width: 100, // slider length
-            height: 30, // slider thickness
+            width: Spacing.XXXL * 3, // slider length
+            height: Spacing.LG, // slider thickness
         },
         volumeSliderWrapper: {
-            width: 120, // slider length
-            height: 30, // slider thickness
+            width: Spacing.XXXL * 3 + Spacing.SM,
+            height: Spacing.LG,
             transform: [{ rotate: '-90deg' }],
             // ensure rotation origin is the center
             transformOrigin: 'center center',

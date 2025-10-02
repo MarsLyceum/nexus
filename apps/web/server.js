@@ -5,6 +5,7 @@ const os = require('os');
 const fs = require('fs');
 const path = require('path');
 const process = require('process');
+const detectPort = require('detect-port');
 
 const dev = process.env.NODE_ENV !== 'production';
 const app = next({ dev });
@@ -184,8 +185,27 @@ ${JSON.stringify(detailedError, null, 2)}
     `);
         });
 
-        server.listen(3000, (err) => {
-            if (err) throw err;
-            console.log('> Ready on http://localhost:3000');
-        });
+        const DEFAULT_PORT = Number.parseInt(process.env.PORT, 10) || 3000;
+
+        detectPort(DEFAULT_PORT)
+            .then((availablePort) => {
+                const portChanged = availablePort !== DEFAULT_PORT;
+                if (portChanged) {
+                    console.log(
+                        `Port ${DEFAULT_PORT} in use, switching to ${availablePort}`
+                    );
+                }
+
+                process.env.PORT = String(availablePort);
+                process.env.NEXT_PUBLIC_PORT = String(availablePort);
+
+                server.listen(availablePort, (err) => {
+                    if (err) throw err;
+                    console.log(`> Ready on http://localhost:${availablePort}`);
+                });
+            })
+            .catch((err) => {
+                console.error('Failed to detect port:', err);
+                process.exit(1);
+            });
     });

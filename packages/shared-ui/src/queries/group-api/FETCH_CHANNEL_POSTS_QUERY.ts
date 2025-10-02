@@ -1,8 +1,8 @@
 import { gql } from '@apollo/client';
 
 export const FETCH_CHANNEL_POSTS_QUERY = gql`
-    query FetchChannelMessage($channelId: String!, $offset: Int, $limit: Int) {
-        fetchFeedPosts: fetchChannelMessages(
+    query GetFeedChannelPosts($channelId: String!, $offset: Int, $limit: Int) {
+        getFeedChannelPosts(
             channelId: $channelId
             offset: $offset
             limit: $limit
@@ -13,17 +13,14 @@ export const FETCH_CHANNEL_POSTS_QUERY = gql`
             edited
             channelId
             postedByUserId
-            messageType
             attachmentUrls
-            ... on PostMessage {
-                title
-                flair
-                domain
-                thumbnail
-                upvotes
-                commentsCount
-                shareCount
-            }
+            title
+            flair
+            domain
+            thumbnail
+            upvotes
+            commentsCount
+            shareCount
         }
     }
 `;

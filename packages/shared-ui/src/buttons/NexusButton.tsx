@@ -1,31 +1,8 @@
-import React from 'react';
-import { Text, Pressable, StyleSheet } from 'react-native';
-import { useTheme } from '../theme';
+import React, { useMemo } from 'react';
+import { Pressable, Text, StyleSheet } from 'react-native';
 
-/**
- * Utility function: darkenColor
- * Darkens a hex color string by a given amount.
- * In production, consider using a library such as polished or tinycolor2.
- */
-function darkenColor(hexColor: string, amount: number): string {
-    const withoutHash = hexColor.replace('#', '');
-    const num = Number.parseInt(withoutHash, 16);
-
-    // eslint-disable-next-line no-bitwise
-    let r = (num >> 16) - Math.round(255 * amount);
-    // eslint-disable-next-line no-bitwise
-    let g = ((num >> 8) & 0xff) - Math.round(255 * amount);
-    // eslint-disable-next-line no-bitwise
-    let b = (num & 0xff) - Math.round(255 * amount);
-
-    r = Math.max(0, r);
-    g = Math.max(0, g);
-    b = Math.max(0, b);
-
-    // eslint-disable-next-line no-bitwise
-    const darkened = (r << 16) | (g << 8) | b;
-    return `#${darkened.toString(16).padStart(6, '0')}`;
-}
+import { useTheme, Theme } from '../theme';
+import { createSharedStyles } from '../styles';
 
 export type NexusButtonProps = {
     label: string;
@@ -52,96 +29,62 @@ export const NexusButton: React.FC<NexusButtonProps> = ({
     disabled = false,
 }) => {
     const { theme } = useTheme();
+    const sharedStyles = useMemo(() => createSharedStyles(theme), [theme]);
+    const styles = useMemo(() => createStyles(theme), [theme]);
 
-    // Determine the button container style based on whether it is pressed.
-    const getButtonStyles = (isPressed: boolean) => {
+    const getButtonStyle = (pressed: boolean) => {
         if (disabled) {
-            return {
-                backgroundColor:
-                    variant === 'filled'
-                        ? theme.colors.SecondaryBackground
-                        : theme.colors.ActiveText,
-                borderColor: theme.colors.InactiveText,
-                borderWidth: 2,
-                borderRadius: 12,
-                opacity: 0.5, // quick visual cue
-            };
+            return [
+                variant === 'filled'
+                    ? sharedStyles.primaryButton
+                    : sharedStyles.outlineButton,
+                styles.disabled,
+            ];
         }
 
         if (variant === 'filled') {
-            const bgColor = isPressed
-                ? darkenColor(theme.colors.Primary, 0.1)
-                : theme.colors.Primary;
-            return {
-                backgroundColor: bgColor,
-                borderColor: bgColor,
-                borderWidth: 2,
-                borderRadius: 12,
-            };
+            return pressed
+                ? sharedStyles.primaryButtonPressed
+                : sharedStyles.primaryButton;
         }
-        // Outline variant uses a transparent background with a colored border.
-        const outlineColor = isPressed
-            ? darkenColor(theme.colors.Primary, 0.1)
-            : theme.colors.Primary;
-        return {
-            backgroundColor: theme.colors.ActiveText,
-            borderColor: outlineColor,
-            borderWidth: 2,
-            borderRadius: 12,
-        };
+
+        return pressed
+            ? sharedStyles.outlineButtonPressed
+            : sharedStyles.outlineButton;
     };
 
-    // Determine the text color based on the variant and press state.
-    const getTextColor = (isPressed: boolean) => {
-        if (disabled) return theme.colors.InactiveText;
-
-        if (variant === 'filled') {
-            return theme.colors.ActiveText;
+    const getTextStyle = () => {
+        if (disabled) {
+            return [
+                variant === 'filled'
+                    ? sharedStyles.primaryButtonText
+                    : sharedStyles.outlineButtonText,
+                styles.disabledText,
+            ];
         }
-        return isPressed
-            ? darkenColor(theme.colors.Primary, 0.1)
-            : theme.colors.Primary;
+
+        return variant === 'filled'
+            ? sharedStyles.primaryButtonText
+            : sharedStyles.outlineButtonText;
     };
 
     return (
         <Pressable
             onPress={onPress}
-            style={({ pressed }) => [
-                styles.nexusButtonBase,
-                getButtonStyles(pressed),
-            ]}
+            style={({ pressed }) => getButtonStyle(pressed)}
             disabled={disabled}
         >
-            {({ pressed }) => (
-                <Text
-                    style={[
-                        styles.buttonTextBase,
-                        { color: getTextColor(pressed) },
-                    ]}
-                >
-                    {label}
-                </Text>
-            )}
+            <Text style={getTextStyle()}>{label}</Text>
         </Pressable>
     );
 };
 
-const styles = StyleSheet.create({
-    nexusButtonBase: {
-        paddingHorizontal: 20,
-        paddingVertical: 8,
-        // Optional shadow on iOS.
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 2,
-        // Optional elevation on Android.
-        elevation: 2,
-    },
-    buttonTextBase: {
-        fontWeight: '700',
-        textAlign: 'center',
-        fontFamily: 'Roboto_700Bold',
-        fontSize: 14,
-    },
-});
+const createStyles = (theme: Theme) =>
+    StyleSheet.create({
+        disabled: {
+            opacity: 0.5,
+        },
+        disabledText: {
+            color: theme.colors.InactiveText,
+        },
+    });

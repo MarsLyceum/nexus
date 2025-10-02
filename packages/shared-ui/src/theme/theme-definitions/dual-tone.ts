@@ -2,6 +2,7 @@
 /* eslint-disable max-lines */
 // src/theme/dual-tone.ts
 import { COLORS as DefaultColors } from '../../constants/colors';
+import { defaultFontConfig } from '../../constants/fonts';
 import type { Theme } from '../themes';
 
 export const DualTone: Theme[] = [
@@ -21,6 +22,7 @@ export const DualTone: Theme[] = [
             MainText: '#E0E0E0',
             InactiveText: '#989898',
         },
+        fonts: defaultFontConfig,
     },
     {
         name: 'Crimson & Navy',
@@ -38,6 +40,7 @@ export const DualTone: Theme[] = [
             MainText: '#E0E0E0',
             InactiveText: '#989898',
         },
+        fonts: defaultFontConfig,
     },
     {
         name: 'Emerald & Gold',
@@ -55,6 +58,7 @@ export const DualTone: Theme[] = [
             MainText: '#E0E0E0',
             InactiveText: '#989898',
         },
+        fonts: defaultFontConfig,
     },
     {
         name: 'Coral & Teal',
@@ -72,6 +76,7 @@ export const DualTone: Theme[] = [
             MainText: '#E0E0E0',
             InactiveText: '#989898',
         },
+        fonts: defaultFontConfig,
     },
     {
         name: 'Lavender & Plum',
@@ -89,6 +94,7 @@ export const DualTone: Theme[] = [
             MainText: '#E0E0E0',
             InactiveText: '#989898',
         },
+        fonts: defaultFontConfig,
     },
     {
         name: 'Blueberry & Mint',
@@ -106,6 +112,7 @@ export const DualTone: Theme[] = [
             MainText: '#E0E0E0',
             InactiveText: '#989898', // cool grey-blue for inactive text
         },
+        fonts: defaultFontConfig,
     },
     {
         name: 'Rust & Olive',
@@ -123,6 +130,7 @@ export const DualTone: Theme[] = [
             MainText: '#E0E0E0',
             InactiveText: '#989898', // muted brown-olive tone
         },
+        fonts: defaultFontConfig,
     },
     {
         name: 'Peach & Charcoal',
@@ -140,6 +148,7 @@ export const DualTone: Theme[] = [
             MainText: '#E0E0E0',
             InactiveText: '#989898', // muted tone to complement mustard and indigo
         },
+        fonts: defaultFontConfig,
     },
     {
         name: 'Magenta & Lime',
@@ -157,6 +166,7 @@ export const DualTone: Theme[] = [
             MainText: '#E0E0E0',
             InactiveText: '#989898', // Updated: Neutral grey
         },
+        fonts: defaultFontConfig,
     },
     {
         name: 'Mustard & Indigo',
@@ -174,5 +184,6 @@ export const DualTone: Theme[] = [
             MainText: '#E0E0E0',
             InactiveText: '#989898', // Updated: Neutral grey
         },
+        fonts: defaultFontConfig,
     },
 ];

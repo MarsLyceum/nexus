@@ -7,6 +7,13 @@ import { Edit, Delete } from '../icons';
 import { useTheme, Theme } from '../theme';
 
 import { MiniModal } from './MiniModal';
+import { getShadowStyle, toRgba } from '../utils';
+import {
+    BorderRadius,
+    Spacing,
+    Opacity,
+    Typography,
+} from '../constants/designSystem';
 
 /* Inline definitions for missing icons using TS.
    These are placeholder paths—replace them with
@@ -213,37 +220,35 @@ export function MoreOptionsMenu({
 function createStyles(theme: Theme) {
     return StyleSheet.create({
         modalContainer: {
-            backgroundColor: theme.colors.PrimaryBackground,
-            borderRadius: 8,
-            paddingVertical: 6,
-            paddingHorizontal: 8,
-            shadowColor: theme.colors.InactiveText,
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.3,
-            shadowRadius: 4,
-            elevation: 5,
+            backgroundColor: theme.colors.SecondaryBackground,
+            borderRadius: BorderRadius.ExtraSmall,
+            paddingVertical: Spacing.XS,
+            paddingHorizontal: Spacing.SM,
+            borderWidth: 1,
+            borderColor: toRgba(theme.colors.ActiveText, Opacity.Border),
+            ...getShadowStyle('medium'),
         },
-        menuContainer: {
-            // Additional styling for menu layout
-        },
+        menuContainer: {},
         menuItem: {
             flexDirection: 'row',
             alignItems: 'center',
-            paddingVertical: 8,
+            paddingVertical: Spacing.SM,
         },
         menuItemDelete: {
             flexDirection: 'row',
             alignItems: 'center',
-            paddingVertical: 8,
-            backgroundColor: 'rgba(187, 24, 23, 0.1)', // or use theme.colors.Error with transparency
+            paddingVertical: Spacing.SM,
+            backgroundColor: toRgba(theme.colors.Error, 0.1),
         },
         menuItemText: {
-            marginLeft: 6,
-            fontSize: 15,
+            marginLeft: Spacing.SM,
+            ...Typography.BodySmall,
+            fontFamily: theme.fonts.primary?.regular,
             color: theme.colors.ActiveText,
         },
         deleteText: {
             color: theme.colors.Error,
+            fontFamily: theme.fonts.primary?.semibold,
         },
     });
 }

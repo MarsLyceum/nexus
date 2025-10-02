@@ -16,18 +16,25 @@ export const StatusManager: React.FC<{ children: ReactNode }> = ({
     );
     const idleTimeout = useRef<number | null>(null);
     const currentStatus = useRef<string>('offline');
+    const hasAuthFailed = useRef<boolean>(false);
 
     // This function updates the user status using GraphQL
     const setStatus = useCallback(
         async (status: string) => {
-            if (Platform.OS !== 'web') {
-                const token =
-                    (await getItemSecure(ACCESS_TOKEN_KEY)) ?? undefined;
-                if (!token) {
-                    return;
-                }
+            if (!user?.id) return;
+
+            const token =
+                Platform.OS !== 'web'
+                    ? (await getItemSecure(ACCESS_TOKEN_KEY)) ?? undefined
+                    : undefined;
+
+            if (Platform.OS !== 'web' && !token) {
+                return;
             }
-            if (!user || !user.id) return;
+
+            if (hasAuthFailed.current) {
+                return;
+            }
             // Determine effective status based on DND preference
             let effectiveStatus = status;
             if (
@@ -45,7 +52,19 @@ export const StatusManager: React.FC<{ children: ReactNode }> = ({
                     },
                 });
                 currentStatus.current = effectiveStatus;
+                hasAuthFailed.current = false;
             } catch (error) {
+                const errorMessage =
+                    error instanceof Error ? error.message : String(error);
+                const isAuthError =
+                    errorMessage.includes('401') ||
+                    errorMessage.includes('Unauthorized');
+
+                if (isAuthError) {
+                    hasAuthFailed.current = true;
+                    return;
+                }
+
                 console.error(
                     `Error updating status to ${effectiveStatus}:`,
                     error
@@ -72,7 +91,17 @@ export const StatusManager: React.FC<{ children: ReactNode }> = ({
     }, [setStatus]);
 
     useEffect(() => {
-        // When the component mounts, set the status to online
+        if (!user?.id) {
+            if (idleTimeout.current) {
+                clearTimeout(idleTimeout.current);
+                idleTimeout.current = null;
+            }
+            currentStatus.current = 'offline';
+            hasAuthFailed.current = false;
+            return undefined;
+        }
+
+        // When the component mounts or user changes, set the status to online
         void setStatus('online');
         resetIdleTimer();
 
@@ -103,6 +132,7 @@ export const StatusManager: React.FC<{ children: ReactNode }> = ({
         return () => {
             if (idleTimeout.current) {
                 clearTimeout(idleTimeout.current);
+                idleTimeout.current = null;
             }
             subscription.remove();
             // Only remove these listeners on web

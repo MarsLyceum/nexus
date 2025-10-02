@@ -64,6 +64,8 @@ module.exports = {
         react: { version: 'detect' },
     },
     rules: {
+        'eslint-comments/disable-enable-pair': 'off',
+        'unicorn/no-null': 'off',
         'import/no-cycle': 'error',
         'import/no-default-export': 'off',
         'unicorn/no-useless-undefined': 'off',
@@ -73,8 +75,8 @@ module.exports = {
         '@typescript-eslint/no-unsafe-member-access': 'off',
         '@typescript-eslint/no-unsafe-assignment': 'off',
         'max-lines': [
-            'error',
-            { max: 500, skipBlankLines: true, skipComments: true },
+            'warn',
+            { max: 1000, skipBlankLines: true, skipComments: true },
         ],
         'no-plusplus': 'off',
         'no-void': 'off',

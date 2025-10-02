@@ -2,9 +2,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { View, StyleSheet, Dimensions, Platform } from 'react-native';
+import { getShadowStyle } from '../utils';
 
 import { Portal } from '../providers';
 import { useTheme, Theme } from '../theme';
+import { BorderRadius, Spacing } from '../constants/designSystem';
 
 /* ------------------------------------------------------------------ */
 /*                               Types                                */
@@ -343,11 +345,20 @@ export const MiniModal: React.FC<MiniModalProps> = ({
     return (
         <Portal>
             <View
-                pointerEvents="box-none"
-                style={[
-                    StyleSheet.absoluteFillObject,
-                    { zIndex: 10_001, elevation: 10_001 },
-                ]}
+                pointerEvents={Platform.OS === 'web' ? undefined : 'box-none'}
+                style={
+                    Platform.OS === 'web'
+                        ? {
+                              ...StyleSheet.absoluteFillObject,
+                              zIndex: 10_001,
+                              elevation: 10_001,
+                              pointerEvents: 'box-none',
+                          }
+                        : StyleSheet.flatten([
+                              StyleSheet.absoluteFillObject,
+                              { zIndex: 10_001, elevation: 10_001 },
+                          ])
+                }
                 // we *don’t* claim the responder—just listen in capture phase
                 onStartShouldSetResponderCapture={(evt) => {
                     if (closeOnOutsideClick && modalLocation) {
@@ -371,10 +382,11 @@ export const MiniModal: React.FC<MiniModalProps> = ({
                 {centered && <View style={styles.modalOverlay} />}
                 <View
                     ref={modalRef}
-                    style={[
+                    style={StyleSheet.flatten([
                         computedContainerStyle,
                         { pointerEvents: 'auto', zIndex: 10_001 },
-                    ]}
+                    ])}
+                    pointerEvents={Platform.OS === 'web' ? undefined : 'auto'}
                     onMouseEnter={onMouseEnter}
                     onMouseLeave={onMouseLeave}
                     onLayout={(e) => {
@@ -404,14 +416,10 @@ function createStyles(theme: Theme) {
             width: 350,
             maxHeight: 250,
             backgroundColor: theme.colors.PrimaryBackground,
-            borderRadius: 8,
-            padding: 10,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.3,
-            shadowRadius: 4,
-            elevation: 5,
+            borderRadius: BorderRadius.ExtraSmall,
+            padding: Spacing.SM,
             transform: [{ translateX: -175 }],
+            ...getShadowStyle('medium'),
         },
         modalOverlay: {
             position: 'absolute',

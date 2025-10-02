@@ -25,7 +25,8 @@ export async function generateMetadata({ params }: PageProps) {
     const paramHeaders = await headers();
 
     // Get the host from the request headers.
-    const host = paramHeaders.get('host') || 'localhost:3000';
+    const port = process.env.NEXT_PUBLIC_PORT || process.env.PORT || '3000';
+    const host = paramHeaders.get('host') || `localhost:${port}`;
     const protocol = process.env.NODE_ENV === 'development' ? 'http' : 'https';
     const origin = `${protocol}://${host}`;
 

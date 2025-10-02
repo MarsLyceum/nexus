@@ -143,11 +143,16 @@ export const AddFriendsScreen = () => {
                 <ActivityIndicator
                     size="large"
                     color={theme.colors.Primary}
-                    style={{ marginVertical: 16 }}
+                    style={{ marginVertical: Spacing.LG }}
                 />
             )}
             {(searchError || friendsError || sendRequestError) && (
-                <Text style={{ color: 'red', marginVertical: 16 }}>
+                <Text
+                    style={{
+                        color: theme.colors.Error,
+                        marginVertical: Spacing.LG,
+                    }}
+                >
                     Error fetching data.
                 </Text>
             )}
@@ -166,69 +171,70 @@ function createStyles(theme: Theme) {
         container: {
             flex: 1,
             backgroundColor: theme.colors.SecondaryBackground,
-            padding: 16,
+            padding: Spacing.LG,
         },
         searchBox: {
+            ...Typography.Code,
+            fontFamily: theme.fonts.primary?.regular,
             backgroundColor: theme.colors.TextInput,
-            borderRadius: 8,
-            padding: 12,
+            borderRadius: BorderRadius.ExtraSmall,
+            padding: Spacing.MD,
             color: theme.colors.ActiveText,
-            marginBottom: 16,
+            marginBottom: Spacing.LG,
         },
         listContainer: {
-            paddingBottom: 16,
+            paddingBottom: Spacing.LG,
         },
         friendItem: {
             flexDirection: 'row',
             alignItems: 'center',
             backgroundColor: theme.colors.PrimaryBackground,
-            borderRadius: 8,
-            padding: 12,
-            marginBottom: 12,
+            borderRadius: BorderRadius.ExtraSmall,
+            padding: Spacing.MD,
+            marginBottom: Spacing.MD,
         },
         avatar: {
-            width: 40,
-            height: 40,
-            borderRadius: 20,
+            width: Spacing.XXXL + Spacing.SM,
+            height: Spacing.XXXL + Spacing.SM,
+            borderRadius: BorderRadius.XL,
         },
         friendInfo: {
             flex: 1,
-            marginLeft: 12,
+            marginLeft: Spacing.MD,
         },
         friendName: {
+            ...Typography.Body,
+            fontFamily: theme.fonts.primary?.bold,
             color: theme.colors.ActiveText,
-            fontWeight: 'bold',
-            fontFamily: 'Roboto_700Bold',
-            fontSize: 16,
         },
         friendFullName: {
+            ...Typography.Code,
+            fontFamily: theme.fonts.secondary?.regular,
             color: theme.colors.ActiveText,
-            fontSize: 14,
         },
         addButton: {
             backgroundColor: theme.colors.Primary,
-            paddingVertical: 6,
-            paddingHorizontal: 12,
-            borderRadius: 4,
+            paddingVertical: Spacing.XS + 2,
+            paddingHorizontal: Spacing.MD,
+            borderRadius: BorderRadius.ExtraSmall - 4,
         },
         addButtonText: {
+            ...Typography.Code,
+            fontFamily: theme.fonts.primary?.bold,
             color: theme.colors.ActiveText,
-            fontWeight: 'bold',
-            fontFamily: 'Roboto_700Bold',
         },
         searchHeader: {
             flexDirection: 'row',
             alignItems: 'center',
-            marginBottom: 16,
+            marginBottom: Spacing.LG,
             width: '100%',
         },
         headerTitle: {
+            ...Typography.H3,
+            fontFamily: theme.fonts.primary?.bold,
             flex: 1,
             textAlign: 'left',
             color: theme.colors.ActiveText,
-            fontSize: 20,
-            fontWeight: 'bold',
-            fontFamily: 'Roboto_700Bold',
         },
     });
 }

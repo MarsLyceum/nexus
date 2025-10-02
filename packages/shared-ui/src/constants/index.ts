@@ -17,3 +17,5 @@ export const REFRESH_TOKEN_KEY = 'refresh_token';
 export const REFRESH_TOKEN_EXPIRES_AT_KEY = 'refresh_token_expires_at';
 
 export * from './colors';
+export * from './designSystem';
+export * from './fonts';

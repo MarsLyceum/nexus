@@ -5,12 +5,13 @@ import { View, FlatList, StyleSheet } from 'react-native';
 import { EventCard } from '../cards';
 import { useTheme, Theme } from '../theme';
 import { Event } from '../types';
+import { Spacing } from '../constants/designSystem';
 
 function createStyles(theme: Theme) {
     return StyleSheet.create({
         container: {
             flex: 1,
-            padding: 10,
+            padding: Spacing.XL,
             backgroundColor: theme.colors.SecondaryBackground,
             height: '100%',
         },

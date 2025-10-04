@@ -17,7 +17,7 @@ export const useAnimatedGlow = (
         duration
     );
 
-    const webAnimationStyle = useMemo(() => createWebGlowAnimationStyle(), []);
+    const webAnimation = useMemo(() => createWebGlowAnimationStyle(), []);
 
     const animatedNativeShadow = useMemo(
         () =>
@@ -39,7 +39,7 @@ export const useAnimatedGlow = (
             : {};
 
     return {
-        webAnimationStyle,
+        webAnimation,
         createNativeShadowStyle,
         glowIntensity,
     };

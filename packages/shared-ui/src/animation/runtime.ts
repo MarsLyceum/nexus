@@ -1,0 +1,1 @@
+export { renderAnimationScene } from './scenes';

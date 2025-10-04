@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import {
     View,
     Text,
@@ -15,12 +15,16 @@ import { useAnimatedGlow } from '../hooks';
 import type { Theme } from '../theme';
 import { BorderRadius, Spacing, Typography } from '../constants/designSystem';
 import { useThemedScrollbars, NexusScrollView } from '../styles';
-import { WebGPUGlow } from '../components/WebGPUGlow';
-import { GlowKeyframes } from '../components/GlowKeyframes';
 import {
-    useAnimationDriver,
-    type AnimationDriverPreference,
+    buildGlowScene,
+    renderAnimationScene,
+    type SceneRenderLayer,
+} from '../animation/scenes';
+import {
+    AnimationProvider,
+    useAnimationLayers,
 } from '../providers/AnimationProvider';
+import { hasWebGPU } from '../components/WebGPUGlow';
 
 type ErrorFallbackProps = {
     error: Error;
@@ -65,64 +69,188 @@ const deriveStackLines = (stack?: string): ParsedStackLine[] =>
 
 const STACK_SCROLL_ID = 'error-fallback-stack';
 
-export const ErrorFallback: React.FC<ErrorFallbackProps> = ({
-    error,
-    resetErrorBoundary,
-    componentStack,
-    onReset,
-}) => {
+const createWebDebugLogger = (label: string) => {
+    const logValue = <Value,>(
+        value: Value,
+        context: Record<string, unknown> = {}
+    ): Value => {
+        console.log(`[ErrorFallback:${label}]`, value, context);
+        return value;
+    };
+
+    return logValue;
+};
+
+const useGpuLayerVisibility = (
+    glowScene: ReturnType<typeof buildGlowScene>
+) => {
+    const isWeb = Platform.OS === 'web';
+    const platformLabel = isWeb ? 'web' : 'native';
+    const debug = useMemo(
+        () => createWebDebugLogger(platformLabel),
+        [platformLabel]
+    );
+
+    debug('useGpuLayerVisibility:mount', {
+        platform: Platform.OS,
+    });
+
+    const { visibility, setVisibility } = useAnimationLayers();
+
+    const { containerStyle, layers, status } = renderAnimationScene(
+        glowScene,
+        isWeb
+            ? {
+                  visibility,
+              }
+            : undefined
+    );
+
+    const gpuIsSupported = isWeb && hasWebGPU();
+    const supportsGpuGlow = gpuIsSupported && status !== 'failed';
+    const gpuVisibilityOverride = visibility['gpu-glow'];
+    const isGpuVisibilityEnabled = gpuVisibilityOverride !== false;
+    const isGpuGlowActive = supportsGpuGlow && isGpuVisibilityEnabled;
+
+    const overlayLayers = useMemo(
+        () =>
+            isWeb
+                ? layers.filter((layer) => layer.type !== 'dom')
+                : ([] as SceneRenderLayer[]),
+        [isWeb, layers]
+    );
+
+    useEffect(() => {
+        debug('useGpuLayerVisibility:status-update', {
+            supportsGpuGlow,
+            status,
+            gpuIsSupported,
+        });
+    }, [debug, gpuIsSupported, status, supportsGpuGlow]);
+
+    useEffect(() => {
+        if (!isWeb) {
+            return;
+        }
+        debug('useGpuLayerVisibility:web-overlay-layers', {
+            filteredCount: overlayLayers.length,
+            layerIds: overlayLayers.map((layer) => layer.id),
+            domLayerIds: layers
+                .filter((layer) => layer.type === 'dom')
+                .map((layer) => layer.id),
+        });
+    }, [debug, isWeb, layers, overlayLayers]);
+
+    useEffect(() => {
+        if (!isWeb) {
+            return;
+        }
+        debug('useGpuLayerVisibility:web-activation-state', {
+            isGpuGlowActive,
+            isGpuVisibilityEnabled,
+            supportsGpuGlow,
+        });
+    }, [
+        debug,
+        isGpuGlowActive,
+        isGpuVisibilityEnabled,
+        isWeb,
+        supportsGpuGlow,
+    ]);
+
+    const toggleGpuVisibility = useCallback(() => {
+        if (!supportsGpuGlow || !isWeb) {
+            debug('toggleGpuVisibility:gpu-unavailable', {
+                status,
+                gpuIsSupported,
+            });
+            return;
+        }
+        if (isGpuVisibilityEnabled) {
+            debug('toggleGpuVisibility:disable-gpu', {
+                visibility,
+            });
+            setVisibility('gpu-glow', false);
+            setVisibility('css-glow', true);
+            return;
+        }
+        debug('toggleGpuVisibility:enable-gpu', {
+            visibility,
+        });
+        setVisibility('gpu-glow', true);
+        setVisibility('css-glow', false);
+    }, [
+        debug,
+        gpuIsSupported,
+        isGpuVisibilityEnabled,
+        isWeb,
+        setVisibility,
+        status,
+        supportsGpuGlow,
+        visibility,
+    ]);
+
+    return {
+        containerStyle,
+        overlayLayers,
+        isGpuGlowActive,
+        toggleGpuVisibility,
+        isGpuSupported: supportsGpuGlow,
+    };
+};
+
+const ErrorFallbackInner: React.FC<
+    ErrorFallbackProps & {
+        glowScene: ReturnType<typeof buildGlowScene>;
+    }
+> = ({ error, resetErrorBoundary, componentStack, onReset, glowScene }) => {
+    const debug = useMemo(() => createWebDebugLogger('inner'), []);
     const { theme } = useTheme();
     const {
-        preferredDriver,
-        effectiveDriver,
-        capabilities,
-        selectDriver,
-        reportDriverFailure,
-        reportDriverRecovery,
-    } = useAnimationDriver();
+        containerStyle,
+        overlayLayers,
+        isGpuGlowActive,
+        toggleGpuVisibility,
+        isGpuSupported,
+    } = useGpuLayerVisibility(glowScene);
     const { width, height } = useWindowDimensions();
     const { ScrollbarStyles } = useThemedScrollbars();
-    const { webAnimationStyle, createNativeShadowStyle } = useAnimatedGlow(
-        0.2,
-        0.5,
-        3000
-    );
-    const [webGpuReady, setWebGpuReady] = useState(false);
-    const isGpuPreferred = Platform.OS === 'web' && effectiveDriver === 'gpu';
-    const useCssGlow = !isGpuPreferred;
+    const { createNativeShadowStyle } = useAnimatedGlow(0.2, 0.5, 3000);
     const stackLines = useMemo(
         () => deriveStackLines(componentStack),
         [componentStack]
     );
+    useEffect(() => {
+        debug('component-stack', {
+            hasStack: stackLines.length > 0,
+            lineCount: stackLines.length,
+        });
+    }, [debug, stackLines]);
     const baseStyles = useMemo(() => createStyles(theme), [theme]);
     const { styles: responsiveStyles, shouldScroll } = useMemo(
         () => createResponsiveOverrides(width, height),
         [height, width]
     );
+    useEffect(() => {
+        debug('responsive-overrides', {
+            shouldScroll,
+        });
+    }, [debug, shouldScroll]);
 
     const handleReset = () => {
+        debug('handleReset:invoke', {
+            hasOnReset: Boolean(onReset),
+        });
         resetErrorBoundary();
         onReset?.();
     };
 
-    const handleDriverToggle = () => {
-        const nextPreference: AnimationDriverPreference =
-            preferredDriver === 'css'
-                ? capabilities.gpu
-                    ? 'gpu'
-                    : 'css'
-                : 'css';
-        selectDriver(nextPreference);
-    };
-
-    const handleGpuReady = () => {
-        reportDriverRecovery('gpu');
-        setWebGpuReady(true);
-    };
-
-    const handleGpuFailure = () => {
-        reportDriverFailure('gpu');
-        setWebGpuReady(false);
+    const handleGpuToggle = () => {
+        debug('handleGpuToggle:invoke', {
+            isGpuSupported,
+            isGpuGlowActive,
+        });
+        toggleGpuVisibility();
     };
 
     const cardContent = (
@@ -143,7 +271,7 @@ export const ErrorFallback: React.FC<ErrorFallbackProps> = ({
             {stackLines.length > 0 && (
                 <View style={baseStyles.section}>
                     <Text style={baseStyles.sectionLabel}>Component Trace</Text>
-                    {Platform.OS === 'web' ? (
+                    {Platform.OS === 'web' && (
                         <NexusScrollView
                             nativeID={STACK_SCROLL_ID}
                             maxHeight={280}
@@ -174,39 +302,13 @@ export const ErrorFallback: React.FC<ErrorFallbackProps> = ({
                                 </View>
                             ))}
                         </NexusScrollView>
-                    ) : (
-                        <View style={baseStyles.stackSurface}>
-                            <NexusScrollView
-                                style={baseStyles.stackScroll}
-                                contentContainerStyle={baseStyles.stackContent}
-                                nativeID={STACK_SCROLL_ID}
-                            >
-                                {stackLines.map((line, index) => (
-                                    <View
-                                        key={`${index}-${line.component}`}
-                                        style={baseStyles.stackLineWrapper}
-                                    >
-                                        <Text style={baseStyles.stackComponent}>
-                                            {line.component}
-                                        </Text>
-                                        {Boolean(line.location) && (
-                                            <Text
-                                                style={baseStyles.stackLocation}
-                                            >
-                                                {line.location}
-                                            </Text>
-                                        )}
-                                    </View>
-                                ))}
-                            </NexusScrollView>
-                        </View>
                     )}
                 </View>
             )}
             <View style={baseStyles.footer}>
-                {capabilities.gpu && (
+                {isGpuSupported ? (
                     <Pressable
-                        onPress={handleDriverToggle}
+                        onPress={handleGpuToggle}
                         style={({ pressed }) =>
                             pressed
                                 ? baseStyles.secondaryButtonPressed
@@ -214,14 +316,12 @@ export const ErrorFallback: React.FC<ErrorFallbackProps> = ({
                         }
                     >
                         <Text style={baseStyles.secondaryButtonText}>
-                            {isGpuPreferred
-                                ? 'Use CSS Glow'
-                                : webGpuReady
-                                  ? 'Use WebGPU Glow'
-                                  : 'Try WebGPU Glow'}
+                            {isGpuGlowActive
+                                ? 'Switch to CSS Glow'
+                                : 'Switch to WebGPU Glow'}
                         </Text>
                     </Pressable>
-                )}
+                ) : null}
                 <Pressable
                     onPress={handleReset}
                     style={({ pressed }) =>
@@ -249,6 +349,41 @@ export const ErrorFallback: React.FC<ErrorFallbackProps> = ({
         );
     }, [ScrollbarStyles]);
 
+    const cardBodyNode = shouldScroll ? (
+        <NexusScrollView
+            style={responsiveStyles.cardScroll}
+            contentContainerStyle={responsiveStyles.cardScrollContent}
+            nativeID="error-fallback-scroll"
+        >
+            {cardContent}
+        </NexusScrollView>
+    ) : (
+        cardContent
+    );
+    useEffect(() => {
+        debug('card-body-node', {
+            hasScrollbar: shouldScroll,
+            overlayLayerCount: overlayLayers.length,
+        });
+    }, [debug, overlayLayers, shouldScroll]);
+
+    const layeredCard = (
+        <View style={baseStyles.cardWrapper}>
+            <View pointerEvents="none" style={baseStyles.overlayContainer}>
+                {overlayLayers.length > 0 ? (
+                    <View style={[baseStyles.overlayContent, containerStyle]}>
+                        {overlayLayers.map((layer) => (
+                            <LayerFragment key={layer.id} layer={layer} />
+                        ))}
+                    </View>
+                ) : null}
+            </View>
+            <View style={[baseStyles.card, responsiveStyles.card]}>
+                {cardBodyNode}
+            </View>
+        </View>
+    );
+
     return (
         <View style={[baseStyles.backdrop, responsiveStyles.backdrop]}>
             {scrollStyles}
@@ -257,45 +392,11 @@ export const ErrorFallback: React.FC<ErrorFallbackProps> = ({
                     style={[
                         baseStyles.shellContainer,
                         responsiveStyles.shellContainer,
-                        useCssGlow ? webAnimationStyle : null,
                     ]}
                     nativeID="error-fallback-shell"
                 >
-                    {Platform.OS === 'web' && (
-                        <style>{`
-                            #error-fallback-shell { position: relative; isolation: isolate; }
-                        `}</style>
-                    )}
-                    {(useCssGlow || !webGpuReady) && Platform.OS === 'web' && (
-                        <GlowKeyframes color={theme.colors.Primary} />
-                    )}
-                    {isGpuPreferred && (
-                        <WebGPUGlow
-                            color={theme.colors.Primary}
-                            borderRadius={BorderRadius.ExtraLarge}
-                            focal={{ x: 0.5, y: 0.5 }}
-                            opacity={0.85}
-                            animate
-                            onReady={handleGpuReady}
-                            onFailure={handleGpuFailure}
-                        />
-                    )}
                     <View style={[baseStyles.shell, responsiveStyles.shell]}>
-                        <View style={[baseStyles.card, responsiveStyles.card]}>
-                            {shouldScroll ? (
-                                <NexusScrollView
-                                    style={responsiveStyles.cardScroll}
-                                    contentContainerStyle={
-                                        responsiveStyles.cardScrollContent
-                                    }
-                                    nativeID="error-fallback-scroll"
-                                >
-                                    {cardContent}
-                                </NexusScrollView>
-                            ) : (
-                                cardContent
-                            )}
-                        </View>
+                        {layeredCard}
                     </View>
                 </View>
             ) : (
@@ -308,25 +409,44 @@ export const ErrorFallback: React.FC<ErrorFallbackProps> = ({
                 >
                     <View style={[baseStyles.shell, responsiveStyles.shell]}>
                         <View style={[baseStyles.card, responsiveStyles.card]}>
-                            {shouldScroll ? (
-                                <NexusScrollView
-                                    style={responsiveStyles.cardScroll}
-                                    contentContainerStyle={
-                                        responsiveStyles.cardScrollContent
-                                    }
-                                    nativeID="error-fallback-scroll"
-                                >
-                                    {cardContent}
-                                </NexusScrollView>
-                            ) : (
-                                cardContent
-                            )}
+                            {cardBodyNode}
                         </View>
                     </View>
                 </Animated.View>
             )}
         </View>
     );
+};
+
+export const ErrorFallback: React.FC<ErrorFallbackProps> = (props) => {
+    const { theme } = useTheme();
+    const glowScene = useMemo(
+        () =>
+            buildGlowScene({
+                color: theme.colors.Primary,
+                borderRadius: BorderRadius.Large,
+                focal: { x: 0.5, y: 0.5 },
+                opacity: 0.85,
+                animate: true,
+            }),
+        [theme.colors.Primary]
+    );
+
+    if (Platform.OS === 'web') {
+        return (
+            <AnimationProvider scene={glowScene}>
+                <ErrorFallbackInner {...props} glowScene={glowScene} />
+            </AnimationProvider>
+        );
+    }
+    return <ErrorFallbackInner {...props} glowScene={glowScene} />;
+};
+
+const LayerFragment: React.FC<{ layer: SceneRenderLayer }> = ({ layer }) => {
+    if (!layer.element) {
+        return null;
+    }
+    return <>{layer.element}</>;
 };
 
 const createStyles = (theme: Theme) =>
@@ -343,6 +463,7 @@ const createStyles = (theme: Theme) =>
             width: '100%',
             maxWidth: 640,
             borderRadius: BorderRadius.ExtraLarge,
+            alignSelf: 'center',
         },
         shell: {
             width: '100%',
@@ -352,12 +473,29 @@ const createStyles = (theme: Theme) =>
             borderWidth: 1,
             borderColor: toRgba(theme.colors.ActiveText, 0.05),
         },
+        cardWrapper: {
+            position: 'relative',
+            borderRadius: BorderRadius.Large,
+            overflow: 'visible',
+        },
         card: {
             width: '100%',
             borderRadius: BorderRadius.Large,
             backgroundColor: theme.colors.SecondaryBackground,
             borderWidth: 1,
             borderColor: toRgba(theme.colors.ActiveText, 0.05),
+        },
+        overlayContainer: {
+            position: 'absolute',
+            inset: 0,
+            pointerEvents: 'none',
+            overflow: 'visible',
+        },
+        overlayContent: {
+            width: '100%',
+            height: '100%',
+            position: 'relative',
+            overflow: 'visible',
         },
         cardBody: {
             padding: Spacing.XXXL,

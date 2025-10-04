@@ -64,6 +64,8 @@ module.exports = {
         react: { version: 'detect' },
     },
     rules: {
+        'no-bitwise': 'off',
+        'unicorn/no-array-reduce': 'off',
         'eslint-comments/disable-enable-pair': 'off',
         'unicorn/no-null': 'off',
         'import/no-cycle': 'error',

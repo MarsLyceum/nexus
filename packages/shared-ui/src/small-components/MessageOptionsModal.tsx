@@ -8,6 +8,7 @@ import { Edit, MoreHorizontal } from '../icons';
 import { Tooltip } from './Tooltip';
 import { MiniModal } from './MiniModal';
 import { getShadowStyle } from '../utils';
+import { registerStableHoverMember } from '../utils/stableHoverGroup';
 import { Spacing, BorderRadius, Typography } from '../constants/designSystem';
 
 export type MessageOptionsModalProps = {
@@ -22,7 +23,7 @@ export type MessageOptionsModalProps = {
         height: number;
     }) => void;
     onMouseEnterModal?: () => void;
-    onMouseLeaveModal?: () => void;
+    onMouseLeaveModal?: (event: React.MouseEvent<HTMLDivElement>) => void;
 };
 
 export const MessageOptionsModal: React.FC<MessageOptionsModalProps> = ({
@@ -69,33 +70,69 @@ export const MessageOptionsModal: React.FC<MessageOptionsModalProps> = ({
             onClose={onClose}
             anchorPosition={anchorPosition}
             containerStyle={styles.modalContainer}
+            blockOutsideClicks={false}
             closeOnOutsideClick={false}
             useRightAnchorAlignment
             onMouseEnter={onMouseEnterModal}
             onMouseLeave={onMouseLeaveModal}
         >
-            <View style={styles.outerContainer}>
+            <View
+                style={styles.outerContainer}
+                ref={(element) => {
+                    if (element instanceof Element) {
+                        registerStableHoverMember(element);
+                    }
+                }}
+            >
                 <View style={styles.iconsRow}>
                     <Tooltip text="Like">
-                        <TouchableOpacity style={styles.iconWrapper}>
+                        <TouchableOpacity
+                            style={styles.iconWrapper}
+                            ref={(element) => {
+                                if (element instanceof Element) {
+                                    registerStableHoverMember(element);
+                                }
+                            }}
+                        >
                             <Text style={styles.emoji}>👍</Text>
                         </TouchableOpacity>
                     </Tooltip>
 
                     <Tooltip text="100">
-                        <TouchableOpacity style={styles.iconWrapper}>
+                        <TouchableOpacity
+                            style={styles.iconWrapper}
+                            ref={(element) => {
+                                if (element instanceof Element) {
+                                    registerStableHoverMember(element);
+                                }
+                            }}
+                        >
                             <Text style={styles.emoji}>💯</Text>
                         </TouchableOpacity>
                     </Tooltip>
 
                     <Tooltip text="Laugh">
-                        <TouchableOpacity style={styles.iconWrapper}>
+                        <TouchableOpacity
+                            style={styles.iconWrapper}
+                            ref={(element) => {
+                                if (element instanceof Element) {
+                                    registerStableHoverMember(element);
+                                }
+                            }}
+                        >
                             <Text style={styles.emoji}>😆</Text>
                         </TouchableOpacity>
                     </Tooltip>
 
                     <Tooltip text="Neutral">
-                        <TouchableOpacity style={styles.iconWrapper}>
+                        <TouchableOpacity
+                            style={styles.iconWrapper}
+                            ref={(element) => {
+                                if (element instanceof Element) {
+                                    registerStableHoverMember(element);
+                                }
+                            }}
+                        >
                             <Text style={styles.emoji}>😐</Text>
                         </TouchableOpacity>
                     </Tooltip>
@@ -103,6 +140,11 @@ export const MessageOptionsModal: React.FC<MessageOptionsModalProps> = ({
                     <Tooltip text="Edit">
                         <TouchableOpacity
                             style={styles.iconWrapper}
+                            ref={(element) => {
+                                if (element instanceof Element) {
+                                    registerStableHoverMember(element);
+                                }
+                            }}
                             onPress={onEdit}
                         >
                             <Edit />
@@ -110,7 +152,14 @@ export const MessageOptionsModal: React.FC<MessageOptionsModalProps> = ({
                     </Tooltip>
 
                     <Tooltip text="Share">
-                        <TouchableOpacity style={styles.iconWrapper}>
+                        <TouchableOpacity
+                            style={styles.iconWrapper}
+                            ref={(element) => {
+                                if (element instanceof Element) {
+                                    registerStableHoverMember(element);
+                                }
+                            }}
+                        >
                             <ArrowIcon theme={theme} />
                         </TouchableOpacity>
                     </Tooltip>
@@ -118,8 +167,15 @@ export const MessageOptionsModal: React.FC<MessageOptionsModalProps> = ({
                     <Tooltip text="More">
                         <TouchableOpacity
                             style={styles.iconWrapper}
+                            ref={(element) => {
+                                if (element instanceof Element) {
+                                    registerStableHoverMember(element);
+                                    moreButtonRef.current = element;
+                                } else if (element === null) {
+                                    moreButtonRef.current = null;
+                                }
+                            }}
                             onPress={handleMorePress}
-                            ref={moreButtonRef}
                         >
                             <MoreHorizontal />
                         </TouchableOpacity>

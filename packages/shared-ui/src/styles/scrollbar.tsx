@@ -36,10 +36,12 @@ const toNumericPx = (value: unknown): number | undefined => {
 
 const getStaticBorderThickness = (style?: Record<string, unknown>): number => {
     if (!style) return 0;
-    type BorderStyle = { borderRightWidth?: unknown; borderWidth?: unknown };
-    const s = (style as BorderStyle) ?? {};
-    const right = toNumericPx(s.borderRightWidth);
-    const all = toNumericPx(s.borderWidth);
+    const readBorder = (key: string) => toNumericPx(style[key]);
+    const right =
+        'borderRightWidth' in style
+            ? readBorder('borderRightWidth')
+            : undefined;
+    const all = 'borderWidth' in style ? readBorder('borderWidth') : undefined;
     return right ?? all ?? 0;
 };
 
@@ -51,8 +53,6 @@ const CONTENT_MIRROR_GUTTER = 0;
 const ANTIALIAS_TOLERANCE = 0.6;
 const RIM_CLEARANCE = 0.75;
 const CORNER_HEADROOM = 0.6;
-
-const HIGHLIGHT_ATTENUATION = 0.1;
 
 const HOVER_SCALE = 1.09;
 const DRAG_SCALE = 1.15;
@@ -68,14 +68,49 @@ const snapToPixel = (value: number, dpr: number): number =>
 const clamp = (value: number, lower: number, upper: number): number =>
     Math.min(upper, Math.max(lower, value));
 
-const getMatchMedia = (): ((query: string) => MediaQueryList) | undefined => {
-    if (typeof globalThis === 'undefined') {
-        return undefined;
-    }
-    const g = globalThis as Window & typeof globalThis;
-    return typeof g.matchMedia === 'function'
-        ? g.matchMedia.bind(g)
+const getMatchMedia = (): ((query: string) => MediaQueryList) | undefined =>
+    typeof globalThis.matchMedia === 'function'
+        ? globalThis.matchMedia.bind(globalThis)
         : undefined;
+
+type WindowEventManager = {
+    addEventListener: (type: string, listener: () => void) => void;
+    removeEventListener: (type: string, listener: () => void) => void;
+};
+
+type VisualViewportManager = {
+    scale?: number;
+    addEventListener: (type: 'resize' | 'scroll', listener: () => void) => void;
+    removeEventListener: (
+        type: 'resize' | 'scroll',
+        listener: () => void
+    ) => void;
+};
+
+const readDevicePixelRatio = (): number => {
+    const ratio = (globalThis as Partial<typeof globalThis>).devicePixelRatio;
+    return typeof ratio === 'number' ? ratio : 1;
+};
+
+const readVisualViewport = (): VisualViewportManager | undefined => {
+    const viewport = (
+        globalThis as Partial<typeof globalThis> & {
+            visualViewport?: VisualViewportManager;
+        }
+    ).visualViewport;
+    return viewport &&
+        typeof viewport.addEventListener === 'function' &&
+        typeof viewport.removeEventListener === 'function'
+        ? viewport
+        : undefined;
+};
+
+const hasGlobalEventListeners = (): boolean => {
+    const maybeWindow = globalThis as Partial<WindowEventManager>;
+    return (
+        typeof maybeWindow.addEventListener === 'function' &&
+        typeof maybeWindow.removeEventListener === 'function'
+    );
 };
 
 type ThumbGeometry = {
@@ -135,7 +170,7 @@ export const useThemedScrollbars: ThemedScrollbarHook = () => {
                 .join(', ');
 
             return `
-                ${createGlowKeyframes(primary)}
+                ${createGlowKeyframes(primary, { focal: { x: 0.5, y: 0.4 } })}
 
                 ${selectorList} {
                     scrollbar-width: none;
@@ -231,40 +266,17 @@ const WebNexusScrollView: React.FC<NexusScrollViewProps> = ({
         setScrollState(next);
     }, []);
 
-    const [dpr, setDpr] = useState(
-        typeof globalThis !== 'undefined' &&
-            (globalThis as any).devicePixelRatio
-            ? (globalThis as any).devicePixelRatio
-            : 1
-    );
-    const baseDprRef = useRef<number>(
-        typeof globalThis !== 'undefined' &&
-            (globalThis as any).devicePixelRatio
-            ? (globalThis as any).devicePixelRatio
-            : 1
-    );
+    const [dpr, setDpr] = useState(() => readDevicePixelRatio());
     const [viewportScale, setViewportScale] = useState(() => {
-        const vv =
-            typeof globalThis !== 'undefined' &&
-            (globalThis as any).visualViewport
-                ? (globalThis as any).visualViewport
-                : undefined;
+        const vv = readVisualViewport();
         return vv && typeof vv.scale === 'number' ? vv.scale : 1;
     });
 
     useEffect(() => {
         const update = () => {
-            const nextDpr =
-                typeof globalThis !== 'undefined' &&
-                (globalThis as any).devicePixelRatio
-                    ? (globalThis as any).devicePixelRatio
-                    : 1;
+            const nextDpr = readDevicePixelRatio();
             if (nextDpr !== dpr) setDpr(nextDpr);
-            const vvNow =
-                typeof globalThis !== 'undefined' &&
-                (globalThis as any).visualViewport
-                    ? (globalThis as any).visualViewport
-                    : undefined;
+            const vvNow = readVisualViewport();
             const nextScale =
                 vvNow && typeof vvNow.scale === 'number' ? vvNow.scale : 1;
             if (nextScale !== viewportScale) setViewportScale(nextScale);
@@ -277,23 +289,19 @@ const WebNexusScrollView: React.FC<NexusScrollViewProps> = ({
             }
         };
         update();
-        if (typeof window !== 'undefined') {
-            window.addEventListener('resize', update);
-            window.addEventListener('orientationchange', update);
+        if (hasGlobalEventListeners()) {
+            globalThis.addEventListener('resize', update);
+            globalThis.addEventListener('orientationchange', update);
         }
-        const vv =
-            typeof globalThis !== 'undefined' &&
-            (globalThis as any).visualViewport
-                ? (globalThis as any).visualViewport
-                : undefined;
+        const vv = readVisualViewport();
         if (vv) {
             vv.addEventListener('resize', update);
             vv.addEventListener('scroll', update);
         }
         return () => {
-            if (typeof window !== 'undefined') {
-                window.removeEventListener('resize', update);
-                window.removeEventListener('orientationchange', update);
+            if (hasGlobalEventListeners()) {
+                globalThis.removeEventListener('resize', update);
+                globalThis.removeEventListener('orientationchange', update);
             }
             if (vv) {
                 vv.removeEventListener('resize', update);
@@ -305,12 +313,15 @@ const WebNexusScrollView: React.FC<NexusScrollViewProps> = ({
     useEffect(() => {
         if (
             !scrollRef.current ||
-            typeof (globalThis as any).ResizeObserver === 'undefined'
+            (globalThis as Partial<typeof globalThis>).ResizeObserver ===
+                undefined
         )
             return undefined;
-        const ResizeObserverImpl = (globalThis as any).ResizeObserver as new (
-            callback: ResizeObserverCallback
-        ) => ResizeObserver;
+        const ResizeObserverImpl = (
+            globalThis as typeof globalThis & {
+                ResizeObserver: typeof ResizeObserver;
+            }
+        ).ResizeObserver;
         const updateFromDom = () => {
             if (!scrollRef.current) return;
             setScrollState({
@@ -405,7 +416,6 @@ const WebNexusScrollView: React.FC<NexusScrollViewProps> = ({
 
     // Simplified: no per-scroll intrusion; shape is computed from container only
     const sinkOffset = 0;
-    const thumbTop = baseThumbTop;
     const snappedThumbWidth = snapToPixel(thumbGeometry.paintWidth, dpr);
     const effectiveThumbHeight = Math.max(0, rawThumbHeight - 2 * sinkOffset);
     const thumbHeight = effectiveThumbHeight;
@@ -468,7 +478,6 @@ const WebNexusScrollView: React.FC<NexusScrollViewProps> = ({
 
     // CSS-pixel geometry using exact scroll fraction; then snap to device pixels
     const laneTop = verticalLaneInset;
-    const viewportHeight = effectiveLaneHeight;
     const liveScrollTop = scrollRef.current?.scrollTop ?? scrollState.scrollTop;
     const liveScrollRangeCss = Math.max(0, liveScrollHeight - liveClientHeight);
     const exactScrollRatioCss =
@@ -483,9 +492,9 @@ const WebNexusScrollView: React.FC<NexusScrollViewProps> = ({
     );
     const snappedThumbHeight = snapToPixel(cssThumbFullHeightRaw, dpr);
     const measuredViewportHeight =
-        (typeof window !== 'undefined' &&
-            (thumbViewportRef.current?.getBoundingClientRect().height ?? 0)) ||
-        0;
+        'document' in globalThis
+            ? thumbViewportRef.current?.getBoundingClientRect().height ?? 0
+            : 0;
     const viewportHeightForTravel =
         measuredViewportHeight > 0
             ? measuredViewportHeight
@@ -509,7 +518,6 @@ const WebNexusScrollView: React.FC<NexusScrollViewProps> = ({
         snappedThumbHeight,
         viewportHeightForTravel
     );
-    const useBottomAnchor = false;
 
     useEffect(() => {
         debugLog('geom', {
@@ -527,7 +535,6 @@ const WebNexusScrollView: React.FC<NexusScrollViewProps> = ({
             effectiveThumbHeight,
             maxThumbTravel,
             baseThumbTop,
-            snappedThumbTop,
             clampedThumbTopCss,
             thumbHeight,
             laneTop: verticalLaneInset,
@@ -548,7 +555,6 @@ const WebNexusScrollView: React.FC<NexusScrollViewProps> = ({
         maxThumbTravel,
         baseThumbTop,
         thumbHeight,
-        dpr,
         renderedThumbHeight,
         boundedTopCss,
         maxTopCss,
@@ -558,6 +564,9 @@ const WebNexusScrollView: React.FC<NexusScrollViewProps> = ({
         exactThumbRatio,
         measuredViewportHeight,
         viewportHeightForTravel,
+        clampedThumbTopCss,
+        verticalLaneInset,
+        inViewportTop,
     ]);
 
     useEffect(() => {
@@ -588,12 +597,7 @@ const WebNexusScrollView: React.FC<NexusScrollViewProps> = ({
 
     const showScrollbar = hasScrollableContent;
 
-    const highlightAttenuationFactor = 0;
-    const highlightOpacity = clamp(
-        0.2 - HIGHLIGHT_ATTENUATION * highlightAttenuationFactor,
-        0.05,
-        0.2
-    );
+    const highlightOpacity = clamp(0.2, 0.05, 0.2);
 
     const thumbOpacity = isHovered ? 0.88 : 0.78;
     const thumbBrightness = isDragging ? 1.03 : 1;

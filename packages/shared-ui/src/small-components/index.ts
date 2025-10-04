@@ -48,5 +48,5 @@ export * from './SkeletonPostItem';
 export * from './StatusManager';
 export * from './Tooltip';
 export * from './GifPlayer';
-// export * from './PatchedFlashList';
+export * from './PatchedFlashList';
 export * from './ErrorFallback';

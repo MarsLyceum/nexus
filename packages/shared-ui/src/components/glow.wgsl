@@ -18,14 +18,14 @@ fn vs(@builtin(vertex_index) vi: u32) -> VSOut {
 
 // 64-byte uniform block; keep fields aligned to 16 bytes
 struct Uniforms {
-    time: f32,          // seconds
-    opacity: f32,       // 0..1
-    widthPx: f32,       // canvas width in px
-    heightPx: f32,      // canvas height in px
-    radiusPx: f32,      // corner radius in px
-    padPx: f32,         // glow padding outside rect in px
-    minI: f32,          // min intensity (CSS ~0.28)
-    maxI: f32,          // max intensity (CSS ~0.90)
+    time: f32,             // seconds
+    opacity: f32,          // css opacity multiplier * component opacity
+    widthPx: f32,          // canvas width in px
+    heightPx: f32,         // canvas height in px
+    radiusPx: f32,         // corner radius in px
+    padPx: f32,            // glow padding outside rect in px
+    shadowOpacity: f32,    // css shadow opacity value
+    brightness: f32,       // css brightness multiplier
     colorAndRim: vec4<f32>,   // rgb + rim boost
     focalAndParams: vec4<f32>, // focal.xy, haloSpreadPx, noiseMix
 };
@@ -63,9 +63,8 @@ fn fs(in_: VSOut) -> @location(0) vec4<f32> {
     let t2 = gaussian(outside, 36.0);
     let t3 = gaussian(outside, 64.0);
 
-  // Animate intensity between min/max similar to CSS keyframes
-    let primary = 0.5 * (1.0 + sin(U.time * (6.2831853 / 4.2)));
-    let intensity = mix(U.minI, U.maxI, primary);
+  // Animate intensity driven directly by css shadow opacity track
+    let intensity = U.shadowOpacity;
 
     let softness = max(12.0, U.padPx * 0.35);
     let nearEdge = 1.0 - smoothstep(0.0, softness, outside);
@@ -73,7 +72,8 @@ fn fs(in_: VSOut) -> @location(0) vec4<f32> {
     let outerMask = 1.0 - smoothstep(-softness, softness * 0.6, outerDistance);
     let distanceFalloff = exp(-outside / max(36.0, U.padPx * 0.9));
     let mask = saturate(nearEdge * outerMask * distanceFalloff);
-    let halo = 1.1 * t3 + 0.7 * t2 + 0.35 * t1;
+    let haloWeights = vec3<f32>(1.1, 0.7, 0.35);
+    let halo = dot(haloWeights, vec3<f32>(t3, t2, t1)) / (haloWeights.x + haloWeights.y + haloWeights.z);
     let rimWidth = max(4.0, U.focalAndParams.z);
     let rim = pow(saturate(1.0 - outside / rimWidth), U.colorAndRim.w);
     let focusUv = U.focalAndParams.xy;
@@ -87,6 +87,7 @@ fn fs(in_: VSOut) -> @location(0) vec4<f32> {
     let n = (hash(uv * 1024.0 + vec2<f32>(U.time, U.time)) - 0.5) * noiseAmp;
     g = max(0.0, g + n * saturate(g * 8.0));
 
-    let c = U.colorAndRim.xyz * (g * U.opacity);
-    return vec4<f32>(c, saturate(g * U.opacity));
+    let colorScale = g * U.opacity;
+    let c = U.colorAndRim.xyz * (colorScale * U.brightness);
+    return vec4<f32>(c, saturate(colorScale));
 }

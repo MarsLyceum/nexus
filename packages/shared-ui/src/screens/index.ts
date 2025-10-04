@@ -1,5 +1,5 @@
 export * from './AddFriendsScreen';
-// export * from './ChatScreen';
+export * from './ChatScreen';
 export * from './CreateCommentScreen';
 export * from './CreateGroupModalScreen';
 export * from './DMListScreen';

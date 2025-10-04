@@ -11,7 +11,7 @@ import {
     Pressable,
 } from 'react-native';
 
-import { Theme, useTheme } from '../theme';
+import { Theme, useTheme, themesByCategory } from '../theme';
 import { BorderRadius, Spacing, Typography } from '../constants/designSystem';
 import { useScreenWidth } from '../hooks/useScreenWidth';
 import { toRgba } from '../utils';
@@ -268,7 +268,7 @@ const ThemePreview: React.FC<ThemePreviewProps> = React.memo(
             () => createStyles(activeThemeContext),
             [activeThemeContext]
         );
-        const { webAnimationStyle, createNativeShadowStyle } = useAnimatedGlow(
+        const { webAnimation, createNativeShadowStyle } = useAnimatedGlow(
             0.08,
             0.28,
             2500
@@ -284,7 +284,7 @@ const ThemePreview: React.FC<ThemePreviewProps> = React.memo(
             };
 
             if (Platform.OS === 'web' && isActive) {
-                return [baseStyle, webAnimationStyle];
+                return [baseStyle, webAnimation.style];
             }
             if (isActive) {
                 return [
@@ -307,7 +307,10 @@ const ThemePreview: React.FC<ThemePreviewProps> = React.memo(
                 ]}
             >
                 {isActive && (
-                    <GlowKeyframes color={activeThemeContext.colors.Primary} />
+                    <GlowKeyframes
+                        color={activeThemeContext.colors.Primary}
+                        focal={{ x: 0.5, y: 0.4 }}
+                    />
                 )}
                 <WrapperComponent style={wrapperStyle}>
                     <TouchableOpacity
@@ -759,10 +762,7 @@ export const ThemeScreen: React.FC = () => {
             showsVerticalScrollIndicator={false}
             nativeID="theme-screen-scroll"
         >
-            <ScrollbarStyles
-                targetSelector="#theme-screen-scroll"
-                thickness={10}
-            />
+            <ScrollbarStyles targetSelector="#theme-screen-scroll" />
 
             <View style={styles.headerBlock}>
                 <Text style={styles.eyebrow}>SETTINGS</Text>

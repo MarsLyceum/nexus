@@ -21,6 +21,7 @@ import {
     SEND_FRIEND_REQUEST,
 } from '../queries';
 import { useTheme, Theme } from '../theme';
+import { Spacing, Typography, BorderRadius } from '../constants/designSystem';
 
 export const AddFriendsScreen = () => {
     // State for the text input and the actual search query.

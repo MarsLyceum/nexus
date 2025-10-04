@@ -23,6 +23,7 @@ export type MiniModalProps = {
     containerStyle?: object;
     anchorPosition?: { x: number; y: number; width: number; height: number };
     children: React.ReactNode;
+    blockOutsideClicks?: boolean;
     closeOnOutsideClick?: boolean;
     centered?: boolean;
     useRightAnchorAlignment?: boolean;
@@ -42,6 +43,7 @@ export const MiniModal: React.FC<MiniModalProps> = ({
     containerStyle,
     anchorPosition,
     children,
+    blockOutsideClicks = true,
     closeOnOutsideClick = true,
     centered,
     useRightAnchorAlignment = false,
@@ -69,8 +71,10 @@ export const MiniModal: React.FC<MiniModalProps> = ({
     const flattenedContainerStyle = StyleSheet.flatten(containerStyle);
 
     /* -------------------------- outside click ----------------------- */
+    const shouldHandleOutsideClick = blockOutsideClicks && closeOnOutsideClick;
+
     useEffect(() => {
-        if (!visible || !closeOnOutsideClick) return;
+        if (!visible || !shouldHandleOutsideClick) return;
         if (Platform.OS === 'web') {
             const handleOutsideClick = (e: MouseEvent) => {
                 if (
@@ -88,7 +92,7 @@ export const MiniModal: React.FC<MiniModalProps> = ({
             return () =>
                 document.removeEventListener('mousedown', handleOutsideClick);
         }
-    }, [visible, closeOnOutsideClick, onClose]);
+    }, [visible, shouldHandleOutsideClick, onClose]);
 
     if (!visible) return undefined;
 
@@ -345,14 +349,13 @@ export const MiniModal: React.FC<MiniModalProps> = ({
     return (
         <Portal>
             <View
-                pointerEvents={Platform.OS === 'web' ? undefined : 'box-none'}
+                pointerEvents="box-none"
                 style={
                     Platform.OS === 'web'
                         ? {
                               ...StyleSheet.absoluteFillObject,
                               zIndex: 10_001,
                               elevation: 10_001,
-                              pointerEvents: 'box-none',
                           }
                         : StyleSheet.flatten([
                               StyleSheet.absoluteFillObject,
@@ -361,7 +364,7 @@ export const MiniModal: React.FC<MiniModalProps> = ({
                 }
                 // we *don’t* claim the responder—just listen in capture phase
                 onStartShouldSetResponderCapture={(evt) => {
-                    if (closeOnOutsideClick && modalLocation) {
+                    if (shouldHandleOutsideClick && modalLocation) {
                         const { pageX, pageY } = evt.nativeEvent;
                         const { x, y, width, height } = modalLocation;
 
@@ -379,7 +382,9 @@ export const MiniModal: React.FC<MiniModalProps> = ({
                     return false;
                 }}
             >
-                {centered && <View style={styles.modalOverlay} />}
+                {centered && (
+                    <View pointerEvents="none" style={styles.modalOverlay} />
+                )}
                 <View
                     ref={modalRef}
                     style={StyleSheet.flatten([

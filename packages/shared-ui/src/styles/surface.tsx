@@ -1,3 +1,4 @@
+import React from 'react';
 import { Platform, StyleSheet } from 'react-native';
 
 import type { Theme } from '../theme';
@@ -9,6 +10,19 @@ type GlowConfig = {
     intensity?: number;
     offsetY?: number;
 };
+
+const createGlowKeyframes = (color: string) => `
+    @keyframes glow-pulse {
+        0%, 100% {
+            filter: drop-shadow(0 0 8px ${color}55)
+                    drop-shadow(0 0 16px ${color}33);
+        }
+        50% {
+            filter: drop-shadow(0 0 12px ${color}77)
+                    drop-shadow(0 0 24px ${color}44);
+        }
+    }
+`;
 
 export const applyGlow = (
     theme: Theme,
@@ -65,19 +79,6 @@ export const createScrollbarStyles = (
     if (Platform.OS !== 'web') {
         return null;
     }
-
-    const createGlowKeyframes = (color: string) => `
-        @keyframes glow-pulse {
-            0%, 100% {
-                filter: drop-shadow(0 0 8px ${color}55)
-                        drop-shadow(0 0 16px ${color}33);
-            }
-            50% {
-                filter: drop-shadow(0 0 12px ${color}77)
-                        drop-shadow(0 0 24px ${color}44);
-            }
-        }
-    `;
 
     return (
         <style>{`

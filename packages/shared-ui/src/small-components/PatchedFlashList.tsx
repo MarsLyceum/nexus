@@ -8,13 +8,9 @@ import React, {
 } from 'react';
 import { Platform } from 'react-native';
 import { FlashList, FlashListProps } from '@shopify/flash-list';
-
-// keep your eslint-disable if you like
-// eslint-disable-next-line react/display-name
 type PatchedFlashListProps<T> = FlashListProps<T> & {
     estimatedItemSize?: number;
     itemHeights?: Record<string, number>;
-    keyExtractor: (item: T, index: number) => string;
 };
 
 const DEFAULT_ESTIMATED_ITEM_SIZE = 320;
@@ -24,7 +20,6 @@ function PatchedFlashListInner<T>(
     {
         inverted,
         itemHeights,
-        keyExtractor,
         estimatedItemSize,
         ...props
     }: PatchedFlashListProps<T>,
@@ -86,7 +81,6 @@ function PatchedFlashListInner<T>(
             inverted={inverted}
             ref={listRef}
             nativeID="patched-flash-list"
-            keyExtractor={keyExtractor}
             estimatedItemSize={computedEstimatedItemSize}
         />
     );

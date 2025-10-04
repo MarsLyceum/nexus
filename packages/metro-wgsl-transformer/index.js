@@ -14,12 +14,9 @@ const createVirtualFilename = (fileName) => {
 };
 
 const toCommonJsModule = (serializedShader) => `"use strict";
-(() => {
-  const module = { exports: {} };
-  const exports = module.exports;
-  exports.default = ${serializedShader};
-  return module.exports;
-})();`;
+const shaderSource = ${serializedShader};
+exports.__esModule = true;
+exports.default = shaderSource;`;
 
 const transformWgsl = (props) => {
     const { src, filename } = props;

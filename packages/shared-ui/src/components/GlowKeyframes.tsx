@@ -5,12 +5,17 @@ import { createGlowKeyframes } from '../utils';
 
 type GlowKeyframesProps = {
     color: string;
+    focal?: { x: number; y: number };
 };
 
-export const GlowKeyframes: React.FC<GlowKeyframesProps> = ({ color }) => {
+export const GlowKeyframes: React.FC<GlowKeyframesProps> = ({
+    color,
+    focal,
+}) => {
     const keyframes = useMemo(
-        () => (Platform.OS === 'web' ? createGlowKeyframes(color) : ''),
-        [color]
+        () =>
+            Platform.OS === 'web' ? createGlowKeyframes(color, { focal }) : '',
+        [color, focal]
     );
 
     if (Platform.OS !== 'web') {

@@ -45,7 +45,7 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
 }) => {
     const client = useApolloClient();
     const { theme } = useTheme();
-    const { webAnimationStyle, createNativeShadowStyle } = useAnimatedGlow(
+    const { webAnimation, createNativeShadowStyle } = useAnimatedGlow(
         0.08,
         0.28,
         2500
@@ -181,7 +181,7 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
 
     const getWrapperStyle = () => {
         if (Platform.OS === 'web' && selected) {
-            return [styles.selectedConversationItemWrapper, webAnimationStyle];
+            return [styles.selectedConversationItemWrapper, webAnimation.style];
         }
         if (selected) {
             return [
@@ -195,7 +195,12 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
 
     return (
         <>
-            {selected && <GlowKeyframes color={primaryColor} />}
+            {selected && (
+                <GlowKeyframes
+                    color={primaryColor}
+                    focal={{ x: 0.45, y: 0.35 }}
+                />
+            )}
             <WrapperComponent style={wrapperStyle}>
                 <Pressable
                     style={[

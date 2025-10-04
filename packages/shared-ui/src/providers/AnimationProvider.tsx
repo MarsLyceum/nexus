@@ -5,146 +5,266 @@ import React, {
     useMemo,
     useState,
 } from 'react';
-import { hasWebGPU } from '../components/WebGPUGlow';
+import { Platform, View } from 'react-native';
 
-type AnimationDriver = 'css' | 'gpu';
-export type AnimationDriverPreference = AnimationDriver | 'auto';
+import {
+    AnimationScene,
+    buildGlowScene,
+    renderAnimationScene,
+    type SceneRenderLayer,
+    type SceneRenderLayerPlacement,
+} from '../animation/scenes';
+import {
+    AnimationTimelineProvider,
+    createSharedAnimationTimeline,
+} from '../animation/timeline';
 
-type AnimationCapabilities = {
-    readonly gpu: boolean;
+type AnimationProviderProps = {
+    readonly children: React.ReactNode;
+    readonly scene?: AnimationScene;
 };
 
-type AnimationContextValue = {
-    readonly preferredDriver: AnimationDriverPreference;
-    readonly effectiveDriver: AnimationDriver;
-    readonly availableDrivers: ReadonlyArray<AnimationDriver>;
-    readonly capabilities: AnimationCapabilities;
-    readonly selectDriver: (driver: AnimationDriverPreference) => void;
-    readonly reportDriverFailure: (driver: AnimationDriver) => void;
-    readonly reportDriverRecovery: (driver: AnimationDriver) => void;
+type AnimationLayerControls = {
+    readonly visibility: Readonly<Record<string, boolean>>;
+    readonly setVisibility: (layerId: string, visible: boolean) => void;
+    readonly toggleVisibility: (layerId: string) => void;
 };
 
-const AnimationContext = createContext<AnimationContextValue | undefined>(
+const AnimationLayerContext = createContext<AnimationLayerControls | undefined>(
     undefined
 );
 
-const resolveDriver = (
-    preference: AnimationDriverPreference,
-    capabilities: AnimationCapabilities,
-    failedDrivers: ReadonlySet<AnimationDriver>
-): AnimationDriver => {
-    const canUseGpu = capabilities.gpu && !failedDrivers.has('gpu');
-    if (preference === 'css') {
-        return 'css';
-    }
-    if (preference === 'gpu') {
-        return canUseGpu ? 'gpu' : 'css';
-    }
-    return canUseGpu ? 'gpu' : 'css';
-};
-
-const computeCapabilities = (): AnimationCapabilities => ({
-    gpu: hasWebGPU(),
-});
-
-const removeDriver = (
-    drivers: ReadonlySet<AnimationDriver>,
-    driver: AnimationDriver
-) => {
-    if (!drivers.has(driver)) {
-        return drivers;
-    }
-    const next = new Set<AnimationDriver>();
-    drivers.forEach((value) => {
-        if (value !== driver) {
-            next.add(value);
+const setVisibilityReducer =
+    (layerId: string, visible: boolean) => (state: Record<string, boolean>) => {
+        if (visible) {
+            if (state[layerId] === undefined) {
+                return state;
+            }
+            const next = { ...state };
+            delete next[layerId];
+            return next;
         }
-    });
-    return next;
-};
+        if (state[layerId] === visible) {
+            return state;
+        }
+        return { ...state, [layerId]: visible };
+    };
 
-const addDriver = (
-    drivers: ReadonlySet<AnimationDriver>,
-    driver: AnimationDriver
-) => {
-    if (drivers.has(driver)) {
-        return drivers;
-    }
-    const next = new Set<AnimationDriver>(drivers);
-    next.add(driver);
-    return next;
-};
+const toggleVisibilityReducer =
+    (layerId: string) => (state: Record<string, boolean>) => {
+        const current = state[layerId] ?? true;
+        const nextVisible = !current;
+        if (nextVisible) {
+            if (state[layerId] === undefined) {
+                return state;
+            }
+            const next = { ...state };
+            delete next[layerId];
+            return next;
+        }
+        return { ...state, [layerId]: false };
+    };
 
-export const AnimationProvider: React.FC<{
-    readonly children: React.ReactNode;
-    readonly defaultPreference?: AnimationDriverPreference;
-}> = ({ children, defaultPreference = 'auto' }) => {
-    const [preferredDriver, setPreferredDriver] =
-        useState<AnimationDriverPreference>(defaultPreference);
-    const [failedDrivers, setFailedDrivers] = useState<
-        ReadonlySet<AnimationDriver>
-    >(new Set());
+export const AnimationProvider: React.FC<AnimationProviderProps> = ({
+    children,
+    scene,
+}) => {
+    const [visibilityOverrides, updateVisibility] = useState<
+        Record<string, boolean>
+    >({});
 
-    const capabilities = useMemo(() => computeCapabilities(), []);
-
-    const availableDrivers = useMemo(() => {
-        const drivers: AnimationDriver[] = ['css'];
-        return capabilities.gpu ? [...drivers, 'gpu'] : drivers;
-    }, [capabilities.gpu]);
-
-    const effectiveDriver = useMemo(
-        () => resolveDriver(preferredDriver, capabilities, failedDrivers),
-        [preferredDriver, capabilities, failedDrivers]
+    const setLayerVisibility = useCallback(
+        (layerId: string, visible: boolean) => {
+            updateVisibility(setVisibilityReducer(layerId, visible));
+        },
+        []
     );
 
-    const selectDriver = useCallback((driver: AnimationDriverPreference) => {
-        setPreferredDriver(driver);
-        setFailedDrivers((prev) =>
-            driver === 'css' ? prev : removeDriver(prev, 'gpu')
-        );
+    const toggleLayerVisibility = useCallback((layerId: string) => {
+        updateVisibility(toggleVisibilityReducer(layerId));
     }, []);
 
-    const reportDriverFailure = useCallback((driver: AnimationDriver) => {
-        setFailedDrivers((prev) => addDriver(prev, driver));
-    }, []);
-
-    const reportDriverRecovery = useCallback((driver: AnimationDriver) => {
-        setFailedDrivers((prev) => removeDriver(prev, driver));
-    }, []);
-
-    const contextValue = useMemo<AnimationContextValue>(
+    const controls = useMemo<AnimationLayerControls>(
         () => ({
-            preferredDriver,
-            effectiveDriver,
-            availableDrivers,
-            capabilities,
-            selectDriver,
-            reportDriverFailure,
-            reportDriverRecovery,
+            visibility: visibilityOverrides,
+            setVisibility: setLayerVisibility,
+            toggleVisibility: toggleLayerVisibility,
         }),
-        [
-            preferredDriver,
-            effectiveDriver,
-            availableDrivers,
-            capabilities,
-            selectDriver,
-            reportDriverFailure,
-            reportDriverRecovery,
-        ]
+        [setLayerVisibility, toggleLayerVisibility, visibilityOverrides]
+    );
+
+    const fallbackScene = useMemo(
+        () =>
+            buildGlowScene({
+                color: '#ffffff',
+                borderRadius: 0,
+                opacity: 1,
+                animate: true,
+            }),
+        []
+    );
+
+    const effectiveScene = scene ?? fallbackScene;
+    const animationTimeline = useMemo(
+        () => createSharedAnimationTimeline(),
+        []
     );
 
     return (
-        <AnimationContext.Provider value={contextValue}>
-            {children}
-        </AnimationContext.Provider>
+        <AnimationTimelineProvider timeline={animationTimeline}>
+            <AnimationLayerContext.Provider value={controls}>
+                <AnimationSceneLayout
+                    scene={effectiveScene}
+                    visibility={visibilityOverrides}
+                >
+                    {children}
+                </AnimationSceneLayout>
+            </AnimationLayerContext.Provider>
+        </AnimationTimelineProvider>
     );
 };
 
-export const useAnimationDriver = () => {
-    const context = useContext(AnimationContext);
+type AnimationSceneLayoutProps = {
+    readonly scene: AnimationScene;
+    readonly visibility: Readonly<Record<string, boolean>>;
+    readonly children: React.ReactNode;
+};
+
+const AnimationSceneLayout: React.FC<AnimationSceneLayoutProps> = ({
+    scene,
+    visibility,
+    children,
+}) => {
+    const { containerStyle, layers } = renderAnimationScene(scene, {
+        visibility,
+    });
+
+    const backgroundLayers = layers.filter(
+        (layer) => layer.placement === 'background'
+    );
+    const contentLayers = layers.filter(
+        (layer) => layer.placement === 'content'
+    );
+    const foregroundLayers = layers.filter(
+        (layer) => layer.placement === 'foreground'
+    );
+
+    if (Platform.OS !== 'web') {
+        return <View style={containerStyle}>{children}</View>;
+    }
+
+    const backgroundNodes = backgroundLayers.map((layer, index) => (
+        <LayerContainer
+            key={layer.id ?? `animation-layer-background-${index}`}
+            layer={layer}
+        />
+    ));
+    const foregroundNodes = foregroundLayers.map((layer, index) => (
+        <LayerContainer
+            key={layer.id ?? `animation-layer-foreground-${index}`}
+            layer={layer}
+        />
+    ));
+
+    const wrappedChildren = contentLayers.reduceRight<React.ReactNode>(
+        (acc, layer, index) => (
+            <ContentLayerWrapper
+                key={layer.id ?? `animation-layer-content-${index}`}
+                layer={layer}
+                content={acc}
+            />
+        ),
+        children
+    );
+
+    return React.createElement(
+        'div',
+        {
+            style: {
+                display: 'flex',
+                flex: 1,
+                width: '100%',
+                height: '100%',
+                position: 'relative',
+                isolation: 'isolate',
+                ...(containerStyle as Record<string, unknown>),
+            },
+        },
+        ...backgroundNodes,
+        wrappedChildren,
+        ...foregroundNodes
+    );
+};
+
+const layerStyleByPlacement: Record<
+    SceneRenderLayerPlacement,
+    React.CSSProperties
+> = {
+    background: {
+        position: 'absolute',
+        inset: 0,
+        pointerEvents: 'none',
+        zIndex: 0,
+    },
+    content: {
+        position: 'absolute',
+        inset: 0,
+        pointerEvents: 'none',
+        zIndex: 1,
+    },
+    foreground: {
+        position: 'absolute',
+        inset: 0,
+        pointerEvents: 'none',
+        zIndex: 2,
+    },
+};
+
+const LayerContainer: React.FC<{ layer: SceneRenderLayer }> = ({ layer }) => {
+    if (!layer.element) {
+        return null;
+    }
+    const placementStyle = layerStyleByPlacement[layer.placement] ?? {
+        position: 'absolute',
+        inset: 0,
+        pointerEvents: 'none',
+    };
+    return React.createElement(
+        'div',
+        {
+            style: {
+                ...placementStyle,
+            },
+        },
+        layer.element
+    );
+};
+
+const ContentLayerWrapper: React.FC<{
+    layer: SceneRenderLayer;
+    content: React.ReactNode;
+}> = ({ layer, content }) => {
+    if (!layer.element) {
+        return <>{content}</>;
+    }
+    const placementStyle = layerStyleByPlacement.content;
+    return React.createElement(
+        'div',
+        {
+            style: {
+                ...placementStyle,
+            },
+        },
+        layer.element,
+        content
+    );
+};
+
+export const useAnimationLayers = () => {
+    const context = useContext(AnimationLayerContext);
     if (!context) {
         throw new Error(
-            'useAnimationDriver must be used within AnimationProvider'
+            'useAnimationLayers must be used within AnimationProvider'
         );
     }
     return context;

@@ -1,6 +1,16 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform } from 'react-native';
-import GLOW_WGSL from './glow.wgsl';
+import GlowShader from './glow.wgsl';
+import {
+    getGlowCssValues,
+    WEBGPU_GLOW_OUTER_PAD_PX,
+    GLOW_RIM_BOOST,
+    GLOW_RIM_SPREAD,
+    GLOW_RIM_WIDTH_SCALE,
+    GLOW_NOISE_MIX,
+    GLOW_INTENSITY_SCALE,
+} from '../animation/glowSpec';
+import { useAnimationTimeline } from '../animation/timeline';
 
 type WebGPUGlowProps = {
     color: string;
@@ -18,11 +28,6 @@ type WebGPUGlowProps = {
 export const hasWebGPU = (): boolean =>
     typeof navigator !== 'undefined' && 'gpu' in navigator;
 
-export const WEBGPU_GLOW_OUTER_PAD_PX = 144; // extend halo beyond container bounds similar to CSS box-shadow blur
-const GLOW_RIM_BOOST = 3.2;
-const GLOW_RIM_SPREAD = 42;
-const GLOW_NOISE_MIX = 18;
-
 declare global {
     interface Navigator {
         gpu?: GPU;
@@ -30,6 +35,8 @@ declare global {
 }
 
 const clamp01 = (value: number): number => Math.min(1, Math.max(0, value));
+
+const UNIFORM_BUFFER_SIZE_BYTES = 256;
 
 const parseRgb = (hex: string): { r: number; g: number; b: number } => {
     const normalized = hex.trim();
@@ -52,8 +59,197 @@ const parseRgb = (hex: string): { r: number; g: number; b: number } => {
     return { r: 255, g: 255, b: 255 };
 };
 
-const toError = (value: unknown): Error =>
-    value instanceof Error ? value : new Error(String(value));
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+    typeof value === 'object' && value !== null;
+
+const getStringProperty = (record: Record<string, unknown>, key: string) => {
+    const value = record[key];
+    return typeof value === 'string' && value.length > 0 ? value : undefined;
+};
+
+const getProperty = (record: Record<string, unknown>, key: string) =>
+    Object.prototype.hasOwnProperty.call(record, key) ? record[key] : undefined;
+
+const safeJson = (value: unknown) => {
+    try {
+        const serialized = JSON.stringify(value);
+        return typeof serialized === 'string' ? serialized : undefined;
+    } catch {
+        return undefined;
+    }
+};
+
+const WGSL_VALUE_KEYS = [
+    'default',
+    'code',
+    'source',
+    'wgsl',
+    'text',
+    'data',
+    'raw',
+    'contents',
+    'body',
+    'File',
+] as const;
+
+const isArrayBufferView = (value: unknown): value is ArrayBufferView =>
+    typeof value === 'object' && value !== null && ArrayBuffer.isView(value);
+
+let cachedTextDecoder: TextDecoder | undefined;
+const getTextDecoder = () => {
+    if (cachedTextDecoder) {
+        return cachedTextDecoder;
+    }
+    if (typeof TextDecoder === 'undefined') {
+        return undefined;
+    }
+    cachedTextDecoder = new TextDecoder('utf8');
+    return cachedTextDecoder;
+};
+
+const decodeBinaryModule = (
+    value: ArrayBuffer | ArrayBufferView
+): string | undefined => {
+    const decoder = getTextDecoder();
+    if (!decoder) {
+        return undefined;
+    }
+    const view =
+        value instanceof ArrayBuffer
+            ? new Uint8Array(value)
+            : new Uint8Array(value.buffer, value.byteOffset, value.byteLength);
+    return decoder.decode(view);
+};
+
+const resolveNestedModule = (
+    value: unknown,
+    depth = 0,
+    visited?: WeakSet<object>
+): string | undefined => {
+    if (depth > 5) {
+        return undefined;
+    }
+    if (typeof value === 'string' && value.length > 0) {
+        return value;
+    }
+    if (value instanceof ArrayBuffer) {
+        return decodeBinaryModule(value);
+    }
+    if (isArrayBufferView(value)) {
+        return decodeBinaryModule(value);
+    }
+    if (typeof value === 'function') {
+        try {
+            return resolveNestedModule(value(), depth + 1);
+        } catch {
+            return undefined;
+        }
+    }
+    if (isRecord(value)) {
+        const tracking = visited ?? new WeakSet<object>();
+        if (tracking.has(value)) {
+            return undefined;
+        }
+        tracking.add(value);
+        const prioritized = WGSL_VALUE_KEYS.map((key) =>
+            resolveNestedModule(value[key], depth + 1, tracking)
+        ).find((result): result is string => result !== undefined);
+        if (prioritized) {
+            return prioritized;
+        }
+        const additionalKeys = Reflect.ownKeys(value)
+            .filter((key): key is string => typeof key === 'string')
+            .filter(
+                (key) =>
+                    !WGSL_VALUE_KEYS.includes(
+                        key as (typeof WGSL_VALUE_KEYS)[number]
+                    )
+            )
+            .filter((key) => !key.startsWith('_'))
+            .filter((key) => key !== 'url');
+        for (const key of additionalKeys) {
+            const resolved = resolveNestedModule(
+                value[key],
+                depth + 1,
+                tracking
+            );
+            if (resolved) {
+                return resolved;
+            }
+        }
+    }
+    return undefined;
+};
+
+const normalizeRecordError = (record: Record<string, unknown>): Error => {
+    const primaryMessage = [
+        getStringProperty(record, 'message'),
+        getStringProperty(record, 'reason'),
+        getStringProperty(record, 'detail'),
+        getStringProperty(record, 'description'),
+    ].find((value) => value !== undefined);
+    const fallbackMessage = safeJson(record) ?? '[object Object]';
+    const error = new Error(primaryMessage ?? fallbackMessage);
+    const inferredName = getStringProperty(record, 'name');
+    if (inferredName) {
+        error.name = inferredName;
+    }
+    const inferredStack = getStringProperty(record, 'stack');
+    if (inferredStack) {
+        error.stack = inferredStack;
+    }
+    if ('cause' in record) {
+        (error as Error & { cause?: unknown }).cause = (
+            record as {
+                cause?: unknown;
+            }
+        ).cause;
+    }
+    return error;
+};
+
+const toError = (value: unknown): Error => {
+    if (value instanceof Error) {
+        return value;
+    }
+    if (typeof DOMException !== 'undefined' && value instanceof DOMException) {
+        const message = `${value.name}: ${value.message}`;
+        const error = new Error(message);
+        error.name = value.name;
+        error.stack = value.stack;
+        return error;
+    }
+    if (isRecord(value)) {
+        return normalizeRecordError(value);
+    }
+    return new Error(String(value));
+};
+
+const resolveWgslSource = (module: unknown): string => {
+    const resolved = resolveNestedModule(module);
+    if (resolved) {
+        return resolved;
+    }
+    if (typeof module === 'object' && module !== null) {
+        const defaultSource = (module as { default?: unknown }).default;
+        const nested = resolveNestedModule(defaultSource);
+        if (nested) {
+            return nested;
+        }
+    }
+    const metadata = isRecord(module)
+        ? {
+              keys: Object.keys(module),
+              type: module.constructor?.name ?? typeof module,
+          }
+        : { type: typeof module };
+    console.warn('[WebGPUGlow] Unexpected WGSL module shape', metadata);
+    const fallback = String(module);
+    console.warn('[WebGPUGlow] Falling back to stringified WGSL module', {
+        fallback,
+    });
+    return fallback;
+};
 
 export const WebGPUGlow: React.FC<WebGPUGlowProps> = ({
     color,
@@ -64,6 +260,7 @@ export const WebGPUGlow: React.FC<WebGPUGlowProps> = ({
     onFailure,
     onReady,
 }) => {
+    const timeline = useAnimationTimeline();
     const rootRef = useRef<HTMLDivElement | null>(null);
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const [{ width, height, dpr }, setMetrics] = useState({
@@ -90,9 +287,8 @@ export const WebGPUGlow: React.FC<WebGPUGlowProps> = ({
         if (!el) return undefined;
 
         const compute = () => {
-            const rect =
-                el.parentElement?.getBoundingClientRect() ??
-                el.getBoundingClientRect();
+            const parentRect = el.parentElement?.getBoundingClientRect();
+            const rect = parentRect ?? el.getBoundingClientRect();
             const nextDpr = (globalThis as Window & typeof globalThis)
                 .devicePixelRatio
                 ? (globalThis as Window & typeof globalThis).devicePixelRatio
@@ -134,7 +330,6 @@ export const WebGPUGlow: React.FC<WebGPUGlowProps> = ({
             failureNotifiedRef.current = true;
             readyNotifiedRef.current = false;
             setHasInitializationError(true);
-            // eslint-disable-next-line no-console
             console.warn('[WebGPUGlow] WebGPU not supported; overlay disabled');
             onFailure?.(new Error('WebGPU not supported'));
             return undefined;
@@ -142,12 +337,11 @@ export const WebGPUGlow: React.FC<WebGPUGlowProps> = ({
         const { current: canvas } = canvasRef;
         if (!canvas || width <= 0 || height <= 0) return undefined;
 
-        const gpu = navigator.gpu;
+        const { gpu } = navigator;
         if (!gpu) {
             failureNotifiedRef.current = true;
             readyNotifiedRef.current = false;
             setHasInitializationError(true);
-            // eslint-disable-next-line no-console
             console.warn('[WebGPUGlow] navigator.gpu not available');
             onFailure?.(new Error('navigator.gpu not available'));
             return undefined;
@@ -155,7 +349,6 @@ export const WebGPUGlow: React.FC<WebGPUGlowProps> = ({
 
         let animationFrame = 0;
         let cancelled = false;
-        let activeDevice: GPUDevice | null = null;
         let detachUncapturedErrorListener: (() => void) | undefined;
 
         failureNotifiedRef.current = false;
@@ -176,15 +369,20 @@ export const WebGPUGlow: React.FC<WebGPUGlowProps> = ({
 
         const configureCanvas = (
             context: GPUCanvasContext,
-            device: GPUDevice
+            device: GPUDevice,
+            gpuContext: GPU
         ) => {
-            const format = navigator.gpu.getPreferredCanvasFormat();
+            const preferredFormat = gpuContext.getPreferredCanvasFormat();
             canvas.width = Math.max(1, Math.floor(width * dpr));
             canvas.height = Math.max(1, Math.floor(height * dpr));
             canvas.style.width = `${width}px`;
             canvas.style.height = `${height}px`;
-            context.configure({ device, format, alphaMode: 'premultiplied' });
-            return format;
+            context.configure({
+                device,
+                format: preferredFormat,
+                alphaMode: 'premultiplied',
+            });
+            return preferredFormat;
         };
 
         const writeUniforms = (
@@ -192,27 +390,31 @@ export const WebGPUGlow: React.FC<WebGPUGlowProps> = ({
             buffer: GPUBuffer,
             timeSeconds: number
         ) => {
-            const minI = 0.28;
-            const maxI = 0.9;
+            const glowValues = getGlowCssValues(timeSeconds);
+            const currentOpacity = glowValues.opacity;
+            const effectiveOpacity =
+                opacity * GLOW_INTENSITY_SCALE * currentOpacity;
+            const currentShadow = glowValues.shadowOpacity;
+            const currentBrightness = glowValues.brightness;
             const uniforms = new Float32Array([
                 timeSeconds,
-                opacity,
+                effectiveOpacity,
                 width * dpr,
                 height * dpr,
-                borderRadius,
+                borderRadius * dpr,
                 WEBGPU_GLOW_OUTER_PAD_PX * dpr,
-                minI,
-                maxI,
+                currentShadow,
+                currentBrightness,
                 rgb.r / 255,
                 rgb.g / 255,
                 rgb.b / 255,
                 GLOW_RIM_BOOST,
                 normalizedFocal.x,
                 normalizedFocal.y,
-                GLOW_RIM_SPREAD * dpr,
+                GLOW_RIM_SPREAD * GLOW_RIM_WIDTH_SCALE * dpr,
                 GLOW_NOISE_MIX,
             ]);
-            device.queue.writeBuffer(buffer, 0, uniforms.buffer);
+            device.queue.writeBuffer(buffer, 0, uniforms);
         };
 
         const renderFrame = (
@@ -220,55 +422,42 @@ export const WebGPUGlow: React.FC<WebGPUGlowProps> = ({
             device: GPUDevice,
             pipeline: GPURenderPipeline,
             bindGroup: GPUBindGroup,
-            uniformBuffer: GPUBuffer,
-            startTime: number
+            uniformBuffer: GPUBuffer
         ) => {
             if (cancelled || failureNotifiedRef.current) {
                 return;
             }
-            try {
-                const now = performance.now();
-                const elapsed = animate ? (now - startTime) / 1000 : 0;
-                writeUniforms(device, uniformBuffer, elapsed);
-                const textureView = context.getCurrentTexture().createView();
-                const encoder = device.createCommandEncoder();
-                const pass = encoder.beginRenderPass({
-                    colorAttachments: [
-                        {
-                            view: textureView,
-                            loadOp: 'clear',
-                            clearValue: { r: 0, g: 0, b: 0, a: 0 },
-                            storeOp: 'store',
-                        },
-                    ],
-                });
-                pass.setPipeline(pipeline);
-                pass.setBindGroup(0, bindGroup);
-                pass.draw(6, 1, 0, 0);
-                pass.end();
-                device.queue.submit([encoder.finish()]);
-                if (!readyNotifiedRef.current) {
-                    readyNotifiedRef.current = true;
-                    onReady?.();
-                }
-                animationFrame = requestAnimationFrame(() =>
-                    renderFrame(
-                        context,
-                        device,
-                        pipeline,
-                        bindGroup,
-                        uniformBuffer,
-                        startTime
-                    )
-                );
-            } catch (cause) {
-                fail(cause);
+            const elapsed = animate ? timeline.getTimeSeconds() : 0;
+            writeUniforms(device, uniformBuffer, elapsed);
+            const textureView = context.getCurrentTexture().createView();
+            const encoder = device.createCommandEncoder();
+            const pass = encoder.beginRenderPass({
+                colorAttachments: [
+                    {
+                        view: textureView,
+                        loadOp: 'clear',
+                        clearValue: { r: 0, g: 0, b: 0, a: 0 },
+                        storeOp: 'store',
+                    },
+                ],
+            });
+            pass.setPipeline(pipeline);
+            pass.setBindGroup(0, bindGroup);
+            pass.draw(6, 1, 0, 0);
+            pass.end();
+            device.queue.submit([encoder.finish()]);
+            if (!readyNotifiedRef.current) {
+                readyNotifiedRef.current = true;
+                onReady?.();
             }
+            animationFrame = requestAnimationFrame(() =>
+                renderFrame(context, device, pipeline, bindGroup, uniformBuffer)
+            );
         };
 
-        const initialize = async () => {
+        const initialize = async (currentGpu: GPU) => {
             try {
-                const adapter = await gpu.requestAdapter();
+                const adapter = await currentGpu.requestAdapter();
                 if (!adapter) {
                     fail(new Error('WebGPU adapter unavailable'));
                     return;
@@ -278,9 +467,19 @@ export const WebGPUGlow: React.FC<WebGPUGlowProps> = ({
                     device.destroy?.();
                     return;
                 }
-                activeDevice = device;
-                const onUncapturedError = (event: GPUUncapturedErrorEvent) => {
-                    fail(event.error ?? new Error('Uncaptured GPU error'));
+                const onUncapturedError: EventListener = (event) => {
+                    const maybeError = isRecord(event)
+                        ? getProperty(event, 'error')
+                        : undefined;
+                    if (maybeError instanceof Error) {
+                        fail(maybeError);
+                        return;
+                    }
+                    const message =
+                        typeof maybeError === 'string'
+                            ? maybeError
+                            : 'Uncaptured GPU error';
+                    fail(new Error(message));
                 };
                 device.addEventListener('uncapturederror', onUncapturedError);
                 detachUncapturedErrorListener = () => {
@@ -292,24 +491,29 @@ export const WebGPUGlow: React.FC<WebGPUGlowProps> = ({
                 void device.lost
                     .then((info) => {
                         if (info.reason === 'destroyed' || cancelled) {
-                            return;
+                            return null;
                         }
-                        fail(
-                            new Error(
-                                info.message ??
-                                    `WebGPU device lost (${info.reason ?? 'unknown'})`
-                            )
-                        );
+                        const message =
+                            info.message ??
+                            `WebGPU device lost (${info.reason ?? 'unknown'})`;
+                        fail(new Error(message));
+                        return null;
                     })
-                    .catch(fail);
+                    .catch((error) => {
+                        fail(error);
+                        return null;
+                    });
 
                 const context = canvas.getContext('webgpu');
                 if (!context) {
                     fail(new Error('webgpu canvas context unavailable'));
                     return;
                 }
-                const format = configureCanvas(context, device);
-                const shader = device.createShaderModule({ code: GLOW_WGSL });
+                const format = configureCanvas(context, device, currentGpu);
+                const shaderSource = resolveWgslSource(GlowShader);
+                const shader = device.createShaderModule({
+                    code: shaderSource,
+                });
                 const pipeline = device.createRenderPipeline({
                     layout: 'auto',
                     vertex: { module: shader, entryPoint: 'vs' },
@@ -338,36 +542,39 @@ export const WebGPUGlow: React.FC<WebGPUGlowProps> = ({
                 });
 
                 const uniformBuffer = device.createBuffer({
-                    size: 64,
+                    size: UNIFORM_BUFFER_SIZE_BYTES,
                     usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
                 });
                 const bindGroup = device.createBindGroup({
                     layout: pipeline.getBindGroupLayout(0),
                     entries: [
-                        { binding: 0, resource: { buffer: uniformBuffer } },
+                        {
+                            binding: 0,
+                            resource: {
+                                buffer: uniformBuffer,
+                                size: UNIFORM_BUFFER_SIZE_BYTES,
+                            },
+                        },
                     ],
                 });
-                const startTime = performance.now();
                 renderFrame(
                     context,
                     device,
                     pipeline,
                     bindGroup,
-                    uniformBuffer,
-                    startTime
+                    uniformBuffer
                 );
-            } catch (cause) {
-                fail(cause);
+            } catch (error) {
+                fail(error);
             }
         };
 
-        void initialize();
+        void initialize(gpu);
 
         return () => {
             cancelled = true;
             if (animationFrame) cancelAnimationFrame(animationFrame);
             detachUncapturedErrorListener?.();
-            activeDevice = null;
             readyNotifiedRef.current = false;
         };
     }, [
@@ -383,6 +590,7 @@ export const WebGPUGlow: React.FC<WebGPUGlowProps> = ({
         hasInitializationError,
         onFailure,
         onReady,
+        timeline,
     ]);
 
     if (Platform.OS !== 'web') {

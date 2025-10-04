@@ -22,6 +22,7 @@ import { Portal } from '../providers';
 import { useTheme, Theme } from '../theme';
 import { useIsComputer } from '../hooks';
 import { toRgba, getShadowStyle } from '../utils';
+import { resolveHoverBounds, measureNativeView } from '../utils/hoverBounds';
 import {
     Spacing,
     BorderRadius,
@@ -61,6 +62,7 @@ export const Tooltip = ({
     const verticalMargin = Spacing.SM;
 
     const triggerWrapperRef = useRef<RNView>(null);
+    const fallbackRectRef = useRef<DOMRect | null>(null);
 
     const measureTrigger = useCallback(() => {
         if (triggerWrapperRef.current) {
@@ -80,6 +82,7 @@ export const Tooltip = ({
         onLeave: () => {
             setTriggerPos(undefined);
         },
+        suppressNestedTracking: true,
     });
 
     useEffect(() => {
@@ -87,20 +90,35 @@ export const Tooltip = ({
             return undefined;
         }
 
-        registerBounds(() => {
-            if (Platform.OS !== 'web' || !triggerWrapperRef.current) {
-                return undefined;
-            }
-            const element = triggerWrapperRef.current as unknown as Element;
-            return element.getBoundingClientRect();
+        measureNativeView(triggerWrapperRef, (rect) => {
+            fallbackRectRef.current = rect;
         });
 
+        registerBounds(
+            () =>
+                resolveHoverBounds({
+                    viewRef: triggerWrapperRef,
+                    fallbackRectRef,
+                }) ??
+                fallbackRectRef.current ??
+                undefined
+        );
+
         return undefined;
-    }, [isComputer, registerBounds]);
+    }, [fallbackRectRef, isComputer, registerBounds]);
 
     const triggerProps = {
         onMouseEnter: hoverHandlers.onPointerEnter,
-        onMouseLeave: hoverHandlers.onPointerLeave,
+        onMouseLeave: (event: MouseEvent<HTMLDivElement>) =>
+            hoverHandlers.onPointerLeave({
+                clientX: event.clientX,
+                clientY: event.clientY,
+                rect: event.currentTarget.getBoundingClientRect(),
+                containsRelated:
+                    event.relatedTarget instanceof Element
+                        ? event.currentTarget.contains(event.relatedTarget)
+                        : undefined,
+            }),
     };
 
     const onBubbleLayout = (e: LayoutChangeEvent) => {

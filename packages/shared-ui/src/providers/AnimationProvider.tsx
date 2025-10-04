@@ -8,12 +8,12 @@ import React, {
 import { Platform, View } from 'react-native';
 
 import {
-    AnimationScene,
-    buildGlowScene,
-    renderAnimationScene,
+    type Scene,
     type SceneRenderLayer,
     type SceneRenderLayerPlacement,
-} from '../animation/scenes';
+} from '../animation/sceneSystem';
+import { useSceneRenderer } from '../animation/sceneRenderer';
+import { buildGlowScene, type GlowSceneState } from '../effects/glow/GlowScene';
 import {
     AnimationTimelineProvider,
     createSharedAnimationTimeline,
@@ -21,7 +21,7 @@ import {
 
 type AnimationProviderProps = {
     readonly children: React.ReactNode;
-    readonly scene?: AnimationScene;
+    readonly scene?: Scene<GlowSceneState>;
 };
 
 type AnimationLayerControls = {
@@ -44,20 +44,16 @@ const setVisibilityReducer =
             delete next[layerId];
             return next;
         }
-        if (state[layerId] === visible) {
+        if (state[layerId] === false) {
             return state;
         }
-        return { ...state, [layerId]: visible };
+        return { ...state, [layerId]: false };
     };
 
 const toggleVisibilityReducer =
     (layerId: string) => (state: Record<string, boolean>) => {
         const current = state[layerId] ?? true;
-        const nextVisible = !current;
-        if (nextVisible) {
-            if (state[layerId] === undefined) {
-                return state;
-            }
+        if (current === false) {
             const next = { ...state };
             delete next[layerId];
             return next;
@@ -125,7 +121,7 @@ export const AnimationProvider: React.FC<AnimationProviderProps> = ({
 };
 
 type AnimationSceneLayoutProps = {
-    readonly scene: AnimationScene;
+    readonly scene: Scene<GlowSceneState>;
     readonly visibility: Readonly<Record<string, boolean>>;
     readonly children: React.ReactNode;
 };
@@ -135,7 +131,7 @@ const AnimationSceneLayout: React.FC<AnimationSceneLayoutProps> = ({
     visibility,
     children,
 }) => {
-    const { containerStyle, layers } = renderAnimationScene(scene, {
+    const { containerStyle, layers } = useSceneRenderer(scene, {
         visibility,
     });
 
@@ -187,7 +183,7 @@ const AnimationSceneLayout: React.FC<AnimationSceneLayoutProps> = ({
                 height: '100%',
                 position: 'relative',
                 isolation: 'isolate',
-                ...(containerStyle as Record<string, unknown>),
+                ...containerStyle,
             },
         },
         ...backgroundNodes,

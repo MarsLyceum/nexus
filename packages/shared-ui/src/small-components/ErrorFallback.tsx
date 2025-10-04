@@ -28,16 +28,14 @@ import {
     Typography,
 } from '../constants/designSystem';
 import { useThemedScrollbars, NexusScrollView } from '../styles';
-import {
-    buildGlowScene,
-    renderAnimationScene,
-    type SceneRenderLayer,
-} from '../animation/scenes';
+import { buildGlowScene, type GlowSceneState } from '../effects/glow/GlowScene';
+import { useSceneRenderer } from '../animation/sceneRenderer';
 import {
     AnimationProvider,
     useAnimationLayers,
 } from '../providers/AnimationProvider';
-import { hasWebGPU, hasWebGL } from '../components/WebGPUGlow';
+import { hasWebGPU, hasWebGL } from '../effects/glow';
+import { SceneRenderLayer } from '../animation/sceneSystem';
 
 type ErrorFallbackProps = {
     error: Error;
@@ -273,7 +271,7 @@ const useGlowBackends = (glowScene: ReturnType<typeof buildGlowScene>) => {
         debug('availability:update', availability);
     }, [availability, debug]);
 
-    const { containerStyle, layers, status } = renderAnimationScene(
+    const { containerStyle, layers, status } = useSceneRenderer<GlowSceneState>(
         glowScene,
         isWeb
             ? {
@@ -382,6 +380,24 @@ const ErrorFallbackInner: React.FC<
         status,
         isWeb,
     } = useGlowBackends(glowScene);
+
+    useEffect(() => {
+        console.log('[ErrorFallback] scene renderer result', {
+            isWeb,
+            status,
+            preferredBackend,
+            activeBackend,
+            overlayLayerIds: overlayLayers.map((layer) => layer.id),
+            availability,
+        });
+    }, [
+        activeBackend,
+        availability,
+        isWeb,
+        overlayLayers,
+        preferredBackend,
+        status,
+    ]);
     const { width, height } = useWindowDimensions();
     const { ScrollbarStyles } = useThemedScrollbars();
     const { createNativeShadowStyle } = useAnimatedGlow(0.2, 0.5, 3000);

@@ -1,6 +1,11 @@
 import { useMemo } from 'react';
 
-import { renderAnimationScene } from './scenes';
+import { useSceneRenderer } from './sceneRenderer';
 
 export const useAnimationManager = () =>
-    useMemo(() => ({ render: renderAnimationScene }), []);
+    useMemo(
+        () => ({
+            render: useSceneRenderer,
+        }),
+        []
+    );

@@ -21,7 +21,7 @@ import {
     sameFontFamily,
     type FontFamily,
 } from '../constants/fonts';
-import { GlowKeyframes } from '../components/GlowKeyframes';
+import { GlowKeyframes } from '../effects/glow';
 import { useAnimatedGlow } from '../hooks/useAnimatedGlow';
 
 const createStyles = (theme: Theme) =>

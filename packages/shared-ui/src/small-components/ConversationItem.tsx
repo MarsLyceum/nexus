@@ -13,7 +13,7 @@ import { useQuery, useApolloClient } from '@apollo/client';
 import { useTheme, Theme } from '../theme';
 import { toRgba, getOnlineStatusDotColor } from '../utils';
 import { useAnimatedGlow } from '../hooks';
-import { GlowKeyframes } from '../components/GlowKeyframes';
+import { GlowKeyframes } from '../effects/glow';
 import { FETCH_USER_QUERY } from '../queries';
 import { UserType } from '../redux';
 import { Conversation } from '../types';

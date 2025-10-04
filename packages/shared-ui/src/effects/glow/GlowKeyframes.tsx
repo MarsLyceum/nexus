@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Platform } from 'react-native';
 
-import { createGlowKeyframes } from '../utils';
+import { createGlowKeyframes } from '../../utils';
 
 type GlowKeyframesProps = {
     color: string;

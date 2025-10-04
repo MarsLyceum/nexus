@@ -38,17 +38,17 @@ module.exports = async function (env, argv) {
         const oneOfRule = config.module.rules.find((rule) =>
             Array.isArray(rule.oneOf)
         );
-        const wgslRule = {
-            test: /\.wgsl$/i,
+        const shaderRule = {
+            test: /\.(wgsl|glsl)$/i,
             type: 'asset/source',
         };
-        console.log('WGSL rule location uses oneOf:', Boolean(oneOfRule));
+        console.log('Shader rule location uses oneOf:', Boolean(oneOfRule));
         if (oneOfRule) {
-            oneOfRule.oneOf.unshift(wgslRule);
+            oneOfRule.oneOf.unshift(shaderRule);
         }
-        config.module.rules.unshift(wgslRule);
+        config.module.rules.unshift(shaderRule);
         config.resolve.extensions = Array.from(
-            new Set([...(config.resolve.extensions || []), '.wgsl'])
+            new Set([...(config.resolve.extensions || []), '.wgsl', '.glsl'])
         );
     }
 

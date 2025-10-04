@@ -1,5 +1,5 @@
 {
-    "name": "metro-wgsl-transformer",
+    "name": "metro-shader-transformer",
     "version": "0.1.0",
     "private": true,
     "main": "index.js",

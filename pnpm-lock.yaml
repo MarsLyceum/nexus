@@ -813,9 +813,9 @@ importers:
       metro-react-native-babel-preset:
         specifier: ^0.77.0
         version: 0.77.0(@babel/core@7.27.1)
-      metro-wgsl-transformer:
+      metro-shader-transformer:
         specifier: workspace:^0.1.0
-        version: link:../../packages/metro-wgsl-transformer
+        version: link:../../packages/metro-shader-transformer
       next:
         specifier: ^15.2.4
         version: 15.2.4(@babel/core@7.27.1)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
@@ -1115,7 +1115,7 @@ importers:
         specifier: ^5.8.3
         version: 5.8.3
 
-  packages/metro-wgsl-transformer: {}
+  packages/metro-shader-transformer: {}
 
   packages/shared-ui:
     dependencies:

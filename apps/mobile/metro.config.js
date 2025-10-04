@@ -8,12 +8,14 @@ const workspaceRoot = path.resolve(projectRoot, '../../');
 
 const config = getDefaultConfig(projectRoot);
 const { assetExts, sourceExts } = config.resolver;
-config.resolver.assetExts = assetExts.filter((ext) => ext !== 'wgsl');
-config.resolver.sourceExts = [...sourceExts, 'wgsl'];
+config.resolver.assetExts = assetExts.filter(
+    (ext) => ext !== 'wgsl' && ext !== 'glsl'
+);
+config.resolver.sourceExts = [...new Set([...sourceExts, 'wgsl', 'glsl'])];
 
 config.transformer = {
     ...config.transformer,
-    babelTransformerPath: require.resolve('metro-wgsl-transformer'),
+    babelTransformerPath: require.resolve('metro-shader-transformer'),
 };
 
 // Watch the entire monorepo.

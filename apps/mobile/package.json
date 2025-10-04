@@ -125,7 +125,7 @@
         "metro": "^0.82.3",
         "metro-config": "^0.82.3",
         "metro-react-native-babel-preset": "^0.77.0",
-        "metro-wgsl-transformer": "workspace:^0.1.0",
+        "metro-shader-transformer": "workspace:^0.1.0",
         "next": "^15.2.4",
         "pako": "^2.1.0",
         "prettier": "3.2.5",

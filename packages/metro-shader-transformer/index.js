@@ -4,7 +4,10 @@ const upstreamTransformer = require('metro-babel-transformer');
 
 const stripQuery = (fileName) => fileName.split('?')[0];
 
-const isWgslFile = (fileName) => stripQuery(fileName).endsWith('.wgsl');
+const isShaderFile = (fileName) => {
+    const normalized = stripQuery(fileName);
+    return normalized.endsWith('.wgsl') || normalized.endsWith('.glsl');
+};
 
 const normalizeFilename = (fileName) => stripQuery(fileName);
 
@@ -18,11 +21,11 @@ const shaderSource = ${serializedShader};
 exports.__esModule = true;
 exports.default = shaderSource;`;
 
-const transformWgsl = (props) => {
+const transformShader = (props) => {
     const { src, filename } = props;
     const virtualFilename = createVirtualFilename(filename);
     console.log(
-        `[metro-wgsl-transformer] transforming ${filename} -> ${virtualFilename}`
+        `[metro-shader-transformer] transforming ${filename} -> ${virtualFilename}`
     );
     const payload = JSON.stringify(String(src));
     const code = toCommonJsModule(payload);
@@ -35,6 +38,6 @@ const transformWgsl = (props) => {
 };
 
 module.exports.transform = (props) =>
-    isWgslFile(props.filename)
-        ? transformWgsl(props)
+    isShaderFile(props.filename)
+        ? transformShader(props)
         : upstreamTransformer.transform(props);

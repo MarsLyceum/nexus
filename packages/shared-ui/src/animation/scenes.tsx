@@ -2,7 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Platform } from 'react-native';
 
 import { GlowKeyframes } from '../components/GlowKeyframes';
-import { WebGPUGlow, hasWebGPU } from '../components/WebGPUGlow';
+import { hasWebGPU, hasWebGL, WebGPUGlow } from '../components/WebGPUGlow';
+import type { GlowBackendId } from '../components/glowRenderer';
 import { WEBGPU_GLOW_OUTER_PAD_PX } from './glowSpec';
 import { useBreathingGlow } from '../hooks/useBreathingGlow';
 import { useAnimationTimeline } from './timeline';
@@ -59,10 +60,12 @@ export type SceneRenderResult = {
     readonly layers: ReadonlyArray<SceneRenderLayer>;
     readonly containerStyle: Record<string, unknown>;
     readonly status: SceneStatus;
+    readonly activeBackend: GlowBackendId | 'css';
 };
 
 export type SceneRenderOptions = {
     readonly visibility?: Partial<Record<string, boolean>>;
+    readonly preferredBackend?: GlowBackendId | 'auto' | 'css';
 };
 
 const defaultGlowConfig: GlowSceneConfig = {
@@ -92,11 +95,31 @@ const useGlowScene = (
 ): SceneRenderResult => {
     const timeline = useAnimationTimeline();
     const isWeb = Platform.OS === 'web';
-    const canUseGpu = isWeb && hasWebGPU();
+    const [gpuAvailability, setGpuAvailability] = useState({
+        webgpu: false,
+        webgl: false,
+    });
+    const canUseGpu =
+        isWeb && (gpuAvailability.webgpu || gpuAvailability.webgl);
+
+    useEffect(() => {
+        if (!isWeb) {
+            return;
+        }
+        const availability = {
+            webgpu: hasWebGPU(),
+            webgl: hasWebGL(),
+        };
+        setGpuAvailability(availability);
+    }, [isWeb]);
     const [gpuFailed, setGpuFailed] = useState(false);
     const visibility = options?.visibility ?? {};
-    const isGpuVisibilityEnabled = visibility['gpu-glow'] !== false;
-    const shouldAnimateGpu = canUseGpu && !gpuFailed && isGpuVisibilityEnabled;
+    const preferredBackend = options?.preferredBackend ?? 'auto';
+    const wantsCssOnly = preferredBackend === 'css';
+    const isGpuVisibilityEnabled =
+        !wantsCssOnly && visibility['gpu-glow'] !== false;
+    const shouldAnimateGpu =
+        canUseGpu && !gpuFailed && isGpuVisibilityEnabled && !wantsCssOnly;
 
     const [status, setStatus] = useState<SceneStatus>(
         shouldAnimateGpu ? 'pending' : 'ready'
@@ -119,6 +142,9 @@ const useGlowScene = (
         setGpuFailed(false);
     }, [isGpuVisibilityEnabled]);
 
+    const [activeBackend, setActiveBackend] = useState<GlowBackendId | 'css'>(
+        'css'
+    );
     const { intensity } = config;
     const glowIntensity = useBreathingGlow(
         (intensity.min + intensity.max) / 2,
@@ -210,6 +236,7 @@ const useGlowScene = (
                         focal={config.focal}
                         opacity={config.opacity}
                         animate={config.animate}
+                        preferredBackend={preferredBackend}
                         onReady={() => {
                             setStatus('ready');
                             setGpuFailed(false);
@@ -235,6 +262,7 @@ const useGlowScene = (
         config.focal,
         config.opacity,
         isWeb,
+        options?.preferredBackend,
         options?.visibility,
         shouldAnimateGpu,
         showCssGlow,

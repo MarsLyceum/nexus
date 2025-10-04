@@ -82,6 +82,7 @@ export const Opacity = {
     BorderLight: 0.04,
     Overlay: 0.1,
     ElevatedBackdrop: 0.18,
+    FocusOutline: 0.18,
 } as const;
 
 export const LayerDepth = {

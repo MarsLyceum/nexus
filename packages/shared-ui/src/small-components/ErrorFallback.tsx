@@ -1,19 +1,32 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, {
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from 'react';
 import {
     View,
     Text,
     StyleSheet,
     Pressable,
     Platform,
-    Animated,
     useWindowDimensions,
+    Animated,
+    Easing,
+    type PressableStateCallbackType,
 } from 'react-native';
 
 import { useTheme } from '../theme';
-import { toRgba } from '../utils';
+import { lightenColor, toRgba } from '../utils';
 import { useAnimatedGlow } from '../hooks';
 import type { Theme } from '../theme';
-import { BorderRadius, Spacing, Typography } from '../constants/designSystem';
+import {
+    BorderRadius,
+    Opacity,
+    Spacing,
+    Typography,
+} from '../constants/designSystem';
 import { useThemedScrollbars, NexusScrollView } from '../styles';
 import {
     buildGlowScene,
@@ -24,7 +37,7 @@ import {
     AnimationProvider,
     useAnimationLayers,
 } from '../providers/AnimationProvider';
-import { hasWebGPU } from '../components/WebGPUGlow';
+import { hasWebGPU, hasWebGL } from '../components/WebGPUGlow';
 
 type ErrorFallbackProps = {
     error: Error;
@@ -37,6 +50,118 @@ type ParsedStackLine = {
     component: string;
     location: string;
 };
+
+type GlowMode = 'webgpu' | 'webgl' | 'css';
+
+const SEGMENT_HEIGHT = 34;
+const SEGMENT_HORIZONTAL_PADDING = 10;
+const SEGMENT_FADE_DURATION = 160;
+const backendOrder: GlowMode[] = ['webgpu', 'webgl', 'css'];
+const backendLabels: Record<GlowMode, string> = {
+    webgpu: 'WebGPU',
+    webgl: 'WebGL',
+    css: 'CSS',
+};
+const backendIcons: Record<GlowMode, string> = {
+    webgpu: '⛶',
+    webgl: '⬚',
+    css: '{}',
+};
+
+type SegmentState = {
+    readonly hovered: boolean;
+    readonly pressed: boolean;
+    readonly focused: boolean;
+};
+
+type SegmentDescriptor = {
+    readonly mode: GlowMode;
+    readonly label: string;
+    readonly available: boolean;
+    readonly active: boolean;
+    readonly isDisabled: boolean;
+};
+
+const createSegmentDescriptors = (
+    availability: Record<GlowMode, boolean>,
+    activeBackend: GlowMode
+) =>
+    backendOrder.map<SegmentDescriptor>((mode) => ({
+        mode,
+        label: backendLabels[mode],
+        available: availability[mode],
+        active: activeBackend === mode,
+        isDisabled: !availability[mode],
+    }));
+
+const createSegmentBoxStyles = (
+    styles: ReturnType<typeof createStyles>,
+    descriptor: SegmentDescriptor,
+    state: SegmentState,
+    animatedOpacity: Animated.AnimatedInterpolation<number>
+) => [
+    styles.segment,
+    { opacity: animatedOpacity },
+    descriptor.active && styles.segmentActive,
+    descriptor.isDisabled && styles.segmentDisabled,
+    state.hovered && !descriptor.isDisabled && styles.segmentHovered,
+    state.pressed && !descriptor.isDisabled && styles.segmentPressed,
+    state.focused && styles.segmentFocused,
+];
+
+const createSegmentLabelStyles = (
+    styles: ReturnType<typeof createStyles>,
+    descriptor: SegmentDescriptor,
+    state: SegmentState
+) => [
+    styles.segmentLabel,
+    descriptor.active && styles.segmentLabelActive,
+    descriptor.isDisabled && styles.segmentLabelDisabled,
+    state.hovered && !descriptor.isDisabled && styles.segmentLabelHovered,
+    state.pressed && !descriptor.isDisabled && styles.segmentLabelPressed,
+    state.focused && styles.segmentLabelFocused,
+];
+
+const mapSegmentState = (state: PressableStateCallbackType) => ({
+    hovered: Boolean(state.hovered),
+    pressed: Boolean(state.pressed),
+    focused: Boolean(state.focused),
+});
+
+const createSegmentAnimations = (activeBackend: GlowMode) =>
+    backendOrder.reduce<Record<GlowMode, Animated.Value>>(
+        (accumulator, mode) => ({
+            ...accumulator,
+            [mode]: new Animated.Value(mode === activeBackend ? 1 : 0),
+        }),
+        {} as Record<GlowMode, Animated.Value>
+    );
+
+const useSegmentAnimations = (activeBackend: GlowMode) => {
+    const animationRef = useRef<Record<GlowMode, Animated.Value>>();
+    if (!animationRef.current) {
+        animationRef.current = createSegmentAnimations(activeBackend);
+    }
+
+    useEffect(() => {
+        backendOrder.forEach((mode) => {
+            Animated.timing(animationRef.current![mode], {
+                toValue: mode === activeBackend ? 1 : 0,
+                duration: SEGMENT_FADE_DURATION,
+                easing: Easing.out(Easing.quad),
+                useNativeDriver: false,
+            }).start();
+        });
+    }, [activeBackend]);
+
+    return animationRef.current!;
+};
+
+const createOpacity = (value: Animated.Value, active: boolean) =>
+    value.interpolate({
+        inputRange: [0, 1],
+        outputRange: active ? [0.68, 1] : [0.24, 0.8],
+    });
 
 const parseStackLine = (line: string): ParsedStackLine => {
     const atRegex = /^at\s+(.+?)(?:\s+\((.+)\))?$/;
@@ -81,36 +206,82 @@ const createWebDebugLogger = (label: string) => {
     return logValue;
 };
 
-const useGpuLayerVisibility = (
-    glowScene: ReturnType<typeof buildGlowScene>
-) => {
+const useGlowBackends = (glowScene: ReturnType<typeof buildGlowScene>) => {
+    const debug = useMemo(() => createWebDebugLogger('backends'), []);
     const isWeb = Platform.OS === 'web';
-    const platformLabel = isWeb ? 'web' : 'native';
-    const debug = useMemo(
-        () => createWebDebugLogger(platformLabel),
-        [platformLabel]
+    const { visibility, setVisibility } = useAnimationLayers();
+
+    const webgpuAvailable = isWeb && hasWebGPU();
+    const webglAvailable = isWeb && hasWebGL();
+
+    const initialPreference = useMemo<GlowMode>(() => {
+        if (webgpuAvailable) {
+            return 'webgpu';
+        }
+        if (webglAvailable) {
+            return 'webgl';
+        }
+        return 'css';
+    }, [webglAvailable, webgpuAvailable]);
+
+    const [preferredBackend, setPreferredBackend] =
+        useState<GlowMode>(initialPreference);
+
+    useEffect(() => {
+        debug('capabilities:detected', {
+            isWeb,
+            webgpuAvailable,
+            webglAvailable,
+        });
+        setPreferredBackend((current) => {
+            const nextPreferred =
+                current === 'webgpu' && !webgpuAvailable
+                    ? webglAvailable
+                        ? 'webgl'
+                        : 'css'
+                    : current === 'webgl' && !webglAvailable
+                      ? webgpuAvailable
+                          ? 'webgpu'
+                          : 'css'
+                      : current;
+            if (nextPreferred !== current) {
+                debug('preferred-backend:adjust', {
+                    from: current,
+                    to: nextPreferred,
+                    webgpuAvailable,
+                    webglAvailable,
+                });
+            } else {
+                debug('preferred-backend:retain', {
+                    current,
+                });
+            }
+            return nextPreferred;
+        });
+    }, [debug, isWeb, webglAvailable, webgpuAvailable]);
+
+    const availability = useMemo(
+        () => ({
+            webgpu: webgpuAvailable,
+            webgl: webglAvailable,
+            css: true,
+        }),
+        [webglAvailable, webgpuAvailable]
     );
 
-    debug('useGpuLayerVisibility:mount', {
-        platform: Platform.OS,
-    });
-
-    const { visibility, setVisibility } = useAnimationLayers();
+    useEffect(() => {
+        debug('availability:update', availability);
+    }, [availability, debug]);
 
     const { containerStyle, layers, status } = renderAnimationScene(
         glowScene,
         isWeb
             ? {
                   visibility,
+                  preferredBackend,
               }
             : undefined
     );
-
-    const gpuIsSupported = isWeb && hasWebGPU();
-    const supportsGpuGlow = gpuIsSupported && status !== 'failed';
-    const gpuVisibilityOverride = visibility['gpu-glow'];
-    const isGpuVisibilityEnabled = gpuVisibilityOverride !== false;
-    const isGpuGlowActive = supportsGpuGlow && isGpuVisibilityEnabled;
 
     const overlayLayers = useMemo(
         () =>
@@ -120,82 +291,77 @@ const useGpuLayerVisibility = (
         [isWeb, layers]
     );
 
+    const effectiveBackend: GlowMode = useMemo(() => {
+        if (!isWeb) {
+            return 'css';
+        }
+        if (preferredBackend === 'css') {
+            return 'css';
+        }
+        if (!availability[preferredBackend]) {
+            return 'css';
+        }
+        if (status === 'failed') {
+            return 'css';
+        }
+        return preferredBackend;
+    }, [availability, isWeb, preferredBackend, status]);
+
     useEffect(() => {
-        debug('useGpuLayerVisibility:status-update', {
-            supportsGpuGlow,
+        debug('backend:status', {
+            preferredBackend,
+            effectiveBackend,
             status,
-            gpuIsSupported,
         });
-    }, [debug, gpuIsSupported, status, supportsGpuGlow]);
-
-    useEffect(() => {
         if (!isWeb) {
             return;
         }
-        debug('useGpuLayerVisibility:web-overlay-layers', {
-            filteredCount: overlayLayers.length,
-            layerIds: overlayLayers.map((layer) => layer.id),
-            domLayerIds: layers
-                .filter((layer) => layer.type === 'dom')
-                .map((layer) => layer.id),
+        const wantsGpu = effectiveBackend !== 'css';
+        debug('visibility:update', {
+            wantsGpu,
         });
-    }, [debug, isWeb, layers, overlayLayers]);
-
-    useEffect(() => {
-        if (!isWeb) {
-            return;
-        }
-        debug('useGpuLayerVisibility:web-activation-state', {
-            isGpuGlowActive,
-            isGpuVisibilityEnabled,
-            supportsGpuGlow,
-        });
+        setVisibility('gpu-glow', wantsGpu);
+        setVisibility('css-glow', !wantsGpu);
     }, [
         debug,
-        isGpuGlowActive,
-        isGpuVisibilityEnabled,
+        effectiveBackend,
         isWeb,
-        supportsGpuGlow,
-    ]);
-
-    const toggleGpuVisibility = useCallback(() => {
-        if (!supportsGpuGlow || !isWeb) {
-            debug('toggleGpuVisibility:gpu-unavailable', {
-                status,
-                gpuIsSupported,
-            });
-            return;
-        }
-        if (isGpuVisibilityEnabled) {
-            debug('toggleGpuVisibility:disable-gpu', {
-                visibility,
-            });
-            setVisibility('gpu-glow', false);
-            setVisibility('css-glow', true);
-            return;
-        }
-        debug('toggleGpuVisibility:enable-gpu', {
-            visibility,
-        });
-        setVisibility('gpu-glow', true);
-        setVisibility('css-glow', false);
-    }, [
-        debug,
-        gpuIsSupported,
-        isGpuVisibilityEnabled,
-        isWeb,
+        preferredBackend,
         setVisibility,
         status,
-        supportsGpuGlow,
-        visibility,
     ]);
+
+    const setBackend = useCallback(
+        (mode: GlowMode) => {
+            debug('set-backend:requested', {
+                mode,
+                available: availability[mode],
+                currentPreferred: preferredBackend,
+                currentEffective: effectiveBackend,
+            });
+            if (!availability[mode]) {
+                debug('set-backend:rejected', {
+                    mode,
+                });
+                return;
+            }
+            setPreferredBackend(mode);
+            debug('set-backend:applied', {
+                mode,
+            });
+        },
+        [availability, debug, effectiveBackend, preferredBackend]
+    );
 
     return {
         containerStyle,
         overlayLayers,
-        isGpuGlowActive,
-        toggleGpuVisibility,
-        isGpuSupported: supportsGpuGlow,
+        availability,
+        preferredBackend,
+        activeBackend: effectiveBackend,
+        setBackend,
+        status,
+        isWeb,
     };
 };
 
@@ -209,10 +375,13 @@ const ErrorFallbackInner: React.FC<
     const {
         containerStyle,
         overlayLayers,
-        isGpuGlowActive,
-        toggleGpuVisibility,
-        isGpuSupported,
-    } = useGpuLayerVisibility(glowScene);
+        availability,
+        preferredBackend,
+        activeBackend,
+        setBackend,
+        status,
+        isWeb,
+    } = useGlowBackends(glowScene);
     const { width, height } = useWindowDimensions();
     const { ScrollbarStyles } = useThemedScrollbars();
     const { createNativeShadowStyle } = useAnimatedGlow(0.2, 0.5, 3000);
@@ -245,13 +414,95 @@ const ErrorFallbackInner: React.FC<
         onReset?.();
     };
 
-    const handleGpuToggle = () => {
-        debug('handleGpuToggle:invoke', {
-            isGpuSupported,
-            isGpuGlowActive,
-        });
-        toggleGpuVisibility();
-    };
+    const segments = useMemo(
+        () => createSegmentDescriptors(availability, activeBackend),
+        [availability, activeBackend]
+    );
+
+    const segmentAnimations = useSegmentAnimations(activeBackend);
+
+    const segmentsNode = useMemo(() => {
+        if (segments.length === 0) {
+            return null;
+        }
+        return (
+            <View style={baseStyles.segmentGroup}>
+                <View style={baseStyles.segmentBackground}>
+                    {segments.map((descriptor) => (
+                        <Pressable
+                            key={descriptor.mode}
+                            accessibilityRole="button"
+                            accessibilityHint={`Switch glow renderer to ${backendLabels[descriptor.mode]}`}
+                            accessibilityState={{
+                                disabled: descriptor.isDisabled,
+                                selected: descriptor.active,
+                            }}
+                            onPress={() => setBackend(descriptor.mode)}
+                            disabled={descriptor.isDisabled}
+                            style={(pressableState) =>
+                                createSegmentBoxStyles(
+                                    baseStyles,
+                                    descriptor,
+                                    mapSegmentState(pressableState),
+                                    createOpacity(
+                                        segmentAnimations[descriptor.mode],
+                                        descriptor.active
+                                    )
+                                )
+                            }
+                        >
+                            {(pressableState) => (
+                                <Animated.View
+                                    style={[baseStyles.segmentContent]}
+                                >
+                                    <Animated.Text
+                                        style={[
+                                            baseStyles.segmentIcon,
+                                            createSegmentLabelStyles(
+                                                baseStyles,
+                                                descriptor,
+                                                mapSegmentState(pressableState)
+                                            ),
+                                            {
+                                                opacity: createOpacity(
+                                                    segmentAnimations[
+                                                        descriptor.mode
+                                                    ],
+                                                    descriptor.active
+                                                ),
+                                            },
+                                        ]}
+                                    >
+                                        {backendIcons[descriptor.mode]}
+                                    </Animated.Text>
+                                    <Animated.Text
+                                        style={[
+                                            baseStyles.segmentLabel,
+                                            createSegmentLabelStyles(
+                                                baseStyles,
+                                                descriptor,
+                                                mapSegmentState(pressableState)
+                                            ),
+                                            {
+                                                opacity: createOpacity(
+                                                    segmentAnimations[
+                                                        descriptor.mode
+                                                    ],
+                                                    descriptor.active
+                                                ),
+                                            },
+                                        ]}
+                                    >
+                                        {descriptor.label}
+                                    </Animated.Text>
+                                </Animated.View>
+                            )}
+                        </Pressable>
+                    ))}
+                </View>
+            </View>
+        );
+    }, [baseStyles, segments, setBackend, segmentAnimations]);
 
     const cardContent = (
         <View style={[baseStyles.cardBody, responsiveStyles.cardBody]}>
@@ -306,22 +557,7 @@ const ErrorFallbackInner: React.FC<
                 </View>
             )}
             <View style={baseStyles.footer}>
-                {isGpuSupported ? (
-                    <Pressable
-                        onPress={handleGpuToggle}
-                        style={({ pressed }) =>
-                            pressed
-                                ? baseStyles.secondaryButtonPressed
-                                : baseStyles.secondaryButton
-                        }
-                    >
-                        <Text style={baseStyles.secondaryButtonText}>
-                            {isGpuGlowActive
-                                ? 'Switch to CSS Glow'
-                                : 'Switch to WebGPU Glow'}
-                        </Text>
-                    </Pressable>
-                ) : null}
+                {Platform.OS === 'web' ? segmentsNode : null}
                 <Pressable
                     onPress={handleReset}
                     style={({ pressed }) =>
@@ -596,6 +832,7 @@ const createStyles = (theme: Theme) =>
             justifyContent: 'flex-end',
             alignItems: 'center',
             marginTop: Spacing.XXXL,
+            gap: Spacing.MD,
         },
         primaryButton: {
             paddingHorizontal: Spacing.XL,
@@ -646,6 +883,92 @@ const createStyles = (theme: Theme) =>
             color: theme.colors.ActiveText,
             fontFamily:
                 theme.fonts.primary?.semibold ?? theme.fonts.primary?.bold,
+        },
+        segmentGroup: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            height: SEGMENT_HEIGHT,
+            borderRadius: SEGMENT_HEIGHT / 2,
+            borderWidth: 1,
+            borderColor: toRgba(theme.colors.ActiveText, Opacity.BorderMedium),
+            backgroundColor: toRgba(theme.colors.ActiveText, 0.06),
+            padding: 2,
+        },
+        segmentBackground: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            borderRadius: SEGMENT_HEIGHT / 2,
+            paddingHorizontal: 2,
+        },
+        segment: {
+            borderRadius: SEGMENT_HEIGHT / 2,
+            minWidth: 90,
+            paddingHorizontal: SEGMENT_HORIZONTAL_PADDING,
+            height: SEGMENT_HEIGHT - 4,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderWidth: 1,
+            borderColor: toRgba(theme.colors.ActiveText, 0.08),
+            marginHorizontal: 2,
+        },
+        segmentContent: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: Spacing.SM,
+        },
+        segmentIcon: {
+            ...Typography.BodySmall,
+            color: toRgba(theme.colors.ActiveText, 0.55),
+        },
+        segmentActive: {
+            backgroundColor: toRgba(theme.colors.Primary, 0.14),
+            borderColor: toRgba(theme.colors.Primary, 0.45),
+            shadowColor: theme.colors.Primary,
+            shadowOpacity: 0.28,
+            shadowRadius: 10,
+            shadowOffset: { width: 0, height: 1 },
+        },
+        segmentHovered: {
+            borderColor: toRgba(theme.colors.Primary, 0.35),
+        },
+        segmentPressed: {
+            backgroundColor: toRgba(theme.colors.Primary, 0.08),
+        },
+        segmentFocused: {
+            borderColor: toRgba(theme.colors.Primary, 0.5),
+            shadowColor: theme.colors.Primary,
+            shadowOpacity: 0.36,
+            shadowRadius: 8,
+            shadowOffset: { width: 0, height: 0 },
+        },
+        segmentDisabled: {
+            opacity: 0.45,
+        },
+        segmentLabel: {
+            ...Typography.BodySmall,
+            color: toRgba(theme.colors.ActiveText, 0.62),
+            fontFamily:
+                theme.fonts.monospace?.semibold ??
+                theme.fonts.monospace?.bold ??
+                theme.fonts.primary?.semibold ??
+                theme.fonts.primary?.bold,
+            letterSpacing: 0.6,
+        },
+        segmentLabelActive: {
+            color: theme.colors.ActiveText,
+        },
+        segmentLabelHovered: {
+            color: lightenColor(theme.colors.ActiveText, 0.12),
+        },
+        segmentLabelPressed: {
+            color: lightenColor(theme.colors.ActiveText, 0.08),
+        },
+        segmentLabelFocused: {
+            color: theme.colors.ActiveText,
+        },
+        segmentLabelDisabled: {
+            color: toRgba(theme.colors.ActiveText, 0.42),
         },
     });
 

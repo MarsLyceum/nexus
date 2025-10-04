@@ -4,6 +4,7 @@ export * from './computeMediaSize';
 export * from './convertDeltaToMarkdownWithFencesAndFormatting';
 export * from './createApolloClient';
 export * from './detectEnvironment';
+export * from './colors';
 export * from './extractUrls';
 export * from './formatDateForChat';
 export * from './getOnlineStatusDotColor';

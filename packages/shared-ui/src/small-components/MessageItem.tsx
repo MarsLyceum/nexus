@@ -262,8 +262,6 @@ export const MessageItem: React.FC<MessageItemProps> = ({
         isHovering,
         registerBounds,
     } = useStableHover({
-        closeDelayMs: 160,
-        leaveGapMs: 96,
         onEnter: handleHoverEnter,
         onLeave: handleHoverLeave,
         debugLabel: `message-${message.id}`,

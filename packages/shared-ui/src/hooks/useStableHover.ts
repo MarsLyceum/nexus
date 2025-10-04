@@ -14,7 +14,8 @@ type HoverConfig = {
     suppressNestedTracking?: boolean;
 };
 
-const DEFAULT_LEAVE_GAP = 160;
+const DEFAULT_LEAVE_GAP = 0;
+const DEFAULT_CLOSE_DELAY = 0;
 const BOUNDS_POLL_INTERVAL = 100;
 const BOUNDS_FAILURE_LIMIT = 5;
 
@@ -49,7 +50,7 @@ type TimeoutHandle = ReturnType<typeof globalThis.setTimeout>;
 type CloseReason = 'scheduled-timeout' | 'bounds-missing' | 'cleanup';
 
 export const useStableHover = ({
-    closeDelayMs = 200,
+    closeDelayMs = DEFAULT_CLOSE_DELAY,
     leaveGapMs = DEFAULT_LEAVE_GAP,
     onEnter,
     onLeave,

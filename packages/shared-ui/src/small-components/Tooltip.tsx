@@ -77,7 +77,6 @@ export const Tooltip = ({
         isHovering,
         registerBounds,
     } = useStableHover({
-        closeDelayMs: 240,
         onEnter: measureTrigger,
         onLeave: () => {
             setTriggerPos(undefined);

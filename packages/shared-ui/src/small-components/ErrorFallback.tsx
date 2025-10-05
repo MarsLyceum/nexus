@@ -222,11 +222,14 @@ const useGlowBackends = (glowScene: ReturnType<typeof buildGlowScene>) => {
     const webglAvailable = isWeb && hasWebGL();
 
     const initialPreference = useMemo<GlowMode>(() => {
-        if (webgpuAvailable) {
+        if (webgpuAvailable && webglAvailable) {
             return 'webgpu';
         }
         if (webglAvailable) {
             return 'webgl';
+        }
+        if (webgpuAvailable) {
+            return 'webgpu';
         }
         return 'css';
     }, [webglAvailable, webgpuAvailable]);

@@ -198,12 +198,30 @@ export const createEffectScene = <
             () => options?.visibility,
             [options?.visibility]
         );
-        const preferredBackend = options?.preferredBackend ?? 'auto';
-        const wantsCssOnly = preferredBackend === 'css';
-
         const [availability, setAvailability] = useState<EffectAvailability>(
             () => (isWeb ? detectAvailability() : defaultAvailability)
         );
+
+        const preferredBackend = useMemo(() => {
+            if (
+                options?.preferredBackend &&
+                options.preferredBackend !== 'auto'
+            ) {
+                return options.preferredBackend;
+            }
+            if (availability.webgpu) {
+                return 'webgpu';
+            }
+            if (availability.webgl) {
+                return 'webgl';
+            }
+            return options?.preferredBackend ?? 'auto';
+        }, [
+            availability.webgl,
+            availability.webgpu,
+            options?.preferredBackend,
+        ]);
+        const wantsCssOnly = preferredBackend === 'css';
 
         useEffect(() => {
             if (!isWeb) {

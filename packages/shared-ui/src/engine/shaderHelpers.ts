@@ -57,6 +57,11 @@ type WebGpuFrameInput<UniformData> = {
     readonly renderInput: RenderInput<UniformData>;
     readonly uniformEncoder: ShaderUniformEncoder<UniformData>;
     readonly clearValue?: GPUColorDict;
+    readonly debug?: {
+        readonly configurePass?: (pass: GPURenderPassEncoder) => void;
+        readonly afterPass?: (commandEncoder: GPUCommandEncoder) => void;
+        readonly afterSubmit?: () => void;
+    };
 };
 
 export const drawWebGpuFrame = <UniformData>(
@@ -65,6 +70,14 @@ export const drawWebGpuFrame = <UniformData>(
     const canvas = input.context.canvas as HTMLCanvasElement;
     const { metrics } = input.renderInput;
     setCanvasDimensions({ canvas, metrics });
+    if (
+        canvas.width !== Math.max(1, Math.floor(metrics.width * metrics.dpr)) ||
+        canvas.height !== Math.max(1, Math.floor(metrics.height * metrics.dpr))
+    ) {
+        console.warn(
+            `[Glow][WebGPU] Canvas pixel dimensions mismatch width=${metrics.width.toFixed(6)} height=${metrics.height.toFixed(6)} dpr=${metrics.dpr.toFixed(6)} pixelWidth=${canvas.width} pixelHeight=${canvas.height}`
+        );
+    }
 
     const commandEncoder = input.device.createCommandEncoder();
     const passEncoder = commandEncoder.beginRenderPass({
@@ -92,9 +105,12 @@ export const drawWebGpuFrame = <UniformData>(
 
     passEncoder.setPipeline(input.pipeline);
     passEncoder.setBindGroup(0, input.bindGroup);
+    input.debug?.configurePass?.(passEncoder);
     passEncoder.draw(4, 1, 0, 0);
     passEncoder.end();
+    input.debug?.afterPass?.(commandEncoder);
     input.device.queue.submit([commandEncoder.finish()]);
+    input.debug?.afterSubmit?.();
 };
 
 type WebglFrameInput<UniformData> = {

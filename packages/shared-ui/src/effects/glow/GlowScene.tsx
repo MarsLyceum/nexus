@@ -199,6 +199,9 @@ const { buildScene } = createEffectScene<GlowSceneState, GlowDerivedState>({
         css: createCssLayer,
         gpu: createGpuLayer,
     },
+    createSceneOptions: () => ({
+        backendPreference: ['webgpu', 'webgl', 'css'],
+    }),
 });
 
 export type GlowSceneDerived = GlowDerivedState;

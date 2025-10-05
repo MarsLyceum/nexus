@@ -35,11 +35,16 @@ float sdRoundedRect(vec2 p, vec2 b, float r) {
 }
 
 void main() {
-    vec2 p = (vUv - vec2(0.5, 0.5)) * vec2(uWidthPx, uHeightPx);
-    vec2 halfSize = vec2(uWidthPx * 0.5 - uPadPx, uHeightPx * 0.5 - uPadPx);
-    vec2 outerHalf = halfSize + vec2(uPadPx, uPadPx);
+    vec2 outerHalf = vec2(uWidthPx * 0.5, uHeightPx * 0.5);
+    vec2 innerHalf = max(outerHalf - vec2(uPadPx, uPadPx), vec2(0.0, 0.0));
+    vec2 toCenter = vUv - vec2(0.5, 0.5);
+    vec2 pOuter = toCenter * (outerHalf * 2.0);
+    vec2 paddedHalf = outerHalf + vec2(uPadPx, uPadPx);
+    vec2 pWithPad = toCenter * (paddedHalf * 2.0);
+    vec2 nearestOnInner = clamp(pOuter, -innerHalf, innerHalf);
+    vec2 nearestOnPadded = clamp(pWithPad, -paddedHalf, paddedHalf);
 
-    float distanceFromEdge = sdRoundedRect(p, halfSize, uRadiusPx);
+    float distanceFromEdge = sdRoundedRect(pOuter, innerHalf, uRadiusPx);
     if (distanceFromEdge < 0.0) {
         discard;
     }
@@ -51,16 +56,16 @@ void main() {
     float intensity = uShadowOpacity;
     float softness = max(12.0, uPadPx * 0.35);
     float nearEdge = 1.0 - smoothstep(0.0, softness, distanceFromEdge);
-    float outerDistance = sdRoundedRect(p, outerHalf, uRadiusPx + uPadPx);
+    float outerDistance = sdRoundedRect(nearestOnPadded, paddedHalf, uRadiusPx + uPadPx);
     float outerMask = 1.0 - smoothstep(-softness, softness * 0.6, outerDistance);
     float distanceFalloff = exp(-distanceFromEdge / max(36.0, uPadPx * 0.9));
     float mask = saturate(nearEdge * outerMask * distanceFalloff);
-    vec3 haloWeights = vec3(1.1, 0.7, 0.35);
+    vec3 haloWeights = vec3(1.2, 0.9, 0.55);
     float halo = dot(haloWeights, vec3(t3, t2, t1)) / (haloWeights.x + haloWeights.y + haloWeights.z);
-    float rimWidth = max(4.0, uRimSpreadPx);
+    float rimWidth = max(6.0, uRimSpreadPx * 1.1);
     float rim = pow(saturate(1.0 - distanceFromEdge / rimWidth), uRimBoost);
-    vec2 focusPx = (uFocal - vec2(0.5, 0.5)) * vec2(uWidthPx, uHeightPx);
-    float focusWeight = saturate(exp(-length(p - focusPx) / (rimWidth * 1.1)));
+    vec2 focusPx = (uFocal - vec2(0.5, 0.5)) * innerHalf * 2.0;
+    float focusWeight = saturate(exp(-length(nearestOnInner - focusPx) / (rimWidth * 1.1)));
     float glow = intensity * mask * mix(halo, rim, focusWeight);
 
     float noiseAmplitude = uNoiseMix / 255.0;

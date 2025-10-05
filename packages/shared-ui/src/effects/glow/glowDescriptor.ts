@@ -64,10 +64,14 @@ const computeGlowUniforms = (
     const glowValues = getGlowCssValues(timelineTime);
     const effectiveOpacity =
         state.opacity * GLOW_INTENSITY_SCALE * glowValues.opacity;
-    const widthPx = state.width * state.dpr;
-    const heightPx = state.height * state.dpr;
-    const radiusPx = state.borderRadius * state.dpr;
-    const padPx = WEBGPU_GLOW_OUTER_PAD_PX * state.dpr;
+    const outerPad = WEBGPU_GLOW_OUTER_PAD_PX;
+    const padPx = outerPad * state.dpr;
+    const widthPx = Math.max(0, state.width) * state.dpr;
+    const heightPx = Math.max(0, state.height) * state.dpr;
+    const innerWidthPx = Math.max(0, widthPx - padPx * 2);
+    const innerHeightPx = Math.max(0, heightPx - padPx * 2);
+    const maxRadiusPx = 0.5 * Math.min(innerWidthPx, innerHeightPx);
+    const radiusPx = Math.min(state.borderRadius * state.dpr, maxRadiusPx);
     const rgb = normalizeRgb(parseHexColor(state.color));
     return {
         timeSeconds: timelineTime,
@@ -205,6 +209,10 @@ const createGlowBackends = () =>
             uniformEncoder: {
                 encodeUniforms: glowUniformsToFloatArray,
                 uniformBufferSize: UNIFORM_BUFFER_SIZE_BYTES,
+            },
+            debug: {
+                enabled: true,
+                invocationCapacity: 8192,
             },
         },
         webgl: {

@@ -75,6 +75,24 @@ fn sdRoundedRect(p: vec2<f32>, b: vec2<f32>, r: f32) -> f32 {
     return length(max(q, vec2<f32>(0.0, 0.0))) - r;
 }
 
+const DEBUG_SAMPLE_TOLERANCE: f32 = 0.001;
+
+fn shouldLogSample(uv: vec2<f32>, sampleTarget: vec2<f32>, tolerance: f32) -> bool {
+    let delta = abs(uv - sampleTarget);
+    return all(delta < vec2<f32>(tolerance, tolerance));
+}
+
+fn sampleAlongHorizontalAxis(offset: f32, halfExtent: f32) -> f32 {
+    let denominator = max(halfExtent * 2.0, 1.0);
+    return 0.5 + offset / denominator;
+}
+
+fn emitRadiusDebug(uv: vec2<f32>, clampedRadiusPx: f32) {
+    if shouldLogSample(uv, vec2<f32>(0.5, 0.5), DEBUG_SAMPLE_TOLERANCE) {
+        debug_log_radius(clampedRadiusPx);
+    }
+}
+
 @fragment
 fn fs(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
     let uniforms = loadUniforms();
@@ -92,49 +110,56 @@ fn fs(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
     let rimSpreadPx = uniforms.rimSpreadPx;
     let noiseMix = uniforms.noiseMix;
 
-  // Convert to pixel space centered at 0
-    let p = (uv - vec2<f32>(0.5, 0.5)) * vec2<f32>(widthPx, heightPx);
-
-  // Half-extents of inner rectangle (the card shell) in px, subtract padding so glow sits outside
-    let half = vec2<f32>(widthPx * 0.5 - padPx, heightPx * 0.5 - padPx);
-    let outerHalf = half + vec2<f32>(padPx, padPx);
+  // Inner and outer half-extents in px
+    let outerHalf = vec2<f32>(widthPx * 0.5, heightPx * 0.5);
+    let innerHalf = max(outerHalf - vec2<f32>(padPx, padPx), vec2<f32>(0.0, 0.0));
+    let toCenter = uv - vec2<f32>(0.5, 0.5);
+    let pOuter = toCenter * outerHalf * 2.0;
+    let paddedHalf = outerHalf + vec2<f32>(padPx, padPx);
+    let pWithPad = toCenter * paddedHalf * 2.0;
+    let nearestOnInner = clamp(pOuter, -innerHalf, innerHalf);
+    let nearestOnPadded = clamp(pWithPad, -paddedHalf, paddedHalf);
 
   // Distance outside the rounded rect. Negative inside, positive outside
-    let d = sdRoundedRect(p, half, radiusPx);
-    if d < 0.0 {
-        return vec4<f32>(0.0, 0.0, 0.0, 0.0);
+    let limitedRadius = min(radiusPx, min(innerHalf.x, innerHalf.y));
+    let distanceFromEdge = sdRoundedRect(pOuter, innerHalf, limitedRadius);
+    if shouldLogSample(uv, vec2<f32>(0.5, 0.5), DEBUG_SAMPLE_TOLERANCE) {
+        emitRadiusDebug(uv, limitedRadius);
     }
-    let outside = d;
+    if distanceFromEdge < 0.0 {
+        discard;
+    }
 
   // Multi-lobe gaussian falloff measured from the edge
-    let t1 = gaussian(outside, 18.0);
-    let t2 = gaussian(outside, 36.0);
-    let t3 = gaussian(outside, 64.0);
+    let t1 = gaussian(distanceFromEdge, 18.0);
+    let t2 = gaussian(distanceFromEdge, 36.0);
+    let t3 = gaussian(distanceFromEdge, 64.0);
 
   // Animate intensity driven directly by css shadow opacity track
     let intensity = shadowOpacity;
 
     let softness = max(12.0, padPx * 0.35);
-    let nearEdge = 1.0 - smoothstep(0.0, softness, outside);
-    let outerDistance = sdRoundedRect(p, outerHalf, radiusPx + padPx);
+    let nearEdge = 1.0 - smoothstep(0.0, softness, distanceFromEdge);
+    let outerDistance = sdRoundedRect(nearestOnPadded, paddedHalf, limitedRadius + padPx);
     let outerMask = 1.0 - smoothstep(-softness, softness * 0.6, outerDistance);
-    let distanceFalloff = exp(-outside / max(36.0, padPx * 0.9));
+    let distanceFalloff = exp(-distanceFromEdge / max(36.0, padPx * 0.9));
     let mask = saturate(nearEdge * outerMask * distanceFalloff);
-    let haloWeights = vec3<f32>(1.1, 0.7, 0.35);
+    let haloWeights = vec3<f32>(1.2, 0.9, 0.55);
     let halo = dot(haloWeights, vec3<f32>(t3, t2, t1)) / (haloWeights.x + haloWeights.y + haloWeights.z);
-    let rimWidth = max(4.0, rimSpreadPx);
-    let rim = pow(saturate(1.0 - outside / rimWidth), rimBoost);
-    let focusPx = (focal - vec2<f32>(0.5, 0.5)) * vec2<f32>(widthPx, heightPx);
-    let focusWeight = saturate(exp(-length(p - focusPx) / (rimWidth * 1.1)));
+    let rimWidth = max(6.0, rimSpreadPx * 1.1);
+    let rim = pow(saturate(1.0 - distanceFromEdge / rimWidth), rimBoost);
+    let innerSize = innerHalf * 2.0;
+    let focusPx = (focal - vec2<f32>(0.5, 0.5)) * innerSize;
+    let focusWeight = saturate(exp(-length(nearestOnInner - focusPx) / (rimWidth * 1.1)));
 
-    var g = intensity * mask * mix(halo, rim, focusWeight);
+    var glow = intensity * mask * mix(halo, rim, focusWeight);
 
     // Reduce banding with tiny noise modulated by glow strength to avoid flat tint
     let noiseAmp = noiseMix / 255.0;
     let n = (hash(uv * 1024.0 + vec2<f32>(time, time)) - 0.5) * noiseAmp;
-    g = max(0.0, g + n * saturate(g * 8.0));
+    glow = max(0.0, glow + n * saturate(glow * 8.0));
 
-    let colorScale = g * opacity;
+    let colorScale = glow * opacity;
     let c = color * (colorScale * brightness);
     return vec4<f32>(c, saturate(colorScale));
 }

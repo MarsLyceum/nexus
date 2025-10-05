@@ -37,9 +37,20 @@ export const createEffectEngine = <State extends EngineState, UniformData>(
     options: EffectEngineOptions<State, UniformData>
 ): EngineControl<State> => {
     const backends = options.backends ?? options.descriptor.createBackends();
+    const gpuFirstPreference = (() => {
+        const descriptorPreference = options.descriptor.backendPreference;
+        if (!descriptorPreference || descriptorPreference.length === 0) {
+            return [
+                'webgpu',
+                'webgl',
+                ...backends.map((backend) => backend.id),
+            ];
+        }
+        return descriptorPreference;
+    })();
     const backendPreference = selectArray(
         options.backendPreference,
-        options.descriptor.backendPreference,
+        gpuFirstPreference,
         backends.map((backend) => backend.id)
     );
     console.log('[effectSystem] createEffectEngine', {

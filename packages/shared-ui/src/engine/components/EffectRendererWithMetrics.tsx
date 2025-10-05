@@ -46,22 +46,23 @@ const useMetrics = (
             return undefined;
         }
         const compute = () => {
-            const parentRect = root.parentElement?.getBoundingClientRect();
-            const rect = parentRect ?? root.getBoundingClientRect();
+            const rootRect = root.getBoundingClientRect();
+            const contentWidth = Math.max(0, rootRect.width);
+            const contentHeight = Math.max(0, rootRect.height);
             const pixelRatio =
                 (globalThis as Window & typeof globalThis).devicePixelRatio ??
                 1;
             setMetrics({
-                width: rect.width + padding * 2,
-                height: rect.height + padding * 2,
+                width: contentWidth,
+                height: contentHeight,
                 dpr: pixelRatio,
             });
             console.log('[EffectRendererWithMetrics] compute metrics', {
-                width: rect.width,
-                height: rect.height,
+                width: contentWidth,
+                height: contentHeight,
                 padding,
-                widthWithPadding: rect.width + padding * 2,
-                heightWithPadding: rect.height + padding * 2,
+                widthWithPadding: contentWidth,
+                heightWithPadding: contentHeight,
                 pixelRatio,
             });
         };

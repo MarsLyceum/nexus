@@ -13,7 +13,7 @@ import {
     type SceneRenderLayerPlacement,
 } from '../animation/sceneSystem';
 import { useSceneRenderer } from '../animation/sceneRenderer';
-import { buildGlowScene, type GlowSceneState } from '../effects/glow/GlowScene';
+import { buildGlowScene, type GlowSceneState } from '../effects/glow/glowScene';
 import {
     AnimationTimelineProvider,
     createSharedAnimationTimeline,

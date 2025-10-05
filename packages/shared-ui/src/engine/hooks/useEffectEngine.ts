@@ -124,7 +124,6 @@ export const useEffectEngine = <State extends EngineState, UniformData>({
         console.log('[useEffectEngine] engine created', {
             descriptorId: descriptor.id,
             desiredBackend: desiredBackendRef.current,
-            availableBackends: engine.getAvailableBackends?.(),
         });
         const desired = desiredBackendRef.current;
         if (desired && desired !== 'auto') {

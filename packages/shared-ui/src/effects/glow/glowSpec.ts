@@ -1,3 +1,10 @@
+import { createCssPropertyDeclaration } from '../../animation/cssAnimationUtils';
+import {
+    createEffectDefinition,
+    type EffectPropertyFormatterMap,
+} from '../effectBuilder';
+import type { EffectAnimationSpec } from '../../animation/effectPropertyMapping';
+
 export const WEBGPU_GLOW_OUTER_PAD_PX = 144;
 export const GLOW_RIM_BOOST = 1.75;
 export const GLOW_RIM_SPREAD = 28;
@@ -5,43 +12,234 @@ export const GLOW_RIM_WIDTH_SCALE = 1;
 export const GLOW_NOISE_MIX = 8;
 export const GLOW_INTENSITY_SCALE = 0.65;
 
-const clamp01 = (value: number): number => Math.min(1, Math.max(0, value));
+export type GlowFocalPoint = { readonly x: number; readonly y: number };
 
-const modulo = (value: number, period: number): number => {
-    if (!Number.isFinite(period) || period === 0) {
-        return 0;
+const formatOpacity = (opacity: number) =>
+    opacity.toFixed(6).replace(/0+$/, '').replace(/\.$/, '');
+
+const fallbackComponent = (component: number) =>
+    Number.isFinite(component) ? component : 255;
+
+const expandHex = (value: string) => value.repeat(2);
+
+const parseHexColor = (color: string) => {
+    const normalized = color.trim().replace('#', '');
+    if (normalized.length === 3) {
+        const expanded = [...normalized].map((value) => expandHex(value));
+        const [r, g, b] = expanded;
+        return {
+            r: fallbackComponent(Number.parseInt(r, 16)),
+            g: fallbackComponent(Number.parseInt(g, 16)),
+            b: fallbackComponent(Number.parseInt(b, 16)),
+        } as const;
     }
-    const remainder = value % period;
-    return remainder < 0 ? remainder + period : remainder;
+    const toComponent = (start: number) =>
+        Number.parseInt(normalized.slice(start, start + 2), 16);
+    const r = toComponent(0);
+    const g = toComponent(2);
+    const b = toComponent(4);
+    return {
+        r: fallbackComponent(r),
+        g: fallbackComponent(g),
+        b: fallbackComponent(b),
+    } as const;
 };
 
-const iterate = <State>(
-    count: number,
-    initial: State,
-    step: (state: State, index: number) => State
-): State => {
-    const recur = (index: number, state: State): State =>
-        index >= count ? state : recur(index + 1, step(state, index));
-    return recur(0, initial);
+const clampRatio = (value: number) => Math.min(1, Math.max(0, value));
+
+const roundPx = (value: number) =>
+    `${value
+        .toFixed(2)
+        .replace(/\.0+$/, '')
+        .replace(/\.([1-9]*)0+$/, '.$1')}px`;
+
+const formatAlphaExpression = (alpha: number, scaleExpression: string) => {
+    const clamped = clampRatio(alpha);
+    if (scaleExpression === '1') {
+        return formatOpacity(clamped);
+    }
+    return `calc(${formatOpacity(clamped)} * (${scaleExpression}))`;
 };
 
-type CubicBezierControlPoints = {
-    readonly x1: number;
-    readonly y1: number;
-    readonly x2: number;
-    readonly y2: number;
+const CSS_SHADOW_INTENSITY = GLOW_INTENSITY_SCALE;
+
+const createLayerSet = (
+    opacity: number,
+    definitions: ReadonlyArray<{
+        readonly offsetX: number;
+        readonly offsetY: number;
+        readonly blur: number;
+        readonly spread: number;
+        readonly weight: number;
+        readonly rim: boolean;
+    }>
+) => {
+    const normalizedOpacity = clampRatio(opacity) * CSS_SHADOW_INTENSITY;
+    const totalWeight = definitions.reduce(
+        (acc, definition) => acc + definition.weight,
+        0
+    );
+    if (totalWeight === 0) {
+        return definitions.map((definition) => ({
+            ...definition,
+            alpha: normalizedOpacity,
+        }));
+    }
+    const focusTotal = definitions
+        .filter((definition) => definition.rim)
+        .reduce((acc, definition) => acc + definition.weight, 0);
+    const haloTotal = totalWeight - focusTotal;
+    const focusedIntensity = normalizedOpacity * 0.7;
+    const haloIntensity = normalizedOpacity * 0.3;
+    return definitions.map((definition) => {
+        const segmentTotal = definition.rim ? focusTotal : haloTotal;
+        const baseAlpha = definition.rim ? focusedIntensity : haloIntensity;
+        if (segmentTotal === 0) {
+            return {
+                ...definition,
+                alpha: baseAlpha,
+            } as const;
+        }
+        return {
+            ...definition,
+            alpha: (baseAlpha * definition.weight) / segmentTotal,
+        } as const;
+    });
 };
 
-type GlowTrackKeyframe = {
-    readonly at: number;
-    readonly value: number;
+export const SHADOW_PAD_PX = WEBGPU_GLOW_OUTER_PAD_PX;
+export const RIM_WIDTH_PX = GLOW_RIM_SPREAD * GLOW_RIM_WIDTH_SCALE;
+export const RIM_WEIGHT_SCALE = GLOW_RIM_BOOST;
+
+const createShadowLayers = (
+    color: string,
+    opacity: number,
+    options: {
+        readonly focal?: GlowFocalPoint;
+        readonly intensityScaleExpression?: string;
+    } = {}
+) => {
+    const { r, g, b } = parseHexColor(color);
+    const rgbExpression = `${r}, ${g}, ${b}`;
+    const scaleExpression = options.intensityScaleExpression
+        ? `(${options.intensityScaleExpression})`
+        : '1';
+    const focal = {
+        x: clampRatio(options.focal?.x ?? 0.5),
+        y: clampRatio(options.focal?.y ?? 0.4),
+    } as const;
+    const focalOffsetScale = SHADOW_PAD_PX * 0.42;
+    const offsetX = (focal.x - 0.5) * focalOffsetScale;
+    const offsetY = (focal.y - 0.5) * focalOffsetScale;
+
+    const haloLayers = createLayerSet(opacity, [
+        {
+            offsetX: 0,
+            offsetY: 0,
+            blur: SHADOW_PAD_PX * 0.4,
+            spread: SHADOW_PAD_PX * 0.05,
+            weight: 0.12,
+            rim: false,
+        },
+        {
+            offsetX: 0,
+            offsetY: 0,
+            blur: SHADOW_PAD_PX * 0.6,
+            spread: SHADOW_PAD_PX * 0.08,
+            weight: 0.08,
+            rim: false,
+        },
+    ]);
+
+    const focalLayers = createLayerSet(opacity, [
+        {
+            offsetX,
+            offsetY,
+            blur: RIM_WIDTH_PX * 2.1,
+            spread: 0,
+            weight: 0.12,
+            rim: true,
+        },
+        {
+            offsetX,
+            offsetY,
+            blur: RIM_WIDTH_PX * 3,
+            spread: RIM_WIDTH_PX * 0.05,
+            weight: 0.14,
+            rim: true,
+        },
+        {
+            offsetX,
+            offsetY,
+            blur: RIM_WIDTH_PX * 4,
+            spread: RIM_WIDTH_PX * 0.1,
+            weight: 0.16,
+            rim: true,
+        },
+    ]);
+
+    const rimLayers = createLayerSet(opacity, [
+        {
+            offsetX: 0,
+            offsetY: 0,
+            blur: RIM_WIDTH_PX * 1,
+            spread: 0,
+            weight: 0.12,
+            rim: true,
+        },
+        {
+            offsetX: 0,
+            offsetY: 0,
+            blur: RIM_WIDTH_PX * 1.6,
+            spread: RIM_WIDTH_PX * 0.05,
+            weight: 0.18,
+            rim: true,
+        },
+        {
+            offsetX: 0,
+            offsetY: 0,
+            blur: RIM_WIDTH_PX * 2.3,
+            spread: RIM_WIDTH_PX * 0.1,
+            weight: 0.22,
+            rim: true,
+        },
+    ]);
+
+    return [...haloLayers, ...focalLayers, ...rimLayers]
+        .map((layer) => {
+            const baseAlphaExpression = formatAlphaExpression(
+                layer.alpha,
+                scaleExpression
+            );
+            const alphaValue = layer.rim
+                ? formatAlphaExpression(
+                      layer.alpha * RIM_WEIGHT_SCALE,
+                      scaleExpression
+                  )
+                : baseAlphaExpression;
+            return `${roundPx(layer.offsetX)} ${roundPx(layer.offsetY)} ${roundPx(
+                layer.blur
+            )} ${roundPx(layer.spread)} rgba(${rgbExpression}, ${alphaValue})`;
+        })
+        .join(', ');
 };
 
-export type GlowAnimationTrackSpec = {
-    readonly durationSeconds: number;
-    readonly keyframes: ReadonlyArray<GlowTrackKeyframe>;
-    readonly easing: CubicBezierControlPoints;
-};
+export const formatShadow =
+    (color: string, focal?: GlowFocalPoint) => (value: number) => {
+        const intensityExpression =
+            'var(--glow-alpha, 1) * var(--glow-brightness, 1)';
+        const shadowLayers = createShadowLayers(color, value, {
+            focal,
+            intensityScaleExpression: intensityExpression,
+        });
+        return `box-shadow: ${shadowLayers};`;
+    };
+
+export const formatOpacityValue = (value: number) =>
+    `--glow-alpha: ${(value * GLOW_INTENSITY_SCALE).toFixed(3)};`;
+
+export const formatBrightnessValue = (value: number) =>
+    `--glow-brightness: ${value.toFixed(3)};`;
 
 export type GlowAnimationTrackName =
     | 'primary'
@@ -49,13 +247,6 @@ export type GlowAnimationTrackName =
     | 'tertiaryBrightness';
 
 export type GlowCssPropertyName = 'shadowOpacity' | 'opacity' | 'brightness';
-
-export type GlowCssRange = { readonly min: number; readonly max: number };
-
-export type GlowAnimationSpec = {
-    readonly tracks: Record<GlowAnimationTrackName, GlowAnimationTrackSpec>;
-    readonly css: Record<GlowCssPropertyName, GlowCssRange>;
-};
 
 export const trackToCssProperty: Record<
     GlowAnimationTrackName,
@@ -75,11 +266,6 @@ export const cssPropertyToTrack: Record<
     brightness: 'tertiaryBrightness',
 };
 
-const mapRangeValue = (range: GlowCssRange, normalized: number) => {
-    const clamped = clamp01(normalized);
-    return range.min + (range.max - range.min) * clamped;
-};
-
 export type GlowCssValue = {
     readonly shadowOpacity: number;
     readonly opacity: number;
@@ -92,175 +278,16 @@ export const TRACK_SEQUENCE: ReadonlyArray<GlowAnimationTrackName> = [
     'tertiaryBrightness',
 ];
 
-export const getGlowCssPropertyValue = (
-    property: GlowCssPropertyName,
-    elapsedSeconds: number
-): number => {
-    const track = cssPropertyToTrack[property];
-    const normalized = evaluateGlowTrack(track, elapsedSeconds);
-    const range = glowAnimationSpec.css[property];
-    return mapRangeValue(range, normalized);
+export const glowAnimationNames: Record<GlowAnimationTrackName, string> = {
+    primary: 'breathingGlowPrimary',
+    secondaryOpacity: 'breathingGlowSecondary',
+    tertiaryBrightness: 'breathingGlowTertiary',
 };
 
-export const getGlowCssValues = (elapsedSeconds: number): GlowCssValue =>
-    TRACK_SEQUENCE.reduce(
-        (accumulated, track) => {
-            const cssProperty = trackToCssProperty[track];
-            return {
-                ...accumulated,
-                [cssProperty]: getGlowCssPropertyValue(
-                    cssProperty,
-                    elapsedSeconds
-                ),
-            };
-        },
-        {
-            shadowOpacity: glowAnimationSpec.css.shadowOpacity.min,
-            opacity: glowAnimationSpec.css.opacity.min,
-            brightness: glowAnimationSpec.css.brightness.min,
-        }
-    );
-
-const toCoefficients = ({
-    x1,
-    x2,
-}: Pick<CubicBezierControlPoints, 'x1' | 'x2'>): {
-    readonly ax: number;
-    readonly bx: number;
-    readonly cx: number;
-} => {
-    const cx = 3 * x1;
-    const bx = 3 * (x2 - x1) - cx;
-    const ax = 1 - cx - bx;
-    return { ax, bx, cx };
-};
-
-const sampleCurve = (
-    t: number,
-    coefficients: {
-        readonly ax: number;
-        readonly bx: number;
-        readonly cx: number;
-    }
-) => ((coefficients.ax * t + coefficients.bx) * t + coefficients.cx) * t;
-
-const sampleCurveDerivative = (
-    t: number,
-    coefficients: {
-        readonly ax: number;
-        readonly bx: number;
-        readonly cx: number;
-    }
-) => (3 * coefficients.ax * t + 2 * coefficients.bx) * t + coefficients.cx;
-
-const buildCubicBezier = ({ x1, y1, x2, y2 }: CubicBezierControlPoints) => {
-    if (x1 === y1 && x2 === y2) {
-        return (progress: number) => progress;
-    }
-    const xCoefficients = toCoefficients({ x1, x2 });
-    const yCoefficients = toCoefficients({ x1: y1, x2: y2 });
-    const epsilon = 1e-6;
-    const solveCurveX = (progress: number) => {
-        const initialGuess = clamp01(progress);
-        const newton = iterate(8, initialGuess, (state) => {
-            const derivative = sampleCurveDerivative(state, xCoefficients);
-            if (Math.abs(derivative) < epsilon) {
-                return state;
-            }
-            const delta =
-                (sampleCurve(state, xCoefficients) - progress) / derivative;
-            return clamp01(state - delta);
-        });
-        const newtonResult = sampleCurve(newton, xCoefficients);
-        if (Math.abs(newtonResult - progress) < epsilon) {
-            return newton;
-        }
-        const binarySearch = (lower: number, upper: number): number => {
-            if (upper - lower <= epsilon) {
-                return (lower + upper) * 0.5;
-            }
-            const mid = (lower + upper) * 0.5;
-            const estimate = sampleCurve(mid, xCoefficients);
-            if (estimate > progress) {
-                return binarySearch(lower, mid);
-            }
-            return binarySearch(mid, upper);
-        };
-        return binarySearch(0, 1);
-    };
-    return (progress: number) => {
-        if (progress <= 0) {
-            return 0;
-        }
-        if (progress >= 1) {
-            return 1;
-        }
-        const param = solveCurveX(progress);
-        return clamp01(sampleCurve(param, yCoefficients));
-    };
-};
-
-const preprocessKeyframes = (
-    keyframes: ReadonlyArray<GlowTrackKeyframe>
-): ReadonlyArray<GlowTrackKeyframe> =>
-    keyframes
-        .filter((frame) => Number.isFinite(frame.at))
-        .filter((frame) => Number.isFinite(frame.value))
-        .sort((left, right) => left.at - right.at);
-
-const evaluateTrackValue = (
-    spec: GlowAnimationTrackSpec,
-    elapsedSeconds: number,
-    easingFn: (value: number) => number,
-    keyframes: ReadonlyArray<GlowTrackKeyframe>
-) => {
-    if (keyframes.length === 0) {
-        return 0;
-    }
-    if (spec.durationSeconds <= 0 || !Number.isFinite(spec.durationSeconds)) {
-        return keyframes[0]?.value ?? 0;
-    }
-    if (keyframes.length === 1) {
-        return keyframes[0].value;
-    }
-    const clampedElapsed = modulo(elapsedSeconds, spec.durationSeconds);
-    const normalized =
-        spec.durationSeconds > 0 ? clampedElapsed / spec.durationSeconds : 0;
-    if (normalized <= keyframes[0].at) {
-        return keyframes[0].value;
-    }
-    const lastFrame = keyframes.at(-1);
-    if (!lastFrame) {
-        return 0;
-    }
-    if (normalized >= lastFrame.at) {
-        return lastFrame.value;
-    }
-    const nextIndex = keyframes.findIndex((frame) => normalized <= frame.at);
-    const upperIndex = nextIndex <= 0 ? 1 : nextIndex;
-    const lowerIndex = upperIndex - 1;
-    const lower = keyframes.at(lowerIndex);
-    const upper = keyframes.at(upperIndex);
-    if (!lower || !upper) {
-        return 0;
-    }
-    const span = upper.at - lower.at;
-    if (span <= 0) {
-        return upper.value;
-    }
-    const localNormalized = (normalized - lower.at) / span;
-    const eased = easingFn(clamp01(localNormalized));
-    return lower.value + (upper.value - lower.value) * eased;
-};
-
-const createTrackEvaluator = (spec: GlowAnimationTrackSpec) => {
-    const easingFn = buildCubicBezier(spec.easing);
-    const keyframes = preprocessKeyframes(spec.keyframes);
-    return (elapsedSeconds: number) =>
-        evaluateTrackValue(spec, elapsedSeconds, easingFn, keyframes);
-};
-
-export const glowAnimationSpec: GlowAnimationSpec = {
+export const glowAnimationSpec: EffectAnimationSpec<
+    GlowAnimationTrackName,
+    GlowCssPropertyName
+> = {
     tracks: {
         primary: {
             durationSeconds: 4.2,
@@ -290,82 +317,76 @@ export const glowAnimationSpec: GlowAnimationSpec = {
             easing: { x1: 0.42, y1: 0, x2: 0.58, y2: 1 },
         },
     },
-    css: {
-        shadowOpacity: { min: 0.28, max: 0.9 },
-        opacity: { min: 0.85, max: 1 },
-        brightness: { min: 1, max: 1.04 },
+    properties: {
+        shadowOpacity: {
+            trackName: 'primary',
+            range: { min: 0.28, max: 0.9 },
+        },
+        opacity: {
+            trackName: 'secondaryOpacity',
+            range: { min: 0.85, max: 1 },
+        },
+        brightness: {
+            trackName: 'tertiaryBrightness',
+            range: { min: 1, max: 1.04 },
+        },
     },
 };
 
-const glowTrackEvaluators: Record<
-    GlowAnimationTrackName,
-    (elapsedSeconds: number) => number
+export const glowCssVariables = {
+    '--glow-alpha': glowAnimationSpec.properties.opacity.range.min,
+    '--glow-brightness': glowAnimationSpec.properties.brightness.range.min,
+};
+
+export const glowCssPropertyDeclarations = () => [
+    createCssPropertyDeclaration(
+        '--glow-alpha',
+        glowAnimationSpec.properties.opacity.range.min
+    ),
+    createCssPropertyDeclaration(
+        '--glow-brightness',
+        glowAnimationSpec.properties.brightness.range.min
+    ),
+];
+
+const fallbackFocal = { x: 0.5, y: 0.4 } as const;
+
+type GlowFormatterContext = {
+    readonly color: string;
+    readonly focal?: { readonly x: number; readonly y: number };
+};
+
+const glowPropertyFormatters: EffectPropertyFormatterMap<
+    GlowCssPropertyName,
+    GlowFormatterContext
 > = {
-    primary: createTrackEvaluator(glowAnimationSpec.tracks.primary),
-    secondaryOpacity: createTrackEvaluator(
-        glowAnimationSpec.tracks.secondaryOpacity
-    ),
-    tertiaryBrightness: createTrackEvaluator(
-        glowAnimationSpec.tracks.tertiaryBrightness
-    ),
+    shadowOpacity: (context) =>
+        formatShadow(context.color, context.focal ?? fallbackFocal),
+    opacity: () => formatOpacityValue,
+    brightness: () => formatBrightnessValue,
 };
 
-export const evaluateGlowTrack = (
-    track: GlowAnimationTrackName,
-    elapsedSeconds: number
-) => glowTrackEvaluators[track](elapsedSeconds);
+export const glowEffect = createEffectDefinition({
+    spec: glowAnimationSpec,
+    trackSequence: TRACK_SEQUENCE,
+    animationNames: glowAnimationNames,
+    propertyFormatters: glowPropertyFormatters,
+    propertyDeclarations: glowCssPropertyDeclarations(),
+    cssVariables: glowCssVariables,
+});
 
-export type GlowCssTimelineSample = {
-    readonly ratio: number;
-    readonly value: number;
-};
-
-export const sampleGlowCssPropertyTimeline = (
-    property: GlowCssPropertyName,
-    resolution = 120
-): ReadonlyArray<GlowCssTimelineSample> => {
-    const track = cssPropertyToTrack[property];
-    const spec = glowAnimationSpec.tracks[track];
-    const sample = (ratio: number): GlowCssTimelineSample => {
-        const clampedRatio = clamp01(ratio);
-        const elapsed = clampedRatio * spec.durationSeconds;
-        return {
-            ratio: clampedRatio,
-            value: getGlowCssPropertyValue(property, elapsed),
-        };
-    };
-    return Array.from({ length: resolution + 1 }, (_, index) =>
-        sample(index / resolution)
-    );
-};
-
-export const formatCubicBezier = ({
-    x1,
-    y1,
-    x2,
-    y2,
-}: CubicBezierControlPoints): string =>
-    `cubic-bezier(${x1}, ${y1}, ${x2}, ${y2})`;
-
-export const getGlowAnimationDelays = (elapsedSeconds: number) =>
-    [
-        glowAnimationSpec.tracks.primary.durationSeconds,
-        glowAnimationSpec.tracks.secondaryOpacity.durationSeconds,
-        glowAnimationSpec.tracks.tertiaryBrightness.durationSeconds,
-    ]
-        .map((duration) => {
-            if (duration <= 0) {
-                return '0s';
-            }
-            const normalized = modulo(elapsedSeconds, duration);
-            return `-${normalized.toFixed(3)}s`;
-        })
-        .join(', ');
+export const evaluateGlowTrack = glowEffect.evaluateTrack;
+export const getGlowCssPropertyValue = glowEffect.evaluateProperty;
+export const getGlowCssValues = glowEffect.evaluateAllProperties;
+export const sampleGlowCssPropertyTimeline = glowEffect.samplePropertyTimeline;
+export const getGlowAnimationDelays = glowEffect.getAnimationDelays;
 
 export const getGlowTrackValue = (
     track: GlowAnimationTrackName,
     elapsedSeconds: number
-) => evaluateGlowTrack(track, elapsedSeconds);
+): number => evaluateGlowTrack(track, elapsedSeconds);
 
-export const getGlowPrimaryValue = (elapsedSeconds: number) =>
+export const getGlowPrimaryValue = (elapsedSeconds: number): number =>
     getGlowTrackValue('primary', elapsedSeconds);
+
+export { formatCubicBezier } from '../../animation/easing';

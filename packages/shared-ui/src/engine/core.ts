@@ -71,8 +71,41 @@ export const createEngine = <State extends EngineState, UniformData>(
         void ensureBackend([normalized]);
     };
 
+    type BackendDiagnosticsEntry = {
+        readonly backend: string;
+        readonly message: string;
+        readonly details?: ReadonlyArray<string>;
+    };
+
+    const extractShaderDiagnostics = (
+        error: Error
+    ): ReadonlyArray<string> | undefined => {
+        const diagnostics = (
+            error as Error & {
+                readonly shaderDiagnostics?: ReadonlyArray<string>;
+            }
+        ).shaderDiagnostics;
+        return Array.isArray(diagnostics) && diagnostics.length > 0
+            ? [...diagnostics]
+            : undefined;
+    };
+
+    const inheritDiagnostics = (
+        backendId: string,
+        errors: ReadonlyArray<Error>,
+        previous: ReadonlyArray<BackendDiagnosticsEntry>
+    ): BackendDiagnosticsEntry[] => [
+        ...previous,
+        ...errors.map((error) => ({
+            backend: backendId,
+            message: error.message,
+            details: extractShaderDiagnostics(error),
+        })),
+    ];
+
     const ensureBackend = (
-        initialErrors: ReadonlyArray<Error> = []
+        initialErrors: ReadonlyArray<Error> = [],
+        diagnostics: ReadonlyArray<BackendDiagnosticsEntry> = []
     ): Promise<string> => {
         if (disposed) {
             return Promise.resolve(activeBackend);
@@ -95,18 +128,39 @@ export const createEngine = <State extends EngineState, UniformData>(
         if (attemptOrder.length === 0) {
             activeBackend = 'none';
             options.onBackendChange?.('none');
-            initialErrors.forEach((error) => options.onError?.(error));
+            const aggregatedDiagnostics = inheritDiagnostics(
+                activeBackend,
+                initialErrors,
+                diagnostics
+            );
+            aggregatedDiagnostics.forEach((entry) => {
+                const detailText = entry.details?.join('\n');
+                const message =
+                    `Renderer fallback while initializing ${entry.backend} backend: ${entry.message}` +
+                    (detailText ? `\n${detailText}` : '');
+                const error = new Error(message);
+                if (entry.details && entry.details.length > 0) {
+                    (
+                        error as Error & {
+                            details?: ReadonlyArray<string>;
+                        }
+                    ).details = entry.details;
+                }
+                options.onError?.(error);
+            });
             return Promise.resolve(activeBackend);
         }
         type BackendAttempt = {
             readonly handle: BackendHandle<UniformData> | undefined;
             readonly backendId: string | undefined;
             readonly errors: ReadonlyArray<Error>;
+            readonly diagnostics: ReadonlyArray<BackendDiagnosticsEntry>;
         };
         const initialAttempt: BackendAttempt = {
             handle: undefined,
             backendId: undefined,
             errors: initialErrors,
+            diagnostics,
         };
         return attemptOrder
             .reduce<Promise<BackendAttempt>>(
@@ -142,17 +196,28 @@ export const createEngine = <State extends EngineState, UniformData>(
                                         handle,
                                         backendId,
                                         errors: acc.errors,
+                                        diagnostics: acc.diagnostics,
                                     }))
                                     .catch((error) => ({
                                         handle: undefined,
                                         backendId: undefined,
                                         errors: [...acc.errors, toError(error)],
+                                        diagnostics: inheritDiagnostics(
+                                            backendId,
+                                            [toError(error)],
+                                            acc.diagnostics
+                                        ),
                                     }));
                             })
                             .catch((error) => ({
                                 handle: undefined,
                                 backendId: undefined,
                                 errors: [...acc.errors, toError(error)],
+                                diagnostics: inheritDiagnostics(
+                                    backendId,
+                                    [toError(error)],
+                                    acc.diagnostics
+                                ),
                             }));
                     }),
                 Promise.resolve(initialAttempt)
@@ -161,7 +226,24 @@ export const createEngine = <State extends EngineState, UniformData>(
                 if (!result.handle || !result.backendId) {
                     activeBackend = 'none';
                     options.onBackendChange?.('none');
-                    result.errors.forEach((error: Error) => {
+                    const aggregatedDiagnostics = inheritDiagnostics(
+                        activeBackend,
+                        result.errors,
+                        result.diagnostics
+                    );
+                    aggregatedDiagnostics.forEach((entry) => {
+                        const detailText = entry.details?.join('\n');
+                        const message =
+                            `Renderer fallback while initializing ${entry.backend} backend: ${entry.message}` +
+                            (detailText ? `\n${detailText}` : '');
+                        const error = new Error(message);
+                        if (entry.details && entry.details.length > 0) {
+                            (
+                                error as Error & {
+                                    details?: ReadonlyArray<string>;
+                                }
+                            ).details = entry.details;
+                        }
                         options.onError?.(error);
                     });
                     return activeBackend;

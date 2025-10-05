@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 import {
     Backend,
     BackendContext,
@@ -5,14 +6,13 @@ import {
     RenderInput,
     RenderMetrics,
 } from './types';
-import { toError } from './utils';
-
-export type ShaderUniformData = Float32Array | Uint32Array;
-
-export type ShaderUniformEncoder<UniformData> = {
-    readonly encodeUniforms: (state: UniformData) => ShaderUniformData;
-    readonly uniformBufferSize: number;
-};
+import {
+    drawWebGpuFrame,
+    drawWebglFrame,
+    setCanvasDimensions,
+    type ShaderUniformEncoder,
+    type WebglUniformEncoder,
+} from './shaderHelpers';
 
 export type WebGPUShaderConfig<UniformData> = {
     readonly shaderSource: string;
@@ -26,40 +26,12 @@ export type WebGPUShaderConfig<UniformData> = {
 export type WebGLShaderConfig<UniformData> = {
     readonly vertexShaderSource: string;
     readonly fragmentShaderSource: string;
-    readonly uniformEncoder: (
-        gl: WebGLRenderingContext | WebGL2RenderingContext,
-        program: WebGLProgram,
-        state: UniformData
-    ) => void;
+    readonly uniformEncoder: WebglUniformEncoder<UniformData>;
 };
 
 export type ShaderBackendConfig<UniformData> = {
     readonly webgpu?: WebGPUShaderConfig<UniformData>;
     readonly webgl?: WebGLShaderConfig<UniformData>;
-};
-
-const setCanvasDimensions = (
-    canvas: HTMLCanvasElement,
-    width: number,
-    height: number,
-    dpr: number
-) => {
-    const pixelWidth = Math.max(1, Math.floor(width * dpr));
-    const pixelHeight = Math.max(1, Math.floor(height * dpr));
-    if (canvas.width !== pixelWidth) {
-        canvas.width = pixelWidth;
-    }
-    if (canvas.height !== pixelHeight) {
-        canvas.height = pixelHeight;
-    }
-    const widthStyle = `${width}px`;
-    const heightStyle = `${height}px`;
-    if (canvas.style.width !== widthStyle) {
-        canvas.style.width = widthStyle;
-    }
-    if (canvas.style.height !== heightStyle) {
-        canvas.style.height = heightStyle;
-    }
 };
 
 const compileShader = (
@@ -124,9 +96,7 @@ const initFullscreenQuad = (
         throw new Error('Unable to create buffer');
     }
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    const positions = new Float32Array([
-        -1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1,
-    ]);
+    const positions = new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]);
     gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
     const location = gl.getAttribLocation(program, 'position');
     if (location === -1) {
@@ -180,7 +150,7 @@ export const createWebGPUShaderBackend = <UniformData>(
         canvas,
         metrics,
         onFatal,
-    }: BackendContext<UniformData>): Promise<BackendHandle<UniformData>> => {
+    }: BackendContext): Promise<BackendHandle<UniformData>> => {
         const gpu = hasWebGPU() ? navigator.gpu : undefined;
         if (!gpu) {
             throw new Error('WebGPU unavailable');
@@ -197,12 +167,7 @@ export const createWebGPUShaderBackend = <UniformData>(
         }
         const format = gpu.getPreferredCanvasFormat();
         const configure = (nextMetrics: RenderMetrics) => {
-            setCanvasDimensions(
-                canvas,
-                nextMetrics.width,
-                nextMetrics.height,
-                nextMetrics.dpr
-            );
+            setCanvasDimensions({ canvas, metrics: nextMetrics });
             context.configure({
                 device,
                 format,
@@ -210,155 +175,151 @@ export const createWebGPUShaderBackend = <UniformData>(
             });
         };
         configure(metrics);
-        const shader = device.createShaderModule({
-            code: config.shaderSource,
+        canvas.addEventListener('webgpucontextlost', (event) => {
+            event.preventDefault();
+            onFatal(new Error('WebGPU context lost'));
         });
-        const entryPoints = config.entryPoints ?? {
-            vertex: 'vs',
-            fragment: 'fs',
+        const vertexEntryPoint = config.entryPoints?.vertex ?? 'main';
+        const fragmentEntryPoint = config.entryPoints?.fragment ?? 'main';
+
+        const vertexModule = device.createShaderModule({
+            code: config.shaderSource,
+            label: 'shader-vertex-module',
+        });
+        const fragmentModule = device.createShaderModule({
+            code: config.shaderSource,
+            label: 'shader-fragment-module',
+        });
+
+        type GPUShaderModuleWithLegacy = GPUShaderModule & {
+            readonly getCompilationInfo?: () => Promise<GPUCompilationInfo>;
         };
-        const pipeline = device.createRenderPipeline({
-            layout: 'auto',
-            vertex: { module: shader, entryPoint: entryPoints.vertex ?? 'vs' },
-            fragment: {
-                module: shader,
-                entryPoint: entryPoints.fragment ?? 'fs',
-                targets: [
-                    {
-                        format,
-                        blend: {
-                            color: {
-                                srcFactor: 'one',
-                                dstFactor: 'one-minus-src-alpha',
-                                operation: 'add',
-                            },
-                            alpha: {
-                                srcFactor: 'one',
-                                dstFactor: 'one-minus-src-alpha',
-                                operation: 'add',
+
+        const loadCompilationInfo = async (
+            module: GPUShaderModuleWithLegacy
+        ): Promise<GPUCompilationInfo | undefined> => {
+            if (typeof module.compilationInfo === 'function') {
+                return module.compilationInfo();
+            }
+            if (typeof module.getCompilationInfo === 'function') {
+                return module.getCompilationInfo();
+            }
+            console.warn(
+                '[WebGPU] Shader compilation diagnostics unavailable on this browser'
+            );
+            return undefined;
+        };
+
+        const reportShaderCompilation = async (
+            module: GPUShaderModule,
+            stage: 'vertex' | 'fragment'
+        ): Promise<string[]> => {
+            const info = await loadCompilationInfo(module);
+            const messages = (info?.messages ?? []).filter(
+                (message) => message.type !== 'info'
+            );
+            if (messages.length === 0) {
+                return [];
+            }
+            const formatted = messages.map((message) => {
+                const hasLocation =
+                    typeof message.lineNum === 'number' &&
+                    typeof message.linePos === 'number';
+                const location = hasLocation
+                    ? ` (${message.lineNum}:${message.linePos})`
+                    : '';
+                return `[${stage}] ${message.type}${location}: ${message.message}`;
+            });
+            console.error(
+                `[WebGPU] Shader compilation messages:\n${formatted.join('\n')}`
+            );
+            return formatted;
+        };
+
+        let pipeline: GPURenderPipeline;
+        try {
+            pipeline = await device.createRenderPipelineAsync({
+                layout: 'auto',
+                vertex: {
+                    module: vertexModule,
+                    entryPoint: vertexEntryPoint,
+                },
+                fragment: {
+                    module: fragmentModule,
+                    entryPoint: fragmentEntryPoint,
+                    targets: [
+                        {
+                            format,
+                            blend: {
+                                color: {
+                                    srcFactor: 'src-alpha',
+                                    dstFactor: 'one-minus-src-alpha',
+                                },
+                                alpha: {
+                                    srcFactor: 'one',
+                                    dstFactor: 'one-minus-src-alpha',
+                                },
                             },
                         },
-                    },
-                ],
-            },
-            primitive: { topology: 'triangle-list' },
-        });
+                    ],
+                },
+                primitive: {
+                    topology: 'triangle-strip',
+                    stripIndexFormat: undefined,
+                },
+            });
+        } catch (error) {
+            const details = await Promise.all([
+                reportShaderCompilation(vertexModule, 'vertex'),
+                reportShaderCompilation(fragmentModule, 'fragment'),
+            ]);
+            const flattenedDetails = details.flat();
+            if (error instanceof Error && flattenedDetails.length > 0) {
+                error.message = `${error.message}\n${flattenedDetails.join('\n')}`;
+                (
+                    error as Error & {
+                        shaderDiagnostics?: ReadonlyArray<string>;
+                    }
+                ).shaderDiagnostics = flattenedDetails;
+            }
+            console.error('[WebGPU] Failed to create render pipeline', error);
+            throw error;
+        }
+        const { uniformEncoder } = config;
         const uniformBuffer = device.createBuffer({
-            size: config.uniformEncoder.uniformBufferSize,
+            size: uniformEncoder.uniformBufferSize,
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
         });
+        const bindGroupLayout = pipeline.getBindGroupLayout(0);
         const bindGroup = device.createBindGroup({
-            layout: pipeline.getBindGroupLayout(0),
+            layout: bindGroupLayout,
             entries: [
                 {
                     binding: 0,
                     resource: {
                         buffer: uniformBuffer,
-                        size: config.uniformEncoder.uniformBufferSize,
                     },
                 },
             ],
         });
-        let lastMetrics = metrics;
-        const detachUncapturedError = (() => {
-            const handler = (event: GPUUncapturedErrorEvent) => {
-                const interpreted =
-                    event.error instanceof Error
-                        ? event.error
-                        : new Error('Uncaptured GPU error');
-                onFatal(interpreted);
-            };
-            device.addEventListener('uncapturederror', handler);
-            return () => {
-                device.removeEventListener('uncapturederror', handler);
-            };
-        })();
-        const deviceLost = device.lost.then((info) => {
-            if (info.reason === 'destroyed') {
-                return undefined;
-            }
-            const message =
-                info.message ??
-                `WebGPU device lost (${info.reason ?? 'unknown'})`;
-            onFatal(new Error(message));
-            return undefined;
-        });
-        const renderFrame = (input: RenderInput<UniformData>) => {
-            if (
-                input.metrics.width <= 0 ||
-                input.metrics.height <= 0 ||
-                input.metrics.dpr <= 0
-            ) {
-                console.log(
-                    '[WebGPUBackend] skipping frame due to invalid metrics',
-                    {
-                        width: input.metrics.width,
-                        height: input.metrics.height,
-                        dpr: input.metrics.dpr,
-                    }
-                );
-                return;
-            }
-            const changedMetrics =
-                input.metrics.width !== lastMetrics.width ||
-                input.metrics.height !== lastMetrics.height ||
-                input.metrics.dpr !== lastMetrics.dpr;
-            if (changedMetrics) {
-                configure(input.metrics);
-                lastMetrics = input.metrics;
-            }
-            device.queue.writeBuffer(
+        const drawFrame = (renderInput: RenderInput<UniformData>) =>
+            drawWebGpuFrame({
+                device,
+                pipeline,
                 uniformBuffer,
-                0,
-                config.uniformEncoder.encodeUniforms(input.uniformData)
-            );
-            const textureView = context.getCurrentTexture().createView();
-            const encoder = device.createCommandEncoder();
-            const pass = encoder.beginRenderPass({
-                colorAttachments: [
-                    {
-                        view: textureView,
-                        loadOp: 'clear',
-                        clearValue: { r: 0, g: 0, b: 0, a: 0 },
-                        storeOp: 'store',
-                    },
-                ],
+                bindGroup,
+                context,
+                uniformEncoder,
+                renderInput,
             });
-            pass.setPipeline(pipeline);
-            pass.setBindGroup(0, bindGroup);
-            pass.draw(6, 1, 0, 0);
-            pass.end();
-            device.queue.submit([encoder.finish()]);
-            console.log('[WebGPUBackend] submitted frame', {
-                width: input.metrics.width,
-                height: input.metrics.height,
-                dpr: input.metrics.dpr,
-            });
+        return {
+            id: 'webgpu',
+            renderFrame: drawFrame,
+            destroy: () => {
+                uniformBuffer.destroy();
+                device.destroy?.();
+            },
         };
-        const destroy = () => {
-            try {
-                const textureView = context.getCurrentTexture().createView();
-                const encoder = device.createCommandEncoder();
-                const pass = encoder.beginRenderPass({
-                    colorAttachments: [
-                        {
-                            view: textureView,
-                            loadOp: 'clear',
-                            clearValue: { r: 0, g: 0, b: 0, a: 0 },
-                            storeOp: 'store',
-                        },
-                    ],
-                });
-                pass.end();
-                device.queue.submit([encoder.finish()]);
-            } catch {
-                // Ignore errors during cleanup
-            }
-            detachUncapturedError();
-            device.destroy?.();
-            void deviceLost;
-        };
-        return { id: 'webgpu', renderFrame, destroy };
     },
 });
 
@@ -367,81 +328,50 @@ export const createWebGLShaderBackend = <UniformData>(
 ): Backend<UniformData> => ({
     id: 'webgl',
     isAvailable: () => hasWebGL(),
+    // eslint-disable-next-line @typescript-eslint/require-await
     create: async ({
         canvas,
         metrics,
         onFatal,
-    }: BackendContext<UniformData>): Promise<BackendHandle<UniformData>> => {
+    }: BackendContext): Promise<BackendHandle<UniformData>> => {
+        const context = canvas.getContext('webgl2', {
+            preserveDrawingBuffer: true,
+        });
         const gl =
-            canvas.getContext('webgl2', {
-                premultipliedAlpha: true,
-                antialias: true,
-            }) ??
+            context ??
             canvas.getContext('webgl', {
-                premultipliedAlpha: true,
-                antialias: true,
+                preserveDrawingBuffer: true,
             });
         if (!gl) {
-            throw new Error('WebGL context unavailable');
+            throw new Error('webgl context unavailable');
         }
-        setCanvasDimensions(canvas, metrics.width, metrics.height, metrics.dpr);
+        setCanvasDimensions({ canvas, metrics });
         const program = createProgram(
             gl,
             config.vertexShaderSource,
             config.fragmentShaderSource
         );
-        gl.useProgram(program);
         const buffer = initFullscreenQuad(gl, program);
-        gl.disable(gl.DEPTH_TEST);
-        gl.disable(gl.CULL_FACE);
-        gl.enable(gl.BLEND);
-        gl.blendFuncSeparate(
-            gl.ONE,
-            gl.ONE_MINUS_SRC_ALPHA,
-            gl.ONE,
-            gl.ONE_MINUS_SRC_ALPHA
-        );
-        gl.viewport(0, 0, canvas.width, canvas.height);
-        let lastMetrics = metrics;
-        const renderFrame = (input: RenderInput<UniformData>) => {
-            if (input.metrics.width <= 0 || input.metrics.height <= 0) {
-                return;
-            }
-            const changedMetrics =
-                input.metrics.width !== lastMetrics.width ||
-                input.metrics.height !== lastMetrics.height ||
-                input.metrics.dpr !== lastMetrics.dpr;
-            if (changedMetrics) {
-                setCanvasDimensions(
-                    canvas,
-                    input.metrics.width,
-                    input.metrics.height,
-                    input.metrics.dpr
-                );
-                gl.viewport(0, 0, canvas.width, canvas.height);
-                lastMetrics = input.metrics;
-            }
-            gl.viewport(0, 0, canvas.width, canvas.height);
-            gl.clearColor(0, 0, 0, 0);
-            gl.clear(gl.COLOR_BUFFER_BIT);
-            config.uniformEncoder(gl, program, input.uniformData);
-            try {
-                gl.drawArrays(gl.TRIANGLES, 0, 6);
-            } catch (error) {
-                onFatal(toError(error));
-            }
+        const drawFrame = (renderInput: RenderInput<UniformData>) =>
+            drawWebglFrame({
+                gl,
+                program,
+                buffer,
+                uniformEncoder: config.uniformEncoder,
+                renderInput,
+            });
+        canvas.addEventListener('webglcontextlost', (event) => {
+            event.preventDefault();
+            onFatal(new Error('WebGL context lost'));
+        });
+        return {
+            id: 'webgl',
+            renderFrame: drawFrame,
+            destroy: () => {
+                gl.deleteBuffer(buffer);
+                gl.deleteProgram(program);
+            },
         };
-        const destroy = () => {
-            try {
-                gl.clearColor(0, 0, 0, 0);
-                gl.clear(gl.COLOR_BUFFER_BIT);
-            } catch {
-                // Ignore errors during cleanup
-            }
-            gl.deleteBuffer(buffer);
-            gl.deleteProgram(program);
-        };
-        return { id: 'webgl', renderFrame, destroy };
     },
 });
 

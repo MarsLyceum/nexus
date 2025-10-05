@@ -66,6 +66,7 @@ export {
     SceneRenderLayerType,
     SceneRenderLayerPlacement,
     SceneRenderResult,
+    SceneRenderDiagnostics,
     SceneRenderOptions,
     SceneActiveBackend,
     ScenePreferredBackend,

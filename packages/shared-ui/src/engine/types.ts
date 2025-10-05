@@ -15,7 +15,7 @@ export type BackendHandle<UniformData> = {
     readonly destroy: () => void;
 };
 
-export type BackendContext<UniformData> = {
+export type BackendContext = {
     readonly canvas: HTMLCanvasElement;
     readonly metrics: RenderMetrics;
     readonly onFatal: (error: Error) => void;
@@ -25,7 +25,7 @@ export type Backend<UniformData> = {
     readonly id: string;
     readonly isAvailable: () => boolean | Promise<boolean>;
     readonly create: (
-        context: BackendContext<UniformData>
+        context: BackendContext
     ) => Promise<BackendHandle<UniformData>>;
 };
 

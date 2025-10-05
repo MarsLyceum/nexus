@@ -134,6 +134,12 @@ export const useSceneRenderer = <State extends Record<string, unknown>>(
         status: result.status,
         activeBackend: result.activeBackend,
         layerIds: result.layers.map((layer) => layer.id),
+        diagnostics: result.diagnostics
+            ? {
+                  failedBackends: result.diagnostics.failedBackends,
+                  backendErrors: Object.keys(result.diagnostics.backendErrors),
+              }
+            : undefined,
     });
     return result;
 };

@@ -28,7 +28,7 @@ import {
     Typography,
 } from '../constants/designSystem';
 import { useThemedScrollbars, NexusScrollView } from '../styles';
-import { buildGlowScene, type GlowSceneState } from '../effects/glow/GlowScene';
+import { buildGlowScene, type GlowSceneState } from '../effects/glow/glowScene';
 import { useSceneRenderer } from '../animation/sceneRenderer';
 import {
     AnimationProvider,
@@ -78,11 +78,13 @@ type SegmentDescriptor = {
     readonly available: boolean;
     readonly active: boolean;
     readonly isDisabled: boolean;
+    readonly failed: boolean;
 };
 
 const createSegmentDescriptors = (
     availability: Record<GlowMode, boolean>,
-    activeBackend: GlowMode
+    activeBackend: GlowMode,
+    failedBackends: ReadonlySet<GlowMode>
 ) =>
     backendOrder.map<SegmentDescriptor>((mode) => ({
         mode,
@@ -90,6 +92,7 @@ const createSegmentDescriptors = (
         available: availability[mode],
         active: activeBackend === mode,
         isDisabled: !availability[mode],
+        failed: failedBackends.has(mode),
     }));
 
 const createSegmentBoxStyles = (
@@ -102,6 +105,7 @@ const createSegmentBoxStyles = (
     { opacity: animatedOpacity },
     descriptor.active && styles.segmentActive,
     descriptor.isDisabled && styles.segmentDisabled,
+    descriptor.failed && styles.segmentFailed,
     state.hovered && !descriptor.isDisabled && styles.segmentHovered,
     state.pressed && !descriptor.isDisabled && styles.segmentPressed,
     state.focused && styles.segmentFocused,
@@ -115,6 +119,7 @@ const createSegmentLabelStyles = (
     styles.segmentLabel,
     descriptor.active && styles.segmentLabelActive,
     descriptor.isDisabled && styles.segmentLabelDisabled,
+    descriptor.failed && styles.segmentLabelFailed,
     state.hovered && !descriptor.isDisabled && styles.segmentLabelHovered,
     state.pressed && !descriptor.isDisabled && styles.segmentLabelPressed,
     state.focused && styles.segmentLabelFocused,
@@ -136,14 +141,18 @@ const createSegmentAnimations = (activeBackend: GlowMode) =>
     );
 
 const useSegmentAnimations = (activeBackend: GlowMode) => {
-    const animationRef = useRef<Record<GlowMode, Animated.Value>>();
+    const animationRef = useRef<Record<GlowMode, Animated.Value> | null>(null);
     if (!animationRef.current) {
         animationRef.current = createSegmentAnimations(activeBackend);
     }
 
     useEffect(() => {
+        const animations = animationRef.current;
+        if (!animations) {
+            return;
+        }
         backendOrder.forEach((mode) => {
-            Animated.timing(animationRef.current![mode], {
+            Animated.timing(animations[mode], {
                 toValue: mode === activeBackend ? 1 : 0,
                 duration: SEGMENT_FADE_DURATION,
                 easing: Easing.out(Easing.quad),
@@ -152,7 +161,7 @@ const useSegmentAnimations = (activeBackend: GlowMode) => {
         });
     }, [activeBackend]);
 
-    return animationRef.current!;
+    return animationRef.current;
 };
 
 const createOpacity = (value: Animated.Value, active: boolean) =>
@@ -271,15 +280,16 @@ const useGlowBackends = (glowScene: ReturnType<typeof buildGlowScene>) => {
         debug('availability:update', availability);
     }, [availability, debug]);
 
-    const { containerStyle, layers, status } = useSceneRenderer<GlowSceneState>(
-        glowScene,
-        isWeb
-            ? {
-                  visibility,
-                  preferredBackend,
-              }
-            : undefined
-    );
+    const { containerStyle, layers, status, diagnostics, activeBackend } =
+        useSceneRenderer<GlowSceneState>(
+            glowScene,
+            isWeb
+                ? {
+                      visibility,
+                      preferredBackend,
+                  }
+                : undefined
+        );
 
     const overlayLayers = useMemo(
         () =>
@@ -357,6 +367,7 @@ const useGlowBackends = (glowScene: ReturnType<typeof buildGlowScene>) => {
         availability,
         preferredBackend,
         activeBackend: effectiveBackend,
+        diagnostics,
         setBackend,
         status,
         isWeb,
@@ -376,6 +387,7 @@ const ErrorFallbackInner: React.FC<
         availability,
         preferredBackend,
         activeBackend,
+        diagnostics,
         setBackend,
         status,
         isWeb,
@@ -430,15 +442,35 @@ const ErrorFallbackInner: React.FC<
         onReset?.();
     };
 
+    const failedBackends = useMemo(() => {
+        if (!diagnostics) {
+            return new Set<GlowMode>();
+        }
+        return diagnostics.failedBackends.reduce<Set<GlowMode>>(
+            (accumulator, backend) => {
+                if (backendOrder.includes(backend as GlowMode)) {
+                    accumulator.add(backend as GlowMode);
+                }
+                return accumulator;
+            },
+            new Set<GlowMode>()
+        );
+    }, [diagnostics]);
+
     const segments = useMemo(
-        () => createSegmentDescriptors(availability, activeBackend),
-        [availability, activeBackend]
+        () =>
+            createSegmentDescriptors(
+                availability,
+                activeBackend,
+                failedBackends
+            ),
+        [availability, activeBackend, failedBackends]
     );
 
     const segmentAnimations = useSegmentAnimations(activeBackend);
 
     const segmentsNode = useMemo(() => {
-        if (segments.length === 0) {
+        if (segments.length === 0 || !segmentAnimations) {
             return null;
         }
         return (
@@ -520,6 +552,64 @@ const ErrorFallbackInner: React.FC<
         );
     }, [baseStyles, segments, setBackend, segmentAnimations]);
 
+    const diagnosticsNotice = useMemo(() => {
+        if (!diagnostics || diagnostics.failedBackends.length === 0) {
+            return null;
+        }
+        const summary = diagnostics.failedBackends.reduce(
+            (
+                accumulator,
+                backend
+            ): {
+                lastBackend: GlowMode | null;
+                lastMessage: string | null;
+                cssActivated: boolean;
+                details: ReadonlyArray<string>;
+            } => {
+                const nextBackend = backend as GlowMode;
+                const isGpuBackend =
+                    nextBackend === 'webgpu' || nextBackend === 'webgl';
+                const error = diagnostics.backendErrors[backend];
+                const nextMessage =
+                    error?.message ?? 'Renderer initialization failed';
+                const detailLines = (() => {
+                    const meta = (
+                        error as Error & {
+                            readonly details?: ReadonlyArray<string>;
+                        }
+                    ).details;
+                    return Array.isArray(meta) ? meta : [];
+                })();
+                const mergedDetails =
+                    detailLines.length > 0 ? detailLines : accumulator.details;
+                return {
+                    lastBackend: nextBackend,
+                    lastMessage: nextMessage,
+                    cssActivated:
+                        accumulator.cssActivated ||
+                        nextBackend === 'css' ||
+                        !isGpuBackend,
+                    details: mergedDetails,
+                };
+            },
+            {
+                lastBackend: null,
+                lastMessage: null,
+                cssActivated: false,
+                details: [],
+            }
+        );
+        if (!summary.lastBackend || !summary.lastMessage) {
+            return null;
+        }
+        return {
+            backend: backendLabels[summary.lastBackend] ?? summary.lastBackend,
+            message: summary.lastMessage,
+            severity: summary.cssActivated ? 'error' : 'warning',
+            details: summary.details,
+        };
+    }, [diagnostics]);
+
     const cardContent = (
         <View style={[baseStyles.cardBody, responsiveStyles.cardBody]}>
             <View style={baseStyles.headerBlock}>
@@ -587,6 +677,35 @@ const ErrorFallbackInner: React.FC<
                     </Text>
                 </Pressable>
             </View>
+            {diagnosticsNotice ? (
+                <View
+                    style={[
+                        baseStyles.diagnosticsBanner,
+                        diagnosticsNotice.severity === 'error'
+                            ? baseStyles.diagnosticsBannerError
+                            : baseStyles.diagnosticsBannerWarning,
+                    ]}
+                >
+                    <Text style={baseStyles.diagnosticsLabel}>
+                        {`Renderer fallback to ${diagnosticsNotice.backend}`}
+                    </Text>
+                    <Text style={baseStyles.diagnosticsMessage}>
+                        {diagnosticsNotice.message}
+                    </Text>
+                    {diagnosticsNotice.details?.length ? (
+                        <View style={baseStyles.diagnosticsDetails}>
+                            {diagnosticsNotice.details.map((line, index) => (
+                                <Text
+                                    key={`${line}-${index}`}
+                                    style={baseStyles.diagnosticsDetailLine}
+                                >
+                                    {line}
+                                </Text>
+                            ))}
+                        </View>
+                    ) : null}
+                </View>
+            ) : null}
         </View>
     );
 
@@ -850,6 +969,52 @@ const createStyles = (theme: Theme) =>
             marginTop: Spacing.XXXL,
             gap: Spacing.MD,
         },
+        diagnosticsBanner: {
+            marginTop: Spacing.XXL,
+            borderRadius: BorderRadius.Medium,
+            paddingHorizontal: Spacing.XL,
+            paddingVertical: Spacing.LG,
+            gap: Spacing.SM,
+        },
+        diagnosticsBannerWarning: {
+            backgroundColor: toRgba(theme.colors.Primary, 0.08),
+            borderWidth: 1,
+            borderColor: toRgba(theme.colors.Primary, 0.22),
+        },
+        diagnosticsBannerError: {
+            backgroundColor: toRgba(theme.colors.Secondary, 0.12),
+            borderWidth: 1,
+            borderColor: toRgba(theme.colors.Secondary, 0.3),
+        },
+        diagnosticsLabel: {
+            ...Typography.Button,
+            color: theme.colors.ActiveText,
+            fontFamily:
+                theme.fonts.primary?.semibold ?? theme.fonts.primary?.bold,
+            textTransform: 'uppercase',
+        },
+        diagnosticsMessage: {
+            ...Typography.BodySmall,
+            color: toRgba(theme.colors.MainText, 0.84),
+            fontFamily: theme.fonts.primary?.regular,
+        },
+        diagnosticsDetails: {
+            marginTop: Spacing.SM,
+            paddingHorizontal: Spacing.SM,
+            paddingVertical: Spacing.XS,
+            backgroundColor: toRgba(theme.colors.ActiveText, 0.06),
+            borderRadius: BorderRadius.Small,
+            borderWidth: 1,
+            borderColor: toRgba(theme.colors.ActiveText, 0.1),
+        },
+        diagnosticsDetailLine: {
+            ...Typography.BodySmall,
+            color: toRgba(theme.colors.MainText, 0.7),
+            fontFamily: theme.fonts.primary?.regular,
+            lineHeight:
+                Typography.BodySmall.lineHeight ??
+                Typography.BodySmall.fontSize * 1.4,
+        },
         primaryButton: {
             paddingHorizontal: Spacing.XL,
             paddingVertical: Spacing.MD,
@@ -988,6 +1153,8 @@ const createStyles = (theme: Theme) =>
         },
     });
 
+const MAX_MODAL_HEIGHT = 720;
+
 const createResponsiveOverrides = (width: number, height: number) => {
     const isSmallWidth = width < 768;
     const isSmallHeight = height < 720;
@@ -1001,6 +1168,10 @@ const createResponsiveOverrides = (width: number, height: number) => {
 
     const cardPadding = isSmallWidth ? Spacing.XXL : Spacing.XXXL;
 
+    const naturalShellHeight = height - verticalPadding * 2;
+    const maxModalHeight = Math.min(naturalShellHeight, MAX_MODAL_HEIGHT);
+    const clampShell = Number.isFinite(maxModalHeight) && maxModalHeight > 0;
+
     const styles = StyleSheet.create({
         backdrop: {
             paddingHorizontal: horizontalPadding,
@@ -1011,16 +1182,13 @@ const createResponsiveOverrides = (width: number, height: number) => {
             marginVertical: isSmallHeight ? Spacing.LG : 0,
         },
         shell: {
-            maxHeight: isSmallHeight
-                ? Math.max(height - verticalPadding * 2, Spacing.XXL * 2)
+            maxHeight: clampShell
+                ? Math.max(maxModalHeight, Spacing.XXL * 2)
                 : undefined,
         },
         card: {
-            maxHeight: isSmallHeight
-                ? Math.max(
-                      height - verticalPadding * 2 - Spacing.LG,
-                      Spacing.XXL * 2
-                  )
+            maxHeight: clampShell
+                ? Math.max(maxModalHeight - Spacing.LG, Spacing.XXL * 2)
                 : undefined,
         },
         cardBody: {
@@ -1028,6 +1196,9 @@ const createResponsiveOverrides = (width: number, height: number) => {
         },
         cardScroll: {
             flexGrow: 0,
+            maxHeight: clampShell
+                ? Math.max(maxModalHeight - Spacing.LG, Spacing.XXL * 2)
+                : undefined,
         },
         cardScrollContent: {
             padding: cardPadding,
@@ -1036,6 +1207,6 @@ const createResponsiveOverrides = (width: number, height: number) => {
 
     return {
         styles,
-        shouldScroll: isSmallHeight,
+        shouldScroll: clampShell,
     };
 };

@@ -17,6 +17,11 @@ export type SceneRenderLayer = {
 
 export type SceneBackendPreference = ReadonlyArray<string> | 'css';
 
+export type SceneRenderDiagnostics = {
+    readonly failedBackends: ReadonlyArray<string>;
+    readonly backendErrors: Record<string, Error>;
+};
+
 export type SceneConfig<State extends Record<string, unknown>> = {
     readonly effectId: string;
     readonly state: Partial<State>;
@@ -40,6 +45,7 @@ export type SceneRenderResult = {
     readonly containerStyle: Record<string, unknown>;
     readonly status: SceneStatus;
     readonly activeBackend: SceneActiveBackend;
+    readonly diagnostics?: SceneRenderDiagnostics;
 };
 
 export type ScenePreferredBackend = string | 'auto' | 'css';

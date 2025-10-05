@@ -192,12 +192,16 @@ const uploadGlowUniforms = (
     if (locations.noiseMix) gl.uniform1f(locations.noiseMix, uniforms.noiseMix);
 };
 
-const UNIFORM_BUFFER_SIZE_BYTES = 256;
+const UNIFORM_BUFFER_SIZE_BYTES = Float32Array.BYTES_PER_ELEMENT * 16;
 
 const createGlowBackends = () =>
     createShaderBackends<GlowUniformData>({
         webgpu: {
             shaderSource: resolveShaderSource(GlowShader),
+            entryPoints: {
+                vertex: 'vs',
+                fragment: 'fs',
+            },
             uniformEncoder: {
                 encodeUniforms: glowUniformsToFloatArray,
                 uniformBufferSize: UNIFORM_BUFFER_SIZE_BYTES,

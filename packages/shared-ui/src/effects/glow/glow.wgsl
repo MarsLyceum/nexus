@@ -75,24 +75,6 @@ fn sdRoundedRect(p: vec2<f32>, b: vec2<f32>, r: f32) -> f32 {
     return length(max(q, vec2<f32>(0.0, 0.0))) - r;
 }
 
-const DEBUG_SAMPLE_TOLERANCE: f32 = 0.001;
-
-fn shouldLogSample(uv: vec2<f32>, sampleTarget: vec2<f32>, tolerance: f32) -> bool {
-    let delta = abs(uv - sampleTarget);
-    return all(delta < vec2<f32>(tolerance, tolerance));
-}
-
-fn sampleAlongHorizontalAxis(offset: f32, halfExtent: f32) -> f32 {
-    let denominator = max(halfExtent * 2.0, 1.0);
-    return 0.5 + offset / denominator;
-}
-
-fn emitRadiusDebug(uv: vec2<f32>, clampedRadiusPx: f32) {
-    if shouldLogSample(uv, vec2<f32>(0.5, 0.5), DEBUG_SAMPLE_TOLERANCE) {
-        debug_log_radius(clampedRadiusPx);
-    }
-}
-
 @fragment
 fn fs(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
     let uniforms = loadUniforms();
@@ -123,9 +105,6 @@ fn fs(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
   // Distance outside the rounded rect. Negative inside, positive outside
     let limitedRadius = min(radiusPx, min(innerHalf.x, innerHalf.y));
     let distanceFromEdge = sdRoundedRect(pOuter, innerHalf, limitedRadius);
-    if shouldLogSample(uv, vec2<f32>(0.5, 0.5), DEBUG_SAMPLE_TOLERANCE) {
-        emitRadiusDebug(uv, limitedRadius);
-    }
     if distanceFromEdge < 0.0 {
         discard;
     }

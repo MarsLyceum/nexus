@@ -1,13 +1,10 @@
 export { Glow } from './Glow';
 export type { GlowProps } from './Glow';
-export {
-    glowEffectDescriptor,
-    clampFocal,
-    WEBGPU_GLOW_OUTER_PAD_PX,
-    hasWebGL,
-    hasWebGPU,
-} from './glowDescriptor';
-export type { GlowState, GlowUniformData } from './glowDescriptor';
+export { glowEffectDescriptor } from './glowConfig';
+export type { GlowState, GlowUniformData } from './glowConfig';
+export { WEBGPU_GLOW_OUTER_PAD_PX } from './glowSpec';
+export { clampFocal } from '../../utils/geometry';
+export { hasWebGL, hasWebGPU } from '../../engine';
 
 export { GlowKeyframes } from './GlowKeyframes';
 export type { GlowEffectProps } from './GlowEffect';

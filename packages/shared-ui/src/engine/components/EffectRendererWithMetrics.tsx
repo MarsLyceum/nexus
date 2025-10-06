@@ -20,24 +20,137 @@ export type EffectRendererWithMetricsProps<
     readonly onFailure?: (error: Error) => void;
     readonly onReady?: () => void;
     readonly onBackendChange?: (backend: string) => void;
+    readonly sizing?: 'container' | 'viewport';
+};
+
+type MetricsState = {
+    readonly width: number;
+    readonly height: number;
+    readonly dpr: number;
+    readonly offsetX: number;
+    readonly offsetY: number;
 };
 
 const useMetrics = (
     rootRef: React.RefObject<HTMLDivElement | null>,
-    padding: number
+    padding: number,
+    sizing: 'container' | 'viewport'
 ) => {
-    const [{ width, height, dpr }, setMetrics] = useState({
-        width: 0,
-        height: 0,
-        dpr: 1,
-    });
+    const [{ width, height, dpr, offsetX, offsetY }, setMetrics] =
+        useState<MetricsState>({
+            width: 0,
+            height: 0,
+            dpr: 1,
+            offsetX: 0,
+            offsetY: 0,
+        });
     useEffect(() => {
         console.log('[EffectRendererWithMetrics] platform check', {
             platform: Platform.OS,
+            sizing,
         });
         if (Platform.OS !== 'web') {
             return undefined;
         }
+        const windowLike = globalThis as Window & typeof globalThis;
+
+        const computeViewportMetrics = () => {
+            const root = rootRef.current;
+            if (!root) {
+                console.log(
+                    '[EffectRendererWithMetrics] root missing during viewport compute'
+                );
+                return;
+            }
+            const target = root.parentElement ?? root;
+            const targetRect = target.getBoundingClientRect();
+            const pixelRatio = windowLike.devicePixelRatio ?? 1;
+            const nextWidth = Math.max(0, targetRect.width + padding * 2);
+            const nextHeight = Math.max(0, targetRect.height + padding * 2);
+            const nextOffsetX = targetRect.left - padding;
+            const nextOffsetY = targetRect.top - padding;
+            setMetrics((current) =>
+                current.width === nextWidth &&
+                current.height === nextHeight &&
+                current.dpr === pixelRatio &&
+                current.offsetX === nextOffsetX &&
+                current.offsetY === nextOffsetY
+                    ? current
+                    : {
+                          width: nextWidth,
+                          height: nextHeight,
+                          dpr: pixelRatio,
+                          offsetX: nextOffsetX,
+                          offsetY: nextOffsetY,
+                      }
+            );
+            console.log(
+                '[EffectRendererWithMetrics] compute viewport metrics',
+                {
+                    width: nextWidth,
+                    height: nextHeight,
+                    padding,
+                    pixelRatio,
+                    offsetX: nextOffsetX,
+                    offsetY: nextOffsetY,
+                }
+            );
+        };
+
+        const computeContainerMetrics = (root: HTMLDivElement) => {
+            const rootRect = root.getBoundingClientRect();
+            const contentWidth = Math.max(0, rootRect.width);
+            const contentHeight = Math.max(0, rootRect.height);
+            const pixelRatio = windowLike.devicePixelRatio ?? 1;
+            setMetrics((current) =>
+                current.width === contentWidth &&
+                current.height === contentHeight &&
+                current.dpr === pixelRatio &&
+                current.offsetX === 0 &&
+                current.offsetY === 0
+                    ? current
+                    : {
+                          width: contentWidth,
+                          height: contentHeight,
+                          dpr: pixelRatio,
+                          offsetX: 0,
+                          offsetY: 0,
+                      }
+            );
+            console.log(
+                '[EffectRendererWithMetrics] compute container metrics',
+                {
+                    width: contentWidth,
+                    height: contentHeight,
+                    padding,
+                    pixelRatio,
+                }
+            );
+        };
+
+        if (sizing === 'viewport') {
+            const compute = () => computeViewportMetrics();
+            computeViewportMetrics();
+            const scrollTarget = rootRef.current?.parentElement;
+            const ResizeObserverCtor = (
+                globalThis as unknown as {
+                    ResizeObserver?: typeof ResizeObserver;
+                }
+            ).ResizeObserver;
+            let resizeObserver: ResizeObserver | undefined;
+            if (ResizeObserverCtor && scrollTarget) {
+                resizeObserver = new ResizeObserverCtor(() => compute());
+                resizeObserver.observe(scrollTarget);
+            }
+            globalThis.addEventListener('resize', compute);
+            globalThis.addEventListener('scroll', compute, true);
+            return () => {
+                resizeObserver?.disconnect();
+                globalThis.removeEventListener('resize', compute);
+                globalThis.removeEventListener('scroll', compute, true);
+            };
+        }
+
         const root = rootRef.current;
         if (!root) {
             console.log(
@@ -45,27 +158,7 @@ const useMetrics = (
             );
             return undefined;
         }
-        const compute = () => {
-            const rootRect = root.getBoundingClientRect();
-            const contentWidth = Math.max(0, rootRect.width);
-            const contentHeight = Math.max(0, rootRect.height);
-            const pixelRatio =
-                (globalThis as Window & typeof globalThis).devicePixelRatio ??
-                1;
-            setMetrics({
-                width: contentWidth,
-                height: contentHeight,
-                dpr: pixelRatio,
-            });
-            console.log('[EffectRendererWithMetrics] compute metrics', {
-                width: contentWidth,
-                height: contentHeight,
-                padding,
-                widthWithPadding: contentWidth,
-                heightWithPadding: contentHeight,
-                pixelRatio,
-            });
-        };
+        const compute = () => computeContainerMetrics(root);
         compute();
         const ResizeObserverCtor = (
             globalThis as unknown as { ResizeObserver?: typeof ResizeObserver }
@@ -88,8 +181,11 @@ const useMetrics = (
             clearInterval(interval);
             globalThis.removeEventListener('resize', compute as EventListener);
         };
-    }, [padding, rootRef]);
-    return useMemo(() => ({ width, height, dpr }), [dpr, height, width]);
+    }, [padding, rootRef, sizing]);
+    return useMemo(
+        () => ({ width, height, dpr, offsetX, offsetY }),
+        [dpr, height, offsetX, offsetY, width]
+    );
 };
 
 export const EffectRendererWithMetrics = <
@@ -100,13 +196,18 @@ export const EffectRendererWithMetrics = <
     borderRadius = 0,
     containerStyle,
     state,
+    sizing = 'container',
     ...props
 }: EffectRendererWithMetricsProps<
     State,
     UniformData
 >): React.ReactElement | null => {
     const rootRef = useRef<HTMLDivElement | null>(null);
-    const { width, height, dpr } = useMetrics(rootRef, padding);
+    const { width, height, dpr, offsetX, offsetY } = useMetrics(
+        rootRef,
+        padding,
+        sizing
+    );
 
     const mergedState = useMemo(
         () => ({
@@ -130,21 +231,33 @@ export const EffectRendererWithMetrics = <
         return null;
     }
 
+    const rootStyle: React.CSSProperties =
+        sizing === 'viewport'
+            ? {
+                  position: 'fixed',
+                  top: offsetY,
+                  left: offsetX,
+                  width,
+                  height,
+                  borderRadius,
+                  overflow: 'visible',
+                  pointerEvents: 'none',
+                  zIndex: 0,
+              }
+            : {
+                  position: 'absolute',
+                  top: -padding,
+                  right: -padding,
+                  bottom: -padding,
+                  left: -padding,
+                  borderRadius,
+                  overflow: 'visible',
+                  pointerEvents: 'none',
+                  zIndex: 0,
+              };
+
     return (
-        <div
-            ref={rootRef}
-            style={{
-                position: 'absolute',
-                top: -padding,
-                right: -padding,
-                bottom: -padding,
-                left: -padding,
-                borderRadius,
-                overflow: 'visible',
-                pointerEvents: 'none',
-                zIndex: 0,
-            }}
-        >
+        <div ref={rootRef} style={rootStyle}>
             <EffectRenderer
                 {...props}
                 state={mergedState}

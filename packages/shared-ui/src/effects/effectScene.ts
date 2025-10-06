@@ -20,7 +20,7 @@ import {
     registerSceneRenderer,
 } from '../animation/sceneRenderer';
 import { useAnimationTimeline } from '../animation/timeline';
-import { hasWebGL, hasWebGPU } from '../engine/shaderBackends';
+import { hasWebGL, hasWebGPU } from '../engine';
 
 type EffectAvailability = {
     readonly webgpu: boolean;

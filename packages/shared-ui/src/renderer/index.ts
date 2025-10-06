@@ -37,20 +37,23 @@ export {
 } from '../engine';
 
 export {
-    createWebGPUShaderBackend,
-    createWebGLShaderBackend,
-    createShaderBackends,
-    hasWebGL,
-    hasWebGPU,
-} from '../engine/shaderBackends';
+    createShaderEngine,
+    getAvailableBackends,
+    getBestAvailableBackend,
+    createUniformEncoder,
+    setCanvasSize,
+} from '../engine';
 
 export type {
-    ShaderUniformData,
-    ShaderUniformEncoder,
-    WebGPUShaderConfig,
-    WebGLShaderConfig,
-    ShaderBackendConfig,
-} from '../engine/shaderBackends';
+    ShaderEngineConfig,
+    ShaderEngine,
+    UniformData as ShaderUniformData,
+    UniformEncoder as ShaderUniformEncoder,
+    ShaderSource,
+    ShaderBackend,
+} from '../engine';
+
+export { hasWebGL, hasWebGPU } from '../engine';
 
 export { EffectRenderer, EffectRendererWithMetrics } from '../engine';
 

@@ -18,6 +18,7 @@ export type WGSLDebugHandle = {
     ) => void;
     readonly fetch: (encoder: GPUCommandEncoder) => void;
     readonly post: () => Promise<void>;
+    readonly dispose?: () => void;
 };
 
 const WGSL_DEBUG_ENTRY_SIZE = 16;
@@ -78,11 +79,16 @@ const createDebugShaderSource = (bindGroupIndex: number): string =>
         `@group(${bindGroupIndex})`
     );
 
+export const injectWGSLDebugUtilities = (
+    source: string,
+    bindGroupIndex = 1
+): string => `${createDebugShaderSource(bindGroupIndex)}\n${source}`;
+
 export const createWGSLDebug = (bindGroupIndex = 1): WGSLDebugHandle => {
     let device: GPUDevice | undefined;
     let debugBuffer: GPUBuffer | undefined;
     let readbackBuffer: GPUBuffer | undefined;
-    const bindGroups = new WeakMap<GPURenderPipeline, GPUBindGroup>();
+    let bindGroups = new WeakMap<GPURenderPipeline, GPUBindGroup>();
     let capacity = 0;
     let active = false;
     let readbackPending = false;
@@ -117,13 +123,8 @@ export const createWGSLDebug = (bindGroupIndex = 1): WGSLDebugHandle => {
 
     const isActive = (): boolean => active;
 
-    const addShader = (source: string, autoInject: boolean): string => {
-        if (!autoInject) {
-            return source;
-        }
-        const utilities = createDebugShaderSource(bindGroupIndex);
-        return `${utilities}\n${source}`;
-    };
+    const addShader = (source: string, autoInject: boolean): string =>
+        autoInject ? injectWGSLDebugUtilities(source, bindGroupIndex) : source;
 
     const resolveBindGroup = (
         pipeline: GPURenderPipeline
@@ -260,5 +261,19 @@ export const createWGSLDebug = (bindGroupIndex = 1): WGSLDebugHandle => {
         setBindGroup,
         fetch,
         post,
+        dispose: () => {
+            active = false;
+            readbackPending = false;
+            mapInFlight = false;
+            bindGroups = new WeakMap();
+            if (debugBuffer) {
+                debugBuffer.destroy?.();
+            }
+            if (readbackBuffer) {
+                readbackBuffer.destroy?.();
+            }
+            debugBuffer = undefined;
+            readbackBuffer = undefined;
+        },
     };
 };

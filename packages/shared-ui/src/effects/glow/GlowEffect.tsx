@@ -1,10 +1,8 @@
 import React, { useMemo } from 'react';
 
-import {
-    clampFocal,
-    glowEffectDescriptor,
-    WEBGPU_GLOW_OUTER_PAD_PX,
-} from './glowDescriptor';
+import { glowEffectDescriptor } from './glowConfig';
+import { WEBGPU_GLOW_OUTER_PAD_PX } from './glowSpec';
+import { clampFocal } from '../../utils/geometry';
 import { useAnimationTimeline } from '../../animation/timeline';
 import { EffectRendererWithMetrics } from '../../engine/components/EffectRendererWithMetrics';
 
@@ -83,7 +81,12 @@ export const GlowEffect: React.FC<GlowEffectProps> = ({
             preferredBackend={preferredBackend}
             padding={WEBGPU_GLOW_OUTER_PAD_PX}
             borderRadius={borderRadius}
-            canvasStyle={{ mixBlendMode: 'plus-lighter' }}
+            sizing="viewport"
+            canvasStyle={{
+                mixBlendMode: 'plus-lighter',
+                width: '100%',
+                height: '100%',
+            }}
             onFailure={handleFailure}
             onReady={handleReady}
             onBackendChange={handleBackendChange}

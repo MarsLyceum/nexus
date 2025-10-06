@@ -36,7 +36,28 @@ const selectArray = <Value>(
 export const createEffectEngine = <State extends EngineState, UniformData>(
     options: EffectEngineOptions<State, UniformData>
 ): EngineControl<State> => {
-    const backends = options.backends ?? options.descriptor.createBackends();
+    const backends =
+        options.backends ??
+        options.descriptor.createBackends().map((backend) => {
+            if (backend.id !== 'webgpu') {
+                return backend;
+            }
+            return {
+                ...backend,
+                create: async (context) => {
+                    const handle = await backend.create(context);
+                    return {
+                        ...handle,
+                        destroy: () => {
+                            const typedCanvas = context.canvas;
+                            typedCanvas.width = 0;
+                            typedCanvas.height = 0;
+                            handle.destroy();
+                        },
+                    };
+                },
+            };
+        });
     const gpuFirstPreference = (() => {
         const descriptorPreference = options.descriptor.backendPreference;
         if (!descriptorPreference || descriptorPreference.length === 0) {

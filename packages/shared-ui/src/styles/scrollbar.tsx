@@ -919,6 +919,9 @@ const WebNexusScrollView: React.FC<NexusScrollViewProps> = ({
                                 height: `${renderedThumbHeight}px`,
                                 pointerEvents: 'none',
                                 zIndex: 0,
+                                transition: isDragging
+                                    ? 'none'
+                                    : 'top 0.12s ease-out, right 0.12s ease-out, width 0.12s ease-out, height 0.12s ease-out',
                             }}
                         >
                             <Glow
@@ -926,8 +929,9 @@ const WebNexusScrollView: React.FC<NexusScrollViewProps> = ({
                                 borderRadius={finalThumbPaintRadius}
                                 focal={{ x: 0.5, y: 0.5 }}
                                 opacity={isDragging ? 0.6 : 0.4}
-                                animate
+                                animate={!isDragging}
                                 fillContainer
+                                sizing="container"
                             />
                         </div>
                     )}

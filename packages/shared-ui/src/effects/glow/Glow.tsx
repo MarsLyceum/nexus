@@ -38,6 +38,7 @@ export type GlowProps = {
     readonly padding?: number;
     readonly enableCssFallback?: boolean;
     readonly fillContainer?: boolean; // If false, uses width/height props
+    readonly sizing?: 'container' | 'viewport';
     readonly width?: number | string;
     readonly height?: number | string;
     readonly onFailure?: (error: Error, backend: string) => void;
@@ -89,6 +90,7 @@ export const Glow: React.FC<GlowProps> = ({
     padding = WEBGPU_GLOW_OUTER_PAD_PX,
     enableCssFallback = true,
     fillContainer = true,
+    sizing = 'viewport',
     width,
     height,
     onFailure,
@@ -374,7 +376,7 @@ export const Glow: React.FC<GlowProps> = ({
                     preferredBackend={activeBackend}
                     padding={padding}
                     borderRadius={borderRadius}
-                    sizing="viewport"
+                    sizing={sizing}
                     canvasStyle={{
                         mixBlendMode: 'plus-lighter',
                         ...containerStyle,

@@ -401,7 +401,7 @@ const ErrorFallbackInner: React.FC<ErrorFallbackProps> = ({
                         fallbackBehavior={
                             rendererLocked ? 'locked' : 'adaptive'
                         }
-                        onBackendChange={control.setActiveBackend}
+                        onBackendChange={control.setBackend}
                         onStatusChange={setStatus}
                         onDiagnosticsChange={setDiagnostics}
                     />

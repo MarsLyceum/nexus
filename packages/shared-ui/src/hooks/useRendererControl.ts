@@ -3,10 +3,8 @@ import { useEffect, useMemo } from 'react';
 import {
     type RendererBackend,
     type RendererControlAvailability,
-    type RendererControlSlice,
     type RendererDiagnostics,
     type RendererStatus,
-    type NexusStore,
     type StateSetter,
     useNexusStore,
     findFirstAvailable,

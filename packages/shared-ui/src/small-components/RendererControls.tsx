@@ -429,13 +429,27 @@ export const RendererControls = <Backend extends RendererBackend>(
                 <View
                     style={styles.segmentGroup}
                     onLayout={(event: LayoutChangeEvent) => {
-                        setSegmentTrackWidth(event.nativeEvent.layout.width);
+                        const layout = event.nativeEvent.layout;
+                        // eslint-disable-next-line no-console
+                        console.log('[RendererControls] segment group layout', {
+                            width: layout.width,
+                            height: layout.height,
+                            segmentTrackWidth,
+                            lastActiveMode: lastActiveMode.current,
+                            activeBackend,
+                        });
+                        setSegmentTrackWidth(layout.width);
                         if (lastActiveMode.current === null) {
                             const initialMode =
                                 segments.find((descriptor) => descriptor.active)
                                     ?.mode ?? segments[0]?.mode;
                             if (initialMode) {
-                                snapThumbTo(initialMode);
+                                const snapped = snapThumbTo(initialMode);
+                                // eslint-disable-next-line no-console
+                                console.log('[RendererControls] initial snap', {
+                                    initialMode,
+                                    snapped,
+                                });
                             }
                         }
                     }}
@@ -472,6 +486,22 @@ export const RendererControls = <Backend extends RendererBackend>(
                                         selected: descriptor.active,
                                     }}
                                     onPress={() => {
+                                        // eslint-disable-next-line no-console
+                                        console.log(
+                                            '[RendererControls] pressed backend',
+                                            {
+                                                mode: descriptor.mode,
+                                                wasActive: descriptor.active,
+                                                availability:
+                                                    control.availability[
+                                                        descriptor.mode
+                                                    ],
+                                                rendererLocked:
+                                                    control.rendererLocked,
+                                                lastActiveMode:
+                                                    lastActiveMode.current,
+                                            }
+                                        );
                                         control.setBackend(descriptor.mode);
                                         control.setActiveBackend(
                                             descriptor.mode
@@ -483,11 +513,35 @@ export const RendererControls = <Backend extends RendererBackend>(
                                         segmentMetrics.current[
                                             descriptor.mode
                                         ] = layout;
+                                        // eslint-disable-next-line no-console
+                                        console.log(
+                                            '[RendererControls] segment layout',
+                                            {
+                                                mode: descriptor.mode,
+                                                layout,
+                                                stored: segmentMetrics.current[
+                                                    descriptor.mode
+                                                ],
+                                                lastActiveMode:
+                                                    lastActiveMode.current,
+                                                activeBackend,
+                                            }
+                                        );
                                         if (
                                             lastActiveMode.current === null &&
                                             descriptor.active
                                         ) {
-                                            snapThumbTo(descriptor.mode);
+                                            const snapped = snapThumbTo(
+                                                descriptor.mode
+                                            );
+                                            // eslint-disable-next-line no-console
+                                            console.log(
+                                                '[RendererControls] snap on layout',
+                                                {
+                                                    mode: descriptor.mode,
+                                                    snapped,
+                                                }
+                                            );
                                         }
                                     }}
                                     disabled={descriptor.isDisabled}
@@ -585,7 +639,18 @@ export const RendererControls = <Backend extends RendererBackend>(
                     {lockLabel}
                 </Text>
                 <View style={styles.lockToggleGroup}>
-                    <Pressable onPress={toggleRendererLock}>
+                    <Pressable
+                        onPress={() => {
+                            // eslint-disable-next-line no-console
+                            console.log(
+                                '[RendererControls] lock toggle pressed',
+                                {
+                                    rendererLocked: control.rendererLocked,
+                                }
+                            );
+                            toggleRendererLock();
+                        }}
+                    >
                         <View
                             style={[
                                 styles.switchTrack,

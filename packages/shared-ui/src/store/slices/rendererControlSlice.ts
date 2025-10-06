@@ -270,13 +270,39 @@ export const createRendererControlSlice = <
 ): RendererControlSlice<Backend> => ({
     ...createInitialRendererState<Backend>(),
     setBackend: (backend) => {
-        set((state) => resolveBackendSelection(backend, state));
+        set((state) => {
+            const nextState = resolveBackendSelection(backend, state);
+            if (nextState !== state) {
+                // eslint-disable-next-line no-console
+                console.log('[rendererControlSlice] setBackend', {
+                    requested: backend,
+                    previousPreferred: state.preferredBackend,
+                    nextPreferred: nextState.preferredBackend,
+                    rendererLocked: state.rendererLocked,
+                });
+            }
+            return nextState;
+        });
     },
     setPreferredBackend: (update) => {
         set(applyPreferredBackendUpdate<Store, Backend>(update));
     },
     setActiveBackend: (update) => {
-        set(applyActiveBackendUpdate<Store, Backend>(update));
+        set((state) => {
+            const next = applyActiveBackendUpdate<Store, Backend>(update)(
+                state
+            );
+            if (next !== state) {
+                // eslint-disable-next-line no-console
+                console.log('[rendererControlSlice] setActiveBackend', {
+                    previousActive: state.activeBackend,
+                    nextActive: next.activeBackend,
+                    rendererLocked: state.rendererLocked,
+                    allowAuto: state.allowAuto,
+                });
+            }
+            return next;
+        });
     },
     setStatus: (update) => {
         set(applyStatusUpdate<Store, Backend>(update));
@@ -285,7 +311,21 @@ export const createRendererControlSlice = <
         set(applyDiagnosticsUpdate<Store, Backend>(update));
     },
     setRendererLocked: (update) => {
-        set(applyRendererLockedUpdate<Store, Backend>(update));
+        set((state) => {
+            const next = applyRendererLockedUpdate<Store, Backend>(update)(
+                state
+            );
+            if (next !== state) {
+                // eslint-disable-next-line no-console
+                console.log('[rendererControlSlice] setRendererLocked', {
+                    previous: state.rendererLocked,
+                    next: next.rendererLocked,
+                    preferredBackend: next.preferredBackend,
+                    activeBackend: next.activeBackend,
+                });
+            }
+            return next;
+        });
     },
     isBackendAvailable: (backend) =>
         Boolean(store.getState().availability[backend]),

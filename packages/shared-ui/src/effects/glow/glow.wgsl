@@ -68,6 +68,7 @@ fn loadUniforms() -> GlowUniforms {
 fn gaussian(r: f32, sigma: f32) -> f32 { return exp(-0.5 * (r * r) / (sigma * sigma)); }
 fn hash(p: vec2<f32>) -> f32 { let h = dot(p, vec2<f32>(127.1, 311.7)); return fract(sin(h) * 43758.5453); }
 fn saturate(x: f32) -> f32 { return clamp(x, 0.0, 1.0); }
+fn lerp(a: f32, b: f32, t: f32) -> f32 { return a + (b - a) * t; }
 
 // Signed distance to a rounded rectangle centered at 0 with half-extents b and corner radius r
 fn sdRoundedRect(p: vec2<f32>, b: vec2<f32>, r: f32) -> f32 {
@@ -131,7 +132,7 @@ fn fs(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
     let focusPx = (focal - vec2<f32>(0.5, 0.5)) * innerSize;
     let focusWeight = saturate(exp(-length(nearestOnInner - focusPx) / (rimWidth * 1.1)));
 
-    var glow = intensity * mask * mix(halo, rim, focusWeight);
+    var glow = intensity * mask * lerp(halo, rim, focusWeight);
 
     // Reduce banding with tiny noise modulated by glow strength to avoid flat tint
     let noiseAmp = noiseMix / 255.0;

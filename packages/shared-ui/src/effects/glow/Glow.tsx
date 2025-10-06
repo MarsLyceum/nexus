@@ -16,17 +16,17 @@ import {
     createGlowKeyframes,
     createWebGlowAnimationStyle,
 } from '../../utils/animatedGlow';
-import { hasWebGL, hasWebGPU } from '../../engine';
+import {
+    useNexusStore,
+    type RendererDiagnostics,
+    type RendererStatus,
+} from '../../store';
 
 export type GlowBackend = 'webgpu' | 'webgl' | 'css' | 'auto';
 
-export type GlowDiagnostics = {
-    readonly failedBackends: ReadonlyArray<string>;
-    readonly backendErrors: Record<string, Error>;
-    readonly attemptedBackends: ReadonlyArray<string>;
-};
+export type GlowDiagnostics = RendererDiagnostics;
 
-export type GlowStatus = 'initializing' | 'ready' | 'failed' | 'rendering';
+export type GlowStatus = RendererStatus;
 
 export type GlowFallbackBehavior = 'adaptive' | 'locked';
 
@@ -109,36 +109,60 @@ export const Glow: React.FC<GlowProps> = ({
     const normalizedFocal = useMemo(() => clampFocal(focal), [focal]);
     const isWeb = Platform.OS === 'web';
 
-    const webgpuAvailable = useMemo(() => isWeb && hasWebGPU(), [isWeb]);
-    const webglAvailable = useMemo(() => isWeb && hasWebGL(), [isWeb]);
-
-    const initialBackend = useMemo(
-        () =>
-            selectBackendPreference(
-                preferredBackend,
-                webgpuAvailable,
-                webglAvailable
-            ),
-        [preferredBackend, webglAvailable, webgpuAvailable]
+    const setActiveBackend = useNexusStore(
+        ({ setActiveBackend: setStoreActiveBackend }) => setStoreActiveBackend
     );
-
-    const [activeBackend, setActiveBackend] = useState<
-        'webgpu' | 'webgl' | 'css'
-    >(initialBackend);
-    const [status, setStatus] = useState<GlowStatus>('initializing');
-    const [diagnostics, setDiagnostics] = useState<GlowDiagnostics>({
-        failedBackends: [],
-        backendErrors: {},
-        attemptedBackends: [initialBackend],
-    });
+    const setStatus = useNexusStore(
+        ({ setStatus: setStoreStatus }) => setStoreStatus
+    );
+    const setDiagnostics = useNexusStore(
+        ({ setDiagnostics: setStoreDiagnostics }) => setStoreDiagnostics
+    );
+    const diagnostics = useNexusStore(
+        ({ diagnostics: storeDiagnostics }) => storeDiagnostics
+    );
+    const status = useNexusStore(({ status: storeStatus }) => storeStatus);
+    const activeBackend = useNexusStore(
+        ({ activeBackend: storeActiveBackend }) => storeActiveBackend
+    );
+    const availability = useNexusStore(
+        ({ availability: storeAvailability }) => storeAvailability
+    );
     const [cssStartTime, setCssStartTime] = useState(() =>
         timeline.getTimeSeconds()
     );
 
     const failedBackendsRef = useRef<Set<string>>(new Set());
     const gpuRenderingFailed = useRef(false);
+    const availabilitySnapshot = useMemo(
+        () => ({
+            webgpu: Boolean(availability.webgpu ?? false),
+            webgl: Boolean(availability.webgl ?? false),
+            css: true,
+        }),
+        [availability.webgl, availability.webgpu]
+    );
+
+    const webgpuAvailable = availabilitySnapshot.webgpu && isWeb;
+    const webglAvailable = availabilitySnapshot.webgl && isWeb;
+
+    useEffect(() => {
+        if (availabilitySnapshot.webgpu || availabilitySnapshot.webgl) {
+            return;
+        }
+        setActiveBackend('css');
+        setStatus('failed');
+    }, [
+        availabilitySnapshot.webgl,
+        availabilitySnapshot.webgpu,
+        setActiveBackend,
+        setStatus,
+    ]);
+
     const lastGpuBackendRef = useRef<'webgpu' | 'webgl' | null>(
-        initialBackend === 'css' ? null : initialBackend
+        activeBackend === 'webgpu' || activeBackend === 'webgl'
+            ? activeBackend
+            : null
     );
     const gpuPersistenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
         null
@@ -146,10 +170,15 @@ export const Glow: React.FC<GlowProps> = ({
     const [persistGpuSnapshot, setPersistGpuSnapshot] = useState(false);
 
     useEffect(() => {
-        if (activeBackend !== 'css') {
+        if (activeBackend === 'webgpu' || activeBackend === 'webgl') {
             lastGpuBackendRef.current = activeBackend;
+            gpuRenderingFailed.current = false;
         }
     }, [activeBackend]);
+
+    useEffect(() => {
+        failedBackendsRef.current = new Set(diagnostics.failedBackends);
+    }, [diagnostics.failedBackends]);
 
     const activeBackendRef = useRef(activeBackend);
     useEffect(() => {

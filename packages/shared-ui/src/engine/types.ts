@@ -63,8 +63,10 @@ export type EngineControl<State extends EngineState> = {
     readonly start: () => void;
     readonly stop: () => void;
     readonly dispose: () => void;
-    readonly setDesiredBackend: (backend: string) => Promise<string>;
-    readonly getActiveBackend: () => string;
+    readonly setDesiredBackend: (
+        backend: string
+    ) => Promise<string | undefined>;
+    readonly getActiveBackend: () => string | undefined;
 };
 
 export type EngineOptions<State extends EngineState, UniformData> = {
@@ -78,7 +80,7 @@ export type EngineOptions<State extends EngineState, UniformData> = {
     }) => UniformData;
     readonly backends?: ReadonlyArray<Backend<UniformData>>;
     readonly backendPreference?: ReadonlyArray<string>;
-    readonly onBackendChange?: (backend: string) => void;
+    readonly onBackendChange?: (backend: string | undefined) => void;
     readonly onReady?: () => void;
     readonly onError?: (error: Error) => void;
 };

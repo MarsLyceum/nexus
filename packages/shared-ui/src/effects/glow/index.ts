@@ -4,6 +4,7 @@ export type {
     GlowBackend,
     GlowDiagnostics,
     GlowStatus,
+    GlowFallbackBehavior,
 } from './Glow';
 export { glowEffectDescriptor } from './glowConfig';
 export type { GlowState, GlowUniformData } from './glowConfig';

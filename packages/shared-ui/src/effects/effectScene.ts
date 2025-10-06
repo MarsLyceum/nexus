@@ -252,8 +252,9 @@ export const createEffectScene = <
             baseShouldAttempt ? 'pending' : 'ready'
         );
         const [gpuFailed, setGpuFailed] = useState(false);
-        const [activeBackend, setActiveBackend] =
-            useState<SceneActiveBackend>('css');
+        const [activeBackend, setActiveBackend] = useState<
+            SceneActiveBackend | undefined
+        >(undefined);
         const [diagnostics, setDiagnostics] = useState<
             SceneRenderDiagnostics | undefined
         >(undefined);
@@ -298,7 +299,7 @@ export const createEffectScene = <
             baseShouldAttempt &&
             !gpuFailed &&
             status !== 'failed' &&
-            activeBackend !== 'none';
+            activeBackend !== undefined;
         const showCssLayer = isWeb
             ? !shouldRenderGpuLayer || gpuFailed || wantsCssOnly
             : false;

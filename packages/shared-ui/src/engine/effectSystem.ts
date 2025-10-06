@@ -14,7 +14,7 @@ export type EffectEngineOptions<State extends EngineState, UniformData> = {
     readonly initialState?: State;
     readonly backends?: ReadonlyArray<Backend<UniformData>>;
     readonly backendPreference?: ReadonlyArray<string>;
-    readonly onBackendChange?: (backend: string) => void;
+    readonly onBackendChange?: (backend: string | undefined) => void;
     readonly onReady?: () => void;
     readonly onError?: (error: Error) => void;
 };

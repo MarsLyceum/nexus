@@ -212,13 +212,14 @@ type NexusScrollViewProps = {
     style?: Record<string, unknown>;
     contentContainerStyle?: Record<string, unknown>;
     nativeID?: string;
-    maxHeight?: number;
+    maxHeight?: number | string;
+    height?: number | string;
     containerRadius?: number;
     keyboardShouldPersistTaps?: 'always' | 'never' | 'handled';
     scrollEventThrottle?: number;
 };
 
-const WebNexusScrollView: React.FC<NexusScrollViewProps> = ({
+const WebNexusScrollViewInner: React.FC<NexusScrollViewProps> = ({
     children,
     style,
     contentContainerStyle,
@@ -768,10 +769,6 @@ const WebNexusScrollView: React.FC<NexusScrollViewProps> = ({
         handleScroll();
     }, [handleScroll, children, dpr, viewportScale]);
 
-    if (Platform.OS !== 'web') {
-        return null;
-    }
-
     const primary = theme.colors.Primary;
 
     // Respect caller-provided paddings while reserving space for the custom scrollbar lane.
@@ -800,14 +797,55 @@ const WebNexusScrollView: React.FC<NexusScrollViewProps> = ({
         'aria-orientation': 'vertical' as const,
     };
 
+    const hasMaxHeight = maxHeight !== undefined;
+    const resolvedMaxHeight = useMemo(() => {
+        if (!hasMaxHeight) {
+            return undefined;
+        }
+        if (typeof maxHeight === 'number') {
+            return `${maxHeight}px`;
+        }
+        return maxHeight;
+    }, [hasMaxHeight, maxHeight]);
+
+    const outerDimensionStyle = useMemo(
+        () =>
+            hasMaxHeight
+                ? {
+                      maxHeight: resolvedMaxHeight,
+                      height: resolvedMaxHeight,
+                      minHeight: 0,
+                  }
+                : {
+                      height: '100%',
+                      minHeight: 0,
+                  },
+        [hasMaxHeight, resolvedMaxHeight]
+    );
+
+    const innerDimensionStyle = useMemo(
+        () =>
+            hasMaxHeight
+                ? {
+                      maxHeight: resolvedMaxHeight,
+                      height: '100%',
+                      minHeight: 0,
+                      overflowY: 'auto' as const,
+                  }
+                : {
+                      height: '100%',
+                      minHeight: 0,
+                      overflowY: 'auto' as const,
+                  },
+        [hasMaxHeight, resolvedMaxHeight]
+    );
+
     return (
         <div
             role="none"
             style={{
                 position: 'relative',
-                ...(maxHeight !== undefined
-                    ? { maxHeight }
-                    : { height: '100%', minHeight: 0 }),
+                ...outerDimensionStyle,
                 overflow: 'hidden',
                 borderRadius: containerRadius,
                 ...style,
@@ -841,10 +879,10 @@ const WebNexusScrollView: React.FC<NexusScrollViewProps> = ({
                 id={nativeID}
                 onScroll={handleScroll}
                 style={{
-                    ...(maxHeight !== undefined
-                        ? { maxHeight }
-                        : { height: '100%', minHeight: 0 }),
-                    overflow: 'auto',
+                    ...innerDimensionStyle,
+                    overflow: 'hidden auto',
+                    overflowX: 'hidden',
+                    overflowY: 'auto',
                     scrollbarWidth: 'none',
                     msOverflowStyle: 'none',
                     WebkitOverflowScrolling: 'touch',
@@ -1025,7 +1063,7 @@ export const NexusScrollView: React.FC<NexusScrollViewProps> = (props) => {
             <ScrollView
                 nativeID={nativeID}
                 style={{
-                    ...(maxHeight !== undefined ? { maxHeight } : {}),
+                    ...(typeof maxHeight === 'number' ? { maxHeight } : {}),
                     borderRadius: containerRadius,
                     ...(style as Record<string, unknown>),
                 }}
@@ -1041,5 +1079,6 @@ export const NexusScrollView: React.FC<NexusScrollViewProps> = (props) => {
             </ScrollView>
         );
     }
-    return <WebNexusScrollView {...props} />;
+
+    return <WebNexusScrollViewInner {...props} />;
 };

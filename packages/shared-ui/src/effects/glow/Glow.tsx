@@ -28,6 +28,8 @@ export type GlowDiagnostics = {
 
 export type GlowStatus = 'initializing' | 'ready' | 'failed' | 'rendering';
 
+export type GlowFallbackBehavior = 'adaptive' | 'locked';
+
 export type GlowProps = {
     readonly color: string;
     readonly borderRadius?: number;
@@ -41,12 +43,15 @@ export type GlowProps = {
     readonly sizing?: 'container' | 'viewport';
     readonly width?: number | string;
     readonly height?: number | string;
+    readonly fallbackBehavior?: GlowFallbackBehavior;
     readonly onFailure?: (error: Error, backend: string) => void;
     readonly onReady?: () => void;
     readonly onBackendChange?: (backend: string) => void;
     readonly onStatusChange?: (status: GlowStatus) => void;
     readonly onDiagnosticsChange?: (diagnostics: GlowDiagnostics) => void;
 };
+
+const GPU_SNAPSHOT_PERSIST_MS = 120;
 
 const selectBackendPreference = (
     preferred: GlowBackend,
@@ -93,6 +98,7 @@ export const Glow: React.FC<GlowProps> = ({
     sizing = 'viewport',
     width,
     height,
+    fallbackBehavior = 'adaptive',
     onFailure,
     onReady,
     onBackendChange,
@@ -131,6 +137,29 @@ export const Glow: React.FC<GlowProps> = ({
 
     const failedBackendsRef = useRef<Set<string>>(new Set());
     const gpuRenderingFailed = useRef(false);
+    const lastGpuBackendRef = useRef<'webgpu' | 'webgl' | null>(
+        initialBackend === 'css' ? null : initialBackend
+    );
+    const gpuPersistenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+        null
+    );
+    const [persistGpuSnapshot, setPersistGpuSnapshot] = useState(false);
+
+    useEffect(() => {
+        if (activeBackend !== 'css') {
+            lastGpuBackendRef.current = activeBackend;
+        }
+    }, [activeBackend]);
+
+    const activeBackendRef = useRef(activeBackend);
+    useEffect(() => {
+        activeBackendRef.current = activeBackend;
+    }, [activeBackend]);
+
+    const persistGpuSnapshotRef = useRef(persistGpuSnapshot);
+    useEffect(() => {
+        persistGpuSnapshotRef.current = persistGpuSnapshot;
+    }, [persistGpuSnapshot]);
 
     const updateDiagnostics = useCallback((backend: string, error?: Error) => {
         setDiagnostics((current) => {
@@ -167,10 +196,6 @@ export const Glow: React.FC<GlowProps> = ({
                 );
             }
 
-            failedBackendsRef.current.add(currentBackend);
-            updateDiagnostics(currentBackend, error);
-            onFailure?.(error, currentBackend);
-
             // Try to find an alternative GPU backend that hasn't failed
             let nextGpuBackend: 'webgpu' | 'webgl' | null = null;
 
@@ -187,6 +212,18 @@ export const Glow: React.FC<GlowProps> = ({
             ) {
                 nextGpuBackend = 'webgl';
             }
+
+            if (fallbackBehavior === 'locked') {
+                gpuRenderingFailed.current = true;
+                updateDiagnostics(currentBackend, error);
+                onFailure?.(error, currentBackend);
+                setStatus('failed');
+                return;
+            }
+
+            failedBackendsRef.current.add(currentBackend);
+            updateDiagnostics(currentBackend, error);
+            onFailure?.(error, currentBackend);
 
             if (nextGpuBackend) {
                 // Try the alternative GPU backend
@@ -224,26 +261,143 @@ export const Glow: React.FC<GlowProps> = ({
         ]
     );
 
+    const clearGpuPersistenceTimer = useCallback(() => {
+        const current = gpuPersistenceTimerRef.current;
+        if (current) {
+            clearTimeout(current);
+            gpuPersistenceTimerRef.current = null;
+        }
+    }, []);
+
+    const effectiveGpuBackend = useMemo<'webgpu' | 'webgl' | null>(() => {
+        if (!isWeb || gpuRenderingFailed.current) {
+            return null;
+        }
+        if (activeBackend === 'css') {
+            return persistGpuSnapshot ? lastGpuBackendRef.current : null;
+        }
+        return activeBackend;
+    }, [activeBackend, isWeb, persistGpuSnapshot]);
+
+    const shouldRenderGpu = useMemo(
+        () =>
+            isWeb &&
+            !gpuRenderingFailed.current &&
+            (activeBackend !== 'css' || persistGpuSnapshot),
+        [activeBackend, isWeb, persistGpuSnapshot]
+    );
+
+    const shouldRenderCss = useMemo(
+        () =>
+            activeBackend === 'css' ||
+            (gpuRenderingFailed.current &&
+                enableCssFallback &&
+                fallbackBehavior === 'adaptive'),
+        [activeBackend, enableCssFallback, fallbackBehavior]
+    );
+
+    const shouldRenderGpuRef = useRef(shouldRenderGpu);
+    useEffect(() => {
+        shouldRenderGpuRef.current = shouldRenderGpu;
+    }, [shouldRenderGpu]);
+
+    const rendererPreferredBackend = useMemo(
+        () => effectiveGpuBackend ?? 'auto',
+        [effectiveGpuBackend]
+    );
+
     const handleGpuReady = useCallback(() => {
+        const readyBackend =
+            effectiveGpuBackend ?? lastGpuBackendRef.current ?? activeBackend;
         if (typeof console !== 'undefined') {
             // eslint-disable-next-line no-console
-            console.log(`[Glow] ${activeBackend} ready`);
+            console.log(`[Glow] ${readyBackend} ready`, {
+                persistGpuSnapshot,
+                lastGpuBackend: lastGpuBackendRef.current,
+            });
         }
+        if (activeBackend === 'css' && persistGpuSnapshot) {
+            return;
+        }
+        clearGpuPersistenceTimer();
+        setPersistGpuSnapshot(false);
         setStatus('ready');
         onReady?.();
-    }, [activeBackend, onReady]);
+    }, [
+        activeBackend,
+        clearGpuPersistenceTimer,
+        effectiveGpuBackend,
+        onReady,
+        persistGpuSnapshot,
+    ]);
 
     const handleGpuBackendChange = useCallback(
-        (backend: string) => {
+        (backend: string | undefined) => {
             if (typeof console !== 'undefined') {
                 // eslint-disable-next-line no-console
                 console.log('[Glow] GPU backend changed to', backend);
             }
+            if (!backend) {
+                return;
+            }
+            const currentActiveBackend = activeBackendRef.current;
+            const currentPersist = persistGpuSnapshotRef.current;
+            const currentShouldRenderGpu = shouldRenderGpuRef.current;
+            if (!currentShouldRenderGpu) {
+                if (typeof console !== 'undefined') {
+                    // eslint-disable-next-line no-console
+                    console.log(
+                        '[Glow] skipping GPU snapshot buffering; renderer not active',
+                        {
+                            activeBackend: currentActiveBackend,
+                            persistGpuSnapshot: currentPersist,
+                            shouldRenderGpu: currentShouldRenderGpu,
+                        }
+                    );
+                }
+                updateDiagnostics(backend);
+                return;
+            }
+            setPersistGpuSnapshot(true);
+            if (currentActiveBackend !== 'css') {
+                lastGpuBackendRef.current = currentActiveBackend as
+                    | 'webgpu'
+                    | 'webgl';
+            }
+            clearGpuPersistenceTimer();
+            gpuPersistenceTimerRef.current = setTimeout(() => {
+                gpuPersistenceTimerRef.current = null;
+                setPersistGpuSnapshot(false);
+            }, GPU_SNAPSHOT_PERSIST_MS);
+            if (typeof console !== 'undefined') {
+                // eslint-disable-next-line no-console
+                console.log('[Glow] buffering GPU snapshot for CSS switch', {
+                    activeBackend: currentActiveBackend,
+                    lastGpuBackend: lastGpuBackendRef.current,
+                    persistGpuSnapshot: true,
+                });
+            }
             updateDiagnostics(backend);
-            onBackendChange?.(backend);
         },
-        [onBackendChange, updateDiagnostics]
+        [
+            activeBackend,
+            clearGpuPersistenceTimer,
+            onBackendChange,
+            persistGpuSnapshot,
+            shouldRenderGpu,
+            updateDiagnostics,
+        ]
     );
+
+    useEffect(() => {
+        if (typeof console !== 'undefined') {
+            // eslint-disable-next-line no-console
+            console.log('[Glow] persistGpuSnapshot changed', {
+                persistGpuSnapshot,
+                lastGpuBackend: lastGpuBackendRef.current,
+            });
+        }
+    }, [persistGpuSnapshot]);
 
     useEffect(() => {
         const resolvedBackend = selectBackendPreference(
@@ -263,8 +417,28 @@ export const Glow: React.FC<GlowProps> = ({
 
         let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
+        const previousBackend = activeBackendRef.current;
+        if (
+            resolvedBackend === 'css' &&
+            previousBackend !== 'css' &&
+            !persistGpuSnapshotRef.current
+        ) {
+            if (typeof console !== 'undefined') {
+                // eslint-disable-next-line no-console
+                console.log(
+                    '[Glow] pre-buffering GPU snapshot before CSS switch',
+                    {
+                        previousBackend,
+                    }
+                );
+            }
+            setPersistGpuSnapshot(true);
+        }
+
         if (failedBackendsRef.current.has(resolvedBackend)) {
-            if (enableCssFallback) {
+            if (fallbackBehavior === 'locked') {
+                setStatus('failed');
+            } else if (enableCssFallback) {
                 setActiveBackend('css');
             }
         } else {
@@ -279,7 +453,13 @@ export const Glow: React.FC<GlowProps> = ({
                 clearTimeout(timeoutId);
             }
         };
-    }, [enableCssFallback, preferredBackend, webglAvailable, webgpuAvailable]);
+    }, [
+        enableCssFallback,
+        fallbackBehavior,
+        preferredBackend,
+        webglAvailable,
+        webgpuAvailable,
+    ]);
 
     useEffect(() => {
         onBackendChange?.(activeBackend);
@@ -310,17 +490,17 @@ export const Glow: React.FC<GlowProps> = ({
         [color, isWeb, normalizedFocal]
     );
 
-    const shouldRenderCss = useMemo(
-        () =>
-            activeBackend === 'css' ||
-            (gpuRenderingFailed.current && enableCssFallback),
-        [activeBackend, enableCssFallback]
-    );
-
-    const shouldRenderGpu = useMemo(
-        () => isWeb && activeBackend !== 'css' && !gpuRenderingFailed.current,
-        [activeBackend, isWeb]
-    );
+    useEffect(() => {
+        if (typeof console !== 'undefined') {
+            // eslint-disable-next-line no-console
+            console.log('[Glow] render mode flags updated', {
+                activeBackend,
+                shouldRenderGpu,
+                shouldRenderCss,
+                persistGpuSnapshot,
+            });
+        }
+    }, [activeBackend, persistGpuSnapshot, shouldRenderCss, shouldRenderGpu]);
 
     const cssAnimationStyle = useMemo(
         () => createWebGlowAnimationStyle(cssStartTime),
@@ -330,6 +510,13 @@ export const Glow: React.FC<GlowProps> = ({
     // Update CSS start time when switching to CSS mode
     useEffect(() => {
         if (shouldRenderCss) {
+            if (typeof console !== 'undefined') {
+                // eslint-disable-next-line no-console
+                console.log('[Glow] entering CSS render mode', {
+                    cssStartTime: timeline.getTimeSeconds(),
+                    persistGpuSnapshot,
+                });
+            }
             setCssStartTime(timeline.getTimeSeconds());
         }
     }, [shouldRenderCss, timeline]);
@@ -337,6 +524,8 @@ export const Glow: React.FC<GlowProps> = ({
     if (!isWeb) {
         return null;
     }
+
+    const shouldShowGpuSnapshot = shouldRenderGpu && persistGpuSnapshot;
 
     const containerStyle = fillContainer
         ? {
@@ -362,24 +551,29 @@ export const Glow: React.FC<GlowProps> = ({
                         ...containerStyle,
                         borderRadius: `${borderRadius}px`,
                         pointerEvents: 'none',
-                        opacity,
+                        opacity: shouldShowGpuSnapshot ? 0 : opacity,
                         ...cssAnimationStyle.style,
                     }}
                 />
             )}
             {shouldRenderGpu && (
                 <EffectRendererWithMetrics
-                    key={`glow-renderer-${activeBackend}`}
                     descriptor={glowEffectDescriptor}
                     timeline={timeline}
                     state={state}
-                    preferredBackend={activeBackend}
+                    preferredBackend={rendererPreferredBackend}
                     padding={padding}
                     borderRadius={borderRadius}
                     sizing={sizing}
                     canvasStyle={{
                         mixBlendMode: 'plus-lighter',
                         ...containerStyle,
+                    }}
+                    containerStyle={{
+                        ...containerStyle,
+                        position: 'absolute',
+                        inset: 0,
+                        opacity: persistGpuSnapshot ? 1 : undefined,
                     }}
                     onFailure={handleGpuFailure}
                     onReady={handleGpuReady}

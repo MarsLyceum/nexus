@@ -10,13 +10,13 @@ export type UseEffectEngineOptions<State extends EngineState, UniformData> = {
     readonly state: Partial<State>;
     readonly backends?: ReadonlyArray<Backend<UniformData>>;
     readonly desiredBackend?: string;
-    readonly onBackendChange?: (backend: string) => void;
+    readonly onBackendChange?: (backend: string | undefined) => void;
     readonly onReady?: () => void;
     readonly onError?: (error: Error) => void;
 };
 
 export type UseEffectEngineResult = {
-    readonly backendId: string;
+    readonly backendId: string | undefined;
 };
 
 export const useEffectEngine = <State extends EngineState, UniformData>({
@@ -30,18 +30,18 @@ export const useEffectEngine = <State extends EngineState, UniformData>({
     onReady,
     onError,
 }: UseEffectEngineOptions<State, UniformData>): UseEffectEngineResult => {
-    const [backendId, setBackendId] = useState('unknown');
+    const [backendId, setBackendId] = useState<string | undefined>(undefined);
     const engineRef = useRef<ReturnType<
         typeof createEffectEngine<State, UniformData>
     > | null>(null);
-    const backendChangeRef = useRef<((backend: string) => void) | undefined>(
-        onBackendChange
-    );
+    const backendChangeRef = useRef<
+        ((backend: string | undefined) => void) | undefined
+    >(onBackendChange);
     const readyRef = useRef<(() => void) | undefined>(onReady);
     const errorRef = useRef<((error: Error) => void) | undefined>(onError);
     const desiredBackendRef = useRef(desiredBackend);
     const stateRef = useRef(state);
-
+    const disposingRef = useRef(false);
     useEffect(() => {
         backendChangeRef.current = onBackendChange;
     }, [onBackendChange]);
@@ -99,6 +99,7 @@ export const useEffectEngine = <State extends EngineState, UniformData>({
             desiredBackendRef.current === 'auto'
                 ? undefined
                 : [desiredBackendRef.current];
+        disposingRef.current = false;
         const engine = createEffectEngine({
             canvas,
             timeline,
@@ -110,7 +111,12 @@ export const useEffectEngine = <State extends EngineState, UniformData>({
                     descriptorId: descriptor.id,
                     backend,
                 });
-                setBackendId(backend);
+                if (disposingRef.current) {
+                    return;
+                }
+                setBackendId((current) =>
+                    current === backend ? current : backend
+                );
                 backendChangeRef.current?.(backend);
             },
             onReady: () => {
@@ -142,6 +148,7 @@ export const useEffectEngine = <State extends EngineState, UniformData>({
             descriptorId: descriptor.id,
         });
         return () => {
+            disposingRef.current = true;
             console.log('[useEffectEngine] disposing engine', {
                 descriptorId: descriptor.id,
             });

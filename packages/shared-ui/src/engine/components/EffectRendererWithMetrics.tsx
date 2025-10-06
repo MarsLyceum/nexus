@@ -31,6 +31,28 @@ type MetricsState = {
     readonly offsetY: number;
 };
 
+const hasPositiveArea = (value: MetricsState): boolean =>
+    value.width > 0 && value.height > 0;
+
+const stabilizeMetrics = (
+    current: MetricsState,
+    candidate: MetricsState
+): MetricsState => {
+    if (!hasPositiveArea(candidate) && hasPositiveArea(current)) {
+        return current;
+    }
+    if (
+        current.width === candidate.width &&
+        current.height === candidate.height &&
+        current.dpr === candidate.dpr &&
+        current.offsetX === candidate.offsetX &&
+        current.offsetY === candidate.offsetY
+    ) {
+        return current;
+    }
+    return candidate;
+};
+
 const useMetrics = (
     rootRef: React.RefObject<HTMLDivElement | null>,
     padding: number,
@@ -69,32 +91,30 @@ const useMetrics = (
             const nextHeight = Math.max(0, targetRect.height + padding * 2);
             const nextOffsetX = targetRect.left - padding;
             const nextOffsetY = targetRect.top - padding;
-            setMetrics((current) =>
-                current.width === nextWidth &&
-                current.height === nextHeight &&
-                current.dpr === pixelRatio &&
-                current.offsetX === nextOffsetX &&
-                current.offsetY === nextOffsetY
-                    ? current
-                    : {
-                          width: nextWidth,
-                          height: nextHeight,
-                          dpr: pixelRatio,
-                          offsetX: nextOffsetX,
-                          offsetY: nextOffsetY,
-                      }
-            );
-            console.log(
-                '[EffectRendererWithMetrics] compute viewport metrics',
-                {
+            setMetrics((current) => {
+                const next = stabilizeMetrics(current, {
                     width: nextWidth,
                     height: nextHeight,
-                    padding,
-                    pixelRatio,
+                    dpr: pixelRatio,
                     offsetX: nextOffsetX,
                     offsetY: nextOffsetY,
+                });
+                if (next === current) {
+                    return current;
                 }
-            );
+                console.log(
+                    '[EffectRendererWithMetrics] compute viewport metrics',
+                    {
+                        width: next.width,
+                        height: next.height,
+                        padding,
+                        pixelRatio: next.dpr,
+                        offsetX: next.offsetX,
+                        offsetY: next.offsetY,
+                    }
+                );
+                return next;
+            });
         };
 
         const computeContainerMetrics = (root: HTMLDivElement) => {
@@ -102,30 +122,28 @@ const useMetrics = (
             const contentWidth = Math.max(0, rootRect.width);
             const contentHeight = Math.max(0, rootRect.height);
             const pixelRatio = windowLike.devicePixelRatio ?? 1;
-            setMetrics((current) =>
-                current.width === contentWidth &&
-                current.height === contentHeight &&
-                current.dpr === pixelRatio &&
-                current.offsetX === 0 &&
-                current.offsetY === 0
-                    ? current
-                    : {
-                          width: contentWidth,
-                          height: contentHeight,
-                          dpr: pixelRatio,
-                          offsetX: 0,
-                          offsetY: 0,
-                      }
-            );
-            console.log(
-                '[EffectRendererWithMetrics] compute container metrics',
-                {
+            setMetrics((current) => {
+                const next = stabilizeMetrics(current, {
                     width: contentWidth,
                     height: contentHeight,
-                    padding,
-                    pixelRatio,
+                    dpr: pixelRatio,
+                    offsetX: 0,
+                    offsetY: 0,
+                });
+                if (next === current) {
+                    return current;
                 }
-            );
+                console.log(
+                    '[EffectRendererWithMetrics] compute container metrics',
+                    {
+                        width: next.width,
+                        height: next.height,
+                        padding,
+                        pixelRatio: next.dpr,
+                    }
+                );
+                return next;
+            });
         };
 
         if (sizing === 'viewport') {
@@ -258,11 +276,13 @@ export const EffectRendererWithMetrics = <
 
     return (
         <div ref={rootRef} style={rootStyle}>
-            <EffectRenderer
-                {...props}
-                state={mergedState}
-                containerStyle={containerStyle}
-            />
+            {width > 0 && height > 0 ? (
+                <EffectRenderer
+                    {...props}
+                    state={mergedState}
+                    containerStyle={containerStyle}
+                />
+            ) : null}
         </div>
     );
 };

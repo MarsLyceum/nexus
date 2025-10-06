@@ -38,7 +38,7 @@ export type Scene<
     readonly config: SceneConfig<State>;
 };
 
-export type SceneActiveBackend = string | 'css' | 'unknown';
+export type SceneActiveBackend = string | undefined;
 
 export type SceneRenderResult = {
     readonly layers: ReadonlyArray<SceneRenderLayer>;

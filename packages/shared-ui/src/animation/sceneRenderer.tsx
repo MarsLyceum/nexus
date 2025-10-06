@@ -91,7 +91,7 @@ export const useSceneRenderer = <State extends Record<string, unknown>>(
             layers: [],
             containerStyle: {},
             status: 'failed',
-            activeBackend: 'unknown',
+            activeBackend: undefined,
         }),
         []
     );

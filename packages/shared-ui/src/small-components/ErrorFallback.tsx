@@ -14,19 +14,16 @@ import {
     useWindowDimensions,
     Animated,
     Easing,
+    type LayoutChangeEvent,
+    type LayoutRectangle,
     type PressableStateCallbackType,
 } from 'react-native';
 
 import { useTheme } from '../theme';
-import { lightenColor, toRgba } from '../utils';
+import { toRgba } from '../utils';
 import { useAnimatedGlow } from '../hooks';
 import type { Theme } from '../theme';
-import {
-    BorderRadius,
-    Opacity,
-    Spacing,
-    Typography,
-} from '../constants/designSystem';
+import { BorderRadius, Spacing, Typography } from '../constants/designSystem';
 import { useThemedScrollbars, NexusScrollView } from '../styles';
 import { AnimationProvider } from '../providers/AnimationProvider';
 import {
@@ -51,22 +48,25 @@ type ParsedStackLine = {
 };
 
 type GlowMode = GlowBackend;
+type GlowSegmentBackend = 'webgpu' | 'webgl' | 'css';
 
-const SEGMENT_HEIGHT = 34;
+const SEGMENT_HEIGHT = 36;
 const SEGMENT_HORIZONTAL_PADDING = 10;
+const SEGMENT_HORIZONTAL_MARGIN = 0;
+const SEGMENT_TRACK_PADDING = 2;
 const SEGMENT_FADE_DURATION = 160;
-const backendOrder: ReadonlyArray<'webgpu' | 'webgl' | 'css'> = [
+const backendOrder: ReadonlyArray<GlowSegmentBackend> = [
     'webgpu',
     'webgl',
     'css',
 ];
-const backendLabels: Record<'webgpu' | 'webgl' | 'css' | 'auto', string> = {
+const backendLabels: Record<GlowSegmentBackend | 'auto', string> = {
     webgpu: 'WebGPU',
     webgl: 'WebGL',
     css: 'CSS',
     auto: 'Auto',
 };
-const backendIcons: Record<'webgpu' | 'webgl' | 'css', string> = {
+const backendIcons: Record<GlowSegmentBackend, string> = {
     webgpu: '⛶',
     webgl: '⬚',
     css: '{}',
@@ -79,7 +79,7 @@ type SegmentState = {
 };
 
 type SegmentDescriptor = {
-    readonly mode: 'webgpu' | 'webgl' | 'css';
+    readonly mode: GlowSegmentBackend;
     readonly label: string;
     readonly available: boolean;
     readonly active: boolean;
@@ -88,7 +88,7 @@ type SegmentDescriptor = {
 };
 
 const createSegmentDescriptors = (
-    availability: Record<'webgpu' | 'webgl' | 'css', boolean>,
+    availability: Record<GlowSegmentBackend, boolean>,
     activeBackend: string,
     failedBackends: ReadonlySet<string>
 ) =>
@@ -137,25 +137,23 @@ const mapSegmentState = (state: PressableStateCallbackType) => ({
     focused: Boolean(state.focused),
 });
 
-const createSegmentAnimations = (activeBackend: 'webgpu' | 'webgl' | 'css') =>
-    backendOrder.reduce<Record<'webgpu' | 'webgl' | 'css', Animated.Value>>(
+const createSegmentAnimations = (activeBackend: GlowSegmentBackend) =>
+    backendOrder.reduce<Record<GlowSegmentBackend, Animated.Value>>(
         (accumulator, mode) => ({
             ...accumulator,
             [mode]: new Animated.Value(mode === activeBackend ? 1 : 0),
         }),
-        {} as Record<'webgpu' | 'webgl' | 'css', Animated.Value>
+        {} as Record<GlowSegmentBackend, Animated.Value>
     );
 
 const useSegmentAnimations = (activeBackend: string) => {
     const animationRef = useRef<Record<
-        'webgpu' | 'webgl' | 'css',
+        GlowSegmentBackend,
         Animated.Value
     > | null>(null);
-    if (!animationRef.current) {
-        animationRef.current = createSegmentAnimations(
-            activeBackend as 'webgpu' | 'webgl' | 'css'
-        );
-    }
+    animationRef.current ??= createSegmentAnimations(
+        activeBackend as GlowSegmentBackend
+    );
 
     useEffect(() => {
         const animations = animationRef.current;
@@ -238,6 +236,7 @@ const useGlowState = () => {
         backendErrors: {},
         attemptedBackends: [],
     });
+    const [rendererLocked, setRendererLocked] = useState(true);
 
     const availability = useMemo(
         () => ({
@@ -273,6 +272,8 @@ const useGlowState = () => {
         setStatus,
         setDiagnostics,
         isWeb,
+        rendererLocked,
+        setRendererLocked,
     };
 };
 
@@ -294,9 +295,80 @@ const ErrorFallbackInner: React.FC<ErrorFallbackProps> = ({
         setStatus,
         setDiagnostics,
         isWeb,
+        rendererLocked,
+        setRendererLocked,
     } = useGlowState();
     const { width, height } = useWindowDimensions();
     const { ScrollbarStyles } = useThemedScrollbars();
+    const switchTranslate = useRef(new Animated.Value(0)).current;
+    useEffect(() => {
+        Animated.timing(switchTranslate, {
+            toValue: rendererLocked ? 1 : 0,
+            duration: 120,
+            easing: Easing.out(Easing.ease),
+            useNativeDriver: true,
+        }).start();
+    }, [rendererLocked, switchTranslate]);
+
+    const knobTranslateX = useMemo(
+        () =>
+            switchTranslate.interpolate({
+                inputRange: [0, 1],
+                outputRange: [3, 23],
+            }),
+        [switchTranslate]
+    );
+    // New: single-pill renderer state for sliding thumb
+    const [segmentTrackWidth, setSegmentTrackWidth] = useState<number>(0);
+    const thumbTranslate = useRef(new Animated.Value(0)).current;
+    const thumbWidth = useRef(new Animated.Value(0)).current;
+    const segmentMetrics = useRef<Record<GlowSegmentBackend, LayoutRectangle>>(
+        {}
+    );
+    const lastActiveMode = useRef<GlowSegmentBackend | null>(null);
+
+    const snapThumbTo = useCallback(
+        (mode: GlowSegmentBackend) => {
+            const metrics = segmentMetrics.current[mode];
+            if (!metrics) {
+                return false;
+            }
+            const xOffset = Math.max(0, metrics.x - SEGMENT_TRACK_PADDING);
+            thumbTranslate.setValue(xOffset);
+            thumbWidth.setValue(metrics.width);
+            lastActiveMode.current = mode;
+            return true;
+        },
+        [thumbTranslate, thumbWidth]
+    );
+
+    const animateThumbTo = useCallback(
+        (mode: GlowSegmentBackend) => {
+            const metrics = segmentMetrics.current[mode];
+            if (!metrics) {
+                return false;
+            }
+            const xOffset = Math.max(0, metrics.x - SEGMENT_TRACK_PADDING);
+            Animated.parallel([
+                Animated.timing(thumbTranslate, {
+                    toValue: xOffset,
+                    duration: 180,
+                    easing: Easing.out(Easing.quad),
+                    useNativeDriver: true,
+                }),
+                Animated.timing(thumbWidth, {
+                    toValue: metrics.width,
+                    duration: 180,
+                    easing: Easing.out(Easing.quad),
+                    useNativeDriver: false,
+                }),
+            ]).start(() => {
+                lastActiveMode.current = mode;
+            });
+            return true;
+        },
+        [thumbTranslate, thumbWidth]
+    );
     const { createNativeShadowStyle } = useAnimatedGlow(0.2, 0.5, 3000);
     const stackLines = useMemo(
         () => deriveStackLines(componentStack),
@@ -327,6 +399,10 @@ const ErrorFallbackInner: React.FC<ErrorFallbackProps> = ({
         onReset?.();
     };
 
+    const toggleRendererLock = useCallback(() => {
+        setRendererLocked((current) => !current);
+    }, [setRendererLocked]);
+
     const failedBackends = useMemo(() => {
         if (!diagnostics) {
             return new Set<string>();
@@ -352,14 +428,66 @@ const ErrorFallbackInner: React.FC<ErrorFallbackProps> = ({
 
     const segmentAnimations = useSegmentAnimations(activeBackend);
 
+    // Minimal single-pill renderer with sliding thumb behind active option
+    useEffect(() => {
+        const active = (
+            activeBackend === 'auto' ? 'css' : activeBackend
+        ) as GlowSegmentBackend;
+        if (lastActiveMode.current === null) {
+            snapThumbTo(active);
+            return;
+        }
+        if (lastActiveMode.current === active) {
+            return;
+        }
+        if (!animateThumbTo(active)) {
+            lastActiveMode.current = active;
+        }
+    }, [activeBackend, animateThumbTo, snapThumbTo]);
+
     const segmentsNode = useMemo(() => {
         if (segments.length === 0 || !segmentAnimations) {
             return null;
         }
         return (
-            <View style={baseStyles.segmentGroup}>
+            <View
+                style={baseStyles.segmentGroup}
+                onLayout={(event: LayoutChangeEvent) => {
+                    setSegmentTrackWidth(event.nativeEvent.layout.width);
+                    if (
+                        lastActiveMode.current === null &&
+                        segments.length > 0
+                    ) {
+                        const activeMode = (
+                            activeBackend === 'auto' ? 'css' : activeBackend
+                        ) as GlowSegmentBackend;
+                        snapThumbTo(activeMode);
+                    }
+                }}
+            >
                 <View style={baseStyles.segmentBackground}>
-                    {segments.map((descriptor) => (
+                    {segments.length > 0 ? (
+                        <Animated.View
+                            style={{
+                                position: 'absolute',
+                                top: SEGMENT_TRACK_PADDING,
+                                left: SEGMENT_TRACK_PADDING,
+                                height:
+                                    SEGMENT_HEIGHT - SEGMENT_TRACK_PADDING * 2,
+                                width: thumbWidth,
+                                borderRadius:
+                                    (SEGMENT_HEIGHT -
+                                        SEGMENT_TRACK_PADDING * 2) /
+                                    2,
+                                backgroundColor: toRgba(
+                                    theme.colors.Primary,
+                                    0.18
+                                ),
+                                transform: [{ translateX: thumbTranslate }],
+                            }}
+                        />
+                    ) : null}
+                    {segments.map((descriptor, index) => (
                         <Pressable
                             key={descriptor.mode}
                             accessibilityRole="button"
@@ -368,12 +496,24 @@ const ErrorFallbackInner: React.FC<ErrorFallbackProps> = ({
                                 disabled: descriptor.isDisabled,
                                 selected: descriptor.active,
                             }}
-                            onPress={() =>
-                                setBackend(descriptor.mode as GlowMode)
-                            }
+                            onPress={() => {
+                                setBackend(descriptor.mode as GlowMode);
+                                animateThumbTo(descriptor.mode);
+                            }}
+                            onLayout={(event: LayoutChangeEvent) => {
+                                const { layout } = event.nativeEvent;
+                                segmentMetrics.current[descriptor.mode] =
+                                    layout;
+                                if (
+                                    lastActiveMode.current === null &&
+                                    descriptor.active
+                                ) {
+                                    snapThumbTo(descriptor.mode);
+                                }
+                            }}
                             disabled={descriptor.isDisabled}
-                            style={(pressableState) =>
-                                createSegmentBoxStyles(
+                            style={(pressableState) => [
+                                ...createSegmentBoxStyles(
                                     baseStyles,
                                     descriptor,
                                     mapSegmentState(pressableState),
@@ -381,8 +521,11 @@ const ErrorFallbackInner: React.FC<ErrorFallbackProps> = ({
                                         segmentAnimations[descriptor.mode],
                                         descriptor.active
                                     )
-                                )
-                            }
+                                ),
+                                pressableState.pressed
+                                    ? { transform: [{ scale: 0.98 }] }
+                                    : {},
+                            ]}
                         >
                             {(pressableState) => (
                                 <Animated.View
@@ -435,7 +578,87 @@ const ErrorFallbackInner: React.FC<ErrorFallbackProps> = ({
                 </View>
             </View>
         );
-    }, [baseStyles, segments, setBackend, segmentAnimations]);
+    }, [
+        segments,
+        segmentAnimations,
+        baseStyles,
+        segmentTrackWidth,
+        thumbTranslate,
+        theme.colors.Primary,
+        setBackend,
+    ]);
+
+    const rendererControls = useMemo(() => {
+        if (!isWeb || !segmentsNode) {
+            return null;
+        }
+
+        return (
+            <View style={baseStyles.lockRow}>
+                <View style={baseStyles.segmentWrapper}>{segmentsNode}</View>
+                <View
+                    style={[
+                        baseStyles.lockTogglePanel,
+                        {
+                            width:
+                                segmentTrackWidth > 0
+                                    ? segmentTrackWidth
+                                    : undefined,
+                        },
+                    ]}
+                >
+                    <Text
+                        style={[
+                            baseStyles.lockToggleLabel,
+                            { opacity: rendererLocked ? 1 : 0.8 },
+                        ]}
+                    >
+                        Lock Renderer
+                    </Text>
+                    <View style={baseStyles.lockToggleGroup}>
+                        <Pressable onPress={toggleRendererLock}>
+                            <View
+                                style={[
+                                    baseStyles.switchTrack,
+                                    rendererLocked &&
+                                        baseStyles.switchTrackActive,
+                                ]}
+                            >
+                                <Animated.View
+                                    style={[
+                                        baseStyles.switchKnob,
+                                        rendererLocked &&
+                                            baseStyles.switchKnobActive,
+                                        {
+                                            transform: [
+                                                { translateX: knobTranslateX },
+                                            ],
+                                        },
+                                    ]}
+                                />
+                            </View>
+                        </Pressable>
+                    </View>
+                </View>
+            </View>
+        );
+    }, [
+        baseStyles.lockRow,
+        baseStyles.lockToggleGroup,
+        baseStyles.lockToggleLabel,
+        baseStyles.lockTogglePanel,
+        baseStyles.segmentWrapper,
+        isWeb,
+        rendererLocked,
+        segmentsNode,
+        toggleRendererLock,
+        knobTranslateX,
+        baseStyles.switchTrack,
+        baseStyles.switchTrackActive,
+        baseStyles.switchKnob,
+        baseStyles.switchKnobActive,
+        segmentTrackWidth,
+    ]);
 
     const diagnosticsNotice = useMemo(() => {
         if (!diagnostics || diagnostics.failedBackends.length === 0) {
@@ -548,7 +771,9 @@ const ErrorFallbackInner: React.FC<ErrorFallbackProps> = ({
                 </View>
             )}
             <View style={baseStyles.footer}>
-                {Platform.OS === 'web' ? segmentsNode : null}
+                <View style={{ flex: 1, alignItems: 'center' }}>
+                    {rendererControls}
+                </View>
                 <Pressable
                     onPress={handleReset}
                     style={({ pressed }) =>
@@ -610,6 +835,7 @@ const ErrorFallbackInner: React.FC<ErrorFallbackProps> = ({
             style={responsiveStyles.cardScroll}
             contentContainerStyle={responsiveStyles.cardScrollContent}
             nativeID="error-fallback-scroll"
+            maxHeight="100vh"
         >
             {cardContent}
         </NexusScrollView>
@@ -627,6 +853,9 @@ const ErrorFallbackInner: React.FC<ErrorFallbackProps> = ({
                         opacity={0.85}
                         animate
                         preferredBackend={preferredBackend}
+                        fallbackBehavior={
+                            rendererLocked ? 'locked' : 'adaptive'
+                        }
                         onBackendChange={setActiveBackend}
                         onStatusChange={setStatus}
                         onDiagnosticsChange={setDiagnostics}
@@ -719,6 +948,7 @@ const createStyles = (theme: Theme) =>
             backgroundColor: theme.colors.SecondaryBackground,
             borderWidth: 1,
             borderColor: toRgba(theme.colors.ActiveText, 0.05),
+            minHeight: 0,
         },
         overlayContainer: {
             position: 'absolute',
@@ -828,10 +1058,48 @@ const createStyles = (theme: Theme) =>
         },
         footer: {
             flexDirection: 'row',
-            justifyContent: 'flex-end',
             alignItems: 'center',
             marginTop: Spacing.XXXL,
             gap: Spacing.MD,
+        },
+        lockRow: {
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: Spacing.MD,
+            width: '100%',
+        },
+        lockTogglePanel: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            alignSelf: 'center',
+            gap: Spacing.LG,
+            paddingHorizontal: Spacing.XL,
+            paddingVertical: Spacing.SM,
+            borderRadius: BorderRadius.Pill,
+            backgroundColor: toRgba(theme.colors.ActiveText, 0.08),
+            borderWidth: 1,
+            borderColor: toRgba(theme.colors.ActiveText, 0.12),
+            width: '100%',
+            maxWidth: 320,
+        },
+        lockToggleGroup: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: Spacing.SM,
+        },
+        lockToggleLabel: {
+            ...Typography.BodySmall,
+            color: toRgba(theme.colors.MainText, 0.82),
+            fontFamily:
+                theme.fonts.primary?.semibold ?? theme.fonts.primary?.bold,
+        },
+        segmentWrapper: {
+            flexShrink: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            display: 'flex',
+            paddingHorizontal: Spacing.XL,
         },
         diagnosticsBanner: {
             marginTop: Spacing.XXL,
@@ -932,30 +1200,31 @@ const createStyles = (theme: Theme) =>
         segmentGroup: {
             flexDirection: 'row',
             alignItems: 'center',
+            justifyContent: 'center',
+            alignSelf: 'center',
             height: SEGMENT_HEIGHT,
             borderRadius: SEGMENT_HEIGHT / 2,
             borderWidth: 1,
-            borderColor: toRgba(theme.colors.ActiveText, Opacity.BorderMedium),
-            backgroundColor: toRgba(theme.colors.ActiveText, 0.06),
-            padding: 2,
+            borderColor: toRgba(theme.colors.ActiveText, 0.08),
+            backgroundColor: theme.colors.TertiaryBackground,
+            padding: SEGMENT_TRACK_PADDING,
         },
         segmentBackground: {
             flexDirection: 'row',
             alignItems: 'center',
+            justifyContent: 'center',
+            alignSelf: 'center',
             borderRadius: SEGMENT_HEIGHT / 2,
-            paddingHorizontal: 2,
+            padding: SEGMENT_TRACK_PADDING,
         },
         segment: {
-            borderRadius: SEGMENT_HEIGHT / 2,
             minWidth: 90,
             paddingHorizontal: SEGMENT_HORIZONTAL_PADDING,
             height: SEGMENT_HEIGHT - 4,
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'center',
-            borderWidth: 1,
-            borderColor: toRgba(theme.colors.ActiveText, 0.08),
-            marginHorizontal: 2,
+            marginHorizontal: SEGMENT_HORIZONTAL_MARGIN,
         },
         segmentContent: {
             flexDirection: 'row',
@@ -967,21 +1236,17 @@ const createStyles = (theme: Theme) =>
             color: toRgba(theme.colors.ActiveText, 0.55),
         },
         segmentActive: {
-            backgroundColor: toRgba(theme.colors.Primary, 0.14),
-            borderColor: toRgba(theme.colors.Primary, 0.45),
-            shadowColor: theme.colors.Primary,
-            shadowOpacity: 0.28,
-            shadowRadius: 10,
-            shadowOffset: { width: 0, height: 1 },
+            // Tweak active state for underline approach
         },
         segmentHovered: {
-            borderColor: toRgba(theme.colors.Primary, 0.35),
+            // Tweak hover state for underline approach
         },
         segmentPressed: {
-            backgroundColor: toRgba(theme.colors.Primary, 0.08),
+            // Handled with transform now
         },
         segmentFocused: {
             borderColor: toRgba(theme.colors.Primary, 0.5),
+            borderRadius: BorderRadius.Medium,
             shadowColor: theme.colors.Primary,
             shadowOpacity: 0.36,
             shadowRadius: 8,
@@ -991,27 +1256,27 @@ const createStyles = (theme: Theme) =>
             opacity: 0.45,
         },
         segmentFailed: {
-            backgroundColor: toRgba(theme.colors.Secondary, 0.12),
-            borderColor: toRgba(theme.colors.Secondary, 0.35),
+            // No visual change for failed state in underline design
         },
         segmentLabel: {
             ...Typography.BodySmall,
-            color: toRgba(theme.colors.ActiveText, 0.62),
+            color: toRgba(theme.colors.ActiveText, 0.8),
             fontFamily:
                 theme.fonts.monospace?.semibold ??
                 theme.fonts.monospace?.bold ??
                 theme.fonts.primary?.semibold ??
                 theme.fonts.primary?.bold,
             letterSpacing: 0.6,
+            textTransform: 'capitalize',
         },
         segmentLabelActive: {
             color: theme.colors.ActiveText,
         },
         segmentLabelHovered: {
-            color: lightenColor(theme.colors.ActiveText, 0.12),
+            color: theme.colors.ActiveText,
         },
         segmentLabelPressed: {
-            color: lightenColor(theme.colors.ActiveText, 0.08),
+            color: theme.colors.ActiveText,
         },
         segmentLabelFocused: {
             color: theme.colors.ActiveText,
@@ -1021,6 +1286,29 @@ const createStyles = (theme: Theme) =>
         },
         segmentLabelFailed: {
             color: toRgba(theme.colors.Secondary, 0.85),
+        },
+        switchTrack: {
+            width: 44,
+            height: 24,
+            borderRadius: 12,
+            backgroundColor: theme.colors.TertiaryBackground,
+            justifyContent: 'center',
+        },
+        switchTrackActive: {
+            backgroundColor: toRgba(theme.colors.Primary, 0.28),
+        },
+        switchKnob: {
+            width: 18,
+            height: 18,
+            borderRadius: 9,
+            backgroundColor: theme.colors.AppBackground,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.2,
+            shadowRadius: 1,
+        },
+        switchKnobActive: {
+            backgroundColor: theme.colors.Primary,
         },
     });
 
@@ -1067,6 +1355,8 @@ const createResponsiveOverrides = (width: number, height: number) => {
         },
         cardScroll: {
             flexGrow: 0,
+            flexShrink: 1,
+            minHeight: 0,
             maxHeight: clampShell
                 ? Math.max(maxModalHeight - Spacing.LG, Spacing.XXL * 2)
                 : undefined,

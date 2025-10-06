@@ -31,34 +31,32 @@ export const createEngine = <State extends EngineState, UniformData>(
     let backendOrder = defaultOrder;
     let state = mergeState(options.initialState, {});
     let activeHandle: BackendHandle<UniformData> | undefined;
-    let activeBackend = 'unknown';
+    let activeBackend: string | undefined;
     let running = false;
     let disposed = false;
     let frameId: number | undefined;
     let readyEmitted = false;
 
     const clearActiveHandle = () => {
-        if (!activeHandle) {
-            if (activeBackend !== 'unknown') {
-                activeBackend = 'unknown';
-                console.log('[engine] backend reset to unknown');
-                options.onBackendChange?.('unknown');
-            }
+        if (!activeHandle && !activeBackend) {
             return;
         }
 
         const handle = activeHandle;
+        const previousBackend = activeBackend;
         activeHandle = undefined;
-        if (activeBackend !== 'unknown') {
-            activeBackend = 'unknown';
-            console.log('[engine] backend reset to unknown');
-            options.onBackendChange?.('unknown');
+        activeBackend = undefined;
+
+        if (handle) {
+            try {
+                handle.destroy();
+            } catch (error) {
+                options.onError?.(toError(error));
+            }
         }
 
-        try {
-            handle.destroy();
-        } catch (error) {
-            options.onError?.(toError(error));
+        if (previousBackend) {
+            options.onBackendChange?.(undefined);
         }
     };
 
@@ -115,7 +113,7 @@ export const createEngine = <State extends EngineState, UniformData>(
     const ensureBackend = (
         initialErrors: ReadonlyArray<Error> = [],
         diagnostics: ReadonlyArray<BackendDiagnosticsEntry> = []
-    ): Promise<string> => {
+    ): Promise<string | undefined> => {
         if (disposed) {
             return Promise.resolve(activeBackend);
         }
@@ -133,10 +131,11 @@ export const createEngine = <State extends EngineState, UniformData>(
         const attemptOrder =
             backendOrder.length > 0 ? backendOrder : [...backendMap.keys()];
         if (attemptOrder.length === 0) {
-            activeBackend = 'none';
-            options.onBackendChange?.('none');
+            const failureBackendId = desired ?? 'unavailable';
+            activeBackend = undefined;
+            options.onBackendChange?.(undefined);
             const aggregatedDiagnostics = inheritDiagnostics(
-                activeBackend,
+                failureBackendId,
                 initialErrors,
                 diagnostics
             );
@@ -231,10 +230,12 @@ export const createEngine = <State extends EngineState, UniformData>(
             )
             .then((result: BackendAttempt) => {
                 if (!result.handle || !result.backendId) {
-                    activeBackend = 'none';
-                    options.onBackendChange?.('none');
+                    const failureBackendId =
+                        desired ?? attemptOrder[0] ?? 'unavailable';
+                    activeBackend = undefined;
+                    options.onBackendChange?.(undefined);
                     const aggregatedDiagnostics = inheritDiagnostics(
-                        activeBackend,
+                        failureBackendId,
                         result.errors,
                         result.diagnostics
                     );

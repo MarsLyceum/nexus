@@ -1,39 +1,24 @@
-import React, {
-    useCallback,
-    useEffect,
-    useMemo,
-    useRef,
-    useState,
-} from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
     View,
     Text,
     StyleSheet,
-    Pressable,
     Platform,
     useWindowDimensions,
+    Pressable,
     Animated,
-    Easing,
-    type LayoutChangeEvent,
-    type LayoutRectangle,
-    type PressableStateCallbackType,
 } from 'react-native';
 
 import { useTheme } from '../theme';
 import { toRgba } from '../utils';
-import { useAnimatedGlow } from '../hooks';
 import type { Theme } from '../theme';
 import { BorderRadius, Spacing, Typography } from '../constants/designSystem';
 import { useThemedScrollbars, NexusScrollView } from '../styles';
 import { AnimationProvider } from '../providers/AnimationProvider';
-import {
-    Glow,
-    hasWebGPU,
-    hasWebGL,
-    type GlowBackend,
-    type GlowDiagnostics,
-    type GlowStatus,
-} from '../effects/glow';
+import { Glow, hasWebGPU, hasWebGL, type GlowBackend } from '../effects/glow';
+import { useRendererControl } from '../hooks/useRendererControl';
+import { RendererControls } from './RendererControls';
+import { useAnimatedGlow } from '../hooks';
 
 type ErrorFallbackProps = {
     error: Error;
@@ -47,137 +32,26 @@ type ParsedStackLine = {
     location: string;
 };
 
-type GlowMode = GlowBackend;
-type GlowSegmentBackend = 'webgpu' | 'webgl' | 'css';
+type GlowRendererBackend = Exclude<GlowBackend, 'auto'>;
 
-const SEGMENT_HEIGHT = 36;
-const SEGMENT_HORIZONTAL_PADDING = 10;
-const SEGMENT_HORIZONTAL_MARGIN = 0;
-const SEGMENT_TRACK_PADDING = 2;
-const SEGMENT_FADE_DURATION = 160;
-const backendOrder: ReadonlyArray<GlowSegmentBackend> = [
+const GLOW_BACKEND_ORDER: ReadonlyArray<GlowRendererBackend> = [
     'webgpu',
     'webgl',
     'css',
 ];
-const backendLabels: Record<GlowSegmentBackend | 'auto', string> = {
+
+const GLOW_BACKEND_LABELS: Record<GlowRendererBackend | 'auto', string> = {
     webgpu: 'WebGPU',
     webgl: 'WebGL',
     css: 'CSS',
     auto: 'Auto',
 };
-const backendIcons: Record<GlowSegmentBackend, string> = {
+
+const GLOW_BACKEND_ICONS: Record<GlowRendererBackend, string> = {
     webgpu: '⛶',
     webgl: '⬚',
     css: '{}',
 };
-
-type SegmentState = {
-    readonly hovered: boolean;
-    readonly pressed: boolean;
-    readonly focused: boolean;
-};
-
-type SegmentDescriptor = {
-    readonly mode: GlowSegmentBackend;
-    readonly label: string;
-    readonly available: boolean;
-    readonly active: boolean;
-    readonly isDisabled: boolean;
-    readonly failed: boolean;
-};
-
-const createSegmentDescriptors = (
-    availability: Record<GlowSegmentBackend, boolean>,
-    activeBackend: string,
-    failedBackends: ReadonlySet<string>
-) =>
-    backendOrder.map<SegmentDescriptor>((mode) => ({
-        mode,
-        label: backendLabels[mode],
-        available: availability[mode],
-        active: activeBackend === mode,
-        isDisabled: !availability[mode],
-        failed: failedBackends.has(mode),
-    }));
-
-const createSegmentBoxStyles = (
-    styles: ReturnType<typeof createStyles>,
-    descriptor: SegmentDescriptor,
-    state: SegmentState,
-    animatedOpacity: Animated.AnimatedInterpolation<number>
-) => [
-    styles.segment,
-    { opacity: animatedOpacity },
-    descriptor.active && styles.segmentActive,
-    descriptor.isDisabled && styles.segmentDisabled,
-    descriptor.failed && styles.segmentFailed,
-    state.hovered && !descriptor.isDisabled && styles.segmentHovered,
-    state.pressed && !descriptor.isDisabled && styles.segmentPressed,
-    state.focused && styles.segmentFocused,
-];
-
-const createSegmentLabelStyles = (
-    styles: ReturnType<typeof createStyles>,
-    descriptor: SegmentDescriptor,
-    state: SegmentState
-) => [
-    styles.segmentLabel,
-    descriptor.active && styles.segmentLabelActive,
-    descriptor.isDisabled && styles.segmentLabelDisabled,
-    descriptor.failed && styles.segmentLabelFailed,
-    state.hovered && !descriptor.isDisabled && styles.segmentLabelHovered,
-    state.pressed && !descriptor.isDisabled && styles.segmentLabelPressed,
-    state.focused && styles.segmentLabelFocused,
-];
-
-const mapSegmentState = (state: PressableStateCallbackType) => ({
-    hovered: Boolean(state.hovered),
-    pressed: Boolean(state.pressed),
-    focused: Boolean(state.focused),
-});
-
-const createSegmentAnimations = (activeBackend: GlowSegmentBackend) =>
-    backendOrder.reduce<Record<GlowSegmentBackend, Animated.Value>>(
-        (accumulator, mode) => ({
-            ...accumulator,
-            [mode]: new Animated.Value(mode === activeBackend ? 1 : 0),
-        }),
-        {} as Record<GlowSegmentBackend, Animated.Value>
-    );
-
-const useSegmentAnimations = (activeBackend: string) => {
-    const animationRef = useRef<Record<
-        GlowSegmentBackend,
-        Animated.Value
-    > | null>(null);
-    animationRef.current ??= createSegmentAnimations(
-        activeBackend as GlowSegmentBackend
-    );
-
-    useEffect(() => {
-        const animations = animationRef.current;
-        if (!animations) {
-            return;
-        }
-        backendOrder.forEach((mode) => {
-            Animated.timing(animations[mode], {
-                toValue: mode === activeBackend ? 1 : 0,
-                duration: SEGMENT_FADE_DURATION,
-                easing: Easing.out(Easing.quad),
-                useNativeDriver: false,
-            }).start();
-        });
-    }, [activeBackend]);
-
-    return animationRef.current;
-};
-
-const createOpacity = (value: Animated.Value, active: boolean) =>
-    value.interpolate({
-        inputRange: [0, 1],
-        outputRange: active ? [0.68, 1] : [0.24, 0.8],
-    });
 
 const parseStackLine = (line: string): ParsedStackLine => {
     const atRegex = /^at\s+(.+?)(?:\s+\((.+)\))?$/;
@@ -223,57 +97,33 @@ const createWebDebugLogger = (label: string) => {
     return logValue;
 };
 
-const useGlowState = () => {
+const useGlowControl = () => {
     const isWeb = Platform.OS === 'web';
     const webgpuAvailable = isWeb && hasWebGPU();
     const webglAvailable = isWeb && hasWebGL();
 
-    const [preferredBackend, setPreferredBackend] = useState<GlowMode>('auto');
-    const [activeBackend, setActiveBackend] = useState<string>('css');
-    const [status, setStatus] = useState<GlowStatus>('initializing');
-    const [diagnostics, setDiagnostics] = useState<GlowDiagnostics>({
-        failedBackends: [],
-        backendErrors: {},
-        attemptedBackends: [],
-    });
-    const [rendererLocked, setRendererLocked] = useState(true);
-
-    const availability = useMemo(
-        () => ({
+    const control = useRendererControl<GlowRendererBackend>({
+        availability: {
             webgpu: webgpuAvailable,
             webgl: webglAvailable,
             css: true,
-        }),
-        [webglAvailable, webgpuAvailable]
-    );
-
-    const setBackend = useCallback(
-        (mode: GlowMode) => {
-            if (mode === 'auto') {
-                setPreferredBackend('auto');
-                return;
-            }
-            if (!availability[mode]) {
-                return;
-            }
-            setPreferredBackend(mode);
         },
-        [availability]
-    );
+        initialPreferredBackend: 'auto',
+        initialActiveBackend: webgpuAvailable
+            ? 'webgpu'
+            : webglAvailable
+              ? 'webgl'
+              : 'css',
+        initialDiagnostics: {
+            failedBackends: [],
+            backendErrors: {},
+            attemptedBackends: [],
+        },
+    });
 
     return {
-        availability,
-        preferredBackend,
-        activeBackend,
-        status,
-        diagnostics,
-        setBackend,
-        setActiveBackend,
-        setStatus,
-        setDiagnostics,
+        control,
         isWeb,
-        rendererLocked,
-        setRendererLocked,
     };
 };
 
@@ -285,91 +135,17 @@ const ErrorFallbackInner: React.FC<ErrorFallbackProps> = ({
 }) => {
     const debug = useMemo(() => createWebDebugLogger('inner'), []);
     const { theme } = useTheme();
+    const { control, isWeb } = useGlowControl();
     const {
-        availability,
         preferredBackend,
-        activeBackend,
         diagnostics,
-        setBackend,
-        setActiveBackend,
+        rendererLocked,
         setStatus,
         setDiagnostics,
-        isWeb,
-        rendererLocked,
-        setRendererLocked,
-    } = useGlowState();
+    } = control;
+    const { createNativeShadowStyle } = useAnimatedGlow();
     const { width, height } = useWindowDimensions();
     const { ScrollbarStyles } = useThemedScrollbars();
-    const switchTranslate = useRef(new Animated.Value(0)).current;
-    useEffect(() => {
-        Animated.timing(switchTranslate, {
-            toValue: rendererLocked ? 1 : 0,
-            duration: 120,
-            easing: Easing.out(Easing.ease),
-            useNativeDriver: true,
-        }).start();
-    }, [rendererLocked, switchTranslate]);
-
-    const knobTranslateX = useMemo(
-        () =>
-            switchTranslate.interpolate({
-                inputRange: [0, 1],
-                outputRange: [3, 23],
-            }),
-        [switchTranslate]
-    );
-    // New: single-pill renderer state for sliding thumb
-    const [segmentTrackWidth, setSegmentTrackWidth] = useState<number>(0);
-    const thumbTranslate = useRef(new Animated.Value(0)).current;
-    const thumbWidth = useRef(new Animated.Value(0)).current;
-    const segmentMetrics = useRef<Record<GlowSegmentBackend, LayoutRectangle>>(
-        {}
-    );
-    const lastActiveMode = useRef<GlowSegmentBackend | null>(null);
-
-    const snapThumbTo = useCallback(
-        (mode: GlowSegmentBackend) => {
-            const metrics = segmentMetrics.current[mode];
-            if (!metrics) {
-                return false;
-            }
-            const xOffset = Math.max(0, metrics.x - SEGMENT_TRACK_PADDING);
-            thumbTranslate.setValue(xOffset);
-            thumbWidth.setValue(metrics.width);
-            lastActiveMode.current = mode;
-            return true;
-        },
-        [thumbTranslate, thumbWidth]
-    );
-
-    const animateThumbTo = useCallback(
-        (mode: GlowSegmentBackend) => {
-            const metrics = segmentMetrics.current[mode];
-            if (!metrics) {
-                return false;
-            }
-            const xOffset = Math.max(0, metrics.x - SEGMENT_TRACK_PADDING);
-            Animated.parallel([
-                Animated.timing(thumbTranslate, {
-                    toValue: xOffset,
-                    duration: 180,
-                    easing: Easing.out(Easing.quad),
-                    useNativeDriver: true,
-                }),
-                Animated.timing(thumbWidth, {
-                    toValue: metrics.width,
-                    duration: 180,
-                    easing: Easing.out(Easing.quad),
-                    useNativeDriver: false,
-                }),
-            ]).start(() => {
-                lastActiveMode.current = mode;
-            });
-            return true;
-        },
-        [thumbTranslate, thumbWidth]
-    );
-    const { createNativeShadowStyle } = useAnimatedGlow(0.2, 0.5, 3000);
     const stackLines = useMemo(
         () => deriveStackLines(componentStack),
         [componentStack]
@@ -399,266 +175,35 @@ const ErrorFallbackInner: React.FC<ErrorFallbackProps> = ({
         onReset?.();
     };
 
-    const toggleRendererLock = useCallback(() => {
-        setRendererLocked((current) => !current);
-    }, [setRendererLocked]);
-
-    const failedBackends = useMemo(() => {
-        if (!diagnostics) {
-            return new Set<string>();
-        }
-        return diagnostics.failedBackends.reduce<Set<string>>(
-            (accumulator, backend) => {
-                accumulator.add(backend);
-                return accumulator;
-            },
-            new Set<string>()
-        );
-    }, [diagnostics]);
-
-    const segments = useMemo(
-        () =>
-            createSegmentDescriptors(
-                availability,
-                activeBackend === 'auto' ? 'css' : activeBackend,
-                failedBackends
-            ),
-        [availability, activeBackend, failedBackends]
-    );
-
-    const segmentAnimations = useSegmentAnimations(activeBackend);
-
-    // Minimal single-pill renderer with sliding thumb behind active option
-    useEffect(() => {
-        const active = (
-            activeBackend === 'auto' ? 'css' : activeBackend
-        ) as GlowSegmentBackend;
-        if (lastActiveMode.current === null) {
-            snapThumbTo(active);
-            return;
-        }
-        if (lastActiveMode.current === active) {
-            return;
-        }
-        if (!animateThumbTo(active)) {
-            lastActiveMode.current = active;
-        }
-    }, [activeBackend, animateThumbTo, snapThumbTo]);
-
-    const segmentsNode = useMemo(() => {
-        if (segments.length === 0 || !segmentAnimations) {
-            return null;
-        }
-        return (
-            <View
-                style={baseStyles.segmentGroup}
-                onLayout={(event: LayoutChangeEvent) => {
-                    setSegmentTrackWidth(event.nativeEvent.layout.width);
-                    if (
-                        lastActiveMode.current === null &&
-                        segments.length > 0
-                    ) {
-                        const activeMode = (
-                            activeBackend === 'auto' ? 'css' : activeBackend
-                        ) as GlowSegmentBackend;
-                        snapThumbTo(activeMode);
-                    }
-                }}
-            >
-                <View style={baseStyles.segmentBackground}>
-                    {segments.length > 0 ? (
-                        <Animated.View
-                            style={{
-                                position: 'absolute',
-                                top: SEGMENT_TRACK_PADDING,
-                                left: SEGMENT_TRACK_PADDING,
-                                height:
-                                    SEGMENT_HEIGHT - SEGMENT_TRACK_PADDING * 2,
-                                width: thumbWidth,
-                                borderRadius:
-                                    (SEGMENT_HEIGHT -
-                                        SEGMENT_TRACK_PADDING * 2) /
-                                    2,
-                                backgroundColor: toRgba(
-                                    theme.colors.Primary,
-                                    0.18
-                                ),
-                                transform: [{ translateX: thumbTranslate }],
-                            }}
-                        />
-                    ) : null}
-                    {segments.map((descriptor, index) => (
-                        <Pressable
-                            key={descriptor.mode}
-                            accessibilityRole="button"
-                            accessibilityHint={`Switch glow renderer to ${backendLabels[descriptor.mode]}`}
-                            accessibilityState={{
-                                disabled: descriptor.isDisabled,
-                                selected: descriptor.active,
-                            }}
-                            onPress={() => {
-                                setBackend(descriptor.mode as GlowMode);
-                                animateThumbTo(descriptor.mode);
-                            }}
-                            onLayout={(event: LayoutChangeEvent) => {
-                                const { layout } = event.nativeEvent;
-                                segmentMetrics.current[descriptor.mode] =
-                                    layout;
-                                if (
-                                    lastActiveMode.current === null &&
-                                    descriptor.active
-                                ) {
-                                    snapThumbTo(descriptor.mode);
-                                }
-                            }}
-                            disabled={descriptor.isDisabled}
-                            style={(pressableState) => [
-                                ...createSegmentBoxStyles(
-                                    baseStyles,
-                                    descriptor,
-                                    mapSegmentState(pressableState),
-                                    createOpacity(
-                                        segmentAnimations[descriptor.mode],
-                                        descriptor.active
-                                    )
-                                ),
-                                pressableState.pressed
-                                    ? { transform: [{ scale: 0.98 }] }
-                                    : {},
-                            ]}
-                        >
-                            {(pressableState) => (
-                                <Animated.View
-                                    style={[baseStyles.segmentContent]}
-                                >
-                                    <Animated.Text
-                                        style={[
-                                            baseStyles.segmentIcon,
-                                            createSegmentLabelStyles(
-                                                baseStyles,
-                                                descriptor,
-                                                mapSegmentState(pressableState)
-                                            ),
-                                            {
-                                                opacity: createOpacity(
-                                                    segmentAnimations[
-                                                        descriptor.mode
-                                                    ],
-                                                    descriptor.active
-                                                ),
-                                            },
-                                        ]}
-                                    >
-                                        {backendIcons[descriptor.mode]}
-                                    </Animated.Text>
-                                    <Animated.Text
-                                        style={[
-                                            baseStyles.segmentLabel,
-                                            createSegmentLabelStyles(
-                                                baseStyles,
-                                                descriptor,
-                                                mapSegmentState(pressableState)
-                                            ),
-                                            {
-                                                opacity: createOpacity(
-                                                    segmentAnimations[
-                                                        descriptor.mode
-                                                    ],
-                                                    descriptor.active
-                                                ),
-                                            },
-                                        ]}
-                                    >
-                                        {descriptor.label}
-                                    </Animated.Text>
-                                </Animated.View>
-                            )}
-                        </Pressable>
-                    ))}
-                </View>
-            </View>
-        );
-    }, [
-        segments,
-        segmentAnimations,
-        baseStyles,
-        segmentTrackWidth,
-        thumbTranslate,
-        theme.colors.Primary,
-        setBackend,
-    ]);
-
     const rendererControls = useMemo(() => {
-        if (!isWeb || !segmentsNode) {
+        if (!isWeb) {
             return null;
         }
+        const { activeBackend } = control;
+        const resolvedActiveBackend: GlowRendererBackend =
+            activeBackend === 'auto'
+                ? control.availability.webgpu
+                    ? 'webgpu'
+                    : control.availability.webgl
+                      ? 'webgl'
+                      : 'css'
+                : activeBackend;
 
         return (
-            <View style={baseStyles.lockRow}>
-                <View style={baseStyles.segmentWrapper}>{segmentsNode}</View>
-                <View
-                    style={[
-                        baseStyles.lockTogglePanel,
-                        {
-                            width:
-                                segmentTrackWidth > 0
-                                    ? segmentTrackWidth
-                                    : undefined,
-                        },
-                    ]}
-                >
-                    <Text
-                        style={[
-                            baseStyles.lockToggleLabel,
-                            { opacity: rendererLocked ? 1 : 0.8 },
-                        ]}
-                    >
-                        Lock Renderer
-                    </Text>
-                    <View style={baseStyles.lockToggleGroup}>
-                        <Pressable onPress={toggleRendererLock}>
-                            <View
-                                style={[
-                                    baseStyles.switchTrack,
-                                    rendererLocked &&
-                                        baseStyles.switchTrackActive,
-                                ]}
-                            >
-                                <Animated.View
-                                    style={[
-                                        baseStyles.switchKnob,
-                                        rendererLocked &&
-                                            baseStyles.switchKnobActive,
-                                        {
-                                            transform: [
-                                                { translateX: knobTranslateX },
-                                            ],
-                                        },
-                                    ]}
-                                />
-                            </View>
-                        </Pressable>
-                    </View>
-                </View>
-            </View>
+            <RendererControls
+                control={control}
+                backendOrder={GLOW_BACKEND_ORDER}
+                backendLabels={GLOW_BACKEND_LABELS}
+                backendIcons={GLOW_BACKEND_ICONS}
+                diagnostics={diagnostics}
+                theme={theme}
+                activeBackend={resolvedActiveBackend}
+                lockLabel={
+                    rendererLocked ? 'Renderer Locked' : 'Allow Switching'
+                }
+            />
         );
-    }, [
-        baseStyles.lockRow,
-        baseStyles.lockToggleGroup,
-        baseStyles.lockToggleLabel,
-        baseStyles.lockTogglePanel,
-        baseStyles.segmentWrapper,
-        isWeb,
-        rendererLocked,
-        segmentsNode,
-        toggleRendererLock,
-        knobTranslateX,
-        baseStyles.switchTrack,
-        baseStyles.switchTrackActive,
-        baseStyles.switchKnob,
-        baseStyles.switchKnobActive,
-        segmentTrackWidth,
-    ]);
+    }, [control, diagnostics, isWeb, rendererLocked, theme]);
 
     const diagnosticsNotice = useMemo(() => {
         if (!diagnostics || diagnostics.failedBackends.length === 0) {
@@ -708,7 +253,7 @@ const ErrorFallbackInner: React.FC<ErrorFallbackProps> = ({
         }
         return {
             backend:
-                backendLabels[summary.lastBackend as GlowMode] ??
+                GLOW_BACKEND_LABELS[summary.lastBackend as GlowBackend] ??
                 summary.lastBackend,
             message: summary.lastMessage,
             severity: summary.cssActivated
@@ -856,7 +401,7 @@ const ErrorFallbackInner: React.FC<ErrorFallbackProps> = ({
                         fallbackBehavior={
                             rendererLocked ? 'locked' : 'adaptive'
                         }
-                        onBackendChange={setActiveBackend}
+                        onBackendChange={control.setActiveBackend}
                         onStatusChange={setStatus}
                         onDiagnosticsChange={setDiagnostics}
                     />
@@ -1094,13 +639,6 @@ const createStyles = (theme: Theme) =>
             fontFamily:
                 theme.fonts.primary?.semibold ?? theme.fonts.primary?.bold,
         },
-        segmentWrapper: {
-            flexShrink: 1,
-            alignItems: 'center',
-            justifyContent: 'center',
-            display: 'flex',
-            paddingHorizontal: Spacing.XL,
-        },
         diagnosticsBanner: {
             marginTop: Spacing.XXL,
             borderRadius: BorderRadius.Medium,
@@ -1196,119 +734,6 @@ const createStyles = (theme: Theme) =>
             color: theme.colors.ActiveText,
             fontFamily:
                 theme.fonts.primary?.semibold ?? theme.fonts.primary?.bold,
-        },
-        segmentGroup: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            alignSelf: 'center',
-            height: SEGMENT_HEIGHT,
-            borderRadius: SEGMENT_HEIGHT / 2,
-            borderWidth: 1,
-            borderColor: toRgba(theme.colors.ActiveText, 0.08),
-            backgroundColor: theme.colors.TertiaryBackground,
-            padding: SEGMENT_TRACK_PADDING,
-        },
-        segmentBackground: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            alignSelf: 'center',
-            borderRadius: SEGMENT_HEIGHT / 2,
-            padding: SEGMENT_TRACK_PADDING,
-        },
-        segment: {
-            minWidth: 90,
-            paddingHorizontal: SEGMENT_HORIZONTAL_PADDING,
-            height: SEGMENT_HEIGHT - 4,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginHorizontal: SEGMENT_HORIZONTAL_MARGIN,
-        },
-        segmentContent: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: Spacing.SM,
-        },
-        segmentIcon: {
-            ...Typography.BodySmall,
-            color: toRgba(theme.colors.ActiveText, 0.55),
-        },
-        segmentActive: {
-            // Tweak active state for underline approach
-        },
-        segmentHovered: {
-            // Tweak hover state for underline approach
-        },
-        segmentPressed: {
-            // Handled with transform now
-        },
-        segmentFocused: {
-            borderColor: toRgba(theme.colors.Primary, 0.5),
-            borderRadius: BorderRadius.Medium,
-            shadowColor: theme.colors.Primary,
-            shadowOpacity: 0.36,
-            shadowRadius: 8,
-            shadowOffset: { width: 0, height: 0 },
-        },
-        segmentDisabled: {
-            opacity: 0.45,
-        },
-        segmentFailed: {
-            // No visual change for failed state in underline design
-        },
-        segmentLabel: {
-            ...Typography.BodySmall,
-            color: toRgba(theme.colors.ActiveText, 0.8),
-            fontFamily:
-                theme.fonts.monospace?.semibold ??
-                theme.fonts.monospace?.bold ??
-                theme.fonts.primary?.semibold ??
-                theme.fonts.primary?.bold,
-            letterSpacing: 0.6,
-            textTransform: 'capitalize',
-        },
-        segmentLabelActive: {
-            color: theme.colors.ActiveText,
-        },
-        segmentLabelHovered: {
-            color: theme.colors.ActiveText,
-        },
-        segmentLabelPressed: {
-            color: theme.colors.ActiveText,
-        },
-        segmentLabelFocused: {
-            color: theme.colors.ActiveText,
-        },
-        segmentLabelDisabled: {
-            color: toRgba(theme.colors.ActiveText, 0.42),
-        },
-        segmentLabelFailed: {
-            color: toRgba(theme.colors.Secondary, 0.85),
-        },
-        switchTrack: {
-            width: 44,
-            height: 24,
-            borderRadius: 12,
-            backgroundColor: theme.colors.TertiaryBackground,
-            justifyContent: 'center',
-        },
-        switchTrackActive: {
-            backgroundColor: toRgba(theme.colors.Primary, 0.28),
-        },
-        switchKnob: {
-            width: 18,
-            height: 18,
-            borderRadius: 9,
-            backgroundColor: theme.colors.AppBackground,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.2,
-            shadowRadius: 1,
-        },
-        switchKnobActive: {
-            backgroundColor: theme.colors.Primary,
         },
     });
 

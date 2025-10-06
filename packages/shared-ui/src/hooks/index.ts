@@ -11,6 +11,7 @@ export * from './useFileUpload';
 export * from './useImageDetailsModal';
 export * from './useAnimatedGlow';
 export * from './useBreathingGlow';
+export * from './useRendererControl';
 export * from './useStableHover';
 export * from './useLinkPreview';
 export * from './useMediaTypes';

@@ -1,27 +1,23 @@
+import { useEffect, useMemo } from 'react';
+
 import {
-    useCallback,
-    useEffect,
-    useMemo,
-    useRef,
-    useState,
-    type Dispatch,
-    type SetStateAction,
-} from 'react';
+    type RendererBackend,
+    type RendererControlAvailability,
+    type RendererControlSlice,
+    type RendererDiagnostics,
+    type RendererStatus,
+    type NexusStore,
+    type StateSetter,
+    useNexusStore,
+    findFirstAvailable,
+    resolveBackendCandidate,
+    createDefaultDiagnostics,
+    areAvailabilityMapsEqual,
+} from '../store';
 
-export type RendererBackend = string;
-
-export type RendererStatus = 'initializing' | 'ready' | 'failed' | 'rendering';
-
-export type RendererDiagnostics = {
-    readonly failedBackends: ReadonlyArray<string>;
-    readonly backendErrors: Record<string, Error>;
-    readonly attemptedBackends: ReadonlyArray<string>;
-};
-
-export type RendererControlAvailability<Backend extends RendererBackend> =
-    Record<Backend, boolean>;
-
-export type UseRendererControlOptions<Backend extends RendererBackend> = {
+export type UseRendererControlOptions<
+    Backend extends RendererBackend = RendererBackend,
+> = {
     readonly availability: RendererControlAvailability<Backend>;
     readonly initialPreferredBackend?: Backend | 'auto';
     readonly initialActiveBackend?: Backend | 'auto';
@@ -31,7 +27,9 @@ export type UseRendererControlOptions<Backend extends RendererBackend> = {
     readonly allowAuto?: boolean;
 };
 
-export type UseRendererControlResult<Backend extends RendererBackend> = {
+export type UseRendererControlResult<
+    Backend extends RendererBackend = RendererBackend,
+> = {
     readonly availability: RendererControlAvailability<Backend>;
     readonly preferredBackend: Backend | 'auto';
     readonly activeBackend: Backend | 'auto';
@@ -39,145 +37,194 @@ export type UseRendererControlResult<Backend extends RendererBackend> = {
     readonly diagnostics: RendererDiagnostics;
     readonly rendererLocked: boolean;
     readonly setBackend: (backend: Backend | 'auto') => void;
-    readonly setPreferredBackend: Dispatch<SetStateAction<Backend | 'auto'>>;
-    readonly setActiveBackend: Dispatch<SetStateAction<Backend | 'auto'>>;
-    readonly setStatus: Dispatch<SetStateAction<RendererStatus>>;
-    readonly setDiagnostics: Dispatch<SetStateAction<RendererDiagnostics>>;
-    readonly setRendererLocked: Dispatch<SetStateAction<boolean>>;
+    readonly setPreferredBackend: StateSetter<Backend | 'auto'>;
+    readonly setActiveBackend: StateSetter<Backend | 'auto'>;
+    readonly setStatus: StateSetter<RendererStatus>;
+    readonly setDiagnostics: StateSetter<RendererDiagnostics>;
+    readonly setRendererLocked: StateSetter<boolean>;
     readonly isBackendAvailable: (backend: Backend) => boolean;
 };
-
-const createDefaultDiagnostics = (): RendererDiagnostics => ({
-    failedBackends: [],
-    backendErrors: {},
-    attemptedBackends: [],
-});
-
-const findFirstAvailable = <Backend extends RendererBackend>(
-    availability: RendererControlAvailability<Backend>
-): Backend | null =>
-    (Object.entries(availability) as Array<[Backend, boolean]>).find(
-        ([, isAvailable]) => isAvailable
-    )?.[0] ?? null;
 
 export const useRendererControl = <Backend extends RendererBackend>(
     options: UseRendererControlOptions<Backend>
 ): UseRendererControlResult<Backend> => {
     const {
-        availability,
+        availability: availabilityOptions,
         initialPreferredBackend,
         initialActiveBackend,
-        initialStatus = 'initializing',
-        initialDiagnostics = createDefaultDiagnostics(),
-        initialRendererLocked = true,
-        allowAuto = true,
+        initialStatus,
+        initialDiagnostics,
+        initialRendererLocked,
+        allowAuto,
     } = options;
 
-    const availabilityRef = useRef(availability);
-    useEffect(() => {
-        availabilityRef.current = availability;
-    }, [availability]);
-
-    const firstAvailable = useMemo(
-        () => findFirstAvailable(availability),
-        [availability]
+    const availability = useNexusStore(
+        ({ availability: nextAvailability }) => nextAvailability
     );
-
-    const resolveInitialBackend = useCallback(
-        (candidate: Backend | 'auto' | undefined): Backend | 'auto' => {
-            if (candidate === undefined) {
-                if (allowAuto) {
-                    return 'auto';
-                }
-                return (
-                    firstAvailable ?? (Object.keys(availability)[0] as Backend)
-                );
-            }
-            if (candidate === 'auto') {
-                if (allowAuto) {
-                    return 'auto';
-                }
-                return (
-                    firstAvailable ?? (Object.keys(availability)[0] as Backend)
-                );
-            }
-            if (availability[candidate]) {
-                return candidate;
-            }
-            if (allowAuto) {
-                return 'auto';
-            }
-            return firstAvailable ?? candidate;
-        },
-        [allowAuto, availability, firstAvailable]
+    const preferredBackend = useNexusStore(
+        ({ preferredBackend: nextPreferredBackend }) => nextPreferredBackend
     );
-
-    const [preferredBackend, setPreferredBackend] = useState<Backend | 'auto'>(
-        () => resolveInitialBackend(initialPreferredBackend)
+    const activeBackend = useNexusStore(
+        ({ activeBackend: nextActiveBackend }) => nextActiveBackend
     );
-
-    const [activeBackend, setActiveBackend] = useState<Backend | 'auto'>(() =>
-        resolveInitialBackend(initialActiveBackend ?? initialPreferredBackend)
+    const status = useNexusStore(({ status: nextStatus }) => nextStatus);
+    const diagnostics = useNexusStore(
+        ({ diagnostics: nextDiagnostics }) => nextDiagnostics
     );
-
-    const [status, setStatus] = useState<RendererStatus>(initialStatus);
-    const [diagnostics, setDiagnostics] =
-        useState<RendererDiagnostics>(initialDiagnostics);
-    const [rendererLocked, setRendererLocked] = useState<boolean>(
-        initialRendererLocked
+    const rendererLocked = useNexusStore(
+        ({ rendererLocked: nextRendererLocked }) => nextRendererLocked
+    );
+    const setBackendAction = useNexusStore(({ setBackend }) => setBackend);
+    const setPreferredBackendAction = useNexusStore(
+        ({ setPreferredBackend }) => setPreferredBackend
+    );
+    const setActiveBackendAction = useNexusStore(
+        ({ setActiveBackend }) => setActiveBackend
+    );
+    const setStatusAction = useNexusStore(({ setStatus }) => setStatus);
+    const setDiagnosticsAction = useNexusStore(
+        ({ setDiagnostics }) => setDiagnostics
+    );
+    const setRendererLockedAction = useNexusStore(
+        ({ setRendererLocked }) => setRendererLocked
+    );
+    const isBackendAvailable = useNexusStore(
+        ({ isBackendAvailable: nextIsBackendAvailable }) =>
+            nextIsBackendAvailable
     );
 
     useEffect(() => {
-        if (preferredBackend === 'auto') {
-            return;
-        }
-        if (!availability[preferredBackend]) {
-            setPreferredBackend((current) => {
-                if (current === 'auto') {
-                    return current;
-                }
-                if (allowAuto) {
-                    return 'auto';
-                }
-                return firstAvailable ?? current;
-            });
-        }
-    }, [allowAuto, availability, firstAvailable, preferredBackend]);
+        const resolvedAllowAuto = allowAuto ?? true;
+        const nextAvailability = availabilityOptions;
+        const initialDiagnosticsSeed =
+            initialDiagnostics ?? createDefaultDiagnostics();
+        const initialStatusSeed = initialStatus ?? 'initializing';
+        const initialRendererLockedSeed = initialRendererLocked ?? true;
 
-    const isBackendAvailable = useCallback(
-        (backend: Backend) => Boolean(availabilityRef.current[backend]),
-        []
-    );
+        useNexusStore.setState((state) => {
+            const availabilityChanged = !areAvailabilityMapsEqual(
+                state.availability,
+                nextAvailability
+            );
+            const firstAvailable = findFirstAvailable(nextAvailability);
+            const preferredCandidate = state.hasHydrated
+                ? state.preferredBackend
+                : initialPreferredBackend ?? state.preferredBackend;
+            const activeCandidate = state.hasHydrated
+                ? state.activeBackend
+                : initialActiveBackend ??
+                  initialPreferredBackend ??
+                  state.activeBackend;
 
-    const setBackend = useCallback(
-        (backend: Backend | 'auto') => {
-            if (backend === 'auto') {
-                if (allowAuto) {
-                    setPreferredBackend('auto');
-                }
-                return;
+            const nextPreferred = resolveBackendCandidate(
+                preferredCandidate,
+                nextAvailability,
+                resolvedAllowAuto,
+                firstAvailable,
+                state.preferredBackend
+            );
+
+            const nextActive = resolveBackendCandidate(
+                activeCandidate,
+                nextAvailability,
+                resolvedAllowAuto,
+                firstAvailable,
+                state.activeBackend
+            );
+
+            const statusSeed = state.hasHydrated
+                ? state.status
+                : initialStatusSeed;
+            const diagnosticsSeed = state.hasHydrated
+                ? state.diagnostics
+                : initialDiagnosticsSeed;
+            const rendererLockedSeed = state.hasHydrated
+                ? state.rendererLocked
+                : initialRendererLockedSeed;
+
+            const allowAutoChanged = state.allowAuto !== resolvedAllowAuto;
+            const preferredChanged = nextPreferred !== state.preferredBackend;
+            const activeChanged = nextActive !== state.activeBackend;
+            const statusChanged = statusSeed !== state.status;
+            const diagnosticsChanged = diagnosticsSeed !== state.diagnostics;
+            const rendererLockedChanged =
+                rendererLockedSeed !== state.rendererLocked;
+            const hydrationChanged = state.hasHydrated === false;
+
+            if (
+                !availabilityChanged &&
+                !allowAutoChanged &&
+                !preferredChanged &&
+                !activeChanged &&
+                !statusChanged &&
+                !diagnosticsChanged &&
+                !rendererLockedChanged &&
+                !hydrationChanged
+            ) {
+                return state;
             }
-            if (!availabilityRef.current[backend]) {
-                return;
-            }
-            setPreferredBackend(backend);
-        },
-        [allowAuto]
-    );
 
-    return {
-        availability,
-        preferredBackend,
-        activeBackend,
-        status,
-        diagnostics,
-        rendererLocked,
-        setBackend,
-        setPreferredBackend,
-        setActiveBackend,
-        setStatus,
-        setDiagnostics,
-        setRendererLocked,
-        isBackendAvailable,
-    };
+            return {
+                ...state,
+                availability: nextAvailability,
+                preferredBackend: nextPreferred,
+                activeBackend: nextActive,
+                status: statusSeed,
+                diagnostics: diagnosticsSeed,
+                rendererLocked: rendererLockedSeed,
+                allowAuto: resolvedAllowAuto,
+                hasHydrated: true,
+            };
+        });
+    }, [
+        allowAuto,
+        availabilityOptions,
+        initialActiveBackend,
+        initialDiagnostics,
+        initialPreferredBackend,
+        initialRendererLocked,
+        initialStatus,
+    ]);
+
+    return useMemo<UseRendererControlResult<Backend>>(
+        () => ({
+            availability: availability as RendererControlAvailability<Backend>,
+            preferredBackend: preferredBackend as Backend | 'auto',
+            activeBackend: activeBackend as Backend | 'auto',
+            status,
+            diagnostics,
+            rendererLocked,
+            setBackend: (backend) => setBackendAction(backend),
+            setPreferredBackend: (update) =>
+                setPreferredBackendAction(
+                    update as StateSetter<Backend | 'auto'>
+                ),
+            setActiveBackend: (update) =>
+                setActiveBackendAction(update as StateSetter<Backend | 'auto'>),
+            setStatus: (update) =>
+                setStatusAction(update as StateSetter<RendererStatus>),
+            setDiagnostics: (update) =>
+                setDiagnosticsAction(
+                    update as StateSetter<RendererDiagnostics>
+                ),
+            setRendererLocked: (update) =>
+                setRendererLockedAction(update as StateSetter<boolean>),
+            isBackendAvailable: (backend) => isBackendAvailable(backend),
+        }),
+        [
+            availability,
+            preferredBackend,
+            activeBackend,
+            status,
+            diagnostics,
+            rendererLocked,
+            setBackendAction,
+            setPreferredBackendAction,
+            setActiveBackendAction,
+            setStatusAction,
+            setDiagnosticsAction,
+            setRendererLockedAction,
+            isBackendAvailable,
+        ]
+    );
 };

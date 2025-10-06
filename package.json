@@ -9,9 +9,6 @@
         "metro:clean": "cargo run --package metro-clean"
     },
     "dependencies": {
-        "expo-updates": "^29.0.12",
-        "expo-screen-orientation": "^8.1.6",
-        "eslint-import-resolver-typescript": "^4.3.5",
         "@apollo/client": "^3.12.8",
         "@babel/plugin-transform-modules-commonjs": "^7.26.3",
         "@babel/plugin-transform-runtime": "^7.26.10",
@@ -64,6 +61,7 @@
         "eslint-config-airbnb-typescript": "^18.0.0",
         "eslint-config-next": "^15.3.2",
         "eslint-config-prettier": "^10.1.5",
+        "eslint-import-resolver-typescript": "^4.3.5",
         "eslint-plugin-eslint-comments": "^3.2.0",
         "eslint-plugin-import": "^2.31.0",
         "eslint-plugin-jest": "^28.11.0",
@@ -84,9 +82,11 @@
         "expo-image": "^2.1.7",
         "expo-image-picker": "^16.1.4",
         "expo-location": "^18.1.4",
+        "expo-screen-orientation": "^8.1.6",
         "expo-secure-store": "^14.2.3",
         "expo-splash-screen": "^0.30.8",
         "expo-status-bar": "^2.2.3",
+        "expo-updates": "^29.0.12",
         "expo-video": "^2.1.8",
         "formik": "^2.4.6",
         "framer-motion": "^12.6.2",
@@ -154,7 +154,8 @@
         "url": "^0.11.4",
         "util": "^0.12.5",
         "uuid": "^11.1.0",
-        "validator": "^13.12.0"
+        "validator": "^13.12.0",
+        "zustand": "^5.0.8"
     },
     "devDependencies": {
         "@babel/core": "^7.26.7",

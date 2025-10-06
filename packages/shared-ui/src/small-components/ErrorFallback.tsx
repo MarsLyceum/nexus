@@ -28,14 +28,15 @@ import {
     Typography,
 } from '../constants/designSystem';
 import { useThemedScrollbars, NexusScrollView } from '../styles';
-import { buildGlowScene, type GlowSceneState } from '../effects/glow/glowScene';
-import { useSceneRenderer } from '../animation/sceneRenderer';
+import { AnimationProvider } from '../providers/AnimationProvider';
 import {
-    AnimationProvider,
-    useAnimationLayers,
-} from '../providers/AnimationProvider';
-import { hasWebGPU, hasWebGL } from '../effects/glow';
-import { SceneRenderLayer } from '../animation/sceneSystem';
+    Glow,
+    hasWebGPU,
+    hasWebGL,
+    type GlowBackend,
+    type GlowDiagnostics,
+    type GlowStatus,
+} from '../effects/glow';
 
 type ErrorFallbackProps = {
     error: Error;
@@ -49,18 +50,23 @@ type ParsedStackLine = {
     location: string;
 };
 
-type GlowMode = 'webgpu' | 'webgl' | 'css';
+type GlowMode = GlowBackend;
 
 const SEGMENT_HEIGHT = 34;
 const SEGMENT_HORIZONTAL_PADDING = 10;
 const SEGMENT_FADE_DURATION = 160;
-const backendOrder: GlowMode[] = ['webgpu', 'webgl', 'css'];
-const backendLabels: Record<GlowMode, string> = {
+const backendOrder: ReadonlyArray<'webgpu' | 'webgl' | 'css'> = [
+    'webgpu',
+    'webgl',
+    'css',
+];
+const backendLabels: Record<'webgpu' | 'webgl' | 'css' | 'auto', string> = {
     webgpu: 'WebGPU',
     webgl: 'WebGL',
     css: 'CSS',
+    auto: 'Auto',
 };
-const backendIcons: Record<GlowMode, string> = {
+const backendIcons: Record<'webgpu' | 'webgl' | 'css', string> = {
     webgpu: '⛶',
     webgl: '⬚',
     css: '{}',
@@ -73,7 +79,7 @@ type SegmentState = {
 };
 
 type SegmentDescriptor = {
-    readonly mode: GlowMode;
+    readonly mode: 'webgpu' | 'webgl' | 'css';
     readonly label: string;
     readonly available: boolean;
     readonly active: boolean;
@@ -82,9 +88,9 @@ type SegmentDescriptor = {
 };
 
 const createSegmentDescriptors = (
-    availability: Record<GlowMode, boolean>,
-    activeBackend: GlowMode,
-    failedBackends: ReadonlySet<GlowMode>
+    availability: Record<'webgpu' | 'webgl' | 'css', boolean>,
+    activeBackend: string,
+    failedBackends: ReadonlySet<string>
 ) =>
     backendOrder.map<SegmentDescriptor>((mode) => ({
         mode,
@@ -131,19 +137,24 @@ const mapSegmentState = (state: PressableStateCallbackType) => ({
     focused: Boolean(state.focused),
 });
 
-const createSegmentAnimations = (activeBackend: GlowMode) =>
-    backendOrder.reduce<Record<GlowMode, Animated.Value>>(
+const createSegmentAnimations = (activeBackend: 'webgpu' | 'webgl' | 'css') =>
+    backendOrder.reduce<Record<'webgpu' | 'webgl' | 'css', Animated.Value>>(
         (accumulator, mode) => ({
             ...accumulator,
             [mode]: new Animated.Value(mode === activeBackend ? 1 : 0),
         }),
-        {} as Record<GlowMode, Animated.Value>
+        {} as Record<'webgpu' | 'webgl' | 'css', Animated.Value>
     );
 
-const useSegmentAnimations = (activeBackend: GlowMode) => {
-    const animationRef = useRef<Record<GlowMode, Animated.Value> | null>(null);
+const useSegmentAnimations = (activeBackend: string) => {
+    const animationRef = useRef<Record<
+        'webgpu' | 'webgl' | 'css',
+        Animated.Value
+    > | null>(null);
     if (!animationRef.current) {
-        animationRef.current = createSegmentAnimations(activeBackend);
+        animationRef.current = createSegmentAnimations(
+            activeBackend as 'webgpu' | 'webgl' | 'css'
+        );
     }
 
     useEffect(() => {
@@ -206,6 +217,7 @@ const createWebDebugLogger = (label: string) => {
         value: Value,
         context: Record<string, unknown> = {}
     ): Value => {
+        // eslint-disable-next-line no-console
         console.log(`[ErrorFallback:${label}]`, value, context);
         return value;
     };
@@ -213,62 +225,19 @@ const createWebDebugLogger = (label: string) => {
     return logValue;
 };
 
-const useGlowBackends = (glowScene: ReturnType<typeof buildGlowScene>) => {
-    const debug = useMemo(() => createWebDebugLogger('backends'), []);
+const useGlowState = () => {
     const isWeb = Platform.OS === 'web';
-    const { visibility, setVisibility } = useAnimationLayers();
-
     const webgpuAvailable = isWeb && hasWebGPU();
     const webglAvailable = isWeb && hasWebGL();
 
-    const initialPreference = useMemo<GlowMode>(() => {
-        if (webgpuAvailable && webglAvailable) {
-            return 'webgpu';
-        }
-        if (webglAvailable) {
-            return 'webgl';
-        }
-        if (webgpuAvailable) {
-            return 'webgpu';
-        }
-        return 'css';
-    }, [webglAvailable, webgpuAvailable]);
-
-    const [preferredBackend, setPreferredBackend] =
-        useState<GlowMode>(initialPreference);
-
-    useEffect(() => {
-        debug('capabilities:detected', {
-            isWeb,
-            webgpuAvailable,
-            webglAvailable,
-        });
-        setPreferredBackend((current) => {
-            const nextPreferred =
-                current === 'webgpu' && !webgpuAvailable
-                    ? webglAvailable
-                        ? 'webgl'
-                        : 'css'
-                    : current === 'webgl' && !webglAvailable
-                      ? webgpuAvailable
-                          ? 'webgpu'
-                          : 'css'
-                      : current;
-            if (nextPreferred !== current) {
-                debug('preferred-backend:adjust', {
-                    from: current,
-                    to: nextPreferred,
-                    webgpuAvailable,
-                    webglAvailable,
-                });
-            } else {
-                debug('preferred-backend:retain', {
-                    current,
-                });
-            }
-            return nextPreferred;
-        });
-    }, [debug, isWeb, webglAvailable, webgpuAvailable]);
+    const [preferredBackend, setPreferredBackend] = useState<GlowMode>('auto');
+    const [activeBackend, setActiveBackend] = useState<string>('css');
+    const [status, setStatus] = useState<GlowStatus>('initializing');
+    const [diagnostics, setDiagnostics] = useState<GlowDiagnostics>({
+        failedBackends: [],
+        backendErrors: {},
+        attemptedBackends: [],
+    });
 
     const availability = useMemo(
         () => ({
@@ -279,140 +248,53 @@ const useGlowBackends = (glowScene: ReturnType<typeof buildGlowScene>) => {
         [webglAvailable, webgpuAvailable]
     );
 
-    useEffect(() => {
-        debug('availability:update', availability);
-    }, [availability, debug]);
-
-    const { containerStyle, layers, status, diagnostics, activeBackend } =
-        useSceneRenderer<GlowSceneState>(
-            glowScene,
-            isWeb
-                ? {
-                      visibility,
-                      preferredBackend,
-                  }
-                : undefined
-        );
-
-    const overlayLayers = useMemo(
-        () =>
-            isWeb
-                ? layers.filter((layer) => layer.type !== 'dom')
-                : ([] as SceneRenderLayer[]),
-        [isWeb, layers]
-    );
-
-    const effectiveBackend: GlowMode = useMemo(() => {
-        if (!isWeb) {
-            return 'css';
-        }
-        if (preferredBackend === 'css') {
-            return 'css';
-        }
-        if (!availability[preferredBackend]) {
-            return 'css';
-        }
-        if (status === 'failed') {
-            return 'css';
-        }
-        return preferredBackend;
-    }, [availability, isWeb, preferredBackend, status]);
-
-    useEffect(() => {
-        debug('backend:status', {
-            preferredBackend,
-            effectiveBackend,
-            status,
-        });
-        if (!isWeb) {
-            return;
-        }
-        const wantsGpu = effectiveBackend !== 'css';
-        debug('visibility:update', {
-            wantsGpu,
-        });
-        setVisibility('gpu-glow', wantsGpu);
-        setVisibility('css-glow', !wantsGpu);
-    }, [
-        debug,
-        effectiveBackend,
-        isWeb,
-        preferredBackend,
-        setVisibility,
-        status,
-    ]);
-
     const setBackend = useCallback(
         (mode: GlowMode) => {
-            debug('set-backend:requested', {
-                mode,
-                available: availability[mode],
-                currentPreferred: preferredBackend,
-                currentEffective: effectiveBackend,
-            });
+            if (mode === 'auto') {
+                setPreferredBackend('auto');
+                return;
+            }
             if (!availability[mode]) {
-                debug('set-backend:rejected', {
-                    mode,
-                });
                 return;
             }
             setPreferredBackend(mode);
-            debug('set-backend:applied', {
-                mode,
-            });
         },
-        [availability, debug, effectiveBackend, preferredBackend]
+        [availability]
     );
 
     return {
-        containerStyle,
-        overlayLayers,
         availability,
         preferredBackend,
-        activeBackend: effectiveBackend,
+        activeBackend,
+        status,
         diagnostics,
         setBackend,
-        status,
+        setActiveBackend,
+        setStatus,
+        setDiagnostics,
         isWeb,
     };
 };
 
-const ErrorFallbackInner: React.FC<
-    ErrorFallbackProps & {
-        glowScene: ReturnType<typeof buildGlowScene>;
-    }
-> = ({ error, resetErrorBoundary, componentStack, onReset, glowScene }) => {
+const ErrorFallbackInner: React.FC<ErrorFallbackProps> = ({
+    error,
+    resetErrorBoundary,
+    componentStack,
+    onReset,
+}) => {
     const debug = useMemo(() => createWebDebugLogger('inner'), []);
     const { theme } = useTheme();
     const {
-        containerStyle,
-        overlayLayers,
         availability,
         preferredBackend,
         activeBackend,
         diagnostics,
         setBackend,
-        status,
+        setActiveBackend,
+        setStatus,
+        setDiagnostics,
         isWeb,
-    } = useGlowBackends(glowScene);
-
-    useEffect(() => {
-        console.log('[ErrorFallback] scene renderer result', {
-            isWeb,
-            status,
-            preferredBackend,
-            activeBackend,
-            overlayLayerIds: overlayLayers.map((layer) => layer.id),
-            availability,
-        });
-    }, [
-        activeBackend,
-        availability,
-        isWeb,
-        overlayLayers,
-        preferredBackend,
-        status,
-    ]);
+    } = useGlowState();
     const { width, height } = useWindowDimensions();
     const { ScrollbarStyles } = useThemedScrollbars();
     const { createNativeShadowStyle } = useAnimatedGlow(0.2, 0.5, 3000);
@@ -447,16 +329,14 @@ const ErrorFallbackInner: React.FC<
 
     const failedBackends = useMemo(() => {
         if (!diagnostics) {
-            return new Set<GlowMode>();
+            return new Set<string>();
         }
-        return diagnostics.failedBackends.reduce<Set<GlowMode>>(
+        return diagnostics.failedBackends.reduce<Set<string>>(
             (accumulator, backend) => {
-                if (backendOrder.includes(backend as GlowMode)) {
-                    accumulator.add(backend as GlowMode);
-                }
+                accumulator.add(backend);
                 return accumulator;
             },
-            new Set<GlowMode>()
+            new Set<string>()
         );
     }, [diagnostics]);
 
@@ -464,7 +344,7 @@ const ErrorFallbackInner: React.FC<
         () =>
             createSegmentDescriptors(
                 availability,
-                activeBackend,
+                activeBackend === 'auto' ? 'css' : activeBackend,
                 failedBackends
             ),
         [availability, activeBackend, failedBackends]
@@ -488,7 +368,9 @@ const ErrorFallbackInner: React.FC<
                                 disabled: descriptor.isDisabled,
                                 selected: descriptor.active,
                             }}
-                            onPress={() => setBackend(descriptor.mode)}
+                            onPress={() =>
+                                setBackend(descriptor.mode as GlowMode)
+                            }
                             disabled={descriptor.isDisabled}
                             style={(pressableState) =>
                                 createSegmentBoxStyles(
@@ -559,38 +441,34 @@ const ErrorFallbackInner: React.FC<
         if (!diagnostics || diagnostics.failedBackends.length === 0) {
             return null;
         }
-        const summary = diagnostics.failedBackends.reduce(
-            (
-                accumulator,
-                backend
-            ): {
-                lastBackend: GlowMode | null;
-                lastMessage: string | null;
-                cssActivated: boolean;
-                details: ReadonlyArray<string>;
-            } => {
-                const nextBackend = backend as GlowMode;
+        const summary = diagnostics.failedBackends.reduce<{
+            lastBackend: string | null;
+            lastMessage: string | null;
+            cssActivated: boolean;
+            details: ReadonlyArray<string>;
+        }>(
+            (accumulator, backend) => {
                 const isGpuBackend =
-                    nextBackend === 'webgpu' || nextBackend === 'webgl';
-                const error = diagnostics.backendErrors[backend];
+                    backend === 'webgpu' || backend === 'webgl';
+                const backendError = diagnostics.backendErrors[backend];
                 const nextMessage =
-                    error?.message ?? 'Renderer initialization failed';
+                    backendError?.message ?? 'Renderer initialization failed';
                 const detailLines = (() => {
                     const meta = (
-                        error as Error & {
+                        backendError as Error & {
                             readonly details?: ReadonlyArray<string>;
                         }
-                    ).details;
+                    )?.details;
                     return Array.isArray(meta) ? meta : [];
                 })();
                 const mergedDetails =
                     detailLines.length > 0 ? detailLines : accumulator.details;
                 return {
-                    lastBackend: nextBackend,
+                    lastBackend: backend,
                     lastMessage: nextMessage,
                     cssActivated:
                         accumulator.cssActivated ||
-                        nextBackend === 'css' ||
+                        backend === 'css' ||
                         !isGpuBackend,
                     details: mergedDetails,
                 };
@@ -606,9 +484,13 @@ const ErrorFallbackInner: React.FC<
             return null;
         }
         return {
-            backend: backendLabels[summary.lastBackend] ?? summary.lastBackend,
+            backend:
+                backendLabels[summary.lastBackend as GlowMode] ??
+                summary.lastBackend,
             message: summary.lastMessage,
-            severity: summary.cssActivated ? 'error' : 'warning',
+            severity: summary.cssActivated
+                ? ('error' as const)
+                : ('warning' as const),
             details: summary.details,
         };
     }, [diagnostics]);
@@ -734,24 +616,23 @@ const ErrorFallbackInner: React.FC<
     ) : (
         cardContent
     );
-    useEffect(() => {
-        debug('card-body-node', {
-            hasScrollbar: shouldScroll,
-            overlayLayerCount: overlayLayers.length,
-        });
-    }, [debug, overlayLayers, shouldScroll]);
-
     const layeredCard = (
         <View style={baseStyles.cardWrapper}>
-            <View pointerEvents="none" style={baseStyles.overlayContainer}>
-                {overlayLayers.length > 0 ? (
-                    <View style={[baseStyles.overlayContent, containerStyle]}>
-                        {overlayLayers.map((layer) => (
-                            <LayerFragment key={layer.id} layer={layer} />
-                        ))}
-                    </View>
-                ) : null}
-            </View>
+            {isWeb && (
+                <View pointerEvents="none" style={baseStyles.overlayContainer}>
+                    <Glow
+                        color={theme.colors.Primary}
+                        borderRadius={BorderRadius.Large}
+                        focal={{ x: 0.5, y: 0.5 }}
+                        opacity={0.85}
+                        animate
+                        preferredBackend={preferredBackend}
+                        onBackendChange={setActiveBackend}
+                        onStatusChange={setStatus}
+                        onDiagnosticsChange={setDiagnostics}
+                    />
+                </View>
+            )}
             <View style={[baseStyles.card, responsiveStyles.card]}>
                 {cardBodyNode}
             </View>
@@ -793,34 +674,14 @@ const ErrorFallbackInner: React.FC<
 };
 
 export const ErrorFallback: React.FC<ErrorFallbackProps> = (props) => {
-    const { theme } = useTheme();
-    const glowScene = useMemo(
-        () =>
-            buildGlowScene({
-                color: theme.colors.Primary,
-                borderRadius: BorderRadius.Large,
-                focal: { x: 0.5, y: 0.5 },
-                opacity: 0.85,
-                animate: true,
-            }),
-        [theme.colors.Primary]
-    );
-
     if (Platform.OS === 'web') {
         return (
-            <AnimationProvider scene={glowScene}>
-                <ErrorFallbackInner {...props} glowScene={glowScene} />
+            <AnimationProvider>
+                <ErrorFallbackInner {...props} />
             </AnimationProvider>
         );
     }
-    return <ErrorFallbackInner {...props} glowScene={glowScene} />;
-};
-
-const LayerFragment: React.FC<{ layer: SceneRenderLayer }> = ({ layer }) => {
-    if (!layer.element) {
-        return null;
-    }
-    return <>{layer.element}</>;
+    return <ErrorFallbackInner {...props} />;
 };
 
 const createStyles = (theme: Theme) =>
@@ -1129,6 +990,10 @@ const createStyles = (theme: Theme) =>
         segmentDisabled: {
             opacity: 0.45,
         },
+        segmentFailed: {
+            backgroundColor: toRgba(theme.colors.Secondary, 0.12),
+            borderColor: toRgba(theme.colors.Secondary, 0.35),
+        },
         segmentLabel: {
             ...Typography.BodySmall,
             color: toRgba(theme.colors.ActiveText, 0.62),
@@ -1153,6 +1018,9 @@ const createStyles = (theme: Theme) =>
         },
         segmentLabelDisabled: {
             color: toRgba(theme.colors.ActiveText, 0.42),
+        },
+        segmentLabelFailed: {
+            color: toRgba(theme.colors.Secondary, 0.85),
         },
     });
 

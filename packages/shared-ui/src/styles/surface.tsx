@@ -11,19 +11,6 @@ type GlowConfig = {
     offsetY?: number;
 };
 
-const createGlowKeyframes = (color: string) => `
-    @keyframes glow-pulse {
-        0%, 100% {
-            filter: drop-shadow(0 0 8px ${color}55)
-                    drop-shadow(0 0 16px ${color}33);
-        }
-        50% {
-            filter: drop-shadow(0 0 12px ${color}77)
-                    drop-shadow(0 0 24px ${color}44);
-        }
-    }
-`;
-
 export const applyGlow = (
     theme: Theme,
     { radius = 24, intensity = 0.28, offsetY = 12 }: GlowConfig = {}
@@ -82,8 +69,6 @@ export const createScrollbarStyles = (
 
     return (
         <style>{`
-            ${createGlowKeyframes(primaryColor)}
-
             #${scrollId} {
                 scrollbar-width: thin;
                 scrollbar-color: ${theme.colors.Primary} ${theme.colors.SecondaryBackground};

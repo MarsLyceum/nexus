@@ -8,8 +8,9 @@ import React, {
 import { Platform, View, ScrollView } from 'react-native';
 
 import { useTheme } from '../theme';
-import { toRgba, createGlowKeyframes } from '../utils';
+import { toRgba } from '../utils';
 import { BorderRadius } from '../constants/designSystem';
+import { Glow } from '../effects/glow';
 
 export const DEFAULT_SCROLLBAR_THICKNESS = 14;
 const THUMB_MIN_HEIGHT = 20;
@@ -163,15 +164,12 @@ export const useThemedScrollbars: ThemedScrollbarHook = () => {
                 return '';
             }
 
-            const primary = theme.colors.Primary;
             const selectorList = selectors.join(', ');
             const webkitSelectors = selectors
                 .map((selector) => `${selector}::-webkit-scrollbar`)
                 .join(', ');
 
             return `
-                ${createGlowKeyframes(primary, { focal: { x: 0.5, y: 0.4 } })}
-
                 ${selectorList} {
                     scrollbar-width: none;
                 }
@@ -911,6 +909,28 @@ const WebNexusScrollView: React.FC<NexusScrollViewProps> = ({
                             }}
                         />
                     </div>
+                    {(isHovered || isDragging) && (
+                        <div
+                            style={{
+                                position: 'absolute',
+                                top: `${verticalLaneInset + boundedTopCss}px`,
+                                right: `${thumbRightOffset}px`,
+                                width: `${finalThumbWidth}px`,
+                                height: `${renderedThumbHeight}px`,
+                                pointerEvents: 'none',
+                                zIndex: 0,
+                            }}
+                        >
+                            <Glow
+                                color={primary}
+                                borderRadius={finalThumbPaintRadius}
+                                focal={{ x: 0.5, y: 0.5 }}
+                                opacity={isDragging ? 0.6 : 0.4}
+                                animate
+                                fillContainer
+                            />
+                        </div>
+                    )}
                     <div
                         className="custom-scrollbar-thumb"
                         onMouseDown={handleThumbMouseDown}

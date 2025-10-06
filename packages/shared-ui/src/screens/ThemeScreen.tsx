@@ -15,13 +15,13 @@ import { Theme, useTheme, themesByCategory } from '../theme';
 import { BorderRadius, Spacing, Typography } from '../constants/designSystem';
 import { useScreenWidth } from '../hooks/useScreenWidth';
 import { toRgba } from '../utils';
+import { Glow } from '../effects/glow';
 import { useThemedScrollbars } from '../styles';
 import {
     availableFontFamilies,
     sameFontFamily,
     type FontFamily,
 } from '../constants/fonts';
-import { GlowKeyframes } from '../effects/glow';
 import { useAnimatedGlow } from '../hooks/useAnimatedGlow';
 
 const createStyles = (theme: Theme) =>
@@ -306,10 +306,13 @@ const ThemePreview: React.FC<ThemePreviewProps> = React.memo(
                     },
                 ]}
             >
-                {isActive && (
-                    <GlowKeyframes
+                {isActive && Platform.OS === 'web' && (
+                    <Glow
                         color={activeThemeContext.colors.Primary}
+                        borderRadius={16}
                         focal={{ x: 0.5, y: 0.4 }}
+                        opacity={1}
+                        animate
                     />
                 )}
                 <WrapperComponent style={wrapperStyle}>

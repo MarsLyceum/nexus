@@ -12,8 +12,8 @@ import { useQuery, useApolloClient } from '@apollo/client';
 
 import { useTheme, Theme } from '../theme';
 import { toRgba, getOnlineStatusDotColor } from '../utils';
+import { Glow } from '../effects/glow';
 import { useAnimatedGlow } from '../hooks';
-import { GlowKeyframes } from '../effects/glow';
 import { FETCH_USER_QUERY } from '../queries';
 import { UserType } from '../redux';
 import { Conversation } from '../types';
@@ -84,63 +84,76 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
         const avatarUrl = `https://picsum.photos/seed/${username}/40`;
 
         return (
-            <Pressable
-                style={[
-                    styles.conversationItem,
-                    selected && styles.selectedConversationItem,
-                    conversationHovered && {
-                        backgroundColor: theme.colors.SecondaryBackground,
-                    },
-                ]}
-                onPress={() => onPress(conversation)}
-                onMouseEnter={() => setConversationHovered(true)}
-                onMouseLeave={() => setConversationHovered(false)}
-            >
-                <View style={styles.avatarAndDot}>
-                    <NexusImage
-                        source={avatarUrl}
-                        alt="avatar"
-                        width={40}
-                        height={40}
-                        style={styles.avatar}
-                        contentFit="cover"
+            <View style={styles.conversationItemContainer}>
+                {selected && Platform.OS === 'web' && (
+                    <Glow
+                        color={primaryColor}
+                        borderRadius={8}
+                        focal={{ x: 0.45, y: 0.35 }}
+                        opacity={1}
+                        animate
                     />
-                    <View
-                        style={[
-                            styles.statusDot,
-                            {
-                                backgroundColor: getOnlineStatusDotColor(
-                                    theme,
-                                    status
-                                ),
-                            },
-                        ]}
-                    />
-                </View>
-                <View style={styles.conversationTextContainer}>
-                    <Text style={styles.conversationTitle}>{username}</Text>
-                </View>
-                {conversationHovered && (
-                    <TouchableOpacity
-                        style={styles.closeButton}
-                        onPress={() => onClose(conversation)}
-                    >
-                        <View
-                            onMouseEnter={() => setCloseButtonHovered(true)}
-                            onMouseLeave={() => setCloseButtonHovered(false)}
-                        >
-                            <Cancel
-                                size={14}
-                                color={
-                                    closeButtonHovered
-                                        ? theme.colors.ActiveText
-                                        : theme.colors.InactiveText
-                                }
-                            />
-                        </View>
-                    </TouchableOpacity>
                 )}
-            </Pressable>
+                <Pressable
+                    style={[
+                        styles.conversationItem,
+                        selected && styles.selectedConversationItem,
+                        conversationHovered && {
+                            backgroundColor: theme.colors.SecondaryBackground,
+                        },
+                    ]}
+                    onPress={() => onPress(conversation)}
+                    onMouseEnter={() => setConversationHovered(true)}
+                    onMouseLeave={() => setConversationHovered(false)}
+                >
+                    <View style={styles.avatarAndDot}>
+                        <NexusImage
+                            source={avatarUrl}
+                            alt="avatar"
+                            width={40}
+                            height={40}
+                            style={styles.avatar}
+                            contentFit="cover"
+                        />
+                        <View
+                            style={[
+                                styles.statusDot,
+                                {
+                                    backgroundColor: getOnlineStatusDotColor(
+                                        theme,
+                                        status
+                                    ),
+                                },
+                            ]}
+                        />
+                    </View>
+                    <View style={styles.conversationTextContainer}>
+                        <Text style={styles.conversationTitle}>{username}</Text>
+                    </View>
+                    {conversationHovered && (
+                        <TouchableOpacity
+                            style={styles.closeButton}
+                            onPress={() => onClose(conversation)}
+                        >
+                            <View
+                                onMouseEnter={() => setCloseButtonHovered(true)}
+                                onMouseLeave={() =>
+                                    setCloseButtonHovered(false)
+                                }
+                            >
+                                <Cancel
+                                    size={14}
+                                    color={
+                                        closeButtonHovered
+                                            ? theme.colors.ActiveText
+                                            : theme.colors.InactiveText
+                                    }
+                                />
+                            </View>
+                        </TouchableOpacity>
+                    )}
+                </Pressable>
+            </View>
         );
     }
 
@@ -194,11 +207,14 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
     const wrapperStyle = getWrapperStyle();
 
     return (
-        <>
-            {selected && (
-                <GlowKeyframes
+        <View style={styles.conversationItemContainer}>
+            {selected && Platform.OS === 'web' && (
+                <Glow
                     color={primaryColor}
+                    borderRadius={8}
                     focal={{ x: 0.45, y: 0.35 }}
+                    opacity={1}
+                    animate
                 />
             )}
             <WrapperComponent style={wrapperStyle}>
@@ -272,12 +288,15 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
                     )}
                 </Pressable>
             </WrapperComponent>
-        </>
+        </View>
     );
 };
 
 function createStyles(theme: Theme) {
     return StyleSheet.create({
+        conversationItemContainer: {
+            position: 'relative',
+        },
         conversationItem: {
             flexDirection: 'row',
             alignItems: 'center',

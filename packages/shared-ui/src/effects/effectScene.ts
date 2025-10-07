@@ -203,10 +203,7 @@ export const createEffectScene = <
         );
 
         const preferredBackend = useMemo(() => {
-            if (
-                options?.preferredBackend &&
-                options.preferredBackend !== 'auto'
-            ) {
+            if (options?.preferredBackend) {
                 return options.preferredBackend;
             }
             if (availability.webgpu) {
@@ -215,7 +212,7 @@ export const createEffectScene = <
             if (availability.webgl) {
                 return 'webgl';
             }
-            return options?.preferredBackend ?? 'auto';
+            return undefined;
         }, [
             availability.webgl,
             availability.webgpu,
@@ -327,10 +324,7 @@ export const createEffectScene = <
                     return updated;
                 });
                 const preferredFallback = (() => {
-                    if (
-                        !options?.preferredBackend ||
-                        options.preferredBackend === 'auto'
-                    ) {
+                    if (!options?.preferredBackend) {
                         return undefined;
                     }
                     if (options.preferredBackend === 'css') {

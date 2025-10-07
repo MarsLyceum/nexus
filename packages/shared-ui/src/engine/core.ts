@@ -62,7 +62,7 @@ export const createEngine = <State extends EngineState, UniformData>(
         defaultOrder,
     });
     let backendOrder = defaultOrder;
-    let desiredBackend: string | 'auto' = 'auto';
+    let desiredBackend: string | undefined;
     let state = mergeState(options.initialState, {});
     let activeHandle: BackendHandle<UniformData> | undefined;
     let activeBackend: string | undefined;
@@ -74,7 +74,7 @@ export const createEngine = <State extends EngineState, UniformData>(
         Promise.resolve(undefined);
 
     const resolveDesiredBackendId = (): string | undefined =>
-        desiredBackend !== 'auto' ? desiredBackend : backendOrder[0];
+        desiredBackend ?? backendOrder[0];
 
     const isCanvasConnected = () => {
         if (options.canvas.isConnected) {
@@ -296,14 +296,14 @@ export const createEngine = <State extends EngineState, UniformData>(
         clearActiveHandle();
     };
 
-    const setDesiredBackend = (backend: string) => {
-        desiredBackend = backend === 'auto' ? 'auto' : backend;
-        const preference =
-            backend === 'auto' ? defaultOrder : [backend, ...defaultOrder];
-        backendOrder = buildBackendOrder(availableBackends, preference);
+    const setDesiredBackend = (backend: string | undefined) => {
+        desiredBackend = backend;
+        const updatedPreference = backend
+            ? [backend, ...defaultOrder]
+            : defaultOrder;
+        backendOrder = buildBackendOrder(availableBackends, updatedPreference);
         console.log('[engine] setDesiredBackend', {
             backend,
-            preference,
             backendOrder,
         });
         readyEmitted = false;

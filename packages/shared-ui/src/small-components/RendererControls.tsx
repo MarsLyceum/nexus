@@ -131,7 +131,7 @@ const createSegmentLabelStyles = <Backend extends RendererBackend>(
 type RendererControlsProps<Backend extends RendererBackend> = {
     readonly control: UseRendererControlResult<Backend>;
     readonly backendOrder: ReadonlyArray<Backend>;
-    readonly backendLabels: Record<Backend | 'auto', string>;
+    readonly backendLabels: Record<Backend, string>;
     readonly backendIcons?: Partial<Record<Backend, string>>;
     readonly diagnostics?: RendererDiagnostics;
     readonly theme: Theme;

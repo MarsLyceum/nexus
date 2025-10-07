@@ -30,7 +30,7 @@ export const useEffectEngine = <State extends EngineState, UniformData>({
     timeline,
     state,
     backends,
-    desiredBackend = 'auto',
+    desiredBackend,
     zIndex,
     groupId,
     groupZIndex,

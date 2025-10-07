@@ -64,7 +64,7 @@ export type EngineControl<State extends EngineState> = {
     readonly stop: () => void;
     readonly dispose: () => void;
     readonly setDesiredBackend: (
-        backend: string
+        backend: string | undefined
     ) => Promise<string | undefined>;
     readonly getActiveBackend: () => string | undefined;
 };

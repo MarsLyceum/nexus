@@ -136,7 +136,7 @@ export const EffectRenderer = <State extends EngineState, UniformData>({
     timeline,
     state,
     backends,
-    preferredBackend = 'auto',
+    preferredBackend,
     containerStyle,
     snapshotStyle,
     onFailure,
@@ -322,14 +322,14 @@ export const EffectRenderer = <State extends EngineState, UniformData>({
     }, [backends, descriptor]);
 
     const normalizedPreferredBackend = useMemo(() => {
-        if (!preferredBackend || preferredBackend === 'auto') {
-            return 'auto' as const;
+        if (!preferredBackend) {
+            return undefined;
         }
         const availableBackendIds = new Set(
             resolvedBackends.map((backend) => backend.id)
         );
         if (!availableBackendIds.has(preferredBackend)) {
-            return 'auto' as const;
+            return undefined;
         }
         return preferredBackend;
     }, [preferredBackend, resolvedBackends]);
@@ -364,7 +364,7 @@ export const EffectRenderer = <State extends EngineState, UniformData>({
                 backendActiveRef.current = true;
                 applySurfaceVisibility();
             }
-            if (next && next !== 'auto') {
+            if (next) {
                 setHasInitError(false);
                 onBackendChange?.(next);
             }

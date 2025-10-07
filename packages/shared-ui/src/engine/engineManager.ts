@@ -21,7 +21,7 @@ type EngineManagerEntry = {
     readonly listeners: Map<string, EngineListener>;
     readonly updateState: (state: Partial<EngineState>) => void;
     readonly setDesiredBackend: (
-        backend: string | 'auto'
+        backend: string | undefined
     ) => Promise<string | undefined>;
     readonly start: () => void;
     readonly stop: () => void;
@@ -29,7 +29,7 @@ type EngineManagerEntry = {
     readonly clearSnapshot: () => void;
     readonly setVisibility: (visible: boolean) => void;
     state: EngineState;
-    desiredBackend: string | 'auto';
+    desiredBackend: string | undefined;
     backendId: string | undefined;
     refCount: number;
 };
@@ -72,7 +72,7 @@ type AttachOptions<State extends EngineState, UniformData> = {
     readonly timeline: Timeline;
     readonly state: Partial<State>;
     readonly backends?: ReadonlyArray<Backend<UniformData>>;
-    readonly desiredBackend: string | 'auto';
+    readonly desiredBackend?: string;
     readonly zIndex: number;
     readonly groupId?: string;
     readonly groupZIndex?: number;
@@ -86,7 +86,7 @@ export type EngineManagerSession<State extends EngineState> = {
     readonly handle: CanvasSurfaceHandle;
     readonly backendId: string | undefined;
     readonly setDesiredBackend: (
-        backend: string | 'auto'
+        backend: string | undefined
     ) => Promise<string | undefined>;
     readonly updateState: (state: Partial<State>) => void;
     readonly release: () => void;
@@ -156,15 +156,17 @@ const createEntry = <State extends EngineState, UniformData>(
     );
     let entry: EngineManagerEntry;
 
+    const backendPreference =
+        options.desiredBackend && options.desiredBackend.length > 0
+            ? [options.desiredBackend]
+            : undefined;
+
     const engine = createEffectEngine<State, UniformData>({
         canvas: handle.canvas,
         timeline: options.timeline,
         descriptor: options.descriptor,
         backends: resolvedBackends,
-        backendPreference:
-            options.desiredBackend === 'auto'
-                ? undefined
-                : [options.desiredBackend],
+        backendPreference,
         onBackendChange: (backend) => notifyBackendChange(entry, backend),
         onReady: () => notifyReady(entry),
         onError: (error) => notifyError(entry, error),
@@ -179,7 +181,7 @@ const createEntry = <State extends EngineState, UniformData>(
         engine.update(patch as Partial<State>);
     };
 
-    const setDesiredBackend = (backend: string | 'auto') => {
+    const setDesiredBackend = (backend: string | undefined) => {
         entry.desiredBackend = backend;
         return engine.setDesiredBackend(backend);
     };

@@ -32,7 +32,7 @@ type ParsedStackLine = {
     location: string;
 };
 
-type GlowRendererBackend = Exclude<GlowBackend, 'auto'>;
+type GlowRendererBackend = GlowBackend;
 
 const GLOW_BACKEND_ORDER: ReadonlyArray<GlowRendererBackend> = [
     'webgpu',
@@ -40,11 +40,10 @@ const GLOW_BACKEND_ORDER: ReadonlyArray<GlowRendererBackend> = [
     'css',
 ];
 
-const GLOW_BACKEND_LABELS: Record<GlowRendererBackend | 'auto', string> = {
+const GLOW_BACKEND_LABELS: Record<GlowRendererBackend, string> = {
     webgpu: 'WebGPU',
     webgl: 'WebGL',
     css: 'CSS',
-    auto: 'Auto',
 };
 
 const GLOW_BACKEND_ICONS: Record<GlowRendererBackend, string> = {
@@ -108,12 +107,16 @@ const useGlowControl = () => {
             webgl: webglAvailable,
             css: true,
         },
-        initialPreferredBackend: 'auto',
+        initialPreferredBackend: webgpuAvailable
+            ? 'webgpu'
+            : webglAvailable
+              ? 'webgl'
+              : undefined,
         initialActiveBackend: webgpuAvailable
             ? 'webgpu'
             : webglAvailable
               ? 'webgl'
-              : 'css',
+              : undefined,
         initialDiagnostics: {
             failedBackends: [],
             backendErrors: {},
@@ -181,13 +184,12 @@ const ErrorFallbackInner: React.FC<ErrorFallbackProps> = ({
         }
         const { activeBackend } = control;
         const resolvedActiveBackend: GlowRendererBackend =
-            activeBackend === 'auto'
-                ? control.availability.webgpu
-                    ? 'webgpu'
-                    : control.availability.webgl
-                      ? 'webgl'
-                      : 'css'
-                : activeBackend;
+            activeBackend ??
+            (control.availability.webgpu
+                ? 'webgpu'
+                : control.availability.webgl
+                  ? 'webgl'
+                  : 'css');
 
         return (
             <RendererControls

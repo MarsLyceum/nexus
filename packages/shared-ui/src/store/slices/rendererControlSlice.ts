@@ -22,8 +22,8 @@ export type RendererControlSliceState<
     Backend extends RendererBackend = RendererBackend,
 > = {
     readonly availability: RendererControlAvailability<Backend>;
-    readonly preferredBackend: Backend | 'auto';
-    readonly activeBackend: Backend | 'auto';
+    readonly preferredBackend: Backend | undefined;
+    readonly activeBackend: Backend | undefined;
     readonly status: RendererStatus;
     readonly diagnostics: RendererDiagnostics;
     readonly rendererLocked: boolean;
@@ -34,9 +34,9 @@ export type RendererControlSliceState<
 export type RendererControlSliceActions<
     Backend extends RendererBackend = RendererBackend,
 > = {
-    readonly setBackend: (backend: Backend | 'auto') => void;
-    readonly setPreferredBackend: StateSetter<Backend | 'auto'>;
-    readonly setActiveBackend: StateSetter<Backend | 'auto'>;
+    readonly setBackend: (backend: Backend | undefined) => void;
+    readonly setPreferredBackend: StateSetter<Backend | undefined>;
+    readonly setActiveBackend: StateSetter<Backend | undefined>;
     readonly setStatus: StateSetter<RendererStatus>;
     readonly setDiagnostics: StateSetter<RendererDiagnostics>;
     readonly setRendererLocked: StateSetter<boolean>;
@@ -70,46 +70,31 @@ export const findFirstAvailable = <Backend extends RendererBackend>(
     )?.[0] ?? null;
 
 export const resolveBackendCandidate = <Backend extends RendererBackend>(
-    candidate: Backend | 'auto' | undefined,
+    candidate: Backend | undefined,
     availability: RendererControlAvailability<Backend>,
     allowAuto: boolean,
     firstAvailable: Backend | null,
-    fallback: Backend | 'auto'
-): Backend | 'auto' => {
+    fallback: Backend | undefined
+): Backend | undefined => {
     if (candidate === undefined) {
         if (allowAuto) {
-            return 'auto';
+            return undefined;
         }
         if (firstAvailable) {
             return firstAvailable;
         }
         return fallback;
-    }
-    if (candidate === 'auto') {
-        if (allowAuto) {
-            return 'auto';
-        }
-        if (firstAvailable) {
-            return firstAvailable;
-        }
-        if (fallback !== 'auto') {
-            return fallback;
-        }
-        return candidate;
     }
     if (availability[candidate]) {
         return candidate;
     }
     if (allowAuto) {
-        return 'auto';
+        return undefined;
     }
     if (firstAvailable) {
         return firstAvailable;
     }
-    if (fallback !== 'auto') {
-        return fallback;
-    }
-    return candidate;
+    return fallback;
 };
 
 export const areAvailabilityMapsEqual = <Backend extends RendererBackend>(
@@ -131,8 +116,8 @@ const createInitialRendererState = <
     Backend extends RendererBackend,
 >(): RendererControlSliceState<Backend> => ({
     availability: {} as RendererControlAvailability<Backend>,
-    preferredBackend: 'auto',
-    activeBackend: 'auto',
+    preferredBackend: undefined,
+    activeBackend: undefined,
     status: 'initializing',
     diagnostics: createDefaultDiagnostics(),
     rendererLocked: true,
@@ -147,8 +132,8 @@ const applyPreferredBackendUpdate =
     >(
         update:
             | Backend
-            | 'auto'
-            | ((current: Backend | 'auto') => Backend | 'auto')
+            | undefined
+            | ((current: Backend | undefined) => Backend | undefined)
     ) =>
     (state: Store): Store => {
         const next = evaluateUpdate(update, state.preferredBackend);
@@ -168,8 +153,8 @@ const applyActiveBackendUpdate =
     >(
         update:
             | Backend
-            | 'auto'
-            | ((current: Backend | 'auto') => Backend | 'auto')
+            | undefined
+            | ((current: Backend | undefined) => Backend | undefined)
     ) =>
     (state: Store): Store => {
         const next = evaluateUpdate(update, state.activeBackend);
@@ -239,16 +224,16 @@ const applyRendererLockedUpdate =
     };
 
 const resolveBackendSelection = <Backend extends RendererBackend>(
-    backend: Backend | 'auto',
+    backend: Backend | undefined,
     store: RendererControlSliceState<Backend>
 ): RendererControlSliceState<Backend> => {
-    if (backend === 'auto') {
-        if (!store.allowAuto || store.preferredBackend === 'auto') {
+    if (backend === undefined) {
+        if (!store.allowAuto || store.preferredBackend === undefined) {
             return store;
         }
         return {
             ...store,
-            preferredBackend: 'auto',
+            preferredBackend: undefined,
         };
     }
     if (!store.availability[backend] || store.preferredBackend === backend) {

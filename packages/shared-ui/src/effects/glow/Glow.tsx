@@ -23,7 +23,7 @@ import {
 } from '../../store';
 import { toError } from '../../engine/utils';
 
-export type GlowBackend = 'webgpu' | 'webgl' | 'css' | 'auto';
+export type GlowBackend = 'webgpu' | 'webgl' | 'css';
 
 export type GlowDiagnostics = RendererDiagnostics;
 
@@ -68,15 +68,6 @@ const selectBackendPreference = (
     if (preferred === 'css') {
         return 'css';
     }
-    if (preferred === 'auto') {
-        if (webgpuAvailable) {
-            return 'webgpu';
-        }
-        if (webglAvailable) {
-            return 'webgl';
-        }
-        return 'css';
-    }
     if (webglAvailable) {
         return 'webgl';
     }
@@ -92,7 +83,7 @@ export const Glow: React.FC<GlowProps> = ({
     focal = { x: 0.5, y: 0.4 },
     opacity = 1,
     animate = true,
-    preferredBackend = 'auto',
+    preferredBackend,
     padding = WEBGPU_GLOW_OUTER_PAD_PX,
     enableCssFallback = true,
     fillContainer = true,
@@ -456,10 +447,10 @@ export const Glow: React.FC<GlowProps> = ({
             return;
         }
 
-        // If user explicitly selected this backend (not 'auto'), clear its failed status
+        // If user explicitly selected this backend, clear its failed status
         // to give it a fresh try
         if (
-            preferredBackend !== 'auto' &&
+            preferredBackend !== undefined &&
             preferredBackend === resolvedBackend
         ) {
             failedBackendsRef.current.delete(resolvedBackend);

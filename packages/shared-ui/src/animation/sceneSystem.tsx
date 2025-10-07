@@ -48,7 +48,7 @@ export type SceneRenderResult = {
     readonly diagnostics?: SceneRenderDiagnostics;
 };
 
-export type ScenePreferredBackend = string | 'auto' | 'css';
+export type ScenePreferredBackend = string | undefined;
 
 export type SceneRenderOptions = {
     readonly visibility?: Partial<Record<string, boolean>>;

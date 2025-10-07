@@ -17,8 +17,8 @@ export type UseRendererControlOptions<
     Backend extends RendererBackend = RendererBackend,
 > = {
     readonly availability: RendererControlAvailability<Backend>;
-    readonly initialPreferredBackend?: Backend | 'auto';
-    readonly initialActiveBackend?: Backend | 'auto';
+    readonly initialPreferredBackend?: Backend;
+    readonly initialActiveBackend?: Backend;
     readonly initialStatus?: RendererStatus;
     readonly initialDiagnostics?: RendererDiagnostics;
     readonly initialRendererLocked?: boolean;
@@ -29,14 +29,14 @@ export type UseRendererControlResult<
     Backend extends RendererBackend = RendererBackend,
 > = {
     readonly availability: RendererControlAvailability<Backend>;
-    readonly preferredBackend: Backend | 'auto';
-    readonly activeBackend: Backend | 'auto';
+    readonly preferredBackend: Backend | undefined;
+    readonly activeBackend: Backend | undefined;
     readonly status: RendererStatus;
     readonly diagnostics: RendererDiagnostics;
     readonly rendererLocked: boolean;
-    readonly setBackend: (backend: Backend | 'auto') => void;
-    readonly setPreferredBackend: StateSetter<Backend | 'auto'>;
-    readonly setActiveBackend: StateSetter<Backend | 'auto'>;
+    readonly setBackend: (backend: Backend | undefined) => void;
+    readonly setPreferredBackend: StateSetter<Backend | undefined>;
+    readonly setActiveBackend: StateSetter<Backend | undefined>;
     readonly setStatus: StateSetter<RendererStatus>;
     readonly setDiagnostics: StateSetter<RendererDiagnostics>;
     readonly setRendererLocked: StateSetter<boolean>;
@@ -187,18 +187,20 @@ export const useRendererControl = <Backend extends RendererBackend>(
     return useMemo<UseRendererControlResult<Backend>>(
         () => ({
             availability: availability as RendererControlAvailability<Backend>,
-            preferredBackend: preferredBackend as Backend | 'auto',
-            activeBackend: activeBackend as Backend | 'auto',
+            preferredBackend: preferredBackend as Backend | undefined,
+            activeBackend: activeBackend as Backend | undefined,
             status,
             diagnostics,
             rendererLocked,
             setBackend: (backend) => setBackendAction(backend),
             setPreferredBackend: (update) =>
                 setPreferredBackendAction(
-                    update as StateSetter<Backend | 'auto'>
+                    update as StateSetter<Backend | undefined>
                 ),
             setActiveBackend: (update) =>
-                setActiveBackendAction(update as StateSetter<Backend | 'auto'>),
+                setActiveBackendAction(
+                    update as StateSetter<Backend | undefined>
+                ),
             setStatus: (update) =>
                 setStatusAction(update as StateSetter<RendererStatus>),
             setDiagnostics: (update) =>

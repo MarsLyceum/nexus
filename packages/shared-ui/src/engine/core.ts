@@ -47,16 +47,16 @@ export const createEngine = <State extends EngineState, UniformData>(
         activeHandle = undefined;
         activeBackend = undefined;
 
+        if (previousBackend) {
+            options.onBackendChange?.(undefined);
+        }
+
         if (handle) {
             try {
                 handle.destroy();
             } catch (error) {
                 options.onError?.(toError(error));
             }
-        }
-
-        if (previousBackend) {
-            options.onBackendChange?.(undefined);
         }
     };
 
@@ -82,6 +82,7 @@ export const createEngine = <State extends EngineState, UniformData>(
         readonly backend: string;
         readonly message: string;
         readonly details?: ReadonlyArray<string>;
+        readonly cause?: Error;
     };
 
     const extractShaderDiagnostics = (
@@ -107,6 +108,7 @@ export const createEngine = <State extends EngineState, UniformData>(
             backend: backendId,
             message: error.message,
             details: extractShaderDiagnostics(error),
+            cause: error,
         })),
     ];
 
@@ -141,10 +143,15 @@ export const createEngine = <State extends EngineState, UniformData>(
             );
             aggregatedDiagnostics.forEach((entry) => {
                 const detailText = entry.details?.join('\n');
-                const message = `Renderer fallback while initializing ${entry.backend} backend: ${entry.message}${
-                    detailText ? `\n${detailText}` : ''
-                }`;
-                const error = new Error(message);
+                const causeText =
+                    entry.cause?.stack ?? entry.cause?.message ?? undefined;
+                const messageLines = [
+                    `Renderer fallback while initializing ${entry.backend} backend: ${entry.message}`,
+                    detailText,
+                    causeText,
+                ].filter((line): line is string => Boolean(line));
+                const error = new Error(messageLines.join('\n'));
+                (error as Error & { cause?: Error }).cause = entry.cause;
                 if (entry.details && entry.details.length > 0) {
                     (
                         error as Error & {
@@ -241,10 +248,18 @@ export const createEngine = <State extends EngineState, UniformData>(
                     );
                     aggregatedDiagnostics.forEach((entry) => {
                         const detailText = entry.details?.join('\n');
-                        const message = `Renderer fallback while initializing ${entry.backend} backend: ${entry.message}${
-                            detailText ? `\n${detailText}` : ''
-                        }`;
-                        const error = new Error(message);
+                        const causeText =
+                            entry.cause?.stack ??
+                            entry.cause?.message ??
+                            undefined;
+                        const messageLines = [
+                            `Renderer fallback while initializing ${entry.backend} backend: ${entry.message}`,
+                            detailText,
+                            causeText,
+                        ].filter((line): line is string => Boolean(line));
+                        const error = new Error(messageLines.join('\n'));
+                        (error as Error & { cause?: Error }).cause =
+                            entry.cause;
                         if (entry.details && entry.details.length > 0) {
                             (
                                 error as Error & {
@@ -254,7 +269,6 @@ export const createEngine = <State extends EngineState, UniformData>(
                         }
                         options.onError?.(error);
                     });
-                    return activeBackend;
                 }
                 activeHandle = result.handle;
                 if (activeBackend !== result.backendId) {

@@ -351,6 +351,41 @@ export const EffectRenderer = <State extends EngineState, UniformData>({
     }, [backendId, hasInitError, descriptor.id]);
 
     useEffect(() => {
+        if (!shouldCaptureSnapshot) {
+            return;
+        }
+        let cancelled = false;
+        const attemptCapture = (remainingAttempts: number): void => {
+            if (cancelled) {
+                return;
+            }
+            const wasCaptured = captureSnapshot();
+            if (wasCaptured) {
+                setShouldCaptureSnapshot(false);
+                return;
+            }
+            if (remainingAttempts <= 0) {
+                setShouldCaptureSnapshot(false);
+                if (typeof console !== 'undefined') {
+                    // eslint-disable-next-line no-console
+                    console.warn(
+                        '[EffectRenderer] failed to capture snapshot',
+                        {
+                            descriptorId: descriptor.id,
+                        }
+                    );
+                }
+                return;
+            }
+            requestAnimationFrame(() => attemptCapture(remainingAttempts - 1));
+        };
+        attemptCapture(SNAPSHOT_CAPTURE_RETRY_LIMIT);
+        return () => {
+            cancelled = true;
+        };
+    }, [captureSnapshot, descriptor.id, shouldCaptureSnapshot]);
+
+    useEffect(() => {
         if (Platform.OS !== 'web') {
             return;
         }
@@ -386,41 +421,6 @@ export const EffectRenderer = <State extends EngineState, UniformData>({
         });
         return null;
     }
-
-    useEffect(() => {
-        if (!shouldCaptureSnapshot) {
-            return;
-        }
-        let cancelled = false;
-        const attemptCapture = (remainingAttempts: number): void => {
-            if (cancelled) {
-                return;
-            }
-            const wasCaptured = captureSnapshot();
-            if (wasCaptured) {
-                setShouldCaptureSnapshot(false);
-                return;
-            }
-            if (remainingAttempts <= 0) {
-                setShouldCaptureSnapshot(false);
-                if (typeof console !== 'undefined') {
-                    // eslint-disable-next-line no-console
-                    console.warn(
-                        '[EffectRenderer] failed to capture snapshot',
-                        {
-                            descriptorId: descriptor.id,
-                        }
-                    );
-                }
-                return;
-            }
-            requestAnimationFrame(() => attemptCapture(remainingAttempts - 1));
-        };
-        attemptCapture(SNAPSHOT_CAPTURE_RETRY_LIMIT);
-        return () => {
-            cancelled = true;
-        };
-    }, [captureSnapshot, descriptor.id, shouldCaptureSnapshot]);
 
     const containerOpacity = snapshotVisible
         ? 1

@@ -21,6 +21,7 @@ import {
     type RendererDiagnostics,
     type RendererStatus,
 } from '../../store';
+import { toError } from '../../engine/utils';
 
 export type GlowBackend = 'webgpu' | 'webgl' | 'css' | 'auto';
 
@@ -128,6 +129,9 @@ export const Glow: React.FC<GlowProps> = ({
     const availability = useNexusStore(
         ({ availability: storeAvailability }) => storeAvailability
     );
+    const rendererLocked = useNexusStore(
+        ({ rendererLocked: storeRendererLocked }) => storeRendererLocked
+    );
     const [cssStartTime, setCssStartTime] = useState(() =>
         timeline.getTimeSeconds()
     );
@@ -145,6 +149,11 @@ export const Glow: React.FC<GlowProps> = ({
 
     const webgpuAvailable = availabilitySnapshot.webgpu && isWeb;
     const webglAvailable = availabilitySnapshot.webgl && isWeb;
+
+    const fallbackMode = useMemo<GlowFallbackBehavior>(
+        () => (rendererLocked ? 'locked' : fallbackBehavior),
+        [fallbackBehavior, rendererLocked]
+    );
 
     useEffect(() => {
         if (availabilitySnapshot.webgpu || availabilitySnapshot.webgl) {
@@ -192,14 +201,15 @@ export const Glow: React.FC<GlowProps> = ({
 
     const updateDiagnostics = useCallback((backend: string, error?: Error) => {
         setDiagnostics((current) => {
-            const nextFailedBackends = error
+            const normalizedError = error ? toError(error) : undefined;
+            const nextFailedBackends = normalizedError
                 ? [...current.failedBackends, backend].filter(
                       (value, index, array) => array.indexOf(value) === index
                   )
                 : current.failedBackends;
 
-            const nextBackendErrors = error
-                ? { ...current.backendErrors, [backend]: error }
+            const nextBackendErrors = normalizedError
+                ? { ...current.backendErrors, [backend]: normalizedError }
                 : current.backendErrors;
 
             const nextAttempted = current.attemptedBackends.includes(backend)
@@ -216,12 +226,13 @@ export const Glow: React.FC<GlowProps> = ({
 
     const handleGpuFailure = useCallback(
         (error: Error) => {
+            const normalizedError = toError(error);
             const currentBackend = activeBackend;
             if (typeof console !== 'undefined') {
                 // eslint-disable-next-line no-console
                 console.error(
                     `[Glow] ${currentBackend} rendering failed:`,
-                    error
+                    normalizedError
                 );
             }
 
@@ -242,17 +253,17 @@ export const Glow: React.FC<GlowProps> = ({
                 nextGpuBackend = 'webgl';
             }
 
-            if (fallbackBehavior === 'locked') {
+            if (fallbackMode === 'locked') {
                 gpuRenderingFailed.current = true;
-                updateDiagnostics(currentBackend, error);
-                onFailure?.(error, currentBackend);
+                updateDiagnostics(currentBackend, normalizedError);
+                onFailure?.(normalizedError, currentBackend);
                 setStatus('failed');
                 return;
             }
 
             failedBackendsRef.current.add(currentBackend);
-            updateDiagnostics(currentBackend, error);
-            onFailure?.(error, currentBackend);
+            updateDiagnostics(currentBackend, normalizedError);
+            onFailure?.(normalizedError, currentBackend);
 
             if (nextGpuBackend) {
                 // Try the alternative GPU backend
@@ -321,8 +332,8 @@ export const Glow: React.FC<GlowProps> = ({
             activeBackend === 'css' ||
             (gpuRenderingFailed.current &&
                 enableCssFallback &&
-                fallbackBehavior === 'adaptive'),
-        [activeBackend, enableCssFallback, fallbackBehavior]
+                fallbackMode === 'adaptive'),
+        [activeBackend, enableCssFallback, fallbackMode]
     );
 
     const shouldRenderGpuRef = useRef(shouldRenderGpu);
@@ -331,8 +342,8 @@ export const Glow: React.FC<GlowProps> = ({
     }, [shouldRenderGpu]);
 
     const rendererPreferredBackend = useMemo(
-        () => effectiveGpuBackend ?? 'auto',
-        [effectiveGpuBackend]
+        () => effectiveGpuBackend ?? preferredBackend,
+        [effectiveGpuBackend, preferredBackend]
     );
 
     const handleGpuReady = useCallback(() => {
@@ -465,7 +476,7 @@ export const Glow: React.FC<GlowProps> = ({
         }
 
         if (failedBackendsRef.current.has(resolvedBackend)) {
-            if (fallbackBehavior === 'locked') {
+            if (fallbackMode === 'locked') {
                 setStatus('failed');
             } else if (enableCssFallback) {
                 setActiveBackend('css');

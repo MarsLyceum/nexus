@@ -221,6 +221,7 @@ export const EffectRendererWithMetrics = <
     UniformData
 >): React.ReactElement | null => {
     const rootRef = useRef<HTMLDivElement | null>(null);
+    const [canvasVersion, setCanvasVersion] = useState(0);
     const { width, height, dpr, offsetX, offsetY } = useMetrics(
         rootRef,
         padding,
@@ -280,6 +281,11 @@ export const EffectRendererWithMetrics = <
                 <EffectRenderer
                     {...props}
                     state={mergedState}
+                    key={canvasVersion}
+                    onFailure={(error) => {
+                        setCanvasVersion((value) => value + 1);
+                        props.onFailure?.(error);
+                    }}
                     containerStyle={containerStyle}
                 />
             ) : null}

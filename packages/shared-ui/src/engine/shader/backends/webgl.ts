@@ -94,6 +94,12 @@ export const createWebGLBackend = <State>(): ShaderBackend<State> => ({
         canvas.addEventListener('webglcontextlost', (event) => {
             event.preventDefault();
             const error = new Error('WebGL context lost');
+            if (typeof console !== 'undefined') {
+                // eslint-disable-next-line no-console
+                console.warn('[WebGL] context lost', {
+                    descriptorId: config.debug?.descriptorId,
+                });
+            }
             onError?.(error);
         });
 

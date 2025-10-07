@@ -23,7 +23,40 @@ export const createEngine = <State extends EngineState, UniformData>(
         availableBackends,
         options.backendPreference
     );
-    console.log('[engine] createEngine', {
+    const describeCanvas = () => ({
+        canvasConnected: options.canvas.isConnected,
+        canvasSize: {
+            width: options.canvas.width,
+            height: options.canvas.height,
+            clientWidth: options.canvas.clientWidth,
+            clientHeight: options.canvas.clientHeight,
+        },
+    });
+
+    type CanvasSnapshot = ReturnType<typeof describeCanvas>;
+
+    const withCanvasState = <Payload extends Record<string, unknown>>(
+        payload: Payload
+    ): Payload & CanvasSnapshot => ({
+        ...payload,
+        ...describeCanvas(),
+    });
+
+    const logEngineEvent = (
+        label: string,
+        payload: Record<string, unknown> = {}
+    ) => {
+        console.log(`[engine] ${label}`, withCanvasState(payload));
+    };
+
+    const warnEngineEvent = (
+        label: string,
+        payload: Record<string, unknown> = {}
+    ) => {
+        console.warn(`[engine] ${label}`, withCanvasState(payload));
+    };
+
+    logEngineEvent('createEngine', {
         availableBackendIds: availableBackends.map((backend) => backend.id),
         backendPreference: options.backendPreference,
         defaultOrder,
@@ -36,6 +69,7 @@ export const createEngine = <State extends EngineState, UniformData>(
     let disposed = false;
     let frameId: number | undefined;
     let readyEmitted = false;
+    let ensureQueue: Promise<string | undefined> = Promise.resolve(undefined);
 
     const clearActiveHandle = () => {
         if (!activeHandle && !activeBackend) {
@@ -65,7 +99,7 @@ export const createEngine = <State extends EngineState, UniformData>(
             return;
         }
         if (activeBackend !== backendId) {
-            console.log('[engine] fatal error on inactive backend', {
+            logEngineEvent('fatal error on inactive backend', {
                 backendId,
                 activeBackend,
             });
@@ -112,22 +146,29 @@ export const createEngine = <State extends EngineState, UniformData>(
         })),
     ];
 
-    const ensureBackend = (
+    const acquireBackendSequentially = async (
         initialErrors: ReadonlyArray<Error> = [],
         diagnostics: ReadonlyArray<BackendDiagnosticsEntry> = []
     ): Promise<string | undefined> => {
         if (disposed) {
-            return Promise.resolve(activeBackend);
+            return activeBackend;
         }
         const desired = backendOrder[0];
-        console.log('[engine] ensureBackend', {
+        if (!options.canvas.isConnected) {
+            logEngineEvent('ensureBackend aborted, canvas detached', {
+                descriptorId: options.canvas.dataset?.effectDescriptorId,
+                desired,
+            });
+            return activeBackend;
+        }
+        logEngineEvent('ensureBackend', {
             desired,
             activeBackend,
             backendOrder,
-            initialErrors,
+            initialErrors: initialErrors.map((error) => error.message),
         });
         if (activeHandle && desired && activeBackend === desired) {
-            return Promise.resolve(activeBackend);
+            return activeBackend;
         }
         clearActiveHandle();
         const attemptOrder =
@@ -135,33 +176,35 @@ export const createEngine = <State extends EngineState, UniformData>(
         if (attemptOrder.length === 0) {
             const failureBackendId = desired ?? 'unavailable';
             activeBackend = undefined;
-            options.onBackendChange?.(undefined);
-            const aggregatedDiagnostics = inheritDiagnostics(
-                failureBackendId,
-                initialErrors,
-                diagnostics
-            );
-            aggregatedDiagnostics.forEach((entry) => {
-                const detailText = entry.details?.join('\n');
-                const causeText =
-                    entry.cause?.stack ?? entry.cause?.message ?? undefined;
-                const messageLines = [
-                    `Renderer fallback while initializing ${entry.backend} backend: ${entry.message}`,
-                    detailText,
-                    causeText,
-                ].filter((line): line is string => Boolean(line));
-                const error = new Error(messageLines.join('\n'));
-                (error as Error & { cause?: Error }).cause = entry.cause;
-                if (entry.details && entry.details.length > 0) {
-                    (
-                        error as Error & {
-                            details?: ReadonlyArray<string>;
-                        }
-                    ).details = entry.details;
-                }
-                options.onError?.(error);
-            });
-            return Promise.resolve(activeBackend);
+            if (!disposed) {
+                options.onBackendChange?.(undefined);
+                const aggregatedDiagnostics = inheritDiagnostics(
+                    failureBackendId,
+                    initialErrors,
+                    diagnostics
+                );
+                aggregatedDiagnostics.forEach((entry) => {
+                    const detailText = entry.details?.join('\n');
+                    const causeText =
+                        entry.cause?.stack ?? entry.cause?.message ?? undefined;
+                    const messageLines = [
+                        `Renderer fallback while initializing ${entry.backend} backend: ${entry.message}`,
+                        detailText,
+                        causeText,
+                    ].filter((line): line is string => Boolean(line));
+                    const error = new Error(messageLines.join('\n'));
+                    (error as Error & { cause?: Error }).cause = entry.cause;
+                    if (entry.details && entry.details.length > 0) {
+                        (
+                            error as Error & {
+                                details?: ReadonlyArray<string>;
+                            }
+                        ).details = entry.details;
+                    }
+                    options.onError?.(error);
+                });
+            }
+            return activeBackend;
         }
         type BackendAttempt = {
             readonly handle: BackendHandle<UniformData> | undefined;
@@ -175,76 +218,121 @@ export const createEngine = <State extends EngineState, UniformData>(
             errors: initialErrors,
             diagnostics,
         };
-        return attemptOrder
-            .reduce<Promise<BackendAttempt>>(
-                (promise, backendId) =>
-                    promise.then((acc: BackendAttempt) => {
-                        if (acc.handle) {
-                            return acc;
-                        }
-                        const backend = backendMap.get(backendId);
-                        if (!backend) {
-                            console.log('[engine] backend missing in map', {
-                                backendId,
-                            });
-                            return acc;
-                        }
-                        return Promise.resolve(backend.isAvailable())
-                            .then((available) => {
-                                console.log('[engine] backend availability', {
-                                    backendId,
-                                    available,
-                                });
-                                if (!available) {
-                                    return acc;
-                                }
-                                return backend
-                                    .create({
-                                        canvas: options.canvas,
-                                        metrics: options.metrics(state),
-                                        onFatal: (error) =>
-                                            handleFatal(backendId, error),
-                                    })
-                                    .then((handle) => ({
-                                        handle,
-                                        backendId,
-                                        errors: acc.errors,
-                                        diagnostics: acc.diagnostics,
-                                    }))
-                                    .catch((error) => ({
-                                        handle: undefined,
-                                        backendId: undefined,
-                                        errors: [...acc.errors, toError(error)],
-                                        diagnostics: inheritDiagnostics(
-                                            backendId,
-                                            [toError(error)],
-                                            acc.diagnostics
-                                        ),
-                                    }));
-                            })
-                            .catch((error) => ({
-                                handle: undefined,
-                                backendId: undefined,
-                                errors: [...acc.errors, toError(error)],
-                                diagnostics: inheritDiagnostics(
-                                    backendId,
-                                    [toError(error)],
-                                    acc.diagnostics
-                                ),
-                            }));
-                    }),
-                Promise.resolve(initialAttempt)
-            )
-            .then((result: BackendAttempt) => {
-                if (!result.handle || !result.backendId) {
-                    const failureBackendId =
-                        desired ?? attemptOrder[0] ?? 'unavailable';
-                    activeBackend = undefined;
+        const canvasDetachedResult = (
+            label: string,
+            backendId: string,
+            acc: BackendAttempt
+        ): BackendAttempt => {
+            logEngineEvent(label, { backendId });
+            return acc;
+        };
+
+        const recordBackendFailure = (
+            backendId: string,
+            error: Error,
+            acc: BackendAttempt
+        ): BackendAttempt => ({
+            handle: undefined,
+            backendId: undefined,
+            errors: [...acc.errors, error],
+            diagnostics: inheritDiagnostics(
+                backendId,
+                [error],
+                acc.diagnostics
+            ),
+        });
+
+        const attemptBackendCandidate = async (
+            acc: BackendAttempt,
+            backendId: string
+        ): Promise<BackendAttempt> => {
+            if (acc.handle || disposed) {
+                return acc;
+            }
+            const backend = backendMap.get(backendId);
+            if (!backend) {
+                warnEngineEvent('backend missing in map', { backendId });
+                return acc;
+            }
+            if (!options.canvas.isConnected) {
+                return canvasDetachedResult(
+                    'backend availability skipped, canvas detached',
+                    backendId,
+                    acc
+                );
+            }
+            let available: boolean;
+            try {
+                available = await Promise.resolve(backend.isAvailable());
+            } catch (error) {
+                const normalized = toError(error);
+                warnEngineEvent('backend availability check failed', {
+                    backendId,
+                    error: normalized.message,
+                    stack: normalized.stack,
+                });
+                return recordBackendFailure(backendId, normalized, acc);
+            }
+            if (disposed) {
+                return acc;
+            }
+            if (!options.canvas.isConnected) {
+                return canvasDetachedResult(
+                    'backend availability ignored, canvas detached after check',
+                    backendId,
+                    acc
+                );
+            }
+            logEngineEvent('backend availability', {
+                backendId,
+                available,
+            });
+            if (!available) {
+                return acc;
+            }
+            if (!options.canvas.isConnected) {
+                return canvasDetachedResult(
+                    'backend creation skipped, canvas detached',
+                    backendId,
+                    acc
+                );
+            }
+            const metrics = options.metrics(state);
+            logEngineEvent('backend create invoked', {
+                backendId,
+                metrics,
+            });
+            try {
+                const handle = await backend.create({
+                    canvas: options.canvas,
+                    metrics,
+                    onFatal: (error) => handleFatal(backendId, error),
+                });
+                return {
+                    handle,
+                    backendId,
+                    errors: acc.errors,
+                    diagnostics: acc.diagnostics,
+                };
+            } catch (error) {
+                const normalized = toError(error);
+                return recordBackendFailure(backendId, normalized, acc);
+            }
+        };
+
+        const finalizeBackendSelection = (
+            attempt: BackendAttempt
+        ): string | undefined => {
+            if (!attempt.handle || !attempt.backendId) {
+                const failureBackendId =
+                    desired ?? attemptOrder[0] ?? 'unavailable';
+                activeBackend = undefined;
+                if (!disposed) {
                     options.onBackendChange?.(undefined);
                     const aggregatedDiagnostics = inheritDiagnostics(
                         failureBackendId,
-                        result.errors,
-                        result.diagnostics
+                        attempt.errors,
+                        attempt.diagnostics
                     );
                     aggregatedDiagnostics.forEach((entry) => {
                         const detailText = entry.details?.join('\n');
@@ -270,17 +358,39 @@ export const createEngine = <State extends EngineState, UniformData>(
                         options.onError?.(error);
                     });
                 }
-                activeHandle = result.handle;
-                if (activeBackend !== result.backendId) {
-                    activeBackend = result.backendId;
-                    console.log('[engine] backend activated', {
-                        activeBackend,
-                    });
-                    options.onBackendChange?.(result.backendId);
-                    readyEmitted = false;
-                }
                 return activeBackend;
-            });
+            }
+            activeHandle = attempt.handle;
+            if (activeBackend !== attempt.backendId) {
+                activeBackend = attempt.backendId;
+                logEngineEvent('backend activated', {
+                    activeBackend,
+                });
+                options.onBackendChange?.(attempt.backendId);
+                readyEmitted = false;
+            }
+            return activeBackend;
+        };
+
+        const result = await attemptOrder.reduce<Promise<BackendAttempt>>(
+            (promise, backendId) =>
+                promise.then((acc) => attemptBackendCandidate(acc, backendId)),
+            Promise.resolve(initialAttempt)
+        );
+        if (disposed) {
+            return activeBackend;
+        }
+        return finalizeBackendSelection(result);
+    };
+
+    const ensureBackend = (
+        initialErrors: ReadonlyArray<Error> = [],
+        diagnostics: ReadonlyArray<BackendDiagnosticsEntry> = []
+    ): Promise<string | undefined> => {
+        ensureQueue = ensureQueue
+            .catch(() => undefined)
+            .then(() => acquireBackendSequentially(initialErrors, diagnostics));
+        return ensureQueue;
     };
 
     const scheduleFrame = () => {

@@ -95,6 +95,15 @@ export const useEffectEngine = <State extends EngineState, UniformData>({
             });
             return undefined;
         }
+        console.log('[useEffectEngine] canvas available', {
+            descriptorId: descriptor.id,
+            desiredBackend: desiredBackendRef.current,
+            connected: canvas.isConnected,
+            width: canvas.width,
+            height: canvas.height,
+            clientWidth: canvas.clientWidth,
+            clientHeight: canvas.clientHeight,
+        });
         const preferredOrder =
             desiredBackendRef.current === 'auto'
                 ? undefined

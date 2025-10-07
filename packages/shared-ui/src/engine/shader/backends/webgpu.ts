@@ -24,6 +24,42 @@ const DEFAULT_CLEAR_COLOR: GPUColorDict = {
 
 const deviceAllocator = createDeviceAllocator();
 
+const waitForNextAnimationFrame = () =>
+    new Promise<void>((resolve) => {
+        requestAnimationFrame(() => resolve());
+    });
+
+const acquireCanvasContext = async (
+    canvas: HTMLCanvasElement
+): Promise<GPUCanvasContext | null> => {
+    let attempt = 0;
+    while (attempt < 5) {
+        console.log('[WebGPU] attempting canvas context acquisition', {
+            attempt,
+        });
+        const context = canvas.getContext('webgpu');
+        if (context) {
+            console.log('[WebGPU] canvas context acquired', {
+                attempt,
+                width: canvas.width,
+                height: canvas.height,
+                clientWidth: canvas.clientWidth,
+                clientHeight: canvas.clientHeight,
+            });
+            return context;
+        }
+        // Wait for the browser to propagate recent context loss events before retrying.
+        // This covers the transition period after we intentionally lose a WebGL context.
+        // eslint-disable-next-line no-await-in-loop
+        await waitForNextAnimationFrame();
+        attempt += 1;
+    }
+    console.warn('[WebGPU] canvas context unavailable after retries', {
+        attempts: attempt,
+    });
+    return null;
+};
+
 type RenderPass<State> = {
     readonly device: GPUDevice;
     readonly pipeline: GPURenderPipeline;
@@ -113,7 +149,7 @@ export const createWebGPUBackend = <State>(): ShaderBackend<State> => ({
         const lease = await deviceAllocator.acquire();
         const { device, format } = lease;
 
-        const context = canvas.getContext('webgpu');
+        const context = await acquireCanvasContext(canvas);
         if (!context) {
             lease.release();
             throw new Error('webgpu canvas context unavailable');
@@ -222,6 +258,13 @@ export const createWebGPUBackend = <State>(): ShaderBackend<State> => ({
             }
             disposed = true;
             const error = new Error('WebGPU context lost');
+            console.warn('[WebGPU] context lost event handled', {
+                descriptorId: debugConfig?.descriptorId,
+                width: canvas.width,
+                height: canvas.height,
+                clientWidth: canvas.clientWidth,
+                clientHeight: canvas.clientHeight,
+            });
             onError?.(error);
             deviceAllocator.invalidate();
             finalizeContext();

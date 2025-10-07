@@ -85,15 +85,31 @@ export const EffectRenderer = <State extends EngineState, UniformData>({
 }: EffectRendererProps<State, UniformData>): React.ReactElement | null => {
     const [canvasElement, setCanvasElement] =
         useState<HTMLCanvasElement | null>(null);
+    const [canvasEpoch, setCanvasEpoch] = useState(0);
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const pendingCanvasClearRef = useRef<TimeoutHandle | null>(null);
 
     const commitCanvasElement = useCallback(
-        (element: HTMLCanvasElement | null) =>
-            setCanvasElement((current) =>
-                current === element ? current : element
-            ),
-        []
+        (element: HTMLCanvasElement | null) => {
+            setCanvasElement((current) => {
+                if (current === element) {
+                    return current;
+                }
+                if (typeof console !== 'undefined') {
+                    // eslint-disable-next-line no-console
+                    console.log('[EffectRenderer] commitCanvasElement', {
+                        descriptorId: descriptor.id,
+                        nextCanvasDefined: Boolean(element),
+                        previousCanvasDefined: Boolean(current),
+                    });
+                }
+                if (current && !element) {
+                    setCanvasEpoch((value) => value + 1);
+                }
+                return element;
+            });
+        },
+        [descriptor.id]
     );
 
     const cancelPendingCanvasClear = useCallback(() => {
@@ -117,9 +133,27 @@ export const EffectRenderer = <State extends EngineState, UniformData>({
             commitCanvasElement(null);
         }, 0);
         pendingCanvasClearRef.current = handle;
+        if (typeof console !== 'undefined') {
+            // eslint-disable-next-line no-console
+            console.log('[EffectRenderer] scheduleCanvasClear', {
+                descriptorId: descriptor.id,
+            });
+        }
     }, [commitCanvasElement]);
 
     useEffect(() => cancelPendingCanvasClear, [cancelPendingCanvasClear]);
+
+    const resetCanvasElement = useCallback(() => {
+        cancelPendingCanvasClear();
+        canvasRef.current = null;
+        commitCanvasElement(null);
+        if (typeof console !== 'undefined') {
+            // eslint-disable-next-line no-console
+            console.log('[EffectRenderer] resetCanvasElement', {
+                descriptorId: descriptor.id,
+            });
+        }
+    }, [cancelPendingCanvasClear, commitCanvasElement]);
 
     const registerCanvas = useCallback(
         (element: HTMLCanvasElement | null) => {
@@ -130,11 +164,26 @@ export const EffectRenderer = <State extends EngineState, UniformData>({
                 }
                 canvasRef.current = element;
                 commitCanvasElement(element);
+                if (typeof console !== 'undefined') {
+                    // eslint-disable-next-line no-console
+                    console.log('[EffectRenderer] registerCanvas', {
+                        descriptorId: descriptor.id,
+                        width: element.width,
+                        height: element.height,
+                        clientWidth: element.clientWidth,
+                        clientHeight: element.clientHeight,
+                    });
+                }
                 return;
             }
             scheduleCanvasClear();
         },
-        [cancelPendingCanvasClear, commitCanvasElement, scheduleCanvasClear]
+        [
+            cancelPendingCanvasClear,
+            commitCanvasElement,
+            descriptor.id,
+            scheduleCanvasClear,
+        ]
     );
     const [backendId, setBackendId] = useState<string | undefined>(undefined);
     const [hasInitError, setHasInitError] = useState(false);
@@ -167,6 +216,12 @@ export const EffectRenderer = <State extends EngineState, UniformData>({
 
     const captureSnapshot = useCallback(() => {
         if (!canvasElement) {
+            if (typeof console !== 'undefined') {
+                // eslint-disable-next-line no-console
+                console.log('[EffectRenderer] snapshot skipped, no canvas', {
+                    descriptorId: descriptor.id,
+                });
+            }
             return false;
         }
         const nextIndex =
@@ -190,6 +245,16 @@ export const EffectRenderer = <State extends EngineState, UniformData>({
             }
         }
         if (!snapshotCanvas) {
+            if (typeof console !== 'undefined') {
+                // eslint-disable-next-line no-console
+                console.log('[EffectRenderer] snapshot canvas unavailable', {
+                    descriptorId: descriptor.id,
+                    nextIndex,
+                    parentDefined: Boolean(parentElement),
+                    parentWidth: parentElement?.clientWidth ?? 0,
+                    parentHeight: parentElement?.clientHeight ?? 0,
+                });
+            }
             return false;
         }
         const width = canvasElement.width;
@@ -213,6 +278,13 @@ export const EffectRenderer = <State extends EngineState, UniformData>({
         }
         const context = snapshotCanvas.getContext('2d');
         if (!context) {
+            if (typeof console !== 'undefined') {
+                // eslint-disable-next-line no-console
+                console.warn('[EffectRenderer] snapshot context unavailable', {
+                    descriptorId: descriptor.id,
+                    nextIndex,
+                });
+            }
             return false;
         }
         context.clearRect(0, 0, width, height);
@@ -300,6 +372,7 @@ export const EffectRenderer = <State extends EngineState, UniformData>({
                 } else if (shouldCaptureSnapshot) {
                     setShouldCaptureSnapshot(false);
                 }
+                resetCanvasElement();
             } else if (shouldCaptureSnapshot) {
                 setShouldCaptureSnapshot(false);
             }
@@ -319,6 +392,7 @@ export const EffectRenderer = <State extends EngineState, UniformData>({
         },
         onReady: handleReady,
         onError: (error) => {
+            resetCanvasElement();
             setHasInitError(true);
             onFailure?.(error);
         },
@@ -343,11 +417,19 @@ export const EffectRenderer = <State extends EngineState, UniformData>({
     }, [activeSnapshotIndex, descriptor.id, snapshotVisible]);
 
     useEffect(() => {
-        console.log('[EffectRenderer] backend state updated', {
-            descriptorId: descriptor.id,
-            backendId,
-            hasInitError,
-        });
+        if (hasInitError) {
+            console.warn('[EffectRenderer] backend state updated with error', {
+                descriptorId: descriptor.id,
+                backendId,
+                hasInitError,
+            });
+        } else {
+            console.log('[EffectRenderer] backend state updated', {
+                descriptorId: descriptor.id,
+                backendId,
+                hasInitError,
+            });
+        }
     }, [backendId, hasInitError, descriptor.id]);
 
     useEffect(() => {
@@ -468,6 +550,7 @@ export const EffectRenderer = <State extends EngineState, UniformData>({
                 />
             ))}
             <canvas
+                key={`effect-canvas-${canvasEpoch}`}
                 ref={registerCanvas}
                 style={{
                     width: '100%',

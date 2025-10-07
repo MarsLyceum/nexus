@@ -446,6 +446,16 @@ export const Glow: React.FC<GlowProps> = ({
             webglAvailable
         );
 
+        const currentActiveBackend = activeBackendRef.current;
+
+        if (
+            fallbackMode === 'locked' &&
+            typeof currentActiveBackend === 'string' &&
+            resolvedBackend !== currentActiveBackend
+        ) {
+            return;
+        }
+
         // If user explicitly selected this backend (not 'auto'), clear its failed status
         // to give it a fresh try
         if (
@@ -496,6 +506,7 @@ export const Glow: React.FC<GlowProps> = ({
     }, [
         enableCssFallback,
         fallbackBehavior,
+        fallbackMode,
         preferredBackend,
         webglAvailable,
         webgpuAvailable,
@@ -605,19 +616,12 @@ export const Glow: React.FC<GlowProps> = ({
                     padding={padding}
                     borderRadius={borderRadius}
                     sizing={sizing}
-                    canvasStyle={{
-                        mixBlendMode: 'plus-lighter',
+                    blendMode="lighter"
+                    snapshotStyle={{
                         ...containerStyle,
-                    }}
-                    containerStyle={{
-                        ...containerStyle,
-                        position: 'absolute',
-                        inset: 0,
                         opacity: persistGpuSnapshot ? 1 : undefined,
                     }}
-                    onFailure={handleGpuFailure}
-                    onReady={handleGpuReady}
-                    onBackendChange={handleGpuBackendChange}
+                    containerStyle={containerStyle}
                 />
             )}
         </>

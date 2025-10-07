@@ -24,14 +24,13 @@ export const setCanvasSize = (
     canvas: HTMLCanvasElement,
     dimensions: CanvasDimensions
 ) => {
-    const pixelWidth = Math.max(
-        1,
-        Math.floor(dimensions.width * dimensions.dpr)
-    );
-    const pixelHeight = Math.max(
-        1,
-        Math.floor(dimensions.height * dimensions.dpr)
-    );
+    if (dimensions.dpr <= 0) {
+        return;
+    }
+    const width = Math.max(0, dimensions.width);
+    const height = Math.max(0, dimensions.height);
+    const pixelWidth = Math.max(1, Math.floor(width * dimensions.dpr));
+    const pixelHeight = Math.max(1, Math.floor(height * dimensions.dpr));
 
     if (canvas.width !== pixelWidth) {
         canvas.width = pixelWidth;
@@ -40,8 +39,8 @@ export const setCanvasSize = (
         canvas.height = pixelHeight;
     }
 
-    const styleWidth = `${dimensions.width}px`;
-    const styleHeight = `${dimensions.height}px`;
+    const styleWidth = `${width}px`;
+    const styleHeight = `${height}px`;
 
     if (canvas.style.width !== styleWidth) {
         canvas.style.width = styleWidth;

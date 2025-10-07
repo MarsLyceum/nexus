@@ -16,11 +16,12 @@ export type EffectRendererWithMetricsProps<
     readonly backends?: ReadonlyArray<Backend<UniformData>>;
     readonly preferredBackend?: string;
     readonly containerStyle?: React.CSSProperties;
-    readonly canvasStyle?: React.CSSProperties;
+    readonly snapshotStyle?: React.CSSProperties;
     readonly onFailure?: (error: Error) => void;
     readonly onReady?: () => void;
-    readonly onBackendChange?: (backend: string) => void;
     readonly sizing?: 'container' | 'viewport';
+    readonly zIndex?: number;
+    readonly blendMode?: GlobalCompositeOperation;
 };
 
 type MetricsState = {
@@ -29,26 +30,64 @@ type MetricsState = {
     readonly dpr: number;
     readonly offsetX: number;
     readonly offsetY: number;
+    readonly visible: boolean;
 };
 
 const hasPositiveArea = (value: MetricsState): boolean =>
     value.width > 0 && value.height > 0;
 
+const metricsEqual = (left: MetricsState, right: MetricsState): boolean =>
+    left.width === right.width &&
+    left.height === right.height &&
+    left.dpr === right.dpr &&
+    left.offsetX === right.offsetX &&
+    left.offsetY === right.offsetY &&
+    left.visible === right.visible;
+
 const stabilizeMetrics = (
     current: MetricsState,
     candidate: MetricsState
 ): MetricsState => {
-    if (!hasPositiveArea(candidate) && hasPositiveArea(current)) {
+    if (metricsEqual(current, candidate)) {
         return current;
     }
+    if (!candidate.visible) {
+        if (typeof console !== 'undefined') {
+            // eslint-disable-next-line no-console
+            console.log('[EffectRendererWithMetrics] metrics hidden', {
+                reason: 'not-visible',
+                width: candidate.width,
+                height: candidate.height,
+                offsetX: candidate.offsetX,
+                offsetY: candidate.offsetY,
+            });
+        }
+        return {
+            ...candidate,
+            width: 0,
+            height: 0,
+        } satisfies MetricsState;
+    }
     if (
-        current.width === candidate.width &&
-        current.height === candidate.height &&
-        current.dpr === candidate.dpr &&
-        current.offsetX === candidate.offsetX &&
-        current.offsetY === candidate.offsetY
+        !hasPositiveArea(candidate) &&
+        current.visible &&
+        hasPositiveArea(current)
     ) {
+        if (typeof console !== 'undefined') {
+            // eslint-disable-next-line no-console
+            console.log('[EffectRendererWithMetrics] metrics retained', {
+                reason: 'zero-area-candidate',
+                current,
+                candidate,
+            });
+        }
         return current;
+    }
+    if (typeof console !== 'undefined') {
+        // eslint-disable-next-line no-console
+        console.log('[EffectRendererWithMetrics] metrics accepted', {
+            candidate,
+        });
     }
     return candidate;
 };
@@ -56,16 +95,54 @@ const stabilizeMetrics = (
 const useMetrics = (
     rootRef: React.RefObject<HTMLDivElement | null>,
     padding: number,
-    sizing: 'container' | 'viewport'
+    sizing: 'container' | 'viewport',
+    descriptorId: string
 ) => {
-    const [{ width, height, dpr, offsetX, offsetY }, setMetrics] =
+    const [{ width, height, dpr, offsetX, offsetY, visible }, setMetrics] =
         useState<MetricsState>({
             width: 0,
             height: 0,
             dpr: 1,
             offsetX: 0,
             offsetY: 0,
+            visible: true,
         });
+    const intersectionVisibleRef = useRef(true);
+
+    useEffect(() => {
+        if (Platform.OS !== 'web') {
+            return undefined;
+        }
+        const target = rootRef.current;
+        if (!target) {
+            return undefined;
+        }
+        const observer = new IntersectionObserver((entries) => {
+            const entry = entries[0];
+            const intersecting = Boolean(
+                entry?.isIntersecting && entry.intersectionRatio > 0
+            );
+            if (intersectionVisibleRef.current === intersecting) {
+                return;
+            }
+            intersectionVisibleRef.current = intersecting;
+            if (typeof console !== 'undefined') {
+                // eslint-disable-next-line no-console
+                console.log('[EffectRendererWithMetrics] intersection change', {
+                    intersecting,
+                    descriptorId,
+                });
+            }
+            setMetrics((current) =>
+                stabilizeMetrics(current, {
+                    ...current,
+                    visible: intersecting,
+                })
+            );
+        });
+        observer.observe(target);
+        return () => observer.disconnect();
+    }, [descriptorId, rootRef, setMetrics]);
     useEffect(() => {
         console.log('[EffectRendererWithMetrics] platform check', {
             platform: Platform.OS,
@@ -87,6 +164,14 @@ const useMetrics = (
             const target = root.parentElement ?? root;
             const targetRect = target.getBoundingClientRect();
             const pixelRatio = windowLike.devicePixelRatio ?? 1;
+            const nextVisible =
+                intersectionVisibleRef.current &&
+                targetRect.width > 0 &&
+                targetRect.height > 0 &&
+                targetRect.bottom > 0 &&
+                targetRect.right > 0 &&
+                targetRect.left < window.innerWidth &&
+                targetRect.top < window.innerHeight;
             const nextWidth = Math.max(0, targetRect.width + padding * 2);
             const nextHeight = Math.max(0, targetRect.height + padding * 2);
             const nextOffsetX = targetRect.left - padding;
@@ -98,6 +183,7 @@ const useMetrics = (
                     dpr: pixelRatio,
                     offsetX: nextOffsetX,
                     offsetY: nextOffsetY,
+                    visible: nextVisible,
                 });
                 if (next === current) {
                     return current;
@@ -122,13 +208,24 @@ const useMetrics = (
             const contentWidth = Math.max(0, rootRect.width);
             const contentHeight = Math.max(0, rootRect.height);
             const pixelRatio = windowLike.devicePixelRatio ?? 1;
+            const offsetLeft = rootRect.left;
+            const offsetTop = rootRect.top;
+            const nextVisible =
+                intersectionVisibleRef.current &&
+                rootRect.width > 0 &&
+                rootRect.height > 0 &&
+                rootRect.bottom > 0 &&
+                rootRect.right > 0 &&
+                rootRect.left < window.innerWidth &&
+                rootRect.top < window.innerHeight;
             setMetrics((current) => {
                 const next = stabilizeMetrics(current, {
                     width: contentWidth,
                     height: contentHeight,
                     dpr: pixelRatio,
-                    offsetX: 0,
-                    offsetY: 0,
+                    offsetX: offsetLeft,
+                    offsetY: offsetTop,
+                    visible: nextVisible,
                 });
                 if (next === current) {
                     return current;
@@ -140,6 +237,8 @@ const useMetrics = (
                         height: next.height,
                         padding,
                         pixelRatio: next.dpr,
+                        offsetX: next.offsetX,
+                        offsetY: next.offsetY,
                     }
                 );
                 return next;
@@ -201,8 +300,8 @@ const useMetrics = (
         };
     }, [padding, rootRef, sizing]);
     return useMemo(
-        () => ({ width, height, dpr, offsetX, offsetY }),
-        [dpr, height, offsetX, offsetY, width]
+        () => ({ width, height, dpr, offsetX, offsetY, visible }),
+        [dpr, height, offsetX, offsetY, visible, width]
     );
 };
 
@@ -213,6 +312,9 @@ export const EffectRendererWithMetrics = <
     padding = 0,
     borderRadius = 0,
     containerStyle,
+    snapshotStyle,
+    blendMode = 'source-over',
+    zIndex = 0,
     state,
     sizing = 'container',
     ...props
@@ -222,7 +324,7 @@ export const EffectRendererWithMetrics = <
 >): React.ReactElement | null => {
     const rootRef = useRef<HTMLDivElement | null>(null);
     const [canvasVersion, setCanvasVersion] = useState(0);
-    const { width, height, dpr, offsetX, offsetY } = useMetrics(
+    const { width, height, dpr, offsetX, offsetY, visible } = useMetrics(
         rootRef,
         padding,
         sizing
@@ -277,16 +379,20 @@ export const EffectRendererWithMetrics = <
 
     return (
         <div ref={rootRef} style={rootStyle}>
-            {width > 0 && height > 0 ? (
+            {visible && width > 0 && height > 0 ? (
                 <EffectRenderer
                     {...props}
                     state={mergedState}
                     key={canvasVersion}
+                    blendMode={blendMode}
+                    zIndex={zIndex}
+                    snapshotStyle={snapshotStyle}
                     onFailure={(error) => {
                         setCanvasVersion((value) => value + 1);
                         props.onFailure?.(error);
                     }}
                     containerStyle={containerStyle}
+                    layout={{ x: offsetX, y: offsetY, width, height, dpr }}
                 />
             ) : null}
         </div>

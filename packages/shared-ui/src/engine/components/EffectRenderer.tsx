@@ -7,6 +7,12 @@ import React, {
 } from 'react';
 import { Platform } from 'react-native';
 
+import {
+    type CanvasSurfaceHandle,
+    type CanvasSurfaceSnapshot,
+    type SurfaceLayout,
+    getCanvasManager,
+} from '../canvasManager';
 import { useEffectEngine } from '../hooks/useEffectEngine';
 import { Backend, EffectDescriptor, EngineState, Timeline } from '../types';
 
@@ -17,58 +23,106 @@ export type EffectRendererProps<State extends EngineState, UniformData> = {
     readonly backends?: ReadonlyArray<Backend<UniformData>>;
     readonly preferredBackend?: string;
     readonly containerStyle?: React.CSSProperties;
-    readonly canvasStyle?: React.CSSProperties;
+    readonly snapshotStyle?: React.CSSProperties;
     readonly onFailure?: (error: Error) => void;
     readonly onReady?: () => void;
     readonly onBackendChange?: (backend: string | undefined) => void;
+    readonly zIndex?: number;
+    readonly blendMode?: GlobalCompositeOperation;
+    readonly layout?: SurfaceLayout;
 };
 
 const SNAPSHOT_BUFFER_COUNT = 3;
 const SNAPSHOT_CAPTURE_RETRY_LIMIT = 5;
-type TimeoutHandle = ReturnType<typeof globalThis.setTimeout>;
 
-type SnapshotResolution = {
-    readonly canvas: HTMLCanvasElement | null;
-    readonly viaFallback: boolean;
+type SnapshotBuffer = {
+    readonly canvas: HTMLCanvasElement;
+    readonly context: CanvasRenderingContext2D;
 };
 
-const resolveSnapshotCanvas = (
-    refs: ReadonlyArray<React.RefObject<HTMLCanvasElement>>,
-    index: number,
-    parentElement: Element | null,
-    parentMetrics: { readonly width: number; readonly height: number }
-): SnapshotResolution => {
-    const refCanvas = refs[index]?.current ?? null;
-    if (refCanvas) {
-        return { canvas: refCanvas, viaFallback: false };
+const createSnapshotBuffers = () =>
+    Array.from({ length: SNAPSHOT_BUFFER_COUNT }, () => {
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        if (!context) {
+            throw new Error('Failed to create snapshot buffer');
+        }
+        return { canvas, context } satisfies SnapshotBuffer;
+    });
+
+const clampUnit = (value: number): number => {
+    if (!Number.isFinite(value)) {
+        return 0;
     }
-    if (!parentElement) {
-        return { canvas: null, viaFallback: false };
+    if (value <= 0) {
+        return 0;
     }
-    const fallback = parentElement.querySelector(
-        `canvas[data-effect-snapshot-index="${index}"]`
-    );
-    if (fallback instanceof HTMLCanvasElement) {
-        return { canvas: fallback, viaFallback: true };
+    if (value >= 1) {
+        return 1;
     }
-    if (parentMetrics.width > 0 && parentMetrics.height > 0) {
-        const candidate = document.createElement('canvas');
-        candidate.dataset.effectSnapshotIndex = String(index);
-        candidate.style.position = 'absolute';
-        candidate.style.top = '0';
-        candidate.style.right = '0';
-        candidate.style.bottom = '0';
-        candidate.style.left = '0';
-        candidate.style.width = '100%';
-        candidate.style.height = '100%';
-        candidate.style.display = 'block';
-        candidate.style.pointerEvents = 'none';
-        candidate.style.opacity = '0';
-        candidate.style.transition = 'opacity 80ms ease-out';
-        parentElement?.appendChild(candidate);
-        return { canvas: candidate, viaFallback: true };
+    return value;
+};
+
+const resolveOpacity = (value: React.CSSProperties['opacity']): number => {
+    if (typeof value === 'number') {
+        return Number.isFinite(value) ? clampUnit(value) : 1;
     }
-    return { canvas: null, viaFallback: false };
+    if (typeof value === 'string') {
+        const parsed = Number.parseFloat(value);
+        return Number.isFinite(parsed) ? clampUnit(parsed) : 1;
+    }
+    return 1;
+};
+
+type StyleState = {
+    readonly visible: boolean;
+    readonly opacity: number;
+};
+
+const resolveStyleState = (
+    style: React.CSSProperties | undefined
+): StyleState => {
+    if (!style) {
+        return { visible: true, opacity: 1 } as const;
+    }
+    const { display } = style;
+    if (display === 'none') {
+        return { visible: false, opacity: 0 } as const;
+    }
+    const { visibility } = style;
+    if (visibility === 'hidden' || visibility === 'collapse') {
+        return { visible: false, opacity: 0 } as const;
+    }
+    const opacity = resolveOpacity(style.opacity);
+    return { visible: true, opacity } as const;
+};
+
+const toPixels = (value: number, dpr: number): number =>
+    Math.max(1, Math.floor(Math.max(0, value) * dpr));
+
+const resolveLayoutFromStyle = (
+    layout: SurfaceLayout | undefined,
+    style: React.CSSProperties | undefined
+): SurfaceLayout | undefined => {
+    if (layout) {
+        return layout;
+    }
+    if (!style) {
+        return undefined;
+    }
+    const width = typeof style.width === 'number' ? style.width : undefined;
+    const height = typeof style.height === 'number' ? style.height : undefined;
+    if (width === undefined || height === undefined) {
+        return undefined;
+    }
+    const dpr = globalThis.devicePixelRatio ?? 1;
+    return {
+        x: 0,
+        y: 0,
+        width,
+        height,
+        dpr,
+    } satisfies SurfaceLayout;
 };
 
 export const EffectRenderer = <State extends EngineState, UniformData>({
@@ -78,243 +132,222 @@ export const EffectRenderer = <State extends EngineState, UniformData>({
     backends,
     preferredBackend = 'auto',
     containerStyle,
-    canvasStyle,
+    snapshotStyle,
     onFailure,
     onReady,
     onBackendChange,
+    zIndex = 0,
+    blendMode = 'source-over',
+    layout,
 }: EffectRendererProps<State, UniformData>): React.ReactElement | null => {
-    const [canvasElement, setCanvasElement] =
-        useState<HTMLCanvasElement | null>(null);
-    const [canvasEpoch, setCanvasEpoch] = useState(0);
-    const canvasRef = useRef<HTMLCanvasElement | null>(null);
-    const pendingCanvasClearRef = useRef<TimeoutHandle | null>(null);
-
-    const commitCanvasElement = useCallback(
-        (element: HTMLCanvasElement | null) => {
-            setCanvasElement((current) => {
-                if (current === element) {
-                    return current;
-                }
-                if (typeof console !== 'undefined') {
-                    // eslint-disable-next-line no-console
-                    console.log('[EffectRenderer] commitCanvasElement', {
-                        descriptorId: descriptor.id,
-                        nextCanvasDefined: Boolean(element),
-                        previousCanvasDefined: Boolean(current),
-                    });
-                }
-                if (current && !element) {
-                    setCanvasEpoch((value) => value + 1);
-                }
-                return element;
-            });
-        },
-        [descriptor.id]
-    );
-
-    const cancelPendingCanvasClear = useCallback(() => {
-        const handle = pendingCanvasClearRef.current;
-        if (!handle) {
-            return;
-        }
-        globalThis.clearTimeout(handle);
-        pendingCanvasClearRef.current = null;
-    }, []);
-
-    const scheduleCanvasClear = useCallback(() => {
-        if (typeof globalThis.setTimeout !== 'function') {
-            canvasRef.current = null;
-            commitCanvasElement(null);
-            return;
-        }
-        const handle = globalThis.setTimeout(() => {
-            pendingCanvasClearRef.current = null;
-            canvasRef.current = null;
-            commitCanvasElement(null);
-        }, 0);
-        pendingCanvasClearRef.current = handle;
-        if (typeof console !== 'undefined') {
-            // eslint-disable-next-line no-console
-            console.log('[EffectRenderer] scheduleCanvasClear', {
-                descriptorId: descriptor.id,
-            });
-        }
-    }, [commitCanvasElement]);
-
-    useEffect(() => cancelPendingCanvasClear, [cancelPendingCanvasClear]);
-
-    const resetCanvasElement = useCallback(() => {
-        cancelPendingCanvasClear();
-        canvasRef.current = null;
-        commitCanvasElement(null);
-        if (typeof console !== 'undefined') {
-            // eslint-disable-next-line no-console
-            console.log('[EffectRenderer] resetCanvasElement', {
-                descriptorId: descriptor.id,
-            });
-        }
-    }, [cancelPendingCanvasClear, commitCanvasElement]);
-
-    const registerCanvas = useCallback(
-        (element: HTMLCanvasElement | null) => {
-            cancelPendingCanvasClear();
-            if (element) {
-                if (canvasRef.current === element) {
-                    return;
-                }
-                canvasRef.current = element;
-                commitCanvasElement(element);
-                if (typeof console !== 'undefined') {
-                    // eslint-disable-next-line no-console
-                    console.log('[EffectRenderer] registerCanvas', {
-                        descriptorId: descriptor.id,
-                        width: element.width,
-                        height: element.height,
-                        clientWidth: element.clientWidth,
-                        clientHeight: element.clientHeight,
-                    });
-                }
-                return;
-            }
-            scheduleCanvasClear();
-        },
-        [
-            cancelPendingCanvasClear,
-            commitCanvasElement,
-            descriptor.id,
-            scheduleCanvasClear,
-        ]
+    const [engineCanvas, setEngineCanvas] = useState<HTMLCanvasElement | null>(
+        null
     );
     const [backendId, setBackendId] = useState<string | undefined>(undefined);
     const [hasInitError, setHasInitError] = useState(false);
-    const snapshotRefs = useRef<
-        ReadonlyArray<React.RefObject<HTMLCanvasElement>>
-    >([]);
-    if (snapshotRefs.current.length === 0) {
-        snapshotRefs.current = Array.from(
-            { length: SNAPSHOT_BUFFER_COUNT },
-            () => React.createRef<HTMLCanvasElement>()
-        );
-    }
     const [activeSnapshotIndex, setActiveSnapshotIndex] = useState<
         number | null
     >(null);
     const [snapshotVisible, setSnapshotVisible] = useState(false);
     const [shouldCaptureSnapshot, setShouldCaptureSnapshot] = useState(false);
+    const surfaceHandleRef = useRef<CanvasSurfaceHandle | null>(null);
+    const layoutRef = useRef<SurfaceLayout | undefined>(
+        resolveLayoutFromStyle(layout, containerStyle)
+    );
+    const snapshotBuffersRef = useRef<ReadonlyArray<SnapshotBuffer>>([]);
+    const lastSnapshotRef = useRef<CanvasSurfaceSnapshot | undefined>(
+        undefined
+    );
     const lastStableBackendRef = useRef<string | undefined>(undefined);
+    const backendActiveRef = useRef(false);
+    const snapshotVisibleRef = useRef(false);
+    const styleState = useMemo(
+        () => resolveStyleState(containerStyle),
+        [containerStyle]
+    );
+    const lastVisibilityStateRef = useRef<string | undefined>(undefined);
 
-    const hideSnapshot = useCallback(() => {
-        if (typeof console !== 'undefined') {
-            // eslint-disable-next-line no-console
-            console.log('[EffectRenderer] hideSnapshot invoked', {
-                descriptorId: descriptor.id,
-            });
+    const applySurfaceVisibility = useCallback(() => {
+        const handle = surfaceHandleRef.current;
+        if (!handle) {
+            return;
         }
-        setSnapshotVisible(false);
-        setActiveSnapshotIndex(null);
-    }, [descriptor.id]);
-
-    const captureSnapshot = useCallback(() => {
-        if (!canvasElement) {
+        const containerVisible = styleState.visible;
+        const engineVisible = containerVisible && backendActiveRef.current;
+        const snapshotVisibleState =
+            containerVisible && snapshotVisibleRef.current;
+        const shouldRenderSurface = engineVisible || snapshotVisibleState;
+        handle.setVisible(shouldRenderSurface);
+        const containerOpacity = containerVisible
+            ? clampUnit(styleState.opacity)
+            : 0;
+        const shouldShowEngine = engineVisible && !snapshotVisibleRef.current;
+        handle.setOpacity(shouldShowEngine ? containerOpacity : 0);
+        const visibilitySnapshot = JSON.stringify({
+            descriptorId: descriptor.id,
+            containerVisible,
+            backendActive: backendActiveRef.current,
+            snapshotVisible: snapshotVisibleRef.current,
+            shouldRenderSurface,
+            shouldShowEngine,
+            containerOpacity,
+        });
+        if (lastVisibilityStateRef.current !== visibilitySnapshot) {
+            lastVisibilityStateRef.current = visibilitySnapshot;
             if (typeof console !== 'undefined') {
                 // eslint-disable-next-line no-console
-                console.log('[EffectRenderer] snapshot skipped, no canvas', {
+                console.log('[EffectRenderer] visibility update', {
                     descriptorId: descriptor.id,
+                    containerVisible,
+                    backendActive: backendActiveRef.current,
+                    snapshotVisible: snapshotVisibleRef.current,
+                    shouldRenderSurface,
+                    shouldShowEngine,
+                    opacity: shouldShowEngine ? containerOpacity : 0,
                 });
             }
+        }
+    }, [descriptor.id, styleState.opacity, styleState.visible]);
+
+    useEffect(() => {
+        if (Platform.OS !== 'web') {
+            return undefined;
+        }
+        const handle = getCanvasManager().registerSurface({
+            descriptorId: descriptor.id,
+            zIndex,
+            blendMode,
+        });
+        surfaceHandleRef.current = handle;
+        layoutRef.current = resolveLayoutFromStyle(layout, containerStyle);
+        handle.setLayout(layoutRef.current);
+        if (handle.canvas.dataset.effectDescriptorId !== descriptor.id) {
+            handle.canvas.dataset.effectDescriptorId = descriptor.id;
+        }
+        setEngineCanvas(handle.canvas);
+        applySurfaceVisibility();
+        return () => {
+            surfaceHandleRef.current = null;
+            snapshotBuffersRef.current = [];
+            lastSnapshotRef.current = undefined;
+            handle.setSnapshot(undefined);
+            handle.dispose();
+            setEngineCanvas(null);
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [
+        applySurfaceVisibility,
+        blendMode,
+        containerStyle,
+        descriptor.id,
+        layout,
+        zIndex,
+    ]);
+
+    useEffect(() => {
+        const handle = surfaceHandleRef.current;
+        if (!handle) {
+            return;
+        }
+        handle.setZIndex(zIndex);
+    }, [zIndex]);
+
+    useEffect(() => {
+        const handle = surfaceHandleRef.current;
+        if (!handle) {
+            return;
+        }
+        handle.setBlendMode(blendMode);
+    }, [blendMode]);
+
+    useEffect(() => {
+        const handle = surfaceHandleRef.current;
+        if (!handle) {
+            return;
+        }
+        layoutRef.current = resolveLayoutFromStyle(layout, containerStyle);
+        handle.setLayout(layoutRef.current);
+        if (engineCanvas) {
+            const { current } = layoutRef;
+            if (current) {
+                const widthPx = toPixels(current.width, current.dpr);
+                const heightPx = toPixels(current.height, current.dpr);
+                if (engineCanvas.width !== widthPx) {
+                    engineCanvas.width = widthPx;
+                }
+                if (engineCanvas.height !== heightPx) {
+                    engineCanvas.height = heightPx;
+                }
+                engineCanvas.style.width = `${current.width}px`;
+                engineCanvas.style.height = `${current.height}px`;
+            }
+        }
+        applySurfaceVisibility();
+    }, [applySurfaceVisibility, containerStyle, engineCanvas, layout]);
+
+    const hideSnapshot = useCallback(() => {
+        setSnapshotVisible(false);
+        setActiveSnapshotIndex(null);
+        lastSnapshotRef.current = undefined;
+        surfaceHandleRef.current?.setSnapshot(undefined);
+        snapshotVisibleRef.current = false;
+        applySurfaceVisibility();
+    }, [applySurfaceVisibility]);
+
+    const captureSnapshot = useCallback(() => {
+        const handle = surfaceHandleRef.current;
+        const canvas = engineCanvas;
+        if (!handle || !canvas || canvas.width <= 0 || canvas.height <= 0) {
             return false;
+        }
+        if (snapshotBuffersRef.current.length === 0) {
+            snapshotBuffersRef.current = createSnapshotBuffers();
         }
         const nextIndex =
             activeSnapshotIndex === null
                 ? 0
                 : (activeSnapshotIndex + 1) % SNAPSHOT_BUFFER_COUNT;
-        const parentElement = canvasElement.parentElement;
-        const { canvas: snapshotCanvas, viaFallback } = resolveSnapshotCanvas(
-            snapshotRefs.current,
-            nextIndex,
-            parentElement,
-            {
-                width: parentElement?.clientWidth ?? 0,
-                height: parentElement?.clientHeight ?? 0,
-            }
-        );
-        if (viaFallback) {
-            const targetRef = snapshotRefs.current[nextIndex];
-            if (targetRef) {
-                targetRef.current = snapshotCanvas;
-            }
+        const { canvas: snapshotCanvas, context } =
+            snapshotBuffersRef.current[nextIndex];
+        const lastLayout = layoutRef.current;
+        if (snapshotCanvas.width !== canvas.width) {
+            snapshotCanvas.width = canvas.width;
         }
-        if (!snapshotCanvas) {
-            if (typeof console !== 'undefined') {
-                // eslint-disable-next-line no-console
-                console.log('[EffectRenderer] snapshot canvas unavailable', {
-                    descriptorId: descriptor.id,
-                    nextIndex,
-                    parentDefined: Boolean(parentElement),
-                    parentWidth: parentElement?.clientWidth ?? 0,
-                    parentHeight: parentElement?.clientHeight ?? 0,
-                });
-            }
-            return false;
+        if (snapshotCanvas.height !== canvas.height) {
+            snapshotCanvas.height = canvas.height;
         }
-        const width = canvasElement.width;
-        const height = canvasElement.height;
-        if (width <= 0 || height <= 0) {
-            if (typeof console !== 'undefined') {
-                // eslint-disable-next-line no-console
-                console.warn('[EffectRenderer] snapshot skipped due to size', {
-                    descriptorId: descriptor.id,
-                    width,
-                    height,
-                });
-            }
-            return false;
-        }
-        if (snapshotCanvas.width !== width) {
-            snapshotCanvas.width = width;
-        }
-        if (snapshotCanvas.height !== height) {
-            snapshotCanvas.height = height;
-        }
-        const context = snapshotCanvas.getContext('2d');
-        if (!context) {
-            if (typeof console !== 'undefined') {
-                // eslint-disable-next-line no-console
-                console.warn('[EffectRenderer] snapshot context unavailable', {
-                    descriptorId: descriptor.id,
-                    nextIndex,
-                });
-            }
-            return false;
-        }
-        context.clearRect(0, 0, width, height);
+        context.setTransform(1, 0, 0, 1, 0, 0);
         context.globalCompositeOperation = 'copy';
-        context.drawImage(canvasElement, 0, 0, width, height);
+        context.drawImage(canvas, 0, 0);
         context.globalCompositeOperation = 'source-over';
+        const containerOpacity = styleState.visible
+            ? resolveOpacity(snapshotStyle?.opacity ?? styleState.opacity)
+            : 0;
+        const snapshot: CanvasSurfaceSnapshot = {
+            canvas: snapshotCanvas,
+            opacity: containerOpacity,
+        };
+        lastSnapshotRef.current = snapshot;
+        handle.setSnapshot(snapshot);
+        if (lastLayout) {
+            handle.setLayout(lastLayout);
+        }
         setActiveSnapshotIndex(nextIndex);
         setSnapshotVisible(true);
-        if (typeof console !== 'undefined') {
-            // eslint-disable-next-line no-console
-            console.log('[EffectRenderer] snapshot captured', {
-                descriptorId: descriptor.id,
-                nextIndex,
-                width,
-                height,
-            });
-        }
+        snapshotVisibleRef.current = true;
+        applySurfaceVisibility();
         return true;
-    }, [activeSnapshotIndex, canvasElement, descriptor.id]);
+    }, [
+        activeSnapshotIndex,
+        applySurfaceVisibility,
+        engineCanvas,
+        snapshotStyle?.opacity,
+        styleState.opacity,
+        styleState.visible,
+    ]);
 
     const resolvedBackends = useMemo(() => {
         const registry = backends ? [...backends] : descriptor.createBackends();
-        const ids = registry.map((backend) => backend.id);
-        if (typeof console !== 'undefined') {
-            // eslint-disable-next-line no-console
-            console.log('[EffectRenderer] resolved backend ids', {
-                descriptorId: descriptor.id,
-                ids,
-            });
-        }
         return registry;
     }, [backends, descriptor]);
 
@@ -326,23 +359,10 @@ export const EffectRenderer = <State extends EngineState, UniformData>({
             resolvedBackends.map((backend) => backend.id)
         );
         if (!availableBackendIds.has(preferredBackend)) {
-            if (typeof console !== 'undefined') {
-                // eslint-disable-next-line no-console
-                console.log('[EffectRenderer] preferred backend unavailable', {
-                    descriptorId: descriptor.id,
-                    preferredBackend,
-                    availableBackendIds: [...availableBackendIds],
-                });
-            }
             return 'auto' as const;
         }
         return preferredBackend;
-    }, [descriptor.id, preferredBackend, resolvedBackends]);
-
-    const baseCanvasStyle = useMemo<React.CSSProperties>(
-        () => ({ ...canvasStyle }),
-        [canvasStyle]
-    );
+    }, [preferredBackend, resolvedBackends]);
 
     const handleReady = useCallback(() => {
         hideSnapshot();
@@ -352,19 +372,11 @@ export const EffectRenderer = <State extends EngineState, UniformData>({
     const engineResult = useEffectEngine({
         descriptor,
         timeline,
-        canvas: canvasElement,
+        canvas: engineCanvas,
         state,
         backends: resolvedBackends,
         desiredBackend: normalizedPreferredBackend,
         onBackendChange: (next) => {
-            console.log('[EffectRenderer] onBackendChange callback', {
-                descriptorId: descriptor.id,
-                next,
-                HTMLElementWidth: canvasElement?.parentElement?.clientWidth,
-                HTMLElementHeight: canvasElement?.parentElement?.clientHeight,
-                snapshotVisible,
-                activeSnapshotIndex,
-            });
             if (!next) {
                 const capturedImmediately = captureSnapshot();
                 if (!capturedImmediately) {
@@ -372,65 +384,25 @@ export const EffectRenderer = <State extends EngineState, UniformData>({
                 } else if (shouldCaptureSnapshot) {
                     setShouldCaptureSnapshot(false);
                 }
-                resetCanvasElement();
-            } else if (shouldCaptureSnapshot) {
+                backendActiveRef.current = false;
+                applySurfaceVisibility();
+            } else {
                 setShouldCaptureSnapshot(false);
+                backendActiveRef.current = true;
+                applySurfaceVisibility();
             }
-            if (next === 'auto') {
-                console.log(
-                    '[EffectRenderer] ignoring synthetic auto backend',
-                    {
-                        descriptorId: descriptor.id,
-                    }
-                );
-                return;
-            }
-            if (next) {
+            if (next && next !== 'auto') {
                 setHasInitError(false);
+                onBackendChange?.(next);
             }
-            onBackendChange?.(next);
         },
         onReady: handleReady,
         onError: (error) => {
-            resetCanvasElement();
+            setEngineCanvas(null);
             setHasInitError(true);
             onFailure?.(error);
         },
     });
-
-    useEffect(() => {
-        console.log('[EffectRenderer] engine result backend change', {
-            descriptorId: descriptor.id,
-            engineBackendId: engineResult.backendId,
-        });
-    }, [engineResult.backendId, descriptor.id]);
-
-    useEffect(() => {
-        if (typeof console !== 'undefined') {
-            // eslint-disable-next-line no-console
-            console.log('[EffectRenderer] snapshot visibility updated', {
-                descriptorId: descriptor.id,
-                snapshotVisible,
-                activeSnapshotIndex,
-            });
-        }
-    }, [activeSnapshotIndex, descriptor.id, snapshotVisible]);
-
-    useEffect(() => {
-        if (hasInitError) {
-            console.warn('[EffectRenderer] backend state updated with error', {
-                descriptorId: descriptor.id,
-                backendId,
-                hasInitError,
-            });
-        } else {
-            console.log('[EffectRenderer] backend state updated', {
-                descriptorId: descriptor.id,
-                backendId,
-                hasInitError,
-            });
-        }
-    }, [backendId, hasInitError, descriptor.id]);
 
     useEffect(() => {
         if (!shouldCaptureSnapshot) {
@@ -448,24 +420,17 @@ export const EffectRenderer = <State extends EngineState, UniformData>({
             }
             if (remainingAttempts <= 0) {
                 setShouldCaptureSnapshot(false);
-                if (typeof console !== 'undefined') {
-                    // eslint-disable-next-line no-console
-                    console.warn(
-                        '[EffectRenderer] failed to capture snapshot',
-                        {
-                            descriptorId: descriptor.id,
-                        }
-                    );
-                }
                 return;
             }
-            requestAnimationFrame(() => attemptCapture(remainingAttempts - 1));
+            globalThis.requestAnimationFrame(() => {
+                attemptCapture(remainingAttempts - 1);
+            });
         };
         attemptCapture(SNAPSHOT_CAPTURE_RETRY_LIMIT);
         return () => {
             cancelled = true;
         };
-    }, [captureSnapshot, descriptor.id, shouldCaptureSnapshot]);
+    }, [captureSnapshot, shouldCaptureSnapshot]);
 
     useEffect(() => {
         if (Platform.OS !== 'web') {
@@ -483,26 +448,29 @@ export const EffectRenderer = <State extends EngineState, UniformData>({
         });
     }, [engineResult.backendId]);
 
-    if (Platform.OS !== 'web') {
-        console.log(
-            '[EffectRenderer] non-web platform detected, rendering null',
-            {
-                descriptorId: descriptor.id,
-            }
-        );
-        return null;
-    }
+    useEffect(() => {
+        backendActiveRef.current = Boolean(engineCanvas);
+        applySurfaceVisibility();
+    }, [applySurfaceVisibility, engineCanvas]);
 
-    if (hasInitError) {
-        console.log('[EffectRenderer] backend unavailable, returning null', {
-            descriptorId: descriptor.id,
-            backendId,
-            hasInitError,
-            snapshotVisible,
-            activeSnapshotIndex,
-        });
-        return null;
-    }
+    useEffect(() => {
+        const handle = surfaceHandleRef.current;
+        const { current } = layoutRef;
+        if (!handle || !current || !engineCanvas) {
+            return;
+        }
+        const widthPx = toPixels(current.width, current.dpr);
+        const heightPx = toPixels(current.height, current.dpr);
+        if (engineCanvas.width !== widthPx) {
+            engineCanvas.width = widthPx;
+        }
+        if (engineCanvas.height !== heightPx) {
+            engineCanvas.height = heightPx;
+        }
+        engineCanvas.style.width = `${current.width}px`;
+        engineCanvas.style.height = `${current.height}px`;
+        handle.setLayout(current);
+    }, [engineCanvas]);
 
     const containerOpacity = snapshotVisible
         ? 1
@@ -510,56 +478,21 @@ export const EffectRenderer = <State extends EngineState, UniformData>({
           ? 0
           : 1;
 
+    if (Platform.OS !== 'web' || hasInitError) {
+        return null;
+    }
+
     return (
         <div
             style={{
                 position: 'absolute',
-                top: 0,
-                right: 0,
-                bottom: 0,
-                left: 0,
+                inset: 0,
                 overflow: 'visible',
                 pointerEvents: 'none',
                 zIndex: 0,
                 opacity: containerOpacity,
                 ...containerStyle,
             }}
-        >
-            {snapshotRefs.current.map((ref, index) => (
-                <canvas
-                    key={`snapshot-${index}`}
-                    ref={ref}
-                    data-effect-snapshot-index={index}
-                    style={{
-                        position: 'absolute',
-                        top: 0,
-                        right: 0,
-                        bottom: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                        ...baseCanvasStyle,
-                        display: 'block',
-                        opacity:
-                            snapshotVisible && activeSnapshotIndex === index
-                                ? 1
-                                : 0,
-                        transition: 'opacity 80ms ease-out',
-                        pointerEvents: 'none',
-                    }}
-                />
-            ))}
-            <canvas
-                key={`effect-canvas-${canvasEpoch}`}
-                ref={registerCanvas}
-                style={{
-                    width: '100%',
-                    height: '100%',
-                    display: 'block',
-                    opacity: snapshotVisible ? 0 : 1,
-                    ...baseCanvasStyle,
-                }}
-            />
-        </div>
+        />
     );
 };

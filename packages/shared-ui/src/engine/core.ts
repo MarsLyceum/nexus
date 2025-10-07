@@ -47,16 +47,16 @@ export const createEngine = <State extends EngineState, UniformData>(
         activeHandle = undefined;
         activeBackend = undefined;
 
-        if (previousBackend) {
-            options.onBackendChange?.(undefined);
-        }
-
         if (handle) {
             try {
                 handle.destroy();
             } catch (error) {
                 options.onError?.(toError(error));
             }
+        }
+
+        if (previousBackend) {
+            options.onBackendChange?.(undefined);
         }
     };
 

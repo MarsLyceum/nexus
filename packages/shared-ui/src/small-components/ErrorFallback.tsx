@@ -342,7 +342,7 @@ const ErrorFallbackInner: React.FC<ErrorFallbackProps> = ({
                     ]}
                 >
                     <Text style={baseStyles.diagnosticsLabel}>
-                        {`Renderer fallback to ${diagnosticsNotice.backend}`}
+                        {`Renderer diagnostics: ${diagnosticsNotice.backend}`}
                     </Text>
                     <Text style={baseStyles.diagnosticsMessage}>
                         {diagnosticsNotice.message}

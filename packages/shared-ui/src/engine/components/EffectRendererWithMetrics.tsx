@@ -24,6 +24,7 @@ export type EffectRendererWithMetricsProps<
     readonly groupId?: string;
     readonly groupZIndex?: number;
     readonly blendMode?: GlobalCompositeOperation;
+    readonly layoutDependencies?: ReadonlyArray<unknown>;
 };
 
 type MetricsState = {
@@ -94,11 +95,14 @@ const stabilizeMetrics = (
     return candidate;
 };
 
+const NO_LAYOUT_DEPS: ReadonlyArray<unknown> = [];
+
 const useMetrics = (
     rootRef: React.RefObject<HTMLDivElement | null>,
     padding: number,
     sizing: 'container' | 'viewport',
-    descriptorId: string
+    descriptorId: string,
+    layoutDeps: ReadonlyArray<unknown>
 ) => {
     const [{ width, height, dpr, offsetX, offsetY, visible }, setMetrics] =
         useState<MetricsState>({
@@ -300,7 +304,7 @@ const useMetrics = (
             clearInterval(interval);
             globalThis.removeEventListener('resize', compute as EventListener);
         };
-    }, [padding, rootRef, sizing]);
+    }, [layoutDeps, padding, rootRef, sizing]);
     return useMemo(
         () => ({ width, height, dpr, offsetX, offsetY, visible }),
         [dpr, height, offsetX, offsetY, visible, width]
@@ -321,6 +325,7 @@ export const EffectRendererWithMetrics = <
     groupZIndex,
     state,
     sizing = 'container',
+    layoutDependencies,
     ...props
 }: EffectRendererWithMetricsProps<
     State,
@@ -331,7 +336,9 @@ export const EffectRendererWithMetrics = <
     const { width, height, dpr, offsetX, offsetY, visible } = useMetrics(
         rootRef,
         padding,
-        sizing
+        sizing,
+        props.descriptor.id,
+        layoutDependencies ?? NO_LAYOUT_DEPS
     );
 
     const mergedState = useMemo(

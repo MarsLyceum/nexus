@@ -156,6 +156,7 @@ type ThemedScrollbarHook = () => {
 
 export const useThemedScrollbars: ThemedScrollbarHook = () => {
     const { theme } = useTheme();
+    const primary = theme.colors.Primary;
 
     const ScrollbarStyles = useMemo(() => {
         const buildStyles = (targetSelector: string) => {
@@ -228,6 +229,7 @@ const WebNexusScrollViewInner: React.FC<NexusScrollViewProps> = ({
     containerRadius = BorderRadius.Small,
 }) => {
     const { theme } = useTheme();
+    const primary = theme.colors.Primary;
     const scrollRef = useRef<HTMLDivElement>(null);
     const [scrollState, setScrollState] = useState({
         scrollTop: 0,
@@ -601,6 +603,28 @@ const WebNexusScrollViewInner: React.FC<NexusScrollViewProps> = ({
     const thumbOpacity = isHovered ? 0.88 : 0.78;
     const thumbBrightness = isDragging ? 1.03 : 1;
     const railChannelBrightness = isHovered || isDragging ? 1.2 : 1;
+    const glowLayoutDeps = useMemo(
+        () => [
+            verticalLaneInset,
+            boundedTopCss,
+            thumbRightOffset,
+            finalThumbWidth,
+            renderedThumbHeight,
+            thumbOpacity,
+            thumbBrightness,
+            primary,
+        ],
+        [
+            verticalLaneInset,
+            boundedTopCss,
+            thumbRightOffset,
+            finalThumbWidth,
+            renderedThumbHeight,
+            thumbOpacity,
+            thumbBrightness,
+            primary,
+        ]
+    );
 
     const thumbPaintRef = useRef<HTMLDivElement | null>(null);
 
@@ -768,8 +792,6 @@ const WebNexusScrollViewInner: React.FC<NexusScrollViewProps> = ({
     useEffect(() => {
         handleScroll();
     }, [handleScroll, children, dpr, viewportScale]);
-
-    const primary = theme.colors.Primary;
 
     // Respect caller-provided paddings while reserving space for the custom scrollbar lane.
     // We explicitly compute numeric paddings from the provided contentContainerStyle to
@@ -970,6 +992,7 @@ const WebNexusScrollViewInner: React.FC<NexusScrollViewProps> = ({
                                 animate={!isDragging}
                                 fillContainer
                                 sizing="container"
+                                layoutDependencies={glowLayoutDeps}
                             />
                         </div>
                     )}

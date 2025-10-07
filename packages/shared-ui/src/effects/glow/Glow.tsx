@@ -31,6 +31,8 @@ export type GlowStatus = RendererStatus;
 
 export type GlowFallbackBehavior = 'adaptive' | 'locked';
 
+const NO_LAYOUT_DEPENDENCIES: ReadonlyArray<unknown> = [];
+
 export type GlowProps = {
     readonly color: string;
     readonly borderRadius?: number;
@@ -50,6 +52,7 @@ export type GlowProps = {
     readonly onBackendChange?: (backend: string) => void;
     readonly onStatusChange?: (status: GlowStatus) => void;
     readonly onDiagnosticsChange?: (diagnostics: GlowDiagnostics) => void;
+    readonly layoutDependencies?: ReadonlyArray<unknown>;
 };
 
 const GPU_SNAPSHOT_PERSIST_MS = 120;
@@ -96,9 +99,12 @@ export const Glow: React.FC<GlowProps> = ({
     onBackendChange,
     onStatusChange,
     onDiagnosticsChange,
+    layoutDependencies,
 }) => {
     const timeline = useAnimationTimeline();
     const normalizedFocal = useMemo(() => clampFocal(focal), [focal]);
+    const resolvedLayoutDependencies =
+        layoutDependencies ?? NO_LAYOUT_DEPENDENCIES;
     const isWeb = Platform.OS === 'web';
 
     const setActiveBackend = useNexusStore(
@@ -615,6 +621,7 @@ export const Glow: React.FC<GlowProps> = ({
                         opacity: persistGpuSnapshot ? 1 : undefined,
                     }}
                     containerStyle={containerStyle}
+                    layoutDependencies={resolvedLayoutDependencies}
                 />
             )}
         </>

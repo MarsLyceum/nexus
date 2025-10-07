@@ -21,6 +21,8 @@ export type EffectRendererWithMetricsProps<
     readonly onReady?: () => void;
     readonly sizing?: 'container' | 'viewport';
     readonly zIndex?: number;
+    readonly groupId?: string;
+    readonly groupZIndex?: number;
     readonly blendMode?: GlobalCompositeOperation;
 };
 
@@ -315,6 +317,8 @@ export const EffectRendererWithMetrics = <
     snapshotStyle,
     blendMode = 'source-over',
     zIndex = 0,
+    groupId,
+    groupZIndex,
     state,
     sizing = 'container',
     ...props
@@ -383,9 +387,10 @@ export const EffectRendererWithMetrics = <
                 <EffectRenderer
                     {...props}
                     state={mergedState}
-                    key={canvasVersion}
                     blendMode={blendMode}
                     zIndex={zIndex}
+                    groupId={groupId}
+                    groupZIndex={groupZIndex}
                     snapshotStyle={snapshotStyle}
                     onFailure={(error) => {
                         setCanvasVersion((value) => value + 1);

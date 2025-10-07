@@ -1,4 +1,5 @@
 type SurfaceId = string;
+type GroupId = string;
 
 export type SurfaceLayout = {
     readonly x: number;
@@ -15,6 +16,7 @@ export type CanvasSurfaceSnapshot = {
 
 export type CanvasSurfaceHandle = {
     readonly id: SurfaceId;
+    readonly groupId: GroupId;
     readonly canvas: HTMLCanvasElement;
     readonly setLayout: (layout: SurfaceLayout | undefined) => void;
     readonly setOpacity: (opacity: number) => void;
@@ -22,11 +24,13 @@ export type CanvasSurfaceHandle = {
     readonly setBlendMode: (mode: GlobalCompositeOperation) => void;
     readonly setSnapshot: (snapshot: CanvasSurfaceSnapshot | undefined) => void;
     readonly setZIndex: (value: number) => void;
+    readonly setGroupZIndex: (value: number) => void;
     readonly dispose: () => void;
 };
 
 type SurfaceState = {
     readonly id: SurfaceId;
+    readonly groupId: GroupId;
     readonly canvas: HTMLCanvasElement;
     readonly blendMode: GlobalCompositeOperation;
     readonly layout: SurfaceLayout | undefined;
@@ -36,15 +40,138 @@ type SurfaceState = {
     readonly zIndex: number;
 };
 
+type GroupState = {
+    readonly id: GroupId;
+    readonly canvas: HTMLCanvasElement;
+    readonly context: CanvasRenderingContext2D;
+    readonly zIndex: number;
+    readonly surfaceIds: ReadonlySet<SurfaceId>;
+};
+
 type CanvasManagerState = {
     readonly surfaces: Map<SurfaceId, SurfaceState>;
+    readonly groups: Map<GroupId, GroupState>;
     readonly frameId: number | undefined;
 };
 
 type SurfaceRegistration = {
     readonly descriptorId: string;
+    readonly groupId?: GroupId;
+    readonly groupZIndex?: number;
     readonly zIndex: number;
     readonly blendMode: GlobalCompositeOperation;
+};
+
+type RenderQueueItem = {
+    readonly surface: SurfaceState;
+    readonly group: GroupState;
+    readonly globalZIndex: number;
+    readonly localZIndex: number;
+};
+
+const createGroupState = (id: GroupId, zIndex: number): GroupState => {
+    const canvas = document.createElement('canvas');
+    const context = ensureContext(canvas);
+    canvas.dataset.effectSurfaceGroupId = id;
+    return {
+        id,
+        canvas,
+        context,
+        zIndex,
+        surfaceIds: new Set<SurfaceId>(),
+    } satisfies GroupState;
+};
+
+const updateGroupState = (
+    groups: Map<GroupId, GroupState>,
+    id: GroupId,
+    mutate: (state: GroupState) => GroupState
+): Map<GroupId, GroupState> => {
+    const current = groups.get(id);
+    if (!current) {
+        return groups;
+    }
+    const next = mutate(current);
+    if (next === current) {
+        return groups;
+    }
+    const updated = new Map(groups);
+    updated.set(id, next);
+    return updated;
+};
+
+const ensureGroup = (
+    groups: Map<GroupId, GroupState>,
+    groupId: GroupId,
+    zIndex: number
+): {
+    readonly groups: Map<GroupId, GroupState>;
+    readonly group: GroupState;
+} => {
+    const current = groups.get(groupId);
+    if (current) {
+        if (current.zIndex === zIndex) {
+            return { groups, group: current } as const;
+        }
+        const updated = {
+            ...current,
+            zIndex,
+        } satisfies GroupState;
+        const nextGroups = new Map(groups);
+        nextGroups.set(groupId, updated);
+        return { groups: nextGroups, group: updated } as const;
+    }
+    const created = createGroupState(groupId, zIndex);
+    const nextGroups = new Map(groups);
+    nextGroups.set(groupId, created);
+    return { groups: nextGroups, group: created } as const;
+};
+
+const removeSurfaceFromGroup = (
+    groups: Map<GroupId, GroupState>,
+    groupId: GroupId,
+    surfaceId: SurfaceId
+): Map<GroupId, GroupState> => {
+    const current = groups.get(groupId);
+    if (!current) {
+        return groups;
+    }
+    if (!current.surfaceIds.has(surfaceId)) {
+        return groups;
+    }
+    const remaining = Array.from(current.surfaceIds).filter(
+        (id) => id !== surfaceId
+    );
+    if (remaining.length === 0) {
+        const nextGroups = new Map(groups);
+        nextGroups.delete(groupId);
+        return nextGroups;
+    }
+    const updated = {
+        ...current,
+        surfaceIds: new Set(remaining),
+    } satisfies GroupState;
+    const nextGroups = new Map(groups);
+    nextGroups.set(groupId, updated);
+    return nextGroups;
+};
+
+const addSurfaceToGroup = (
+    groups: Map<GroupId, GroupState>,
+    groupId: GroupId,
+    zIndex: number,
+    surfaceId: SurfaceId
+): Map<GroupId, GroupState> => {
+    const ensured = ensureGroup(groups, groupId, zIndex);
+    const nextSurfaceIds = new Set(ensured.group.surfaceIds).add(surfaceId);
+    const updated = {
+        ...ensured.group,
+        zIndex,
+        surfaceIds: nextSurfaceIds,
+    } satisfies GroupState;
+    const nextGroups = new Map(ensured.groups);
+    nextGroups.set(groupId, updated);
+    return nextGroups;
 };
 
 type CanvasManager = {
@@ -159,10 +286,12 @@ const renderSurface = (
 
 const createSurfaceState = (
     id: SurfaceId,
+    groupId: GroupId,
     canvas: HTMLCanvasElement,
     input: SurfaceRegistration
 ): SurfaceState => ({
     id,
+    groupId,
     canvas,
     blendMode: input.blendMode,
     layout: undefined,
@@ -203,22 +332,109 @@ const removeSurfaceState = (
 const compositeSurfaces = (
     context: CanvasRenderingContext2D,
     canvas: HTMLCanvasElement,
-    surfaces: Map<SurfaceId, SurfaceState>
+    snapshot: CanvasManagerState
 ) => {
     const dpr = window.devicePixelRatio ?? 1;
     adjustOutputCanvasSize(canvas, dpr);
     context.setTransform(dpr, 0, 0, dpr, 0, 0);
     context.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr);
-    [...surfaces.values()]
+
+    const cssWidth = canvas.width / dpr;
+    const cssHeight = canvas.height / dpr;
+
+    const renderQueue: RenderQueueItem[] = [];
+
+    const groupedSurfaces = [...snapshot.groups.values()].map((group) => {
+        const surfaces = Array.from(group.surfaceIds)
+            .map((surfaceId) => snapshot.surfaces.get(surfaceId))
+            .filter((surface): surface is SurfaceState => Boolean(surface))
+            .sort((left, right) => {
+                if (left.zIndex === right.zIndex) {
+                    return left.id.localeCompare(right.id);
+                }
+                return left.zIndex - right.zIndex;
+            });
+        const groupCanvas = group.canvas;
+        const groupContext = group.context;
+        if (groupCanvas.width !== canvas.width) {
+            groupCanvas.width = canvas.width;
+        }
+        if (groupCanvas.height !== canvas.height) {
+            groupCanvas.height = canvas.height;
+        }
+        const styleWidth = `${cssWidth}px`;
+        const styleHeight = `${cssHeight}px`;
+        if (groupCanvas.style.width !== styleWidth) {
+            groupCanvas.style.width = styleWidth;
+        }
+        if (groupCanvas.style.height !== styleHeight) {
+            groupCanvas.style.height = styleHeight;
+        }
+        groupContext.setTransform(1, 0, 0, 1, 0, 0);
+        groupContext.clearRect(0, 0, groupCanvas.width, groupCanvas.height);
+        groupContext.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        surfaces.forEach((surface) => {
+            renderSurface(groupContext, surface);
+            renderQueue.push({
+                surface,
+                group,
+                globalZIndex: group.zIndex,
+                localZIndex: surface.zIndex,
+            });
+        });
+
+        groupContext.globalAlpha = 1;
+        groupContext.globalCompositeOperation = 'source-over';
+
+        return group;
+    });
+
+    renderQueue.sort((left, right) => {
+        if (left.globalZIndex === right.globalZIndex) {
+            if (left.localZIndex === right.localZIndex) {
+                return left.surface.id.localeCompare(right.surface.id);
+            }
+            return left.localZIndex - right.localZIndex;
+        }
+        return left.globalZIndex - right.globalZIndex;
+    });
+
+    const preparedGroups = new Set<GroupId>();
+
+    renderQueue.forEach((item) => {
+        if (!preparedGroups.has(item.group.id)) {
+            preparedGroups.add(item.group.id);
+        }
+    });
+
+    const sortedGroups = groupedSurfaces
+        .filter((group) => preparedGroups.has(group.id))
         .sort((left, right) => {
             if (left.zIndex === right.zIndex) {
                 return left.id.localeCompare(right.id);
             }
             return left.zIndex - right.zIndex;
-        })
-        .forEach((surface) => {
-            renderSurface(context, surface);
         });
+
+    sortedGroups.forEach((group) => {
+        context.globalCompositeOperation = 'source-over';
+        context.globalAlpha = 1;
+        context.drawImage(
+            group.canvas,
+            0,
+            0,
+            group.canvas.width,
+            group.canvas.height,
+            0,
+            0,
+            cssWidth,
+            cssHeight
+        );
+        group.context.globalAlpha = 1;
+        group.context.globalCompositeOperation = 'source-over';
+    });
+
     context.globalAlpha = 1;
     context.globalCompositeOperation = 'source-over';
 };
@@ -228,6 +444,7 @@ const createCanvasManager = (): CanvasManager => {
     const context = ensureContext(outputCanvas);
     let state: CanvasManagerState = {
         surfaces: new Map<SurfaceId, SurfaceState>(),
+        groups: new Map<GroupId, GroupState>(),
         frameId: undefined,
     };
 
@@ -239,7 +456,7 @@ const createCanvasManager = (): CanvasManager => {
                     ? undefined
                     : globalThis.requestAnimationFrame(step),
         };
-        compositeSurfaces(context, outputCanvas, state.surfaces);
+        compositeSurfaces(context, outputCanvas, state);
     };
 
     const ensureAnimation = () => {
@@ -253,9 +470,15 @@ const createCanvasManager = (): CanvasManager => {
     };
 
     const releaseSurface = (id: SurfaceId) => {
+        const surface = state.surfaces.get(id);
+        const nextSurfaces = removeSurfaceState(state.surfaces, id);
+        const nextGroups = surface
+            ? removeSurfaceFromGroup(state.groups, surface.groupId, id)
+            : state.groups;
         state = {
             ...state,
-            surfaces: removeSurfaceState(state.surfaces, id),
+            surfaces: nextSurfaces,
+            groups: nextGroups,
         };
         if (state.surfaces.size === 0 && state.frameId !== undefined) {
             globalThis.cancelAnimationFrame(state.frameId);
@@ -287,10 +510,20 @@ const createCanvasManager = (): CanvasManager => {
         host.append(surfaceCanvas);
         document.body.append(host);
         surfaceCanvas.dataset.effectSurfaceId = id;
-        const initial = createSurfaceState(id, surfaceCanvas, input);
+        const groupId = input.groupId ?? 'default';
+        const groupZIndex = input.groupZIndex ?? 0;
+        const initial = createSurfaceState(id, groupId, surfaceCanvas, input);
+        const ensuredGroup = ensureGroup(state.groups, groupId, groupZIndex);
+        const nextGroups = addSurfaceToGroup(
+            ensuredGroup.groups,
+            groupId,
+            groupZIndex,
+            id
+        );
         state = {
             ...state,
             surfaces: new Map(state.surfaces).set(id, initial),
+            groups: nextGroups,
         };
         ensureAnimation();
 
@@ -384,6 +617,7 @@ const createCanvasManager = (): CanvasManager => {
 
         return {
             id,
+            groupId,
             canvas: surfaceCanvas,
             setLayout,
             setOpacity,
@@ -391,6 +625,19 @@ const createCanvasManager = (): CanvasManager => {
             setBlendMode,
             setSnapshot,
             setZIndex,
+            setGroupZIndex: (value: number) => {
+                state = {
+                    ...state,
+                    groups: updateGroupState(
+                        state.groups,
+                        groupId,
+                        (current) => ({
+                            ...current,
+                            zIndex: value,
+                        })
+                    ),
+                };
+            },
             dispose,
         } satisfies CanvasSurfaceHandle;
     };

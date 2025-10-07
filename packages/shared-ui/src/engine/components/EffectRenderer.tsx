@@ -7,14 +7,18 @@ import React, {
 } from 'react';
 import { Platform } from 'react-native';
 
+import { useEffectEngine } from '../hooks/useEffectEngine';
+import {
+    type Backend,
+    type EffectDescriptor,
+    type EngineState,
+    type Timeline,
+} from '../types';
 import {
     type CanvasSurfaceHandle,
     type CanvasSurfaceSnapshot,
     type SurfaceLayout,
-    getCanvasManager,
 } from '../canvasManager';
-import { useEffectEngine } from '../hooks/useEffectEngine';
-import { Backend, EffectDescriptor, EngineState, Timeline } from '../types';
 
 export type EffectRendererProps<State extends EngineState, UniformData> = {
     readonly descriptor: EffectDescriptor<State, UniformData>;
@@ -28,6 +32,8 @@ export type EffectRendererProps<State extends EngineState, UniformData> = {
     readonly onReady?: () => void;
     readonly onBackendChange?: (backend: string | undefined) => void;
     readonly zIndex?: number;
+    readonly groupId?: string;
+    readonly groupZIndex?: number;
     readonly blendMode?: GlobalCompositeOperation;
     readonly layout?: SurfaceLayout;
 };
@@ -137,12 +143,11 @@ export const EffectRenderer = <State extends EngineState, UniformData>({
     onReady,
     onBackendChange,
     zIndex = 0,
+    groupId,
+    groupZIndex,
     blendMode = 'source-over',
     layout,
 }: EffectRendererProps<State, UniformData>): React.ReactElement | null => {
-    const [engineCanvas, setEngineCanvas] = useState<HTMLCanvasElement | null>(
-        null
-    );
     const [backendId, setBackendId] = useState<string | undefined>(undefined);
     const [hasInitError, setHasInitError] = useState(false);
     const [activeSnapshotIndex, setActiveSnapshotIndex] = useState<
@@ -210,41 +215,6 @@ export const EffectRenderer = <State extends EngineState, UniformData>({
     }, [descriptor.id, styleState.opacity, styleState.visible]);
 
     useEffect(() => {
-        if (Platform.OS !== 'web') {
-            return undefined;
-        }
-        const handle = getCanvasManager().registerSurface({
-            descriptorId: descriptor.id,
-            zIndex,
-            blendMode,
-        });
-        surfaceHandleRef.current = handle;
-        layoutRef.current = resolveLayoutFromStyle(layout, containerStyle);
-        handle.setLayout(layoutRef.current);
-        if (handle.canvas.dataset.effectDescriptorId !== descriptor.id) {
-            handle.canvas.dataset.effectDescriptorId = descriptor.id;
-        }
-        setEngineCanvas(handle.canvas);
-        applySurfaceVisibility();
-        return () => {
-            surfaceHandleRef.current = null;
-            snapshotBuffersRef.current = [];
-            lastSnapshotRef.current = undefined;
-            handle.setSnapshot(undefined);
-            handle.dispose();
-            setEngineCanvas(null);
-        };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [
-        applySurfaceVisibility,
-        blendMode,
-        containerStyle,
-        descriptor.id,
-        layout,
-        zIndex,
-    ]);
-
-    useEffect(() => {
         const handle = surfaceHandleRef.current;
         if (!handle) {
             return;
@@ -267,23 +237,24 @@ export const EffectRenderer = <State extends EngineState, UniformData>({
         }
         layoutRef.current = resolveLayoutFromStyle(layout, containerStyle);
         handle.setLayout(layoutRef.current);
-        if (engineCanvas) {
+        const handleCanvas = surfaceHandleRef.current?.canvas;
+        if (handleCanvas) {
             const { current } = layoutRef;
             if (current) {
                 const widthPx = toPixels(current.width, current.dpr);
                 const heightPx = toPixels(current.height, current.dpr);
-                if (engineCanvas.width !== widthPx) {
-                    engineCanvas.width = widthPx;
+                if (handleCanvas.width !== widthPx) {
+                    handleCanvas.width = widthPx;
                 }
-                if (engineCanvas.height !== heightPx) {
-                    engineCanvas.height = heightPx;
+                if (handleCanvas.height !== heightPx) {
+                    handleCanvas.height = heightPx;
                 }
-                engineCanvas.style.width = `${current.width}px`;
-                engineCanvas.style.height = `${current.height}px`;
+                handleCanvas.style.width = `${current.width}px`;
+                handleCanvas.style.height = `${current.height}px`;
             }
         }
         applySurfaceVisibility();
-    }, [applySurfaceVisibility, containerStyle, engineCanvas, layout]);
+    }, [applySurfaceVisibility, containerStyle, layout]);
 
     const hideSnapshot = useCallback(() => {
         setSnapshotVisible(false);
@@ -296,7 +267,7 @@ export const EffectRenderer = <State extends EngineState, UniformData>({
 
     const captureSnapshot = useCallback(() => {
         const handle = surfaceHandleRef.current;
-        const canvas = engineCanvas;
+        const canvas = handle?.canvas ?? null;
         if (!handle || !canvas || canvas.width <= 0 || canvas.height <= 0) {
             return false;
         }
@@ -340,7 +311,6 @@ export const EffectRenderer = <State extends EngineState, UniformData>({
     }, [
         activeSnapshotIndex,
         applySurfaceVisibility,
-        engineCanvas,
         snapshotStyle?.opacity,
         styleState.opacity,
         styleState.visible,
@@ -372,10 +342,13 @@ export const EffectRenderer = <State extends EngineState, UniformData>({
     const engineResult = useEffectEngine({
         descriptor,
         timeline,
-        canvas: engineCanvas,
         state,
         backends: resolvedBackends,
         desiredBackend: normalizedPreferredBackend,
+        zIndex,
+        groupId,
+        groupZIndex,
+        blendMode,
         onBackendChange: (next) => {
             if (!next) {
                 const capturedImmediately = captureSnapshot();
@@ -398,11 +371,41 @@ export const EffectRenderer = <State extends EngineState, UniformData>({
         },
         onReady: handleReady,
         onError: (error) => {
-            setEngineCanvas(null);
             setHasInitError(true);
             onFailure?.(error);
         },
     });
+
+    useEffect(() => {
+        if (Platform.OS !== 'web') {
+            return undefined;
+        }
+        const { handle } = engineResult;
+        if (!handle) {
+            return undefined;
+        }
+        surfaceHandleRef.current = handle;
+        layoutRef.current = resolveLayoutFromStyle(layout, containerStyle);
+        handle.setLayout(layoutRef.current);
+        if (handle.canvas.dataset.effectDescriptorId !== descriptor.id) {
+            handle.canvas.dataset.effectDescriptorId = descriptor.id;
+        }
+        applySurfaceVisibility();
+        return () => {
+            surfaceHandleRef.current = null;
+            snapshotBuffersRef.current = [];
+            lastSnapshotRef.current = undefined;
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [
+        applySurfaceVisibility,
+        blendMode,
+        containerStyle,
+        descriptor.id,
+        engineResult.handle,
+        layout,
+        zIndex,
+    ]);
 
     useEffect(() => {
         if (!shouldCaptureSnapshot) {
@@ -449,28 +452,30 @@ export const EffectRenderer = <State extends EngineState, UniformData>({
     }, [engineResult.backendId]);
 
     useEffect(() => {
-        backendActiveRef.current = Boolean(engineCanvas);
+        const canvas = surfaceHandleRef.current?.canvas ?? null;
+        backendActiveRef.current = Boolean(canvas);
         applySurfaceVisibility();
-    }, [applySurfaceVisibility, engineCanvas]);
+    }, [applySurfaceVisibility, engineResult.handle]);
 
     useEffect(() => {
         const handle = surfaceHandleRef.current;
         const { current } = layoutRef;
-        if (!handle || !current || !engineCanvas) {
+        const canvas = handle?.canvas;
+        if (!handle || !current || !canvas) {
             return;
         }
         const widthPx = toPixels(current.width, current.dpr);
         const heightPx = toPixels(current.height, current.dpr);
-        if (engineCanvas.width !== widthPx) {
-            engineCanvas.width = widthPx;
+        if (canvas.width !== widthPx) {
+            canvas.width = widthPx;
         }
-        if (engineCanvas.height !== heightPx) {
-            engineCanvas.height = heightPx;
+        if (canvas.height !== heightPx) {
+            canvas.height = heightPx;
         }
-        engineCanvas.style.width = `${current.width}px`;
-        engineCanvas.style.height = `${current.height}px`;
+        canvas.style.width = `${current.width}px`;
+        canvas.style.height = `${current.height}px`;
         handle.setLayout(current);
-    }, [engineCanvas]);
+    }, [engineResult.handle]);
 
     const containerOpacity = snapshotVisible
         ? 1

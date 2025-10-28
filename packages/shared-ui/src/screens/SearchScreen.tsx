@@ -13,6 +13,7 @@ import { SearchBox, PostItem } from '../sections';
 import { useSearchFilter, useNexusRouter } from '../hooks';
 import { SearchContext } from '../providers';
 import { ChevronDown } from '../icons';
+import { BorderRadius, Spacing, Typography } from '../constants/designSystem';
 
 type SearchResult = {
     id: string;
@@ -149,8 +150,8 @@ export const SearchScreen = () => {
                 ))}
 
                 {filteredResults.length === 0 && (
-                    <View style={{ marginTop: 20 }}>
-                        <Text style={{ color: theme.colors.ActiveText }}>
+                    <View style={styles.emptyState}>
+                        <Text style={styles.emptyStateText}>
                             No results found for "{searchText}".
                         </Text>
                     </View>
@@ -169,36 +170,51 @@ function createStyles(theme: Theme) {
         headerRow: {
             flexDirection: 'row',
             alignItems: 'center',
-            paddingHorizontal: 10,
-            paddingVertical: 10,
+            paddingHorizontal: Spacing.XL,
+            paddingVertical: Spacing.MD,
             borderBottomWidth: 1,
             borderBottomColor: theme.colors.TextInput,
+            backgroundColor: theme.colors.PrimaryBackground,
         },
         filterRow: {
             flexDirection: 'row',
             alignItems: 'center',
-            marginLeft: 10,
+            marginLeft: Spacing.LG,
+            gap: Spacing.SM,
         },
         filterButton: {
             flexDirection: 'row',
             alignItems: 'center',
-            marginRight: 10,
+            paddingVertical: Spacing.XS,
+            paddingHorizontal: Spacing.SM,
+            borderRadius: BorderRadius.ExtraSmall,
+            backgroundColor: theme.colors.TertiaryBackground,
         },
         filterButtonText: {
+            ...Typography.Caption,
+            fontFamily: theme.fonts.primary?.regular,
             color: theme.colors.InactiveText,
-            fontFamily: 'Roboto_400Regular',
-            marginRight: 4,
-            fontSize: 13,
+            marginRight: Spacing.XS,
         },
         filterIcon: {
-            marginTop: 1,
+            marginTop: Spacing.XS / 2,
         },
         searchBoxContainer: {
-            padding: 10,
+            paddingHorizontal: Spacing.XL,
+            paddingVertical: Spacing.MD,
         },
         resultsContainer: {
             flex: 1,
-            paddingHorizontal: 10,
+            paddingHorizontal: Spacing.XL,
+        },
+        emptyState: {
+            marginTop: Spacing.XXXL,
+            alignItems: 'center',
+        },
+        emptyStateText: {
+            ...Typography.Code,
+            fontFamily: theme.fonts.primary?.regular,
+            color: theme.colors.ActiveText,
         },
     });
 }

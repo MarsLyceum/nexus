@@ -15,6 +15,7 @@ import { Friend } from '../types';
 import { NexusButton } from '../buttons';
 import { CheckMark } from '../icons';
 import { getOnlineStatusDotColor } from '../utils';
+import { BorderRadius, Spacing, Typography } from '../constants/designSystem';
 
 import { MiniModal } from './MiniModal';
 import { NexusImage } from './NexusImage';
@@ -79,10 +80,10 @@ export const SendMessageModal: React.FC<SendMessageModalProps> = ({
             anchorPosition={anchorPosition}
             containerStyle={[
                 styles.container,
-                { width: Math.min(440, viewportWidth - 32) },
+                { width: Math.min(440, viewportWidth - Spacing.XXXL) },
             ]}
             layout="below right"
-            gap={20}
+            gap={Spacing.XL}
         >
             {/* Header */}
             <View style={styles.header}>
@@ -177,82 +178,83 @@ function createStyles(theme: Theme) {
     return StyleSheet.create({
         avatarAndDot: {
             position: 'relative',
-            marginRight: 8,
+            marginRight: Spacing.SM,
         },
         statusDot: {
             position: 'absolute',
             bottom: 0,
-            right: 5,
-            width: 15,
-            height: 15,
-            borderRadius: 7,
+            right: Spacing.XS + 1,
+            width: Spacing.LG - 1,
+            height: Spacing.LG - 1,
+            borderRadius: BorderRadius.ExtraSmall - 1,
             borderWidth: 2,
             borderColor: theme.colors.SecondaryBackground,
         },
         container: {
             backgroundColor: theme.colors.TertiaryBackground,
-            borderRadius: 8,
-            padding: 16,
+            borderRadius: BorderRadius.ExtraSmall,
+            padding: Spacing.LG,
         },
         header: {
-            marginBottom: 12,
+            marginBottom: Spacing.MD,
         },
         title: {
-            fontSize: 18,
-            fontWeight: 'bold',
+            ...Typography.SectionHeading,
+            fontFamily: theme.fonts.primary?.bold,
             color: theme.colors.ActiveText,
-            fontFamily: 'Roboto_700Bold',
         },
         caption: {
-            fontSize: 12,
+            ...Typography.Caption,
+            fontFamily: theme.fonts.secondary?.regular,
             color: theme.colors.InactiveText,
-            marginTop: 2,
+            marginTop: Spacing.XS / 2,
         },
         searchInput: {
+            ...Typography.Code,
+            fontFamily: theme.fonts.primary?.regular,
             backgroundColor: theme.colors.TextInput,
-            borderRadius: 6,
-            paddingVertical: 6,
-            paddingHorizontal: 10,
-            fontSize: 14,
+            borderRadius: BorderRadius.ExtraSmall - 2,
+            paddingVertical: Spacing.XS + 2,
+            paddingHorizontal: Spacing.MD,
             color: theme.colors.ActiveText,
-            marginBottom: 12,
+            marginBottom: Spacing.MD,
         },
         list: {
-            marginBottom: 12,
+            marginBottom: Spacing.MD,
         },
         row: {
             flexDirection: 'row',
             alignItems: 'center',
-            paddingVertical: 6,
-            paddingHorizontal: 8,
-            borderRadius: 4,
+            paddingVertical: Spacing.XS + 2,
+            paddingHorizontal: Spacing.SM,
+            borderRadius: BorderRadius.ExtraSmall - 4,
         },
         rowPressed: {
             backgroundColor: theme.colors.SecondaryBackground,
         },
         avatar: {
-            borderRadius: 16,
-            marginRight: 10,
+            borderRadius: BorderRadius.Medium,
+            marginRight: Spacing.MD,
         },
         textCol: {
             flex: 1,
         },
         displayName: {
+            ...Typography.Code,
+            fontFamily: theme.fonts.primary?.bold,
             color: theme.colors.ActiveText,
-            fontSize: 14,
-            fontWeight: 'bold',
-            fontFamily: 'Roboto_700Bold',
         },
         userName: {
+            ...Typography.Caption,
+            fontFamily: theme.fonts.secondary?.regular,
             color: theme.colors.InactiveText,
-            fontSize: 12,
         },
         checkbox: {
-            width: 18,
-            height: 18,
+            width: Spacing.LG + 2,
+            height: Spacing.LG + 2,
             borderWidth: 2,
             borderColor: theme.colors.InactiveText,
-            borderRadius: 4,
+            borderRadius: BorderRadius.ExtraSmall - 4,
             justifyContent: 'center',
             alignItems: 'center',
         },
@@ -265,18 +267,17 @@ function createStyles(theme: Theme) {
         },
         createBtn: {
             backgroundColor: theme.colors.Primary,
-            paddingVertical: 10,
-            paddingHorizontal: 20,
-            borderRadius: 4,
+            paddingVertical: Spacing.MD,
+            paddingHorizontal: Spacing.XL,
+            borderRadius: BorderRadius.ExtraSmall - 4,
         },
         createBtnDisabled: {
             opacity: 0.4,
         },
         createBtnTxt: {
+            ...Typography.Code,
+            fontFamily: theme.fonts.primary?.bold,
             color: theme.colors.ActiveText,
-            fontSize: 14,
-            fontWeight: 'bold',
-            fontFamily: 'Roboto_700Bold',
         },
     });
 }

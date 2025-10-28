@@ -1,6 +1,14 @@
 import React, { useMemo } from 'react';
 import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
+
 import { useTheme, Theme } from '../theme';
+import {
+    BorderRadius,
+    Spacing,
+    Opacity,
+    Typography,
+} from '../constants/designSystem';
+import { toRgba } from '../utils';
 
 type CreateContentButtonProps = {
     buttonText: string;
@@ -20,9 +28,7 @@ export const CreateContentButton: React.FC<CreateContentButtonProps> = ({
     return (
         <View style={styles.bottomSection}>
             <TouchableOpacity style={styles.input} onPress={onPress}>
-                <Text style={{ color: theme.colors.InactiveText }}>
-                    {buttonText}
-                </Text>
+                <Text style={styles.inputText}>{buttonText}</Text>
             </TouchableOpacity>
         </View>
     );
@@ -33,18 +39,24 @@ function createCreateContentButtonStyles(theme: Theme) {
         bottomSection: {
             height: 60,
             borderTopWidth: 1,
-            borderTopColor: '#4A3A5A',
+            borderTopColor: toRgba(
+                theme.colors.ActiveText,
+                Opacity.BorderMedium
+            ),
             backgroundColor: theme.colors.SecondaryBackground,
             justifyContent: 'center',
-            paddingHorizontal: 10,
+            paddingHorizontal: Spacing.SM,
         },
         input: {
             backgroundColor: theme.colors.TextInput,
-            color: theme.colors.ActiveText,
-            paddingVertical: 10,
-            paddingHorizontal: 15,
-            borderRadius: 20,
-            fontSize: 14,
+            paddingVertical: Spacing.SM,
+            paddingHorizontal: Spacing.LG,
+            borderRadius: BorderRadius.XL,
+        },
+        inputText: {
+            ...Typography.Code,
+            fontFamily: theme.fonts.primary?.regular,
+            color: theme.colors.InactiveText,
         },
     });
 }

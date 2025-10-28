@@ -5,7 +5,7 @@ import React, {
     useLayoutEffect,
     useMemo,
 } from 'react';
-import { View, Animated, StyleSheet, ScrollView } from 'react-native';
+import { View, Animated, StyleSheet, ScrollView, Platform } from 'react-native';
 import { DrawerContentComponentProps } from '@react-navigation/drawer';
 import { useApolloClient } from '@apollo/client';
 import isEqual from 'lodash.isequal';
@@ -32,6 +32,7 @@ import { FETCH_USER_GROUPS_QUERY } from '../queries';
 import { SIDEBAR_WIDTH } from '../constants';
 import { detectEnvironment, Environment, getItem, setItem } from '../utils';
 import { useTheme, Theme } from '../theme';
+import { BorderRadius, Spacing, Typography } from '../constants/designSystem';
 
 // Enhanced helper function to merge groups from cache and fetched data.
 // It uses lodash.isequal for deep comparison and preserves object identity when possible.
@@ -65,8 +66,8 @@ const mergeGroups = (
     });
 };
 
-const BUTTON_MARGIN_TOP = 32;
-const CONTENT_PADDING_LEFT = 10;
+const BUTTON_MARGIN_TOP = Spacing.XXXL;
+const CONTENT_PADDING_LEFT = Spacing.MD;
 
 function createStyles(theme: Theme) {
     return StyleSheet.create({
@@ -84,15 +85,15 @@ function createStyles(theme: Theme) {
             position: 'relative',
         },
         buttonContainer: {
-            marginBottom: 16,
+            marginBottom: Spacing.LG,
         },
         highlight: {
             position: 'absolute',
             left: -CONTENT_PADDING_LEFT,
             width: 4,
             backgroundColor: theme.colors.ActiveText,
-            borderTopRightRadius: 20,
-            borderBottomRightRadius: 20,
+            borderTopRightRadius: BorderRadius.Medium,
+            borderBottomRightRadius: BorderRadius.Medium,
             zIndex: 999,
         },
         skeletonButton: {
@@ -100,16 +101,16 @@ function createStyles(theme: Theme) {
             alignItems: 'center',
         },
         skeletonAvatar: {
-            width: 45,
-            height: 45,
-            borderRadius: 20,
+            width: Spacing.XXXL + Spacing.SM,
+            height: Spacing.XXXL + Spacing.SM,
+            borderRadius: BorderRadius.XL,
             backgroundColor: theme.colors.InactiveText,
-            marginRight: 10,
+            marginRight: Spacing.MD,
         },
         skeletonText: {
-            width: 100,
-            height: 16,
-            borderRadius: 4,
+            width: Spacing.XXXL * 2,
+            height: Spacing.MD,
+            borderRadius: BorderRadius.ExtraSmall,
             backgroundColor: theme.colors.InactiveText,
         },
     });
@@ -312,11 +313,12 @@ export const SidebarScreen = ({
                 ref={sidebarButtonsContainerRef}
             >
                 <Animated.View
-                    pointerEvents="none"
-                    style={[
+                    pointerEvents={Platform.OS === 'web' ? undefined : 'none'}
+                    style={StyleSheet.flatten([
                         styles.highlight,
                         { top: highlightTop, height: highlightHeight },
-                    ]}
+                        Platform.OS === 'web' ? { pointerEvents: 'none' } : {},
+                    ])}
                 />
                 <View
                     ref={staticButtonRefs.friends}

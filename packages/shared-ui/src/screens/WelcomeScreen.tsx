@@ -21,22 +21,23 @@ import {
 } from '../constants';
 import { Footer } from '..';
 import { useTheme, Theme } from '../theme';
+import { Spacing, Typography } from '../constants/designSystem';
 
 const isWeb = Platform.OS === 'web';
 
 function createStyles(theme: Theme) {
     return StyleSheet.create({
         topButton: {
-            marginTop: 63,
+            marginTop: Spacing.XXXL + Spacing.XXXL - 1,
         },
         bottomButton: {
-            marginTop: 48,
+            marginTop: Spacing.XXXL + Spacing.LG,
         },
         centeredContainer: {
             flex: 1,
             justifyContent: 'center',
             alignItems: 'center',
-            paddingVertical: 20,
+            paddingVertical: Spacing.XL,
             width: '100%',
         },
         outerContainer: {
@@ -60,9 +61,9 @@ function createStyles(theme: Theme) {
             alignItems: 'center',
         },
         tagline: {
-            fontFamily: 'Lato_700Bold',
-            fontSize: 24,
-            marginTop: 63,
+            ...Typography.H2,
+            fontFamily: theme.fonts.primary?.bold,
+            marginTop: Spacing.XXXL + Spacing.XXXL - 1,
             color: theme.colors.MainText,
         },
     });

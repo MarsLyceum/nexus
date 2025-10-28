@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { TouchableOpacity, StyleSheet, View, Text, Image } from 'react-native';
 
 import { useTheme, Theme } from '../theme';
+import { BorderRadius, Spacing, Typography } from '../constants/designSystem';
 import { NexusImage } from '../small-components/NexusImage';
 
 export const GroupButton = ({
@@ -79,19 +80,18 @@ function createGroupButtonStyles(theme: Theme) {
             height: 45,
             alignItems: 'center',
             justifyContent: 'center',
-            borderRadius: 10, // Keeps edges rounded
-            overflow: 'hidden', // Prevents image overflow outside button
+            borderRadius: BorderRadius.SM,
+            overflow: 'hidden',
         },
         image: {
-            width: '100%', // Fills the full button
+            width: '100%',
             height: '100%',
         },
         text: {
-            marginLeft: 8, // Spacing between the button and the text
-            fontSize: 16,
+            ...Typography.Body,
+            fontFamily: theme.fonts.primary?.semibold,
+            marginLeft: Spacing.SM,
             color: theme.colors.ActiveText,
-            fontFamily: 'Roboto_500Medium',
-            fontWeight: 'semibold',
         },
     });
 }

@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { StyleSheet, Platform } from 'react-native';
 
 import { useTheme, Theme } from '../theme';
+import { toRgba } from '../utils';
 
 import { MarkdownInputBase, MarkdownInputBaseProps } from './MarkdownInputBase';
 
@@ -41,7 +42,9 @@ function createStyles(theme: Theme) {
             position: 'relative',
             backgroundColor: theme.colors.TextInput,
             flex: 1,
-            borderRadius: 20,
+            borderRadius: 999,
+            borderWidth: 1,
+            borderColor: toRgba(theme.colors.ActiveText, 0.08),
         },
         inputTextOverlay: {
             position: 'absolute',
@@ -54,12 +57,12 @@ function createStyles(theme: Theme) {
             textAlignVertical: 'center',
             lineHeight: 20,
             zIndex: 1,
-            borderRadius: 20,
+            borderRadius: 999,
         },
         input: {
             height: 40,
             backgroundColor: 'transparent',
-            borderRadius: 20,
+            borderRadius: 999,
             fontSize: 14,
             textAlignVertical: 'center',
             color: 'transparent',

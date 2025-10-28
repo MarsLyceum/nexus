@@ -12,6 +12,8 @@ import {
 } from 'react-native';
 
 import { useTheme, Theme } from '../theme';
+import { toRgba } from '../utils';
+import { BorderRadius, Spacing, Opacity } from '../constants/designSystem';
 
 export type BottomSheetProps = {
     visible: boolean;
@@ -257,26 +259,35 @@ function createStyles(theme: Theme, screenHeight: number) {
     return StyleSheet.create({
         overlay: {
             flex: 1,
-            backgroundColor: 'rgba(0,0,0,0.4)',
+            backgroundColor: 'rgba(0,0,0,0.7)',
         },
         bottomSheetContainer: {
             position: 'absolute',
             left: 0,
             right: 0,
             height: screenHeight,
-            backgroundColor: theme.colors.PrimaryBackground,
-            borderTopLeftRadius: 12,
-            borderTopRightRadius: 12,
+            backgroundColor: theme.colors.SecondaryBackground,
+            borderTopLeftRadius: BorderRadius.Large,
+            borderTopRightRadius: BorderRadius.Large,
+            borderWidth: 1,
+            borderBottomWidth: 0,
+            borderColor: toRgba(theme.colors.ActiveText, Opacity.Border),
+            shadowColor: theme.colors.Primary,
+            shadowOpacity: 0.35,
+            shadowRadius: 32,
+            shadowOffset: { width: 0, height: -8 },
+            elevation: 20,
         },
         handleBarContainer: {
             alignItems: 'center',
-            paddingVertical: 16,
+            paddingVertical: Spacing.LG,
         },
         handleBar: {
-            width: 36,
-            height: 4,
-            borderRadius: 2,
-            backgroundColor: theme.colors.ActiveText,
+            width: 48,
+            height: 5,
+            borderRadius: BorderRadius.Pill,
+            backgroundColor: theme.colors.InactiveText,
+            opacity: 0.5,
         },
     });
 }

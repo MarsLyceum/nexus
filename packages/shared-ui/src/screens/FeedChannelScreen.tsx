@@ -22,11 +22,17 @@ import {
 } from '../hooks';
 import { CreatePostModal } from '../small-components';
 import { detectEnvironment } from '../utils';
+import {
+    BorderRadius,
+    Spacing,
+    Typography,
+    Opacity,
+} from '../constants/designSystem';
 
 // Create a hook to read our screen parameters.
 // const { useParam } = createNexusParam<{ channelId: string }>();
 
-const BOTTOM_INPUT_HEIGHT = 60;
+const BOTTOM_INPUT_HEIGHT = Spacing.XXXL + Spacing.SM;
 
 function createStyles(theme: Theme) {
     return StyleSheet.create({
@@ -36,47 +42,60 @@ function createStyles(theme: Theme) {
             backgroundColor: theme.colors.SecondaryBackground,
         },
         feedList: {
-            padding: 15,
+            paddingHorizontal: Spacing.XL,
+            paddingTop: Spacing.LG,
             paddingBottom: BOTTOM_INPUT_HEIGHT,
+            gap: Spacing.LG,
         },
         skeletonContainer: {
             backgroundColor: theme.colors.PrimaryBackground,
-            padding: 15,
-            marginBottom: 10,
-            borderRadius: 8,
+            padding: Spacing.XL,
+            borderRadius: BorderRadius.ExtraSmall,
             shadowColor: theme.colors.ActiveText,
-            shadowOpacity: 0.1,
-            shadowRadius: 5,
+            shadowOpacity: Opacity.BorderMedium,
+            shadowRadius: BorderRadius.ExtraSmall,
             elevation: 2,
         },
         skeletonHeader: {
             flexDirection: 'row',
             alignItems: 'center',
-            marginBottom: 10,
+            marginBottom: Spacing.MD,
         },
         skeletonAvatar: {
-            width: 40,
-            height: 40,
-            borderRadius: 20,
-            backgroundColor: theme.colors.InactiveText,
+            width: Spacing.XXXL + Spacing.SM,
+            height: Spacing.XXXL + Spacing.SM,
+            borderRadius: BorderRadius.XL,
+            backgroundColor: toRgba(
+                theme.colors.InactiveText,
+                Opacity.BorderMedium
+            ),
         },
         skeletonTextBlock: {
-            height: 20,
-            backgroundColor: theme.colors.InactiveText,
-            borderRadius: 4,
-            marginLeft: 10,
+            height: Spacing.LG,
+            backgroundColor: toRgba(
+                theme.colors.InactiveText,
+                Opacity.BorderMedium
+            ),
+            borderRadius: BorderRadius.ExtraSmall,
+            marginLeft: Spacing.MD,
             flex: 1,
         },
         skeletonTitle: {
-            height: 20,
-            backgroundColor: theme.colors.InactiveText,
-            borderRadius: 4,
-            marginBottom: 10,
+            height: Spacing.LG,
+            backgroundColor: toRgba(
+                theme.colors.InactiveText,
+                Opacity.BorderMedium
+            ),
+            borderRadius: BorderRadius.ExtraSmall,
+            marginBottom: Spacing.MD,
         },
         skeletonContent: {
-            height: 60,
-            backgroundColor: theme.colors.InactiveText,
-            borderRadius: 4,
+            height: Spacing.XXXL,
+            backgroundColor: toRgba(
+                theme.colors.InactiveText,
+                Opacity.BorderMedium
+            ),
+            borderRadius: BorderRadius.ExtraSmall,
         },
         createContentButtonContainer: {
             position: 'absolute',
@@ -84,6 +103,9 @@ function createStyles(theme: Theme) {
             left: 0,
             right: 0,
             height: BOTTOM_INPUT_HEIGHT,
+            paddingHorizontal: Spacing.XL,
+            paddingTop: Spacing.MD,
+            backgroundColor: theme.colors.SecondaryBackground,
         },
     });
 }

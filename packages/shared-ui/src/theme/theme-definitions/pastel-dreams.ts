@@ -1,5 +1,6 @@
 // src/theme/pastel-dreams.ts
 import { COLORS as DefaultColors } from '../../constants/colors';
+import { defaultFontConfig } from '../../constants/fonts';
 import type { Theme } from '../themes';
 
 export const PastelDreams: Theme[] = [
@@ -19,6 +20,7 @@ export const PastelDreams: Theme[] = [
             MainText: '#1a1919',
             InactiveText: '#262424',
         },
+        fonts: defaultFontConfig,
     },
     {
         name: 'Peach Bliss',
@@ -36,6 +38,7 @@ export const PastelDreams: Theme[] = [
             MainText: '#1a1919',
             InactiveText: '#262424',
         },
+        fonts: defaultFontConfig,
     },
     {
         name: 'Mint Whisper',
@@ -53,6 +56,7 @@ export const PastelDreams: Theme[] = [
             MainText: '#1a1919',
             InactiveText: '#262424',
         },
+        fonts: defaultFontConfig,
     },
     {
         name: 'Baby Blue',
@@ -70,6 +74,7 @@ export const PastelDreams: Theme[] = [
             MainText: '#1a1919',
             InactiveText: '#262424',
         },
+        fonts: defaultFontConfig,
     },
     {
         name: 'Soft Coral',
@@ -87,6 +92,7 @@ export const PastelDreams: Theme[] = [
             MainText: '#1a1919',
             InactiveText: '#262424',
         },
+        fonts: defaultFontConfig,
     },
     {
         name: 'Vanilla Cream',
@@ -104,6 +110,7 @@ export const PastelDreams: Theme[] = [
             MainText: '#1a1919',
             InactiveText: '#262424',
         },
+        fonts: defaultFontConfig,
     },
     {
         name: 'Lilac Mist',
@@ -121,6 +128,7 @@ export const PastelDreams: Theme[] = [
             MainText: '#1a1919',
             InactiveText: '#262424',
         },
+        fonts: defaultFontConfig,
     },
     {
         name: 'Honeydew',
@@ -138,6 +146,7 @@ export const PastelDreams: Theme[] = [
             MainText: '#1a1919',
             InactiveText: '#262424',
         },
+        fonts: defaultFontConfig,
     },
     {
         name: 'Rosewater',
@@ -155,6 +164,7 @@ export const PastelDreams: Theme[] = [
             MainText: '#1a1919',
             InactiveText: '#262424',
         },
+        fonts: defaultFontConfig,
     },
     {
         name: 'Pale Sunlight',
@@ -172,6 +182,7 @@ export const PastelDreams: Theme[] = [
             MainText: '#1a1919',
             InactiveText: '#262424',
         },
+        fonts: defaultFontConfig,
     },
     {
         name: 'Dusky Mauve',
@@ -189,6 +200,7 @@ export const PastelDreams: Theme[] = [
             MainText: '#1a1919',
             InactiveText: '#262424',
         },
+        fonts: defaultFontConfig,
     },
     {
         name: 'Smoky Mint',
@@ -206,5 +218,6 @@ export const PastelDreams: Theme[] = [
             MainText: '#1a1919',
             InactiveText: '#262424',
         },
+        fonts: defaultFontConfig,
     },
 ];

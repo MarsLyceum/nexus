@@ -19,7 +19,7 @@ export default function RootLayout({
     children: React.ReactNode;
 }) {
     return (
-        <html lang="en">
+        <html lang="en" suppressHydrationWarning>
             <head>
                 {/* 1) viewport meta for proper mobile/SSR scaling */}
                 <meta
@@ -42,6 +42,7 @@ export default function RootLayout({
                 />
             </head>
             <body
+                suppressHydrationWarning
                 style={{
                     margin: 0,
                     padding: 0,

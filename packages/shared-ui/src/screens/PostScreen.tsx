@@ -1,7 +1,6 @@
 import React, { useEffect, useContext, useCallback, useMemo } from 'react';
 import {
     View,
-    ScrollView,
     StyleSheet,
     SafeAreaView,
     KeyboardAvoidingView,
@@ -32,6 +31,7 @@ import {
     SkeletonComment,
     CommentEditor,
 } from '../small-components';
+import { NexusScrollView } from '../styles';
 import { useTheme } from '../theme';
 
 type PostScreenProps = {
@@ -213,16 +213,26 @@ export const PostScreen: React.FC<PostScreenProps> = (props) => {
         return (
             <SafeAreaView style={computedStyles.safeContainer}>
                 <View style={computedStyles.mainContainer}>
-                    <ScrollView
-                        style={computedStyles.scrollSection}
-                        contentContainerStyle={computedStyles.scrollView}
+                    <NexusScrollView
+                        style={
+                            computedStyles.scrollSection as unknown as Record<
+                                string,
+                                unknown
+                            >
+                        }
+                        contentContainerStyle={
+                            computedStyles.scrollView as unknown as Record<
+                                string,
+                                unknown
+                            >
+                        }
                         keyboardShouldPersistTaps="handled"
                     >
                         <SkeletonPostItem />
                         <SkeletonComment />
                         <SkeletonComment />
                         <SkeletonComment />
-                    </ScrollView>
+                    </NexusScrollView>
                 </View>
             </SafeAreaView>
         );
@@ -257,9 +267,19 @@ export const PostScreen: React.FC<PostScreenProps> = (props) => {
             {/* @ts-expect-error web only */}
             <ContainerComponent {...containerProps}>
                 <View style={computedStyles.mainContainer}>
-                    <ScrollView
-                        style={computedStyles.scrollSection}
-                        contentContainerStyle={computedStyles.scrollView}
+                    <NexusScrollView
+                        style={
+                            computedStyles.scrollSection as unknown as Record<
+                                string,
+                                unknown
+                            >
+                        }
+                        contentContainerStyle={
+                            computedStyles.scrollView as unknown as Record<
+                                string,
+                                unknown
+                            >
+                        }
                         keyboardShouldPersistTaps="handled"
                         scrollEventThrottle={16}
                     >
@@ -300,7 +320,7 @@ export const PostScreen: React.FC<PostScreenProps> = (props) => {
                             postId={postData.id}
                             parentCommentId={parentCommentId}
                         />
-                    </ScrollView>
+                    </NexusScrollView>
                     {!isComputer && (
                         // Show CreateContentButton on mobile; reset comment context before navigating.
                         <View

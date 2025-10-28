@@ -15,7 +15,7 @@ export const useSendMessage = (
         channelId: string,
         messageText: string,
         attachments: Attachment[],
-        refreshMessages: () => void
+        refreshChannelMessages: () => void
     ) => {
         if (!messageText.trim() && attachments.length === 0) return;
         try {
@@ -33,8 +33,6 @@ export const useSendMessage = (
                 postedAt: new Date(), // Stored as Date for local state
                 avatar: 'https://picsum.photos/50?random=10',
                 edited: false,
-                messageType: 'message',
-                // Optionally include additional fields such as username if available.
             };
 
             // Immediately update the local state with the optimistic message.
@@ -52,8 +50,8 @@ export const useSendMessage = (
                 // Provide an optimistic response for completeness.
                 optimisticResponse: {
                     __typename: 'Mutation',
-                    createGroupChannelMessage: {
-                        __typename: 'Message',
+                    createTextChannelMessage: {
+                        __typename: 'TextChannelMessage',
                         ...optimisticMessage,
                         postedAt: new Date().toISOString(),
                         attachmentUrls: attachmentsArray,
@@ -67,7 +65,7 @@ export const useSendMessage = (
                 },
             });
             Keyboard.dismiss();
-            refreshMessages();
+            refreshChannelMessages();
         } catch (error) {
             console.error('Error creating message:', error);
             // Optionally: Remove or flag the optimistic message from local state if the mutation fails.

@@ -16,12 +16,18 @@ import {
     SearchProvider,
     CurrentCommentProvider,
     PortalProvider,
+    AnimationProvider,
 } from 'shared-ui/providers';
 import { StatusManager, Login } from 'shared-ui/small-components';
 import { createApolloClient } from 'shared-ui/utils';
 import { useTheme, ThemeProvider } from 'shared-ui/theme';
 import { useFonts } from 'expo-font';
-import { Lato_400Regular, Lato_700Bold } from '@expo-google-fonts/lato';
+import {
+    Lato_400Regular,
+    Lato_400Regular_Italic,
+    Lato_700Bold,
+    Lato_700Bold_Italic,
+} from '@expo-google-fonts/lato';
 import {
     Roboto_400Regular,
     Roboto_400Regular_Italic,
@@ -30,6 +36,22 @@ import {
     Roboto_700Bold,
     Roboto_700Bold_Italic,
 } from '@expo-google-fonts/roboto';
+import {
+    Inter_400Regular,
+    Inter_400Regular_Italic,
+    Inter_600SemiBold,
+    Inter_600SemiBold_Italic,
+    Inter_700Bold,
+    Inter_700Bold_Italic,
+} from '@expo-google-fonts/inter';
+import {
+    SourceCodePro_400Regular,
+    SourceCodePro_400Regular_Italic,
+    SourceCodePro_500Medium,
+    SourceCodePro_500Medium_Italic,
+    SourceCodePro_700Bold,
+    SourceCodePro_700Bold_Italic,
+} from '@expo-google-fonts/source-code-pro';
 
 // Create your Apollo client.
 const client = createApolloClient();
@@ -94,10 +116,12 @@ const ClientProvidersContent = ({
                                         <GestureHandlerRootView
                                             style={{ flex: 1 }}
                                         >
-                                            <StatusManager>
-                                                <Login>{children}</Login>
-                                                <Toast />
-                                            </StatusManager>
+                                            <AnimationProvider>
+                                                <StatusManager>
+                                                    <Login>{children}</Login>
+                                                    <Toast />
+                                                </StatusManager>
+                                            </AnimationProvider>
                                         </GestureHandlerRootView>
                                     </PortalProvider>
                                 </ReduxProvider>
@@ -110,24 +134,56 @@ const ClientProvidersContent = ({
     );
 };
 
-export function ClientProviders({ children }: { children: React.ReactNode }) {
+export function ClientProviders({
+    children,
+}: {
+    readonly children: React.ReactNode;
+}) {
+    const [isMounted, setIsMounted] = React.useState(false);
+
     // Only load fonts on the client.
     const [fontsLoaded] = useFonts({
+        // Lato (semibold will fall back to bold)
         Lato_400Regular,
+        Lato_400Regular_Italic,
         Lato_700Bold,
+        Lato_700Bold_Italic,
+        // Roboto
         Roboto_400Regular,
         Roboto_400Regular_Italic,
         Roboto_500Medium,
         Roboto_500Medium_Italic,
         Roboto_700Bold,
         Roboto_700Bold_Italic,
+        // Inter (default secondary font)
+        Inter_400Regular,
+        Inter_400Regular_Italic,
+        Inter_600SemiBold,
+        Inter_600SemiBold_Italic,
+        Inter_700Bold,
+        Inter_700Bold_Italic,
+        // Source Code Pro
+        SourceCodePro_400Regular,
+        SourceCodePro_400Regular_Italic,
+        SourceCodePro_500Medium,
+        SourceCodePro_500Medium_Italic,
+        SourceCodePro_700Bold,
+        SourceCodePro_700Bold_Italic,
     });
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     useEffect(() => {
         if (fontsLoaded) {
             void SplashScreen.hideAsync();
         }
     }, [fontsLoaded]);
+
+    if (!isMounted) {
+        return undefined;
+    }
 
     return (
         <ThemeProvider>

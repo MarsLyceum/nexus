@@ -33,6 +33,7 @@ import {
 import { Add } from '../icons';
 
 import { ChatScreen } from './ChatScreen';
+import { BorderRadius, Spacing, Typography } from '../constants/designSystem';
 
 // A component for rendering a single conversation item.
 
@@ -333,9 +334,10 @@ export const DMListScreen: React.FC = () => {
                         data={[1, 2, 3, 4, 5]}
                         keyExtractor={(item) => item.toString()}
                         renderItem={() => <ConversationSkeleton />}
+                        contentContainerStyle={styles.listContent}
                     />
                 ) : error ? (
-                    <Text style={{ color: theme.colors.Error, margin: 16 }}>
+                    <Text style={styles.errorText} accessibilityRole="alert">
                         Error fetching conversations.
                     </Text>
                 ) : (
@@ -398,21 +400,36 @@ function createStyles(theme: Theme, isComputer: boolean) {
         sidebar: {
             width: isComputer ? 250 : '100%',
             backgroundColor: theme.colors.PrimaryBackground,
-            paddingTop: 10,
+            paddingTop: Spacing.LG,
+            paddingHorizontal: Spacing.MD,
         },
         dmHeader: {
             flexDirection: 'row',
             justifyContent: 'space-between',
-            paddingHorizontal: 15,
-            paddingVertical: 8,
+            alignItems: 'center',
+            paddingHorizontal: Spacing.MD,
+            paddingVertical: Spacing.SM,
+            borderRadius: BorderRadius.ExtraSmall,
+            backgroundColor: theme.colors.SecondaryBackground,
         },
         dmTitle: {
-            fontSize: 12,
-            fontFamily: 'Roboto_700Bold',
+            ...Typography.Caption,
+            fontFamily: theme.fonts.primary?.semibold,
+            textTransform: 'uppercase',
         },
         chatWrapper: {
             flex: 1,
             backgroundColor: theme.colors.PrimaryBackground,
+            padding: Spacing.LG,
+        },
+        listContent: {
+            paddingTop: Spacing.LG,
+        },
+        errorText: {
+            ...Typography.Code,
+            fontFamily: theme.fonts.primary?.semibold,
+            color: theme.colors.Error,
+            margin: Spacing.LG,
         },
     });
 }

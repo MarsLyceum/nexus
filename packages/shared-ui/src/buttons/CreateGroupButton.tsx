@@ -1,7 +1,9 @@
 import React, { useMemo } from 'react';
 import { TouchableOpacity, StyleSheet, View, Text } from 'react-native';
+
 import { CreateGroup } from '../icons';
 import { useTheme, Theme } from '../theme';
+import { BorderRadius, Spacing, Typography } from '../constants/designSystem';
 
 function createCreateGroupButtonStyles(theme: Theme) {
     return StyleSheet.create({
@@ -12,17 +14,16 @@ function createCreateGroupButtonStyles(theme: Theme) {
         button: {
             width: 32,
             height: 32,
-            borderRadius: 20,
+            borderRadius: BorderRadius.Pill,
             backgroundColor: theme.colors.Primary,
             justifyContent: 'center',
             alignItems: 'center',
         },
         text: {
-            marginLeft: 8, // Spacing between the button and the text
-            fontSize: 14,
+            ...Typography.Code,
+            fontFamily: theme.fonts.primary?.semibold,
+            marginLeft: Spacing.SM,
             color: theme.colors.ActiveText,
-            fontFamily: 'Roboto_500Medium',
-            fontWeight: 'semibold',
         },
     });
 }

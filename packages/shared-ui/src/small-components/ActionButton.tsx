@@ -1,7 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { Pressable, StyleSheet, View, ViewStyle } from 'react-native';
+import { Platform, Pressable, StyleSheet, View, ViewStyle } from 'react-native';
 
 import { useTheme, Theme } from '../theme';
+import { toRgba } from '../utils';
+import { BorderRadius, Opacity } from '../constants/designSystem';
 
 import { Tooltip } from './Tooltip';
 
@@ -38,7 +40,13 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
             ]}
         >
             {active && (
-                <View style={styles.activeOverlay} pointerEvents="none" />
+                <View
+                    style={{
+                        ...styles.activeOverlay,
+                        pointerEvents: 'none',
+                    }}
+                    pointerEvents={Platform.OS === 'web' ? undefined : 'none'}
+                />
             )}
             <View style={styles.childrenContainer}>{children}</View>
         </Pressable>
@@ -56,7 +64,7 @@ function createStyles(theme: Theme) {
         iconButton: {
             width: 45,
             height: 45,
-            borderRadius: 23,
+            borderRadius: BorderRadius.Pill,
             backgroundColor: theme.colors.AppBackground,
             justifyContent: 'center',
             alignItems: 'center',
@@ -68,8 +76,11 @@ function createStyles(theme: Theme) {
         },
         activeOverlay: {
             ...StyleSheet.absoluteFillObject,
-            backgroundColor: 'rgba(255, 255, 255, 0.04)', // extremely subtle white overlay
-            borderRadius: 23,
+            backgroundColor: toRgba(
+                theme.colors.ActiveText,
+                Opacity.BorderLight
+            ),
+            borderRadius: BorderRadius.Pill,
         },
         childrenContainer: {
             flex: 1,

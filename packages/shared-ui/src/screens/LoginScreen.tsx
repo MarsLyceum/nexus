@@ -21,12 +21,18 @@ import {
 import { useNexusRouter } from '../hooks';
 import { loginUser, useAppDispatch } from '../redux';
 import { LOGIN_USER } from '../queries';
-import { validatePassword, setItemSecure } from '../utils';
+import { validatePassword, setItemSecure, toRgba } from '../utils';
 import { Email, Lock, GoogleLogo } from '../icons';
 import { HorizontalLine } from '../images';
 import { PrimaryGradientButton } from '../buttons';
 import { User } from '../types';
 import { useTheme, Theme } from '../theme';
+import {
+    BorderRadius,
+    Spacing,
+    Opacity,
+    Typography,
+} from '../constants/designSystem';
 
 const isWeb = Platform.OS === 'web';
 
@@ -57,8 +63,8 @@ export function FacebookIcon({
 function createStyles(theme: Theme) {
     return StyleSheet.create({
         topButton: {
-            marginTop: 38,
-            marginBottom: 80,
+            marginTop: Spacing.XXXL + Spacing.SM,
+            marginBottom: Spacing.XXXL + Spacing.XXXL + Spacing.LG,
         },
         outerContainer: {
             flex: 1,
@@ -66,7 +72,7 @@ function createStyles(theme: Theme) {
         },
         container: {
             flex: 1,
-            paddingHorizontal: 20,
+            paddingHorizontal: Spacing.XL,
             justifyContent: 'center',
             alignItems: 'center',
             backgroundColor: theme.colors.PrimaryBackground,
@@ -74,45 +80,50 @@ function createStyles(theme: Theme) {
         image: {
             width: 100,
             height: 100,
-            marginBottom: 20,
+            marginBottom: Spacing.XL,
         },
         title: {
-            fontSize: 32,
-            fontWeight: 'bold',
-            color: theme.colors.MainText,
-            marginTop: 20, // Changed from -125 to 20 to keep content within view
+            ...Typography.H1,
+            fontFamily: theme.fonts.primary?.semibold,
+            color: theme.colors.ActiveText,
+            marginTop: Spacing.XL,
             textAlign: 'center',
         },
         subtitle: {
-            fontSize: 16,
+            ...Typography.Body,
+            fontFamily: theme.fonts.primary?.regular,
             color: theme.colors.InactiveText,
-            marginBottom: 20,
+            marginBottom: Spacing.XL,
             textAlign: 'center',
         },
         inputContainer: {
             width: '100%',
-            marginTop: 15,
-            marginBottom: 15,
+            marginTop: Spacing.LG,
+            marginBottom: Spacing.LG,
             height: 50,
             alignItems: 'center',
         },
         input: {
-            borderColor: theme.colors.ActiveText,
-            height: 45,
+            ...Typography.Body,
+            fontFamily: theme.fonts.primary?.regular,
+            borderWidth: 1,
+            borderColor: toRgba(theme.colors.ActiveText, Opacity.BorderMedium),
+            borderRadius: BorderRadius.Pill,
+            height: 50,
             flex: 1,
-            fontSize: 16,
-            marginRight: 5,
             backgroundColor: theme.colors.TextInput,
-            color: theme.colors.MainText,
-            paddingHorizontal: 10,
+            color: theme.colors.ActiveText,
+            paddingHorizontal: Spacing.XL,
+            marginRight: Spacing.XS,
         },
         orText: {
-            fontSize: 16,
+            ...Typography.Body,
+            fontFamily: theme.fonts.primary?.regular,
             color: theme.colors.InactiveText,
-            marginVertical: 15,
+            marginVertical: Spacing.LG,
             textAlign: 'center',
-            marginLeft: 20,
-            marginRight: 20,
+            marginLeft: Spacing.XL,
+            marginRight: Spacing.XL,
         },
         socialContainer: {
             flexDirection: 'row',
@@ -121,14 +132,16 @@ function createStyles(theme: Theme) {
             width: '40%',
         },
         socialButton: {
-            width: 50,
-            height: 50,
+            width: 56,
+            height: 56,
             justifyContent: 'center',
             alignItems: 'center',
-            borderRadius: 25,
-            backgroundColor: theme.colors.ActiveText,
-            marginLeft: 10,
-            marginRight: 10,
+            borderRadius: BorderRadius.ExtraLarge,
+            backgroundColor: theme.colors.SecondaryBackground,
+            marginLeft: Spacing.SM,
+            marginRight: Spacing.SM,
+            borderWidth: 1,
+            borderColor: toRgba(theme.colors.ActiveText, Opacity.BorderMedium),
         },
         button: {
             width: '100%',
@@ -136,40 +149,42 @@ function createStyles(theme: Theme) {
             backgroundColor: theme.colors.Primary,
             justifyContent: 'center',
             alignItems: 'center',
-            borderRadius: 25,
-            marginBottom: 15,
+            borderRadius: BorderRadius.Pill,
+            marginBottom: Spacing.LG,
+            borderWidth: 1,
+            borderColor: toRgba(theme.colors.ActiveText, Opacity.BorderMedium),
         },
         buttonText: {
+            ...Typography.Button,
+            fontFamily: theme.fonts.primary?.bold,
             color: theme.colors.ActiveText,
-            fontSize: 16,
-            fontWeight: 'bold',
         },
         forgotPasswordText: {
-            fontSize: 16,
+            ...Typography.Body,
+            fontFamily: theme.fonts.primary?.regular,
             color: theme.colors.InactiveText,
-            marginTop: 17,
-            marginBottom: 53,
+            marginTop: Spacing.LG + Spacing.XS / 2,
+            marginBottom: Spacing.XXXL + Spacing.XL + Spacing.XS,
             textAlign: 'center',
         },
         forgotPasswordLink: {
+            fontFamily: theme.fonts.primary?.bold,
             color: theme.colors.Link,
-            fontWeight: 'bold',
         },
-        // Updated innerScrollContainer to use flex and a minHeight on web
         innerScrollContainer: isWeb
             ? {
                   flexGrow: 1,
                   minHeight: '100vh',
                   justifyContent: 'center',
                   alignItems: 'center',
-                  paddingVertical: 20,
+                  paddingVertical: Spacing.XL,
               }
             : {
                   width: '100%',
                   flexGrow: 1,
                   justifyContent: 'center',
                   alignItems: 'center',
-                  paddingVertical: 20,
+                  paddingVertical: Spacing.XL,
               },
         orContainer: {
             flexDirection: 'row',
@@ -178,7 +193,7 @@ function createStyles(theme: Theme) {
             justifyContent: 'center',
         },
         inputIcon: {
-            marginRight: 10,
+            marginRight: Spacing.MD,
         },
         inputWrapper: {
             flexDirection: 'row',
@@ -186,12 +201,11 @@ function createStyles(theme: Theme) {
             width: 285,
             borderColor: theme.colors.ActiveText,
             borderWidth: 1,
-            borderRadius: 25,
-            paddingHorizontal: 10,
+            borderRadius: BorderRadius.Pill,
+            paddingHorizontal: Spacing.MD,
             backgroundColor: theme.colors.TextInput,
             height: 50,
             flex: 1,
-            fontSize: 16,
         },
     });
 }
@@ -298,8 +312,15 @@ export function LoginScreen(): React.JSX.Element {
                                 placeholder="Enter your email"
                                 style={styles.input}
                                 keyboardType="email-address"
+                                autoComplete="username"
+                                textContentType="emailAddress"
                                 value={email}
                                 onChangeText={setEmail}
+                                {...(isWeb && {
+                                    id: 'email',
+                                    name: 'email',
+                                    type: 'email',
+                                })}
                             />
                         </View>
                     </View>
@@ -311,8 +332,15 @@ export function LoginScreen(): React.JSX.Element {
                                 placeholder="Password"
                                 style={styles.input}
                                 secureTextEntry
+                                autoComplete="current-password"
+                                textContentType="password"
                                 value={password}
                                 onChangeText={setPassword}
+                                {...(isWeb && {
+                                    id: 'password',
+                                    name: 'password',
+                                    type: 'password',
+                                })}
                             />
                         </View>
                     </View>

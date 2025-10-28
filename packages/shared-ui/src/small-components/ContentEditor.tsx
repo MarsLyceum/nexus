@@ -19,6 +19,8 @@ import { GiphyModal } from './GiphyModal';
 import { useTheme, Theme } from '../theme';
 import { Tooltip } from './Tooltip';
 import { FormattingOptions } from '../icons';
+import { BorderRadius, Spacing, Opacity } from '../constants/designSystem';
+import { toRgba } from '../utils';
 
 // --- New imports for preview modal ---
 import { CustomPortalModal } from './CustomPortalModal';
@@ -312,19 +314,19 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
 function createStyles(theme: Theme) {
     return StyleSheet.create({
         container: {
-            marginTop: 10,
-            marginBottom: 10,
+            marginTop: Spacing.SM,
+            marginBottom: Spacing.SM,
             borderWidth: 0,
-            borderRadius: 5,
-            padding: 10,
+            borderRadius: BorderRadius.ExtraSmall,
+            padding: Spacing.SM,
             position: 'relative',
         },
         toggleButton: {
             alignSelf: 'flex-end',
-            marginBottom: 8,
-            paddingVertical: 4,
-            paddingHorizontal: 8,
-            borderRadius: 4,
+            marginBottom: Spacing.SM,
+            paddingVertical: Spacing.XS,
+            paddingHorizontal: Spacing.SM,
+            borderRadius: BorderRadius.ExtraSmall,
             backgroundColor: theme.colors.Primary,
         },
         toggleButtonText: {
@@ -332,26 +334,26 @@ function createStyles(theme: Theme) {
             fontWeight: '600',
         },
         editorContainer: {
-            marginBottom: 10,
+            marginBottom: Spacing.SM,
         },
         formatAndAttachContainer: {
             flexDirection: 'row',
             alignItems: 'center',
-            marginBottom: 10,
+            marginBottom: Spacing.SM,
         },
         imageButton: {
-            marginLeft: 10,
-            padding: 8,
+            marginLeft: Spacing.SM,
+            padding: Spacing.SM,
             backgroundColor: theme.colors.SecondaryBackground,
-            borderRadius: 5,
+            borderRadius: BorderRadius.ExtraSmall,
             justifyContent: 'center',
             alignItems: 'center',
         },
         gifButton: {
-            marginLeft: 10,
-            padding: 8,
+            marginLeft: Spacing.SM,
+            padding: Spacing.SM,
             backgroundColor: theme.colors.SecondaryBackground,
-            borderRadius: 5,
+            borderRadius: BorderRadius.ExtraSmall,
             justifyContent: 'center',
             alignItems: 'center',
         },
@@ -362,9 +364,9 @@ function createStyles(theme: Theme) {
             fontFamily: 'Roboto_700Bold',
         },
         formatToggleButton: {
-            marginLeft: 10,
-            padding: 8,
-            borderRadius: 5,
+            marginLeft: Spacing.SM,
+            padding: Spacing.SM,
+            borderRadius: BorderRadius.ExtraSmall,
             justifyContent: 'center',
             alignItems: 'center',
         },

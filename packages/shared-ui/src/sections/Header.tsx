@@ -5,20 +5,26 @@ import { StyleSheet, View, Text } from 'react-native';
 import { useNexusRouter } from '../hooks';
 import { BackArrow } from '../buttons';
 import { useTheme, Theme } from '../theme';
+import { Spacing, Opacity, Typography } from '../constants/designSystem';
+import { toRgba } from '../utils';
 
 function createStyles(theme: Theme) {
     return StyleSheet.create({
         header: {
             flexDirection: 'row',
             alignItems: 'center',
-            padding: 15,
+            padding: Spacing.LG,
             borderBottomWidth: 1,
-            borderBottomColor: '#4A3A5A',
+            borderBottomColor: toRgba(
+                theme.colors.ActiveText,
+                Opacity.BorderMedium
+            ),
         },
         channelName: {
-            fontSize: 18,
+            ...Typography.SectionHeading,
+            fontFamily: theme.fonts.primary?.bold,
             color: theme.colors.ActiveText,
-            fontWeight: 'bold',
+            marginLeft: Spacing.SM,
         },
     });
 }

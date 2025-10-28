@@ -14,6 +14,7 @@ import {
     useWindowDimensions,
     SafeAreaView,
     Platform,
+    LayoutChangeEvent,
 } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import {
@@ -52,10 +53,16 @@ import {
     MessageWithAvatar,
     Attachment,
 } from '../types';
-import { getOnlineStatusDotColor } from '../utils';
+import { getOnlineStatusDotColor, toRgba } from '../utils';
 import { BackArrow } from '../buttons';
 import { MediaDetailsModal } from '../sections';
 import { useTheme, Theme } from '../theme';
+import {
+    BorderRadius,
+    Spacing,
+    Typography,
+    Opacity,
+} from '../constants/designSystem';
 
 interface ChatScreenProps {
     conversation?: Conversation;
@@ -108,6 +115,9 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
 
     // Create a ref for the FlatList scroll container.
     const flashListRef = useRef<FlashList<Message>>(null);
+    const [layoutHeights, setLayoutHeights] = useState<Record<string, number>>(
+        {}
+    );
 
     // Determine if the conversation is one-to-one.
     const isOneToOne =
@@ -231,7 +241,9 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
                             // @ts-expect-error web only types
                             style={[
                                 styles.groupAvatar,
-                                { marginLeft: index === 0 ? 0 : -10 },
+                                {
+                                    marginLeft: index === 0 ? 0 : -Spacing.MD,
+                                },
                             ]}
                             contentFit="cover"
                         />
@@ -241,7 +253,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
         }
     }
 
-    const headerHeight = 70;
+    const headerHeight = Spacing.XXXL + Spacing.SM;
     const messagesHeight = windowHeight - (headerHeight + inputContainerHeight);
 
     // Use GET_CONVERSATION_MESSAGES to fetch messages.
@@ -276,7 +288,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
     // Initialize messages state from query data.
     const [messages, setMessages] = useState<Message[]>([]);
     useEffect(() => {
-        if (data && data.getConversationMessages) {
+        if (data?.getConversationMessages) {
             setMessages(data.getConversationMessages);
         }
     }, [data]);
@@ -444,6 +456,14 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
                 scrollContainerRef={flashListRef}
                 onSaveEdit={handleSaveEdit}
                 onDeleteMessage={handleDeleteMessage}
+                onLayout={(event: LayoutChangeEvent) => {
+                    const { height } = event.nativeEvent.layout;
+                    setLayoutHeights((prev) => {
+                        if (prev[item.id] === height) return prev;
+                        return { ...prev, [item.id]: height };
+                    });
+                }}
+                contentHeight={layoutHeights[item.id] ?? undefined}
             />
         );
     };
@@ -486,6 +506,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ conversation }) => {
                             renderItem={renderItem}
                             onEndReached={handleLoadMore}
                             onEndReachedThreshold={0.2}
+                            itemHeights={layoutHeights}
                         />
                     )}
                 </View>
@@ -525,27 +546,36 @@ function createStyles(theme: Theme) {
         container: {
             flex: 1,
             flexBasis: 0,
-            backgroundColor: theme.colors.SecondaryBackground,
             overflow: 'hidden',
             height: '100%',
+            backgroundColor: theme.colors.AppBackground,
             ...(Platform.OS === 'web' && { height: '100vh' }),
         },
         chatHeader: {
             flexDirection: 'row',
             alignItems: 'center',
-            backgroundColor: theme.colors.SecondaryBackground,
-            borderBottomWidth: 1,
-            borderColor: theme.colors.InactiveText,
-            padding: 15,
+            backgroundColor: theme.colors.TertiaryBackground,
+            padding: Spacing.LG,
+            borderRadius: BorderRadius.XL,
+            marginHorizontal: Spacing.LG,
+            marginTop: Spacing.LG,
+            marginBottom: Spacing.MD,
+            borderWidth: 1,
+            borderColor: toRgba(theme.colors.ActiveText, Opacity.Border),
+            shadowColor: theme.colors.Primary,
+            shadowOpacity: Opacity.ElevatedBackdrop,
+            shadowRadius: BorderRadius.Medium,
+            shadowOffset: { width: 0, height: Spacing.SM },
+            elevation: Platform.select({ android: 8, default: 0 }),
         },
         headerAvatar: {
             width: 40,
             height: 40,
-            borderRadius: 20,
+            borderRadius: BorderRadius.XL,
         },
         avatarAndDot: {
             position: 'relative',
-            marginRight: 10,
+            marginRight: Spacing.SM,
         },
         statusDot: {
             position: 'absolute',
@@ -553,33 +583,47 @@ function createStyles(theme: Theme) {
             right: 5,
             width: 15,
             height: 15,
-            borderRadius: 7,
+            borderRadius: 8,
             borderWidth: 2,
-            borderColor: theme.colors.SecondaryBackground,
+            borderColor: theme.colors.TertiaryBackground,
         },
         avatarGroup: {
             flexDirection: 'row',
-            marginRight: 10,
+            marginRight: Spacing.SM,
         },
         groupAvatar: {
-            width: 40,
-            height: 40,
-            borderRadius: 20,
-            borderWidth: 1,
-            borderColor: theme.colors.SecondaryBackground,
+            width: Spacing.XXXL + Spacing.SM,
+            height: Spacing.XXXL + Spacing.SM,
+            borderRadius: BorderRadius.XL,
+            borderWidth: 2,
+            borderColor: theme.colors.TertiaryBackground,
         },
         chatTitle: {
-            fontSize: 18,
-            fontWeight: 'bold',
+            ...Typography.H3,
+            fontFamily: theme.fonts.primary?.bold,
             color: theme.colors.ActiveText,
-            marginLeft: 10,
+            marginLeft: Spacing.SM,
         },
         mainContent: {
             flex: 1,
             flexDirection: 'column',
+            borderRadius: BorderRadius.Large,
+            backgroundColor: theme.colors.SecondaryBackground,
+            marginHorizontal: Spacing.LG,
+            marginBottom: Spacing.LG,
+            paddingBottom: Spacing.LG,
+            borderWidth: 1,
+            borderColor: toRgba(theme.colors.ActiveText, Opacity.Border),
+            shadowColor: theme.colors.Primary,
+            shadowOpacity: Opacity.ElevatedBackdrop,
+            shadowRadius: BorderRadius.XL,
+            shadowOffset: { width: 0, height: Spacing.MD },
+            elevation: Platform.select({ android: 12, default: 0 }),
+            overflow: 'hidden',
         },
         messagesContainer: {
             flex: 1,
+            overflow: 'hidden',
         },
         inputContainer: {
             minHeight: 70,
@@ -587,47 +631,47 @@ function createStyles(theme: Theme) {
         skeletonContainer: {
             flexDirection: 'row',
             alignItems: 'center',
-            marginVertical: 10,
-            paddingHorizontal: 15,
+            paddingVertical: Spacing.SM,
+            paddingHorizontal: Spacing.LG,
         },
         skeletonAvatar: {
-            width: 40,
-            height: 40,
-            borderRadius: 20,
-            backgroundColor: theme.colors.InactiveText,
+            width: Spacing.XXXL + Spacing.SM,
+            height: Spacing.XXXL + Spacing.SM,
+            borderRadius: BorderRadius.XL,
+            backgroundColor: toRgba(theme.colors.InactiveText, 0.3),
         },
         skeletonContent: {
             flex: 1,
-            marginLeft: 10,
+            marginLeft: Spacing.SM,
         },
         skeletonLineShort: {
             width: '30%',
-            height: 10,
-            backgroundColor: theme.colors.InactiveText,
-            marginBottom: 6,
-            borderRadius: 5,
+            height: Spacing.SM,
+            backgroundColor: toRgba(theme.colors.InactiveText, 0.3),
+            marginBottom: Spacing.XS,
+            borderRadius: BorderRadius.ExtraSmall,
         },
         skeletonLineLong: {
             width: '80%',
-            height: 10,
-            backgroundColor: theme.colors.InactiveText,
-            borderRadius: 5,
+            height: Spacing.SM,
+            backgroundColor: toRgba(theme.colors.InactiveText, 0.3),
+            borderRadius: BorderRadius.ExtraSmall,
         },
         skeletonHeaderAvatar: {
-            width: 40,
-            height: 40,
-            borderRadius: 20,
-            backgroundColor: theme.colors.InactiveText,
+            width: Spacing.XXXL + Spacing.SM,
+            height: Spacing.XXXL + Spacing.SM,
+            borderRadius: BorderRadius.XL,
+            backgroundColor: toRgba(theme.colors.InactiveText, 0.3),
         },
         skeletonHeaderText: {
-            width: 100,
-            height: 20,
-            backgroundColor: theme.colors.InactiveText,
-            borderRadius: 4,
-            marginLeft: 10,
+            width: Spacing.XXXL * 2,
+            height: Typography.H3.fontSize,
+            backgroundColor: toRgba(theme.colors.InactiveText, 0.3),
+            borderRadius: BorderRadius.ExtraSmall,
+            marginLeft: Spacing.SM,
         },
         backArrow: {
-            marginRight: 10,
+            marginRight: Spacing.SM,
         },
     });
 }

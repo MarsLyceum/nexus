@@ -21,6 +21,7 @@ import {
 import { GET_FRIENDS, REMOVE_FRIEND, ACCEPT_FRIEND_REQUEST } from '../queries';
 import { useAppSelector, RootState } from '../redux';
 import { useTheme, Theme } from '../theme';
+import { BorderRadius, Spacing, Typography } from '../constants/designSystem';
 
 import { AddFriendsScreen } from './AddFriendsScreen';
 
@@ -320,59 +321,61 @@ function createStyles(theme: Theme) {
         header: {
             flexDirection: 'row',
             alignItems: 'center',
-            padding: 16,
+            padding: Spacing.LG,
             backgroundColor: theme.colors.PrimaryBackground,
         },
         tabItem: {
-            marginRight: 16,
+            marginRight: Spacing.LG,
             color: theme.colors.ActiveText,
             opacity: 0.7,
         },
         activeTab: {
             opacity: 1,
-            fontWeight: 'bold',
-            fontFamily: 'Roboto_700Bold',
+            ...Typography.Code,
+            fontFamily: theme.fonts.primary?.bold,
             color: theme.colors.ActiveText,
         },
         addFriendButton: {
             backgroundColor: theme.colors.Primary,
-            paddingVertical: 8,
-            paddingHorizontal: 16,
-            borderRadius: 4,
+            paddingVertical: Spacing.SM,
+            paddingHorizontal: Spacing.LG,
+            borderRadius: BorderRadius.ExtraSmall - 4,
         },
         addFriendText: {
+            ...Typography.Code,
+            fontFamily: theme.fonts.primary?.semibold,
             color: theme.colors.ActiveText,
         },
         friendsListArea: {
             flex: 1,
-            padding: 8,
+            padding: Spacing.SM,
         },
         skeletonFriendItem: {
             flexDirection: 'row',
             alignItems: 'center',
             backgroundColor: theme.colors.SecondaryBackground,
-            marginVertical: 4,
-            borderRadius: 4,
-            padding: 12,
+            marginVertical: Spacing.XS,
+            borderRadius: BorderRadius.ExtraSmall - 4,
+            padding: Spacing.MD,
         },
         skeletonAvatarAndDot: {
             position: 'relative',
-            marginRight: 8,
+            marginRight: Spacing.SM,
         },
         skeletonAvatar: {
-            width: 32,
-            height: 32,
-            borderRadius: 16,
+            width: Spacing.XXL,
+            height: Spacing.XXL,
+            borderRadius: BorderRadius.Medium,
             backgroundColor: theme.colors.TextInput,
-            marginRight: 8,
+            marginRight: Spacing.SM,
         },
         skeletonStatusDot: {
             position: 'absolute',
             bottom: 0,
-            right: 5,
-            width: 15,
-            height: 15,
-            borderRadius: 7,
+            right: Spacing.XS + 1,
+            width: Spacing.LG - 1,
+            height: Spacing.LG - 1,
+            borderRadius: BorderRadius.SM,
             borderWidth: 2,
             borderColor: theme.colors.SecondaryBackground,
             backgroundColor: theme.colors.InactiveText,
@@ -382,25 +385,26 @@ function createStyles(theme: Theme) {
             justifyContent: 'center',
         },
         skeletonNameLine: {
-            height: 12,
+            height: Spacing.MD,
             width: '30%',
             backgroundColor: theme.colors.InactiveText,
-            borderRadius: 4,
-            marginBottom: 4,
+            borderRadius: BorderRadius.ExtraSmall - 4,
+            marginBottom: Spacing.XS,
         },
         skeletonStatusLine: {
-            height: 10,
+            height: Spacing.SM + Spacing.XS,
             width: '20%',
             backgroundColor: theme.colors.InactiveText,
-            borderRadius: 4,
+            borderRadius: BorderRadius.ExtraSmall - 4,
         },
         dropdownMenuItem: {
-            paddingVertical: 8,
-            paddingHorizontal: 4,
+            paddingVertical: Spacing.SM,
+            paddingHorizontal: Spacing.XS,
         },
         dropdownMenuItemText: {
+            ...Typography.Code,
+            fontFamily: theme.fonts.primary?.semibold,
             color: theme.colors.Error,
-            fontSize: 14,
         },
     });
 }

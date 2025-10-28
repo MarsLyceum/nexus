@@ -11,12 +11,17 @@ import {
     TransitionPresets,
 } from '@react-navigation/stack';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { Platform, StatusBar, View, Text, Button } from 'react-native';
+import { Platform, StatusBar } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { ApolloProvider } from '@apollo/client';
 import { Provider as ReduxProvider } from 'react-redux';
 import { loadErrorMessages, loadDevMessages } from '@apollo/client/dev';
-import { Lato_400Regular, Lato_700Bold } from '@expo-google-fonts/lato';
+import {
+    Lato_400Regular,
+    Lato_400Regular_Italic,
+    Lato_700Bold,
+    Lato_700Bold_Italic,
+} from '@expo-google-fonts/lato';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import {
@@ -28,17 +33,44 @@ import {
     Roboto_700Bold,
     Roboto_700Bold_Italic,
 } from '@expo-google-fonts/roboto';
+import {
+    Inter_400Regular,
+    Inter_400Regular_Italic,
+    Inter_600SemiBold,
+    Inter_600SemiBold_Italic,
+    Inter_700Bold,
+    Inter_700Bold_Italic,
+} from '@expo-google-fonts/inter';
+import {
+    SourceCodePro_400Regular,
+    SourceCodePro_400Regular_Italic,
+    SourceCodePro_500Medium,
+    SourceCodePro_500Medium_Italic,
+    SourceCodePro_700Bold,
+    SourceCodePro_700Bold_Italic,
+} from '@expo-google-fonts/source-code-pro';
 import * as SplashScreen from 'expo-splash-screen';
 
 import { store } from 'shared-ui/redux';
-import { useTheme, ThemeProvider } from 'shared-ui/theme';
+import { useTheme, ThemeProvider, ThemeContext } from 'shared-ui/theme';
+import { COLORS } from 'shared-ui/constants/colors';
+import {
+    defaultFontConfig,
+    createFontStyle,
+    type FontConfig,
+} from 'shared-ui/constants/fonts';
 import {
     SearchProvider,
     ActiveGroupProvider,
     CurrentCommentProvider,
     PortalProvider,
+    AnimationProvider,
 } from 'shared-ui/providers';
-import { StatusManager, Login } from 'shared-ui/small-components';
+import {
+    StatusManager,
+    Login,
+    ErrorFallback,
+} from 'shared-ui/small-components';
 import {
     LoginScreen,
     SignUpScreen,
@@ -53,7 +85,7 @@ import {
     CreateCommentScreen,
     AddFriendsScreen,
 } from 'shared-ui/screens';
-import { createApolloClient } from 'shared-ui/utils';
+import { createApolloClient, useForceRefresh } from 'shared-ui/utils';
 import { AppDrawerScreen } from './AppDrawerScreen';
 import { linking } from './linking';
 
@@ -98,6 +130,57 @@ const MainStack = createStackNavigator();
 const RootStack = createStackNavigator();
 
 const client = createApolloClient();
+
+// Simulation removed; wrapper only handles real provider failures now
+
+const buildFontStyles = (fontConfig: FontConfig) => {
+    const make = (family: 'primary' | 'secondary' | 'monospace') => ({
+        heading: createFontStyle(fontConfig, { weight: 'bold', family }),
+        subheading: createFontStyle(fontConfig, { weight: 'semibold', family }),
+        body: createFontStyle(fontConfig, { weight: 'regular', family }),
+    });
+
+    const primary = make('primary');
+    const secondary = fontConfig.secondary ? make('secondary') : undefined;
+    const monospace = fontConfig.monospace
+        ? {
+              ...make('monospace'),
+              code: createFontStyle(fontConfig, {
+                  weight: 'regular',
+                  family: 'monospace',
+              }),
+          }
+        : undefined;
+
+    return { primary, secondary, monospace };
+};
+
+const fallbackThemeContextValue = {
+    theme: { name: 'Default', colors: COLORS, fonts: defaultFontConfig },
+    setThemeByName: () => {},
+    setPrimaryFont: () => {},
+    setSecondaryFont: () => {},
+    setMonospaceFont: () => {},
+    fontStyles: buildFontStyles(defaultFontConfig),
+};
+
+const ThemeProviderWithFallback: React.FC<{ children: React.ReactNode }> = ({
+    children,
+}) => (
+    // Catch failures in ThemeProvider and show ErrorFallback with a default theme
+    <ErrorBoundary
+        fallbackRender={({ error, resetErrorBoundary }) => (
+            <ThemeContext.Provider value={fallbackThemeContextValue}>
+                <ErrorFallback
+                    error={error}
+                    resetErrorBoundary={resetErrorBoundary}
+                />
+            </ThemeContext.Provider>
+        )}
+    >
+        <ThemeProvider>{children}</ThemeProvider>
+    </ErrorBoundary>
+);
 
 function MainStackScreen() {
     return (
@@ -162,50 +245,53 @@ const AppContent = () => {
                                 <ApolloProvider client={client}>
                                     <ReduxProvider store={store}>
                                         <PortalProvider>
-                                            <Login>
-                                                <NavigationContainer
-                                                    linking={linking}
-                                                >
-                                                    <StatusManager>
-                                                        <RootStack.Navigator
-                                                            screenOptions={{
-                                                                headerShown:
-                                                                    false,
-                                                                presentation:
-                                                                    'transparentModal', // This makes the screens render as modals by default
-                                                            }}
-                                                        >
-                                                            <RootStack.Screen
-                                                                name="Main"
-                                                                component={
-                                                                    MainStackScreen
-                                                                }
-                                                            />
-                                                            <RootStack.Screen
-                                                                name="CreateGroup"
-                                                                // @ts-expect-error navigator
-                                                                component={
-                                                                    CreateGroupModalScreen
-                                                                }
-                                                                options={{
+                                            <AnimationProvider>
+                                                <Login>
+                                                    <NavigationContainer
+                                                        linking={linking}
+                                                    >
+                                                        <StatusManager>
+                                                            <RootStack.Navigator
+                                                                screenOptions={{
+                                                                    headerShown:
+                                                                        false,
                                                                     presentation:
-                                                                        'transparentModal',
-                                                                    cardStyle: {
-                                                                        backgroundColor:
-                                                                            'transparent',
-                                                                    },
-                                                                    ...Platform.select(
-                                                                        {
-                                                                            ios: TransitionPresets.ModalPresentationIOS,
-                                                                        }
-                                                                    ),
+                                                                        'transparentModal', // This makes the screens render as modals by default
                                                                 }}
-                                                            />
-                                                        </RootStack.Navigator>
-                                                        <Toast />
-                                                    </StatusManager>
-                                                </NavigationContainer>
-                                            </Login>
+                                                            >
+                                                                <RootStack.Screen
+                                                                    name="Main"
+                                                                    component={
+                                                                        MainStackScreen
+                                                                    }
+                                                                />
+                                                                <RootStack.Screen
+                                                                    name="CreateGroup"
+                                                                    // @ts-expect-error navigator
+                                                                    component={
+                                                                        CreateGroupModalScreen
+                                                                    }
+                                                                    options={{
+                                                                        presentation:
+                                                                            'transparentModal',
+                                                                        cardStyle:
+                                                                            {
+                                                                                backgroundColor:
+                                                                                    'transparent',
+                                                                            },
+                                                                        ...Platform.select(
+                                                                            {
+                                                                                ios: TransitionPresets.ModalPresentationIOS,
+                                                                            }
+                                                                        ),
+                                                                    }}
+                                                                />
+                                                            </RootStack.Navigator>
+                                                            <Toast />
+                                                        </StatusManager>
+                                                    </NavigationContainer>
+                                                </Login>
+                                            </AnimationProvider>
                                         </PortalProvider>
                                     </ReduxProvider>
                                 </ApolloProvider>
@@ -222,17 +308,37 @@ const AppContent = () => {
 // eslint-disable-next-line import/no-default-export
 export default function App() {
     const [appIsReady, setAppIsReady] = useState(false);
+    // Only load essential font weights to improve startup performance
     const [fontsLoaded] = useFonts({
+        // Lato (semibold will fall back to bold)
         Lato_400Regular,
+        Lato_400Regular_Italic,
         Lato_700Bold,
+        Lato_700Bold_Italic,
+        // Roboto
         Roboto_400Regular,
         Roboto_400Regular_Italic,
         Roboto_500Medium,
         Roboto_500Medium_Italic,
         Roboto_700Bold,
         Roboto_700Bold_Italic,
+        // Inter (default secondary font)
+        Inter_400Regular,
+        Inter_400Regular_Italic,
+        Inter_600SemiBold,
+        Inter_600SemiBold_Italic,
+        Inter_700Bold,
+        Inter_700Bold_Italic,
+        // Source Code Pro
+        SourceCodePro_400Regular,
+        SourceCodePro_400Regular_Italic,
+        SourceCodePro_500Medium,
+        SourceCodePro_500Medium_Italic,
+        SourceCodePro_700Bold,
+        SourceCodePro_700Bold_Italic,
     });
     const [stack, setStack] = useState<string | undefined>();
+    const forceRefresh = useForceRefresh();
 
     useEffect(() => {
         if (fontsLoaded) {
@@ -244,40 +350,28 @@ export default function App() {
 
     if (appIsReady) {
         return (
-            <ErrorBoundary
-                // 1. Log & stash the componentStack when the error fires
-                onError={(error, info) => {
-                    console.log('🚨 Component stack:', info.componentStack);
-                    setStack(info.componentStack ?? undefined);
-                }}
-                // 2. Render a fallback UI—only gets error + reset, not the stack
-                fallbackRender={({ error, resetErrorBoundary }) => (
-                    <View style={{ padding: 16 }}>
-                        <Text style={{ marginBottom: 8 }}>
-                            Error: {error.message}
-                        </Text>
-                        {stack && (
-                            <Text
-                                style={{
-                                    marginVertical: 8,
-                                    fontFamily: 'monospace',
-                                    fontSize: 12,
+            <ThemeProviderWithFallback>
+                <ErrorBoundary
+                    onError={(_, info) => {
+                        setStack(info.componentStack ?? undefined);
+                    }}
+                    fallbackRender={({ error, resetErrorBoundary }) => (
+                        <AnimationProvider>
+                            <ErrorFallback
+                                error={error}
+                                resetErrorBoundary={() => {
+                                    resetErrorBoundary();
+                                    forceRefresh();
                                 }}
-                            >
-                                {stack}
-                            </Text>
-                        )}
-                        <Button
-                            title="Try Again"
-                            onPress={resetErrorBoundary}
-                        />
-                    </View>
-                )}
-            >
-                <ThemeProvider>
+                                componentStack={stack}
+                                onReset={() => setStack(undefined)}
+                            />
+                        </AnimationProvider>
+                    )}
+                >
                     <AppContent />
-                </ThemeProvider>
-            </ErrorBoundary>
+                </ErrorBoundary>
+            </ThemeProviderWithFallback>
         );
     }
 }

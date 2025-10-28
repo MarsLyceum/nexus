@@ -1,5 +1,6 @@
 // src/theme/monochrome.ts
 import { COLORS as DefaultColors } from '../../constants/colors';
+import { defaultFontConfig } from '../../constants/fonts';
 import type { Theme } from '../themes';
 
 export const Monochrome: Theme[] = [
@@ -8,6 +9,7 @@ export const Monochrome: Theme[] = [
         colors: {
             ...DefaultColors,
         },
+        fonts: defaultFontConfig,
     },
     {
         name: 'Red Radiance',
@@ -25,6 +27,7 @@ export const Monochrome: Theme[] = [
             MainText: '#F0F0F0',
             InactiveText: '#989898', // Updated: Neutral grey
         },
+        fonts: defaultFontConfig,
     },
     {
         name: 'Orange Ember',
@@ -42,6 +45,7 @@ export const Monochrome: Theme[] = [
             MainText: '#EFEFEF',
             InactiveText: '#989898', // Updated: Neutral grey
         },
+        fonts: defaultFontConfig,
     },
     {
         name: 'Yellow Glow',
@@ -59,6 +63,7 @@ export const Monochrome: Theme[] = [
             MainText: '#222222',
             InactiveText: '#989898',
         },
+        fonts: defaultFontConfig,
     },
     {
         name: 'Green Meadow',
@@ -76,6 +81,7 @@ export const Monochrome: Theme[] = [
             MainText: '#DDFFDD',
             InactiveText: '#989898', // Updated: Neutral grey
         },
+        fonts: defaultFontConfig,
     },
     {
         name: 'Cyan Tide',
@@ -93,6 +99,7 @@ export const Monochrome: Theme[] = [
             MainText: '#E0FFFF',
             InactiveText: '#989898', // Updated: Neutral grey
         },
+        fonts: defaultFontConfig,
     },
     {
         name: 'Blue Depths',
@@ -110,5 +117,6 @@ export const Monochrome: Theme[] = [
             MainText: '#DEE8FF',
             InactiveText: '#989898', // Updated: Neutral grey
         },
+        fonts: defaultFontConfig,
     },
 ];

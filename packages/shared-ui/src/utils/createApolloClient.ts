@@ -50,23 +50,27 @@ const useRemoteGraphql: boolean = isNext
     ? process.env.NEXT_PUBLIC_USE_REMOTE_GRAPHQL === 'true'
     : process.env.USE_REMOTE_GRAPHQL === 'true';
 
+// Get the local GraphQL server host (configurable for when IP changes)
+const getLocalGraphQLHost = () =>
+    process.env.LOCAL_GRAPHQL_HOST ??
+    process.env.NEXT_PUBLIC_LOCAL_GRAPHQL_HOST ??
+    '192.168.1.48';
+
+const getLocalEndpoint = (protocol: 'http' | 'ws') => {
+    const useLocalhost = isNext || isReactNativeWeb;
+    const host = useLocalhost ? 'localhost' : getLocalGraphQLHost();
+    return `${protocol}://${host}:4000/graphql`;
+};
+
 // Set endpoints based on whether we are using the local server or the Cloud Run server.
 const graphqlApiGatewayEndpointHttp =
     !onRemoteServer && !useRemoteGraphql
-        ? isNext
-            ? 'http://localhost:3000/graphql'
-            : isReactNativeWeb
-              ? 'http://localhost:8081/graphql'
-              : 'http://192.168.1.48:4000/graphql'
+        ? getLocalEndpoint('http')
         : 'https://dev.my-nexus.net/graphql';
 
 const graphqlApiGatewayEndpointWs =
     !onRemoteServer && !useRemoteGraphql
-        ? isNext
-            ? 'ws://localhost:3000/graphql'
-            : isReactNativeWeb
-              ? 'ws://localhost:4000/graphql'
-              : 'ws://192.168.1.48:4000/graphql'
+        ? getLocalEndpoint('ws')
         : 'wss://dev.my-nexus.net/graphql';
 
 export const createApolloClient = (serverCookie?: string) => {

@@ -1,5 +1,6 @@
 // src/theme/nature-inspired.ts
 import { COLORS as DefaultColors } from '../../constants/colors';
+import { defaultFontConfig } from '../../constants/fonts';
 import type { Theme } from '../themes';
 
 export const NatureInspired: Theme[] = [
@@ -19,6 +20,7 @@ export const NatureInspired: Theme[] = [
             MainText: '#E0E0E0',
             InactiveText: '#989898',
         },
+        fonts: defaultFontConfig,
     },
     {
         name: 'Ocean Breeze',
@@ -36,6 +38,7 @@ export const NatureInspired: Theme[] = [
             MainText: '#E0E0E0',
             InactiveText: '#989898',
         },
+        fonts: defaultFontConfig,
     },
     {
         name: 'Mountain Peak',
@@ -53,6 +56,7 @@ export const NatureInspired: Theme[] = [
             MainText: '#E0E0E0',
             InactiveText: '#989898',
         },
+        fonts: defaultFontConfig,
     },
     {
         name: 'Desert Mirage',
@@ -70,6 +74,7 @@ export const NatureInspired: Theme[] = [
             MainText: '#E0E0E0',
             InactiveText: '#989898',
         },
+        fonts: defaultFontConfig,
     },
     {
         name: 'Autumn Leaves',
@@ -87,6 +92,7 @@ export const NatureInspired: Theme[] = [
             MainText: '#E0E0E0',
             InactiveText: '#989898',
         },
+        fonts: defaultFontConfig,
     },
     {
         name: 'Spring Blossom',
@@ -104,6 +110,7 @@ export const NatureInspired: Theme[] = [
             MainText: '#E0E0E0',
             InactiveText: '#989898',
         },
+        fonts: defaultFontConfig,
     },
     {
         name: 'Winter Frost',
@@ -121,6 +128,7 @@ export const NatureInspired: Theme[] = [
             MainText: '#E0E0E0',
             InactiveText: '#989898',
         },
+        fonts: defaultFontConfig,
     },
     {
         name: 'Summer Glow',
@@ -138,6 +146,7 @@ export const NatureInspired: Theme[] = [
             MainText: '#E0E0E0',
             InactiveText: '#989898',
         },
+        fonts: defaultFontConfig,
     },
     {
         name: 'Tropical Paradise',
@@ -155,6 +164,7 @@ export const NatureInspired: Theme[] = [
             MainText: '#E0E0E0',
             InactiveText: '#989898',
         },
+        fonts: defaultFontConfig,
     },
     {
         name: 'Rainforest Canopy',
@@ -172,5 +182,6 @@ export const NatureInspired: Theme[] = [
             MainText: '#E0E0E0',
             InactiveText: '#989898',
         },
+        fonts: defaultFontConfig,
     },
 ];

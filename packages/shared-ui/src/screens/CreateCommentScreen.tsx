@@ -3,7 +3,6 @@ import {
     View,
     Text,
     StyleSheet,
-    ScrollView,
     Platform,
     SafeAreaView,
     LayoutChangeEvent,
@@ -19,6 +18,8 @@ import {
 import { getRelativeTime, extractUrls, stripHtml } from '../utils';
 import { CurrentCommentContext } from '../providers';
 import { useTheme, Theme } from '../theme';
+import { BorderRadius, Spacing, Typography } from '../constants/designSystem';
+import { NexusScrollView } from '../styles';
 
 type RootStackParamList = {
     CreateComment: Record<string, unknown>;
@@ -69,9 +70,16 @@ export const CreateCommentScreen: React.FC<CreateCommentScreenProps> = ({
 
     return (
         <SafeAreaView style={styles.safeContainer}>
-            <ScrollView
-                style={styles.scrollSection}
-                contentContainerStyle={styles.scrollContainerStyle}
+            <NexusScrollView
+                style={
+                    styles.scrollSection as unknown as Record<string, unknown>
+                }
+                contentContainerStyle={
+                    styles.scrollContainerStyle as unknown as Record<
+                        string,
+                        unknown
+                    >
+                }
             >
                 <View style={styles.modalContainer}>
                     <Text style={styles.userInfo}>
@@ -100,7 +108,7 @@ export const CreateCommentScreen: React.FC<CreateCommentScreenProps> = ({
                                     <View
                                         style={{
                                             alignSelf: 'flex-start',
-                                            marginBottom: 15,
+                                            marginBottom: Spacing.LG,
                                         }}
                                     >
                                         <AttachmentImageGallery
@@ -140,7 +148,7 @@ export const CreateCommentScreen: React.FC<CreateCommentScreenProps> = ({
                         onClose={() => setModalVisible(false)}
                     />
                 )}
-            </ScrollView>
+            </NexusScrollView>
         </SafeAreaView>
     );
 };
@@ -163,7 +171,7 @@ function createStyles(theme: Theme) {
         safeContainer: {
             flex: 1,
             backgroundColor: theme.colors.SecondaryBackground,
-            paddingTop: 15,
+            paddingTop: Spacing.LG,
             ...(isWeb && { height: '100vh', display: 'flex' }),
         },
         scrollContainer: {
@@ -175,57 +183,60 @@ function createStyles(theme: Theme) {
         },
         modalContainer: {
             backgroundColor: theme.colors.AppBackground,
-            borderRadius: 8,
-            padding: 20,
+            borderRadius: BorderRadius.ExtraSmall,
+            padding: Spacing.XL,
         },
         modalTitle: {
-            fontSize: 18,
-            fontWeight: '600',
-            marginBottom: 15,
+            ...Typography.SectionHeading,
+            fontFamily: theme.fonts.primary?.semibold,
+            marginBottom: Spacing.LG,
             color: theme.colors.ActiveText,
         },
         userInfo: {
-            fontSize: 14,
+            ...Typography.Code,
+            fontFamily: theme.fonts.secondary?.regular,
             color: theme.colors.InactiveText,
-            marginBottom: 10,
+            marginBottom: Spacing.MD,
         },
         parentContentContainer: {
             borderWidth: 1,
             borderColor: theme.colors.InactiveText,
-            borderRadius: 5,
-            padding: 10,
-            marginBottom: 15,
+            borderRadius: BorderRadius.ExtraSmall - 3,
+            padding: Spacing.MD,
+            marginBottom: Spacing.LG,
             backgroundColor: theme.colors.SecondaryBackground,
         },
         toggleButton: {
             alignSelf: 'flex-end',
-            marginBottom: 10,
-            paddingVertical: 6,
-            paddingHorizontal: 10,
+            marginBottom: Spacing.MD,
+            paddingVertical: Spacing.XS + 2,
+            paddingHorizontal: Spacing.MD,
             backgroundColor: theme.colors.SecondaryBackground,
-            borderRadius: 5,
+            borderRadius: BorderRadius.ExtraSmall - 3,
         },
         modalButtonRow: {
             flexDirection: 'row',
             justifyContent: 'flex-end',
         },
         modalButton: {
-            marginLeft: 10,
-            paddingVertical: 8,
-            paddingHorizontal: 15,
-            borderRadius: 5,
+            marginLeft: Spacing.MD,
+            paddingVertical: Spacing.SM,
+            paddingHorizontal: Spacing.LG,
+            borderRadius: BorderRadius.ExtraSmall - 3,
             backgroundColor: theme.colors.Primary,
         },
         modalButtonText: {
+            ...Typography.Code,
+            fontFamily: theme.fonts.primary?.semibold,
             color: theme.colors.ActiveText,
-            fontWeight: '600',
         },
         editorContainer: {
-            marginBottom: 15,
+            marginBottom: Spacing.LG,
         },
         toggleButtonText: {
+            ...Typography.Code,
+            fontFamily: theme.fonts.primary?.semibold,
             color: theme.colors.ActiveText,
-            fontWeight: '600',
         },
     });
 }

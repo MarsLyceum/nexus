@@ -1,29 +1,29 @@
 import React, { useMemo } from 'react';
 import { TouchableOpacity, StyleSheet, View, Text } from 'react-native';
-import { useTheme, Theme } from '../theme';
 
+import { useTheme, Theme } from '../theme';
+import { BorderRadius, Spacing, Typography } from '../constants/designSystem';
 import { Chat } from '../icons';
 
 function createChatButtonStyles(theme: Theme) {
     return StyleSheet.create({
         container: {
-            flexDirection: 'row', // Arrange children horizontally
-            alignItems: 'center', // Center them vertically
+            flexDirection: 'row',
+            alignItems: 'center',
         },
         button: {
             width: 32,
             height: 32,
-            borderRadius: 20,
+            borderRadius: BorderRadius.Pill,
             backgroundColor: theme.colors.Primary,
             justifyContent: 'center',
             alignItems: 'center',
         },
         text: {
-            marginLeft: 8, // Spacing between the icon and the text
-            fontSize: 14,
+            ...Typography.Code,
+            fontFamily: theme.fonts.primary?.semibold,
+            marginLeft: Spacing.SM,
             color: theme.colors.ActiveText,
-            fontFamily: 'Roboto_500Medium',
-            fontWeight: '500', // semibold (numeric value is recommended)
         },
     });
 }

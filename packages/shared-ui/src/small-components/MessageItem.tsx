@@ -2,15 +2,20 @@ import React, {
     useState,
     useRef,
     useEffect,
+    useLayoutEffect,
     useCallback,
     useMemo,
 } from 'react';
+import type { MouseEvent as ReactMouseEvent } from 'react';
 import {
     View,
     Text,
     StyleSheet,
     Pressable as RNPressable,
     Platform,
+    LayoutChangeEvent,
+    Animated,
+    Easing,
 } from 'react-native';
 import {
     Pressable as RNGHPressable,
@@ -20,9 +25,17 @@ import {
 
 import { useTheme, Theme } from '../theme';
 import { MessageContent, MessageEditor } from './message';
-import { formatDateForChat } from '../utils';
+import { formatDateForChat, toRgba } from '../utils';
+import { resolveHoverBounds, measureNativeView } from '../utils/hoverBounds';
+import { isStableHoverGroupMember } from '../utils/stableHoverGroup';
 import type { MessageWithAvatar, DirectMessageWithAvatar } from '../types';
-import { useIsComputer } from '../hooks';
+import { useIsComputer, useStableHover } from '../hooks';
+import {
+    BorderRadius,
+    Spacing,
+    Typography,
+    Opacity,
+} from '../constants/designSystem';
 
 import { MessageOptionsBottomSheet } from './MessageOptionsBottomSheet';
 import { MessageOptionsModal } from './MessageOptionsModal';
@@ -42,6 +55,8 @@ export type MessageItemProps = {
     onDeleteMessage: (
         message: DirectMessageWithAvatar | MessageWithAvatar
     ) => void;
+    onLayout?: (event: LayoutChangeEvent) => void;
+    contentHeight?: number;
 };
 
 const getMessageDate = (
@@ -56,6 +71,8 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     scrollContainerRef,
     onSaveEdit,
     onDeleteMessage,
+    onLayout,
+    contentHeight,
 }) => {
     const isComputer = useIsComputer();
     const [currentMessage, setCurrentMessage] = useState(message);
@@ -73,15 +90,25 @@ export const MessageItem: React.FC<MessageItemProps> = ({
         | undefined
     >(undefined);
     const [modalHovered, setModalHovered] = useState(false);
-    const [isHovered, setIsHovered] = useState(false);
-    const [isScrolling, setIsScrolling] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [editedContent, setEditedContent] = useState(
         currentMessage.content ?? ''
     );
+    const pressableRef = useRef<View>(null);
     const containerRef = useRef<View>(null);
+    const lastInteractiveRectRef = useRef<DOMRect | null>(null);
     const messageDate = getMessageDate(currentMessage);
-    const hideModalTimeoutRef = useRef<number | null>(null);
+    const entranceProgress = useRef(new Animated.Value(0)).current;
+    const hoverProgress = useRef(new Animated.Value(0)).current;
+    const logHoverEvent = useCallback(
+        (label: string, details: Record<string, unknown> = {}) => {
+            if (__DEV__) {
+                // eslint-disable-next-line no-console
+                console.log(`[MessageItem:${message.id}] ${label}`, details);
+            }
+        },
+        [message.id]
+    );
     const [showMoreOptions, setShowMoreOptions] = useState(false);
     const [moreButtonAnchor, setMoreButtonAnchor] = useState<
         | {
@@ -107,112 +134,305 @@ export const MessageItem: React.FC<MessageItemProps> = ({
         setShowDeleteConfirmationModal(true);
     }, []);
 
+    const getInteractiveRect = useCallback(() => {
+        if (Platform.OS !== 'web') {
+            logHoverEvent('interactive-rect-non-web');
+            return null;
+        }
+
+        const candidateRefs = [containerRef, pressableRef] as const;
+
+        for (const ref of candidateRefs) {
+            const candidateLabel =
+                ref === containerRef ? 'container' : 'pressable';
+            const rect = resolveHoverBounds({
+                viewRef: ref,
+                fallbackRectRef: lastInteractiveRectRef,
+            });
+
+            if (rect) {
+                lastInteractiveRectRef.current = rect;
+                logHoverEvent('interactive-rect-resolved', {
+                    candidate: candidateLabel,
+                    width: rect.width,
+                    height: rect.height,
+                });
+                return rect;
+            }
+
+            logHoverEvent('interactive-rect-miss', {
+                candidate: candidateLabel,
+                hasRef: Boolean(ref.current),
+                hasProps: Boolean(ref.current?.props),
+            });
+        }
+
+        if (lastInteractiveRectRef.current) {
+            logHoverEvent('interactive-node-using-fallback', {
+                width: lastInteractiveRectRef.current.width,
+                height: lastInteractiveRectRef.current.height,
+            });
+            return lastInteractiveRectRef.current;
+        }
+
+        logHoverEvent('interactive-node-not-found');
+        return null;
+    }, [logHoverEvent]);
+
     const handleLongPress = useCallback((): void => {
         setBottomSheetVisible(true);
     }, []);
 
-    // Measure the container and set the anchor based on its top-right edge.
-    const showModal = useCallback(() => {
-        if (isComputer && containerRef.current) {
-            const rect = (
-                containerRef.current as unknown as Element
-            ).getBoundingClientRect();
-            const margin = 10;
-            // Compute the anchor as the top-right of the message (with a slight inset)
-            const computedAnchor = {
-                x: rect.right - margin,
-                y: rect.top + margin,
+    useLayoutEffect(() => {
+        if (Platform.OS !== 'web') {
+            return undefined;
+        }
+
+        if (!pressableRef.current) {
+            logHoverEvent('measure-native-view-missing-pressable');
+            return undefined;
+        }
+
+        const handleMeasured = (rect: DOMRect) => {
+            if (rect.width > 0 && rect.height > 0) {
+                lastInteractiveRectRef.current = rect;
+                logHoverEvent('measure-native-view', {
+                    width: rect.width,
+                    height: rect.height,
+                });
+                return;
+            }
+
+            logHoverEvent('measure-native-view-skipped', {
                 width: rect.width,
                 height: rect.height,
-            };
-            setAnchorPosition(computedAnchor);
-            setOptionsModalVisible(true);
-        }
-    }, [isComputer]);
-
-    const handleMouseEnter = () => {
-        if (hideModalTimeoutRef.current) {
-            clearTimeout(hideModalTimeoutRef.current);
-            // eslint-disable-next-line unicorn/no-null
-            hideModalTimeoutRef.current = null;
-        }
-        setIsHovered(true);
-        if (!isScrolling) showModal();
-    };
-
-    const handleMouseLeave = () => {
-        setIsHovered(false);
-        hideModalTimeoutRef.current = setTimeout(() => {
-            if (!modalHovered) {
-                setOptionsModalVisible(false);
-            }
-        }, 300) as unknown as number;
-    };
-
-    // eslint-disable-next-line consistent-return
-    useEffect(() => {
-        const handleDocumentMouseMove = (e: MouseEvent) => {
-            if (containerRef.current) {
-                const rect = (
-                    containerRef.current as unknown as Element
-                ).getBoundingClientRect();
-                const { clientX, clientY } = e;
-                const isOverMessage =
-                    clientX >= rect.left &&
-                    clientX <= rect.right &&
-                    clientY >= rect.top &&
-                    clientY <= rect.bottom;
-
-                if (!isOverMessage) {
-                    setOptionsModalVisible(false);
-                }
-            }
-        };
-
-        // add listener only when we switch into "computer" mode
-        if (isComputer && Platform.OS === 'web') {
-            document.addEventListener('mousemove', handleDocumentMouseMove, {
-                passive: true,
             });
+        };
+
+        measureNativeView(pressableRef, handleMeasured);
+
+        return undefined;
+    }, [logHoverEvent, pressableRef]);
+
+    // Measure the container and set the anchor based on its top-right edge.
+    const showModal = useCallback(() => {
+        const rect = getInteractiveRect();
+        if (!rect) {
+            logHoverEvent('show-modal-missing-rect');
+            return;
+        }
+        const margin = 10;
+        const computedAnchor = {
+            x: rect.right - margin,
+            y: rect.top + margin,
+            width: rect.width,
+            height: rect.height,
+        };
+        logHoverEvent('show-modal-anchor', computedAnchor);
+        setAnchorPosition(computedAnchor);
+        setOptionsModalVisible(true);
+    }, [getInteractiveRect, logHoverEvent]);
+
+    const animateHover = useCallback(
+        (toValue: number) => {
+            Animated.timing(hoverProgress, {
+                toValue,
+                duration: 180,
+                easing: Easing.out(Easing.cubic),
+                useNativeDriver: false,
+            }).start();
+        },
+        [hoverProgress]
+    );
+
+    const handleHoverEnter = useCallback(() => {
+        logHoverEvent('hover-enter');
+        animateHover(1);
+        showModal();
+    }, [animateHover, logHoverEvent, showModal]);
+
+    const handleHoverLeave = useCallback(() => {
+        logHoverEvent('hover-leave');
+        animateHover(0);
+        setOptionsModalVisible(false);
+    }, [animateHover, logHoverEvent]);
+
+    const {
+        handlers: hoverHandlers,
+        isHovering,
+        registerBounds,
+    } = useStableHover({
+        onEnter: handleHoverEnter,
+        onLeave: handleHoverLeave,
+        debugLabel: `message-${message.id}`,
+        allowReentrantEnter: true,
+    });
+
+    const handleHoverIn = useCallback(() => {
+        const result = hoverHandlers.onPointerEnter();
+        logHoverEvent('handle-hover-in', { result });
+    }, [hoverHandlers, logHoverEvent]);
+
+    const handleScrollerLeave = useCallback(() => {
+        logHoverEvent('handle-scroller-leave');
+        hoverHandlers.onPointerLeave();
+    }, [hoverHandlers, logHoverEvent]);
+
+    const handleMouseLeave = useCallback(
+        (event: ReactMouseEvent<View>) => {
+            const nextTarget = event.relatedTarget;
+            const possibleTarget = event.currentTarget;
+            logHoverEvent('handle-mouse-leave', {
+                hasRelatedTarget: Boolean(nextTarget),
+                eventType: event.type,
+            });
+            if (!(possibleTarget instanceof Element)) {
+                logHoverEvent('mouse-leave-non-element');
+                hoverHandlers.onPointerLeave();
+                return;
+            }
+            const currentTarget: Element = possibleTarget;
+            const { clientX, clientY } = event.nativeEvent;
+            const rect =
+                typeof currentTarget.getBoundingClientRect === 'function'
+                    ? currentTarget.getBoundingClientRect()
+                    : undefined;
+            const relatedSummary =
+                nextTarget instanceof Element
+                    ? {
+                          nodeName: nextTarget.nodeName,
+                          id: nextTarget.id,
+                          className: nextTarget.className,
+                      }
+                    : { type: typeof nextTarget };
+            logHoverEvent('mouse-leave-geometry', {
+                clientX,
+                clientY,
+                rectTop: rect?.top,
+                rectBottom: rect?.bottom,
+                rectLeft: rect?.left,
+                rectRight: rect?.right,
+                rectWidth: rect?.width,
+                rectHeight: rect?.height,
+                currentContainsRelated:
+                    nextTarget instanceof Element
+                        ? currentTarget.contains(nextTarget)
+                        : undefined,
+                relatedSummary,
+            });
+            const containsRelated =
+                nextTarget instanceof Element
+                    ? isStableHoverGroupMember(nextTarget)
+                    : undefined;
+            const result = hoverHandlers.onPointerLeave({
+                clientX,
+                clientY,
+                rect,
+                containsRelated,
+                relatedTarget:
+                    nextTarget instanceof Element ? nextTarget : null,
+            });
+            logHoverEvent('mouse-leave-result', { result });
+        },
+        [hoverHandlers, logHoverEvent]
+    );
+
+    const hoverBindings = useMemo(() => {
+        if (Platform.OS === 'web') {
+            return {
+                onMouseEnter: handleHoverIn,
+                onMouseLeave: handleMouseLeave,
+            } as const;
+        }
+        return {
+            onHoverIn: handleHoverIn,
+            onHoverOut: handleScrollerLeave,
+        } as const;
+    }, [handleHoverIn, handleMouseLeave, handleScrollerLeave]);
+
+    useLayoutEffect(() => {
+        if (Platform.OS !== 'web') {
+            return undefined;
         }
 
-        // ALWAYS remove the listener on cleanup (unmount or isComputer toggle)
-        return () => {
-            if (Platform.OS === 'web') {
-                document.removeEventListener(
-                    'mousemove',
-                    handleDocumentMouseMove
-                );
+        let needsFallback = false;
+
+        registerBounds(() => {
+            const rect = getInteractiveRect();
+            logHoverEvent('register-bounds-attempt', {
+                rectExists: Boolean(rect),
+                lastWidth: lastInteractiveRectRef.current?.width,
+                lastHeight: lastInteractiveRectRef.current?.height,
+            });
+            if (rect) {
+                logHoverEvent('register-bounds', {
+                    width: rect.width,
+                    height: rect.height,
+                    source: 'fresh',
+                });
+                return rect;
             }
-        };
-    }, [isComputer]);
+
+            if (!needsFallback) {
+                needsFallback = true;
+                logHoverEvent('register-bounds', {
+                    source: 'defer',
+                });
+                return undefined;
+            }
+
+            const lastRect = lastInteractiveRectRef.current ?? undefined;
+            if (lastRect && lastRect.width > 0 && lastRect.height > 0) {
+                logHoverEvent('register-bounds', {
+                    width: lastRect.width,
+                    height: lastRect.height,
+                    source: 'cached',
+                });
+                needsFallback = false;
+                return lastRect;
+            }
+
+            logHoverEvent('register-bounds', {
+                source: 'missing',
+            });
+            needsFallback = false;
+            return undefined;
+        });
+
+        return undefined;
+    }, [getInteractiveRect, logHoverEvent, registerBounds]);
+
+    useEffect(() => {
+        if (!isHovering && !modalHovered) {
+            logHoverEvent('effect-close-hover', {
+                isHovering,
+                modalHovered,
+            });
+            animateHover(0);
+            setOptionsModalVisible(false);
+        }
+    }, [animateHover, isHovering, logHoverEvent, modalHovered]);
 
     useEffect(() => {
         const scrollContainerComponent = scrollContainerRef.current;
-        if (!scrollContainerComponent) return;
+        if (!scrollContainerComponent) return undefined;
         const scrollContainer = scrollContainerComponent.getScrollableNode
             ? scrollContainerComponent.getScrollableNode()
             : scrollContainerComponent;
         if (
             !scrollContainer ||
             typeof scrollContainer.addEventListener !== 'function'
-        )
-            return;
-        const handleScroll = () => {
-            setIsScrolling(true);
-            setOptionsModalVisible(false);
-            setTimeout(() => {
-                setIsScrolling(false);
-            }, 1000);
-        };
-        scrollContainer.addEventListener('scroll', handleScroll, {
+        ) {
+            return undefined;
+        }
+        scrollContainer.addEventListener('scroll', handleScrollerLeave, {
             passive: true,
         });
         // eslint-disable-next-line consistent-return
         return () => {
-            scrollContainer.removeEventListener('scroll', handleScroll);
+            scrollContainer.removeEventListener('scroll', handleScrollerLeave);
         };
-    }, [scrollContainerRef]);
+    }, [handleScrollerLeave, scrollContainerRef]);
 
     const handleEdit = () => {
         setOptionsModalVisible(false);
@@ -267,6 +487,18 @@ export const MessageItem: React.FC<MessageItemProps> = ({
 
     const OuterElement = Platform.OS === 'web' ? View : GestureDetector;
 
+    useEffect(() => {
+        entranceProgress.stopAnimation();
+        entranceProgress.setValue(0);
+        Animated.spring(entranceProgress, {
+            toValue: 1,
+            damping: 18,
+            stiffness: 210,
+            mass: 0.8,
+            useNativeDriver: true,
+        }).start();
+    }, [entranceProgress, message.id]);
+
     return (
         <OuterElement
             gesture={Gesture.Simultaneous(
@@ -275,18 +507,75 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                 sliderGesture
             )}
         >
-            <View collapsable={false} style={styles.pressableContainer}>
+            <Animated.View
+                collapsable={false}
+                style={[
+                    styles.pressableContainer,
+                    {
+                        opacity: entranceProgress,
+                        transform: [
+                            {
+                                translateY: entranceProgress.interpolate({
+                                    inputRange: [0, 1],
+                                    outputRange: [16, 0],
+                                }),
+                            },
+                        ],
+                    },
+                ]}
+            >
                 <Pressable
-                    onPressIn={() => setIsHovered(true)}
-                    onPressOut={() => setIsHovered(false)}
-                    onMouseEnter={handleMouseEnter}
-                    onMouseLeave={handleMouseLeave}
+                    ref={pressableRef}
+                    {...hoverBindings}
+                    onLayout={onLayout}
+                    style={
+                        contentHeight ? { minHeight: contentHeight } : undefined
+                    }
+                    className="message-item__pressable"
                 >
-                    <View
+                    <Animated.View
                         ref={containerRef}
                         style={[
                             styles.messageContainer,
-                            isHovered && styles.hovered,
+                            {
+                                borderWidth: hoverProgress.interpolate({
+                                    inputRange: [0, 1],
+                                    outputRange: [1, 1.5],
+                                }),
+                                borderColor: hoverProgress.interpolate({
+                                    inputRange: [0, 1],
+                                    outputRange: [
+                                        toRgba(
+                                            theme.colors.ActiveText,
+                                            Opacity.BorderSubtle
+                                        ),
+                                        toRgba(
+                                            theme.colors.Primary,
+                                            Opacity.BorderMedium
+                                        ),
+                                    ],
+                                }),
+                                backgroundColor: hoverProgress.interpolate({
+                                    inputRange: [0, 1],
+                                    outputRange: [
+                                        'transparent',
+                                        toRgba(
+                                            theme.colors.TertiaryBackground,
+                                            0.92
+                                        ),
+                                    ],
+                                }),
+                                shadowOpacity: hoverProgress.interpolate({
+                                    inputRange: [0, 1],
+                                    outputRange: [0, Opacity.ElevatedBackdrop],
+                                }),
+                                shadowRadius: hoverProgress.interpolate({
+                                    inputRange: [0, 1],
+                                    outputRange: [0, BorderRadius.Small],
+                                }),
+                                marginHorizontal: -Spacing.XS,
+                                marginVertical: -Spacing.XS,
+                            },
                         ]}
                     >
                         <NexusImage
@@ -355,7 +644,10 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                                 {/* Attachments section */}
                                 {hasAttachments && (
                                     <View
-                                        style={styles.attachmentsWhileEditing}
+                                        style={[
+                                            styles.attachmentsWhileEditing,
+                                            styles.clippedSection,
+                                        ]}
                                     >
                                         <MessageContent
                                             message={currentMessage}
@@ -385,12 +677,24 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                                         anchorPosition={anchorPosition}
                                         onEdit={handleEdit}
                                         onMore={handleMore}
-                                        onMouseEnterModal={() =>
-                                            setModalHovered(true)
-                                        }
-                                        onMouseLeaveModal={() => {
+                                        onMouseEnterModal={() => {
+                                            setModalHovered(true);
+                                            hoverHandlers.onPointerEnter();
+                                        }}
+                                        onMouseLeaveModal={(event) => {
                                             setModalHovered(false);
-                                            setOptionsModalVisible(false);
+                                            hoverHandlers.onPointerLeave({
+                                                clientX: event.clientX,
+                                                clientY: event.clientY,
+                                                rect: event.currentTarget.getBoundingClientRect(),
+                                                containsRelated:
+                                                    event.relatedTarget instanceof
+                                                    Element
+                                                        ? event.currentTarget.contains(
+                                                              event.relatedTarget
+                                                          )
+                                                        : undefined,
+                                            });
                                         }}
                                     />
                                 </View>
@@ -444,9 +748,9 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                                 onAttachmentPress={onAttachmentPress}
                             />
                         )}
-                    </View>
+                    </Animated.View>
                 </Pressable>
-            </View>
+            </Animated.View>
         </OuterElement>
     );
 };
@@ -456,37 +760,41 @@ function createStyles(theme: Theme) {
         messageContainer: {
             flexDirection: 'row',
             alignItems: 'flex-start',
-            padding: 15,
+            padding: Spacing.MD,
             width: '100%',
             position: 'relative',
             overflow: 'visible',
+            borderRadius: BorderRadius.Medium,
+            borderWidth: 1,
+            borderColor: toRgba(theme.colors.ActiveText, Opacity.BorderSubtle),
         },
         pressableContainer: {
             flex: 1,
-        },
-        hovered: {
-            backgroundColor: theme.colors.TertiaryBackground,
+            borderRadius: BorderRadius.Medium,
+            backgroundColor: toRgba(theme.colors.SecondaryBackground, 0.68),
+            marginVertical: Spacing.XS,
+            overflow: 'hidden',
+            paddingHorizontal: Spacing.XS,
+            paddingVertical: Spacing.XS,
         },
         avatar: {
             width: 40,
             height: 40,
-            borderRadius: 20,
-            marginRight: 10,
+            borderRadius: BorderRadius.Pill,
+            marginRight: Spacing.SM,
         },
         innerContainer: {
             flex: 1,
             flexShrink: 1,
         },
         userName: {
-            fontSize: 14,
-            fontWeight: 'bold',
+            fontSize: Typography.BodySmall.fontSize,
+            fontWeight: '700' as const,
             color: theme.colors.ActiveText,
-            fontFamily: 'Roboto_700Bold',
         },
         time: {
-            fontSize: 12,
-            color: theme.colors.InactiveText,
-            fontFamily: 'Roboto_400Regular',
+            fontSize: Typography.Eyebrow.fontSize,
+            color: toRgba(theme.colors.InactiveText, 0.7),
         },
         viewContainer: {
             // Container for normal viewing mode
@@ -495,10 +803,14 @@ function createStyles(theme: Theme) {
             // Container for edit mode components
         },
         linkPreviewsWhileEditing: {
-            marginTop: 10,
+            marginTop: Spacing.SM,
         },
         attachmentsWhileEditing: {
-            marginTop: 10,
+            marginTop: Spacing.SM,
+        },
+        clippedSection: {
+            overflow: 'hidden',
+            borderRadius: BorderRadius.Small,
         },
         optionsModalContainer: {
             position: 'absolute',

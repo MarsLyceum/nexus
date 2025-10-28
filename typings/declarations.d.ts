@@ -18,6 +18,30 @@ declare module '*.svg' {
     export default content;
 }
 
+declare module '*.wgsl' {
+    const content: string;
+    // eslint-disable-next-line import/no-default-export
+    export default content;
+}
+
+declare module '*.wgsl?raw' {
+    const content: string;
+    // eslint-disable-next-line import/no-default-export
+    export default content;
+}
+
+declare module '*.glsl' {
+    const content: string;
+    // eslint-disable-next-line import/no-default-export
+    export default content;
+}
+
+declare module '*.glsl?raw' {
+    const content: string;
+    // eslint-disable-next-line import/no-default-export
+    export default content;
+}
+
 declare namespace JSX {
     interface ElementChildrenAttribute {
         children: unknown; // specify children name to use

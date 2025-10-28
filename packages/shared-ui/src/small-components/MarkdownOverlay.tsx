@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
-import { ScrollView, Text, StyleSheet } from 'react-native';
+import { ScrollView, Text, StyleSheet, Platform } from 'react-native';
 
 import { useTheme, Theme } from '../theme';
+import { Spacing, Typography } from '../constants/designSystem';
 
 export interface MarkdownOverlayProps {
     value: string;
@@ -215,15 +216,30 @@ const MarkdownOverlayComponent = (
 ) => {
     const { theme } = useTheme();
     const styles = useMemo(() => createStyles(theme), [theme]);
+    const pointerEventsValue = Platform.OS === 'web' ? undefined : 'none';
+    const multilineContainerStyle =
+        Platform.OS === 'web'
+            ? [
+                  { ...styles.overlayContainer, pointerEvents: 'none' },
+                  overlayStyle,
+              ]
+            : [styles.overlayContainer, overlayStyle];
+    const singleLineContainerStyle =
+        Platform.OS === 'web'
+            ? [
+                  { ...styles.singleLineOverlay, pointerEvents: 'none' },
+                  overlayStyle,
+              ]
+            : [styles.singleLineOverlay, overlayStyle];
 
     return multiline ? (
         <ScrollView
             ref={ref}
-            style={[styles.overlayContainer, overlayStyle]}
-            contentContainerStyle={{ paddingHorizontal: 10, paddingBottom: 25 }}
+            style={multilineContainerStyle}
+            contentContainerStyle={styles.multilineContentContainer}
             scrollEnabled={false}
             showsVerticalScrollIndicator={false}
-            pointerEvents="none"
+            pointerEvents={pointerEventsValue}
         >
             <Text style={[styles.inputTextOverlay, inputStyle]}>
                 {renderHighlightedText(value, styles)}
@@ -233,17 +249,17 @@ const MarkdownOverlayComponent = (
         <ScrollView
             ref={ref}
             horizontal
-            style={[styles.singleLineOverlay, overlayStyle]}
-            contentContainerStyle={{ paddingVertical: 4 }}
+            style={singleLineContainerStyle}
+            contentContainerStyle={styles.singleLineContentContainer}
             scrollEnabled
             showsHorizontalScrollIndicator={false}
-            pointerEvents="none"
+            pointerEvents={pointerEventsValue}
         >
             <Text
                 style={[
                     styles.inputTextOverlay,
                     inputStyle,
-                    { flexWrap: 'nowrap', paddingHorizontal: 10 },
+                    styles.singleLineText,
                 ]}
             >
                 {renderHighlightedText(value, styles)}
@@ -266,81 +282,109 @@ function createStyles(theme: Theme) {
             right: 0,
             bottom: 0,
         },
-        singleLineOverlay: {
-            // additional styles can be added here if needed
+        singleLineOverlay: {},
+        multilineContentContainer: {
+            paddingHorizontal: Spacing.MD,
+            paddingBottom: Spacing.XXL,
+        },
+        singleLineContentContainer: {
+            paddingVertical: Spacing.SM,
+        },
+        singleLineText: {
+            flexWrap: 'nowrap',
+            paddingHorizontal: Spacing.MD,
         },
         inputTextOverlay: {
-            fontSize: 14,
+            ...Typography.Code,
+            fontFamily: theme.fonts.primary?.regular,
             color: theme.colors.ActiveText,
-            lineHeight: 20,
         },
         plainText: {
+            ...Typography.Code,
+            fontFamily: theme.fonts.primary?.regular,
             color: theme.colors.ActiveText,
-            fontFamily: 'Roboto_400Regular',
-            fontSize: 14,
-            lineHeight: 20,
         },
         codeText: {
-            fontFamily: 'monospace',
+            ...Typography.Code,
+            fontFamily:
+                theme.fonts.monospace?.regular ??
+                Platform.select({
+                    web: 'monospace',
+                    default: 'Courier',
+                }),
             backgroundColor: theme.colors.SecondaryBackground,
             color: theme.colors.MainText,
         },
         codeBlockText: {
-            fontFamily: 'monospace',
+            ...Typography.Code,
+            fontFamily:
+                theme.fonts.monospace?.regular ??
+                Platform.select({
+                    web: 'monospace',
+                    default: 'Courier',
+                }),
             backgroundColor: theme.colors.SecondaryBackground,
             color: theme.colors.MainText,
         },
         boldText: {
-            fontWeight: 'bold',
+            ...Typography.Code,
+            fontFamily: theme.fonts.primary?.bold,
             color: theme.colors.ActiveText,
-            fontFamily: 'Roboto_700Bold',
         },
         italicText: {
+            ...Typography.Code,
+            fontFamily: theme.fonts.primary?.regular,
             fontStyle: 'italic',
             color: theme.colors.ActiveText,
-            fontFamily: 'Roboto_400Regular_Italic',
         },
         boldItalicText: {
-            fontWeight: 'bold',
+            ...Typography.Code,
+            fontFamily: theme.fonts.primary?.bold,
             fontStyle: 'italic',
             color: theme.colors.ActiveText,
-            fontFamily: 'Roboto_700Bold_Italic',
         },
         underlineText: {
+            ...Typography.Code,
+            fontFamily: theme.fonts.primary?.regular,
             textDecorationLine: 'underline',
             color: theme.colors.ActiveText,
-            fontFamily: 'Roboto_400Regular',
         },
         strikethroughText: {
+            ...Typography.Code,
+            fontFamily: theme.fonts.primary?.regular,
             textDecorationLine: 'line-through',
             color: theme.colors.ActiveText,
-            fontFamily: 'Roboto_400Regular',
         },
         spoilerTextInline: {
-            backgroundColor: 'grey',
+            ...Typography.Code,
+            fontFamily: theme.fonts.primary?.regular,
+            backgroundColor: theme.colors.InactiveText,
             color: theme.colors.ActiveText,
-            fontFamily: 'Roboto_400Regular',
         },
         blockquoteText: {
+            ...Typography.Code,
+            fontFamily: theme.fonts.primary?.regular,
             borderLeftWidth: 4,
             borderLeftColor: theme.colors.TextInput,
-            paddingLeft: 8,
+            paddingLeft: Spacing.SM,
             color: theme.colors.MainText,
             fontStyle: 'italic',
-            fontFamily: 'Roboto_400Regular',
         },
         listText: {
+            ...Typography.Code,
+            fontFamily: theme.fonts.primary?.regular,
             color: theme.colors.ActiveText,
-            fontFamily: 'Roboto_400Regular',
         },
         linkText: {
+            ...Typography.Code,
+            fontFamily: theme.fonts.primary?.regular,
             color: theme.colors.Link,
             textDecorationLine: 'underline',
-            fontFamily: 'Roboto_400Regular',
         },
         imageText: {
-            color: '#f3a14e',
-            fontFamily: 'Roboto_400Regular',
+            ...Typography.Code,
+            fontFamily: theme.fonts.primary?.regular,
+            color: theme.colors.Secondary,
         },
     });
 }

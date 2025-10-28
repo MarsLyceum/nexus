@@ -29,6 +29,7 @@ import { Group, GroupChannel } from '../types';
 import { Feed, Chat, Events } from '../icons';
 import { ActiveGroupContext } from '../providers';
 import { useNexusRouter } from '../hooks';
+import { BorderRadius, Spacing, Typography } from '../constants/designSystem';
 
 import { GroupChannelScreen } from './GroupChannelScreen';
 import { GroupEventsScreen } from './GroupEventsScreen';
@@ -51,50 +52,49 @@ function createStyles(theme: Theme) {
         channelListContainer: {
             flex: 1,
             backgroundColor: theme.colors.PrimaryBackground,
-            padding: 20,
+            padding: Spacing.XL,
         },
         serverTitle: {
-            fontSize: 20,
-            fontFamily: 'Roboto_700Bold',
-            fontWeight: 'bold',
+            ...Typography.H3,
+            fontFamily: theme.fonts.primary?.bold,
             color: theme.colors.ActiveText,
-            marginBottom: 10,
+            marginBottom: Spacing.LG,
         },
         memberInfo: {
-            fontSize: 12,
+            ...Typography.Code,
+            fontFamily: theme.fonts.secondary?.regular,
             color: theme.colors.ActiveText,
-            marginBottom: 10,
+            marginBottom: Spacing.MD,
         },
         groupDescription: {
-            fontFamily: 'Roboto_400Regular',
-            fontSize: 14,
+            ...Typography.Body,
+            fontFamily: theme.fonts.primary?.regular,
             color: theme.colors.ActiveText,
-            marginBottom: 20,
+            marginBottom: Spacing.XL,
         },
         channelItem: {
             flexDirection: 'row',
             alignItems: 'center',
-            paddingVertical: 10,
-            paddingHorizontal: 8,
+            paddingVertical: Spacing.MD,
+            paddingHorizontal: Spacing.SM,
         },
         activeChannelItemWrapper: {
             backgroundColor: theme.colors.SecondaryBackground,
-            padding: 4,
-            marginVertical: 2,
-            borderRadius: 5,
+            padding: Spacing.XS,
+            marginVertical: Spacing.XS,
+            borderRadius: BorderRadius.ExtraSmall,
         },
         icon: {
-            marginRight: 10,
+            marginRight: Spacing.SM,
         },
         channelText: {
-            fontSize: 16,
-            fontFamily: 'Roboto_400Regular',
+            ...Typography.Body,
+            fontFamily: theme.fonts.primary?.regular,
             color: theme.colors.MainText,
         },
         activeChannelText: {
             color: theme.colors.ActiveText,
-            fontWeight: 'bold',
-            fontFamily: 'Roboto_700Bold',
+            fontFamily: theme.fonts.primary?.bold,
         },
     });
 }
@@ -144,9 +144,17 @@ export function GroupScreen() {
                     justifyContent: 'center',
                     alignItems: 'center',
                     backgroundColor: theme.colors.PrimaryBackground,
+                    padding: Spacing.XL,
                 }}
             >
-                <Text style={{ color: theme.colors.ActiveText }}>
+                <Text
+                    style={{
+                        ...Typography.Body,
+                        fontFamily: theme.fonts.primary?.regular,
+                        color: theme.colors.ActiveText,
+                        textAlign: 'center',
+                    }}
+                >
                     No active group selected.
                 </Text>
             </View>

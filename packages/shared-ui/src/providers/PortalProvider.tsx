@@ -66,8 +66,15 @@ export const PortalProvider: React.FC<{ children: ReactNode }> = ({
             {children}
             {/* Host container for portals */}
             <View
-                pointerEvents="box-none"
-                style={StyleSheet.absoluteFill as ViewStyle}
+                pointerEvents={'box-none'}
+                style={
+                    Platform.OS === 'web'
+                        ? {
+                              ...(StyleSheet.absoluteFill as ViewStyle),
+                              pointerEvents: 'box-none',
+                          }
+                        : (StyleSheet.absoluteFill as ViewStyle)
+                }
             >
                 {Object.entries(portals).map(([key, element]) => (
                     <React.Fragment key={key}>{element}</React.Fragment>

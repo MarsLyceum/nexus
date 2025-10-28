@@ -2,9 +2,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { View, StyleSheet, Dimensions, Platform } from 'react-native';
+import { getShadowStyle } from '../utils';
 
 import { Portal } from '../providers';
 import { useTheme, Theme } from '../theme';
+import { BorderRadius, Spacing } from '../constants/designSystem';
 
 /* ------------------------------------------------------------------ */
 /*                               Types                                */
@@ -21,6 +23,7 @@ export type MiniModalProps = {
     containerStyle?: object;
     anchorPosition?: { x: number; y: number; width: number; height: number };
     children: React.ReactNode;
+    blockOutsideClicks?: boolean;
     closeOnOutsideClick?: boolean;
     centered?: boolean;
     useRightAnchorAlignment?: boolean;
@@ -40,6 +43,7 @@ export const MiniModal: React.FC<MiniModalProps> = ({
     containerStyle,
     anchorPosition,
     children,
+    blockOutsideClicks = true,
     closeOnOutsideClick = true,
     centered,
     useRightAnchorAlignment = false,
@@ -67,8 +71,10 @@ export const MiniModal: React.FC<MiniModalProps> = ({
     const flattenedContainerStyle = StyleSheet.flatten(containerStyle);
 
     /* -------------------------- outside click ----------------------- */
+    const shouldHandleOutsideClick = blockOutsideClicks && closeOnOutsideClick;
+
     useEffect(() => {
-        if (!visible || !closeOnOutsideClick) return;
+        if (!visible || !shouldHandleOutsideClick) return;
         if (Platform.OS === 'web') {
             const handleOutsideClick = (e: MouseEvent) => {
                 if (
@@ -86,7 +92,7 @@ export const MiniModal: React.FC<MiniModalProps> = ({
             return () =>
                 document.removeEventListener('mousedown', handleOutsideClick);
         }
-    }, [visible, closeOnOutsideClick, onClose]);
+    }, [visible, shouldHandleOutsideClick, onClose]);
 
     if (!visible) return undefined;
 
@@ -344,13 +350,21 @@ export const MiniModal: React.FC<MiniModalProps> = ({
         <Portal>
             <View
                 pointerEvents="box-none"
-                style={[
-                    StyleSheet.absoluteFillObject,
-                    { zIndex: 10_001, elevation: 10_001 },
-                ]}
+                style={
+                    Platform.OS === 'web'
+                        ? {
+                              ...StyleSheet.absoluteFillObject,
+                              zIndex: 10_001,
+                              elevation: 10_001,
+                          }
+                        : StyleSheet.flatten([
+                              StyleSheet.absoluteFillObject,
+                              { zIndex: 10_001, elevation: 10_001 },
+                          ])
+                }
                 // we *don’t* claim the responder—just listen in capture phase
                 onStartShouldSetResponderCapture={(evt) => {
-                    if (closeOnOutsideClick && modalLocation) {
+                    if (shouldHandleOutsideClick && modalLocation) {
                         const { pageX, pageY } = evt.nativeEvent;
                         const { x, y, width, height } = modalLocation;
 
@@ -368,13 +382,16 @@ export const MiniModal: React.FC<MiniModalProps> = ({
                     return false;
                 }}
             >
-                {centered && <View style={styles.modalOverlay} />}
+                {centered && (
+                    <View pointerEvents="none" style={styles.modalOverlay} />
+                )}
                 <View
                     ref={modalRef}
-                    style={[
+                    style={StyleSheet.flatten([
                         computedContainerStyle,
                         { pointerEvents: 'auto', zIndex: 10_001 },
-                    ]}
+                    ])}
+                    pointerEvents={Platform.OS === 'web' ? undefined : 'auto'}
                     onMouseEnter={onMouseEnter}
                     onMouseLeave={onMouseLeave}
                     onLayout={(e) => {
@@ -404,14 +421,10 @@ function createStyles(theme: Theme) {
             width: 350,
             maxHeight: 250,
             backgroundColor: theme.colors.PrimaryBackground,
-            borderRadius: 8,
-            padding: 10,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.3,
-            shadowRadius: 4,
-            elevation: 5,
+            borderRadius: BorderRadius.ExtraSmall,
+            padding: Spacing.SM,
             transform: [{ translateX: -175 }],
+            ...getShadowStyle('medium'),
         },
         modalOverlay: {
             position: 'absolute',

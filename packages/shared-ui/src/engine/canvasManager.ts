@@ -1,3 +1,5 @@
+import { now } from './utils';
+
 type SurfaceId = string;
 type GroupId = string;
 
@@ -69,6 +71,20 @@ type RenderQueueItem = {
     readonly localZIndex: number;
 };
 
+type PooledSurface = {
+    readonly id: SurfaceId;
+    readonly descriptorId: string;
+    readonly groupId: GroupId;
+    readonly host: HTMLDivElement;
+    readonly canvas: HTMLCanvasElement;
+    readonly blendMode: GlobalCompositeOperation;
+    readonly createdAt: number;
+    releasedAt: number;
+};
+
+const SURFACE_POOL_TTL_MS = 15_000;
+const SURFACE_POOL_CLEANUP_INTERVAL_MS = 5000;
+
 const createGroupState = (id: GroupId, zIndex: number): GroupState => {
     const canvas = document.createElement('canvas');
     const context = ensureContext(canvas);
@@ -139,9 +155,7 @@ const removeSurfaceFromGroup = (
     if (!current.surfaceIds.has(surfaceId)) {
         return groups;
     }
-    const remaining = Array.from(current.surfaceIds).filter(
-        (id) => id !== surfaceId
-    );
+    const remaining = [...current.surfaceIds].filter((id) => id !== surfaceId);
     if (remaining.length === 0) {
         const nextGroups = new Map(groups);
         nextGroups.delete(groupId);
@@ -322,12 +336,11 @@ const updateSurfaceState = (
 const removeSurfaceState = (
     surfaces: Map<SurfaceId, SurfaceState>,
     id: SurfaceId
-): Map<SurfaceId, SurfaceState> =>
-    [...surfaces.entries()].reduce<Map<SurfaceId, SurfaceState>>(
-        (accumulator, [key, value]) =>
-            key === id ? accumulator : accumulator.set(key, value),
-        new Map<SurfaceId, SurfaceState>()
-    );
+): Map<SurfaceId, SurfaceState> => {
+    const next = new Map(surfaces);
+    next.delete(id);
+    return next;
+};
 
 const compositeSurfaces = (
     context: CanvasRenderingContext2D,
@@ -345,7 +358,7 @@ const compositeSurfaces = (
     const renderQueue: RenderQueueItem[] = [];
 
     const groupedSurfaces = [...snapshot.groups.values()].map((group) => {
-        const surfaces = Array.from(group.surfaceIds)
+        const surfaces = [...group.surfaceIds]
             .map((surfaceId) => snapshot.surfaces.get(surfaceId))
             .filter((surface): surface is SurfaceState => Boolean(surface))
             .sort((left, right) => {
@@ -448,6 +461,49 @@ const createCanvasManager = (): CanvasManager => {
         frameId: undefined,
     };
 
+    const surfacePool = new Map<string, PooledSurface>();
+    let poolTrimHandle: ReturnType<typeof setTimeout> | undefined;
+
+    const buildPoolKey = (
+        descriptorId: string,
+        groupId: GroupId | undefined,
+        zIndex: number,
+        blendMode: GlobalCompositeOperation
+    ) => `${descriptorId}:${groupId ?? 'default'}:${zIndex}:${blendMode}`;
+
+    const acquirePooledSurface = (
+        poolKey: string
+    ): PooledSurface | undefined => {
+        const pooled = surfacePool.get(poolKey);
+        if (!pooled) {
+            return undefined;
+        }
+        surfacePool.delete(poolKey);
+        return pooled;
+    };
+
+    const schedulePoolTrim = () => {
+        if (poolTrimHandle !== undefined) {
+            return;
+        }
+        poolTrimHandle = setTimeout(() => {
+            poolTrimHandle = undefined;
+            const nowTs = now();
+            const entries = Array.from(surfacePool.entries());
+            surfacePool.clear();
+            entries.forEach(([key, pooled]) => {
+                if (nowTs - pooled.releasedAt <= SURFACE_POOL_TTL_MS) {
+                    surfacePool.set(key, pooled);
+                    return;
+                }
+                pooled.host.remove();
+            });
+            if (surfacePool.size > 0) {
+                schedulePoolTrim();
+            }
+        }, SURFACE_POOL_CLEANUP_INTERVAL_MS);
+    };
+
     const step = () => {
         state = {
             ...state,
@@ -490,25 +546,50 @@ const createCanvasManager = (): CanvasManager => {
     const registerSurface = (
         input: SurfaceRegistration
     ): CanvasSurfaceHandle => {
-        const id = `${input.descriptorId}-${crypto.randomUUID()}`;
-        const surfaceCanvas = document.createElement('canvas');
-        const host = document.createElement('div');
-        host.dataset.effectSurfaceHostId = id;
-        host.style.position = 'fixed';
-        host.style.top = '0';
-        host.style.left = '0';
-        host.style.width = '0';
-        host.style.height = '0';
-        host.style.pointerEvents = 'none';
-        host.style.opacity = '0';
-        host.style.overflow = 'hidden';
-        surfaceCanvas.dataset.effectSurfaceId = id;
-        surfaceCanvas.dataset.effectDescriptorId = input.descriptorId;
-        surfaceCanvas.style.display = 'block';
-        surfaceCanvas.style.width = '0';
-        surfaceCanvas.style.height = '0';
-        host.append(surfaceCanvas);
-        document.body.append(host);
+        const poolKey = buildPoolKey(
+            input.descriptorId,
+            input.groupId,
+            input.zIndex,
+            input.blendMode
+        );
+        const pooled = acquirePooledSurface(poolKey);
+        let surfaceCanvas: HTMLCanvasElement;
+        let host: HTMLDivElement;
+        let id: SurfaceId;
+        if (pooled) {
+            id = pooled.id;
+            surfaceCanvas = pooled.canvas;
+            host = pooled.host;
+            surfaceCanvas.dataset.effectDescriptorId = input.descriptorId;
+            surfaceCanvas.dataset.effectSurfaceId = id;
+            surfaceCanvas.style.display = 'block';
+            surfaceCanvas.style.width = '0';
+            surfaceCanvas.style.height = '0';
+            host.style.opacity = '0';
+            host.style.width = '0';
+            host.style.height = '0';
+            pooled.releasedAt = now();
+        } else {
+            id = `${input.descriptorId}-${crypto.randomUUID()}`;
+            surfaceCanvas = document.createElement('canvas');
+            host = document.createElement('div');
+            host.dataset.effectSurfaceHostId = id;
+            host.style.position = 'fixed';
+            host.style.top = '0';
+            host.style.left = '0';
+            host.style.width = '0';
+            host.style.height = '0';
+            host.style.pointerEvents = 'none';
+            host.style.opacity = '0';
+            host.style.overflow = 'hidden';
+            surfaceCanvas.dataset.effectSurfaceId = id;
+            surfaceCanvas.dataset.effectDescriptorId = input.descriptorId;
+            surfaceCanvas.style.display = 'block';
+            surfaceCanvas.style.width = '0';
+            surfaceCanvas.style.height = '0';
+            host.append(surfaceCanvas);
+            document.body.append(host);
+        }
         surfaceCanvas.dataset.effectSurfaceId = id;
         const groupId = input.groupId ?? 'default';
         const groupZIndex = input.groupZIndex ?? 0;
@@ -611,8 +692,19 @@ const createCanvasManager = (): CanvasManager => {
         };
 
         const dispose = () => {
-            host.remove();
             releaseSurface(id);
+            const pooled: PooledSurface = {
+                id,
+                descriptorId: input.descriptorId,
+                groupId,
+                host,
+                canvas: surfaceCanvas,
+                blendMode: input.blendMode,
+                createdAt: now(),
+                releasedAt: now(),
+            };
+            surfacePool.set(poolKey, pooled);
+            schedulePoolTrim();
         };
 
         return {

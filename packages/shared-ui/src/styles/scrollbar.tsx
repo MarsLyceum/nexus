@@ -60,11 +60,6 @@ const DRAG_SCALE = 1.15;
 
 const snapToPixel = (value: number, dpr: number): number =>
     Math.round(value * dpr) / dpr;
-// Removed unused pixel-floor helper to avoid linter error
-
-// Debug types removed
-
-// Debug logger removed for production
 
 const clamp = (value: number, lower: number, upper: number): number =>
     Math.min(upper, Math.max(lower, value));

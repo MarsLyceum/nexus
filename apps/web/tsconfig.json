@@ -1,36 +1,30 @@
 {
-  "extends": "../../tsconfig.json",
-  "compilerOptions": {
-    "outDir": "build",
-    "baseUrl": ".",
-    "paths": {
-      "@/*": [
-        "./src/*"
-      ],
-      "shared-ui/*": [
-        "../../packages/shared-ui/src/*"
-      ]
+    "extends": "../../tsconfig.json",
+    "compilerOptions": {
+        "outDir": "build",
+        "baseUrl": ".",
+        "paths": {
+            "@/*": ["./src/*"],
+            "shared-ui/*": ["../../packages/shared-ui/src/*"]
+        },
+        "incremental": true,
+        "isolatedModules": true,
+        "jsx": "preserve",
+        "plugins": [
+            {
+                "name": "next"
+            }
+        ]
     },
-    "incremental": true,
-    "isolatedModules": true,
-    "jsx": "preserve",
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ]
-  },
-  "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    "next-env.d.ts",
-    "next.config.js",
-    "polyfills/expo-polyfills.js",
-    "stubs/expo-secure-store.js",
-    ".next/types/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    ".next"
-  ]
+    "include": [
+        "**/*.ts",
+        "**/*.tsx",
+        "next-env.d.ts",
+        "next.config.js",
+        "polyfills/expo-polyfills.js",
+        "stubs/expo-secure-store.js",
+        ".next/types/**/*.ts",
+        "types/**/*.d.ts"
+    ],
+    "exclude": ["node_modules", ".next"]
 }

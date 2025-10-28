@@ -237,22 +237,6 @@ export const EffectRenderer = <State extends EngineState, UniformData>({
         }
         layoutRef.current = resolveLayoutFromStyle(layout, containerStyle);
         handle.setLayout(layoutRef.current);
-        const handleCanvas = surfaceHandleRef.current?.canvas;
-        if (handleCanvas) {
-            const { current } = layoutRef;
-            if (current) {
-                const widthPx = toPixels(current.width, current.dpr);
-                const heightPx = toPixels(current.height, current.dpr);
-                if (handleCanvas.width !== widthPx) {
-                    handleCanvas.width = widthPx;
-                }
-                if (handleCanvas.height !== heightPx) {
-                    handleCanvas.height = heightPx;
-                }
-                handleCanvas.style.width = `${current.width}px`;
-                handleCanvas.style.height = `${current.height}px`;
-            }
-        }
         applySurfaceVisibility();
     }, [applySurfaceVisibility, containerStyle, layout]);
 

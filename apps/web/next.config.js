@@ -214,6 +214,16 @@ const nextConfig = {
 
         config.resolve.mainFields = ['module', 'main'];
 
+        // shaders
+        config.module.rules.push({
+            test: /\.wgsl/,
+            loader: 'webpack-wgsl-loader',
+        });
+        config.module.rules.push({
+            test: /\.(glsl|vs|fs)$/,
+            loader: 'ts-shader-loader',
+        });
+
         config.module.rules.push({
             test: /\.js$/,
             parser: {

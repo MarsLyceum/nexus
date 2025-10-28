@@ -133,6 +133,8 @@ export const Glow: React.FC<GlowProps> = ({
         timeline.getTimeSeconds()
     );
 
+    console.log('activeBackend:', activeBackend);
+
     const failedBackendsRef = useRef<Set<string>>(new Set());
     const gpuRenderingFailed = useRef(false);
     const availabilitySnapshot = useMemo(
@@ -588,23 +590,25 @@ export const Glow: React.FC<GlowProps> = ({
               height: height ?? '100%',
           };
 
+    console.log('shouldRenderCss:', shouldRenderCss);
+    console.log('shouldRenderGpu:', shouldRenderGpu);
+    console.log('shouldShowGpuSnapshot:', shouldShowGpuSnapshot);
     return (
         <>
-            {Boolean(keyframes) && shouldRenderCss && (
+            {Boolean(keyframes) && activeBackend === 'css' && (
                 <style>{keyframes}</style>
             )}
-            {shouldRenderCss && (
+            {activeBackend === 'css' && (
                 <div
                     style={{
                         ...containerStyle,
                         borderRadius: `${borderRadius}px`,
                         pointerEvents: 'none',
-                        opacity: shouldShowGpuSnapshot ? 0 : opacity,
                         ...cssAnimationStyle.style,
                     }}
                 />
             )}
-            {shouldRenderGpu && (
+            {activeBackend !== 'css' && (
                 <EffectRendererWithMetrics
                     descriptor={glowEffectDescriptor}
                     timeline={timeline}

@@ -13,7 +13,6 @@ import {
     createConfigurationTracker,
     reportShaderCompilation,
 } from './webgpu-utils';
-import { createFrameCounter } from '../debug/utils';
 
 const DEFAULT_CLEAR_COLOR: GPUColorDict = {
     r: 0,
@@ -78,8 +77,23 @@ const executeRenderPass = <State>(
     pass: RenderPass<State>,
     uniformData: State
 ) => {
+    const data = pass.uniformEncoder.encode(uniformData);
+    pass.device.queue.writeBuffer(
+        pass.uniformBuffer,
+        0,
+        data.buffer,
+        data.byteOffset,
+        data.byteLength
+    );
+
     const commandEncoder = pass.device.createCommandEncoder();
-    const swapTexture = pass.context.getCurrentTexture();
+    let swapTexture;
+    try {
+        swapTexture = pass.context.getCurrentTexture();
+    } catch (error) {
+        console.warn('Failed to get current texture:', error);
+        return; // Skip this frame
+    }
     const passEncoder = commandEncoder.beginRenderPass({
         colorAttachments: [
             {
@@ -91,15 +105,6 @@ const executeRenderPass = <State>(
             },
         ],
     });
-
-    const data = pass.uniformEncoder.encode(uniformData);
-    pass.device.queue.writeBuffer(
-        pass.uniformBuffer,
-        0,
-        data.buffer,
-        data.byteOffset,
-        data.byteLength
-    );
 
     passEncoder.setPipeline(pass.pipeline);
     passEncoder.setBindGroup(0, pass.bindGroup);
@@ -139,6 +144,8 @@ export const createWebGPUBackend = <State>(): ShaderBackend<State> => ({
             onError,
         } = config;
 
+        let canvasConfigured = false;
+
         if (!source.webgpu) {
             throw new Error('WebGPU shader source not provided');
         }
@@ -160,7 +167,6 @@ export const createWebGPUBackend = <State>(): ShaderBackend<State> => ({
         };
 
         const configurationTracker = createConfigurationTracker();
-        const nextFrameId = createFrameCounter();
 
         const unconfigureCanvas = () => {
             const { unconfigure } = contextWithUnconfigure;
@@ -248,6 +254,9 @@ export const createWebGPUBackend = <State>(): ShaderBackend<State> => ({
                         debug = undefined;
                     }
                     lease.release();
+                })
+                .catch((error) => {
+                    console.warn('[WebGPU] finalizeContext rejected', error);
                 });
         };
 
@@ -258,13 +267,7 @@ export const createWebGPUBackend = <State>(): ShaderBackend<State> => ({
             }
             disposed = true;
             const error = new Error('WebGPU context lost');
-            console.warn('[WebGPU] context lost event handled', {
-                descriptorId: debugConfig?.descriptorId,
-                width: canvas.width,
-                height: canvas.height,
-                clientWidth: canvas.clientWidth,
-                clientHeight: canvas.clientHeight,
-            });
+
             onError?.(error);
             deviceAllocator.invalidate();
             finalizeContext();
@@ -338,14 +341,17 @@ export const createWebGPUBackend = <State>(): ShaderBackend<State> => ({
                     if (canvas.width <= 0 || canvas.height <= 0) {
                         return;
                     }
-                    unconfigureCanvas();
-                    context.configure({
-                        device,
-                        format,
-                        alphaMode: 'premultiplied',
-                        colorSpace: 'srgb',
-                        usage: GPUTextureUsage.RENDER_ATTACHMENT,
-                    });
+                    if (!canvasConfigured) {
+                        // unconfigureCanvas();
+                        context.configure({
+                            device,
+                            format,
+                            alphaMode: 'premultiplied',
+                            colorSpace: 'srgb',
+                            usage: GPUTextureUsage.RENDER_ATTACHMENT,
+                        });
+                        canvasConfigured = true;
+                    }
                     configurationTracker.mark(pixelWidth, pixelHeight);
                 });
 
@@ -357,8 +363,7 @@ export const createWebGPUBackend = <State>(): ShaderBackend<State> => ({
                     throw error;
                 });
 
-                let next: Promise<void>;
-                next = tracked.finally(() => {
+                const next = tracked.finally(() => {
                     if (pendingConfigure === next) {
                         pendingConfigure = null;
                     }
@@ -506,13 +511,13 @@ export const createWebGPUBackend = <State>(): ShaderBackend<State> => ({
                 debug: debug
                     ? {
                           configurePass: (passEncoder) => {
-                              debug.setBindGroup(pipeline, passEncoder);
+                              debug?.setBindGroup(pipeline, passEncoder);
                           },
                           afterPass: (commandEncoder) => {
-                              debug.fetch(commandEncoder);
+                              debug?.fetch(commandEncoder);
                           },
                           afterSubmit: () => {
-                              void debug.post();
+                              debug?.post();
                           },
                       }
                     : undefined,

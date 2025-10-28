@@ -7,7 +7,10 @@ import {
     type EngineState,
     type Timeline,
 } from './types';
-import { mergeState } from './utils';
+import { mergeState, now } from './utils';
+
+const ENGINE_ENTRY_TTL_MS = 15_000;
+const ENGINE_ENTRY_CLEANUP_INTERVAL_MS = 5000;
 
 type EngineListener = {
     readonly onBackendChange?: (backend: string | undefined) => void;
@@ -20,6 +23,7 @@ type EngineManagerEntry = {
     readonly handle: CanvasSurfaceHandle;
     readonly listeners: Map<string, EngineListener>;
     readonly updateState: (state: Partial<EngineState>) => void;
+    readonly resetState: (state: Partial<EngineState>) => void;
     readonly setDesiredBackend: (
         backend: string | undefined
     ) => Promise<string | undefined>;
@@ -32,6 +36,7 @@ type EngineManagerEntry = {
     desiredBackend: string | undefined;
     backendId: string | undefined;
     refCount: number;
+    releasedAt?: number;
 };
 
 type EngineGroup = {
@@ -98,12 +103,7 @@ const hasEntries = (value: Partial<EngineState>): boolean =>
 const collectListeners = <Key extends keyof EngineListener>(
     entry: EngineManagerEntry,
     selector: (listener: EngineListener) => EngineListener[Key] | undefined
-) =>
-    Array.from(entry.listeners.values())
-        .map(selector)
-        .filter((callback): callback is NonNullable<EngineListener[Key]> =>
-            Boolean(callback)
-        );
+) => [...entry.listeners.values()].map(selector).filter(Boolean);
 
 const notifyBackendChange = (
     entry: EngineManagerEntry,
@@ -181,6 +181,15 @@ const createEntry = <State extends EngineState, UniformData>(
         engine.update(patch as Partial<State>);
     };
 
+    const resetState = (nextState: Partial<EngineState>) => {
+        currentState = mergeState<State>(
+            options.descriptor.initialState,
+            nextState as Partial<State>
+        );
+        entry.state = currentState;
+        engine.update(currentState);
+    };
+
     const setDesiredBackend = (backend: string | undefined) => {
         entry.desiredBackend = backend;
         return engine.setDesiredBackend(backend);
@@ -191,6 +200,7 @@ const createEntry = <State extends EngineState, UniformData>(
         handle,
         listeners,
         updateState,
+        resetState,
         setDesiredBackend,
         start: () => {
             engine.start();
@@ -224,19 +234,67 @@ const createEntry = <State extends EngineState, UniformData>(
     return entry;
 };
 
+const buildEntryKey = (
+    descriptorId: string,
+    groupId: string | undefined,
+    zIndex: number,
+    blendMode: GlobalCompositeOperation
+) => `${descriptorId}:${groupId ?? 'default'}:${zIndex}:${blendMode}`;
+
 const createEngineManager = () => {
     const groups = new Map<string, EngineGroup>();
+    const idleEntries = new Map<string, EngineManagerEntry>();
+    let idleCleanupHandle: ReturnType<typeof setTimeout> | undefined;
+
+    const scheduleIdleCleanup = () => {
+        if (idleCleanupHandle !== undefined) {
+            return;
+        }
+        idleCleanupHandle = setTimeout(() => {
+            idleCleanupHandle = undefined;
+            const expiresBefore = now() - ENGINE_ENTRY_TTL_MS;
+            const entries = [...idleEntries.entries()];
+            idleEntries.clear();
+            entries.forEach(([key, entry]) => {
+                if (!entry.releasedAt || entry.releasedAt < expiresBefore) {
+                    entry.handle.dispose();
+                    return;
+                }
+                idleEntries.set(key, entry);
+            });
+            if (idleEntries.size > 0) {
+                scheduleIdleCleanup();
+            }
+        }, ENGINE_ENTRY_CLEANUP_INTERVAL_MS);
+    };
 
     const attach = <State extends EngineState, UniformData>(
         options: AttachOptions<State, UniformData>
     ): EngineManagerSession<State> => {
-        const desiredBackend = options.desiredBackend;
+        const { desiredBackend } = options;
         const groupKey = options.groupId
             ? `${options.groupId}`
             : options.descriptor.id;
         const resolvedGroupZIndex = options.groupZIndex ?? 0;
         const group = ensureEngineGroup(groups, groupKey, resolvedGroupZIndex);
-        const entry = createEntry(options);
+        const reuseKey = buildEntryKey(
+            options.descriptor.id,
+            options.groupId,
+            options.zIndex,
+            options.blendMode
+        );
+        const reusable = idleEntries.get(reuseKey);
+        let entry: EngineManagerEntry;
+        if (reusable) {
+            idleEntries.delete(reuseKey);
+            reusable.listeners.clear();
+            reusable.refCount = 0;
+            reusable.resetState(options.state);
+            reusable.releasedAt = undefined;
+            entry = reusable;
+        } else {
+            entry = createEntry(options);
+        }
         const entryKey = entry.handle.id;
         group.entries.set(entryKey, entry);
         applyGroupZIndex(group);
@@ -285,7 +343,9 @@ const createEngineManager = () => {
                 if (targetGroup && targetGroup.entries.size === 0) {
                     groups.delete(groupKey);
                 }
-                entry.handle.dispose();
+                entry.releasedAt = now();
+                idleEntries.set(reuseKey, entry);
+                scheduleIdleCleanup();
             },
         } satisfies EngineManagerSession<State>;
     };

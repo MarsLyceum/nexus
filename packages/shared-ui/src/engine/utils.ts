@@ -1,5 +1,7 @@
 import { Backend, EngineState } from './types';
 
+export const now = (): number => Date.now();
+
 const unique = <Value>(values: ReadonlyArray<Value>): Value[] =>
     values.filter(
         (value, index, collection) => collection.indexOf(value) === index
